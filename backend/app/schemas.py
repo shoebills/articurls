@@ -1,8 +1,16 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class Post(BaseModel):
+class PostBase(BaseModel):
     title: str
-    author: str
-    date: datetime
     content: str
+
+    class Config:
+        from_attributes = True
+
+class Post(PostBase):
+    post_id: int
+    pass
+
+    class Config:
+        from_attributes = True
