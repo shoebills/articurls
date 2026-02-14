@@ -1,5 +1,4 @@
 from pydantic import BaseModel
-from datetime import datetime
 
 class CreatePost(BaseModel):
     title: str
@@ -18,13 +17,3 @@ class GetPost(BaseModel):
 
 class UpdatePost(CreatePost):
     pass
-
-class CreateUser(BaseModel):
-    name: str
-    email: str
-    password: str
-
-class GetUser(BaseModel):
-    user_id: int
-    name: str
-    email: str

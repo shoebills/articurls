@@ -1,7 +1,8 @@
-from fastapi import FastAPI, Depends, APIRouter
+from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models, schemas
+from .. import models
+from ..schemas import post
 from typing import List
 
 router = APIRouter(
@@ -9,8 +10,8 @@ router = APIRouter(
     prefix="/post"
 )
 
-@router.post("/", response_model=schemas.GetPost)
-def create_post(request: schemas.CreatePost, db: Session = Depends(get_db)):
+@router.post("/", response_model=post.GetPost)
+def create_post(request: post.CreatePost, db: Session = Depends(get_db)):
 
     new_post = models.Post(title=request.title, content=request.content)
     db.add(new_post)
@@ -18,20 +19,20 @@ def create_post(request: schemas.CreatePost, db: Session = Depends(get_db)):
     db.refresh(new_post)
     return new_post
 
-@router.get("/", response_model=List[schemas.GetPost])
+@router.get("/", response_model=List[post.GetPost])
 def get_posts(db: Session = Depends(get_db)):
 
     posts = db.query(models.Post).all()
     return posts
 
-@router.get("/{id}", response_model=schemas.GetPost)
+@router.get("/{id}", response_model=post.GetPost)
 def get_post(id: int, db: Session = Depends(get_db)):
 
     post = db.query(models.Post).filter(models.Post.post_id == id).first()
     return post
 
-@router.put("/{id}", response_model=schemas.GetPost)
-def update_post(id: int, request: schemas.UpdatePost, db: Session = Depends(get_db)):
+@router.put("/{id}", response_model=post.GetPost)
+def update_post(id: int, request: post.UpdatePost, db: Session = Depends(get_db)):
 
     post = db.query(models.Post).filter(models.Post.post_id == id).first()
     post.title = request.title

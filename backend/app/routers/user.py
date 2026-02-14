@@ -1,16 +1,16 @@
-from fastapi import FastAPI, Depends, APIRouter
+from fastapi import Depends, APIRouter
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models, schemas
-from typing import List
+from .. import models
+from ..schemas import user
 
 router = APIRouter(
     tags=["User"],
     prefix="/user"
 )
 
-@router.post("/user", response_model=schemas.GetUser)
-def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
+@router.post("/", response_model=user.GetUser)
+def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
     new_user = models.User(name=request.name, email=request.email, password=request.password)
     db.add(new_user)
@@ -19,7 +19,7 @@ def create_user(request: schemas.CreateUser, db: Session = Depends(get_db)):
  
     return new_user
 
-@router.get("/user/{id}", response_model=schemas.GetUser)
+@router.get("/{id}", response_model=user.GetUser)
 def get_user(id: int, db: Session = Depends(get_db)):
 
     user = db.query(models.User).filter(models.User.user_id == id).first()

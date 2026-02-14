@@ -1,8 +1,7 @@
 import os
 from dotenv import load_dotenv
-from fastapi import FastAPI, Depends
 from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker, Session
+from sqlalchemy.orm import sessionmaker
 from .models import Base
 
 load_dotenv()
