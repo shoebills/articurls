@@ -1,15 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response
+from datetime import timedelta
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..schemas import authentication, user
+from ..schemas import authentication, token
 from .. import models
-from ..security import hashing
+from ..security import hashing, oauth2
+from ..config import settings
 
 router = APIRouter(
     tags=["Authentication"]
 )
 
-@router.post("/login", response_model=user.GetUser)
+@router.post("/login", response_model=token.Token)
 def login(request: authentication.Login, db: Session = Depends(get_db)):
 
     user = db.query(models.User).filter(models.User.email == request.username).first()
@@ -24,4 +26,12 @@ def login(request: authentication.Login, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Credentials")
     
-    return user
+    access_token = oauth2.create_access_token(
+        data={"sub": user.email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer"
+    }
