@@ -1,19 +1,9 @@
-import os
-from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .models import Base
+from .config import settings
 
-load_dotenv()
-
-DATABASE_NAME = os.getenv("DATABASE_NAME")
-DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE_HOSTNAME = os.getenv("DATABASE_HOSTNAME")
-DATABASE_PORT = os.getenv("DATABASE_PORT")
-
-
-SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{DATABASE_USERNAME}:"f"{DATABASE_PASSWORD}@"f"{DATABASE_HOSTNAME}:"f"{DATABASE_PORT}/"f"{DATABASE_NAME}")
+SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{settings.database_username}:"f"{settings.database_password}@"f"{settings.database_hostname}:"f"{settings.database_port}/"f"{settings.database_name}")
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
