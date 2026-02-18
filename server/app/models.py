@@ -12,10 +12,10 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     
-class Post(Base):
-    __tablename__ = "posts"
+class Blog(Base):
+    __tablename__ = "blogs"
 
-    post_id = Column(Integer, primary_key=True)
+    blog_id = Column(Integer, primary_key=True)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

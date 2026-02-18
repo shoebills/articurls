@@ -1,14 +1,14 @@
 from pydantic import BaseModel
 from datetime import datetime
 
-class CreatePost(BaseModel):
+class CreateBlog(BaseModel):
     title: str
     content: str
 
     class Config:
         from_attributes = True
 
-class GetPost(BaseModel):
+class GetBlog(BaseModel):
     post_id: int
     title: str
     content: str
@@ -18,5 +18,5 @@ class GetPost(BaseModel):
     class Config:
         from_attributes = True
 
-class UpdatePost(CreatePost):
+class UpdateBlog(CreateBlog):
     pass
