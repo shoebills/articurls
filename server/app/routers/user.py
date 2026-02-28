@@ -22,7 +22,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     
     hashed_password = hashing.get_password_hash(request.password)
     
-    new_user = models.User(name=request.name, email=request.email, password=hashed_password)
+    new_user = models.User(name=request.name, user_name=request.user_name, email=request.email, password=hashed_password)
 
     db.add(new_user)
     db.commit()

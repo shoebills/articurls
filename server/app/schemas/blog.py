@@ -9,7 +9,7 @@ class CreateBlog(BaseModel):
         from_attributes = True
 
 class GetBlog(BaseModel):
-    post_id: int
+    blog_id: int
     title: str
     content: str
     created_at: datetime
