@@ -1,5 +1,5 @@
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy import Column, String, Integer, DateTime, func, ForeignKey
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, func, ForeignKey
 
 class Base(DeclarativeBase):
     pass
@@ -20,4 +20,5 @@ class Blog(Base):
     user_id = Column(ForeignKey("users.user_id"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
+    is_published = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now())

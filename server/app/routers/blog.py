@@ -58,6 +58,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     
     blog.title = request.title
     blog.content = request.content
+    blog.is_published = request.is_published
     
     db.commit()
     db.refresh(blog)
