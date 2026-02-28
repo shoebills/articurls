@@ -40,6 +40,9 @@ def get_blog(id: int, db: Session = Depends(get_db)):
     if not blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
+    if blog.is_published == False:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} is unpublished")
+    
     return blog
 
 @router.put("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_202_ACCEPTED)
