@@ -1,1 +1,1 @@
-Blogging Saas
+Blogging web application for writing minimal articles with almost zero technical overhead.
