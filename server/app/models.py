@@ -13,6 +13,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
 class Blog(Base):
     __tablename__ = "blogs"
@@ -23,3 +24,4 @@ class Blog(Base):
     content = Column(String, nullable=False)
     is_published = Column(Boolean, default=True, nullable=False)
     created_at = Column(DateTime, server_default=func.now())
+    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())

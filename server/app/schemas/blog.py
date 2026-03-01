@@ -14,6 +14,7 @@ class GetBlog(BaseModel):
     content: str
     is_published: bool
     created_at: datetime
+    updated_at: datetime
     user_id: int
 
     class Config:
