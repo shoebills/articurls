@@ -7,7 +7,6 @@ class CreateUser(BaseModel):
     user_name: str
     email: str
     password: str
-    created_at: datetime
 
 class GetUser(BaseModel):
     user_id: int
