@@ -12,6 +12,7 @@ class User(Base):
     user_name = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
     
 class Blog(Base):
     __tablename__ = "blogs"
