@@ -19,6 +19,10 @@ class GetBlog(BaseModel):
     class Config:
         from_attributes = True
 
-class UpdateBlog(CreateBlog):
+class UpdateBlog(BaseModel):
+    title: str
+    content: str
     is_published: bool
-    pass
+
+    class Config:
+        from_attributes = True
