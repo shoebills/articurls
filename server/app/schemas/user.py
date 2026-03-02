@@ -7,8 +7,6 @@ class CreateUser(BaseModel):
     user_name: str
     email: str
     password: str
-    seo_title: str
-    seo_description: str
 
     class Config:
         from_attributes = True
@@ -17,7 +15,7 @@ class GetUser(BaseModel):
     user_id: int
     name: str
     user_name: str
-    email: str
+    email: EmailStr
     seo_title: str
     seo_description: str
 

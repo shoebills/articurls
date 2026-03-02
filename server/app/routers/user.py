@@ -13,12 +13,19 @@ router = APIRouter(
 @router.post("/", response_model=user.GetUser, status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
-    existing_user = db.query(models.User).filter(models.User.email == request.email).first()
+    existing_email = db.query(models.User).filter(models.User.email == request.email).first()
 
-    if existing_user:
+    if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
+    
+    existing_username = db.query(models.User).filter(models.User.user_name == request.user_name).first()
+    
+    if existing_username:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username already registered")
     
     hashed_password = hashing.get_password_hash(request.password)
     
@@ -26,8 +33,8 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
                            user_name=request.user_name, 
                            email=request.email, 
                            password=hashed_password, 
-                           seo_title=request.seo_title,
-                           seo_description=request.seo_description)
+                           seo_title=f"{request.name}'s Blog",
+                           seo_description=f"Explore all the blogs published by {request.name} on Articals.")
 
     db.add(new_user)
     db.commit()
