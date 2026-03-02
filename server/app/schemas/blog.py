@@ -5,6 +5,7 @@ from typing import Optional
 class CreateBlog(BaseModel):
     title: str
     content: str
+    slug: Optional[str] = None
     seo_title: str
     seo_description: str
 
@@ -15,6 +16,7 @@ class GetBlog(BaseModel):
     blog_id: int
     title: str
     content: str
+    slug: str
     seo_title: str
     seo_description: str
     created_at: datetime
