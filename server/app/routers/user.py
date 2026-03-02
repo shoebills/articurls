@@ -17,12 +17,17 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
     if existing_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
+            status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
     
     hashed_password = hashing.get_password_hash(request.password)
     
-    new_user = models.User(name=request.name, user_name=request.user_name, email=request.email, password=hashed_password)
+    new_user = models.User(name=request.name, 
+                           user_name=request.user_name, 
+                           email=request.email, 
+                           password=hashed_password, 
+                           seo_title=request.seo_title,
+                           seo_description=request.seo_description)
 
     db.add(new_user)
     db.commit()

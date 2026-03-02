@@ -7,6 +7,8 @@ class CreateUser(BaseModel):
     user_name: str
     email: str
     password: str
+    seo_title: str
+    seo_description: str
 
     class Config:
         from_attributes = True
@@ -16,6 +18,8 @@ class GetUser(BaseModel):
     name: str
     user_name: str
     email: str
+    seo_title: str
+    seo_description: str
 
     class Config:
         from_attributes = True
@@ -24,6 +28,8 @@ class UpdateUser(BaseModel):
     name: Optional[str] = None
     user_name: Optional[str] = None
     email: Optional[EmailStr] = None
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
 
     class Config:
         from_attributes = True

@@ -14,7 +14,11 @@ router = APIRouter(
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    new_blog = models.Blog(title=request.title, content=request.content, user_id=current_user.user_id)
+    new_blog = models.Blog(title=request.title, 
+                           content=request.content, 
+                           user_id=current_user.user_id,
+                           seo_title=request.seo_title,
+                           seo_description=request.seo_description)
 
     db.add(new_blog)
     db.commit()
@@ -42,7 +46,7 @@ def get_blog(id: int, db: Session = Depends(get_db)):
     
     return blog
 
-@router.put("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_202_ACCEPTED)
 def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -55,10 +59,12 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
+
+    update_data = request.dict(exclude_unset=True)
     
-    blog.title = request.title
-    blog.content = request.content
-    
+    for key, value in update_data.items():
+        setattr(blog, key, value)
+
     db.commit()
     db.refresh(blog)
 
