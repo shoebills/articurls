@@ -12,7 +12,6 @@ class GetBlog(BaseModel):
     blog_id: int
     title: str
     content: str
-    is_published: bool
     created_at: datetime
     updated_at: datetime
     user_id: int
@@ -23,7 +22,6 @@ class GetBlog(BaseModel):
 class UpdateBlog(BaseModel):
     title: str
     content: str
-    is_published: bool
 
     class Config:
         from_attributes = True

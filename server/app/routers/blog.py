@@ -25,7 +25,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 @router.get("/", response_model=List[blog.GetBlog], status_code=200)
 def get_blogs(db: Session = Depends(get_db)):
 
-    blogs = db.query(models.Blog).filter(models.Blog.is_published == True).all()
+    blogs = db.query(models.Blog).all()
 
     if not blogs:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No blogs found")
@@ -39,9 +39,6 @@ def get_blog(id: int, db: Session = Depends(get_db)):
 
     if not blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
-    
-    if blog.is_published == False:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} is unpublished")
     
     return blog
 
@@ -61,7 +58,6 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     
     blog.title = request.title
     blog.content = request.content
-    blog.is_published = request.is_published
     
     db.commit()
     db.refresh(blog)

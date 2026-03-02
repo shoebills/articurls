@@ -12,6 +12,8 @@ class User(Base):
     user_name = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, index=True, nullable=False)
     password = Column(String, nullable=False)
+    profile_seo_title = Column(String, nullable=True)
+    profile_seo_description = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
 
@@ -22,6 +24,7 @@ class Blog(Base):
     user_id = Column(ForeignKey("users.user_id"), nullable=False)
     title = Column(String, nullable=False)
     content = Column(String, nullable=False)
-    is_published = Column(Boolean, default=True, nullable=False)
+    blog_seo_title = Column(String, nullable=True)
+    blog_seo_description = Column(String, nullable=True)
     created_at = Column(DateTime, server_default=func.now())
     updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
