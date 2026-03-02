@@ -41,9 +41,9 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     return new_blog
 
 @router.get("/", response_model=List[blog.GetBlog], status_code=200)
-def get_blogs(db: Session = Depends(get_db)):
+def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blogs = db.query(models.Blog).all()
+    blogs = db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id).all()
 
     if not blogs:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No blogs found")
