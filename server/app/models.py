@@ -10,7 +10,7 @@ class User(Base):
     user_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
     user_name = Column(String, unique=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
+    email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
