@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+from ..models import BlogStatus
 
 class CreateBlog(BaseModel):
     title: str
@@ -19,6 +20,8 @@ class GetBlog(BaseModel):
     slug: str
     seo_title: str
     seo_description: str
+    status: BlogStatus
+    published_at: datetime
     created_at: datetime
     updated_at: datetime
     user_id: int

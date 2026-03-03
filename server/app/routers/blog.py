@@ -6,7 +6,7 @@ from ..schemas import blog
 from ..security.oauth2 import get_current_user
 from typing import List
 from slugify import slugify
-from datetime import datetime
+from datetime import datetime, timezone
 
 router = APIRouter(
     tags=["Blogs"],
@@ -86,7 +86,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
 
     return blog
 
-@router.delete("/{id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id}", status_code=status.HTTP_200_OK)
 def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -105,7 +105,7 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
 
     return {"message": "Blog deleted"}
 
-@router.post("/{id}/publish", response_model=blog.GetBlog)
+@router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -126,14 +126,14 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     
     # Only set publish date if first time
     if blog.published_at is None:
-        blog.published_at = datetime.utcnow()
+        blog.published_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(blog)
 
     return blog
 
-@router.post("/{id}/archive", response_model=blog.GetBlog)
+@router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
