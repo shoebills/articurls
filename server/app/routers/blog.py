@@ -6,6 +6,7 @@ from ..schemas import blog
 from ..security.oauth2 import get_current_user
 from typing import List
 from slugify import slugify
+from datetime import datetime
 
 router = APIRouter(
     tags=["Blogs"],
@@ -32,7 +33,8 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
                            user_id=current_user.user_id,
                            slug=db_slug,
                            seo_title=request.seo_title,
-                           seo_description=request.seo_description)
+                           seo_description=request.seo_description,
+                           status=models.BlogStatus.DRAFT)
 
     db.add(new_blog)
     db.commit()
@@ -51,9 +53,9 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     return blogs
 
 @router.get("/{id}", response_model=blog.GetBlog, status_code=200)
-def get_blog(id: int, db: Session = Depends(get_db)):
+def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    blog = db.query(models.Blog).filter(models.Blog.blog_id == current_user.user_id).first()
 
     if not blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
@@ -100,3 +102,57 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
     
     db.delete(blog)
     db.commit()
+
+    return {"message": "Blog deleted"}
+
+@router.post("/{id}/publish", response_model=blog.GetBlog)
+def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+
+    if not blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    if blog.user_id != current_user.user_id:
+        raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authorized to perform this action"
+    )
+
+    if blog.status == models.BlogStatus.PUBLISHED:
+        return blog
+    
+    blog.status = models.BlogStatus.PUBLISHED
+    
+    # Only set publish date if first time
+    if blog.published_at is None:
+        blog.published_at = datetime.utcnow()
+
+    db.commit()
+    db.refresh(blog)
+
+    return blog
+
+@router.post("/{id}/archive", response_model=blog.GetBlog)
+def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+
+    if not blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    if blog.user_id != current_user.user_id:
+        raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authorized to perform this action"
+    )
+
+    if blog.status == models.BlogStatus.ARCHIVED:
+        return blog
+    
+    blog.status = models.BlogStatus.ARCHIVED
+
+    db.commit()
+    db.refresh(blog)
+
+    return blog
