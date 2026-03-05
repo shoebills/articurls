@@ -21,7 +21,7 @@ class GetBlog(BaseModel):
     seo_title: str
     seo_description: str
     status: BlogStatus
-    published_at: datetime
+    published_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
     user_id: int
