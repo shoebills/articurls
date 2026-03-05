@@ -15,13 +15,14 @@ class User(Base):
     password = Column(String, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
 class BlogStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
+    SCHEDULED = "scheduled"
 
 class Blog(Base):
     __tablename__ = "blogs"
@@ -34,6 +35,7 @@ class Blog(Base):
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
-    published_at = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
-    updated_at = Column(DateTime, server_default=func.now(), onupdate=func.now())
+    scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
+    published_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
