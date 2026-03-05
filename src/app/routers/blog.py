@@ -156,3 +156,48 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.refresh(blog)
 
     return blog
+
+@router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
+def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+
+    if not blog:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Blog with id: {id} not found"
+    )
+    
+    if blog.user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform this action"
+    )
+
+    if blog.status == models.BlogStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Published blogs cannot be scheduled"
+    )
+    
+    if blog.status == models.BlogStatus.ARCHIVED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Archived blogs cannot be scheduled"
+    )
+    
+    now = datetime.now(timezone.utc)
+
+    if request.scheduled_at <= now:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Scheduled time must be in the future"
+    )
+
+    blog.status = models.BlogStatus.SCHEDULED
+    blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
+
+    db.commit()
+    db.refresh(blog)
+
+    return blog

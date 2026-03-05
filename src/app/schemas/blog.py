@@ -37,3 +37,9 @@ class UpdateBlog(BaseModel):
 
     class Config:
         from_attributes = True
+
+class ScheduleBlog(BaseModel):
+    scheduled_at: datetime
+
+    class Config:
+        from_attributes = True
