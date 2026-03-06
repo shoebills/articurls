@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from .celery_app import celery
 from .. import models, database
-from sqlalchemy.orm import Session
-
 
 @celery.task
 def publish_scheduled_blogs():

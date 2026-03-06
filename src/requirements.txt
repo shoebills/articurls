@@ -33,6 +33,7 @@ mdurl==0.1.2
 packaging==26.0
 prompt_toolkit==3.0.52
 psycopg==3.3.2
+psycopg-binary==3.3.2
 pwdlib==0.3.0
 pycparser==3.0
 pydantic==2.12.5
