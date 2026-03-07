@@ -68,7 +68,7 @@ def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db)
         detail="Not authorized to perform this action"
     )
 
-    update_data = request.dict(exclude_unset=True)
+    update_data = request.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
         setattr(user, key, value)

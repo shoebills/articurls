@@ -55,7 +55,7 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
 @router.get("/{id}", response_model=blog.GetBlog, status_code=200)
 def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == current_user.user_id).first()
+    blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id).first()
 
     if not blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
