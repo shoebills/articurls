@@ -10,9 +10,7 @@ async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     yield
 
-
 app = FastAPI(lifespan=lifespan)
-
 
 app.include_router(authentication.router)
 app.include_router(blog.router)
