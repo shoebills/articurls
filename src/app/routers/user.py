@@ -43,7 +43,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     return new_user
 
 @router.get("/{id}", response_model=user.GetUser, status_code=200)
-def get_user(id: int, db: Session = Depends(get_db)):
+def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
 
     user = db.query(models.User).filter(models.User.user_id == id).first()
 
@@ -51,6 +51,12 @@ def get_user(id: int, db: Session = Depends(get_db)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f"User with id: {id} doesnt exist")
+    
+    if user.user_id != current_user.user_id:
+        raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authorized to perform this action"
+    )
     
     return user
 
