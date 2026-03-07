@@ -21,17 +21,17 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     else:
         base_slug = slugify(request.title)
 
-    db_slug = base_slug
+    slug_obj = base_slug
     counter = 1
 
-    while db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id, models.Blog.slug == db_slug).first():
-        db_slug = f"{base_slug}-{counter}"
+    while db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id, models.Blog.slug == slug_obj).first():
+        slug_obj = f"{base_slug}-{counter}"
         counter += 1
 
     new_blog = models.Blog(title=request.title, 
                            content=request.content, 
                            user_id=current_user.user_id,
-                           slug=db_slug,
+                           slug=slug_obj,
                            seo_title=request.seo_title,
                            seo_description=request.seo_description,
                            status=models.BlogStatus.DRAFT)

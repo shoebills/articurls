@@ -7,8 +7,8 @@ class CreateBlog(BaseModel):
     title: str
     content: str
     slug: Optional[str] = None
-    seo_title: str
-    seo_description: str
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
 
     class Config:
         from_attributes = True
