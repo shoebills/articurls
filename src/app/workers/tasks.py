@@ -8,7 +8,6 @@ def publish_scheduled_blogs():
     db = database.SessionLocal()
 
     try:
-
         now = datetime.now(timezone.utc)
         
         posts = db.query(models.Blog).filter(models.Blog.status == models.BlogStatus.SCHEDULED, models.Blog.scheduled_at <= now).all()
@@ -20,5 +19,4 @@ def publish_scheduled_blogs():
         db.commit()
 
     finally:
-        
         db.close()

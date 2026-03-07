@@ -47,9 +47,6 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
 
     blogs = db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id).all()
 
-    if not blogs:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No blogs found")
-
     return blogs
 
 @router.get("/{id}", response_model=blog.GetBlog, status_code=200)
@@ -62,7 +59,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
     
     return blog
 
-@router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -147,6 +144,12 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
         detail="Not authorized to perform this action"
     )
 
+    if blog.status != models.BlogStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only published blogs can be archived"
+    )
+
     if blog.status == models.BlogStatus.ARCHIVED:
         return blog
     
@@ -201,3 +204,34 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
     db.refresh(blog)
 
     return blog
+
+@router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
+def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    
+    blog_obj = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+
+    if not blog_obj:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail=f"Blog with id: {id} not found"
+    )
+    
+    if blog_obj.user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform this action"
+    )
+
+    if blog_obj.status != models.BlogStatus.SCHEDULED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Blog is not scheduled"
+    )
+
+    blog_obj.status = models.BlogStatus.DRAFT
+    blog_obj.scheduled_at = None
+
+    db.commit()
+    db.refresh(blog_obj)
+
+    return blog_obj
