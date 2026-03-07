@@ -5,12 +5,12 @@ from .database import engine
 from .routers import blog, user, authentication
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    Base.metadata.create_all(bind=engine)
-    yield
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     Base.metadata.create_all(bind=engine)
+#     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.include_router(authentication.router)
 app.include_router(blog.router)
