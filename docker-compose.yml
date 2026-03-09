@@ -37,6 +37,8 @@ services:
     command: celery -A src.app.workers.celery_app.celery worker --loglevel=info
     env_file:
       - .env.docker
+    volumes:
+      - .:/app
     restart: always
     depends_on:
       - redis
@@ -47,6 +49,8 @@ services:
     command: celery -A src.app.workers.celery_app.celery beat --loglevel=info
     env_file:
       - .env.docker
+    volumes:
+      - .:/app
     restart: always
     depends_on:
       - redis
