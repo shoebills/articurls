@@ -46,6 +46,5 @@ class Subscriber(Base):
     subscriber_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
     email = Column(String, nullable=False)
-    is_confirmed = Column(Boolean, default=False, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)

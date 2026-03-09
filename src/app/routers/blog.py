@@ -9,7 +9,7 @@ from slugify import slugify
 from datetime import datetime, timezone
 
 router = APIRouter(
-    tags=["Blogs"],
+    tags=["Blog"],
     prefix="/blog"
 )
 
