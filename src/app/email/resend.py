@@ -1,5 +1,5 @@
 import requests
-from app.config import settings
+from ..config import settings
 
 
 def send_resend_email(to_email, subject, html):

@@ -1,7 +1,7 @@
 from pathlib import Path
-from app.config import settings
-from app.email.smtp import send_smtp_email
-from app.email.resend import send_resend_email
+from ..config import settings
+from .smtp import send_smtp_email
+from .resend import send_resend_email
 
 
 TEMPLATE_DIR = Path(__file__).parent
