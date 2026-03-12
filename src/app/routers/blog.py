@@ -4,6 +4,7 @@ from ..database import get_db
 from .. import models
 from ..schemas import blog
 from ..security.oauth2 import get_current_user
+from ..workers import tasks
 from typing import List
 from slugify import slugify
 from datetime import datetime, timezone
@@ -119,15 +120,20 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     if blog.status == models.BlogStatus.PUBLISHED:
         return blog
     
+    first_publish = blog.published_at is None
+
     blog.status = models.BlogStatus.PUBLISHED
     
     # Only set publish date if first time
-    if blog.published_at is None:
+    if first_publish:
         blog.published_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(blog)
 
+    if first_publish:
+        tasks.send_post_emails.delay(blog.blog_id)
+    
     return blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)

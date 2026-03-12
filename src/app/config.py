@@ -14,6 +14,12 @@ class Settings(BaseSettings):
 
     redis_url: str
 
+    email_provider: str
+    smtp_host: str
+    smtp_port: int
+    resend_api_key: str
+    from_email: str
+
     class Config:
         env_file = ".env"
 
