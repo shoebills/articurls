@@ -10,6 +10,7 @@ celery==5.6.2
 celery-redbeat==2.3.3
 certifi==2026.1.4
 cffi==2.0.0
+charset-normalizer==3.4.5
 click==8.3.1
 click-didyoumean==0.3.1
 click-plugins==1.1.1.2
@@ -50,6 +51,7 @@ python-multipart==0.0.22
 python-slugify==8.0.4
 PyYAML==6.0.3
 redis==7.2.1
+requests==2.32.5
 rich==14.3.2
 rich-toolkit==0.18.1
 rignore==0.7.6
