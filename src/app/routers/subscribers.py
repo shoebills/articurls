@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..schemas import subscribers
-from ..security.oauth2 import verify_unsubscribe_token
+from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
+from ..email.service import send_confirmation_email
 
 
 router = APIRouter(
@@ -43,7 +44,33 @@ def subscribe_blog(username: str, request: subscribers.Subscribe, db: Session = 
     db.commit()
     db.refresh(new_subscriber)
 
-    return {"message": "Successfully subscribed"}
+    token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.user_id)
+    send_confirmation_email(new_subscriber.email, user_db.name, token)
+
+    return {"message": "Please check your email to confirm subscription"}
+
+@router.get("/confirm-subscription", status_code=status.HTTP_200_OK)
+def confirm_subscription(token: str, db: Session = Depends(get_db)):
+
+    try:
+        payload = verify_sub_confirm_token(token)
+
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired confirmation link")
+    
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.user_id == payload["user_id"]).first()
+
+    if not db_subscriber:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
+
+    if db_subscriber.is_confirmed:
+        return {"message": "Already confirmed"}
+    
+    db_subscriber.is_confirmed = True
+
+    db.commit()
+
+    return {"message": "Email verified successfully"}
 
 @router.post("/unsubscribe/{username}", status_code=status.HTTP_200_OK)
 def unsubscribe_blog(username: str, request: subscribers.Unsubscribe, db: Session = Depends(get_db)):

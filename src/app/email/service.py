@@ -24,3 +24,14 @@ def send_new_post_email(to_email: str, post_title: str, blog_url: str, blog_name
 
     subject = f"New post from {blog_name}: {post_title}"
     send_email(to_email, subject, html)
+
+def send_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
+
+    html = (TEMPLATE_DIR / "confirm_subscription.html").read_text()
+
+    html = html.replace("{{ blog_name }}", blog_name)
+    html = html.replace("{{ confirm_url }}", f"https://articals.io/confirm-subscription?token={confirm_token}")
+
+    subject = f"Confirm your subscription to {blog_name}'s blog"
+
+    send_email(to_email, subject, html)

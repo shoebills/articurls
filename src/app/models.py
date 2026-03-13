@@ -48,3 +48,4 @@ class Subscriber(Base):
     email = Column(String, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
+    is_confirmed = Column(Boolean, index=True, nullable=False, default=False)

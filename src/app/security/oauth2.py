@@ -78,3 +78,25 @@ def verify_unsubscribe_token(token: str):
         raise ValueError("Invalid token purpose")
     
     return payload
+
+def create_sub_confirm_token(subscriber_id: int, user_id: int):
+
+    payload = {
+        "subscriber_id": subscriber_id,
+        "user_id": user_id,
+        "purpose": "confirm-subscription"
+        }
+
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    
+    return token
+    
+
+def verify_sub_confirm_token(token: str):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    if payload.get("purpose") != "confirm-subscription":
+        raise ValueError("Invalid token purpose")
+    
+    return payload

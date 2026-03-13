@@ -21,7 +21,7 @@ def send_post_emails(blog_id: int):
         if not user:
             return
 
-        subscribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == user.user_id, models.Subscriber.unsubscribed_at.is_(None)).all()
+        subscribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).all()
         
         blog_url = f"https://articals.io/{user.user_name}/{blog.slug}"
 
