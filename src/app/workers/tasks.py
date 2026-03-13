@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 from .celery_app import celery
 from .. import models, database
 from ..email.service import send_new_post_email
+from ..security.oauth2 import create_unsubscribe_token
 
 
 @celery.task
@@ -26,7 +27,8 @@ def send_post_emails(blog_id: int):
 
         for sub in subscribers:
             try:
-                send_new_post_email(sub.email, blog.title, blog_url, user.name)
+                unsubscribe_token = create_unsubscribe_token(sub.subscriber_id, user.user_id)
+                send_new_post_email(sub.email, blog.title, blog_url, user.name, unsubscribe_token)
             except Exception:
                 pass
 

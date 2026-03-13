@@ -57,3 +57,24 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     )
 
     return user
+
+def create_unsubscribe_token(subscriber_id: int, user_id: int):
+
+    payload = {
+        "subscriber_id": subscriber_id,
+        "user_id": user_id,
+        "purpose": "unsubscribe"
+        }
+
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+    
+    return token
+
+def verify_unsubscribe_token(token: str):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    if payload.get("purpose") != "unsubscribe":
+        raise ValueError("Invalid token purpose")
+    
+    return payload

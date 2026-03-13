@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..schemas import subscribers
+from ..security.oauth2 import verify_unsubscribe_token
 
 
 router = APIRouter(
@@ -71,6 +72,27 @@ def unsubscribe_blog(username: str, request: subscribers.Unsubscribe, db: Sessio
 
     subscriber_db.unsubscribed_at = func.now()
 
+    db.commit()
+
+    return {"message": "Successfully unsubscribed"}
+
+@router.get("/unsubscribe", status_code=status.HTTP_200_OK)
+def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
+    try:
+        payload = verify_unsubscribe_token(token)
+
+    except Exception:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired unsubscriber link")
+    
+    subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.user_id == payload["user_id"]).first()
+
+    if not subscriber:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subcriber not found")
+    
+    if subscriber.unsubscribed_at:
+        return {"message": "Already unsubscribed"}
+    
+    subscriber.unsubscribed_at = func.now()
     db.commit()
 
     return {"message": "Successfully unsubscribed"}
