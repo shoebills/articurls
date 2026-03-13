@@ -49,3 +49,14 @@ class Subscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
     is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
+
+class EmailLogs(Base):
+    __tablename__ = "email_logs"
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
+    blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
+    total_recipients = Column(Integer, default=0, nullable=False)
+    status = Column(String, default="pending", nullable=False)
+    sent_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
