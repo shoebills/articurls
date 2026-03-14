@@ -14,8 +14,8 @@ router = APIRouter(
 )
 
 PERIOD_MAP = {
-    "1h": timedelta(hours=1),
-    "7h": timedelta(hours=7),
+    "24h": timedelta(hours=24),
+    "7d": timedelta(days=7),
     "28d": timedelta(days=28),
     "3m": timedelta(days=90),
     "6m": timedelta(days=180),
