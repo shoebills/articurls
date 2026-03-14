@@ -28,6 +28,21 @@ class GetBlog(BaseModel):
 
     class Config:
         from_attributes = True
+        
+
+class PublicBlog(BaseModel):
+    blog_id: int
+    title: str
+    content: str
+    slug: str
+    seo_title: Optional[str]
+    seo_description: Optional[str]
+    published_at: Optional[datetime]
+    updated_at: datetime
+    user_id: int
+
+    class Config:
+        from_attributes = True
 
 
 class UpdateBlog(BaseModel):

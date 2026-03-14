@@ -19,6 +19,16 @@ class GetUser(BaseModel):
 
     class Config:
         from_attributes = True
+        
+
+class PublicUser(BaseModel):
+    name: str
+    user_name: str
+    seo_title: str
+    seo_description: str
+
+    class Config:
+        from_attributes = True
 
 
 class UpdateUser(BaseModel):

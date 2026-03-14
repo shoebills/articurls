@@ -53,10 +53,19 @@ class Subscriber(Base):
 class EmailLogs(Base):
     __tablename__ = "email_logs"
 
-    id = Column(Integer, primary_key=True)
+    log_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
     blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
     total_recipients = Column(Integer, default=0, nullable=False)
     status = Column(String, default="pending", nullable=False)
     sent_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+class Views(Base):
+    __tablename__ = "views"
+
+    view_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
+    blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
+    visitor_hash = Column(String, nullable=False)
+    visited_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
