@@ -6,6 +6,9 @@ from .. import models
 from ..security.oauth2 import get_current_user
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+from fastapi.responses import StreamingResponse
+import io
+import csv
 
 
 router = APIRouter(
@@ -97,6 +100,20 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    db_subcribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None)).all()
-    
-    return 
+    db_subcribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).order_by(models.Subscriber.subscribed_at.desc()).all()
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+
+    writer.writerow(["email", "subscribed_at"])
+
+    for sub in db_subcribers:
+        writer.writerow([sub.email, sub.subscribed_at.isoformat()])
+
+    buffer.seek(0)
+
+    return StreamingResponse(
+        buffer,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=subscribers.csv"},
+    ) 
