@@ -74,11 +74,11 @@ def views_analytics(db: Session = Depends(get_db), period: Optional[str] = "all"
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None)).scalar()
+    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).scalar()
 
     since = get_since(period)
 
-    sub_query = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id)
+    sub_query = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
 
     if since:
         subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since).scalar()
@@ -93,3 +93,10 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         "subscribed": subscribed,
         "unsubscribed": unsubscribed
     }
+
+@router.get("/export-to-csv", status_code=status.HTTP_200_OK)
+def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    db_subcribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None)).all()
+    
+    return 
