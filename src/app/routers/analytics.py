@@ -100,7 +100,11 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    db_subcribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).order_by(models.Subscriber.subscribed_at.desc()).all()
+    db_subcribers = db.query(models.Subscriber).filter(
+        models.Subscriber.user_id == current_user.user_id, 
+        models.Subscriber.unsubscribed_at.is_(None), 
+        models.Subscriber.is_confirmed == True
+        ).order_by(models.Subscriber.subscribed_at.desc()).all()
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)

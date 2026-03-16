@@ -47,8 +47,22 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 @router.get("/", response_model=List[blog.GetBlog], status_code=200)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blogs = db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id).all()
+    results = db.query(
+        models.Blog,
+        func.count(models.Views.view_id).label("view_count")
+    ).outerjoin(
+        models.Views, models.Blog.blog_id == models.Views.blog_id
+    ).filter(
+        models.Blog.user_id == current_user.user_id
+    ).group_by(
+        models.Blog.blog_id
+    ).all()
 
+    blogs = []
+    for blog_obj, view_count in results:
+        blog_obj.view_count = view_count
+        blogs.append(blog_obj)
+        
     return blogs
 
 @router.get("/{id}", response_model=blog.GetBlog, status_code=200)
