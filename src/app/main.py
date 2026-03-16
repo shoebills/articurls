@@ -13,4 +13,4 @@ app.include_router(public.router)
 
 @app.get("/")
 def home():
-    return {"Message": "Welcome to articals!"}
+    return {"Message": "Welcome to articurls!"}

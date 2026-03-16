@@ -15,6 +15,10 @@ class User(Base):
     password = Column(String, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
+    is_verified = Column(Boolean, nullable=False, default=False)
+    remove_footer = Column(Boolean, nullable=False, default=False)
+    custom_domain = Column(String, nullable=True, default=False)
+    email_notifications = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
