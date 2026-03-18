@@ -20,7 +20,6 @@ class GetBlog(BaseModel):
     seo_title: Optional[str]
     seo_description: Optional[str]
     status: BlogStatus
-    view_count: int
     scheduled_at: Optional[datetime]
     published_at: Optional[datetime]
     created_at: datetime
