@@ -20,7 +20,7 @@ def send_new_post_email(to_email: str, post_title: str, blog_url: str, blog_name
     html = html.replace("{{ post_title }}", post_title)
     html = html.replace("{{ post_url }}", blog_url)
     html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ unsubscribe_url }}", f"https://articals.io/unsubscribe?token={unsubscribe_token}")
+    html = html.replace("{{ unsubscribe_url }}", f"https://articurls.com/unsubscribe?token={unsubscribe_token}")
 
     subject = f"New post from {blog_name}: {post_title}"
     send_email(to_email, subject, html)
@@ -30,7 +30,7 @@ def send_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
     html = (TEMPLATE_DIR / "confirm_subscription.html").read_text()
 
     html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ confirm_url }}", f"https://articals.io/confirm-subscription?token={confirm_token}")
+    html = html.replace("{{ confirm_url }}", f"https://articurls.com/confirm-subscription?token={confirm_token}")
 
     subject = f"Confirm your subscription to {blog_name}'s blog"
 

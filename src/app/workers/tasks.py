@@ -41,7 +41,7 @@ def send_post_emails(blog_id: int):
         db.add(new_log)
         db.commit()
         
-        blog_url = f"https://articals.io/{user.user_name}/{blog.slug}"
+        blog_url = f"https://articurls.com/{user.user_name}/{blog.slug}"
 
         for sub in subscribers:
             try:

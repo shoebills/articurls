@@ -3,7 +3,7 @@ from celery.schedules import crontab
 from ..config import settings
 
 celery = Celery(
-    "articals",
+    "articurls",
     broker=settings.redis_url,
     backend=settings.redis_url
 )

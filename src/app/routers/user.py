@@ -34,7 +34,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
                            email=request.email, 
                            password=hashed_password, 
                            seo_title=f"{request.name}'s Blog",
-                           seo_description=f"Explore all the blogs published by {request.name} on Articals.")
+                           seo_description=f"Explore all the blogs published by {request.name} on Articurls.")
 
     db.add(new_user)
     db.commit()
