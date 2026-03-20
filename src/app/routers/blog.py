@@ -44,7 +44,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     return new_blog
 
-@router.get("/", response_model=List[blog.GetBlog], status_code=status.HTTP_200_OK)
+@router.get("/", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     # returns (blog, views)

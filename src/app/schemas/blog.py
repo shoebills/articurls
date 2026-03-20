@@ -28,6 +28,10 @@ class GetBlog(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class GetAll(GetBlog):
+    view_count: int
         
 
 class PublicBlog(BaseModel):
