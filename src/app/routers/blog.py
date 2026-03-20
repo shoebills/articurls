@@ -23,17 +23,17 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     else:
         base_slug = slugify(request.title)
 
-    slug_obj = base_slug
+    candidate_slug = base_slug
     counter = 1
 
-    while db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id, models.Blog.slug == slug_obj).first():
-        slug_obj = f"{base_slug}-{counter}"
+    while db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id, models.Blog.slug == candidate_slug).first():
+        candidate_slug = f"{base_slug}-{counter}"
         counter += 1
 
     new_blog = models.Blog(title=request.title, 
                            content=request.content, 
                            user_id=current_user.user_id,
-                           slug=slug_obj,
+                           slug=candidate_slug,
                            seo_title=request.seo_title,
                            seo_description=request.seo_description,
                            status=models.BlogStatus.DRAFT)
@@ -44,9 +44,10 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     return new_blog
 
-@router.get("/", response_model=List[blog.GetBlog], status_code=200)
+@router.get("/", response_model=List[blog.GetBlog], status_code=status.HTTP_200_OK)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
+    # returns (blog, views)
     results = db.query(
         models.Blog,
         func.count(models.Views.view_id).label("view_count")
@@ -57,63 +58,63 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     ).group_by(
         models.Blog.blog_id
     ).all()
-
+    
     blogs = []
-    for blog_obj, view_count in results:
-        blog_obj.view_count = view_count
-        blogs.append(blog_obj)
+    for db_blog, view_count in results:
+        db_blog.view_count = view_count
+        blogs.append(db_blog)
         
     return blogs
 
-@router.get("/{id}", response_model=blog.GetBlog, status_code=200)
+@router.get("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
-    return blog
+    return db_blog
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
-    if blog.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
 
-    update_data = request.dict(exclude_unset=True)
+    update_data = request.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
-        setattr(blog, key, value)
+        setattr(db_blog, key, value)
 
     db.commit()
-    db.refresh(blog)
+    db.refresh(db_blog)
 
-    return blog
+    return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
 def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
-    if blog.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
     
-    db.delete(blog)
+    db.delete(db_blog)
     db.commit()
 
     return {"message": "Blog deleted"}
@@ -121,96 +122,96 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
 
-    if blog.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
 
-    if blog.status == models.BlogStatus.PUBLISHED:
-        return blog
+    if db_blog.status == models.BlogStatus.PUBLISHED:
+        return db_blog
     
-    first_publish = blog.published_at is None
+    first_publish = db_blog.published_at is None
 
-    blog.status = models.BlogStatus.PUBLISHED
+    db_blog.status = models.BlogStatus.PUBLISHED
     
     # Only set publish date if first time
     if first_publish:
-        blog.published_at = datetime.now(timezone.utc)
+        db_blog.published_at = datetime.now(timezone.utc)
 
     db.commit()
-    db.refresh(blog)
+    db.refresh(db_blog)
 
     if first_publish:
-        tasks.send_post_emails.delay(blog.blog_id)
+        tasks.send_post_emails.delay(db_blog.blog_id)
     
-    return blog
+    return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
 
-    if blog.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
 
-    if blog.status != models.BlogStatus.PUBLISHED:
+    if db_blog.status != models.BlogStatus.PUBLISHED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Only published blogs can be archived"
     )
 
-    if blog.status == models.BlogStatus.ARCHIVED:
-        return blog
+    if db_blog.status == models.BlogStatus.ARCHIVED:
+        return db_blog
     
-    blog.status = models.BlogStatus.ARCHIVED
+    db_blog.status = models.BlogStatus.ARCHIVED
 
     db.commit()
-    db.refresh(blog)
+    db.refresh(db_blog)
 
-    return blog
+    return db_blog
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog:
+    if not db_blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f"Blog with id: {id} not found"
     )
     
-    if blog.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform this action"
     )
 
-    if blog.status == models.BlogStatus.PUBLISHED:
+    if db_blog.status == models.BlogStatus.PUBLISHED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Published blogs cannot be scheduled"
     )
     
-    if blog.status == models.BlogStatus.ARCHIVED:
+    if db_blog.status == models.BlogStatus.ARCHIVED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived blogs cannot be scheduled"
     )
 
-    if blog.status == models.BlogStatus.SCHEDULED:
+    if db_blog.status == models.BlogStatus.SCHEDULED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="You cannot reschedule a scheduled blog"
@@ -224,41 +225,41 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             detail="Scheduled time must be in the future"
     )
 
-    blog.status = models.BlogStatus.SCHEDULED
-    blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
+    db_blog.status = models.BlogStatus.SCHEDULED
+    db_blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
 
     db.commit()
-    db.refresh(blog)
+    db.refresh(db_blog)
 
-    return blog
+    return db_blog
 
 @router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
 def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     
-    blog_obj = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
-    if not blog_obj:
+    if not db_blog:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f"Blog with id: {id} not found"
     )
     
-    if blog_obj.user_id != current_user.user_id:
+    if db_blog.user_id != current_user.user_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform this action"
     )
 
-    if blog_obj.status != models.BlogStatus.SCHEDULED:
+    if db_blog.status != models.BlogStatus.SCHEDULED:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Blog is not scheduled"
     )
 
-    blog_obj.status = models.BlogStatus.DRAFT
-    blog_obj.scheduled_at = None
+    db_blog.status = models.BlogStatus.DRAFT
+    db_blog.scheduled_at = None
 
     db.commit()
-    db.refresh(blog_obj)
+    db.refresh(db_blog)
 
-    return blog_obj
+    return db_blog

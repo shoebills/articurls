@@ -100,24 +100,25 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    db_subcribers = db.query(models.Subscriber).filter(
+    db_subscribers = db.query(models.Subscriber).filter(
         models.Subscriber.user_id == current_user.user_id, 
         models.Subscriber.unsubscribed_at.is_(None), 
-        models.Subscriber.is_confirmed == True
+        models.Subscriber.is_confirmed.is_(True)
         ).order_by(models.Subscriber.subscribed_at.desc()).all()
 
     buffer = io.StringIO()
     writer = csv.writer(buffer)
-
     writer.writerow(["email", "subscribed_at"])
 
-    for sub in db_subcribers:
-        writer.writerow([sub.email, sub.subscribed_at.isoformat()])
+    for sub in db_subscribers:  
+        subscribed_at = sub.subscribed_at.isoformat() if sub.subscribed_at else ""
+        writer.writerow([sub.email, subscribed_at])
 
-    buffer.seek(0)
-
+    csv_content = buffer.getvalue()
+    buffer.close()
+ 
     return StreamingResponse(
-        buffer,
-        media_type="text/csv",
+        iter([csv_content]),
+        media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=subscribers.csv"},
     ) 

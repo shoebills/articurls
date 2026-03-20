@@ -15,20 +15,20 @@ router = APIRouter(
 @router.post("/login", response_model=token.Token)
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
-    user = db.query(models.User).filter(models.User.email == request.username).first()
+    db_user = db.query(models.User).filter(models.User.email == request.username).first()
     
-    if not user:
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Invalid Credentials")
     
-    if not hashing.verify_password(request.password, user.password):
+    if not hashing.verify_password(request.password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Credentials")
     
     access_token = oauth2.create_access_token(
-        data={"sub": user.email},
+        data={"sub": db_user.email},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     

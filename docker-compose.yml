@@ -9,7 +9,7 @@ services:
       - .env.docker
     volumes:
       - .:/app
-    restart: always
+    restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
@@ -20,7 +20,7 @@ services:
 
   postgres:
     image: postgres:16
-    restart: always
+    restart: "no"
     env_file:
       - .env.docker
     environment:
@@ -39,7 +39,7 @@ services:
 
   redis:
     image: redis:7
-    restart: always
+    restart: "no"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -61,7 +61,7 @@ services:
       - .env.docker
     volumes:
       - .:/app
-    restart: always
+    restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
@@ -77,7 +77,7 @@ services:
       - .env.docker
     volumes:
       - .:/app
-    restart: always
+    restart: "no"
     depends_on:
       postgres:
         condition: service_healthy

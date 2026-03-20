@@ -18,13 +18,13 @@ def get_blogs(user_name: str, db: Session = Depends(get_db)):
     db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
 
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"{user_name} not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
 
     db_blogs = db.query(models.Blog).filter(models.Blog.user_id == db_user.user_id, models.Blog.status == models.BlogStatus.PUBLISHED).all()
 
     return db_blogs
 
-@router.get("/{user_name}/{id}", response_model=blog.PublicBlog, status_code=200)
+@router.get("/{user_name}/blog/{id}", response_model=blog.PublicBlog, status_code=200)
 def get_blog(user_name: str, id: int, request: Request, db: Session = Depends(get_db)):
 
     db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
@@ -45,7 +45,7 @@ def get_blog(user_name: str, id: int, request: Request, db: Session = Depends(ge
     visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
 
     new_visitor = models.Views(user_id=db_user.user_id,
-                                       blog_id=db_blog.blog_id,
+                               blog_id=db_blog.blog_id,
                                        visitor_hash=visitor_hash)
     db.add(new_visitor)
     db.commit()

@@ -13,16 +13,16 @@ router = APIRouter(
 @router.post("/", response_model=user.GetUser, status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
-    existing_email = db.query(models.User).filter(models.User.email == request.email).first()
+    db_email = db.query(models.User).filter(models.User.email == request.email).first()
 
-    if existing_email:
+    if db_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
     
-    existing_username = db.query(models.User).filter(models.User.user_name == request.user_name).first()
+    db_user_name = db.query(models.User).filter(models.User.user_name == request.user_name).first()
     
-    if existing_username:
+    if db_user_name:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Username already registered")
@@ -42,33 +42,33 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
     return new_user
 
-@router.get("/{id}", response_model=user.GetUser, status_code=200)
+@router.get("/{id}", response_model=user.GetUser, status_code=status.HTTP_200_OK)
 def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
 
-    user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == id).first()
 
-    if not user:
+    if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, 
             detail=f"User with id: {id} doesnt exist")
     
-    if user.user_id != current_user.user_id:
+    if db_user.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
     
-    return user
+    return db_user
 
 @router.patch("/{id}", response_model=user.GetUser, status_code=status.HTTP_202_ACCEPTED)
 def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     
-    user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == id).first()
 
-    if not user:
+    if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} not found")
     
-    if user.user_id != current_user.user_id:
+    if db_user.user_id != current_user.user_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
@@ -77,9 +77,9 @@ def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db)
     update_data = request.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
-        setattr(user, key, value)
+        setattr(db_user, key, value)
 
     db.commit()
-    db.refresh(user)
+    db.refresh(db_user)
 
-    return user
+    return db_user

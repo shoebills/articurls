@@ -48,15 +48,15 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             detail="Could not validate credentials"
     )
 
-    user = db.query(models.User).filter(models.User.email == email).first()
+    db_user = db.query(models.User).filter(models.User.email == email).first()
 
-    if user is None:
+    if db_user is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, 
             detail="Could not validate credentials"
     )
 
-    return user
+    return db_user
 
 def create_unsubscribe_token(subscriber_id: int, user_id: int):
 
