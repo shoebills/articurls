@@ -73,3 +73,38 @@ class Views(Base):
     blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
     visitor_hash = Column(String, nullable=False)
     visited_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
+
+class Subscriptions(Base):
+    __tablename__ = "subscriptions"
+
+    subscription_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
+    dodo_subscription_id = Column(String, unique=True, nullable=True)
+    plan_type = Column(String, nullable=False, default="free")  # "free", "pro"
+    status = Column(String, nullable=False, default="inactive")  # "active", "inactive", "cancelled", "past_due"
+    current_period_start = Column(DateTime(timezone=True), nullable=True)
+    current_period_end = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+class Transactions(Base):
+    __tablename__ = "transactions"
+
+    transaction_id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
+    subscription_id = Column(Integer, ForeignKey("subscriptions.subscription_id"), nullable=True)
+    dodo_payment_id = Column(String, unique=True, nullable=True)
+    amount = Column(Integer, nullable=False)
+    currency = Column(String, nullable=False, default="USD")
+    status = Column(String, nullable=False, default="pending")
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class PaymentWebhooks(Base):
+    __tablename__ = "payment_webhooks"
+
+    webhook_id = Column(Integer, primary_key=True)
+    event_type = Column(String, nullable=False)
+    dodo_event_id = Column(String, unique=True, nullable=False)
+    payload = Column(String, nullable=False)
+    processed = Column(Boolean, nullable=False, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
