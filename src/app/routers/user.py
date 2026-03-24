@@ -77,36 +77,41 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    if db_user.is_verified:
-        return {"message": "Already confirmed"}
     
-    db_user.is_verified = True
-    db.commit()
-
-    access_token = oauth2.create_access_token(
-        data={"sub": db_user.email},
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
-        )
-
     if plan_choice not in ("free", "pro"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid plan_choice; use 'free' or 'pro'"
             )
+    
+    next_step = "checkout" if plan_choice == "pro" else "dashboard"
 
-    if plan_choice == "free":
-        
+    if db_user.is_verified:
+        access_token = oauth2.create_access_token(
+        data={"sub": db_user.email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+        )
+
         return {
+            "message": "Already confirmed",
             "access_token": access_token,
             "token_type": "bearer",
-            "next": "dashboard"
+            "next": next_step
             }
+
+    db_user.is_verified = True
+    db.commit()
+    db.refresh(db_user)
+
+    access_token = oauth2.create_access_token(
+        data={"sub": db_user.email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+        )
     
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "next": "checkout"
+        "next": next_step
         }
 
 @router.get("/{id}", response_model=user.GetUser, status_code=status.HTTP_200_OK)
