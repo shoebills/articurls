@@ -27,6 +27,11 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Credentials")
     
+    if not db_user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email not verified. Check your mailbox for email verification link")
+    
     access_token = oauth2.create_access_token(
         data={"sub": db_user.email},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)

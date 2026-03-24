@@ -25,7 +25,7 @@ def send_new_post_email(to_email: str, post_title: str, blog_url: str, blog_name
     subject = f"New post from {blog_name}: {post_title}"
     send_email(to_email, subject, html)
 
-def send_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
+def send_sub_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
 
     html = (TEMPLATE_DIR / "confirm_subscription.html").read_text()
 
@@ -33,5 +33,16 @@ def send_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
     html = html.replace("{{ confirm_url }}", f"https://articurls.com/confirm-subscription?token={confirm_token}")
 
     subject = f"Confirm your subscription to {blog_name}'s blog"
+
+    send_email(to_email, subject, html)
+
+def send_verify_new_user(to_email: str, blog_name: str, verify_token: str, plan_choice: str):
+
+    html = (TEMPLATE_DIR / "verify_new_user.html").read_text()
+
+    html = html.replace("{{ blog_name }}", blog_name)
+    html = html.replace("{{ verify_url }}", f"https://app.articurls.com/verify-new-user?token={verify_token}&plan_choice={plan_choice}")
+
+    subject = "Verify your email for Articurls"
 
     send_email(to_email, subject, html)

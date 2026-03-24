@@ -1,16 +1,20 @@
+import jwt
 from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..security import hashing, oauth2
 from ..schemas import user
+from ..email.service import send_verify_new_user
+from datetime import timedelta
+from ..config import settings
 
 router = APIRouter(
     tags=["User"],
     prefix="/user"
 )
 
-@router.post("/", response_model=user.GetUser, status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
     db_email = db.query(models.User).filter(models.User.email == request.email).first()
@@ -40,7 +44,70 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    return new_user
+    verify_token = oauth2.create_new_user_token(request.email)
+    plan_choice = request.plan_choice
+    send_verify_new_user(request.email, request.name, verify_token, plan_choice)
+
+    return {"message": "Please check your mailbox to verify your email!"}
+
+@router.get("/verify-new-user", status_code=status.HTTP_200_OK)
+def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db)):
+
+    try:
+        payload = oauth2.verify_new_user_token(token)
+
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Verification link has expired. Request a new one."
+        )
+
+    except jwt.PyJWTError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid confirmation link",
+        )
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid confirmation link",
+        )
+
+    db_user = db.query(models.User).filter(models.User.email == payload["email"]).first()
+
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if db_user.is_verified:
+        return {"message": "Already confirmed"}
+    
+    db_user.is_verified = True
+    db.commit()
+
+    access_token = oauth2.create_access_token(
+        data={"sub": db_user.email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+        )
+
+    if plan_choice not in ("free", "pro"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid plan_choice; use 'free' or 'pro'"
+            )
+
+    if plan_choice == "free":
+        
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "next": "dashboard"
+            }
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "next": "checkout"
+        }
 
 @router.get("/{id}", response_model=user.GetUser, status_code=status.HTTP_200_OK)
 def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):

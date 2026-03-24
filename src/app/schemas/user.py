@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, Literal
 
 
 class CreateUser(BaseModel):
@@ -7,6 +7,7 @@ class CreateUser(BaseModel):
     user_name: str
     email: EmailStr
     password: str
+    plan_choice: Literal["free", "pro"] = "free" 
 
 
 class GetUser(BaseModel):

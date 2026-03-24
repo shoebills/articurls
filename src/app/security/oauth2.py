@@ -58,6 +58,29 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
 
     return db_user
 
+def create_new_user_token(email: str):
+
+    expire = datetime.now(timezone.utc) + timedelta(hours=24)
+
+    payload = {
+        "email": email,
+        "purpose": "verify-user",
+        "exp": expire
+    }
+
+    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+    return token
+
+def verify_new_user_token(token: str):
+
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    if payload.get("purpose") != "verify-user":
+        raise ValueError("Invalid token purpose")
+    
+    return payload
+
 def create_unsubscribe_token(subscriber_id: int, user_id: int):
 
     payload = {

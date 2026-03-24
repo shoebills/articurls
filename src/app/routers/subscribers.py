@@ -5,7 +5,7 @@ from ..database import get_db
 from .. import models
 from ..schemas import subscribers
 from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
-from ..email.service import send_confirmation_email
+from ..email.service import send_sub_confirmation_email
 
 
 router = APIRouter(
@@ -45,7 +45,7 @@ def subscribe_blog(user_name: str, request: subscribers.Subscribe, db: Session =
     db.refresh(new_subscriber)
 
     token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.user_id)
-    send_confirmation_email(new_subscriber.email, db_user.name, token)
+    send_sub_confirmation_email(new_subscriber.email, db_user.name, token)
 
     return {"message": "Please check your email to confirm subscription"}
 
