@@ -41,7 +41,7 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str, plan_
     html = (TEMPLATE_DIR / "verify_new_user.html").read_text()
 
     html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ verify_url }}", f"https://app.articurls.com/verify-new-user?token={verify_token}&plan_choice={plan_choice}")
+    html = html.replace("{{ verify_url }}", f"http://localhost:8000/user/verify-new-user?token={verify_token}&plan_choice={plan_choice}")
 
     subject = "Verify your email for Articurls"
 

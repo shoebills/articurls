@@ -73,7 +73,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
             detail="Invalid confirmation link",
         )
 
-    db_user = db.query(models.User).filter(models.User.email == payload["email"]).first()
+    db_user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")

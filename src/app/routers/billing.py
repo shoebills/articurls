@@ -32,7 +32,7 @@ def create_checkout(db: Session = Depends(get_db), current_user = Depends(get_cu
             "name": current_user.name
             },
 
-        return_url="https://articurls.com/billing/success",
+        return_url="https://app.articurls.com/billing/success",
     )
 
     return {"checkout_url": session.checkout_url}
@@ -110,23 +110,42 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
 
     elif event_type == "payment.succeeded":
-
         customer = getattr(event.data, "customer", None)
         customer_email = getattr(customer, "email", None) if customer else None
-        db_user = db.query(models.User).filter(models.User.email == customer_email).first() if customer_email else None
+        db_user = (
+            db.query(models.User).filter(models.User.email == customer_email).first()
+            if customer_email
+            else None
+        )
 
         if db_user:
-            db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.dodo_subscription_id == getattr(event.data, "subscription_id", None)).first()
-
-            transaction = models.Transactions(
-                user_id=db_user.user_id,
-                subscription_id=db_sub.subscription_id if db_sub else None,
-                dodo_payment_id=getattr(event.data, "payment_id", None),
-                amount=getattr(event.data, "total_amount", 0),
-                currency=getattr(event.data, "currency", "USD"),
-                status="succeeded",
+            dodo_sid = getattr(event.data, "subscription_id", None)
+            db_sub = (
+                db.query(models.Subscriptions)
+                .filter(models.Subscriptions.dodo_subscription_id == dodo_sid)
+                .first()
             )
 
+            if db_sub is None and dodo_sid:
+                db_sub = models.Subscriptions(
+                    user_id=db_user.user_id,
+                    dodo_subscription_id=dodo_sid,
+                    plan_type="pro",
+                    status="active",
+                    current_period_start=getattr(event.data, "previous_billing_date", None),
+                    current_period_end=getattr(event.data, "next_billing_date", None),
+                )
+                db.add(db_sub)
+                db.flush()
+
+            transaction = models.Transactions(
+                    user_id=db_user.user_id,
+                    subscription_id=db_sub.subscription_id if db_sub else None,
+                    dodo_payment_id=getattr(event.data, "payment_id", None),
+                    amount=getattr(event.data, "total_amount", 0),
+                    currency=getattr(event.data, "currency", "USD"),
+                    status="succeeded",
+                )
             db.add(transaction)
 
     elif event_type == "payment.failed":

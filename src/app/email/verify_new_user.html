@@ -13,13 +13,13 @@
           <tr>
             <td>
               <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#111111;">
-                Hi {{name}},
+                Hi {{ blog_name }},
               </p>
               <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#333333;">
                 Thanks for signing up for <strong>Articurls</strong>. Confirm your email address to activate your account and open your dashboard.
               </p>
               <p style="margin:0 0 32px;">
-                <a href="{{verify_url}}" style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 24px;border-radius:6px;">
+                <a href="{{ verify_url }}" style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 24px;border-radius:6px;">
                   Verify email address
                 </a>
               </p>
@@ -27,7 +27,7 @@
                 Or paste this link into your browser:
               </p>
               <p style="margin:0 0 32px;font-size:13px;line-height:1.5;color:#111111;word-break:break-all;">
-                {{verify_url}}
+                {{ verify_url }}
               </p>
               <p style="margin:0;font-size:13px;line-height:1.5;color:#888888;">
                 This link expires in {{expiry_hours}} hours. If you didn’t create an account, you can safely ignore this email.
