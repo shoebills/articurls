@@ -18,6 +18,7 @@ class User(Base):
     is_verified = Column(Boolean, nullable=False, default=False)
     remove_footer = Column(Boolean, nullable=False, default=False)
     custom_domain = Column(String, nullable=True, default=None)
+    is_domain_verified = Column(Boolean, nullable=False, default=False)
     email_notifications = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -78,7 +79,7 @@ class Subscriptions(Base):
     __tablename__ = "subscriptions"
 
     subscription_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
+    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, unique=True, nullable=False)
     dodo_subscription_id = Column(String, unique=True, nullable=True)
     plan_type = Column(String, nullable=False, default="free")  # "free", "pro"
     status = Column(String, nullable=False, default="inactive")  # "active", "inactive", "cancelled", "past_due"
