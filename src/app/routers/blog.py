@@ -36,6 +36,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
                            slug=candidate_slug,
                            seo_title=request.seo_title,
                            seo_description=request.seo_description,
+                           featured_image_url=request.featured_image_url,
                            status=models.BlogStatus.DRAFT)
 
     db.add(new_blog)
