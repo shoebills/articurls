@@ -10,7 +10,6 @@ class CreateBlog(BaseModel):
     slug: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
-    featured_image_url: Optional[str] = None
 
 
 class GetBlog(BaseModel):
@@ -20,7 +19,6 @@ class GetBlog(BaseModel):
     slug: str
     seo_title: Optional[str]
     seo_description: Optional[str]
-    featured_image_url: Optional[str] = None
     status: BlogStatus
     scheduled_at: Optional[datetime]
     published_at: Optional[datetime]
@@ -43,7 +41,6 @@ class PublicBlog(BaseModel):
     slug: str
     seo_title: Optional[str]
     seo_description: Optional[str]
-    featured_image_url: Optional[str] = None
     published_at: Optional[datetime]
     updated_at: datetime
     user_id: int
@@ -57,8 +54,6 @@ class UpdateBlog(BaseModel):
     content: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
-    featured_image_url: Optional[str] = None
-
 
 class ScheduleBlog(BaseModel):
     scheduled_at: datetime

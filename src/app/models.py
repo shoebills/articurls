@@ -40,7 +40,6 @@ class Blog(Base):
     slug = Column(String, index=True, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
-    featured_image_url = Column(String, nullable=True)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
