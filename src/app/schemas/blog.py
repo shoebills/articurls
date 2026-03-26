@@ -32,6 +32,7 @@ class GetBlog(BaseModel):
 
 class GetAll(GetBlog):
     view_count: int
+    excerpt: Optional[str] = None
         
 
 class PublicBlog(BaseModel):
@@ -47,6 +48,10 @@ class PublicBlog(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+class PublicBlogs(PublicBlog):
+    excerpt: Optional[str] = None
 
 
 class UpdateBlog(BaseModel):

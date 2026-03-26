@@ -2,7 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
-from .. import models
+from .. import models, utils
 from ..schemas import blog
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
@@ -17,6 +17,16 @@ router = APIRouter(
 
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    if request.seo_title:
+        candidate_seo_title = request.seo_title
+    else:
+        candidate_seo_title = request.title
+
+    if request.seo_description:
+        candidate_seo_description = request.seo_description
+    else:
+        candidate_seo_description = utils.make_seo_description(request.content)
 
     if request.slug:
         base_slug = slugify(request.slug)
@@ -34,9 +44,8 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
                            content=request.content, 
                            user_id=current_user.user_id,
                            slug=candidate_slug,
-                           seo_title=request.seo_title,
-                           seo_description=request.seo_description,
-                           featured_image_url=request.featured_image_url,
+                           seo_title=candidate_seo_title,
+                           seo_description=candidate_seo_description,
                            status=models.BlogStatus.DRAFT)
 
     db.add(new_blog)
@@ -63,6 +72,7 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     blogs = []
     for db_blog, view_count in results:
         db_blog.view_count = view_count
+        db_blog.excerpt = utils.make_excerpt(db_blog.content)
         blogs.append(db_blog)
         
     return blogs

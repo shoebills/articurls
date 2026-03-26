@@ -2,7 +2,7 @@ import hashlib
 from fastapi import Depends, APIRouter, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from ..database import get_db
-from .. import models
+from .. import models, utils
 from ..schemas import blog, user
 from typing import List
 
@@ -12,7 +12,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{user_name}/blogs", response_model=List[blog.PublicBlog], status_code=status.HTTP_200_OK)
+@router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
 def get_blogs(user_name: str, db: Session = Depends(get_db)):
 
     db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
@@ -21,6 +21,9 @@ def get_blogs(user_name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
 
     db_blogs = db.query(models.Blog).filter(models.Blog.user_id == db_user.user_id, models.Blog.status == models.BlogStatus.PUBLISHED).all()
+
+    for blog in db_blogs:
+        blog.excerpt = utils.make_excerpt(blog.content)
 
     return db_blogs
 
