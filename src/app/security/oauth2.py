@@ -113,7 +113,6 @@ def create_sub_confirm_token(subscriber_id: int, user_id: int):
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     
     return token
-    
 
 def verify_sub_confirm_token(token: str):
 
@@ -122,4 +121,21 @@ def verify_sub_confirm_token(token: str):
     if payload.get("purpose") != "confirm-subscription":
         raise ValueError("Invalid token purpose")
     
+    return payload
+
+def create_reset_password_token(email: str):
+    expire = datetime.now(timezone.utc) + timedelta(hours=1)
+    payload = {
+        "email": email,
+        "purpose": "reset-password",
+        "exp": expire,
+    }
+    return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
+
+def verify_reset_password_token(token: str):
+    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+
+    if payload.get("purpose") != "reset-password":
+        raise ValueError("Invalid token purpose")
+
     return payload

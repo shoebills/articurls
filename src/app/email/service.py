@@ -46,3 +46,13 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str, plan_
     subject = "Verify your email for Articurls"
 
     send_email(to_email, subject, html)
+
+def send_password_reset(to_email: str, reset_token: str):
+
+    html = (TEMPLATE_DIR / "reset_password.html").read_text()
+
+    reset_url = f"http://localhost:8000/reset-password?token={reset_token}"
+    html = html.replace("{{ reset_url }}", reset_url)
+
+    subject = "Reset your Articurls password"
+    send_email(to_email, subject, html)
