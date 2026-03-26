@@ -25,6 +25,11 @@ class Settings(BaseSettings):
     dodopayments_environment: str
     dodopayments_product_id: str
 
+    uploads_dir: str = "uploads"
+    public_base_url: str
+    storage_backend: str = "local"
+    default_profile_image_url: str
+
     class Config:
         env_file = ".env"
 

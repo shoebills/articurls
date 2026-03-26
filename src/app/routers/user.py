@@ -8,6 +8,8 @@ from ..schemas import user
 from ..email.service import send_verify_new_user
 from datetime import timedelta
 from ..config import settings
+from fastapi import UploadFile, File
+from ..storage.service import save_image_local
 
 router = APIRouter(
     tags=["User"],
@@ -38,7 +40,8 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
                            email=request.email, 
                            password=hashed_password, 
                            seo_title=f"{request.name}'s Blog",
-                           seo_description=f"Explore all the blogs published by {request.name} on Articurls.")
+                           seo_description=f"Explore all the blogs published by {request.name} on Articurls.",
+                           profile_image_url=settings.default_profile_image_url)
 
     db.add(new_user)
     db.commit()
@@ -149,9 +152,32 @@ def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db)
     update_data = request.model_dump(exclude_unset=True)
     
     for key, value in update_data.items():
+        if key == "profile_image_url" and value is None:
+            value = settings.default_profile_image_url
         setattr(db_user, key, value)
 
     db.commit()
     db.refresh(db_user)
 
     return db_user
+
+@router.post("/{id}/profile-image", status_code=status.HTTP_200_OK)
+async def upload_profile_image(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+
+    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if db_user.user_id != current_user.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not authorized to perform this action",
+        )
+
+    image_url = await save_image_local(file=file, category="users", owner_id=id)
+    db_user.profile_image_url = image_url
+    db.commit()
+    db.refresh(db_user)
+
+    return {"profile_image_url": db_user.profile_image_url}

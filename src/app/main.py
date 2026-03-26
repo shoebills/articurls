@@ -1,8 +1,15 @@
 from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+from .config import settings
 from .routers import blog, user, authentication, subscribers, public, analytics, billing
 
 
 app = FastAPI()
+
+
+Path(settings.uploads_dir).mkdir(parents=True, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=settings.uploads_dir), name="uploads")
 
 app.include_router(authentication.router)
 app.include_router(blog.router)
