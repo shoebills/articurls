@@ -23,7 +23,18 @@ def send_post_emails(blog_id: int):
         if not db_user:
             return
         
-        existing_log = db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id, models.EmailLogs.user_id == db_user.user_id).first()
+        if db_user.email_notifications == False:
+            return
+        
+        db_subscription = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id, 
+                                                                models.Subscriptions.plan_type == "pro", 
+                                                                models.Subscriptions.status == "active").first()
+        
+        if not db_subscription:
+            return
+        
+        existing_log = db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id, 
+                                                         models.EmailLogs.user_id == db_user.user_id).first()
 
         if existing_log:
             return

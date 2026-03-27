@@ -31,7 +31,7 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid Credentials")
     
-    if not db_user.is_verified:
+    if not db_user.email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email not verified. Check your mailbox for email verification link")

@@ -158,7 +158,18 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.commit()
     db.refresh(db_blog)
 
-    if first_publish:
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first() 
+
+    email_enabled = db_user.email_notifications
+
+    db_subscription = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id, 
+                                                                models.Subscriptions.plan_type == "pro", 
+                                                                models.Subscriptions.status == "active").first()
+        
+    if not db_subscription:
+        return db_blog
+
+    if first_publish and email_enabled:
         tasks.send_post_emails.delay(db_blog.blog_id)
     
     return db_blog

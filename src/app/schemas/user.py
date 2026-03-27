@@ -10,14 +10,19 @@ class CreateUser(BaseModel):
     plan_choice: Literal["free", "pro"] = "free" 
 
 
-class GetUser(BaseModel):
+class UserSettings(BaseModel):
     user_id: int
     name: str
     user_name: str
     email: EmailStr
-    seo_title: str
-    seo_description: str
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
     profile_image_url: Optional[str] = None
+    
+    custom_domain: Optional[str] = None
+    is_domain_verified: bool
+    email_notifications: bool
+    verification_tick: bool
 
     class Config:
         from_attributes = True
@@ -29,6 +34,7 @@ class PublicUser(BaseModel):
     seo_title: str
     seo_description: str
     profile_image_url: Optional[str] = None
+    verification_tick: bool
 
     class Config:
         from_attributes = True
@@ -41,3 +47,9 @@ class UpdateUser(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     profile_image_url: Optional[str] = None
+
+
+class UpdateProUser(BaseModel):
+    email_notifications: Optional[bool] = None
+    verification_tick: Optional[bool] = None
+    custom_domain: Optional[str] = None

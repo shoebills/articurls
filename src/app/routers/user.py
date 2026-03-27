@@ -10,6 +10,7 @@ from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
+from ..utils import require_pro
 
 router = APIRouter(
     tags=["User"],
@@ -89,7 +90,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
     
     next_step = "checkout" if plan_choice == "pro" else "dashboard"
 
-    if db_user.is_verified:
+    if db_user.email_verified:
         access_token = oauth2.create_access_token(
         data={"sub": db_user.email},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
@@ -102,7 +103,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
             "next": next_step
             }
 
-    db_user.is_verified = True
+    db_user.email_verified = True
     db.commit()
     db.refresh(db_user)
 
@@ -117,7 +118,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
         "next": next_step
         }
 
-@router.get("/{id}", response_model=user.GetUser, status_code=status.HTTP_200_OK)
+@router.get("/{id}", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
 def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
 
     db_user = db.query(models.User).filter(models.User.user_id == id).first()
@@ -135,7 +136,7 @@ def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oaut
     
     return db_user
 
-@router.patch("/{id}", response_model=user.GetUser, status_code=status.HTTP_202_ACCEPTED)
+@router.patch("/{id}", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     
     db_user = db.query(models.User).filter(models.User.user_id == id).first()
@@ -154,6 +155,30 @@ def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db)
     for key, value in update_data.items():
         if key == "profile_image_url" and value is None:
             value = settings.default_profile_image_url
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+
+    return db_user
+
+@router.patch("/pro/{id}", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_pro_user(id: int, request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
+    
+    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} not found")
+    
+    if db_user.user_id != current_user.user_id:
+        raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authorized to perform this action"
+    )
+
+    update_data = request.model_dump(exclude_unset=True)
+    
+    for key, value in update_data.items():
         setattr(db_user, key, value)
 
     db.commit()
