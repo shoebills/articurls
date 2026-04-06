@@ -118,37 +118,23 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
         "next": next_step
         }
 
-@router.get("/{id}", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
-def get_user(id: int, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
+@router.get("/me", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
+def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
 
-    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail=f"User with id: {id} doesnt exist")
-    
-    if db_user.user_id != current_user.user_id:
-        raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Not authorized to perform this action"
-    )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
     return db_user
 
-@router.patch("/{id}", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
+@router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     
-    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} not found")
-    
-    if db_user.user_id != current_user.user_id:
-        raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Not authorized to perform this action"
-    )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     update_data = request.model_dump(exclude_unset=True)
     
@@ -162,19 +148,13 @@ def update_user(id: int, request: user.UpdateUser, db: Session = Depends(get_db)
 
     return db_user
 
-@router.patch("/pro/{id}", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(id: int, request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
+@router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
     
-    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User with id: {id} not found")
-    
-    if db_user.user_id != current_user.user_id:
-        raise HTTPException(
-        status_code=status.HTTP_403_FORBIDDEN,
-        detail="Not authorized to perform this action"
-    )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     update_data = request.model_dump(exclude_unset=True)
     
@@ -186,21 +166,15 @@ def update_pro_user(id: int, request: user.UpdateProUser, db: Session = Depends(
 
     return db_user
 
-@router.post("/{id}/profile-image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+@router.post("/me/profile-image", status_code=status.HTTP_200_OK)
+async def upload_profile_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
 
-    db_user = db.query(models.User).filter(models.User.user_id == id).first()
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if db_user.user_id != current_user.user_id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not authorized to perform this action",
-        )
-
-    image_url = await save_image_local(file=file, category="users", owner_id=id)
+    image_url = await save_image_local(file=file, category="users", owner_id=current_user.user_id)
     db_user.profile_image_url = image_url
     db.commit()
     db.refresh(db_user)

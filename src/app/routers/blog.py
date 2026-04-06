@@ -18,6 +18,7 @@ router = APIRouter(
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
+    # seo
     if request.seo_title:
         candidate_seo_title = request.seo_title
     else:
@@ -28,6 +29,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     else:
         candidate_seo_description = utils.make_seo_description(request.content)
 
+    # slug
     if request.slug:
         base_slug = slugify(request.slug)
     else:

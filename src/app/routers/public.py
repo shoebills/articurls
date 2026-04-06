@@ -27,15 +27,15 @@ def get_blogs(user_name: str, db: Session = Depends(get_db)):
 
     return db_blogs
 
-@router.get("/{user_name}/blog/{id}", response_model=blog.PublicBlog, status_code=200)
-def get_blog(user_name: str, id: int, request: Request, db: Session = Depends(get_db)):
+@router.get("/{user_name}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
+def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
 
     db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == db_user.user_id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.slug == slug, models.Blog.user_id == db_user.user_id).first()
 
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog not found")
