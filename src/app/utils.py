@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from . import models
 from .security.oauth2 import get_current_user
 from .database import get_db
+from datetime import datetime, timezone
 
 def make_excerpt(text: str, max_len: int = 160) -> str:
     if not text:
@@ -36,10 +37,18 @@ def require_pro(current_user = Depends(get_current_user), db: Session = Depends(
 
     db_subscription = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
 
-    if not db_subscription or db_subscription.plan_type != "pro" or db_subscription.status != "active":
+    now = datetime.now(timezone.utc)
+
+    if (
+        not db_subscription
+        or db_subscription.plan_type != "pro"
+        or db_subscription.status not in ("active", "past_due")
+        or db_subscription.current_period_end is None
+        or db_subscription.current_period_end < now
+    ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Pro plan required",
         )
-    
+
     return db_subscription

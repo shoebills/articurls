@@ -26,9 +26,12 @@ def send_post_emails(blog_id: int):
         if db_user.email_notifications == False:
             return
         
+        now = datetime.now(timezone.utc)
         db_subscription = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id, 
                                                                 models.Subscriptions.plan_type == "pro", 
-                                                                models.Subscriptions.status == "active").first()
+                                                                models.Subscriptions.status.in_(("active", "past_due")),
+                                                                models.Subscriptions.current_period_end.isnot(None),
+                                                                models.Subscriptions.current_period_end >= now).first()
         
         if not db_subscription:
             return
@@ -94,6 +97,36 @@ def publish_scheduled_blogs():
 
         for post in db_posts:
             send_post_emails.delay(post.blog_id)
+
+    finally:
+        db.close()
+
+@celery.task
+def expired_pro_fallback():
+
+    db = database.SessionLocal()
+
+    try:
+        now = datetime.now(timezone.utc)
+        
+        expired_subscriptions = db.query(models.Subscriptions).filter(
+            models.Subscriptions.plan_type == "pro",
+            models.Subscriptions.status != "active",
+            models.Subscriptions.current_period_end.isnot(None),
+            models.Subscriptions.current_period_end < now,
+        ).all()
+        
+        for sub in expired_subscriptions:
+            db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
+            if db_user:
+                db_user.email_notifications = False
+                db_user.verification_tick = False
+
+            sub.plan_type = "free"
+            if sub.status != "cancelled":
+                sub.status = "inactive"
+            
+        db.commit()
 
     finally:
         db.close()

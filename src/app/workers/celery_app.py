@@ -19,8 +19,13 @@ celery.conf.redbeat_redis_url = settings.redis_url
 celery.autodiscover_tasks(["src.app.workers"])
 
 celery.conf.beat_schedule = {
-    "publish-scheduled-blogs":{
+    "publish-scheduled-blogs": {
         "task": "src.app.workers.tasks.publish_scheduled_blogs",
         "schedule": crontab(minute="*"),
-    }
+    },
+    
+    "expired-pro-fallback": {
+        "task": "src.app.workers.tasks.expired_pro_fallback",
+        "schedule": crontab(minute=0),
+    },
 }

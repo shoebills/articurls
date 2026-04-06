@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from .. import models
 from ..database import get_db
 from ..security.oauth2 import get_current_user
@@ -58,167 +59,183 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
     event_id = request.headers.get("webhook-id", "")
     event_type = event.type
 
+    if not event_id:
+        raise HTTPException(status_code=400, detail="Missing webhook-id")
+
     db_webhook = db.query(models.PaymentWebhooks).filter(models.PaymentWebhooks.dodo_event_id == event_id).first()
 
-    if db_webhook:
+    if db_webhook and db_webhook.processed:
         return {"detail": "already processed"}
 
-    new_webhook = models.PaymentWebhooks(
-        event_type=event_type,
-        dodo_event_id=event_id,
-        payload=raw_body.decode("utf-8", errors="replace"),
-        processed=False,
-    )
-    db.add(new_webhook)
-    db.flush()
+    if not db_webhook:
+        try:
+            db_webhook = models.PaymentWebhooks(
+                event_type=event_type,
+                dodo_event_id=event_id,
+                payload=raw_body.decode("utf-8", errors="replace"),
+                processed=False,
+            )
+            db.add(db_webhook)
+            db.commit()
+            db.refresh(db_webhook)
 
-    if event_type == "subscription.active":
-        customer = getattr(event.data, "customer", None)
-        customer_email = getattr(customer, "email", None) if customer else None
+        except IntegrityError:
+            db.rollback()
+            db_webhook = db.query(models.PaymentWebhooks).filter(models.PaymentWebhooks.dodo_event_id == event_id).first()
+            if db_webhook and db_webhook.processed:
+                return {"detail": "already processed"}
 
-        if customer_email:
-            db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+    try:
+        if event_type == "subscription.active":
+            customer = getattr(event.data, "customer", None)
+            customer_email = getattr(customer, "email", None) if customer else None
+
+            if customer_email:
+                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+
+                if db_user:
+                    incoming_dodo_sid = getattr(event.data, "subscription_id", None)
+
+                    db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
+
+                    if db_sub:
+                        db_sub.dodo_subscription_id = incoming_dodo_sid
+                        db_sub.plan_type = "pro"
+                        db_sub.status = "active"
+                        db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
+                        db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
+
+                    else:
+                        new_sub = models.Subscriptions(
+                            user_id=db_user.user_id,
+                            dodo_subscription_id=event.data.subscription_id,
+                            plan_type="pro",
+                            status="active",
+                            current_period_start=getattr(event.data, "previous_billing_date", None),
+                            current_period_end=getattr(event.data, "next_billing_date", None),
+                        )
+
+                        db.add(new_sub)
+                        db_sub = new_sub
+
+                    if db_sub and incoming_dodo_sid:
+                        db.query(models.Transactions).filter(
+                            models.Transactions.user_id == db_user.user_id,
+                            models.Transactions.subscription_id.is_(None),
+                        ).update(
+                            {"subscription_id": db_sub.subscription_id},
+                            synchronize_session=False,
+                        )
+
+        elif event_type == "subscription.cancelled":
+            customer = getattr(event.data, "customer", None)
+            customer_email = getattr(customer, "email", None) if customer else None
+
+            if customer_email:
+                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+                if db_user:
+                    db_sub = (
+                        db.query(models.Subscriptions)
+                        .filter(models.Subscriptions.user_id == db_user.user_id)
+                        .first()
+                    )
+                    if db_sub:
+                        db_sub.status = "cancelled"
+
+        elif event_type == "subscription.renewed":
+            customer = getattr(event.data, "customer", None)
+            customer_email = getattr(customer, "email", None) if customer else None
+
+            if customer_email:
+                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+
+                if db_user:
+                    incoming_dodo_sid = getattr(event.data, "subscription_id", None)
+
+                    db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
+
+                    if db_sub:
+                        db_sub.dodo_subscription_id = incoming_dodo_sid
+                        db_sub.plan_type = "pro"
+                        db_sub.status = "active"
+                        db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
+                        db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
+
+                    else:
+                        db_sub = models.Subscriptions(
+                            user_id=db_user.user_id,
+                            dodo_subscription_id=incoming_dodo_sid,
+                            plan_type="pro",
+                            status="active",
+                            current_period_start=getattr(event.data, "previous_billing_date", None),
+                            current_period_end=getattr(event.data, "next_billing_date", None),
+                        )
+
+                        db.add(db_sub)
+
+                    if db_sub and incoming_dodo_sid:
+                        db.query(models.Transactions).filter(
+                            models.Transactions.user_id == db_user.user_id,
+                            models.Transactions.subscription_id.is_(None),
+                        ).update(
+                            {"subscription_id": db_sub.subscription_id},
+                            synchronize_session=False,
+                        )
+
+        elif event_type == "payment.succeeded":
+            customer = getattr(event.data, "customer", None)
+            customer_email = getattr(customer, "email", None) if customer else None
+
+            db_user = (
+                db.query(models.User).filter(models.User.email == customer_email).first()
+                if customer_email
+                else None
+            )
 
             if db_user:
-                incoming_dodo_sid = getattr(event.data, "subscription_id", None)
+                dodo_sid = getattr(event.data, "subscription_id", None)
 
-                db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
+                db_sub = None
+                if dodo_sid:
+                    db_sub = (db.query(models.Subscriptions).filter(models.Subscriptions.dodo_subscription_id == dodo_sid).first())
 
-                if db_sub:
-                    db_sub.dodo_subscription_id = incoming_dodo_sid
-                    db_sub.plan_type = "pro"
-                    db_sub.status = "active"
-                    db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
-                    db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
-            
-                else:
-                    new_sub = models.Subscriptions(
+                # minimal fallback for out-of-order webhooks
+                if db_sub is None:
+                    db_sub = (db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first())
+
+                transaction = models.Transactions(
                         user_id=db_user.user_id,
-                        dodo_subscription_id=event.data.subscription_id,
-                        plan_type="pro",
-                        status="active",
-                        current_period_start=getattr(event.data, "previous_billing_date", None),
-                        current_period_end=getattr(event.data, "next_billing_date", None),
+                        subscription_id=db_sub.subscription_id if db_sub else None,
+                        dodo_payment_id=getattr(event.data, "payment_id", None),
+                        amount=getattr(event.data, "total_amount", 0),
+                        currency=getattr(event.data, "currency", "USD"),
+                        status="succeeded",
                     )
+                db.add(transaction)
 
-                    db.add(new_sub)
-                    db_sub = new_sub
+        elif event_type == "payment.failed":
+            customer = getattr(event.data, "customer", None)
+            customer_email = getattr(customer, "email", None) if customer else None
 
-                if db_sub and incoming_dodo_sid:
-                    db.query(models.Transactions).filter(
-                        models.Transactions.user_id == db_user.user_id,
-                        models.Transactions.subscription_id.is_(None),
-                    ).update(
-                        {"subscription_id": db_sub.subscription_id},
-                        synchronize_session=False,
+            if customer_email:
+                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+
+                if db_user:
+                    db_sub = (
+                        db.query(models.Subscriptions)
+                        .filter(models.Subscriptions.user_id == db_user.user_id)
+                        .first()
                     )
+                    if db_sub:
+                        db_sub.status = "past_due"
 
-    elif event_type == "subscription.cancelled":
-        customer = getattr(event.data, "customer", None)
-        customer_email = getattr(customer, "email", None) if customer else None
-
-        if customer_email:
-            db_user = db.query(models.User).filter(models.User.email == customer_email).first()
-            if db_user:
-                db_sub = (
-                    db.query(models.Subscriptions)
-                    .filter(models.Subscriptions.user_id == db_user.user_id)
-                    .first()
-                )
-                if db_sub:
-                    db_sub.status = "cancelled"
-
-    elif event_type == "subscription.renewed":
-        customer = getattr(event.data, "customer", None)
-        customer_email = getattr(customer, "email", None) if customer else None
-
-        if customer_email:
-            db_user = db.query(models.User).filter(models.User.email == customer_email).first()
-
-            if db_user:
-                incoming_dodo_sid = getattr(event.data, "subscription_id", None)
-
-                db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
-
-                if db_sub:
-                    db_sub.dodo_subscription_id = incoming_dodo_sid
-                    db_sub.plan_type = "pro"
-                    db_sub.status = "active"
-                    db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
-                    db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
-
-                else:
-                    db_sub = models.Subscriptions(
-                        user_id=db_user.user_id,
-                        dodo_subscription_id=incoming_dodo_sid,
-                        plan_type="pro",
-                        status="active",
-                        current_period_start=getattr(event.data, "previous_billing_date", None),
-                        current_period_end=getattr(event.data, "next_billing_date", None),
-                    )
-
-                    db.add(db_sub)
-
-                if db_sub and incoming_dodo_sid:
-                    db.query(models.Transactions).filter(
-                        models.Transactions.user_id == db_user.user_id,
-                        models.Transactions.subscription_id.is_(None),
-                    ).update(
-                        {"subscription_id": db_sub.subscription_id},
-                        synchronize_session=False,
-                    )
-
-    elif event_type == "payment.succeeded":
-        customer = getattr(event.data, "customer", None)
-        customer_email = getattr(customer, "email", None) if customer else None
-
-        db_user = (
-            db.query(models.User).filter(models.User.email == customer_email).first()
-            if customer_email
-            else None
-        )
-
-        if db_user:
-            dodo_sid = getattr(event.data, "subscription_id", None)
-
-            db_sub = None
-            if dodo_sid:
-                db_sub = (db.query(models.Subscriptions).filter(models.Subscriptions.dodo_subscription_id == dodo_sid).first())
-
-            # minimal fallback for out-of-order webhooks
-            if db_sub is None:
-                db_sub = (db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first())
-
-            transaction = models.Transactions(
-                    user_id=db_user.user_id,
-                    subscription_id=db_sub.subscription_id if db_sub else None,
-                    dodo_payment_id=getattr(event.data, "payment_id", None),
-                    amount=getattr(event.data, "total_amount", 0),
-                    currency=getattr(event.data, "currency", "USD"),
-                    status="succeeded",
-                )
-            db.add(transaction)
-
-    elif event_type == "payment.failed":
-        customer = getattr(event.data, "customer", None)
-        customer_email = getattr(customer, "email", None) if customer else None
+        db_webhook.processed = True
+        db.commit()
+        return {"detail": "processed"}
         
-        if customer_email:
-            db_user = db.query(models.User).filter(models.User.email == customer_email).first()
-
-            if db_user:
-                db_sub = (
-                    db.query(models.Subscriptions)
-                    .filter(models.Subscriptions.user_id == db_user.user_id)
-                    .first()
-                )
-                if db_sub:
-                    db_sub.status = "past_due"
-
-    new_webhook.processed = True
-    db.commit()
-
-    return {"detail": "processed"}
+    except Exception:
+        db.rollback()
+        raise HTTPException(status_code=500, detail="temporary failure")
 
 @router.get("/subscription", response_model=SubscriptionOut)
 def get_my_subscription(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
