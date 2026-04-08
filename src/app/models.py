@@ -1,5 +1,5 @@
 import enum
-from sqlalchemy.orm import DeclarativeBase
+from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy import Column, String, Integer, Enum, DateTime, func, ForeignKey, Boolean
 
 class Base(DeclarativeBase):
@@ -45,6 +45,22 @@ class Blog(Base):
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
+
+class BlogMedia(Base):
+    __tablename__ = "blog_medias"
+
+    media_id = Column(Integer, primary_key=True)
+    blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    media_type = Column(String, nullable=False)  # image / video
+    url = Column(String, nullable=False)
+    storage_key = Column(String, nullable=False)
+    mime_type = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    blog = relationship("Blog", back_populates="media")
 
 class Subscriber(Base):
     __tablename__ = "subscribers"

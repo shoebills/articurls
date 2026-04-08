@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
@@ -6,6 +6,7 @@ from .. import models, utils
 from ..schemas import blog
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
+from ..storage.service import save_media, delete_media
 from typing import List
 from slugify import slugify
 from datetime import datetime, timezone
@@ -88,6 +89,80 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
     return db_blog
+
+
+@router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
+async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+
+    db_blog = (
+        db.query(models.Blog)
+        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .first()
+    )
+
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    stored = await save_media(
+        file=file,
+        category="blogs",
+        user_id=current_user.user_id,
+        blog_id=db_blog.blog_id,
+    )
+
+    max_sort_order = (
+        db.query(func.max(models.BlogMedia.sort_order))
+        .filter(models.BlogMedia.blog_id == db_blog.blog_id)
+        .scalar()
+    )
+    next_sort_order = (max_sort_order or 0) + 1
+
+    new_media = models.BlogMedia(
+        blog_id=db_blog.blog_id,
+        user_id=current_user.user_id,
+        media_type=stored.media_type,
+        url=stored.url,
+        storage_key=stored.storage_key,
+        mime_type=stored.mime_type,
+        size_bytes=stored.size_bytes,
+        sort_order=next_sort_order,
+    )
+    db.add(new_media)
+    db.commit()
+    db.refresh(new_media)
+
+    return new_media
+
+
+@router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
+def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+
+    db_blog = (
+        db.query(models.Blog)
+        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .first()
+    )
+    
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    db_media = (
+        db.query(models.BlogMedia)
+        .filter(
+            models.BlogMedia.media_id == media_id,
+            models.BlogMedia.blog_id == db_blog.blog_id,
+            models.BlogMedia.user_id == current_user.user_id,
+        )
+        .first()
+    )
+    if not db_media:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Media with id: {media_id} not found")
+
+    delete_media(db_media.storage_key)
+    db.delete(db_media)
+    db.commit()
+
+    return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):

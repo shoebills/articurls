@@ -174,7 +174,7 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    image_url = await save_image_local(file=file, category="users", owner_id=current_user.user_id)
+    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id)
     db_user.profile_image_url = image_url
     db.commit()
     db.refresh(db_user)

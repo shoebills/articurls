@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from typing import Optional
 
 
 class Settings(BaseSettings):
@@ -28,6 +29,11 @@ class Settings(BaseSettings):
     uploads_dir: str = "uploads"
     public_base_url: str
     storage_backend: str = "local"
+    r2_account_id: Optional[str] = None
+    r2_bucket_name: Optional[str] = None
+    r2_access_key_id: Optional[str] = None
+    r2_secret_access_key: Optional[str] = None
+    r2_public_base_url: Optional[str] = None
     default_profile_image_url: str
 
     class Config:

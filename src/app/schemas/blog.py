@@ -4,6 +4,16 @@ from typing import Optional
 from ..models import BlogStatus
 
 
+class BlogMediaOut(BaseModel):
+    media_id: int
+    media_type: str
+    url: str
+    sort_order: int
+
+    class Config:
+        from_attributes = True
+
+
 class CreateBlog(BaseModel):
     title: str
     content: str
@@ -25,6 +35,7 @@ class GetBlog(BaseModel):
     created_at: datetime
     updated_at: datetime
     user_id: int
+    media: list[BlogMediaOut] = []
 
     class Config:
         from_attributes = True
@@ -45,6 +56,7 @@ class PublicBlog(BaseModel):
     published_at: Optional[datetime]
     updated_at: datetime
     user_id: int
+    media: list[BlogMediaOut] = []
 
     class Config:
         from_attributes = True
