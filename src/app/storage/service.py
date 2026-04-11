@@ -5,9 +5,7 @@ from fastapi import UploadFile, HTTPException, status
 from ..config import settings
 
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
-ALLOWED_VIDEO_CONTENT_TYPES = {"video/mp4", "video/webm", "video/quicktime"}
 MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
-MAX_VIDEO_SIZE_BYTES = 50 * 1024 * 1024
 
 
 @dataclass
@@ -16,7 +14,6 @@ class StoredMedia:
     storage_key: str
     mime_type: str
     size_bytes: int
-    media_type: str
 
 
 class LocalStorageProvider:
@@ -30,7 +27,6 @@ class LocalStorageProvider:
             storage_key=storage_key,
             mime_type="",
             size_bytes=len(data),
-            media_type="",
         )
 
     def delete(self, storage_key: str) -> None:
@@ -80,38 +76,24 @@ class R2StorageProvider:
             storage_key=storage_key,
             mime_type="",
             size_bytes=len(data),
-            media_type="",
         )
 
     def delete(self, storage_key: str) -> None:
         self.client.delete_object(Bucket=self.bucket, Key=storage_key)
 
 
-def _get_media_type(content_type: str) -> str:
-    if content_type in ALLOWED_IMAGE_CONTENT_TYPES:
-        return "image"
-    if content_type in ALLOWED_VIDEO_CONTENT_TYPES:
-        return "video"
-    raise HTTPException(
-        status_code=status.HTTP_400_BAD_REQUEST,
-        detail="Only image(jpg/png/webp) or video(mp4/webm/mov) files are allowed",
-    )
-
-
-def _validate_upload(file: UploadFile, data: bytes) -> str:
+def _validate_image_upload(file: UploadFile, data: bytes) -> None:
     content_type = file.content_type or ""
-    media_type = _get_media_type(content_type)
-    if media_type == "image" and len(data) > MAX_IMAGE_SIZE_BYTES:
+    if content_type not in ALLOWED_IMAGE_CONTENT_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only jpg, png, and webp images are allowed",
+        )
+    if len(data) > MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Image too large (max 5MB)",
         )
-    if media_type == "video" and len(data) > MAX_VIDEO_SIZE_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Video too large (max 50MB)",
-        )
-    return media_type
 
 
 def _ext_from_content_type(content_type: str) -> str:
@@ -119,9 +101,6 @@ def _ext_from_content_type(content_type: str) -> str:
         "image/jpeg": ".jpg",
         "image/png": ".png",
         "image/webp": ".webp",
-        "video/mp4": ".mp4",
-        "video/webm": ".webm",
-        "video/quicktime": ".mov",
     }.get(content_type, "")
 
 
@@ -134,7 +113,7 @@ def _get_storage_provider():
 
 async def save_media(file: UploadFile, category: str, user_id: int, blog_id: int | None = None) -> StoredMedia:
     data = await file.read()
-    media_type = _validate_upload(file, data)
+    _validate_image_upload(file, data)
 
     ext = _ext_from_content_type(file.content_type or "")
     filename = f"{uuid4().hex}{ext}"
@@ -146,7 +125,6 @@ async def save_media(file: UploadFile, category: str, user_id: int, blog_id: int
     provider = _get_storage_provider()
     stored = provider.save(data=data, storage_key=storage_key)
     stored.mime_type = file.content_type or ""
-    stored.media_type = media_type
     return stored
 
 
@@ -157,9 +135,4 @@ def delete_media(storage_key: str) -> None:
 
 async def save_image_local(file: UploadFile, category: str, user_id: int) -> str:
     stored = await save_media(file=file, category=category, user_id=user_id)
-    if stored.media_type != "image":
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only image uploads are allowed for this endpoint",
-        )
     return stored.url

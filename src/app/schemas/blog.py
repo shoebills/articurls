@@ -6,7 +6,6 @@ from ..models import BlogStatus
 
 class BlogMediaOut(BaseModel):
     media_id: int
-    media_type: str
     url: str
     sort_order: int
 

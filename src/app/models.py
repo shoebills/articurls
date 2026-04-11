@@ -53,7 +53,6 @@ class BlogMedia(Base):
     media_id = Column(Integer, primary_key=True)
     blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
     user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
-    media_type = Column(String, nullable=False)  # image / video
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)

@@ -120,7 +120,6 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
     new_media = models.BlogMedia(
         blog_id=db_blog.blog_id,
         user_id=current_user.user_id,
-        media_type=stored.media_type,
         url=stored.url,
         storage_key=stored.storage_key,
         mime_type=stored.mime_type,
