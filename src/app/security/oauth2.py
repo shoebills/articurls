@@ -4,7 +4,6 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 from ..config import settings
 from ..database import get_db
-from .. import models
 from fastapi.security import OAuth2PasswordBearer
 
 SECRET_KEY = settings.secret_key
@@ -31,7 +30,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    
+    from ..utils import user_by_email
+
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email: str = payload.get("sub")
@@ -48,7 +48,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             detail="Could not validate credentials"
     )
 
-    db_user = db.query(models.User).filter(models.User.email == email).first()
+    db_user = user_by_email(db, email)
 
     if db_user is None:
         raise HTTPException(

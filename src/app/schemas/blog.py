@@ -70,6 +70,7 @@ class PublicBlogs(PublicBlog):
 class UpdateBlog(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    slug: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
     notify_subscribers: Optional[bool] = None

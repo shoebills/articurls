@@ -37,6 +37,11 @@ class Settings(BaseSettings):
     r2_public_base_url: Optional[str] = None
     default_profile_image_url: str
 
+    cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    # Used in verification email (should be the Next.js app origin, e.g. https://app.articurls.com)
+    app_base_url: str = "http://localhost:3000"
+
     class Config:
         env_file = ".env"
 

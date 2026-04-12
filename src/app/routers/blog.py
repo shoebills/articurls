@@ -8,6 +8,7 @@ from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
 from typing import List
+import secrets
 from slugify import slugify
 from datetime import datetime, timezone
 
@@ -16,33 +17,28 @@ router = APIRouter(
     prefix="/blog"
 )
 
-
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # seo
-    if request.seo_title:
+    if request.seo_title is not None:
         candidate_seo_title = request.seo_title
     else:
-        candidate_seo_title = request.title
+        candidate_seo_title = None
 
-    if request.seo_description:
+    if request.seo_description is not None:
         candidate_seo_description = request.seo_description
     else:
-        candidate_seo_description = utils.make_seo_description(request.content)
+        candidate_seo_description = None
 
-    # slug
     if request.slug:
-        base_slug = slugify(request.slug)
+        base_slug = slugify(request.slug) or None
     else:
-        base_slug = slugify(request.title)
+        base_slug = slugify(request.title) if request.title and request.title.strip() else None
 
-    candidate_slug = base_slug
-    counter = 1
+    if not base_slug:
+        base_slug = f"draft-{secrets.token_hex(6)}"
 
-    while db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id, models.Blog.slug == candidate_slug).first():
-        candidate_slug = f"{base_slug}-{counter}"
-        counter += 1
+    candidate_slug = utils.unique_blog_slug(db, current_user.user_id, base_slug)
 
     if request.notify_subscribers:
         utils.assert_pro(db, current_user.user_id)
@@ -189,6 +185,26 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
 
+    slug_in = update_data.pop("slug", None)
+    if slug_in is not None:
+        new_slug = slugify(slug_in.strip()) if slug_in.strip() else None
+        if db_blog.status in (models.BlogStatus.PUBLISHED, models.BlogStatus.ARCHIVED):
+            if new_slug and new_slug != db_blog.slug:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot change the URL slug after the post is published.",
+                )
+        elif new_slug is not None and new_slug != db_blog.slug:
+            try_slug = utils.unique_blog_slug(
+                db, current_user.user_id, new_slug, exclude_blog_id=db_blog.blog_id
+            )
+            if try_slug != new_slug:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="That URL slug is already used by another post.",
+                )
+            db_blog.slug = new_slug
+
     for key, value in update_data.items():
         setattr(db_blog, key, value)
 
@@ -236,7 +252,10 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     first_publish = db_blog.published_at is None
 
     db_blog.status = models.BlogStatus.PUBLISHED
-    
+
+    if first_publish:
+        utils.maybe_replace_placeholder_slug_on_publish(db, db_blog)
+
     # Only set publish date if first time
     if first_publish:
         db_blog.published_at = datetime.now(timezone.utc)

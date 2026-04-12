@@ -11,7 +11,7 @@ from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
-from ..utils import require_pro
+from ..utils import normalize_email, require_pro, user_by_email
 from ..domains import normalize_custom_domain, verify_custom_domain_dns
 
 router = APIRouter(
@@ -22,7 +22,9 @@ router = APIRouter(
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
-    db_email = db.query(models.User).filter(models.User.email == request.email).first()
+    email = normalize_email(str(request.email))
+
+    db_email = user_by_email(db, email)
 
     if db_email:
         raise HTTPException(
@@ -40,7 +42,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     
     new_user = models.User(name=request.name, 
                            user_name=request.user_name, 
-                           email=request.email, 
+                           email=email, 
                            password=hashed_password, 
                            seo_title=f"{request.name}'s Blog",
                            seo_description=f"Explore all the blogs published by {request.name} on Articurls.",
@@ -50,9 +52,9 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
-    verify_token = oauth2.create_new_user_token(request.email)
+    verify_token = oauth2.create_new_user_token(email)
     plan_choice = request.plan_choice
-    send_verify_new_user(request.email, request.name, verify_token, plan_choice)
+    send_verify_new_user(email, request.name, verify_token, plan_choice)
 
     return {"message": "Please check your mailbox to verify your email!"}
 
@@ -79,7 +81,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
             detail="Invalid confirmation link",
         )
 
-    db_user = db.query(models.User).filter(models.User.email == payload.get("email")).first()
+    db_user = user_by_email(db, payload.get("email"))
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -139,10 +141,11 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     update_data = request.model_dump(exclude_unset=True)
-    
+
+    if "email" in update_data and update_data["email"] is not None:
+        update_data["email"] = normalize_email(str(update_data["email"]))
+
     for key, value in update_data.items():
-        if key == "profile_image_url" and value is None:
-            value = settings.default_profile_image_url
         setattr(db_user, key, value)
 
     db.commit()

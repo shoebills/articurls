@@ -4,7 +4,7 @@ from .celery_app import celery
 from .. import database, models
 from ..email.service import send_new_post_email
 from ..security.oauth2 import create_unsubscribe_token
-from ..utils import is_pro_entitled, public_post_url
+from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_post_url
 
 
 @celery.task
@@ -84,9 +84,10 @@ def publish_scheduled_blogs():
         db_posts = db.query(models.Blog).filter(models.Blog.status == models.BlogStatus.SCHEDULED, models.Blog.scheduled_at <= now).all()
         
         for post in db_posts:
+            maybe_replace_placeholder_slug_on_publish(db, post)
             post.status = models.BlogStatus.PUBLISHED
             post.published_at = now
-            
+
         db.commit()
 
         for post in db_posts:

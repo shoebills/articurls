@@ -1,0 +1,313 @@
+"use client";
+
+import { use, useCallback, useEffect, useState } from "react";
+import Link from "next/link";
+import slugify from "slugify";
+import {
+  getBlog,
+  updateBlog,
+  publishBlog,
+  archiveBlog,
+  scheduleBlog,
+  unscheduleBlog,
+  ApiError,
+} from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
+import type { BlogDetail } from "@/lib/types";
+import { BlogEditor } from "@/components/editor/blog-editor";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { BlogStatusBadge } from "@/components/blog-status-badge";
+import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
+import { Separator } from "@/components/ui/separator";
+import { MARKETING_ORIGIN } from "@/lib/env";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+
+const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
+
+export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const blogId = Number(id);
+  const { token, isPro, refreshUser, user } = useAuth();
+
+  const [blog, setBlog] = useState<BlogDetail | null>(null);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [slugCustom, setSlugCustom] = useState("");
+  const [seoTitle, setSeoTitle] = useState("");
+  const [seoTitleDirty, setSeoTitleDirty] = useState(false);
+  const [seoDesc, setSeoDesc] = useState("");
+  const [notify, setNotify] = useState(false);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [scheduleOpen, setScheduleOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  const applyBlogToForm = useCallback((b: BlogDetail) => {
+    setBlog(b);
+    setTitle(b.title);
+    setContent(b.content);
+    const slugEditable = b.status === "draft" || b.status === "scheduled";
+    if (!slugEditable) {
+      setSlugCustom(b.slug);
+    } else {
+      const derived = slugify(b.title, { lower: true, strict: true });
+      const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(b.slug);
+      const slugMatchesTitle = derived !== "" && b.slug === derived;
+      setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : b.slug);
+    }
+    setSeoTitle(b.seo_title || "");
+    const seoSynced = !b.seo_title || b.seo_title === b.title;
+    setSeoTitleDirty(!seoSynced);
+    setSeoDesc(b.seo_description || "");
+    setNotify(b.notify_subscribers);
+  }, []);
+
+  const load = useCallback(async () => {
+    if (!token || Number.isNaN(blogId)) return;
+    setErr(null);
+    try {
+      const b = await getBlog(token, blogId);
+      applyBlogToForm(b);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
+    }
+  }, [token, blogId, applyBlogToForm]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  useEffect(() => {
+    if (!seoTitleDirty) {
+      setSeoTitle(title);
+    }
+  }, [title, seoTitleDirty]);
+
+  const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
+
+  async function save() {
+    if (!token || !blog) return;
+    setSaving(true);
+    setErr(null);
+    try {
+      const body: Parameters<typeof updateBlog>[2] = {
+        title,
+        content,
+        notify_subscribers: notify,
+      };
+
+      if (slugEditable) {
+        const derived = slugify(title.trim(), { lower: true, strict: true });
+        const nextSlug = slugCustom.trim() || derived || blog.slug;
+        body.slug = nextSlug;
+      }
+
+      if (!seoTitleDirty || seoTitle.trim() === title.trim()) {
+        body.seo_title = null;
+      } else if (seoTitle.trim()) {
+        body.seo_title = seoTitle.trim();
+      } else {
+        body.seo_title = null;
+      }
+
+      if (seoDesc.trim()) body.seo_description = seoDesc.trim();
+      else body.seo_description = null;
+
+      const updated = await updateBlog(token, blog.blog_id, body);
+      applyBlogToForm(updated);
+      await refreshUser();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Save failed");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function publish() {
+    if (!token || !blog) return;
+    await save();
+    try {
+      const b = await publishBlog(token, blog.blog_id);
+      applyBlogToForm(b);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Publish failed");
+    }
+  }
+
+  async function archive() {
+    if (!token || !blog) return;
+    try {
+      const b = await archiveBlog(token, blog.blog_id);
+      applyBlogToForm(b);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Archive failed");
+    }
+  }
+
+  async function doSchedule(iso: string) {
+    if (!token || !blog) return;
+    try {
+      const b = await scheduleBlog(token, blog.blog_id, iso);
+      applyBlogToForm(b);
+      setScheduleOpen(false);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Schedule failed");
+    }
+  }
+
+  async function doUnschedule() {
+    if (!token || !blog) return;
+    try {
+      await unscheduleBlog(token, blog.blog_id);
+      await load();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Unschedule failed");
+    }
+  }
+
+  if (loading || !blog) {
+    return <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>;
+  }
+
+  const liveUrl =
+    blog.status === "published" && user
+      ? `${MARKETING_ORIGIN}/${user.user_name}/blog/${blog.slug}`
+      : null;
+
+  const slugPlaceholder = slugify(title, { lower: true, strict: true });
+
+  return (
+    <div className="mx-auto max-w-3xl pb-24">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/dashboard">← Posts</Link>
+        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <BlogStatusBadge status={blog.status} />
+          {liveUrl && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={liveUrl} target="_blank" rel="noreferrer">
+                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                View
+              </a>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
+
+      <Input
+        className="mb-4 min-h-0 border-none px-0 text-3xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-4xl md:text-5xl"
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Title"
+      />
+
+      <BlogEditor
+        key={blog.blog_id}
+        blogId={blog.blog_id}
+        token={token}
+        content={content}
+        onChange={setContent}
+      />
+
+      <div className="mt-6">
+        <button
+          type="button"
+          className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
+          onClick={() => setAdvancedOpen(!advancedOpen)}
+        >
+          Advanced — slug, SEO, email to subscribers
+          {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </button>
+        {advancedOpen && (
+          <div className="mt-4 space-y-4 rounded-lg border border-border p-4">
+            <div className="space-y-2">
+              <Label>URL slug</Label>
+              <Input
+                value={slugCustom}
+                disabled={!slugEditable}
+                onChange={(e) => setSlugCustom(e.target.value)}
+                placeholder={slugPlaceholder || "(from title)"}
+              />
+              <p className="text-xs text-muted-foreground">
+                {slugEditable
+                  ? "Updates from the title until you edit this field. Must be unique before you publish."
+                  : "The public URL cannot be changed after the post is published."}
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>SEO title</Label>
+              <Input
+                value={seoTitle}
+                onChange={(e) => {
+                  setSeoTitleDirty(true);
+                  setSeoTitle(e.target.value);
+                }}
+                placeholder="Same as post title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>SEO description</Label>
+              <Input value={seoDesc} onChange={(e) => setSeoDesc(e.target.value)} placeholder="Defaults from content" />
+            </div>
+            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">Email subscribers when published</p>
+                <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
+              </div>
+              <Switch
+                checked={notify}
+                disabled={!isPro}
+                onCheckedChange={(v) => {
+                  if (!isPro) return;
+                  setNotify(v);
+                }}
+              />
+            </div>
+            {!isPro && notify === false && (
+              <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
+            )}
+          </div>
+        )}
+      </div>
+
+      <Separator className="my-8" />
+
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={save} disabled={saving}>
+          {saving ? "Saving…" : "Save"}
+        </Button>
+        {blog.status === "draft" && (
+          <>
+            <Button variant="default" onClick={publish}>
+              Publish
+            </Button>
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              Schedule
+            </Button>
+          </>
+        )}
+        {blog.status === "scheduled" && (
+          <Button variant="outline" onClick={doUnschedule}>
+            Unschedule
+          </Button>
+        )}
+        {blog.status === "published" && (
+          <Button variant="outline" onClick={archive}>
+            Archive
+          </Button>
+        )}
+      </div>
+
+      <SchedulePublishDialog open={scheduleOpen} onOpenChange={setScheduleOpen} onConfirm={doSchedule} />
+    </div>
+  );
+}

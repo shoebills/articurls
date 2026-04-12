@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .. import models
 from ..database import get_db
+from ..utils import user_by_email
 from ..security.oauth2 import get_current_user
 from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse
 from ..payments.client import client as dodo_client
@@ -91,7 +92,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             customer_email = getattr(customer, "email", None) if customer else None
 
             if customer_email:
-                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+                db_user = user_by_email(db, customer_email)
 
                 if db_user:
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
@@ -132,7 +133,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             customer_email = getattr(customer, "email", None) if customer else None
 
             if customer_email:
-                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+                db_user = user_by_email(db, customer_email)
                 if db_user:
                     db_sub = (
                         db.query(models.Subscriptions)
@@ -147,7 +148,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             customer_email = getattr(customer, "email", None) if customer else None
 
             if customer_email:
-                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+                db_user = user_by_email(db, customer_email)
 
                 if db_user:
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
@@ -187,7 +188,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             customer_email = getattr(customer, "email", None) if customer else None
 
             db_user = (
-                db.query(models.User).filter(models.User.email == customer_email).first()
+                user_by_email(db, customer_email)
                 if customer_email
                 else None
             )
@@ -218,7 +219,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             customer_email = getattr(customer, "email", None) if customer else None
 
             if customer_email:
-                db_user = db.query(models.User).filter(models.User.email == customer_email).first()
+                db_user = user_by_email(db, customer_email)
 
                 if db_user:
                     db_sub = (

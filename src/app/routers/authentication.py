@@ -3,8 +3,8 @@ from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.orm import Session
 from ..database import get_db
+from ..utils import user_by_email
 from ..schemas import token, authentication
-from .. import models
 from ..security import hashing, oauth2
 from ..config import settings
 from ..email.service import send_password_reset
@@ -19,7 +19,7 @@ router = APIRouter(
 @router.post("/login", response_model=token.Token)
 def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
-    db_user = db.query(models.User).filter(models.User.email == request.username).first()
+    db_user = user_by_email(db, request.username)
     
     if not db_user:
         raise HTTPException(
@@ -49,7 +49,7 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
 @router.post("/request-password-reset")
 def request_password_reset(request: authentication.RequestPasswordReset, db: Session = Depends(get_db),):
 
-    db_user = db.query(models.User).filter(models.User.email == request.email).first()
+    db_user = user_by_email(db, request.email)
 
     if db_user:
         reset_token = oauth2.create_reset_password_token(db_user.email)
@@ -66,7 +66,7 @@ def reset_password(request: authentication.ResetPassword, db: Session = Depends(
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid or expired reset token")
 
-    db_user = db.query(models.User).filter(models.User.email == email).first()
+    db_user = user_by_email(db, email)
     if not db_user:
         raise HTTPException(status_code=404, detail="User not found")
 
