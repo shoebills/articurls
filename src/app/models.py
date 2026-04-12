@@ -1,6 +1,19 @@
 import enum
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, String, Integer, Enum, DateTime, func, ForeignKey, Boolean
+from sqlalchemy import (
+    Column,
+    String,
+    Integer,
+    Enum,
+    DateTime,
+    Text,
+    JSON,
+    Index,
+    UniqueConstraint,
+    func,
+    ForeignKey,
+    Boolean,
+)
 
 class Base(DeclarativeBase):
     pass
@@ -31,11 +44,15 @@ class BlogStatus(str, enum.Enum):
 
 class Blog(Base):
     __tablename__ = "blogs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "slug", name="uq_blogs_user_slug"),
+        Index("ix_blogs_status_scheduled_at", "status", "scheduled_at"),
+    )
 
     blog_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
     title = Column(String, nullable=False)
-    content = Column(String, nullable=False)
+    content = Column(Text, nullable=False)
     slug = Column(String, index=True, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
@@ -63,6 +80,9 @@ class BlogMedia(Base):
 
 class Subscriber(Base):
     __tablename__ = "subscribers"
+    __table_args__ = (
+        UniqueConstraint("user_id", "email", name="uq_subscribers_user_email"),
+    )
 
     subscriber_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
@@ -73,6 +93,9 @@ class Subscriber(Base):
 
 class EmailLogs(Base):
     __tablename__ = "email_logs"
+    __table_args__ = (
+        UniqueConstraint("user_id", "blog_id", name="uq_email_logs_user_blog"),
+    )
 
     log_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
@@ -84,6 +107,10 @@ class EmailLogs(Base):
 
 class Views(Base):
     __tablename__ = "views"
+    __table_args__ = (
+        Index("ix_views_user_visited_at", "user_id", "visited_at"),
+        Index("ix_views_blog_visitor_hash", "blog_id", "visitor_hash"),
+    )
 
     view_id = Column(Integer, primary_key=True)
     user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
@@ -122,6 +149,6 @@ class PaymentWebhooks(Base):
     webhook_id = Column(Integer, primary_key=True)
     event_type = Column(String, nullable=False)
     dodo_event_id = Column(String, unique=True, nullable=False)
-    payload = Column(String, nullable=False)
+    payload = Column(JSON, nullable=False)
     processed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

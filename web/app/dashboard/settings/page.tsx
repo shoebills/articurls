@@ -148,8 +148,8 @@ export default function SettingsPage() {
           <CardTitle className="text-xl">Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:gap-5">
-            <div className="relative inline-flex">
+          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <div className="relative inline-flex shrink-0">
               <input
                 ref={pfpInputRef}
                 id="pfp"
@@ -195,9 +195,9 @@ export default function SettingsPage() {
             {ctxUser?.profile_image_url ? (
               <Button
                 type="button"
-                variant="ghost"
+                variant="outline"
                 size="sm"
-                className="h-10 w-fit shrink-0 self-start text-muted-foreground hover:bg-destructive/10 hover:text-destructive sm:self-auto"
+                className="h-10 w-fit shrink-0 border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
                 disabled={busy}
                 onClick={removePfp}
               >

@@ -216,6 +216,15 @@ export async function getPublicBlog(userName: string, slug: string): Promise<Pub
   return apiFetch(`/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}`);
 }
 
+/** Public: request email subscription to a writer’s posts (confirmation email is sent when applicable). */
+export async function publicSubscribe(userName: string, email: string): Promise<{ message: string }> {
+  return apiFetch(`/subscribe/${encodeURIComponent(userName)}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function viewsAnalytics(token: string, period?: string): Promise<ViewsAnalytics> {
   const q = period ? `?period=${encodeURIComponent(period)}` : "";
   return apiFetch(`/analytics/views${q}`, { token });

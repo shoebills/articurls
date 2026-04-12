@@ -107,8 +107,8 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
           <p className="mt-1 text-sm text-muted-foreground">Drafts, scheduled, and published work in one place.</p>
         </div>
-        <Button asChild className="shrink-0 shadow-sm">
-          <Link href="/dashboard/posts/new">New post</Link>
+        <Button asChild className="h-11 w-full shrink-0 touch-manipulation shadow-sm sm:h-auto sm:w-auto">
+          <Link href="/dashboard/posts/new">+ New post</Link>
         </Button>
       </div>
       {err && <p className="mt-4 text-sm text-destructive">{err}</p>}
@@ -212,7 +212,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <Button asChild className="touch-manipulation">
-            <Link href="/dashboard/posts/new">New post</Link>
+            <Link href="/dashboard/posts/new">+ New post</Link>
           </Button>
         </div>
       )}

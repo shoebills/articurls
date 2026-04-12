@@ -43,7 +43,7 @@ export default function RootLayout({
       className={`${inter.variable} ${jetbrainsMono.variable} min-h-dvh antialiased`}
       data-theme="light"
     >
-      <body className="flex min-h-dvh flex-col">
+      <body className="flex min-h-dvh flex-col overflow-x-hidden">
         <Providers>{children}</Providers>
       </body>
     </html>

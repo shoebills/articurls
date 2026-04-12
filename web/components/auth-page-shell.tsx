@@ -4,7 +4,7 @@ import { MARKETING_ORIGIN } from "@/lib/env";
 
 export function AuthPageShell({ children }: { children: ReactNode }) {
   return (
-    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 py-12 sm:px-6 sm:py-16">
+    <div className="relative flex min-h-dvh flex-col items-center justify-center overflow-hidden px-4 pb-[max(3rem,env(safe-area-inset-bottom))] pt-[max(3rem,env(safe-area-inset-top))] sm:px-6 sm:pb-16 sm:pt-16">
       <div
         className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_-30%,oklch(0.55_0.14_264/0.14),transparent_55%)]"
         aria-hidden

@@ -122,9 +122,13 @@ export default function AnalyticsPage() {
       {err && <p className="text-sm text-destructive">{err}</p>}
 
       <Tabs defaultValue="views">
-        <TabsList>
-          <TabsTrigger value="views">Views</TabsTrigger>
-          <TabsTrigger value="subscribers">Subscribers</TabsTrigger>
+        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
+          <TabsTrigger value="views" className="min-h-11 sm:min-h-8">
+            Views
+          </TabsTrigger>
+          <TabsTrigger value="subscribers" className="min-h-11 sm:min-h-8">
+            Subscribers
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="views" className="space-y-6">
@@ -222,7 +226,7 @@ export default function AnalyticsPage() {
               Export CSV
             </Button>
           </div>
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader>
                 <CardDescription>Current subscribers</CardDescription>

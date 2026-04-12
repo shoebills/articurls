@@ -204,7 +204,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
 
       <Input
-        className="mb-4 min-h-0 border-none px-0 text-3xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-4xl md:text-5xl"
+        className="mb-4 min-h-0 border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title"
@@ -258,12 +258,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <Label>SEO description</Label>
               <Input value={seoDesc} onChange={(e) => setSeoDesc(e.target.value)} placeholder="Defaults from content" />
             </div>
-            <div className="flex items-center justify-between gap-4 rounded-md border border-border p-3">
-              <div>
+            <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+              <div className="min-w-0">
                 <p className="text-sm font-medium">Email subscribers when published</p>
                 <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
               </div>
               <Switch
+                className="shrink-0 self-start sm:self-center"
                 checked={notify}
                 disabled={!isPro}
                 onCheckedChange={(v) => {

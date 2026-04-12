@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser } from "@/lib/types";
+import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -42,12 +43,17 @@ export default async function PublicBlogPage({ params }: Props) {
 
   return (
     <article className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-        <Link href={`/${username}`} className="text-sm text-muted-foreground hover:text-foreground">
+      <div className="mx-auto max-w-3xl px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14">
+        <Link
+          href={`/${username}`}
+          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+        >
           ← {author.name}
         </Link>
-        <header className="mt-8">
-          <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-5xl">{blog.title}</h1>
+        <header className="mt-6 sm:mt-8">
+          <h1 className="text-balance break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+            {blog.title}
+          </h1>
           {blog.published_at && (
             <time className="mt-4 block text-sm text-muted-foreground" dateTime={blog.published_at}>
               {new Date(blog.published_at).toLocaleDateString(undefined, {
@@ -70,7 +76,10 @@ export default async function PublicBlogPage({ params }: Props) {
             ))}
           </div>
         )}
-        <footer className="mt-16 border-t border-border pt-8 text-center text-xs text-muted-foreground">
+        <div className="mt-14">
+          <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
+        </div>
+        <footer className="mt-12 border-t border-border pt-8 text-center text-xs text-muted-foreground">
           <a href={MARKETING_ORIGIN} className="underline">
             Published with Articurls
           </a>

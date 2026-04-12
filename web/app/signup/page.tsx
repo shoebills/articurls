@@ -1,19 +1,37 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { signup as apiSignup, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
+
+/** Label → control spacing; same for text inputs and plan picker. */
+const FIELD_GROUP = "flex flex-col gap-2.5";
 
 function SignupForm() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const planChoice = searchParams.get("plan_choice") === "pro" ? "pro" : "free";
+  const planFromQuery = searchParams.get("plan_choice") === "pro" ? "pro" : "free";
+  const [planChoice, setPlanChoice] = useState<"free" | "pro">(planFromQuery);
+
+  useEffect(() => {
+    setPlanChoice(planFromQuery);
+  }, [planFromQuery]);
+
+  function selectPlan(p: "free" | "pro") {
+    setPlanChoice(p);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("plan_choice", p);
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+  }
 
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
@@ -63,19 +81,16 @@ function SignupForm() {
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold tracking-tight">Create account</CardTitle>
           <CardDescription className="text-base">
-            Plan:{" "}
-            <span className="font-medium text-foreground">
-              {planChoice === "pro" ? "Pro ($9/mo after checkout)" : "Free"}
-            </span>
+            Enter your details, then choose Free or Pro. You can change your mind before you submit.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="name">Display name</Label>
               <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required />
             </div>
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="user_name">Username</Label>
               <Input
                 id="user_name"
@@ -89,11 +104,11 @@ function SignupForm() {
                 Your public URL: articurls.com/{user_name || "username"}
               </p>
             </div>
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="email">Email</Label>
               <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
@@ -104,8 +119,77 @@ function SignupForm() {
                 minLength={8}
               />
             </div>
+            <div className={FIELD_GROUP}>
+              <Label id="plan-label">Choose plan</Label>
+              <div
+                role="radiogroup"
+                aria-labelledby="plan-label"
+                className="grid grid-cols-2 gap-2"
+              >
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={planChoice === "free"}
+                  aria-label="Free plan, $0 per month"
+                  className="w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                  onClick={() => selectPlan("free")}
+                >
+                  <Card
+                    className={cn(
+                      "relative rounded-lg border bg-card px-2 py-1.5 shadow-none hover:shadow-none motion-reduce:transition-none",
+                      planChoice === "free" && "pr-7",
+                      planChoice === "free"
+                        ? "border-primary ring-1 ring-primary ring-offset-1 ring-offset-background"
+                        : "border-border/80 hover:border-border",
+                    )}
+                  >
+                    {planChoice === "free" && (
+                      <span className="absolute right-1 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+                      </span>
+                    )}
+                    <div className="flex flex-col gap-0 leading-none">
+                      <span className="text-sm font-semibold">Free</span>
+                      <span className="text-xs font-semibold tabular-nums">
+                        $0<span className="font-normal text-muted-foreground">/mo</span>
+                      </span>
+                    </div>
+                  </Card>
+                </button>
+                <button
+                  type="button"
+                  role="radio"
+                  aria-checked={planChoice === "pro"}
+                  aria-label="Pro plan, $9 per month"
+                  className="w-full rounded-lg text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+                  onClick={() => selectPlan("pro")}
+                >
+                  <Card
+                    className={cn(
+                      "relative rounded-lg border bg-card px-2 py-1.5 shadow-none hover:shadow-none motion-reduce:transition-none",
+                      planChoice === "pro" && "pr-7",
+                      planChoice === "pro"
+                        ? "border-primary ring-1 ring-primary ring-offset-1 ring-offset-background"
+                        : "border-border/80 hover:border-border",
+                    )}
+                  >
+                    {planChoice === "pro" && (
+                      <span className="absolute right-1 top-1/2 flex h-4 w-4 -translate-y-1/2 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="h-2.5 w-2.5" strokeWidth={3} aria-hidden />
+                      </span>
+                    )}
+                    <div className="flex flex-col gap-0 leading-none">
+                      <span className="text-sm font-semibold">Pro</span>
+                      <span className="text-xs font-semibold tabular-nums">
+                        $9<span className="font-normal text-muted-foreground">/mo</span>
+                      </span>
+                    </div>
+                  </Card>
+                </button>
+              </div>
+            </div>
             {err && <p className="text-sm leading-relaxed text-destructive">{err}</p>}
-            <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
+            <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? "Creating…" : "Sign up"}
             </Button>
           </form>

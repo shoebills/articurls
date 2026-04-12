@@ -75,7 +75,7 @@ export default function BillingPage() {
             </p>
           )}
           {!pro && (
-            <Button onClick={upgrade} disabled={busy}>
+            <Button className="h-11 min-h-11 w-full touch-manipulation sm:h-auto sm:w-auto" onClick={upgrade} disabled={busy}>
               {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
             </Button>
           )}
@@ -90,19 +90,28 @@ export default function BillingPage() {
           {tx.length === 0 ? (
             <p className="text-sm text-muted-foreground">No payments yet.</p>
           ) : (
-            <ul className="divide-y divide-border">
-              {tx.map((row) => (
-                <li key={row.transaction_id} className="flex flex-wrap justify-between gap-2 py-3 text-sm">
-                  <span>
-                    {(row.amount / 100).toFixed(2)} {row.currency}
-                  </span>
-                  <span className="text-muted-foreground">{row.status}</span>
-                  <span className="text-muted-foreground">
-                    {row.created_at ? format(new Date(row.created_at), "PPp") : "—"}
-                  </span>
-                </li>
-              ))}
-            </ul>
+            <div className="overflow-x-auto rounded-lg border border-border [-webkit-overflow-scrolling:touch]">
+              <div className="min-w-[20rem]">
+                <div className="grid grid-cols-3 gap-2 border-b border-border bg-muted/40 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  <span>Amount</span>
+                  <span>Status</span>
+                  <span>Date</span>
+                </div>
+                <ul className="divide-y divide-border">
+                  {tx.map((row) => (
+                    <li key={row.transaction_id} className="grid grid-cols-3 gap-2 px-3 py-3 text-sm">
+                      <span className="tabular-nums">
+                        {(row.amount / 100).toFixed(2)} {row.currency}
+                      </span>
+                      <span className="text-muted-foreground">{row.status}</span>
+                      <span className="whitespace-nowrap text-muted-foreground">
+                        {row.created_at ? format(new Date(row.created_at), "PPp") : "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           )}
         </CardContent>
       </Card>

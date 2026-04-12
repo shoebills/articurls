@@ -1,3 +1,4 @@
+import json
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -70,10 +71,14 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
     if not db_webhook:
         try:
+            try:
+                payload_json = json.loads(raw_body.decode("utf-8", errors="replace"))
+            except json.JSONDecodeError:
+                payload_json = {"raw": raw_body.decode("utf-8", errors="replace")}
             db_webhook = models.PaymentWebhooks(
                 event_type=event_type,
                 dodo_event_id=event_id,
-                payload=raw_body.decode("utf-8", errors="replace"),
+                payload=payload_json,
                 processed=False,
             )
             db.add(db_webhook)

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser } from "@/lib/types";
+import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -42,40 +43,43 @@ export default async function PublicProfilePage({ params }: Props) {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
-      <header className="relative border-b border-border/80 bg-gradient-to-b from-muted/20 to-background">
-        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_0%,oklch(0.55_0.12_264/0.08),transparent_65%)]" />
-        <div className="relative mx-auto flex max-w-3xl flex-col items-center gap-4 px-4 py-14 text-center sm:px-6 sm:py-16">
-          {user.profile_image_url && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={assetUrl(user.profile_image_url)}
-              alt=""
-              className="h-24 w-24 rounded-full object-cover shadow-lg ring-4 ring-background ring-offset-2 ring-offset-transparent"
-            />
-          )}
-          <div>
-            <h1 className="flex flex-wrap items-center justify-center gap-2 text-3xl font-bold tracking-tight sm:text-4xl">
-              {user.name}
-              {user.verification_tick && (
-                <span className="rounded-full bg-primary/12 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
-                  Verified
-                </span>
-              )}
-            </h1>
-            <p className="mt-2 text-sm text-muted-foreground sm:text-base">@{user.user_name}</p>
+      <main className="mx-auto max-w-3xl px-4 py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14">
+        <section className="border-b border-border/80 pb-10 sm:pb-12">
+          <div className="flex w-full flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              {user.profile_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={assetUrl(user.profile_image_url)}
+                  alt=""
+                  className="h-20 w-20 shrink-0 rounded-full object-cover shadow-md ring-2 ring-border/60 sm:h-24 sm:w-24"
+                />
+              ) : null}
+              <div className="min-w-0 text-left">
+                <h1 className="flex flex-wrap items-center gap-2 text-2xl font-bold tracking-tight sm:text-3xl">
+                  {user.name}
+                  {user.verification_tick && (
+                    <span className="rounded-full bg-primary/12 px-2.5 py-0.5 text-xs font-semibold text-primary ring-1 ring-primary/20">
+                      Verified
+                    </span>
+                  )}
+                </h1>
+                <p className="mt-1 text-sm text-muted-foreground sm:text-base">@{user.user_name}</p>
+              </div>
+            </div>
+            <div className="flex w-full shrink-0 justify-stretch sm:w-auto sm:justify-end">
+              <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
+            </div>
           </div>
-          {user.seo_description && (
-            <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">{user.seo_description}</p>
-          )}
-        </div>
-      </header>
-      <main className="mx-auto max-w-3xl px-4 py-12 sm:px-6 sm:py-14">
-        <h2 className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Stories</h2>
+        </section>
+        <h2 className="mt-10 text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground sm:mt-12">
+          Stories
+        </h2>
         <ul className="mt-6 divide-y divide-border/80">
           {blogs.map((b) => (
             <li key={b.blog_id} className="py-8 first:pt-0">
               <Link href={`/${username}/blog/${b.slug}`} className="group block rounded-xl py-1 transition-colors hover:bg-muted/30">
-                <h3 className="text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
+                <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
                   {b.title}
                 </h3>
                 {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}

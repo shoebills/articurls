@@ -157,6 +157,33 @@ body {
   padding: 0 0.15em;
 }
 
+@media (max-width: 639px) {
+  .prose-blog {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+  .prose-blog h1 {
+    font-size: 1.75rem;
+    margin-top: 1.5rem;
+    line-height: 1.2;
+  }
+  .prose-blog h2 {
+    font-size: 1.25rem;
+    margin-top: 1.5rem;
+  }
+  .prose-blog h3 {
+    font-size: 1.125rem;
+  }
+  .prose-blog pre {
+    margin: 1.25rem -0.25rem;
+    padding: 0.75rem;
+    font-size: 0.8125rem;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
 /* TipTap editor surface */
 .tiptap-editor .ProseMirror {
   min-height: 320px;

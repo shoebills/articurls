@@ -65,7 +65,7 @@ export default function MarketingPage() {
               Everything lines up with how the Articurls API works—so what you see in the app is what your readers get.
             </p>
           </div>
-          <div className="mt-12 grid gap-5 sm:gap-6 md:grid-cols-3">
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {features.map((f) => (
               <Card
                 key={f.title}
@@ -92,7 +92,7 @@ export default function MarketingPage() {
               <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Pricing</h2>
               <p className="mt-3 text-muted-foreground leading-relaxed">Start free. Upgrade when you want Pro features.</p>
             </div>
-            <div className="mt-12 grid gap-6 md:grid-cols-2 md:gap-8 lg:gap-10">
+            <div className="mt-12 grid gap-6 sm:grid-cols-2 sm:gap-8 lg:gap-10">
               <Card className="relative flex flex-col border-border/80 bg-card/90 shadow-md transition-shadow duration-200 hover:shadow-lg">
                 <CardHeader>
                   <CardTitle>Free</CardTitle>
