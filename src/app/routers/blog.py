@@ -16,6 +16,7 @@ router = APIRouter(
     prefix="/blog"
 )
 
+
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
@@ -43,13 +44,19 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         candidate_slug = f"{base_slug}-{counter}"
         counter += 1
 
-    new_blog = models.Blog(title=request.title, 
-                           content=request.content, 
-                           user_id=current_user.user_id,
-                           slug=candidate_slug,
-                           seo_title=candidate_seo_title,
-                           seo_description=candidate_seo_description,
-                           status=models.BlogStatus.DRAFT)
+    if request.notify_subscribers:
+        utils.assert_pro(db, current_user.user_id)
+
+    new_blog = models.Blog(
+        title=request.title,
+        content=request.content,
+        user_id=current_user.user_id,
+        slug=candidate_slug,
+        seo_title=candidate_seo_title,
+        seo_description=candidate_seo_description,
+        notify_subscribers=request.notify_subscribers,
+        status=models.BlogStatus.DRAFT,
+    )
 
     db.add(new_blog)
     db.commit()
@@ -178,7 +185,10 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     )
 
     update_data = request.model_dump(exclude_unset=True)
-    
+
+    if update_data.get("notify_subscribers") is True:
+        utils.assert_pro(db, current_user.user_id)
+
     for key, value in update_data.items():
         setattr(db_blog, key, value)
 
@@ -239,7 +249,7 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     if not db_user:
         return db_blog
 
-    if first_publish and db_user.email_notifications:
+    if first_publish and db_blog.notify_subscribers:
         tasks.send_post_emails.delay(db_blog.blog_id)
     
     return db_blog

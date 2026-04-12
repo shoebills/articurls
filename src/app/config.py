@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
     uploads_dir: str = "uploads"
     public_base_url: str
+    custom_domain_cname_target: Optional[str] = None
     storage_backend: str = "local"
     r2_account_id: Optional[str] = None
     r2_bucket_name: Optional[str] = None

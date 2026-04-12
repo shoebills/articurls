@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .config import settings
-from .routers import blog, user, authentication, subscribers, public, analytics, billing
+from .routers import blog, user, authentication, subscribers, public, analytics, billing, custom_domain_public
 
 
 app = FastAPI()
@@ -16,6 +16,7 @@ app.include_router(blog.router)
 app.include_router(user.router)
 app.include_router(subscribers.router)
 app.include_router(analytics.router)
+app.include_router(custom_domain_public.router)
 app.include_router(public.router)
 app.include_router(billing.router)
 

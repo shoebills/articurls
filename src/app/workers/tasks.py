@@ -1,9 +1,10 @@
 from datetime import datetime, timezone
+from sqlalchemy import func
 from .celery_app import celery
-from .. import models, database
+from .. import database, models
 from ..email.service import send_new_post_email
 from ..security.oauth2 import create_unsubscribe_token
-from sqlalchemy import func
+from ..utils import is_pro_entitled, public_post_url
 
 
 @celery.task
@@ -23,19 +24,12 @@ def send_post_emails(blog_id: int):
         if not db_user:
             return
         
-        if db_user.email_notifications == False:
+        if not db_blog.notify_subscribers:
             return
-        
-        now = datetime.now(timezone.utc)
-        db_subscription = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id, 
-                                                                models.Subscriptions.plan_type == "pro", 
-                                                                models.Subscriptions.status.in_(("active", "past_due")),
-                                                                models.Subscriptions.current_period_end.isnot(None),
-                                                                models.Subscriptions.current_period_end >= now).first()
-        
-        if not db_subscription:
+
+        if not is_pro_entitled(db_user, db):
             return
-        
+
         existing_log = db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id, 
                                                          models.EmailLogs.user_id == db_user.user_id).first()
 
@@ -55,7 +49,7 @@ def send_post_emails(blog_id: int):
         db.add(new_log)
         db.commit()
         
-        blog_url = f"https://articurls.com/{db_user.user_name}/{db_blog.slug}"
+        blog_url = public_post_url(db_user, db_blog, db)
 
         for sub in db_subscribers:
             try:
@@ -119,7 +113,6 @@ def expired_pro_fallback():
         for sub in expired_subscriptions:
             db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
             if db_user:
-                db_user.email_notifications = False
                 db_user.verification_tick = False
 
             sub.plan_type = "free"

@@ -19,6 +19,7 @@ class CreateBlog(BaseModel):
     slug: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    notify_subscribers: bool = False
 
 
 class GetBlog(BaseModel):
@@ -28,6 +29,7 @@ class GetBlog(BaseModel):
     slug: str
     seo_title: Optional[str]
     seo_description: Optional[str]
+    notify_subscribers: bool
     status: BlogStatus
     scheduled_at: Optional[datetime]
     published_at: Optional[datetime]
@@ -70,6 +72,7 @@ class UpdateBlog(BaseModel):
     content: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    notify_subscribers: Optional[bool] = None
 
 class ScheduleBlog(BaseModel):
     scheduled_at: datetime

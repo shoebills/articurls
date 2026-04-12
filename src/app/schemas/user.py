@@ -21,7 +21,6 @@ class UserSettings(BaseModel):
     
     custom_domain: Optional[str] = None
     is_domain_verified: bool
-    email_notifications: bool
     verification_tick: bool
 
     class Config:
@@ -50,6 +49,5 @@ class UpdateUser(BaseModel):
 
 
 class UpdateProUser(BaseModel):
-    email_notifications: Optional[bool] = None
     verification_tick: Optional[bool] = None
     custom_domain: Optional[str] = None

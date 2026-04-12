@@ -1,10 +1,10 @@
 import hashlib
-from fastapi import Depends, APIRouter, HTTPException, status, Request
+from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from typing import List
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
-from typing import List
 
 
 router = APIRouter(
@@ -35,22 +35,24 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    db_blog = db.query(models.Blog).filter(models.Blog.slug == slug, models.Blog.user_id == db_user.user_id).first()
-
+    db_blog = (
+        db.query(models.Blog)
+        .filter(models.Blog.slug == slug, models.Blog.user_id == db_user.user_id)
+        .first()
+    )
     if not db_blog:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog not found")
-
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
     if db_blog.status != models.BlogStatus.PUBLISHED:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog not found")
-    
-    ip = request.client.host or ""
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
+
+    ip = (request.client.host if request.client else None) or ""
     user_agent = request.headers.get("user-agent", "")
     visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
-
-    new_visitor = models.Views(user_id=db_user.user_id,
-                               blog_id=db_blog.blog_id,
-                                       visitor_hash=visitor_hash)
-    db.add(new_visitor)
+    db.add(models.Views(
+            user_id=db_user.user_id,
+            blog_id=db_blog.blog_id,
+            visitor_hash=visitor_hash,
+        ))
     db.commit()
 
     return db_blog
