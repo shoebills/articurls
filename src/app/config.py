@@ -1,4 +1,4 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
 
@@ -41,8 +41,8 @@ class Settings(BaseSettings):
 
     # Used in verification email (should be the Next.js app origin, e.g. https://app.articurls.com)
     app_base_url: str = "http://localhost:3000"
+    internal_api_secret: Optional[str] = None
 
-    class Config:
-        env_file = ".env"
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
