@@ -94,6 +94,48 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
     return db_blog
 
 
+@router.patch("/ads/selection", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
+def update_ads_selection(
+    request: blog.AdsSelectionUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    utils.assert_pro(db, current_user.user_id)
+
+    selected_ids = set(request.blog_ids or [])
+    all_blogs = db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id).all()
+    user_blog_ids = {b.blog_id for b in all_blogs}
+    published_blog_ids = {b.blog_id for b in all_blogs if b.status == models.BlogStatus.PUBLISHED}
+
+    if not selected_ids.issubset(user_blog_ids):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blog selection.")
+    if not selected_ids.issubset(published_blog_ids):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ads can only be enabled on published blogs.")
+
+    for db_blog in all_blogs:
+        db_blog.ads_enabled = db_blog.blog_id in selected_ids
+
+    db.commit()
+
+    results = db.query(
+        models.Blog,
+        func.count(models.Views.view_id).label("view_count")
+    ).outerjoin(
+        models.Views, models.Blog.blog_id == models.Views.blog_id
+    ).filter(
+        models.Blog.user_id == current_user.user_id
+    ).group_by(
+        models.Blog.blog_id
+    ).all()
+
+    blogs = []
+    for db_blog, view_count in results:
+        db_blog.view_count = view_count
+        db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        blogs.append(db_blog)
+    return blogs
+
+
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
 async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
 
@@ -227,7 +269,6 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
         detail="Not authorized to perform this action"
     )
     
-    # Remove dependent rows that have restrictive foreign keys before deleting the blog.
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)

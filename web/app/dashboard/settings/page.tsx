@@ -53,8 +53,6 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [seo_title, setSeoTitle] = useState("");
-  const [seo_description, setSeoDescription] = useState("");
   const [bio, setBio] = useState("");
   const [link, setLink] = useState("");
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>({
@@ -83,8 +81,6 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setSeoTitle(u.seo_title || "");
-      setSeoDescription(u.seo_description || "");
       setBio(u.bio || "");
       setLink(u.link || "");
       const nextLinks: Record<SocialPlatform, string> = {
@@ -116,8 +112,6 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setSeoTitle(ctxUser.seo_title || "");
-      setSeoDescription(ctxUser.seo_description || "");
       setBio(ctxUser.bio || "");
       setLink(ctxUser.link || "");
       const nextLinks: Record<SocialPlatform, string> = {
@@ -152,8 +146,6 @@ export default function SettingsPage() {
         name,
         user_name,
         email,
-        seo_title,
-        seo_description,
         bio,
         link,
         contact_email: socialLinks.contact_email || null,
@@ -439,14 +431,6 @@ export default function SettingsPage() {
                 </Button>
               )
             ) : null}
-          </div>
-          <div className="space-y-2.5">
-            <Label htmlFor="seo_title">Public SEO title</Label>
-            <Input id="seo_title" value={seo_title} onChange={(e) => setSeoTitle(e.target.value)} />
-          </div>
-          <div className="space-y-2.5">
-            <Label htmlFor="seo_description">Public SEO description</Label>
-            <Input id="seo_description" value={seo_description} onChange={(e) => setSeoDescription(e.target.value)} />
           </div>
           <div className="border-t border-border/60 pt-6">
             <Button size="lg" onClick={saveBase} disabled={busy}>

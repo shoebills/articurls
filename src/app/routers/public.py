@@ -58,6 +58,32 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
 
     return db_blog
 
+
+@router.get("/{user_name}/blog/{slug}/ads", response_model=blog.PublicBlogAds, status_code=status.HTTP_200_OK)
+def get_blog_ads(user_name: str, slug: str, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db_blog = (
+        db.query(models.Blog)
+        .filter(
+            models.Blog.slug == slug,
+            models.Blog.user_id == db_user.user_id,
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+        .first()
+    )
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
+
+    enabled = bool(db_user.ads_enabled and db_blog.ads_enabled and db_user.ad_code)
+    return {
+        "enabled": enabled,
+        "ad_code": db_user.ad_code if enabled else None,
+        "ad_frequency": db_user.ad_frequency or 3,
+    }
+
 @router.get("/{user_name}", response_model=user.PublicUser)
 def get_user(user_name: str, db: Session = Depends(get_db)):
 

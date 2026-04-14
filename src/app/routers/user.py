@@ -159,6 +159,46 @@ def update_design_settings(
     db.refresh(db_user)
     return db_user
 
+
+@router.get("/monetization", response_model=user.MonetizationSettings, status_code=status.HTTP_200_OK)
+def get_monetization_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return db_user
+
+
+@router.patch("/monetization", response_model=user.MonetizationSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_monetization_settings(
+    request: user.MonetizationSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    is_pro=Depends(require_pro),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    update_data = request.model_dump(exclude_unset=True)
+    if "ad_frequency" in update_data and update_data["ad_frequency"] is not None:
+        ad_frequency = int(update_data["ad_frequency"])
+        if ad_frequency < 2 or ad_frequency > 10:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ad frequency must be between 2 and 10.")
+        db_user.ad_frequency = ad_frequency
+
+    if "ad_code" in update_data:
+        db_user.ad_code = (update_data["ad_code"] or "").strip() or None
+
+    if "ads_enabled" in update_data:
+        requested_enabled = bool(update_data["ads_enabled"])
+        if requested_enabled and not (db_user.ad_code and db_user.ad_code.strip()):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Save ad code before enabling ads.")
+        db_user.ads_enabled = requested_enabled
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     

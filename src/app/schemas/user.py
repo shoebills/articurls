@@ -87,3 +87,18 @@ class UpdateProUser(BaseModel):
     navbar_enabled: Optional[bool] = None
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
+
+
+class MonetizationSettings(BaseModel):
+    ads_enabled: bool
+    ad_code: Optional[str] = None
+    ad_frequency: int = 3
+
+    class Config:
+        from_attributes = True
+
+
+class MonetizationSettingsUpdate(BaseModel):
+    ads_enabled: Optional[bool] = None
+    ad_code: Optional[str] = None
+    ad_frequency: Optional[int] = None

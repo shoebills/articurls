@@ -4,7 +4,9 @@ import type {
   BlogListItem,
   BlogMediaOut,
   DesignSettings,
+  MonetizationSettings,
   PublicBlog,
+  PublicBlogAds,
   UserPage,
   PublicUser,
   SubscribersAnalytics,
@@ -142,6 +144,22 @@ export async function getDesignSettings(token: string): Promise<DesignSettings> 
   return apiFetch("/user/design", { token });
 }
 
+export async function getMonetizationSettings(token: string): Promise<MonetizationSettings> {
+  return apiFetch("/user/monetization", { token });
+}
+
+export async function patchMonetizationSettings(
+  token: string,
+  body: Partial<MonetizationSettings>
+): Promise<MonetizationSettings> {
+  return apiFetch("/user/monetization", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function patchDesignSettings(token: string, body: DesignSettings): Promise<DesignSettings> {
   return apiFetch("/user/design", {
     method: "PATCH",
@@ -245,6 +263,7 @@ export async function updateBlog(
     seo_title?: string | null;
     seo_description?: string | null;
     notify_subscribers?: boolean;
+    ads_enabled?: boolean;
   }
 ): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}`, {
@@ -252,6 +271,15 @@ export async function updateBlog(
     token,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
+  });
+}
+
+export async function updateAdsBlogSelection(token: string, blog_ids: number[]): Promise<BlogListItem[]> {
+  return apiFetch("/blog/ads/selection", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blog_ids }),
   });
 }
 
@@ -304,6 +332,10 @@ export async function getPublicBlogs(userName: string): Promise<PublicBlog[]> {
 
 export async function getPublicBlog(userName: string, slug: string): Promise<PublicBlog> {
   return apiFetch(`/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}`);
+}
+
+export async function getPublicBlogAds(userName: string, slug: string): Promise<PublicBlogAds> {
+  return apiFetch(`/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}/ads`);
 }
 
 /** Public: request email subscription to a writer’s posts (confirmation email is sent when applicable). */

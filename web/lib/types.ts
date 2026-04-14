@@ -14,6 +14,7 @@ export interface BlogListItem {
   seo_title: string | null;
   seo_description: string | null;
   notify_subscribers: boolean;
+  ads_enabled: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
   published_at: string | null;
@@ -25,7 +26,7 @@ export interface BlogListItem {
   excerpt?: string | null;
 }
 
-export interface BlogDetail extends Omit<BlogListItem, "view_count" | "excerpt"> {}
+export type BlogDetail = Omit<BlogListItem, "view_count" | "excerpt">;
 
 export interface PublicBlog {
   blog_id: number;
@@ -34,6 +35,7 @@ export interface PublicBlog {
   slug: string;
   seo_title: string | null;
   seo_description: string | null;
+  ads_enabled: boolean;
   published_at: string | null;
   updated_at: string;
   user_id: number;
@@ -102,6 +104,18 @@ export interface DesignSettings {
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
+}
+
+export interface MonetizationSettings {
+  ads_enabled: boolean;
+  ad_code: string | null;
+  ad_frequency: number;
+}
+
+export interface PublicBlogAds {
+  enabled: boolean;
+  ad_code: string | null;
+  ad_frequency: number;
 }
 
 export interface SubscriptionOut {

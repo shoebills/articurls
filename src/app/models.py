@@ -33,6 +33,9 @@ class User(Base):
     navbar_enabled = Column(Boolean, nullable=False, default=False)
     nav_blog_name = Column(String, nullable=True)
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
+    ads_enabled = Column(Boolean, nullable=False, default=False)
+    ad_code = Column(Text, nullable=True)
+    ad_frequency = Column(Integer, nullable=False, default=3)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -57,6 +60,7 @@ class Blog(Base):
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
+    ads_enabled = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
@@ -152,7 +156,6 @@ class PaymentWebhooks(Base):
     payload = Column(JSON, nullable=False)
     processed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-
 
 class UserPage(Base):
     __tablename__ = "user_pages"

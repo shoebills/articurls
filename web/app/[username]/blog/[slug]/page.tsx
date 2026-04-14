@@ -3,9 +3,11 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
-import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
+import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { Menu } from "lucide-react";
+import { injectAdsIntoHtml } from "@/lib/ad-injection";
+import { AdSlot } from "@/components/ad-slot";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -30,6 +32,14 @@ async function loadPages(username: string): Promise<UserPage[]> {
   return res.json();
 }
 
+async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAds | null> {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}/ads`, {
+    cache: "no-store",
+  });
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
   if (isReservedUsername(username)) return {};
@@ -45,9 +55,18 @@ export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
   if (isReservedUsername(username)) notFound();
 
-  const [blog, author, pages] = await Promise.all([loadBlog(username, slug), loadUser(username), loadPages(username)]);
+  const [blog, author, pages, adConfig] = await Promise.all([
+    loadBlog(username, slug),
+    loadUser(username),
+    loadPages(username),
+    loadBlogAds(username, slug),
+  ]);
   if (!blog || !author) notFound();
   const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
+  const adSegments =
+    adConfig?.enabled && adConfig.ad_code
+      ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
+      : [{ type: "html" as const, html: blog.content }];
 
   return (
     <article className="min-h-screen bg-background">
@@ -145,10 +164,15 @@ export default async function PublicBlogPage({ params }: Props) {
             )}
           </div>
         </header>
-        <div
-          className="prose-blog mt-12"
-          dangerouslySetInnerHTML={{ __html: blog.content }}
-        />
+        <div className="mt-12">
+          {adSegments.map((segment, idx) =>
+            segment.type === "html" ? (
+              <div key={`html-${idx}`} className="prose-blog" dangerouslySetInnerHTML={{ __html: segment.html }} />
+            ) : adConfig?.ad_code ? (
+              <AdSlot key={segment.key} slotId={segment.key} adCode={adConfig.ad_code} slotType={segment.slotType} />
+            ) : null
+          )}
+        </div>
         {blog.media?.length > 0 && (
           <div className="mt-12 space-y-6">
             {blog.media.map((m) => (
