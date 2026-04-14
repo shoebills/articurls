@@ -11,6 +11,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Check, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 /** Label → control spacing; same for text inputs and plan picker. */
 const FIELD_GROUP = "flex flex-col gap-2.5";
@@ -77,6 +78,7 @@ function SignupForm() {
 
   return (
     <AuthPageShell>
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold tracking-tight">Create account</CardTitle>
@@ -188,7 +190,6 @@ function SignupForm() {
                 </button>
               </div>
             </div>
-            {err && <p className="text-sm leading-relaxed text-destructive">{err}</p>}
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? "Creating…" : "Sign up"}
             </Button>

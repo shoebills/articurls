@@ -47,6 +47,15 @@ export interface PublicUser {
   user_name: string;
   seo_title: string;
   seo_description: string;
+  bio: string | null;
+  link: string | null;
+  contact_email: string | null;
+  instagram_link: string | null;
+  x_link: string | null;
+  pinterest_link: string | null;
+  facebook_link: string | null;
+  linkedin_link: string | null;
+  github_link: string | null;
   profile_image_url: string | null;
   verification_tick: boolean;
 }
@@ -58,6 +67,15 @@ export interface UserSettings {
   email: string;
   seo_title: string | null;
   seo_description: string | null;
+  bio: string | null;
+  link: string | null;
+  contact_email: string | null;
+  instagram_link: string | null;
+  x_link: string | null;
+  pinterest_link: string | null;
+  facebook_link: string | null;
+  linkedin_link: string | null;
+  github_link: string | null;
   profile_image_url: string | null;
   custom_domain: string | null;
   is_domain_verified: boolean;

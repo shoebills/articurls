@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { viewsAnalytics, subscribersAnalytics, exportSubscribersCsv, ApiError } from "@/lib/api";
+import { useEffect, useMemo, useState } from "react";
+import { viewsAnalytics, subscribersAnalytics, exportSubscribersCsv, listBlogs, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import type { BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
 
@@ -46,6 +48,8 @@ const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
+const POSTS_PAGE_SIZE = 10;
+
 export default function AnalyticsPage() {
   const { token } = useAuth();
   const [vPeriod, setVPeriod] = useState<(typeof PERIODS)[number]>("28d");
@@ -59,6 +63,9 @@ export default function AnalyticsPage() {
   } | null>(null);
   const [chartViews, setChartViews] = useState<{ name: string; views: number; visitors: number }[]>([]);
   const [chartSubs, setChartSubs] = useState<{ name: string; gained: number; lost: number }[]>([]);
+  const [posts, setPosts] = useState<BlogListItem[]>([]);
+  const [postSort, setPostSort] = useState<"most_viewed" | "latest">("most_viewed");
+  const [postPage, setPostPage] = useState(1);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -69,15 +76,17 @@ export default function AnalyticsPage() {
       try {
         const vPeriods = chartPeriodsForSelection(vPeriod);
         const sPeriods = chartPeriodsForSelection(sPeriod);
-        const [v, s, viewRows, subRows] = await Promise.all([
+        const [v, s, viewRows, subRows, postRows] = await Promise.all([
           viewsAnalytics(token, vPeriod),
           subscribersAnalytics(token, sPeriod),
           Promise.all(vPeriods.map((p) => viewsAnalytics(token, p))),
           Promise.all(sPeriods.map((p) => subscribersAnalytics(token, p))),
+          listBlogs(token),
         ]);
         if (cancelled) return;
         setViews(v);
         setSubs(s);
+        setPosts(postRows);
         setChartViews(
           viewRows.map((d, i) => ({
             name: vPeriods[i],
@@ -101,6 +110,32 @@ export default function AnalyticsPage() {
     };
   }, [token, vPeriod, sPeriod]);
 
+  const sortedPosts = useMemo(() => {
+    const rows = [...posts];
+    const comparePublished = (a: BlogListItem, b: BlogListItem) => {
+      const aPub = a.published_at;
+      const bPub = b.published_at;
+      if (aPub && bPub) return new Date(bPub).getTime() - new Date(aPub).getTime();
+      if (aPub && !bPub) return -1;
+      if (!aPub && bPub) return 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    };
+    if (postSort === "latest") {
+      rows.sort(comparePublished);
+      return rows;
+    }
+    rows.sort((a, b) => {
+      const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
+      if (byViews !== 0) return byViews;
+      return comparePublished(a, b);
+    });
+    return rows;
+  }, [posts, postSort]);
+
+  const postPageCount = Math.max(1, Math.ceil(sortedPosts.length / POSTS_PAGE_SIZE));
+  const safePostPage = Math.min(postPage, postPageCount);
+  const pagedPosts = sortedPosts.slice((safePostPage - 1) * POSTS_PAGE_SIZE, safePostPage * POSTS_PAGE_SIZE);
+
   async function exportCsv() {
     if (!token) return;
     try {
@@ -119,7 +154,6 @@ export default function AnalyticsPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-10">
       <h1 className="text-2xl font-bold">Analytics</h1>
-      {err && <p className="text-sm text-destructive">{err}</p>}
 
       <Tabs defaultValue="views">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
@@ -204,6 +238,83 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader className="space-y-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle>Posts</CardTitle>
+                  <CardDescription>Sort by latest published or most viewed.</CardDescription>
+                </div>
+                <div className="w-full sm:w-52">
+                  <Select
+                    value={postSort}
+                    onValueChange={(v) => {
+                      setPostSort(v as "most_viewed" | "latest");
+                      setPostPage(1);
+                    }}
+                  >
+                    <SelectTrigger aria-label="Sort posts list">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="most_viewed">Most viewed</SelectItem>
+                      <SelectItem value="latest">Latest</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              {pagedPosts.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No posts yet.</p>
+              ) : (
+                <>
+                  <ul className="divide-y divide-border rounded-lg border border-border">
+                    {pagedPosts.map((post) => (
+                      <li key={post.blog_id} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium">{post.title || "Untitled"}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {post.published_at
+                                ? `Published ${new Date(post.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+                                : "Not published"}
+                            </p>
+                          </div>
+                          <p className="shrink-0 text-sm text-muted-foreground">
+                            {post.view_count ?? 0} view{(post.view_count ?? 0) === 1 ? "" : "s"}
+                          </p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Page {safePostPage} of {postPageCount}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostPage((p) => Math.max(1, p - 1))}
+                        disabled={safePostPage <= 1}
+                      >
+                        Prev
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setPostPage((p) => Math.min(postPageCount, p + 1))}
+                        disabled={safePostPage >= postPageCount}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="subscribers" className="space-y-6">
@@ -286,6 +397,7 @@ export default function AnalyticsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
   const { token } = useAuth();
@@ -53,12 +54,10 @@ export default function BillingPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-8">
       <h1 className="text-2xl font-bold">Billing</h1>
-      {err && <p className="text-sm text-destructive">{err}</p>}
 
       <Card>
         <CardHeader>
           <CardTitle>Current plan</CardTitle>
-          <CardDescription>Synced from your Articurls subscription record.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap items-center gap-2">
@@ -115,6 +114,7 @@ export default function BillingPage() {
           )}
         </CardContent>
       </Card>
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
 }

@@ -17,6 +17,15 @@ class UserSettings(BaseModel):
     email: EmailStr
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    bio: Optional[str] = None
+    link: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    instagram_link: Optional[str] = None
+    x_link: Optional[str] = None
+    pinterest_link: Optional[str] = None
+    facebook_link: Optional[str] = None
+    linkedin_link: Optional[str] = None
+    github_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     
     custom_domain: Optional[str] = None
@@ -32,6 +41,15 @@ class PublicUser(BaseModel):
     user_name: str
     seo_title: str
     seo_description: str
+    bio: Optional[str] = None
+    link: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    instagram_link: Optional[str] = None
+    x_link: Optional[str] = None
+    pinterest_link: Optional[str] = None
+    facebook_link: Optional[str] = None
+    linkedin_link: Optional[str] = None
+    github_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     verification_tick: bool
 
@@ -45,6 +63,15 @@ class UpdateUser(BaseModel):
     email: Optional[EmailStr] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    bio: Optional[str] = None
+    link: Optional[str] = None
+    contact_email: Optional[EmailStr] = None
+    instagram_link: Optional[str] = None
+    x_link: Optional[str] = None
+    pinterest_link: Optional[str] = None
+    facebook_link: Optional[str] = None
+    linkedin_link: Optional[str] = None
+    github_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
 

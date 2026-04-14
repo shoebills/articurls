@@ -24,6 +24,7 @@ import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
@@ -172,7 +173,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   if (loading || !blog) {
-    return <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>;
+    return (
+      <>
+        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      </>
+    );
   }
 
   const liveUrl =
@@ -200,8 +206,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
       </div>
-
-      {err && <p className="mb-4 text-sm text-destructive">{err}</p>}
 
       <Input
         className="mb-4 min-h-0 border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
@@ -309,6 +313,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <SchedulePublishDialog open={scheduleOpen} onOpenChange={setScheduleOpen} onConfirm={doSchedule} />
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
 }

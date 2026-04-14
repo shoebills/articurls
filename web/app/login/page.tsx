@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ApiError } from "@/lib/api";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 
 function LoginForm() {
@@ -42,6 +43,7 @@ function LoginForm() {
 
   return (
     <AuthPageShell>
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold tracking-tight">Log in</CardTitle>
@@ -76,7 +78,6 @@ function LoginForm() {
                 required
               />
             </div>
-            {err && <p className="text-sm leading-relaxed text-destructive">{err}</p>}
             <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}
             </Button>

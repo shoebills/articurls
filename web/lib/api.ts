@@ -87,7 +87,29 @@ export async function getMe(token: string): Promise<UserSettings> {
   return apiFetch("/user/me", { token });
 }
 
-export async function patchMe(token: string, body: Partial<Pick<UserSettings, "name" | "user_name" | "email" | "seo_title" | "seo_description" | "profile_image_url">>): Promise<UserSettings> {
+export async function patchMe(
+  token: string,
+  body: Partial<
+    Pick<
+      UserSettings,
+      | "name"
+      | "user_name"
+      | "email"
+      | "seo_title"
+      | "seo_description"
+      | "bio"
+      | "link"
+      | "contact_email"
+      | "instagram_link"
+      | "x_link"
+      | "pinterest_link"
+      | "facebook_link"
+      | "linkedin_link"
+      | "github_link"
+      | "profile_image_url"
+    >
+  >
+): Promise<UserSettings> {
   return apiFetch("/user/me", {
     method: "PATCH",
     token,

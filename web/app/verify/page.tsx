@@ -7,6 +7,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const TOKEN_KEY = "articurls_token";
 
@@ -48,6 +49,7 @@ function VerifyInner() {
 
   return (
     <AuthPageShell>
+      <FloatingErrorToast message={err} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-2">
           <CardTitle className="text-2xl font-bold tracking-tight">Email verification</CardTitle>
@@ -55,12 +57,9 @@ function VerifyInner() {
         </CardHeader>
         <CardContent className="space-y-5">
           {err && (
-            <>
-              <p className="text-sm leading-relaxed text-destructive">{err}</p>
-              <Button className="w-full" size="lg" variant="outline" onClick={() => (window.location.href = "/login")}>
-                Back to log in
-              </Button>
-            </>
+            <Button className="w-full" size="lg" variant="outline" onClick={() => (window.location.href = "/login")}>
+              Back to log in
+            </Button>
           )}
         </CardContent>
       </Card>

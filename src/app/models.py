@@ -1,19 +1,7 @@
 import enum
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import (
-    Column,
-    String,
-    Integer,
-    Enum,
-    DateTime,
-    Text,
-    JSON,
-    Index,
-    UniqueConstraint,
-    func,
-    ForeignKey,
-    Boolean,
-)
+from sqlalchemy import Column, String, Integer, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean
+
 
 class Base(DeclarativeBase):
     pass
@@ -28,6 +16,15 @@ class User(Base):
     password = Column(String, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
+    bio = Column(Text, nullable=True)
+    link = Column(String, nullable=True)
+    contact_email = Column(String, nullable=True)
+    instagram_link = Column(String, nullable=True)
+    x_link = Column(String, nullable=True)
+    pinterest_link = Column(String, nullable=True)
+    facebook_link = Column(String, nullable=True)
+    linkedin_link = Column(String, nullable=True)
+    github_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     custom_domain = Column(String, nullable=True, default=None)

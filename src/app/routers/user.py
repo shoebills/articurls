@@ -145,6 +145,17 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
     if "email" in update_data and update_data["email"] is not None:
         update_data["email"] = normalize_email(str(update_data["email"]))
 
+    if "contact_email" in update_data and update_data["contact_email"] is not None:
+        update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
+
+    if "bio" in update_data and update_data["bio"] is not None:
+        word_count = len(update_data["bio"].split())
+        if word_count > 200:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Bio must be 200 words or fewer",
+            )
+
     for key, value in update_data.items():
         setattr(db_user, key, value)
 

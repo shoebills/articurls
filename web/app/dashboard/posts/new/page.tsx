@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBlog, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogDetail } from "@/lib/types";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 let newDraftPromise: Promise<BlogDetail> | null = null;
 
@@ -54,8 +55,8 @@ export default function NewPostPage() {
     return (
       <div className="mx-auto max-w-lg">
         <h1 className="text-2xl font-bold">New post</h1>
-        <p className="mt-4 text-sm text-destructive">{err}</p>
-        <p className="mt-2 text-sm text-muted-foreground">Go back to the dashboard and try again.</p>
+        <p className="mt-4 text-sm text-muted-foreground">We couldn&apos;t create a draft. Go back to the dashboard and try again.</p>
+        <FloatingErrorToast message={err} />
       </div>
     );
   }

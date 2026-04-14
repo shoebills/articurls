@@ -54,15 +54,33 @@ export default async function PublicBlogPage({ params }: Props) {
           <h1 className="text-balance break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {blog.title}
           </h1>
-          {blog.published_at && (
-            <time className="mt-4 block text-sm text-muted-foreground" dateTime={blog.published_at}>
-              {new Date(blog.published_at).toLocaleDateString(undefined, {
-                year: "numeric",
-                month: "long",
-                day: "numeric",
-              })}
-            </time>
-          )}
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <Link
+              href={`/${author.user_name}`}
+              className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
+            >
+              {author.profile_image_url ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={assetUrl(author.profile_image_url)}
+                  alt=""
+                  className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70"
+                />
+              ) : (
+                <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
+              )}
+              <span className="truncate text-sm">@{author.user_name}</span>
+            </Link>
+            {blog.published_at && (
+              <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
+                {new Date(blog.published_at).toLocaleDateString(undefined, {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                })}
+              </time>
+            )}
+          </div>
         </header>
         <div
           className="prose-blog mt-12"
@@ -79,12 +97,13 @@ export default async function PublicBlogPage({ params }: Props) {
         <div className="mt-14">
           <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
         </div>
-        <footer className="mt-12 border-t border-border pt-8 text-center text-xs text-muted-foreground">
-          <a href={MARKETING_ORIGIN} className="underline">
-            Published with Articurls
-          </a>
-        </footer>
       </div>
+      <a
+        href={MARKETING_ORIGIN}
+        className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+      >
+        Made with Articurls
+      </a>
     </article>
   );
 }

@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 type Props = {
   userName: string;
@@ -103,56 +104,68 @@ export function SubscribeToAuthor({
           </Button>
         </form>
       )}
-      {status === "error" && message && (
-        <p className="mt-2 text-sm text-destructive" role="alert">
-          {message}
-        </p>
-      )}
     </>
   );
 
+  const errorToast =
+    status === "error" && message ? (
+      <FloatingErrorToast
+        message={message}
+        onDismiss={() => {
+          setStatus("idle");
+          setMessage(null);
+        }}
+      />
+    ) : null;
+
   if (mode === "dialog") {
     return (
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          setOpen(next);
-          if (!next) resetForm();
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button
-            type="button"
-            variant="default"
-            size="sm"
-            className={cn(
-              "h-11 min-h-11 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:shrink-0",
-              triggerClassName,
-            )}
-          >
-            Subscribe
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Email updates</DialogTitle>
-            <DialogDescription>{description}</DialogDescription>
-          </DialogHeader>
-          {formBody}
-        </DialogContent>
-      </Dialog>
+      <>
+        <Dialog
+          open={open}
+          onOpenChange={(next) => {
+            setOpen(next);
+            if (!next) resetForm();
+          }}
+        >
+          <DialogTrigger asChild>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className={cn(
+                "h-11 min-h-11 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:shrink-0",
+                triggerClassName,
+              )}
+            >
+              Subscribe
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Email updates</DialogTitle>
+              <DialogDescription>{description}</DialogDescription>
+            </DialogHeader>
+            {formBody}
+          </DialogContent>
+        </Dialog>
+        {errorToast}
+      </>
     );
   }
 
   return (
-    <div
-      className={
-        className ?? "rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5"
-      }
-    >
-      <p className="text-sm font-medium text-foreground">Email updates</p>
-      <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-      {formBody}
-    </div>
+    <>
+      <div
+        className={
+          className ?? "rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5"
+        }
+      >
+        <p className="text-sm font-medium text-foreground">Email updates</p>
+        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        {formBody}
+      </div>
+      {errorToast}
+    </>
   );
 }
