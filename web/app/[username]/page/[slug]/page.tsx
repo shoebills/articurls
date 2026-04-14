@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicUser, UserPage } from "@/lib/types";
@@ -26,6 +27,18 @@ async function loadPage(username: string, slug: string): Promise<UserPage | null
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { username, slug } = await params;
+  if (isReservedUsername(username)) return {};
+  const page = await loadPage(username, slug);
+  if (!page) return { title: "Not found" };
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`;
+  return {
+    title: page.title,
+    alternates: { canonical },
+  };
 }
 
 export default async function PublicCustomPage({ params }: Props) {

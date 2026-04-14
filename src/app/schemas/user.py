@@ -102,3 +102,22 @@ class MonetizationSettingsUpdate(BaseModel):
     ads_enabled: Optional[bool] = None
     ad_code: Optional[str] = None
     ad_frequency: Optional[int] = None
+
+
+class SeoSettings(BaseModel):
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    robots_mode: Literal["auto", "custom", "off"] = "auto"
+    robots_custom_rules: Optional[str] = None
+    sitemap_enabled: bool = True
+
+    class Config:
+        from_attributes = True
+
+
+class SeoSettingsUpdate(BaseModel):
+    seo_title: Optional[str] = None
+    seo_description: Optional[str] = None
+    robots_mode: Optional[Literal["auto", "custom", "off"]] = None
+    robots_custom_rules: Optional[str] = None
+    sitemap_enabled: Optional[bool] = None

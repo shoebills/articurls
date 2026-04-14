@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import { MARKETING_ORIGIN, API_URL, assetUrl } from "@/lib/env";
 import Link from "next/link";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
@@ -23,7 +23,11 @@ async function blogByHost(host: string, slug: string): Promise<PublicBlog> {
     { cache: "no-store", redirect: "manual", headers: apiHeaders() }
   );
 
-  if (res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308) {
+  if (res.status === 301 || res.status === 308) {
+    const location = res.headers.get("location");
+    if (location) permanentRedirect(location);
+  }
+  if (res.status === 302 || res.status === 307) {
     const location = res.headers.get("location");
     if (location) redirect(location);
   }
@@ -36,7 +40,11 @@ async function userByCustomHost(host: string): Promise<PublicUser> {
     `${SERVER_API_URL}/public/custom-domain/user?host=${encodeURIComponent(host)}`,
     { cache: "no-store", redirect: "manual", headers: apiHeaders() }
   );
-  if (res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308) {
+  if (res.status === 301 || res.status === 308) {
+    const location = res.headers.get("location");
+    if (location) permanentRedirect(location);
+  }
+  if (res.status === 302 || res.status === 307) {
     const location = res.headers.get("location");
     if (location) redirect(location);
   }
@@ -58,7 +66,11 @@ async function blogsByHost(host: string): Promise<PublicBlog[]> {
     `${SERVER_API_URL}/public/custom-domain/blogs?host=${encodeURIComponent(host)}`,
     { cache: "no-store", redirect: "manual", headers: apiHeaders() }
   );
-  if (res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308) {
+  if (res.status === 301 || res.status === 308) {
+    const location = res.headers.get("location");
+    if (location) permanentRedirect(location);
+  }
+  if (res.status === 302 || res.status === 307) {
     const location = res.headers.get("location");
     if (location) redirect(location);
   }
@@ -71,7 +83,11 @@ async function pagesByHost(host: string): Promise<UserPage[]> {
     `${SERVER_API_URL}/public/custom-domain/pages?host=${encodeURIComponent(host)}`,
     { cache: "no-store", redirect: "manual", headers: apiHeaders() }
   );
-  if (res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308) {
+  if (res.status === 301 || res.status === 308) {
+    const location = res.headers.get("location");
+    if (location) permanentRedirect(location);
+  }
+  if (res.status === 302 || res.status === 307) {
     const location = res.headers.get("location");
     if (location) redirect(location);
   }
@@ -84,7 +100,11 @@ async function pageByHost(host: string, slug: string): Promise<UserPage> {
     `${SERVER_API_URL}/public/custom-domain/page/${encodeURIComponent(slug)}?host=${encodeURIComponent(host)}`,
     { cache: "no-store", redirect: "manual", headers: apiHeaders() }
   );
-  if (res.status === 301 || res.status === 302 || res.status === 307 || res.status === 308) {
+  if (res.status === 301 || res.status === 308) {
+    const location = res.headers.get("location");
+    if (location) permanentRedirect(location);
+  }
+  if (res.status === 302 || res.status === 307) {
     const location = res.headers.get("location");
     if (location) redirect(location);
   }
@@ -97,19 +117,28 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const h = await headers();
   const host = (h.get("host") || "").split(":")[0];
   if (!host) return { title: "Not found" };
+  const canonicalBase = `https://${host}`;
   if (slug.length === 0) {
     const author = await userByCustomHost(host);
     return {
       title: author.seo_title || `${author.name}'s Blog`,
       description: author.seo_description || undefined,
+      alternates: { canonical: `${canonicalBase}/` },
     };
   }
   if (slug[0] === "page" && slug[1]) {
     const page = await pageByHost(host, slug[1]);
-    return { title: page.title };
+    return {
+      title: page.title,
+      alternates: { canonical: `${canonicalBase}/page/${encodeURIComponent(slug[1])}` },
+    };
   }
   const blog = await blogByHost(host, slug[0]);
-  return { title: blog.seo_title || blog.title, description: blog.seo_description || undefined };
+  return {
+    title: blog.seo_title || blog.title,
+    description: blog.seo_description || undefined,
+    alternates: { canonical: `${canonicalBase}/${encodeURIComponent(slug[0])}` },
+  };
 }
 
 export default async function CustomDomainPostPage({ params }: Props) {

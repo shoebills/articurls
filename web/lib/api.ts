@@ -5,6 +5,7 @@ import type {
   BlogMediaOut,
   DesignSettings,
   MonetizationSettings,
+  SeoSettings,
   PublicBlog,
   PublicBlogAds,
   UserPage,
@@ -142,6 +143,22 @@ export async function patchProMe(
 
 export async function getDesignSettings(token: string): Promise<DesignSettings> {
   return apiFetch("/user/design", { token });
+}
+
+export async function getSeoSettings(token: string): Promise<SeoSettings> {
+  return apiFetch("/user/seo", { token });
+}
+
+export async function patchSeoSettings(
+  token: string,
+  body: Partial<SeoSettings>
+): Promise<SeoSettings> {
+  return apiFetch("/user/seo", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
 export async function getMonetizationSettings(token: string): Promise<MonetizationSettings> {

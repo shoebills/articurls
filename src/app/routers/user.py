@@ -14,6 +14,7 @@ from fastapi import UploadFile, File
 from ..storage.service import save_image_local
 from ..utils import normalize_email, require_pro, user_by_email
 from ..domains import normalize_custom_domain, verify_custom_domain_dns
+from ..seo import _sanitize_custom_robots_rules
 
 router = APIRouter(
     tags=["User"],
@@ -155,6 +156,44 @@ def update_design_settings(
     db_user.navbar_enabled = request.navbar_enabled
     db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
     db_user.nav_menu_enabled = request.nav_menu_enabled
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+
+@router.get("/seo", response_model=user.SeoSettings, status_code=status.HTTP_200_OK)
+def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return db_user
+
+
+@router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_seo_settings(
+    request: user.SeoSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    update_data = request.model_dump(exclude_unset=True)
+
+    if "seo_title" in update_data:
+        db_user.seo_title = (update_data["seo_title"] or "").strip() or None
+    if "seo_description" in update_data:
+        db_user.seo_description = (update_data["seo_description"] or "").strip() or None
+    if "robots_mode" in update_data:
+        db_user.robots_mode = update_data["robots_mode"] or "auto"
+    if "robots_custom_rules" in update_data:
+        raw_rules = (update_data["robots_custom_rules"] or "").strip()
+        sanitized = _sanitize_custom_robots_rules(raw_rules) if raw_rules else ""
+        db_user.robots_custom_rules = sanitized or None
+    if "sitemap_enabled" in update_data and update_data["sitemap_enabled"] is not None:
+        db_user.sitemap_enabled = bool(update_data["sitemap_enabled"])
+
     db.commit()
     db.refresh(db_user)
     return db_user

@@ -45,9 +45,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (isReservedUsername(username)) return {};
   const blog = await loadBlog(username, slug);
   if (!blog) return { title: "Not found" };
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`;
   return {
     title: blog.seo_title || blog.title,
     description: blog.seo_description || undefined,
+    alternates: { canonical },
   };
 }
 

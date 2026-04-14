@@ -112,6 +112,14 @@ export interface MonetizationSettings {
   ad_frequency: number;
 }
 
+export interface SeoSettings {
+  seo_title: string | null;
+  seo_description: string | null;
+  robots_mode: "auto" | "custom" | "off";
+  robots_custom_rules: string | null;
+  sitemap_enabled: boolean;
+}
+
 export interface PublicBlogAds {
   enabled: boolean;
   ad_code: string | null;
