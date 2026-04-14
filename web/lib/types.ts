@@ -58,6 +58,9 @@ export interface PublicUser {
   github_link: string | null;
   profile_image_url: string | null;
   verification_tick: boolean;
+  navbar_enabled: boolean;
+  nav_blog_name: string | null;
+  nav_menu_enabled: boolean;
 }
 
 export interface UserSettings {
@@ -80,6 +83,25 @@ export interface UserSettings {
   custom_domain: string | null;
   is_domain_verified: boolean;
   verification_tick: boolean;
+  navbar_enabled: boolean;
+  nav_blog_name: string | null;
+  nav_menu_enabled: boolean;
+}
+
+export interface UserPage {
+  page_id: number;
+  user_id: number;
+  title: string;
+  slug: string;
+  content: string;
+  show_in_menu: boolean;
+  menu_order: number | null;
+}
+
+export interface DesignSettings {
+  navbar_enabled: boolean;
+  nav_blog_name: string | null;
+  nav_menu_enabled: boolean;
 }
 
 export interface SubscriptionOut {

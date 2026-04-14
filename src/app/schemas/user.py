@@ -31,6 +31,9 @@ class UserSettings(BaseModel):
     custom_domain: Optional[str] = None
     is_domain_verified: bool
     verification_tick: bool
+    navbar_enabled: bool
+    nav_blog_name: Optional[str] = None
+    nav_menu_enabled: bool
 
     class Config:
         from_attributes = True
@@ -52,6 +55,9 @@ class PublicUser(BaseModel):
     github_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     verification_tick: bool
+    navbar_enabled: bool
+    nav_blog_name: Optional[str] = None
+    nav_menu_enabled: bool
 
     class Config:
         from_attributes = True
@@ -78,3 +84,6 @@ class UpdateUser(BaseModel):
 class UpdateProUser(BaseModel):
     verification_tick: Optional[bool] = None
     custom_domain: Optional[str] = None
+    navbar_enabled: Optional[bool] = None
+    nav_blog_name: Optional[str] = None
+    nav_menu_enabled: Optional[bool] = None

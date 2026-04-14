@@ -6,6 +6,7 @@ from ..database import get_db
 from .. import models
 from ..security import hashing, oauth2
 from ..schemas import user
+from ..schemas import page as page_schema
 from ..email.service import send_verify_new_user
 from datetime import timedelta
 from ..config import settings
@@ -130,6 +131,32 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
+    return db_user
+
+
+@router.get("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_200_OK)
+def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return db_user
+
+
+@router.patch("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_design_settings(
+    request: page_schema.DesignSettings,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db_user.navbar_enabled = request.navbar_enabled
+    db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
+    db_user.nav_menu_enabled = request.nav_menu_enabled
+    db.commit()
+    db.refresh(db_user)
     return db_user
 
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)

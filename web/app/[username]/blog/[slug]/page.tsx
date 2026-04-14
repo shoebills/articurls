@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
-import type { PublicBlog, PublicUser } from "@/lib/types";
+import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { Menu } from "lucide-react";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -23,6 +24,12 @@ async function loadUser(username: string): Promise<PublicUser | null> {
   return res.json();
 }
 
+async function loadPages(username: string): Promise<UserPage[]> {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
   if (isReservedUsername(username)) return {};
@@ -38,12 +45,68 @@ export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
   if (isReservedUsername(username)) notFound();
 
-  const [blog, author] = await Promise.all([loadBlog(username, slug), loadUser(username)]);
+  const [blog, author, pages] = await Promise.all([loadBlog(username, slug), loadUser(username), loadPages(username)]);
   if (!blog || !author) notFound();
+  const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
 
   return (
     <article className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14">
+        {author.navbar_enabled ? (
+          <section className="mb-8 border-b border-border/80 pb-4">
+            <div className="hidden items-center justify-between gap-4 sm:flex">
+              <Link href={`/${username}`} className="truncate text-sm font-semibold hover:underline">
+                {navBlogName}
+              </Link>
+              <div className="flex min-w-0 items-center gap-4">
+                {author.nav_menu_enabled ? (
+                  pages.length > 0 ? (
+                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                      {pages.map((p) => (
+                        <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                          {p.title}
+                        </Link>
+                      ))}
+                    </nav>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Add pages to display.</p>
+                  )
+                ) : null}
+                <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
+              </div>
+            </div>
+            <div className="sm:hidden">
+              <div className="flex items-center justify-between gap-3">
+                <Link href={`/${username}`} className="truncate text-sm font-semibold hover:underline">
+                  {navBlogName}
+                </Link>
+                <details className="relative">
+                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border text-muted-foreground [&::-webkit-details-marker]:hidden">
+                    <Menu className="h-4 w-4" />
+                  </summary>
+                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background p-2 shadow-md">
+                    <div className="space-y-1">
+                      {author.nav_menu_enabled ? (
+                        pages.length > 0 ? (
+                          pages.map((p) => (
+                            <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="block rounded-md px-2 py-1.5 text-sm hover:bg-muted">
+                              {p.title}
+                            </Link>
+                          ))
+                        ) : (
+                          <p className="px-2 py-1 text-sm text-muted-foreground">Add pages to display.</p>
+                        )
+                      ) : null}
+                    </div>
+                    <div className="mt-2 border-t border-border pt-2">
+                      <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
+                    </div>
+                  </div>
+                </details>
+              </div>
+            </div>
+          </section>
+        ) : null}
         <Link
           href={`/${username}`}
           className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"

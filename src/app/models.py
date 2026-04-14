@@ -30,6 +30,9 @@ class User(Base):
     custom_domain = Column(String, nullable=True, default=None)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
     verification_tick = Column(Boolean, nullable=False, default=False)
+    navbar_enabled = Column(Boolean, nullable=False, default=False)
+    nav_blog_name = Column(String, nullable=True)
+    nav_menu_enabled = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -149,3 +152,21 @@ class PaymentWebhooks(Base):
     payload = Column(JSON, nullable=False)
     processed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+
+class UserPage(Base):
+    __tablename__ = "user_pages"
+    __table_args__ = (
+        UniqueConstraint("user_id", "slug", name="uq_user_pages_user_slug"),
+        Index("ix_user_pages_user_menu_order", "user_id", "menu_order"),
+    )
+
+    page_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    title = Column(String, nullable=False)
+    slug = Column(String, nullable=False)
+    content = Column(Text, nullable=False, default="")
+    show_in_menu = Column(Boolean, nullable=False, default=False)
+    menu_order = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

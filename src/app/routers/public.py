@@ -5,6 +5,7 @@ from typing import List
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
+from ..schemas import page as page_schema
 
 
 router = APIRouter(
@@ -66,3 +67,31 @@ def get_user(user_name: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
     return db_user
+
+
+@router.get("/{user_name}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
+def get_pages(user_name: str, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return (
+        db.query(models.UserPage)
+        .filter(models.UserPage.user_id == db_user.user_id, models.UserPage.show_in_menu.is_(True))
+        .order_by(models.UserPage.menu_order.asc(), models.UserPage.created_at.asc())
+        .all()
+    )
+
+
+@router.get("/{user_name}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def get_page(user_name: str, slug: str, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.user_id == db_user.user_id, models.UserPage.slug == slug)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    return db_page

@@ -3,7 +3,9 @@ import type {
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
+  DesignSettings,
   PublicBlog,
+  UserPage,
   PublicUser,
   SubscribersAnalytics,
   SubscriptionOut,
@@ -120,7 +122,13 @@ export async function patchMe(
 
 export async function patchProMe(
   token: string,
-  body: { verification_tick?: boolean; custom_domain?: string | null }
+  body: {
+    verification_tick?: boolean;
+    custom_domain?: string | null;
+    navbar_enabled?: boolean;
+    nav_blog_name?: string | null;
+    nav_menu_enabled?: boolean;
+  }
 ): Promise<UserSettings> {
   return apiFetch("/user/pro/me", {
     method: "PATCH",
@@ -128,6 +136,66 @@ export async function patchProMe(
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+}
+
+export async function getDesignSettings(token: string): Promise<DesignSettings> {
+  return apiFetch("/user/design", { token });
+}
+
+export async function patchDesignSettings(token: string, body: DesignSettings): Promise<DesignSettings> {
+  return apiFetch("/user/design", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listPages(token: string): Promise<UserPage[]> {
+  return apiFetch("/pages/", { token });
+}
+
+export async function createPage(token: string, body: { title: string; content: string }): Promise<UserPage> {
+  return apiFetch("/pages/", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deletePage(token: string, pageId: number): Promise<void> {
+  await apiFetch(`/pages/${pageId}`, { method: "DELETE", token });
+}
+
+export async function updatePage(
+  token: string,
+  pageId: number,
+  body: { title?: string; content?: string }
+): Promise<UserPage> {
+  return apiFetch(`/pages/id/${pageId}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateMenuPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
+  return apiFetch("/pages/menu", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_page_ids }),
+  });
+}
+
+export async function getPublicPages(userName: string): Promise<UserPage[]> {
+  return apiFetch(`/${encodeURIComponent(userName)}/pages`);
+}
+
+export async function getPublicPage(userName: string, slug: string): Promise<UserPage> {
+  return apiFetch(`/${encodeURIComponent(userName)}/page/${encodeURIComponent(slug)}`);
 }
 
 export async function verifyCustomDomain(token: string): Promise<UserSettings> {
