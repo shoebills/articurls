@@ -69,6 +69,14 @@ export async function login(email: string, password: string): Promise<{ access_t
   });
 }
 
+export async function requestPasswordReset(email: string): Promise<{ message: string }> {
+  return apiFetch("/request-password-reset", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+}
+
 export async function signup(data: {
   name: string;
   user_name: string;

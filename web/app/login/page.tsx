@@ -78,6 +78,14 @@ function LoginForm() {
                 required
               />
             </div>
+            <div className="flex items-center justify-between">
+              <Link
+                href="/forgot-password"
+                className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                Forgot your password?
+              </Link>
+            </div>
             <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}
             </Button>
