@@ -33,6 +33,7 @@ class User(Base):
     navbar_enabled = Column(Boolean, nullable=False, default=False)
     nav_blog_name = Column(String, nullable=True)
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
+    footer_enabled = Column(Boolean, nullable=False, default=False)
     robots_mode = Column(String, nullable=False, default="auto")
     robots_custom_rules = Column(Text, nullable=True)
     sitemap_enabled = Column(Boolean, nullable=False, default=True)

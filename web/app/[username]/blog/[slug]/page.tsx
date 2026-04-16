@@ -8,6 +8,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { Menu } from "lucide-react";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
+import { PublicProfileFooter } from "@/components/public-profile-footer";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -65,6 +66,9 @@ export default async function PublicBlogPage({ params }: Props) {
   ]);
   if (!blog || !author) notFound();
   const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
+  const containerSpacing = author.navbar_enabled
+    ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
+    : "mx-auto max-w-3xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
   const adSegments =
     adConfig?.enabled && adConfig.ad_code
       ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
@@ -72,11 +76,11 @@ export default async function PublicBlogPage({ params }: Props) {
 
   return (
     <article className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14">
+      <div className={containerSpacing}>
         {author.navbar_enabled ? (
-          <section className="mb-8 border-b border-border/80 pb-4">
+          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
             <div className="hidden items-center justify-between gap-4 sm:flex">
-              <Link href={`/${username}`} className="truncate text-sm font-semibold hover:underline">
+              <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
@@ -89,16 +93,14 @@ export default async function PublicBlogPage({ params }: Props) {
                         </Link>
                       ))}
                     </nav>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Add pages to display.</p>
-                  )
+                  ) : null
                 ) : null}
                 <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
               </div>
             </div>
             <div className="sm:hidden">
               <div className="flex items-center justify-between gap-3">
-                <Link href={`/${username}`} className="truncate text-sm font-semibold hover:underline">
+                <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
                   {navBlogName}
                 </Link>
                 <details className="relative">
@@ -114,9 +116,7 @@ export default async function PublicBlogPage({ params }: Props) {
                               {p.title}
                             </Link>
                           ))
-                        ) : (
-                          <p className="px-2 py-1 text-sm text-muted-foreground">Add pages to display.</p>
-                        )
+                        ) : null
                       ) : null}
                     </div>
                     <div className="mt-2 border-t border-border pt-2">
@@ -132,10 +132,10 @@ export default async function PublicBlogPage({ params }: Props) {
           href={`/${username}`}
           className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
         >
-          ← {author.name}
+          ← Back
         </Link>
         <header className="mt-6 sm:mt-8">
-          <h1 className="text-balance break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {blog.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -153,7 +153,7 @@ export default async function PublicBlogPage({ params }: Props) {
               ) : (
                 <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
               )}
-              <span className="truncate text-sm">@{author.user_name}</span>
+              <span className="truncate text-sm">{author.name}</span>
             </Link>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
@@ -183,9 +183,10 @@ export default async function PublicBlogPage({ params }: Props) {
             ))}
           </div>
         )}
-        <div className="mt-14">
+        <div className="mt-14 border-t border-border/80 pt-6">
           <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
         </div>
+        <PublicProfileFooter user={author} />
       </div>
       <a
         href={MARKETING_ORIGIN}

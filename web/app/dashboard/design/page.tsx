@@ -25,6 +25,7 @@ export default function DesignDashboardPage() {
     navbar_enabled: false,
     nav_blog_name: null,
     nav_menu_enabled: false,
+    footer_enabled: false,
   });
   const [pages, setPages] = useState<UserPage[]>([]);
   const [menuSelection, setMenuSelection] = useState<number[]>([]);
@@ -97,7 +98,7 @@ export default function DesignDashboardPage() {
       <h1 className="text-2xl font-bold">Design</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Navbar</CardTitle>
+          <CardTitle>Navigation bar</CardTitle>
           <CardDescription>Control public navigation for your profile/blog.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-5">
@@ -229,76 +230,124 @@ export default function DesignDashboardPage() {
               ) : null}
             </>
           ) : null}
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>Live preview</CardTitle>
-          <CardDescription>Auto-updates as you change settings.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="rounded-xl border bg-muted/20 p-3 sm:hidden">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile preview</p>
-            {design.navbar_enabled ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
-                  <span className="truncate text-sm font-semibold">{previewBlogName}</span>
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
-                    <Menu className="h-4 w-4" />
-                  </span>
-                </div>
-                <div className="rounded-md border bg-background p-2">
-                  {design.nav_menu_enabled ? (
-                    selectedMenuPages.length > 0 ? (
-                      <div className="space-y-1">
-                        {selectedMenuPages.map((p) => (
-                          <p key={p.page_id} className="rounded px-2 py-1 text-sm hover:bg-muted">
-                            {p.title}
-                          </p>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="px-2 py-1 text-sm text-muted-foreground">Add pages to display.</p>
-                    )
-                  ) : null}
-                  <div className="mt-2 border-t pt-2">
-                    <Button size="sm" className="w-full">
-                      Subscribe
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
-            )}
-          </div>
 
-          <div className="hidden rounded-xl border bg-muted/20 p-4 sm:block">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
-            {design.navbar_enabled ? (
-              <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="truncate text-sm font-semibold">{previewBlogName}</span>
-                  <div className="flex min-w-0 items-center gap-4">
+          <div className="space-y-3 border-t border-border/70 pt-4">
+            <p className="text-sm font-medium">Live preview of navbar</p>
+            <div className="rounded-xl border bg-muted/20 p-3 sm:hidden">
+              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile preview</p>
+              {design.navbar_enabled ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
+                    <span className="truncate text-lg font-semibold">{previewBlogName}</span>
+                    <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
+                      <Menu className="h-4 w-4" />
+                    </span>
+                  </div>
+                  <div className="rounded-md border bg-background p-2">
                     {design.nav_menu_enabled ? (
                       selectedMenuPages.length > 0 ? (
-                        <div className="flex min-w-0 items-center gap-3">
+                        <div className="space-y-1">
                           {selectedMenuPages.map((p) => (
-                            <span key={p.page_id} className="truncate text-sm text-muted-foreground">
+                            <p key={p.page_id} className="rounded px-2 py-1 text-sm hover:bg-muted">
                               {p.title}
-                            </span>
+                            </p>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-sm text-muted-foreground">Add pages to display.</span>
+                        <p className="px-2 py-1 text-sm text-muted-foreground">Add pages to display.</p>
                       )
                     ) : null}
-                    <Button size="sm">Subscribe</Button>
+                    <div className="mt-2 border-t pt-2">
+                      <Button size="sm" className="w-full">
+                        Subscribe
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
+              )}
+            </div>
+
+            <div className="hidden rounded-xl border bg-muted/20 p-4 sm:block">
+              <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
+              {design.navbar_enabled ? (
+                <div className="rounded-md border bg-background px-4 py-3">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="truncate text-lg font-semibold">{previewBlogName}</span>
+                    <div className="flex min-w-0 items-center gap-4">
+                      {design.nav_menu_enabled ? (
+                        selectedMenuPages.length > 0 ? (
+                          <div className="flex min-w-0 items-center gap-3">
+                            {selectedMenuPages.map((p) => (
+                              <span key={p.page_id} className="truncate text-sm text-muted-foreground">
+                                {p.title}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-sm text-muted-foreground">Add pages to display.</span>
+                        )
+                      ) : null}
+                      <Button size="sm">Subscribe</Button>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
+              )}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Footer</CardTitle>
+          <CardDescription>Show your profile summary below your public content.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="font-medium">Enable footer</p>
+              <p className="text-sm text-muted-foreground">
+                Displays profile image, name, bio, link, and socials below your blogs/content.
+              </p>
+            </div>
+            <Switch
+              checked={design.footer_enabled}
+              onCheckedChange={(v) => saveDesign({ ...design, footer_enabled: v })}
+              disabled={busy}
+            />
+          </div>
+          <div className="space-y-3 border-t border-border/70 pt-4">
+            <p className="text-sm font-medium">Live preview of footer</p>
+            {design.footer_enabled ? (
+              <div className="rounded-xl border bg-muted/20 p-4">
+                <div className="rounded-md border bg-background p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
+                    <div>
+                      <p className="font-semibold leading-tight">Your Name</p>
+                    </div>
+                  </div>
+                  <p className="mt-5 text-sm text-muted-foreground">Your bio will appear here.</p>
+                  <p className="mt-5 text-sm font-medium text-foreground underline underline-offset-4">your-link.com</p>
+                  <div className="mt-6 flex items-center gap-2.5">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
+                      in
+                    </span>
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
+                      x
+                    </span>
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
+                      ig
+                    </span>
                   </div>
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
+              <p className="text-sm text-muted-foreground">Footer disabled.</p>
             )}
           </div>
         </CardContent>

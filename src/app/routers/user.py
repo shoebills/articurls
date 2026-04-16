@@ -156,6 +156,7 @@ def update_design_settings(
     db_user.navbar_enabled = request.navbar_enabled
     db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
     db_user.nav_menu_enabled = request.nav_menu_enabled
+    db_user.footer_enabled = request.footer_enabled
     db.commit()
     db.refresh(db_user)
     return db_user

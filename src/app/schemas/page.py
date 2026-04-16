@@ -44,4 +44,5 @@ class DesignSettings(BaseModel):
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
+    footer_enabled: bool
 

@@ -6,6 +6,7 @@ import Link from "next/link";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
+import { PublicProfileFooter } from "@/components/public-profile-footer";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -154,12 +155,14 @@ export default async function CustomDomainPostPage({ params }: Props) {
     const blogs = await blogsByHost(host);
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
-        <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
-          <section className="border-b border-border/80 pb-8">
-            <h1 className="text-3xl font-bold">{author.name}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">@{author.user_name}</p>
-            {author.bio ? <p className="mt-4 text-muted-foreground">{author.bio}</p> : null}
-          </section>
+        <main className="mx-auto max-w-3xl px-[26px] py-10 sm:px-6 sm:py-14">
+          {!author.footer_enabled ? (
+            <section className="rounded-lg border border-border/80 bg-muted/30 p-6">
+              <h1 className="text-3xl font-bold">{author.name}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">@{author.user_name}</p>
+              {author.bio ? <p className="mt-4 whitespace-pre-line text-base text-muted-foreground">{author.bio}</p> : null}
+            </section>
+          ) : null}
           {pages.length > 0 ? (
             <nav className="mt-6 flex flex-wrap items-center gap-3">
               {pages.map((p) => (
@@ -179,6 +182,7 @@ export default async function CustomDomainPostPage({ params }: Props) {
               </article>
             ))}
           </section>
+          <PublicProfileFooter user={author} />
         </main>
       </div>
     );
@@ -188,16 +192,17 @@ export default async function CustomDomainPostPage({ params }: Props) {
     const page = await pageByHost(host, slug[1]);
     return (
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
-        <main className="mx-auto max-w-3xl px-4 py-10 sm:px-6 sm:py-14">
+        <main className="mx-auto max-w-3xl px-[26px] py-10 sm:px-6 sm:py-14">
           <div className="mb-8 flex items-center gap-4">
             <Link href="/" className="text-sm text-muted-foreground hover:text-foreground">
-              ← {author.name}
+              ← Back
             </Link>
           </div>
           <article>
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
             <div className="prose-blog mt-6" dangerouslySetInnerHTML={{ __html: page.content }} />
           </article>
+          <PublicProfileFooter user={author} />
         </main>
       </div>
     );
@@ -216,9 +221,9 @@ export default async function CustomDomainPostPage({ params }: Props) {
 
   return (
     <article className="min-h-screen bg-background">
-      <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-14">
+      <div className="mx-auto max-w-3xl px-[26px] py-8 sm:px-6 sm:py-14">
         <header className="mt-4 sm:mt-6">
-          <h1 className="text-balance break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {blog.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -232,7 +237,7 @@ export default async function CustomDomainPostPage({ params }: Props) {
               ) : (
                 <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
               )}
-              <span className="truncate text-sm">@{author.user_name}</span>
+              <span className="truncate text-sm">{author.name}</span>
             </a>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
@@ -254,6 +259,7 @@ export default async function CustomDomainPostPage({ params }: Props) {
             ) : null
           )}
         </div>
+        <PublicProfileFooter user={author} />
       </div>
     </article>
   );

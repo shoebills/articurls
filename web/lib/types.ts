@@ -63,6 +63,7 @@ export interface PublicUser {
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
+  footer_enabled: boolean;
 }
 
 export interface UserSettings {
@@ -88,6 +89,7 @@ export interface UserSettings {
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
+  footer_enabled: boolean;
 }
 
 export interface UserPage {
@@ -104,6 +106,7 @@ export interface DesignSettings {
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
+  footer_enabled: boolean;
 }
 
 export interface MonetizationSettings {
