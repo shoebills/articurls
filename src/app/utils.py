@@ -57,7 +57,6 @@ _HTML_TAG_RE = re.compile(r"<[^>]+>")
 
 
 def html_to_plain_text(s: str) -> str:
-    """Strip tags and decode entities so excerpts/SEO are readable (content is stored as HTML)."""
     if not s:
         return ""
     t = re.sub(r"<script[^>]*>[\s\S]*?</script>", " ", s, flags=re.IGNORECASE)
