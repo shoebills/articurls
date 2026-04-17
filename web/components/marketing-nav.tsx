@@ -6,12 +6,12 @@ import { Menu } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
-import { APP_ORIGIN } from "@/lib/env";
+import { appAuthHref } from "@/lib/env";
 
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
-  const signupFree = `${APP_ORIGIN}/signup?plan_choice=free`;
-  const login = `${APP_ORIGIN}/login`;
+  const signupFree = appAuthHref("/signup?plan_choice=free");
+  const login = appAuthHref("/login");
 
   const mobileLinks = (
     <nav className="flex flex-col gap-1 p-2">

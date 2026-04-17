@@ -2,13 +2,13 @@ import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { APP_ORIGIN } from "@/lib/env";
+import { appAuthHref } from "@/lib/env";
 import { BarChart3, CalendarClock, Check, FileText } from "lucide-react";
 
 export default function MarketingPage() {
-  const signupFree = `${APP_ORIGIN}/signup?plan_choice=free`;
-  const signupPro = `${APP_ORIGIN}/signup?plan_choice=pro`;
-  const loginUrl = `${APP_ORIGIN}/login`;
+  const signupFree = appAuthHref("/signup?plan_choice=free");
+  const signupPro = appAuthHref("/signup?plan_choice=pro");
+  const loginUrl = appAuthHref("/login");
 
   const features = [
     {

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { BrandLogo } from "@/components/brand-logo";
-import { APP_ORIGIN, MARKETING_ORIGIN } from "@/lib/env";
+import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
 
 export function MarketingFooter() {
   return (
@@ -18,7 +18,7 @@ export function MarketingFooter() {
             </p>
           </div>
           <div className="flex flex-wrap gap-6 text-sm text-muted-foreground">
-            <Link href={`${APP_ORIGIN}/login`} className="min-h-10 inline-flex items-center transition-colors duration-200 hover:text-foreground">
+            <Link href={appAuthHref("/login")} className="min-h-10 inline-flex items-center transition-colors duration-200 hover:text-foreground">
               Log in
             </Link>
             <a

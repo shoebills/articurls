@@ -125,36 +125,6 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
           </section>
         ) : null}
-        {!user.footer_enabled ? (
-          <section className="border-b border-border/80 pb-10 sm:pb-12">
-            <div className="flex w-full items-start gap-4 sm:gap-5">
-              {user.profile_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={assetUrl(user.profile_image_url)}
-                  alt=""
-                  className="h-20 w-20 shrink-0 rounded-full object-cover shadow-md ring-2 ring-border/60 sm:h-24 sm:w-24"
-                />
-              ) : null}
-              <div className="min-w-0 flex-1 text-left">
-                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-                  <h1 className="min-w-0 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
-                    <span className="inline-flex max-w-full flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="min-w-0 break-words">{user.name}</span>
-                      {user.verification_tick && <VerifiedBadge />}
-                    </span>
-                  </h1>
-                  {!user.navbar_enabled ? (
-                    <div className="flex w-full shrink-0 basis-full justify-stretch sm:w-auto sm:basis-auto sm:justify-end">
-                      <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                    </div>
-                  ) : null}
-                </div>
-                <p className="mt-1 text-sm text-muted-foreground sm:text-base">@{user.user_name}</p>
-              </div>
-            </div>
-          </section>
-        ) : null}
         <section className="mt-10 sm:mt-12">
           <ul className="divide-y divide-border/80">
             {blogs.map((b) => (
