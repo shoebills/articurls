@@ -9,6 +9,7 @@ import { Menu } from "lucide-react";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -153,7 +154,10 @@ export default async function PublicBlogPage({ params }: Props) {
               ) : (
                 <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
               )}
-              <span className="truncate text-sm">{author.name}</span>
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
+                <span className="truncate">{author.name}</span>
+                {author.verification_tick ? <VerifiedBadge /> : null}
+              </span>
             </Link>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
@@ -188,12 +192,14 @@ export default async function PublicBlogPage({ params }: Props) {
         </div>
         <PublicProfileFooter user={author} />
       </div>
-      <a
-        href={MARKETING_ORIGIN}
-        className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
-      >
-        Made with Articurls
-      </a>
+      {author.show_articurls_watermark !== false ? (
+        <a
+          href={MARKETING_ORIGIN}
+          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        >
+          Made with Articurls
+        </a>
+      ) : null}
     </article>
   );
 }

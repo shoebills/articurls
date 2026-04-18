@@ -7,6 +7,7 @@ import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/type
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
+import { VerifiedBadge } from "@/components/verified-badge";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -237,7 +238,10 @@ export default async function CustomDomainPostPage({ params }: Props) {
               ) : (
                 <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
               )}
-              <span className="truncate text-sm">{author.name}</span>
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
+                <span className="truncate">{author.name}</span>
+                {author.verification_tick ? <VerifiedBadge /> : null}
+              </span>
             </a>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>

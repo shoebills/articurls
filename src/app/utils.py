@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from . import models
 from .config import settings
 from .database import get_db
+from .schemas import user
 from .domains import normalize_custom_domain
 from .security.oauth2 import get_current_user
 
@@ -136,6 +137,13 @@ def is_pro_entitled(user: models.User, db: Session) -> bool:
         and sub.status in ("active", "past_due")
         and sub.current_period_end is not None
         and sub.current_period_end >= now
+    )
+
+
+def public_user_out(db: Session, db_user: models.User):
+
+    return user.PublicUser.model_validate(db_user, from_attributes=True).model_copy(
+        update={"show_articurls_watermark": not is_pro_entitled(db_user, db)},
     )
 
 

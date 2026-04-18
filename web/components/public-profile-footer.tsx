@@ -1,5 +1,6 @@
 import type { PublicUser } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
+import { VerifiedBadge } from "@/components/verified-badge";
 import { MdOutlineEmail } from "react-icons/md";
 import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
@@ -26,7 +27,7 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
 
   return (
     <section className="mt-12 border-t border-border/80 pt-8">
-      <h2 className="mb-6 text-xl font-semibold tracking-tight sm:text-2xl">About the author</h2>
+      <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">About the author</h2>
       <div className="flex items-center gap-3">
         {user.profile_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -34,8 +35,11 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
         ) : (
           <div className="h-10 w-10 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
         )}
-        <div>
-          <p className="font-semibold leading-tight">{user.name}</p>
+        <div className="min-w-0">
+          <p className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold leading-tight">
+            <span className="min-w-0 break-words">{user.name}</span>
+            {user.verification_tick ? <VerifiedBadge /> : null}
+          </p>
         </div>
       </div>
 

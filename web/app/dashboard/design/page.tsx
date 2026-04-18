@@ -325,7 +325,7 @@ export default function DesignDashboardPage() {
             {design.footer_enabled ? (
               <div className="rounded-xl border bg-muted/20 p-4">
                 <div className="rounded-md border bg-background p-4">
-                  <h3 className="mb-6 text-xl font-semibold tracking-tight sm:text-2xl">About the author</h3>
+                  <h3 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">About the author</h3>
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
                     <div>

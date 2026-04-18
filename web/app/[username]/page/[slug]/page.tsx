@@ -82,12 +82,14 @@ export default async function PublicCustomPage({ params }: Props) {
         </article>
         <PublicProfileFooter user={user} />
       </main>
-      <a
-        href={MARKETING_ORIGIN}
-        className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
-      >
-        Made with Articurls
-      </a>
+      {user.show_articurls_watermark !== false ? (
+        <a
+          href={MARKETING_ORIGIN}
+          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        >
+          Made with Articurls
+        </a>
+      ) : null}
     </div>
   );
 }

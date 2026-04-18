@@ -60,6 +60,7 @@ class PublicUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    show_articurls_watermark: bool = True
 
     class Config:
         from_attributes = True

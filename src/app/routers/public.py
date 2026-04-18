@@ -98,8 +98,8 @@ def get_user(user_name: str, db: Session = Depends(get_db)):
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    return db_user
+
+    return utils.public_user_out(db, db_user)
 
 
 @router.get("/{user_name}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)

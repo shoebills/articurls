@@ -5,25 +5,8 @@ import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { MdVerified } from "react-icons/md";
 import { Menu } from "lucide-react";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-
-/** Material `MdVerified` — sized in `em` so it stays centered with the heading text. */
-function VerifiedBadge() {
-  return (
-    <span
-      className="inline-flex shrink-0 items-center justify-center leading-none"
-      title="Verified"
-      aria-label="Verified"
-    >
-      <MdVerified
-        className="block h-[0.92em] w-[0.92em] text-[#1D9BF0] drop-shadow-[0_2px_10px_rgba(29,155,240,0.45)] dark:text-[#38bdf8]"
-        aria-hidden
-      />
-    </span>
-  );
-}
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -151,12 +134,14 @@ export default async function PublicProfilePage({ params }: Props) {
         </section>
         <PublicProfileFooter user={user} />
       </main>
-      <a
-        href={MARKETING_ORIGIN}
-        className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
-      >
-        Made with Articurls
-      </a>
+      {user.show_articurls_watermark !== false ? (
+        <a
+          href={MARKETING_ORIGIN}
+          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        >
+          Made with Articurls
+        </a>
+      ) : null}
     </div>
   );
 }

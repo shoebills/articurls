@@ -64,6 +64,8 @@ export interface PublicUser {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  /** False for active Pro — hide "Made with Articurls" on public pages. */
+  show_articurls_watermark?: boolean;
 }
 
 export interface UserSettings {

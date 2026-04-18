@@ -113,7 +113,7 @@ def user_by_host(
     db_user = _resolve_verified_user_by_host(host, db)
     if not is_pro_entitled(db_user, db):
         return RedirectResponse(url=_canonical_profile_url(db_user.user_name), status_code=status.HTTP_301_MOVED_PERMANENTLY)
-    return db_user
+    return utils.public_user_out(db, db_user)
 
 
 @router.get("/blogs", response_model=list[blog.PublicBlogs], responses={301: {"description": "Redirect to canonical articurls URL when Pro is not active"}})
