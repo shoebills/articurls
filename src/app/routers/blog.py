@@ -20,6 +20,7 @@ router = APIRouter(
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
+    # SEO
     if request.seo_title is not None:
         candidate_seo_title = request.seo_title
     else:
@@ -30,6 +31,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     else:
         candidate_seo_description = None
 
+    # Slug
     if request.slug:
         base_slug = slugify(request.slug) or None
     else:
@@ -230,17 +232,20 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     slug_in = update_data.pop("slug", None)
     if slug_in is not None:
         new_slug = slugify(slug_in.strip()) if slug_in.strip() else None
-        if db_blog.status in (models.BlogStatus.PUBLISHED, models.BlogStatus.ARCHIVED):
-            if new_slug and new_slug != db_blog.slug:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot change the URL slug after the post is published.",
-                )
-        elif new_slug is not None and new_slug != db_blog.slug:
-            try_slug = utils.unique_blog_slug(
+        slug_locked = db_blog.status in (models.BlogStatus.PUBLISHED, models.BlogStatus.ARCHIVED)
+        wants_different_slug = new_slug is not None and new_slug != db_blog.slug
+
+        if slug_locked and wants_different_slug:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change the URL slug after the post is published.",
+            )
+
+        if not slug_locked and wants_different_slug:
+            resolved = utils.unique_blog_slug(
                 db, current_user.user_id, new_slug, exclude_blog_id=db_blog.blog_id
             )
-            if try_slug != new_slug:
+            if resolved != new_slug:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
                     detail="That URL slug is already used by another post.",
