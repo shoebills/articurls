@@ -15,11 +15,11 @@ class Settings(BaseSettings):
 
     redis_url: str
 
-    email_provider: str
-    smtp_host: str
-    smtp_port: int
-    resend_api_key: str
-    from_email: str
+    email_provider: str = "resend"
+    smtp_host: str = ""
+    smtp_port: int = 587
+    resend_api_key: str = ""
+    from_email: str = ""
 
     dodopayments_api_key: str
     dodopayments_webhook_key: str
@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     dodopayments_product_id: str
 
     uploads_dir: str = "uploads"
+    # Reader/marketing site origin (blog links in emails; env: MARKETING_ORIGIN).
+    marketing_origin: str = "http://localhost:3000"
     public_base_url: str
     storage_backend: str = "local"
     r2_account_id: Optional[str] = None
