@@ -78,9 +78,6 @@ export function MarketingNav() {
               Log in
             </Link>
           </nav>
-          <Button variant="ghost" size="sm" className="h-10 md:hidden" asChild>
-            <Link href={login}>Log in</Link>
-          </Button>
           <Button size="sm" className="h-10 min-w-[6.5rem] touch-manipulation sm:min-w-0" asChild>
             <a href={signupFree}>Get started</a>
           </Button>
