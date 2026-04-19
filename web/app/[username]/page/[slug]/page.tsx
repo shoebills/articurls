@@ -5,7 +5,6 @@ import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { PublicProfileFooter } from "@/components/public-profile-footer";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -78,9 +77,8 @@ export default async function PublicCustomPage({ params }: Props) {
 
         <article className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
-          <div className="whitespace-pre-wrap text-muted-foreground">{page.content}</div>
+          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
         </article>
-        <PublicProfileFooter user={user} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a

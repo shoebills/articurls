@@ -128,7 +128,7 @@ export default function PagesDashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle>Create new page</CardTitle>
-            <CardDescription>Free: 1 page (About). Pro: up to 10 pages.</CardDescription>
+            <CardDescription>Free: 1 page. Pro: up to 10 pages.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <Input

@@ -59,7 +59,7 @@ def create_page(
     max_pages = _max_pages_for_user(db, current_user.user_id)
     if current_count >= max_pages:
         detail = (
-            "Free plan supports only one page (About). Upgrade to Pro for up to 10 pages."
+            "Free plan supports only one page. Upgrade to Pro for up to 10 pages."
             if max_pages == 1
             else "You can create up to 10 pages on Pro."
         )
@@ -68,11 +68,6 @@ def create_page(
     title = request.title.strip()
     if not title:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
-    if max_pages == 1 and title.lower() != "about":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Free plan supports only an About page.",
-        )
 
     new_page = models.UserPage(
         user_id=current_user.user_id,
@@ -124,12 +119,6 @@ def update_page(
         title = (update_data["title"] or "").strip()
         if not title:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
-        max_pages = _max_pages_for_user(db, current_user.user_id)
-        if max_pages == 1 and title.lower() != "about":
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Free plan supports only an About page.",
-            )
         if title != db_page.title:
             db_page.slug = _unique_page_slug(db, current_user.user_id, title)
         db_page.title = title

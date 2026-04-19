@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiError, getMonetizationSettings, listBlogs, patchMonetizationSettings, updateAdsBlogSelection } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -15,7 +16,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ChevronDown } from "lucide-react";
 
 export default function MonetizationPage() {
-  const { token } = useAuth();
+  const { token, isPro, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -47,11 +48,17 @@ export default function MonetizationPage() {
   }, [token]);
 
   useEffect(() => {
+    if (authLoading || !token) return;
+    setLoading(true);
     load();
-  }, [load]);
+  }, [authLoading, token, load]);
 
   async function saveAds() {
     if (!token) return;
+    if (!isPro) {
+      setErr("Upgrade to Pro to save ad settings.");
+      return;
+    }
     if (adsEnabled && !adCode.trim()) {
       setErr("Please add ad JavaScript code before enabling ads.");
       return;
@@ -82,6 +89,10 @@ export default function MonetizationPage() {
     setAdFrequency(Math.max(2, Math.min(10, Math.floor(parsed))));
   }
 
+  if (authLoading) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+
   if (loading) {
     return <p className="text-sm text-muted-foreground">Loading monetization...</p>;
   }
@@ -93,6 +104,22 @@ export default function MonetizationPage() {
         <p className="mt-1 text-sm text-muted-foreground">Configure ads and future premium monetization tools.</p>
       </div>
 
+      {!isPro ? (
+        <Card className="border-primary/20 bg-primary/[0.03]">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-base">Pro required to enable ads</CardTitle>
+            <CardDescription>
+              You can review these settings on Free. Ads go live on your public posts after you upgrade and save.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <Button asChild variant="secondary" size="sm">
+              <Link href="/dashboard/billing">View billing & plans</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Ads</CardTitle>
@@ -103,7 +130,7 @@ export default function MonetizationPage() {
         <CardContent className="space-y-5">
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <Label htmlFor="ads-enabled">Enable ads</Label>
-            <Switch id="ads-enabled" checked={adsEnabled} onCheckedChange={setAdsEnabled} />
+            <Switch id="ads-enabled" checked={adsEnabled} onCheckedChange={setAdsEnabled} disabled={!isPro} />
           </div>
 
           {adsEnabled ? (
@@ -119,6 +146,7 @@ export default function MonetizationPage() {
                   autoCapitalize="off"
                   autoComplete="off"
                   autoCorrect="off"
+                  disabled={!isPro}
                   className="font-mono text-xs sm:text-sm"
                   placeholder={`<script async src="https://example-ad-network.js"></script>\n<div id="ad-slot"></div>\n<script>\n  // ad init code\n</script>`}
                 />
@@ -136,6 +164,7 @@ export default function MonetizationPage() {
                   max={10}
                   value={adFrequency}
                   onChange={(e) => handleFrequencyChange(e.target.value)}
+                  disabled={!isPro}
                 />
               </div>
 
@@ -147,7 +176,12 @@ export default function MonetizationPage() {
                   <div className="rounded-lg border border-border p-3">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="outline" className="w-full justify-between sm:w-auto">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full justify-between sm:w-auto"
+                          disabled={!isPro}
+                        >
                           {selectedBlogIds.length > 0
                             ? `${selectedBlogIds.length} blog${selectedBlogIds.length === 1 ? "" : "s"} selected`
                             : "Select blogs"}
@@ -178,10 +212,13 @@ export default function MonetizationPage() {
             </>
           ) : null}
 
-          <div className="flex items-center gap-3">
-            <Button onClick={saveAds} disabled={saving}>
+          <div className="flex flex-wrap items-center gap-3">
+            <Button onClick={saveAds} disabled={saving || !isPro}>
               {saving ? "Saving..." : "Save ads settings"}
             </Button>
+            {!isPro ? (
+              <p className="text-sm text-muted-foreground">Saving is available on the Pro plan.</p>
+            ) : null}
           </div>
         </CardContent>
       </Card>

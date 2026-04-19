@@ -16,11 +16,18 @@ export function MarketingNav() {
   const mobileLinks = (
     <nav className="flex flex-col gap-1 p-2">
       <a
+        href="#features"
+        className="flex min-h-12 items-center rounded-lg px-4 text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
+        onClick={() => setOpen(false)}
+      >
+        Features
+      </a>
+      <a
         href="#product"
         className="flex min-h-12 items-center rounded-lg px-4 text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
         onClick={() => setOpen(false)}
       >
-        Product
+        Why Articurls
       </a>
       <a
         href="#pricing"
@@ -41,8 +48,8 @@ export function MarketingNav() {
 
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 pt-[env(safe-area-inset-top)] shadow-sm shadow-black/[0.02] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,backdrop-filter] duration-200 supports-[backdrop-filter]:bg-background/70">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-4 sm:h-16 sm:px-6">
-        <div className="flex min-w-0 flex-1 items-center gap-2">
+      <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:h-16 sm:gap-3 sm:px-6 sm:pr-6">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
           <Button
             type="button"
             variant="ghost"
@@ -56,10 +63,13 @@ export function MarketingNav() {
           <BrandLogo className="min-w-0" />
         </div>
 
-        <div className="flex shrink-0 items-center gap-5 sm:gap-6 md:gap-8 lg:gap-10">
-          <nav className="hidden items-center gap-8 text-sm font-medium text-muted-foreground md:flex lg:gap-10">
+        <div className="flex shrink-0 items-center gap-2 min-[400px]:gap-3 sm:gap-5 md:gap-6 lg:gap-8">
+          <nav className="hidden items-center gap-4 text-sm font-medium text-muted-foreground md:flex lg:gap-8">
+            <a href="#features" className="transition-colors duration-200 hover:text-foreground">
+              Features
+            </a>
             <a href="#product" className="transition-colors duration-200 hover:text-foreground">
-              Product
+              Why Articurls
             </a>
             <a href="#pricing" className="transition-colors duration-200 hover:text-foreground">
               Pricing

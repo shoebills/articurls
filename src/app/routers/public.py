@@ -77,7 +77,12 @@ def get_blog_ads(user_name: str, slug: str, db: Session = Depends(get_db)):
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
 
-    enabled = bool(db_user.ads_enabled and db_blog.ads_enabled and db_user.ad_code)
+    enabled = bool(
+        utils.is_pro_entitled(db_user, db)
+        and db_user.ads_enabled
+        and db_blog.ads_enabled
+        and db_user.ad_code
+    )
     return {
         "enabled": enabled,
         "ad_code": db_user.ad_code if enabled else None,
