@@ -27,9 +27,7 @@ class UserSettings(BaseModel):
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
     profile_image_url: Optional[str] = None
-    
-    custom_domain: Optional[str] = None
-    is_domain_verified: bool
+
     verification_tick: bool
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
@@ -86,7 +84,6 @@ class UpdateUser(BaseModel):
 
 class UpdateProUser(BaseModel):
     verification_tick: Optional[bool] = None
-    custom_domain: Optional[str] = None
     navbar_enabled: Optional[bool] = None
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
@@ -110,9 +107,6 @@ class MonetizationSettingsUpdate(BaseModel):
 class SeoSettings(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
-    robots_mode: Literal["auto", "custom", "off"] = "auto"
-    robots_custom_rules: Optional[str] = None
-    sitemap_enabled: bool = True
 
     class Config:
         from_attributes = True
@@ -121,6 +115,3 @@ class SeoSettings(BaseModel):
 class SeoSettingsUpdate(BaseModel):
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
-    robots_mode: Optional[Literal["auto", "custom", "off"]] = None
-    robots_custom_rules: Optional[str] = None
-    sitemap_enabled: Optional[bool] = None

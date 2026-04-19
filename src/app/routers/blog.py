@@ -97,17 +97,21 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
 
 @router.patch("/ads/selection", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
-def update_ads_selection(
-    request: blog.AdsSelectionUpdate,
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-):
+def update_ads_selection(request: blog.AdsSelectionUpdate, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+
     utils.assert_pro(db, current_user.user_id)
 
     selected_ids = set(request.blog_ids or [])
     all_blogs = db.query(models.Blog).filter(models.Blog.user_id == current_user.user_id).all()
-    user_blog_ids = {b.blog_id for b in all_blogs}
-    published_blog_ids = {b.blog_id for b in all_blogs if b.status == models.BlogStatus.PUBLISHED}
+
+    user_blog_ids = set()
+    for b in all_blogs:
+        user_blog_ids.add(b.blog_id)
+    
+    published_blog_ids = set()
+    for b in all_blogs:
+        if b.status == models.BlogStatus.PUBLISHED:
+            published_blog_ids.add(b.blog_id)
 
     if not selected_ids.issubset(user_blog_ids):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid blog selection.")
@@ -115,7 +119,10 @@ def update_ads_selection(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ads can only be enabled on published blogs.")
 
     for db_blog in all_blogs:
-        db_blog.ads_enabled = db_blog.blog_id in selected_ids
+        if db_blog.blog_id in selected_ids:
+            db_blog.ads_enabled = True
+        else:
+            db_blog.ads_enabled = False
 
     db.commit()
 

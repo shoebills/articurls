@@ -1,23 +1,16 @@
 import hashlib
-from fastapi import Depends, APIRouter, HTTPException, Request, Response, status
+from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
 from ..schemas import page as page_schema
-from ..seo import render_platform_sitemap, render_robots, render_sitemap
 
 
 router = APIRouter(
     tags=["Public"],
 )
-
-
-@router.get("/sitemap.xml", status_code=status.HTTP_200_OK)
-def get_platform_sitemap(db: Session = Depends(get_db)):
-    content = render_platform_sitemap(db)
-    return Response(content=content, media_type="application/xml; charset=utf-8")
 
 
 @router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
@@ -128,21 +121,3 @@ def get_page(user_name: str, slug: str, db: Session = Depends(get_db)):
     if not db_page:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
     return db_page
-
-
-@router.get("/{user_name}/robots.txt", status_code=status.HTTP_200_OK)
-def get_user_robots(user_name: str, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    content = render_robots(db_user, db, serving_custom_host=False)
-    return Response(content=content, media_type="text/plain; charset=utf-8")
-
-
-@router.get("/{user_name}/sitemap.xml", status_code=status.HTTP_200_OK)
-def get_user_sitemap(user_name: str, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    content = render_sitemap(db_user, db)
-    return Response(content=content, media_type="application/xml; charset=utf-8")

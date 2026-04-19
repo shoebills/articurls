@@ -135,7 +135,6 @@ export async function patchProMe(
   token: string,
   body: {
     verification_tick?: boolean;
-    custom_domain?: string | null;
     navbar_enabled?: boolean;
     nav_blog_name?: string | null;
     nav_menu_enabled?: boolean;
@@ -239,10 +238,6 @@ export async function getPublicPages(userName: string): Promise<UserPage[]> {
 
 export async function getPublicPage(userName: string, slug: string): Promise<UserPage> {
   return apiFetch(`/${encodeURIComponent(userName)}/page/${encodeURIComponent(slug)}`);
-}
-
-export async function verifyCustomDomain(token: string): Promise<UserSettings> {
-  return apiFetch("/user/pro/me/custom-domain/verify", { method: "POST", token });
 }
 
 export async function uploadProfileImage(token: string, file: File): Promise<{ profile_image_url: string }> {

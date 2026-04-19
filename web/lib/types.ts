@@ -85,8 +85,6 @@ export interface UserSettings {
   linkedin_link: string | null;
   github_link: string | null;
   profile_image_url: string | null;
-  custom_domain: string | null;
-  is_domain_verified: boolean;
   verification_tick: boolean;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
@@ -120,9 +118,6 @@ export interface MonetizationSettings {
 export interface SeoSettings {
   seo_title: string | null;
   seo_description: string | null;
-  robots_mode: "auto" | "custom" | "off";
-  robots_custom_rules: string | null;
-  sitemap_enabled: boolean;
 }
 
 export interface PublicBlogAds {

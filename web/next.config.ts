@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  allowedDevOrigins: ["myblog.localtest.me", "10.106.108.92"],
+  allowedDevOrigins: ["10.106.108.92"],
   images: {
     remotePatterns: [
       { protocol: "http", hostname: "localhost", pathname: "/uploads/**" },

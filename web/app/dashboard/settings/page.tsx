@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { getMe, patchMe, patchProMe, verifyCustomDomain, uploadProfileImage, ApiError } from "@/lib/api";
+import { getMe, patchMe, patchProMe, uploadProfileImage, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,6 @@ export default function SettingsPage() {
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
-  const [custom_domain, setCustomDomain] = useState("");
   const [verification_tick, setVerificationTick] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -96,7 +95,6 @@ export default function SettingsPage() {
       setEnabledSocials(
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
-      setCustomDomain(u.custom_domain || "");
       setVerificationTick(u.verification_tick);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -127,7 +125,6 @@ export default function SettingsPage() {
       setEnabledSocials(
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
-      setCustomDomain(ctxUser.custom_domain || "");
       setVerificationTick(ctxUser.verification_tick);
     }
   }, [ctxUser]);
@@ -170,26 +167,11 @@ export default function SettingsPage() {
     setBusy(true);
     setErr(null);
     try {
-      await patchProMe(token, { custom_domain: custom_domain || null, verification_tick });
+      await patchProMe(token, { verification_tick });
       await refreshUser();
       setSaved(true);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Save failed");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function verifyDns() {
-    if (!token || !isPro) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await verifyCustomDomain(token);
-      await refreshUser();
-      setSaved(true);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Verification failed");
     } finally {
       setBusy(false);
     }
@@ -445,7 +427,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Pro options</CardTitle>
-          <CardDescription>Custom domain, verification tick, and footer controls require an active Pro plan.</CardDescription>
+          <CardDescription>Verification tick and footer controls require an active Pro plan.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isPro && (
@@ -453,19 +435,6 @@ export default function SettingsPage() {
               Upgrade under Billing to edit these.
             </p>
           )}
-          <div className="space-y-2.5">
-            <Label htmlFor="domain">Custom domain</Label>
-            <Input
-              id="domain"
-              value={custom_domain}
-              onChange={(e) => setCustomDomain(e.target.value)}
-              disabled={!isPro}
-              placeholder="blog.example.com"
-            />
-          </div>
-          <Button variant="outline" size="lg" onClick={verifyDns} disabled={!isPro || busy}>
-            Verify DNS
-          </Button>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
               <p className="text-sm font-medium">Verification tick</p>

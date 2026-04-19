@@ -28,7 +28,6 @@ class Settings(BaseSettings):
 
     uploads_dir: str = "uploads"
     public_base_url: str
-    custom_domain_cname_target: Optional[str] = None
     storage_backend: str = "local"
     r2_account_id: Optional[str] = None
     r2_bucket_name: Optional[str] = None
@@ -39,9 +38,7 @@ class Settings(BaseSettings):
 
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
-    # Used in verification email (should be the Next.js app origin, e.g. https://app.articurls.com)
     app_base_url: str = "http://localhost:3000"
-    internal_api_secret: Optional[str] = None
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

@@ -1,6 +1,5 @@
 import jwt
 from fastapi import Depends, APIRouter, HTTPException, status
-from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
@@ -13,8 +12,6 @@ from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
 from ..utils import normalize_email, require_pro, user_by_email
-from ..domains import normalize_custom_domain, verify_custom_domain_dns
-from ..seo import _sanitize_custom_robots_rules
 
 router = APIRouter(
     tags=["User"],
@@ -186,14 +183,6 @@ def update_seo_settings(
         db_user.seo_title = (update_data["seo_title"] or "").strip() or None
     if "seo_description" in update_data:
         db_user.seo_description = (update_data["seo_description"] or "").strip() or None
-    if "robots_mode" in update_data:
-        db_user.robots_mode = update_data["robots_mode"] or "auto"
-    if "robots_custom_rules" in update_data:
-        raw_rules = (update_data["robots_custom_rules"] or "").strip()
-        sanitized = _sanitize_custom_robots_rules(raw_rules) if raw_rules else ""
-        db_user.robots_custom_rules = sanitized or None
-    if "sitemap_enabled" in update_data and update_data["sitemap_enabled"] is not None:
-        db_user.sitemap_enabled = bool(update_data["sitemap_enabled"])
 
     db.commit()
     db.refresh(db_user)
@@ -281,13 +270,6 @@ def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), 
 
     update_data = request.model_dump(exclude_unset=True)
 
-    if "custom_domain" in update_data:
-        new_norm = normalize_custom_domain(update_data["custom_domain"])
-        old_norm = normalize_custom_domain(db_user.custom_domain)
-        update_data["custom_domain"] = new_norm
-        if new_norm != old_norm:
-            db_user.is_domain_verified = False
-
     for key, value in update_data.items():
         setattr(db_user, key, value)
 
@@ -310,46 +292,3 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     db.refresh(db_user)
 
     return {"profile_image_url": db_user.profile_image_url}
-
-@router.post("/pro/me/custom-domain/verify", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
-def verify_custom_domain(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), is_pro=Depends(require_pro)):
-
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    if not normalize_custom_domain(db_user.custom_domain):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Set a custom domain first (PATCH /user/pro/me with custom_domain), then verify.",
-        )
-
-    if not settings.custom_domain_cname_target:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Custom domain verification is not configured on the server (CUSTOM_DOMAIN_CNAME_TARGET).",
-        )
-
-    try:
-        verify_custom_domain_dns(
-            db_user.custom_domain, settings.custom_domain_cname_target
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(exc),
-        ) from None
-
-    db_user.is_domain_verified = True
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This domain is already verified on another account.",
-        ) from None
-
-    db.refresh(db_user)
-    return db_user
