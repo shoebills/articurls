@@ -6,6 +6,11 @@ from .resend import send_resend_email
 
 TEMPLATE_DIR = Path(__file__).parent
 
+
+def _api_base() -> str:
+    return settings.public_base_url.rstrip("/")
+
+
 def send_email(to_email, subject, html):
 
     if settings.email_provider == "resend":
@@ -20,7 +25,10 @@ def send_new_post_email(to_email: str, post_title: str, blog_url: str, blog_name
     html = html.replace("{{ post_title }}", post_title)
     html = html.replace("{{ post_url }}", blog_url)
     html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ unsubscribe_url }}", f"https://articurls.com/unsubscribe?token={unsubscribe_token}")
+    html = html.replace(
+        "{{ unsubscribe_url }}",
+        f"{_api_base()}/unsubscribe?token={unsubscribe_token}",
+    )
 
     subject = f"New post from {blog_name}: {post_title}"
     send_email(to_email, subject, html)
@@ -30,7 +38,10 @@ def send_sub_confirmation_email(to_email: str, blog_name: str, confirm_token: st
     html = (TEMPLATE_DIR / "confirm_subscription.html").read_text()
 
     html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ confirm_url }}", f"https://articurls.com/confirm-subscription?token={confirm_token}")
+    html = html.replace(
+        "{{ confirm_url }}",
+        f"{_api_base()}/confirm-subscription?token={confirm_token}",
+    )
 
     subject = f"Confirm your subscription to {blog_name}'s blog"
 
@@ -55,7 +66,7 @@ def send_password_reset(to_email: str, reset_token: str):
 
     html = (TEMPLATE_DIR / "reset_password.html").read_text()
 
-    reset_url = f"http://localhost:8000/reset-password?token={reset_token}"
+    reset_url = f"{_api_base()}/reset-password?token={reset_token}"
     html = html.replace("{{ reset_url }}", reset_url)
 
     subject = "Reset your Articurls password"
