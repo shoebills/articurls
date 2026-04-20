@@ -179,14 +179,6 @@ export default async function PublicBlogPage({ params }: Props) {
             ) : null
           )}
         </div>
-        {blog.media?.length > 0 && (
-          <div className="mt-12 space-y-6">
-            {blog.media.map((m) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img key={m.media_id} src={assetUrl(m.url)} alt="" className="w-full rounded-lg" />
-            ))}
-          </div>
-        )}
         <div className="mt-14 border-t border-border/80 pt-6">
           <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
         </div>
