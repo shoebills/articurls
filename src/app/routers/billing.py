@@ -20,6 +20,7 @@ router = APIRouter(
 
 @router.post("/checkout", response_model=CheckoutResponse)
 def create_checkout(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    return_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success"
 
     session = dodo_client.checkout_sessions.create(
 
@@ -35,7 +36,7 @@ def create_checkout(db: Session = Depends(get_db), current_user = Depends(get_cu
             "name": current_user.name
             },
 
-        return_url="https://app.articurls.com/billing/success",
+        return_url=return_url,
     )
 
     return {"checkout_url": session.checkout_url}
