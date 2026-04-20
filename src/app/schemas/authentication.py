@@ -7,12 +7,15 @@ class Login(BaseModel):
     class Config:
         from_attributes = True
 
+
 class RequestPasswordReset(BaseModel):
     email: EmailStr
+
 
 class ResendVerificationEmail(BaseModel):
     email: EmailStr
     plan_choice: str = "free"
+
 
 class ResetPassword(BaseModel):
     token: str
