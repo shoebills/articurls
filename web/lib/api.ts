@@ -77,6 +77,17 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
   });
 }
 
+export async function resendVerificationEmail(
+  email: string,
+  plan_choice: "free" | "pro" = "free"
+): Promise<{ message: string }> {
+  return apiFetch("/resend-verification-email", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, plan_choice }),
+  });
+}
+
 export async function signup(data: {
   name: string;
   user_name: string;
