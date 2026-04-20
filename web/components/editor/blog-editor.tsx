@@ -29,6 +29,7 @@ import {
   Redo2,
   Underline as UnderlineIcon,
   Undo2,
+  X,
   Video,
 } from "lucide-react";
 import { uploadBlogMedia } from "@/lib/api";
@@ -118,6 +119,11 @@ export function BlogEditor({
     const url = window.prompt("YouTube URL");
     if (!url) return;
     editor.commands.setYoutubeVideo({ src: url });
+  }, [editor]);
+
+  const removeSelectedImage = useCallback(() => {
+    if (!editor || !editor.isActive("image")) return;
+    editor.chain().focus().deleteSelection().run();
   }, [editor]);
 
   if (!editor) {
@@ -225,6 +231,16 @@ export function BlogEditor({
         <Separator orientation="vertical" className="mx-1 h-6" />
         <Button type="button" variant="ghost" size="icon" onClick={addImage} title="Image">
           <ImageIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={editor.isActive("image") ? "secondary" : "ghost"}
+          size="icon"
+          onClick={removeSelectedImage}
+          title="Remove selected image"
+          disabled={!editor.isActive("image")}
+        >
+          <X className="h-4 w-4" />
         </Button>
         <Button type="button" variant="ghost" size="icon" onClick={addYoutube} title="YouTube">
           <Video className="h-4 w-4" />
