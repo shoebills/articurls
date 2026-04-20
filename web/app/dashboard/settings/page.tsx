@@ -211,6 +211,12 @@ export default function SettingsPage() {
   }
 
   const hiddenSocialOptions = SOCIAL_OPTIONS.filter((s) => !enabledSocials.includes(s.key));
+  const profileImageUrl = ctxUser?.profile_image_url || "";
+  const isDefaultProfileImage =
+    !profileImageUrl ||
+    profileImageUrl.includes("/users/defaults/") ||
+    profileImageUrl.includes("/uploads/defaults/");
+  const hasCustomProfileImage = Boolean(profileImageUrl) && !isDefaultProfileImage;
 
   function addSocial() {
     if (!socialToAdd) return;
@@ -247,7 +253,7 @@ export default function SettingsPage() {
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
                 className="group relative h-[6.5rem] w-[6.5rem] shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow,transform,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
-                aria-label="Change profile photo"
+                aria-label={hasCustomProfileImage ? "Change profile photo" : "Upload profile photo"}
               >
                 {ctxUser?.profile_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -273,18 +279,30 @@ export default function SettingsPage() {
                 </span>
               </button>
             </div>
-            {ctxUser?.profile_image_url ? (
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
                 size="sm"
-                className="h-10 w-fit shrink-0 border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                className="h-10 w-fit shrink-0"
                 disabled={busy}
-                onClick={removePfp}
+                onClick={() => pfpInputRef.current?.click()}
               >
-                Remove photo
+                {hasCustomProfileImage ? "Change photo" : "Upload photo"}
               </Button>
-            ) : null}
+              {hasCustomProfileImage ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-10 w-fit shrink-0 border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                  disabled={busy}
+                  onClick={removePfp}
+                >
+                  Remove photo
+                </Button>
+              ) : null}
+            </div>
           </div>
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2.5">
