@@ -30,7 +30,7 @@ class User(Base):
     custom_domain = Column(String, nullable=True, default=None)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
     verification_tick = Column(Boolean, nullable=False, default=False)
-    navbar_enabled = Column(Boolean, nullable=False, default=False)
+    navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
     footer_enabled = Column(Boolean, nullable=False, default=False)
