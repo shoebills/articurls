@@ -7,7 +7,8 @@ from ..utils import user_by_email
 from ..schemas import token, authentication
 from ..security import hashing, oauth2
 from ..config import settings
-from ..email.service import send_password_reset
+from ..email.service import send_password_reset, send_verify_new_user
+from ..utils import normalize_email
 from fastapi.responses import HTMLResponse
 import html as html_lib
 from pathlib import Path
@@ -56,6 +57,23 @@ def request_password_reset(request: authentication.RequestPasswordReset, db: Ses
         send_password_reset(db_user.email, reset_token)
 
     return {"message": "If the email exists, you will receive a reset token shortly."}
+
+@router.post("/resend-verification-email")
+def resend_verification_email(request: authentication.ResendVerificationEmail, db: Session = Depends(get_db)):
+    email = normalize_email(str(request.email))
+    db_user = user_by_email(db, email)
+
+    if request.plan_choice not in ("free", "pro"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid plan_choice; use 'free' or 'pro'",
+        )
+
+    if db_user and not db_user.email_verified:
+        verify_token = oauth2.create_new_user_token(email)
+        send_verify_new_user(email, db_user.name, verify_token, request.plan_choice)
+
+    return {"message": "If your account exists and is not yet verified, a new verification link has been sent."}
 
 @router.post("/reset-password")
 def reset_password(request: authentication.ResetPassword, db: Session = Depends(get_db)):

@@ -10,6 +10,10 @@ class Login(BaseModel):
 class RequestPasswordReset(BaseModel):
     email: EmailStr
 
+class ResendVerificationEmail(BaseModel):
+    email: EmailStr
+    plan_choice: str = "free"
+
 class ResetPassword(BaseModel):
     token: str
     new_password: str

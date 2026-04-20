@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiError } from "@/lib/api";
+import { ApiError, resendVerificationEmail } from "@/lib/api";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 
@@ -20,7 +20,9 @@ function LoginForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
 
   useEffect(() => {
     if (!loading && token) router.replace("/dashboard");
@@ -29,6 +31,7 @@ function LoginForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    setInfo(null);
     setBusy(true);
     try {
       await login(email, password);
@@ -40,6 +43,24 @@ function LoginForm() {
   }
 
   const signup = searchParams.get("signup") === "1";
+  const unverified = err?.toLowerCase().includes("not verified");
+
+  async function onResendVerification() {
+    if (!email.trim()) {
+      setErr("Enter your email first, then tap resend.");
+      return;
+    }
+    setResending(true);
+    setInfo(null);
+    try {
+      const res = await resendVerificationEmail(email.trim(), "free");
+      setInfo(res.message);
+    } catch (ex) {
+      setErr(ex instanceof ApiError ? ex.message : "Could not resend verification email");
+    } finally {
+      setResending(false);
+    }
+  }
 
   return (
     <AuthPageShell>
@@ -53,6 +74,11 @@ function LoginForm() {
           {signup && (
             <p className="mb-6 rounded-xl border border-border/60 bg-muted/50 px-4 py-3.5 text-sm leading-relaxed text-muted-foreground">
               Account created — check your email to verify, then sign in here.
+            </p>
+          )}
+          {info && (
+            <p className="mb-6 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-3.5 text-sm leading-relaxed text-emerald-900">
+              {info}
             </p>
           )}
           <form onSubmit={onSubmit} className="space-y-5">
@@ -85,6 +111,18 @@ function LoginForm() {
               >
                 Forgot your password?
               </Link>
+              {unverified && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-auto px-2 py-1 text-xs"
+                  onClick={onResendVerification}
+                  disabled={resending}
+                >
+                  {resending ? "Sending…" : "Resend verification"}
+                </Button>
+              )}
             </div>
             <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}

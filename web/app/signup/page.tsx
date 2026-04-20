@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { signup as apiSignup, ApiError } from "@/lib/api";
+import { signup as apiSignup, ApiError, resendVerificationEmail } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -39,12 +39,15 @@ function SignupForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [resending, setResending] = useState(false);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setErr(null);
+    setInfo(null);
     setBusy(true);
     try {
       await apiSignup({ name, user_name, email, password, plan_choice: planChoice });
@@ -57,8 +60,22 @@ function SignupForm() {
   }
 
   if (done) {
+    async function onResendVerification() {
+      setInfo(null);
+      setResending(true);
+      try {
+        const res = await resendVerificationEmail(email, planChoice);
+        setInfo(res.message);
+      } catch (ex) {
+        setErr(ex instanceof ApiError ? ex.message : "Could not resend verification email");
+      } finally {
+        setResending(false);
+      }
+    }
+
     return (
       <AuthPageShell>
+        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
         <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
           <CardHeader className="space-y-2">
             <CardTitle className="text-2xl font-bold tracking-tight">Check your email</CardTitle>
@@ -67,6 +84,21 @@ function SignupForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {info && (
+              <p className="mb-4 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
+                {info}
+              </p>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              className="mb-3 w-full"
+              size="lg"
+              onClick={onResendVerification}
+              disabled={resending}
+            >
+              {resending ? "Sending..." : "Resend verification email"}
+            </Button>
             <Button asChild className="w-full" size="lg">
               <Link href="/login?signup=1">Go to log in</Link>
             </Button>
