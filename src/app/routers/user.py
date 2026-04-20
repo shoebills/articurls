@@ -253,6 +253,9 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
             )
 
     for key, value in update_data.items():
+        if key == "profile_image_url" and value is None:
+            # Keep a default avatar instead of leaving profile photo empty.
+            value = settings.default_profile_image_url
         setattr(db_user, key, value)
 
     db.commit()
