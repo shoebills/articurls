@@ -81,30 +81,39 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
             </div>
             <div className="sm:hidden">
-              <div className="flex items-center justify-between gap-3">
-                <p className="truncate text-lg font-semibold">{navBlogName}</p>
-                <details className="relative">
-                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border text-muted-foreground [&::-webkit-details-marker]:hidden">
-                    <Menu className="h-4 w-4" />
-                  </summary>
-                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background p-2 shadow-md">
-                    <div className="space-y-1">
-                      {user.nav_menu_enabled ? (
-                        pages.length > 0 ? (
-                          pages.map((p) => (
-                            <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="block rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                              {p.title}
-                            </Link>
-                          ))
-                        ) : null
-                      ) : null}
-                    </div>
-                    <div className="mt-2 border-t border-border pt-2">
-                      <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                    </div>
+              <details className="group">
+                <summary className="flex list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
+                  <p className="truncate text-lg font-semibold">{navBlogName}</p>
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 transition-all duration-200 hover:bg-background hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary">
+                    <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
+                  </span>
+                </summary>
+                <div className="mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                  <div className="space-y-1.5">
+                    {user.nav_menu_enabled ? (
+                      pages.length > 0 ? (
+                        pages.map((p) => (
+                          <Link
+                            key={p.page_id}
+                            href={`/${username}/page/${p.slug}`}
+                            className="block rounded-lg px-3 py-2 text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
+                          >
+                            {p.title}
+                          </Link>
+                        ))
+                      ) : null
+                    ) : null}
                   </div>
-                </details>
-              </div>
+                  <div className={`mt-2 pt-2 ${user.nav_menu_enabled && pages.length > 0 ? "border-t border-border/60" : ""}`}>
+                    <SubscribeToAuthor
+                      mode="dialog"
+                      userName={user.user_name}
+                      authorName={user.name}
+                      triggerClassName="h-8 min-h-8 w-full rounded-md px-3 text-xs font-medium"
+                    />
+                  </div>
+                </div>
+              </details>
             </div>
           </section>
         ) : null}
