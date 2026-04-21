@@ -3,6 +3,7 @@ import jwt
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
+from urllib.parse import urlparse
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
@@ -60,6 +61,19 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
                     viewer = utils.user_by_email(db, email)
                     is_owner_view = bool(viewer and viewer.user_id == db_user.user_id)
             except jwt.PyJWTError:
+                pass
+
+    if not is_owner_view:
+        referer = request.headers.get("referer", "")
+        if referer:
+            try:
+                ref = urlparse(referer)
+                app = urlparse(settings.app_base_url)
+                same_app_host = bool(ref.hostname and app.hostname and ref.hostname == app.hostname)
+                from_dashboard = ref.path.startswith("/dashboard")
+                if same_app_host and from_dashboard:
+                    is_owner_view = True
+            except ValueError:
                 pass
 
     if not is_owner_view:
