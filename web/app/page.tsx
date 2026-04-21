@@ -133,7 +133,7 @@ export default function MarketingPage() {
           <div className="mx-auto max-w-6xl">
             <div className="max-w-2xl">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">How it works</h2>
-              <p className="mt-3 text-base text-muted-foreground">From first draft to published post in three steps.</p>
+              <p className="mt-3 text-base text-justify text-muted-foreground">From first draft to published post in three steps.</p>
             </div>
             <div className="mt-8 grid gap-4 sm:grid-cols-3">
               {[
@@ -156,7 +156,7 @@ export default function MarketingPage() {
                 <div key={item.step} className="rounded-2xl border border-border/70 bg-card/70 p-5">
                   <p className="text-xs font-semibold tracking-[0.14em] text-primary">{item.step}</p>
                   <h3 className="mt-3 text-lg font-semibold tracking-tight">{item.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{item.body}</p>
+                  <p className="mt-2 text-sm text-justify text-muted-foreground">{item.body}</p>
                 </div>
               ))}
             </div>
