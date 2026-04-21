@@ -110,7 +110,7 @@ export default async function PublicBlogPage({ params }: Props) {
                   <summary className="flex h-9 w-9 list-none items-center justify-center rounded-full border border-border/70 bg-background/80 text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/70 hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary [&::-webkit-details-marker]:hidden">
                     <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
                   </summary>
-                  <div className="absolute right-0 z-20 mt-2 w-60 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-2 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                  <div className="absolute right-0 z-20 mt-2.5 w-52 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-2 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
                     <div className="space-y-1.5">
                       {author.nav_menu_enabled ? (
                         pages.length > 0 ? (
@@ -126,8 +126,15 @@ export default async function PublicBlogPage({ params }: Props) {
                         ) : null
                       ) : null}
                     </div>
-                    <div className="mt-2 border-t border-border/60 pt-2.5">
-                      <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
+                    <div
+                      className={`mt-2 pt-2 ${author.nav_menu_enabled && pages.length > 0 ? "border-t border-border/60" : ""}`}
+                    >
+                      <SubscribeToAuthor
+                        mode="dialog"
+                        userName={author.user_name}
+                        authorName={author.name}
+                        triggerClassName="h-9 min-h-9 w-full rounded-lg text-sm font-medium"
+                      />
                     </div>
                   </div>
                 </details>
