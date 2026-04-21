@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogListItem } from "@/lib/types";
@@ -28,6 +29,7 @@ import { Archive, ArchiveRestore, Loader2, MoreVertical, PenLine, Pencil, Trash2
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { token } = useAuth();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,6 +94,10 @@ export default function DashboardPage() {
     }
   }
 
+  function openEditor(blogId: number) {
+    router.push(`/dashboard/posts/${blogId}/edit`);
+  }
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -117,7 +123,24 @@ export default function DashboardPage() {
             const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
-              <Card className="transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-md">
+              <Card
+                role="link"
+                tabIndex={0}
+                onClick={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("[data-card-action='true']")) return;
+                  openEditor(b.blog_id);
+                }}
+                onKeyDown={(e) => {
+                  const target = e.target as HTMLElement;
+                  if (target.closest("[data-card-action='true']")) return;
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    openEditor(b.blog_id);
+                  }
+                }}
+                className="cursor-pointer transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+              >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
                     <h2 className="min-w-0 flex-1 text-lg font-semibold leading-snug tracking-tight text-foreground">
@@ -126,6 +149,7 @@ export default function DashboardPage() {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button
+                          data-card-action="true"
                           variant="ghost"
                           size="icon"
                           className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
