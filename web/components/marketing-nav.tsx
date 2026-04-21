@@ -23,11 +23,11 @@ export function MarketingNav() {
         Features
       </a>
       <a
-        href="#proof"
+        href="#how-it-works"
         className="flex min-h-12 items-center rounded-lg px-4 text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
         onClick={() => setOpen(false)}
       >
-        Social proof
+        How it works
       </a>
       <a
         href="#pricing"
@@ -68,8 +68,8 @@ export function MarketingNav() {
             <a href="#features" className="transition-colors duration-200 hover:text-foreground">
               Features
             </a>
-            <a href="#proof" className="transition-colors duration-200 hover:text-foreground">
-              Social proof
+            <a href="#how-it-works" className="transition-colors duration-200 hover:text-foreground">
+              How it works
             </a>
             <a href="#pricing" className="transition-colors duration-200 hover:text-foreground">
               Pricing
