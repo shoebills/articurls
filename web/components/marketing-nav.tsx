@@ -52,9 +52,9 @@ export function MarketingNav() {
         <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="icon"
-            className="h-11 w-11 shrink-0 touch-manipulation md:hidden"
+            className="h-11 w-11 shrink-0 border-border/70 bg-background/90 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground md:hidden"
             aria-label="Open menu"
             onClick={() => setOpen(true)}
           >
