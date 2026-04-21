@@ -81,14 +81,14 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
             </div>
             <div className="sm:hidden">
-              <details className="group">
+              <details className="group relative">
                 <summary className="flex list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <p className="truncate text-lg font-semibold">{navBlogName}</p>
                   <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 transition-all duration-200 hover:bg-background hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary">
                     <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
                   </span>
                 </summary>
-                <div className="mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                <div className="absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
                   <div className="space-y-1.5">
                     {user.nav_menu_enabled ? (
                       pages.length > 0 ? (

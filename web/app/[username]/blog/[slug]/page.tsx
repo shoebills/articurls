@@ -102,7 +102,7 @@ export default async function PublicBlogPage({ params }: Props) {
               </div>
             </div>
             <div className="sm:hidden">
-              <details className="group">
+              <details className="group relative">
                 <summary className="flex list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
                   <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
                     {navBlogName}
@@ -111,7 +111,7 @@ export default async function PublicBlogPage({ params }: Props) {
                     <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
                   </span>
                 </summary>
-                <div className="mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                <div className="absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
                   <div className="space-y-1.5">
                     {author.nav_menu_enabled ? (
                       pages.length > 0 ? (
