@@ -1,4 +1,5 @@
 import hashlib
+import jwt
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -6,6 +7,7 @@ from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
 from ..schemas import page as page_schema
+from ..config import settings
 
 
 router = APIRouter(
@@ -46,15 +48,30 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
     if db_blog.status != models.BlogStatus.PUBLISHED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
 
-    ip = (request.client.host if request.client else None) or ""
-    user_agent = request.headers.get("user-agent", "")
-    visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
-    db.add(models.Views(
-            user_id=db_user.user_id,
-            blog_id=db_blog.blog_id,
-            visitor_hash=visitor_hash,
-        ))
-    db.commit()
+    is_owner_view = False
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        if token:
+            try:
+                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+                email = payload.get("sub")
+                if email:
+                    viewer = utils.user_by_email(db, email)
+                    is_owner_view = bool(viewer and viewer.user_id == db_user.user_id)
+            except jwt.PyJWTError:
+                pass
+
+    if not is_owner_view:
+        ip = (request.client.host if request.client else None) or ""
+        user_agent = request.headers.get("user-agent", "")
+        visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
+        db.add(models.Views(
+                user_id=db_user.user_id,
+                blog_id=db_blog.blog_id,
+                visitor_hash=visitor_hash,
+            ))
+        db.commit()
 
     return db_blog
 
