@@ -106,11 +106,11 @@ export default async function PublicBlogPage({ params }: Props) {
                 <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
                   {navBlogName}
                 </Link>
-                <details className="group relative">
-                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border/70 bg-background/80 text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/70 hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary [&::-webkit-details-marker]:hidden">
+                <details className="group static">
+                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 transition-all duration-200 hover:bg-background hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary [&::-webkit-details-marker]:hidden">
                     <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
                   </summary>
-                  <div className="absolute left-0 right-0 z-20 mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
+                  <div className="absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
                     <div className="space-y-1.5">
                       {author.nav_menu_enabled ? (
                         pages.length > 0 ? (
