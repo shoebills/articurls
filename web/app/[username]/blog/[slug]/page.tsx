@@ -10,6 +10,7 @@ import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { VerifiedBadge } from "@/components/verified-badge";
+import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -78,6 +79,7 @@ export default async function PublicBlogPage({ params }: Props) {
   return (
     <article className="min-h-screen bg-background">
       <div className={containerSpacing}>
+        <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
             <div className="hidden items-center justify-between gap-4 sm:flex">

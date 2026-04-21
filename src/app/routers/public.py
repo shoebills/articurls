@@ -3,7 +3,6 @@ import jwt
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from typing import List
-from urllib.parse import urlparse
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
@@ -49,6 +48,27 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
     if db_blog.status != models.BlogStatus.PUBLISHED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
 
+    return db_blog
+
+
+@router.post("/{user_name}/blog/{slug}/view", status_code=status.HTTP_204_NO_CONTENT)
+def track_blog_view(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db_blog = (
+        db.query(models.Blog)
+        .filter(
+            models.Blog.slug == slug,
+            models.Blog.user_id == db_user.user_id,
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+        .first()
+    )
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
+
     is_owner_view = False
     auth_header = request.headers.get("authorization", "")
     if auth_header.lower().startswith("bearer "):
@@ -63,30 +83,18 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
             except jwt.PyJWTError:
                 pass
 
-    if not is_owner_view:
-        referer = request.headers.get("referer", "")
-        if referer:
-            try:
-                ref = urlparse(referer)
-                app = urlparse(settings.app_base_url)
-                same_app_host = bool(ref.hostname and app.hostname and ref.hostname == app.hostname)
-                if same_app_host:
-                    is_owner_view = True
-            except ValueError:
-                pass
+    if is_owner_view:
+        return
 
-    if not is_owner_view:
-        ip = (request.client.host if request.client else None) or ""
-        user_agent = request.headers.get("user-agent", "")
-        visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
-        db.add(models.Views(
-                user_id=db_user.user_id,
-                blog_id=db_blog.blog_id,
-                visitor_hash=visitor_hash,
-            ))
-        db.commit()
-
-    return db_blog
+    ip = (request.client.host if request.client else None) or ""
+    user_agent = request.headers.get("user-agent", "")
+    visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
+    db.add(models.Views(
+            user_id=db_user.user_id,
+            blog_id=db_blog.blog_id,
+            visitor_hash=visitor_hash,
+        ))
+    db.commit()
 
 
 @router.get("/{user_name}/blog/{slug}/ads", response_model=blog.PublicBlogAds, status_code=status.HTTP_200_OK)
