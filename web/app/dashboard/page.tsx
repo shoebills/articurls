@@ -108,17 +108,18 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
+    <div className="mx-auto max-w-[1100px]">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your posts</h1>
+          <p className="text-sm text-slate-500">Manage and track your content</p>
         </div>
-        <Button asChild className="h-11 w-full shrink-0 touch-manipulation shadow-sm sm:h-auto sm:w-auto">
-          <Link href="/dashboard/posts/new">+ New post</Link>
+        <Button asChild className="h-11 w-full shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:w-auto">
+          <Link href="/dashboard/posts/new">+ New Post</Link>
         </Button>
       </div>
       {blogs.length > 0 ? (
-        <ul className="mt-8 space-y-4">
+        <ul className="space-y-4">
           {blogs.map((b) => {
             const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
@@ -139,11 +140,11 @@ export default function DashboardPage() {
                     openEditor(b.blog_id);
                   }
                 }}
-                className="cursor-pointer transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start justify-between gap-3">
-                    <h2 className="min-w-0 flex-1 text-lg font-semibold leading-snug tracking-tight text-foreground">
+                    <h2 className="min-w-0 flex-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
                       {b.title || "Untitled"}
                     </h2>
                     <DropdownMenu>
@@ -152,7 +153,7 @@ export default function DashboardPage() {
                           data-card-action="true"
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
+                          className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-700"
                           aria-label={`Actions for ${b.title || "Untitled"}`}
                           disabled={rowBusyId === b.blog_id}
                         >
@@ -196,17 +197,17 @@ export default function DashboardPage() {
                     </DropdownMenu>
                   </div>
 
-                  <p className="line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                  <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
                     {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                   </p>
 
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-sm text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
                     <BlogStatusBadge status={b.status} className="shrink-0" />
-                    <span className="text-border select-none" aria-hidden>
+                    <span className="text-slate-300 select-none" aria-hidden>
                       ·
                     </span>
                     <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
-                    <span className="text-border select-none" aria-hidden>
+                    <span className="text-slate-300 select-none" aria-hidden>
                       ·
                     </span>
                     <span className="whitespace-nowrap">
@@ -221,7 +222,7 @@ export default function DashboardPage() {
         </ul>
       ) : (
         <div
-          className="mt-10 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-border bg-muted/25 px-6 py-14 text-center transition-colors duration-200 sm:min-h-[260px]"
+          className="mt-10 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200 sm:min-h-[260px]"
           role="status"
           aria-label="No posts yet"
         >

@@ -31,7 +31,7 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border bg-sidebar/80 px-3">
+      <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-sidebar/70 px-3">
         <BrandLogo
           href="/dashboard"
           size="sm"
@@ -39,7 +39,7 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
           onClick={() => onNavigate?.()}
         />
       </div>
-      <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overscroll-contain p-2">
+      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
         {links.map(({ href, label, icon: Icon }) => {
           const active =
             href === "/dashboard"
@@ -51,24 +51,24 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
               href={href}
               onClick={() => onNavigate?.()}
               className={cn(
-                "flex min-h-11 items-center gap-3 rounded-xl px-3 text-sm font-medium transition-[background-color,color,box-shadow] duration-200 active:bg-sidebar-accent/90",
+                "flex min-h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
                 active
-                  ? "bg-sidebar-accent text-sidebar-foreground shadow-sm ring-1 ring-sidebar-border/80"
-                  : "text-muted-foreground hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                  ? "bg-sidebar-accent/80 text-sidebar-foreground"
+                  : "text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
               )}
             >
-              <Icon className="h-5 w-5 shrink-0 opacity-80" />
+              <Icon className="h-4 w-4 shrink-0 opacity-80" />
               {label}
             </Link>
           );
         })}
       </nav>
-      <div className="shrink-0 border-t border-sidebar-border bg-sidebar/90 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <div className="shrink-0 border-t border-sidebar-border/70 bg-sidebar/75 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
         <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
         <Button
           variant="ghost"
           size="sm"
-          className="mt-2 h-11 w-full justify-start gap-2 sm:h-9"
+          className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground sm:h-9"
           onClick={() => {
             onNavigate?.();
             logout();
@@ -84,7 +84,7 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-dvh max-h-dvh w-[15.5rem] shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:sticky md:top-0 md:self-start md:flex">
+    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/65 md:sticky md:top-0 md:self-start md:flex">
       <DashboardSidebarPanel />
     </aside>
   );
