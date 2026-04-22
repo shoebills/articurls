@@ -100,12 +100,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 id={mobileMenuId}
                 className={cn(
                   // Row→border and border→tray both use --mobile-nav-rail-gap (same as padding under row)
-                  "absolute left-0 top-full z-50 mt-[calc(var(--mobile-nav-rail-gap)+1px+var(--mobile-nav-rail-gap))] w-[80%] min-w-0 max-w-full transition-all duration-200 ease-out",
-                  open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
+                  "absolute left-0 top-full z-50 mt-[calc(var(--mobile-nav-rail-gap)+1px+var(--mobile-nav-rail-gap))] w-[80%] min-w-0 max-w-full transition-opacity duration-200 ease-out",
+                  open ? "opacity-100" : "pointer-events-none opacity-0"
                 )}
                 aria-hidden={!open}
               >
-                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
+                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
@@ -119,7 +119,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
           {open ? (
             <div
-              className="pointer-events-auto fixed left-0 right-0 top-14 z-20 bg-background/40 md:hidden"
+              className="pointer-events-auto fixed left-0 right-0 top-14 z-20 bg-[#f8fafc]/85 md:hidden"
               style={{ height: "calc(100dvh - 3.5rem)" }}
               aria-hidden
               onClick={close}
