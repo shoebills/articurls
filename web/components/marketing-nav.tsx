@@ -122,7 +122,7 @@ export function MarketingNav() {
         }`}
       >
         <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-6 sm:pr-6">
-          <div className="mt-2 overflow-hidden rounded-xl border border-border/80 bg-background/95 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/90">
+          <div className="mt-2 overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10">
             {mobileLinks}
             <div className="border-t border-border p-3">
               <Button className="h-11 w-full touch-manipulation" asChild>
