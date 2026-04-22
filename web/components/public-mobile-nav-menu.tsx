@@ -70,8 +70,8 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
 
       <div
         id={menuId}
-        className={`absolute inset-x-0 top-full z-20 mt-[var(--mobile-nav-rail-gap)] overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
-          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
+        className={`absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
+          open ? "opacity-100" : "pointer-events-none opacity-0"
         }`}
       >
         {links.length > 0 ? (
