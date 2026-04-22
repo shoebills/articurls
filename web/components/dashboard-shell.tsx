@@ -16,19 +16,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh w-full bg-[#f8fafc] md:h-dvh md:max-h-dvh md:overflow-hidden">
       <AppSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
-        <header className="hidden h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background/95 px-8 md:flex">
-          <Link href="/dashboard" className="text-sm font-semibold tracking-tight text-slate-900">
-            Articurls
-          </Link>
-          <div className="flex items-center gap-6 text-sm text-slate-500">
-            <span className="cursor-default">Report a bug</span>
-            <span className="cursor-default">Support</span>
+        <header className="hidden h-14 shrink-0 items-center justify-end bg-background/95 px-8 md:flex">
+          <div className="flex items-center gap-2">
+            <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+              Report a bug
+            </Button>
+            <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+              Support
+            </Button>
             {user?.user_name ? (
-              <Link href={`/${user.user_name}`} className="font-medium text-slate-700 transition-colors hover:text-slate-900">
-                Visit blog
-              </Link>
+              <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
+                <Link href={`/${user.user_name}`}>Visit blog</Link>
+              </Button>
             ) : (
-              <span className="cursor-default">Visit blog</span>
+              <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+                Visit blog
+              </Button>
             )}
           </div>
         </header>
