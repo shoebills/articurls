@@ -110,9 +110,8 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1100px]">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-semibold tracking-tight text-slate-900">Your posts</h1>
-          <p className="text-sm text-slate-500">Manage and track your content</p>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
         </div>
         <Button asChild className="h-11 w-full shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:w-auto">
           <Link href="/dashboard/posts/new">+ New Post</Link>

@@ -234,7 +234,7 @@ export default function SettingsPage() {
 
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
-      <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
       {saved && <p className="text-sm font-medium text-emerald-600">Saved.</p>}
 
       <Card>

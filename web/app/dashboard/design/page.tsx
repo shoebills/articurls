@@ -95,7 +95,7 @@ export default function DesignDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
-      <h1 className="text-2xl font-bold">Design</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Design</h1>
       <Card>
         <CardHeader>
           <CardTitle>Navigation bar</CardTitle>

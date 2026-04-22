@@ -53,7 +53,7 @@ export default function BillingPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
-      <h1 className="text-2xl font-bold">Billing</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
 
       <Card>
         <CardHeader>

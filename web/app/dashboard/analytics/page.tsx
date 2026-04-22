@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-10">
-      <h1 className="text-2xl font-bold">Analytics</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
 
       <Tabs defaultValue="views">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
