@@ -60,7 +60,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background/90 pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
         >
           <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">
@@ -119,7 +119,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
           {open ? (
             <div
-              className="pointer-events-auto fixed left-0 right-0 top-14 z-20 bg-background/30 backdrop-blur-[1px] md:hidden"
+              className="pointer-events-auto fixed left-0 right-0 top-14 z-20 bg-background/40 md:hidden"
               style={{ height: "calc(100dvh - 3.5rem)" }}
               aria-hidden
               onClick={close}
