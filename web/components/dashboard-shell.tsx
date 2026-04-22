@@ -119,7 +119,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           </div>
           {open ? (
             <div
-              className="pointer-events-auto fixed left-0 right-0 top-14 z-20 bg-[#f8fafc]/85 md:hidden"
+              className="pointer-events-auto fixed inset-x-0 top-14 z-20 bg-transparent md:hidden"
               style={{ height: "calc(100dvh - 3.5rem)" }}
               aria-hidden
               onClick={close}

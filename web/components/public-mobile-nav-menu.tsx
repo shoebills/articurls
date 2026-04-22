@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { cn } from "@/lib/utils";
+
+const TRAY_GAP_BELOW_NAVBAR_PX = 8;
+
+type TrayLayout = { top: number; left: number; width: number };
 
 type PublicMobileNavMenuProps = {
   title: string;
@@ -15,8 +20,37 @@ type PublicMobileNavMenuProps = {
 
 export function PublicMobileNavMenu({ title, titleHref, links, userName, authorName }: PublicMobileNavMenuProps) {
   const [open, setOpen] = useState(false);
+  const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const menuId = useId();
+
+  const updateTrayLayout = useCallback(() => {
+    const root = rootRef.current;
+    if (!root || !open) return;
+    const rootBox = root.getBoundingClientRect();
+    const section = root.closest("section");
+    const bottomEdge = section ? section.getBoundingClientRect().bottom : rootBox.bottom;
+    setTrayLayout({
+      top: bottomEdge + TRAY_GAP_BELOW_NAVBAR_PX,
+      left: rootBox.left,
+      width: rootBox.width,
+    });
+  }, [open]);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setTrayLayout(null);
+      return;
+    }
+    updateTrayLayout();
+    const scrollOpts: AddEventListenerOptions = { capture: true };
+    window.addEventListener("resize", updateTrayLayout);
+    window.addEventListener("scroll", updateTrayLayout, scrollOpts);
+    return () => {
+      window.removeEventListener("resize", updateTrayLayout);
+      window.removeEventListener("scroll", updateTrayLayout, scrollOpts);
+    };
+  }, [open, updateTrayLayout]);
 
   useEffect(() => {
     if (!open) return;
@@ -43,7 +77,6 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
 
   return (
     <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:2px]">
-      {/* Symmetric vertical rail; title strip matches menu button height for optical centering. */}
       <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
           <Link
@@ -68,38 +101,51 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
         </button>
       </div>
 
-      <div
-        id={menuId}
-        className={`absolute inset-x-0 top-[calc(100%+8px)] z-50 overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
-          open ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
-      >
-        {links.length > 0 ? (
-          <div className="space-y-1.5 p-1.5">
-            {links.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={() => setOpen(false)}
-                className="block w-full rounded-lg px-3 py-2 text-center text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
-        ) : null}
-
+      {open ? (
         <div
-          className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}
+          id={menuId}
+          className={cn(
+            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-background transition-opacity duration-200 ease-out",
+            trayLayout ? "opacity-100" : "pointer-events-none opacity-0"
+          )}
+          style={
+            trayLayout
+              ? {
+                  top: trayLayout.top,
+                  left: trayLayout.left,
+                  width: trayLayout.width,
+                }
+              : undefined
+          }
+          aria-hidden={!trayLayout}
         >
-          <SubscribeToAuthor
-            mode="dialog"
-            userName={userName}
-            authorName={authorName}
-            triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
-          />
+          {links.length > 0 ? (
+            <div className="space-y-1.5 p-1.5">
+              {links.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setOpen(false)}
+                  className="block w-full rounded-lg px-3 py-2 text-center text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </div>
+          ) : null}
+
+          <div
+            className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}
+          >
+            <SubscribeToAuthor
+              mode="dialog"
+              userName={userName}
+              authorName={authorName}
+              triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
+            />
+          </div>
         </div>
-      </div>
+      ) : null}
     </div>
   );
 }
