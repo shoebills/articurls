@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Bug, CircleHelp, ExternalLink, Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -19,17 +19,23 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background/95 px-8 md:flex">
           <div className="flex items-center gap-2">
             <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+              <Bug className="mr-1.5 h-3.5 w-3.5" />
               Report a bug
             </Button>
             <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+              <CircleHelp className="mr-1.5 h-3.5 w-3.5" />
               Support
             </Button>
             {user?.user_name ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
-                <Link href={`/${user.user_name}`}>Visit blog</Link>
+                <Link href={`/${user.user_name}`}>
+                  <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
+                  Visit blog
+                </Link>
               </Button>
             ) : (
               <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
+                <ExternalLink className="mr-1.5 h-3.5 w-3.5" />
                 Visit blog
               </Button>
             )}
