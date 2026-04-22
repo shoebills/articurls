@@ -110,10 +110,18 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1100px]">
       <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
+        <div className="flex items-center justify-between gap-3 sm:block">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
+          <Button
+            asChild
+            size="icon"
+            className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+            aria-label="Create new post"
+          >
+            <Link href="/dashboard/posts/new">+</Link>
+          </Button>
         </div>
-        <Button asChild className="h-11 w-full shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:w-auto">
+        <Button asChild className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
           <Link href="/dashboard/posts/new">+ New Post</Link>
         </Button>
       </div>
