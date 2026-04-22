@@ -13,11 +13,24 @@ def normalize_email(email: str | None) -> str:
     return str(email).strip().lower()
 
 
+def normalize_username(user_name: str | None) -> str:
+    if user_name is None:
+        return ""
+    return str(user_name).strip().lower()
+
+
 def user_by_email(db: Session, email: str) -> models.User | None:
     norm = normalize_email(email)
     if not norm:
         return None
     return db.query(models.User).filter(func.lower(models.User.email) == norm).first()
+
+
+def user_by_username(db: Session, user_name: str) -> models.User | None:
+    norm = normalize_username(user_name)
+    if not norm:
+        return None
+    return db.query(models.User).filter(func.lower(models.User.user_name) == norm).first()
 
 
 HTML_TAG_RE = re.compile(r"<[^>]+>")

@@ -311,7 +311,11 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
-              <Input id="user_name" value={user_name} onChange={(e) => setUserName(e.target.value)} />
+              <Input
+                id="user_name"
+                value={user_name}
+                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+              />
             </div>
           </div>
           <div className="space-y-2.5">

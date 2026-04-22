@@ -129,7 +129,7 @@ function SignupForm() {
               <Input
                 id="user_name"
                 value={user_name}
-                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, ""))}
+                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
                 required
                 pattern="[a-zA-Z0-9_-]+"
                 title="Letters, numbers, underscore, hyphen"

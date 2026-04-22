@@ -11,7 +11,7 @@ from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
-from ..utils import normalize_email, require_pro, user_by_email
+from ..utils import normalize_email, normalize_username, require_pro, user_by_email, user_by_username
 
 router = APIRouter(
     tags=["User"],
@@ -22,6 +22,7 @@ router = APIRouter(
 def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
 
     email = normalize_email(str(request.email))
+    user_name = normalize_username(request.user_name)
 
     db_email = user_by_email(db, email)
 
@@ -30,7 +31,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
     
-    db_user_name = db.query(models.User).filter(models.User.user_name == request.user_name).first()
+    db_user_name = user_by_username(db, user_name)
     
     if db_user_name:
         raise HTTPException(
@@ -40,7 +41,7 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
     hashed_password = hashing.get_password_hash(request.password)
     
     new_user = models.User(name=request.name, 
-                           user_name=request.user_name, 
+                           user_name=user_name, 
                            email=email, 
                            password=hashed_password, 
                            seo_title=f"{request.name}'s Blog",
@@ -243,6 +244,21 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
 
     if "contact_email" in update_data and update_data["contact_email"] is not None:
         update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
+
+    if "user_name" in update_data and update_data["user_name"] is not None:
+        normalized_user_name = normalize_username(update_data["user_name"])
+        if not normalized_user_name:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Username is required",
+            )
+        existing_user = user_by_username(db, normalized_user_name)
+        if existing_user and existing_user.user_id != db_user.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Username already registered",
+            )
+        update_data["user_name"] = normalized_user_name
 
     if "bio" in update_data and update_data["bio"] is not None:
         word_count = len(update_data["bio"].split())
