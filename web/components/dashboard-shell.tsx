@@ -47,7 +47,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
             </Button>
             <Link
               href="/dashboard"
-              className="min-w-0 truncate text-lg font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
+              className="min-w-0 truncate text-[1.6875rem] font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
             >
               Articurls
             </Link>
