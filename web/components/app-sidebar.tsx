@@ -39,44 +39,46 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
           onClick={() => onNavigate?.()}
         />
       </div>
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
-        {links.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/dashboard"
-              ? pathname === "/dashboard" || pathname.startsWith("/dashboard/posts")
-              : pathname === href || pathname.startsWith(`${href}/`);
-          return (
-            <Link
-              key={href}
-              href={href}
-              onClick={() => onNavigate?.()}
-              className={cn(
-                "flex min-h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
-                active
-                  ? "bg-sidebar-accent/80 text-sidebar-foreground"
-                  : "text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-              )}
-            >
-              <Icon className="h-4 w-4 shrink-0 opacity-80" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-      <div className="shrink-0 border-t border-sidebar-border/70 bg-sidebar/75 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-        <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground sm:h-9"
-          onClick={() => {
-            onNavigate?.();
-            logout();
-          }}
-        >
-          <LogOut className="h-4 w-4" />
-          Log out
-        </Button>
+      <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
+        <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
+          {links.map(({ href, label, icon: Icon }) => {
+            const active =
+              href === "/dashboard"
+                ? pathname === "/dashboard" || pathname.startsWith("/dashboard/posts")
+                : pathname === href || pathname.startsWith(`${href}/`);
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => onNavigate?.()}
+                className={cn(
+                  "flex min-h-10 items-center gap-2.5 rounded-lg px-3 text-sm font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
+                  active
+                    ? "bg-sidebar-accent/80 text-sidebar-foreground"
+                    : "text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+                )}
+              >
+                <Icon className="h-4 w-4 shrink-0 opacity-80" />
+                {label}
+              </Link>
+            );
+          })}
+        </nav>
+        <div className="shrink-0 border-t border-sidebar-border/70 bg-sidebar/75 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground sm:h-9"
+            onClick={() => {
+              onNavigate?.();
+              logout();
+            }}
+          >
+            <LogOut className="h-4 w-4" />
+            Log out
+          </Button>
+        </div>
       </div>
     </div>
   );
@@ -84,7 +86,7 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col border-r border-sidebar-border/70 bg-sidebar/65 md:sticky md:top-0 md:self-start md:flex">
+    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col bg-sidebar/65 md:sticky md:top-0 md:self-start md:flex">
       <DashboardSidebarPanel />
     </aside>
   );
