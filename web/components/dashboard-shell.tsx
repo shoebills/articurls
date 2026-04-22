@@ -60,9 +60,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background/90 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background/90 pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:hidden"
         >
-          <div className="px-3 py-2">
+          <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">
               <div className="flex w-full min-w-0 items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -99,12 +99,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div
                 id={mobileMenuId}
                 className={cn(
-                  "absolute left-0 top-full z-50 w-[80%] min-w-0 max-w-full transition-all duration-200 ease-out",
+                  // Row→border and border→tray both use --mobile-nav-rail-gap (same as padding under row)
+                  "absolute left-0 top-full z-50 mt-[calc(var(--mobile-nav-rail-gap)+1px+var(--mobile-nav-rail-gap))] w-[80%] min-w-0 max-w-full transition-all duration-200 ease-out",
                   open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
                 )}
                 aria-hidden={!open}
               >
-                <div className="mt-1.5 max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
+                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
