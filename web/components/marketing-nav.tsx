@@ -50,16 +50,6 @@ export function MarketingNav() {
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/80 pt-[env(safe-area-inset-top)] shadow-sm shadow-black/[0.02] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,backdrop-filter] duration-200 supports-[backdrop-filter]:bg-background/70">
       <div className="mx-auto flex h-14 max-w-6xl items-center gap-2 px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:h-16 sm:gap-3 sm:px-6 sm:pr-6">
         <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            className="h-11 w-11 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground md:hidden"
-            aria-label="Open menu"
-            onClick={() => setOpen(true)}
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
           <BrandLogo className="min-w-0" />
         </div>
 
@@ -78,8 +68,18 @@ export function MarketingNav() {
               Log in
             </Link>
           </nav>
-          <Button size="sm" className="h-10 min-w-[6.5rem] touch-manipulation sm:min-w-0" asChild>
+          <Button size="sm" className="hidden h-10 min-w-[6.5rem] touch-manipulation md:inline-flex sm:min-w-0" asChild>
             <a href={signupFree}>Get started</a>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="h-11 w-11 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground md:hidden"
+            aria-label="Open menu"
+            onClick={() => setOpen(true)}
+          >
+            <Menu className="h-5 w-5" />
           </Button>
         </div>
       </div>
