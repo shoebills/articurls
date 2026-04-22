@@ -42,8 +42,8 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:0.5rem]">
-      <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-[var(--mobile-nav-rail-gap)]">
+    <div ref={rootRef} className="relative sm:hidden">
+      <div className="flex items-center justify-between gap-3">
         {titleHref ? (
           <Link href={titleHref} className="truncate text-lg font-semibold hover:underline">
             {title}
@@ -66,7 +66,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
 
       <div
         id={menuId}
-        className={`absolute inset-x-0 top-full z-20 mt-[var(--mobile-nav-rail-gap)] overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
+        className={`absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >
