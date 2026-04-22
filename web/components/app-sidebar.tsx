@@ -6,7 +6,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, BadgeDollarSign } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, BadgeDollarSign, Bug, CircleHelp } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
@@ -65,6 +65,16 @@ export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
           })}
         </nav>
         <div className="shrink-0 border-t border-sidebar-border/70 bg-sidebar/75 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+          <div className="mb-2 flex flex-col gap-1.5">
+            <Button type="button" variant="ghost" size="sm" className="h-9 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground">
+              <Bug className="h-4 w-4" />
+              Report a bug
+            </Button>
+            <Button type="button" variant="ghost" size="sm" className="h-9 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground">
+              <CircleHelp className="h-4 w-4" />
+              Support
+            </Button>
+          </div>
           <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
           <Button
             variant="ghost"
