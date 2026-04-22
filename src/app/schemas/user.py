@@ -26,6 +26,7 @@ class UserSettings(BaseModel):
     facebook_link: Optional[str] = None
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
+    youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
     verification_tick: bool
@@ -52,6 +53,7 @@ class PublicUser(BaseModel):
     facebook_link: Optional[str] = None
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
+    youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     verification_tick: bool
     navbar_enabled: bool
@@ -79,6 +81,7 @@ class UpdateUser(BaseModel):
     facebook_link: Optional[str] = None
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
+    youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
 

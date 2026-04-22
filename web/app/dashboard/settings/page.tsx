@@ -19,6 +19,7 @@ import {
   SiGithub,
   SiInstagram,
   SiPinterest,
+  SiYoutube,
   SiX,
 } from "react-icons/si";
 import { MdOutlineEmail } from "react-icons/md";
@@ -31,7 +32,8 @@ type SocialPlatform =
   | "pinterest_link"
   | "facebook_link"
   | "linkedin_link"
-  | "github_link";
+  | "github_link"
+  | "youtube_link";
 
 const SOCIAL_OPTIONS: Array<{
   key: SocialPlatform;
@@ -41,11 +43,12 @@ const SOCIAL_OPTIONS: Array<{
 }> = [
   { key: "contact_email", label: "Contact email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden />, placeholder: "hello@example.com" },
   { key: "instagram_link", label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden />, placeholder: "https://instagram.com/username" },
-  { key: "x_link", label: "X", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },
+  { key: "x_link", label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },
   { key: "pinterest_link", label: "Pinterest", icon: <SiPinterest className="h-4 w-4" aria-hidden />, placeholder: "https://pinterest.com/username" },
   { key: "facebook_link", label: "Facebook", icon: <SiFacebook className="h-4 w-4" aria-hidden />, placeholder: "https://facebook.com/username" },
   { key: "linkedin_link", label: "LinkedIn", icon: <FaLinkedinIn className="h-4 w-4" aria-hidden />, placeholder: "https://linkedin.com/in/username" },
   { key: "github_link", label: "GitHub", icon: <SiGithub className="h-4 w-4" aria-hidden />, placeholder: "https://github.com/username" },
+  { key: "youtube_link", label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden />, placeholder: "https://youtube.com/@username" },
 ];
 
 export default function SettingsPage() {
@@ -63,6 +66,7 @@ export default function SettingsPage() {
     facebook_link: "",
     linkedin_link: "",
     github_link: "",
+    youtube_link: "",
   });
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
   const [addingSocial, setAddingSocial] = useState(false);
@@ -90,6 +94,7 @@ export default function SettingsPage() {
         facebook_link: u.facebook_link || "",
         linkedin_link: u.linkedin_link || "",
         github_link: u.github_link || "",
+        youtube_link: u.youtube_link || "",
       };
       setSocialLinks(nextLinks);
       setEnabledSocials(
@@ -120,6 +125,7 @@ export default function SettingsPage() {
         facebook_link: ctxUser.facebook_link || "",
         linkedin_link: ctxUser.linkedin_link || "",
         github_link: ctxUser.github_link || "",
+        youtube_link: ctxUser.youtube_link || "",
       };
       setSocialLinks(nextLinks);
       setEnabledSocials(
@@ -152,6 +158,7 @@ export default function SettingsPage() {
         facebook_link: socialLinks.facebook_link || null,
         linkedin_link: socialLinks.linkedin_link || null,
         github_link: socialLinks.github_link || null,
+        youtube_link: socialLinks.youtube_link || null,
       });
       await refreshUser();
       setSaved(true);

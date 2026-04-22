@@ -130,6 +130,7 @@ export async function patchMe(
       | "facebook_link"
       | "linkedin_link"
       | "github_link"
+      | "youtube_link"
       | "profile_image_url"
     >
   >
