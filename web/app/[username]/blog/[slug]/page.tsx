@@ -81,7 +81,7 @@ export default async function PublicBlogPage({ params }: Props) {
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
-          <section className="mb-8 flex min-h-11 items-center rounded-lg border border-border/80 bg-muted/30 px-4 py-0 sm:min-h-0 sm:block sm:py-4">
+          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 px-4 py-0 sm:py-4">
             <div className="hidden min-h-9 items-center justify-between gap-4 sm:flex">
               <Link
                 href={`/${username}`}

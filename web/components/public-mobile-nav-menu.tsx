@@ -42,7 +42,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:0.5rem]">
+    <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:2px]">
       {/* Symmetric vertical rail; title strip matches menu button height for optical centering. */}
       <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
