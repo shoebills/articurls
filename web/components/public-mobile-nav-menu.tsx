@@ -42,8 +42,8 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden">
-      <div className="flex items-center justify-between gap-3">
+    <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:0.5rem]">
+      <div className="flex items-center justify-between gap-3 border-b border-border/60 pb-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
           <Link href={titleHref} className="truncate text-lg font-semibold hover:underline">
             {title}
@@ -66,7 +66,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
 
       <div
         id={menuId}
-        className={`absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
+        className={`absolute inset-x-0 top-full z-20 mt-[var(--mobile-nav-rail-gap)] overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10 transition-all duration-250 ease-in-out ${
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
         }`}
       >
@@ -77,7 +77,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="block rounded-lg px-3 py-2 text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
+                className="block w-full rounded-lg px-3 py-2 text-center text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
               >
                 {item.label}
               </Link>
@@ -85,12 +85,14 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
           </div>
         ) : null}
 
-        <div className={`${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}>
+        <div
+          className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}
+        >
           <SubscribeToAuthor
             mode="dialog"
             userName={userName}
             authorName={authorName}
-            triggerClassName="h-8 min-h-8 w-full rounded-md px-3 text-xs font-medium"
+            triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
           />
         </div>
       </div>
