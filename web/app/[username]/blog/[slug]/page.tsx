@@ -81,9 +81,12 @@ export default async function PublicBlogPage({ params }: Props) {
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 px-4 py-1.5">
-            <div className="hidden items-center justify-between gap-4 sm:flex">
-              <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
+          <section className="mb-8 flex min-h-11 items-center rounded-lg border border-border/80 bg-muted/30 px-4 py-1.5 sm:min-h-0 sm:block">
+            <div className="hidden min-h-9 items-center justify-between gap-4 sm:flex">
+              <Link
+                href={`/${username}`}
+                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+              >
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
@@ -101,7 +104,7 @@ export default async function PublicBlogPage({ params }: Props) {
                 <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
               </div>
             </div>
-            <div className="sm:hidden">
+            <div className="w-full sm:hidden">
               <PublicMobileNavMenu
                 title={navBlogName}
                 titleHref={`/${username}`}

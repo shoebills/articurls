@@ -78,9 +78,9 @@ export function MarketingNav() {
       ref={navRef}
       className="sticky top-0 z-40 border-b border-border/70 bg-background/80 pt-[env(safe-area-inset-top)] shadow-sm shadow-black/[0.02] [--mobile-nav-rail-gap:0.5rem] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,backdrop-filter] duration-200 supports-[backdrop-filter]:bg-background/70"
     >
-      <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pb-[var(--mobile-nav-rail-gap)] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-6 sm:pr-6">
-        <div className="flex h-14 w-full items-center gap-2 sm:h-16 sm:gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:gap-2">
+      <div className="mx-auto w-full max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-6 sm:pr-6">
+        <div className="flex min-h-11 w-full items-center gap-2 py-[var(--mobile-nav-rail-gap)] sm:h-16 sm:min-h-16 sm:gap-3 sm:py-0">
+          <div className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 sm:min-h-0 sm:gap-2">
             <BrandLogo className="min-w-0" />
           </div>
 

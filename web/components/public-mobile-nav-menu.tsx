@@ -43,14 +43,17 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
 
   return (
     <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:0.5rem]">
-      {/* Same token: space under the nav row to its outer edge, and matching space before the dropdown (like dashboard rail). */}
-      <div className="flex items-center justify-between gap-3 pb-[var(--mobile-nav-rail-gap)]">
+      {/* Symmetric vertical rail; title strip matches menu button height for optical centering. */}
+      <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
-          <Link href={titleHref} className="truncate text-lg font-semibold hover:underline">
+          <Link
+            href={titleHref}
+            className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+          >
             {title}
           </Link>
         ) : (
-          <p className="truncate text-lg font-semibold">{title}</p>
+          <p className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight">{title}</p>
         )}
 
         <button
