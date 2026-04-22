@@ -160,8 +160,8 @@ export default function DashboardPage() {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-48">
-                        <DropdownMenuItem asChild>
+                      <DropdownMenuContent data-card-action="true" align="end" className="w-48">
+                        <DropdownMenuItem data-card-action="true" asChild>
                           <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
                             <Pencil className="h-4 w-4" />
                             Edit
@@ -169,6 +169,7 @@ export default function DashboardPage() {
                         </DropdownMenuItem>
                         {b.status === "published" && (
                           <DropdownMenuItem
+                            data-card-action="true"
                             onClick={() => handleArchive(b.blog_id)}
                             disabled={rowBusyId === b.blog_id}
                           >
@@ -178,15 +179,17 @@ export default function DashboardPage() {
                         )}
                         {b.status === "archived" && (
                           <DropdownMenuItem
+                            data-card-action="true"
                             onClick={() => handlePublishAgain(b.blog_id)}
                             disabled={rowBusyId === b.blog_id}
                           >
                             <ArchiveRestore className="h-4 w-4" />
-                            Publish again
+                            Unarchive
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
+                          data-card-action="true"
                           className="text-destructive focus:bg-destructive/10 focus:text-destructive"
                           onClick={() => setDeleteId(b.blog_id)}
                         >
