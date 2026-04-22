@@ -118,7 +118,9 @@ export default function DashboardPage() {
             className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
             aria-label="Create new post"
           >
-            <Link href="/dashboard/posts/new">+</Link>
+            <Link href="/dashboard/posts/new">
+              <span className="text-xl leading-none">+</span>
+            </Link>
           </Button>
         </div>
         <Button asChild className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
