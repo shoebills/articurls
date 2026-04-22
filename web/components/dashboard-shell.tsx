@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
@@ -8,13 +8,48 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
+type TrayMetrics = { top: number; left: number; width: number };
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [trayMetrics, setTrayMetrics] = useState<TrayMetrics | null>(null);
   const { user } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
+  const mobileNavRowRef = useRef<HTMLDivElement | null>(null);
   const mobileMenuId = useId();
 
   const close = useCallback(() => setOpen(false), []);
+
+  const measureMobileTray = useCallback(() => {
+    const header = mobileHeaderRef.current;
+    const row = mobileNavRowRef.current;
+    if (!header || !row) return;
+    const hb = header.getBoundingClientRect();
+    const rr = row.getBoundingClientRect();
+    setTrayMetrics({
+      top: hb.bottom,
+      left: rr.left,
+      width: rr.width * 0.8,
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!open) {
+      setTrayMetrics(null);
+      return;
+    }
+    measureMobileTray();
+    const header = mobileHeaderRef.current;
+    const ro = typeof ResizeObserver !== "undefined" ? new ResizeObserver(measureMobileTray) : null;
+    if (header && ro) ro.observe(header);
+    window.addEventListener("resize", measureMobileTray);
+    window.addEventListener("scroll", measureMobileTray, true);
+    return () => {
+      ro?.disconnect();
+      window.removeEventListener("resize", measureMobileTray);
+      window.removeEventListener("scroll", measureMobileTray, true);
+    };
+  }, [open, measureMobileTray]);
 
   useEffect(() => {
     if (!open) return;
@@ -63,7 +98,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background/90 pt-[max(0.5rem,env(safe-area-inset-top))] backdrop-blur-md supports-[backdrop-filter]:bg-background/75 md:hidden"
         >
           <div className="px-3 py-2">
-            <div className="relative w-full">
+            <div ref={mobileNavRowRef} className="relative w-full">
               <div className="flex w-full min-w-0 items-center justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center gap-3">
                   <Button
@@ -99,19 +134,30 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div
                 id={mobileMenuId}
                 className={cn(
-                  "absolute left-0 top-full z-50 w-[80%] min-w-0 max-w-full transition-all duration-200 ease-out",
-                  open
-                    ? "translate-y-0 opacity-100"
-                    : "pointer-events-none -translate-y-1 opacity-0"
+                  "z-50 min-w-0 transition-all duration-200 ease-out",
+                  open && trayMetrics
+                    ? "fixed"
+                    : "absolute left-0 top-full w-[80%] max-w-full",
+                  open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1 opacity-0"
                 )}
+                style={
+                  open && trayMetrics
+                    ? {
+                        top: trayMetrics.top,
+                        left: trayMetrics.left,
+                        width: trayMetrics.width,
+                        height: `calc(100dvh - ${trayMetrics.top}px - env(safe-area-inset-bottom, 0px))`,
+                      }
+                    : undefined
+                }
                 aria-hidden={!open}
               >
-                <div className="mt-1.5 max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
+                <div className="flex h-full min-h-0 flex-col overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
                     onNavigate={close}
-                    className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
+                    className="!h-full min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
                   />
                 </div>
               </div>
