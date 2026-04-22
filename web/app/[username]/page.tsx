@@ -5,7 +5,7 @@ import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { Menu } from "lucide-react";
+import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 
 type Props = { params: Promise<{ username: string }> };
@@ -81,39 +81,12 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
             </div>
             <div className="sm:hidden">
-              <details className="group relative">
-                <summary className="flex list-none items-center justify-between gap-3 [&::-webkit-details-marker]:hidden">
-                  <p className="truncate text-lg font-semibold">{navBlogName}</p>
-                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 transition-all duration-200 hover:bg-background hover:text-foreground group-open:border-primary/30 group-open:bg-primary/[0.08] group-open:text-primary">
-                    <Menu className="h-4 w-4 transition-transform duration-200 group-open:scale-105" />
-                  </span>
-                </summary>
-                <div className="absolute inset-x-0 top-full z-20 mt-2.5 overflow-hidden rounded-xl border border-border/70 bg-background/95 p-1.5 shadow-xl shadow-black/10 backdrop-blur supports-[backdrop-filter]:bg-background/85">
-                  <div className="space-y-1.5">
-                    {user.nav_menu_enabled ? (
-                      pages.length > 0 ? (
-                        pages.map((p) => (
-                          <Link
-                            key={p.page_id}
-                            href={`/${username}/page/${p.slug}`}
-                            className="block rounded-lg px-3 py-2 text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
-                          >
-                            {p.title}
-                          </Link>
-                        ))
-                      ) : null
-                    ) : null}
-                  </div>
-                  <div className={`mt-2 pt-2 ${user.nav_menu_enabled && pages.length > 0 ? "border-t border-border/60" : ""}`}>
-                    <SubscribeToAuthor
-                      mode="dialog"
-                      userName={user.user_name}
-                      authorName={user.name}
-                      triggerClassName="h-8 min-h-8 w-full rounded-md px-3 text-xs font-medium"
-                    />
-                  </div>
-                </div>
-              </details>
+              <PublicMobileNavMenu
+                title={navBlogName}
+                links={user.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                userName={user.user_name}
+                authorName={user.name}
+              />
             </div>
           </section>
         ) : null}
