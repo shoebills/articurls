@@ -152,7 +152,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
+    <div className="mx-auto max-w-[1100px] space-y-10">
       <h1 className="text-2xl font-bold">Analytics</h1>
 
       <Tabs defaultValue="views">

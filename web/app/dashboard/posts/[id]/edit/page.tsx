@@ -189,7 +189,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
   return (
-    <div className="mx-auto max-w-3xl pb-24">
+    <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard">← Posts</Link>

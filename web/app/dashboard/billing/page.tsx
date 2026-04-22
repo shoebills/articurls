@@ -52,7 +52,7 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-8">
       <h1 className="text-2xl font-bold">Billing</h1>
 
       <Card>

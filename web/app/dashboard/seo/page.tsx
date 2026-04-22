@@ -51,7 +51,7 @@ export default function SeoDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-[1100px] space-y-6">
       <h1 className="text-2xl font-bold">SEO</h1>
       {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
 

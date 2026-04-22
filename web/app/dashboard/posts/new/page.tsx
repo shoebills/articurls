@@ -53,7 +53,7 @@ export default function NewPostPage() {
 
   if (err) {
     return (
-      <div className="mx-auto max-w-lg">
+      <div className="mx-auto max-w-[1100px]">
         <h1 className="text-2xl font-bold">New post</h1>
         <p className="mt-4 text-sm text-muted-foreground">We couldn&apos;t create a draft. Go back to the dashboard and try again.</p>
         <FloatingErrorToast message={err} />
@@ -62,7 +62,7 @@ export default function NewPostPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-[1100px]">
       <p className="text-muted-foreground">Opening editor…</p>
     </div>
   );
