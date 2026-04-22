@@ -99,7 +99,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div
                 id={mobileMenuId}
                 className={cn(
-                  "absolute left-0 top-full z-50 w-[60%] min-w-0 max-w-full transition-all duration-200 ease-out",
+                  "absolute left-0 top-full z-50 w-[80%] min-w-0 max-w-full transition-all duration-200 ease-out",
                   open
                     ? "translate-y-0 opacity-100"
                     : "pointer-events-none -translate-y-1 opacity-0"
@@ -109,8 +109,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <div className="mt-1.5 max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar shadow-lg shadow-black/10">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
+                    showBrand={false}
                     onNavigate={close}
-                    className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:nth-child(2)]:!min-h-0 [&>div:nth-child(2)]:!flex-1 [&>div:nth-child(2)]:!overflow-hidden"
+                    className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
                   />
                 </div>
               </div>

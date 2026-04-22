@@ -23,22 +23,26 @@ type PanelProps = {
   /** Close mobile sheet after navigation */
   onNavigate?: () => void;
   className?: string;
+  /** Show logo + title row (desktop sidebar); hide for compact mobile tray */
+  showBrand?: boolean;
 };
 
-export function DashboardSidebarPanel({ onNavigate, className }: PanelProps) {
+export function DashboardSidebarPanel({ onNavigate, className, showBrand = true }: PanelProps) {
   const pathname = usePathname();
   const { logout, user } = useAuth();
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-sidebar/70 px-3">
-        <BrandLogo
-          href="/dashboard"
-          size="sm"
-          className="min-w-0"
-          onClick={() => onNavigate?.()}
-        />
-      </div>
+      {showBrand ? (
+        <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-sidebar/70 px-3">
+          <BrandLogo
+            href="/dashboard"
+            size="sm"
+            className="min-w-0"
+            onClick={() => onNavigate?.()}
+          />
+        </div>
+      ) : null}
       <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
         <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5">
           {links.map(({ href, label, icon: Icon }) => {
