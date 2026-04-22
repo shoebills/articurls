@@ -37,17 +37,17 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex min-w-0 items-center gap-3">
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
               size="icon"
-              className="h-11 w-11 shrink-0 touch-manipulation"
+              className="h-9 w-9 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground"
               aria-label="Open menu"
               onClick={() => setOpen(true)}
             >
-              <Menu className="h-5 w-5" />
+              <Menu className="h-4 w-4" />
             </Button>
             <Link
               href="/dashboard"
-              className="min-w-0 truncate font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
+              className="min-w-0 truncate text-lg font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
             >
               Articurls
             </Link>
