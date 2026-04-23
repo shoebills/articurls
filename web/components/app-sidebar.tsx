@@ -77,7 +77,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
       <Button
         variant="ghost"
         size="sm"
-        className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground sm:h-9"
+        className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-9"
         onClick={() => {
           onNavigate?.();
           logout();
