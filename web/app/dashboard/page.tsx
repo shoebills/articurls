@@ -181,13 +181,13 @@ export default function DashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-11 rounded-xl border-border/80 bg-background pl-10"
+            className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 gap-2 rounded-xl px-3 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">Filter</span>
             </Button>
@@ -202,7 +202,7 @@ export default function DashboardPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-11 gap-2 rounded-xl px-3 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <ArrowUpDown className="h-4 w-4" />
               <span className="hidden sm:inline">Sort</span>
             </Button>
