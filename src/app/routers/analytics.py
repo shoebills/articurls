@@ -55,11 +55,21 @@ def get_blog_views(id: int, db: Session = Depends(get_db), current_user = Depend
 @router.get("/views", status_code=status.HTTP_200_OK)
 def views_analytics(db: Session = Depends(get_db), period: Optional[str] = "all", current_user = Depends(get_current_user)):
 
-    total_posts = db.query(func.count(models.Blog.blog_id)).filter(models.Blog.user_id == current_user.user_id).scalar()
+    total_posts = db.query(func.count(models.Blog.blog_id)).filter(
+        models.Blog.user_id == current_user.user_id,
+        models.Blog.status == models.BlogStatus.PUBLISHED
+    ).scalar()
 
     since = get_since(period)
 
-    views_query = db.query(models.Views).filter(models.Views.user_id == current_user.user_id)
+    views_query = db.query(models.Views).join(
+        models.Blog,
+        models.Blog.blog_id == models.Views.blog_id
+    ).filter(
+        models.Views.user_id == current_user.user_id,
+        models.Blog.user_id == current_user.user_id,
+        models.Blog.status == models.BlogStatus.PUBLISHED
+    )
 
     if since:
         views_query = views_query.filter(models.Views.visited_at >= since)

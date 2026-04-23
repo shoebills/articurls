@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
         if (cancelled) return;
         setViews(v);
         setSubs(s);
-        setPosts(postRows);
+        setPosts(postRows.filter((post) => !!post.published_at));
         setChartViews(
           viewRows.map((d, i) => ({
             name: vPeriods[i],
