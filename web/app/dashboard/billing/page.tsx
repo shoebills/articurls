@@ -50,6 +50,7 @@ export default function BillingPage() {
 
   const pro = isProSubscription(sub);
   const displayTier = pro ? "Pro" : "Free";
+  const subStatus = sub?.status?.toLowerCase() ?? "";
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
@@ -61,7 +62,22 @@ export default function BillingPage() {
           <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5 pt-2">
-          <p className="text-3xl font-bold tracking-tight">{displayTier}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-3xl font-bold tracking-tight">{displayTier}</p>
+            {pro && sub ? (
+              subStatus === "past_due" ? (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.1] px-3 py-2 text-sm font-medium text-amber-900">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 ring-2 ring-amber-500/30" aria-hidden />
+                  Past due
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-sm font-medium text-emerald-800">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" aria-hidden />
+                  Active
+                </div>
+              )
+            ) : null}
+          </div>
           {sub?.current_period_end ? (
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
               <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
