@@ -2,10 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
+import { ArrowUpDown, Search } from "lucide-react";
 import type { PublicBlog } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -14,6 +15,7 @@ type PublicBlogListSearchProps = {
 
 export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "title_asc">("latest");
 
   if (blogs.length === 0) {
     return (
@@ -24,8 +26,26 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
   }
 
   const sortedBlogs = useMemo(() => {
+    const compareBySort = (a: PublicBlog, b: PublicBlog) => {
+      if (sortBy === "oldest") {
+        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+        return aDate - bDate;
+      }
+      if (sortBy === "title_asc") {
+        return (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
+      }
+      const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+      const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+      return bDate - aDate;
+    };
+
     const trimmed = query.trim();
-    if (!trimmed) return blogs;
+    if (!trimmed) {
+      const rows = [...blogs];
+      rows.sort(compareBySort);
+      return rows;
+    }
 
     return blogs
       .map((blog) => ({
@@ -35,24 +55,37 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
       .filter((row) => row.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        const aDate = a.blog.published_at ? new Date(a.blog.published_at).getTime() : 0;
-        const bDate = b.blog.published_at ? new Date(b.blog.published_at).getTime() : 0;
-        return bDate - aDate;
+        return compareBySort(a.blog, b.blog);
       })
       .map((row) => row.blog);
-  }, [blogs, query]);
+  }, [blogs, query, sortBy]);
 
   return (
     <section className="mt-5 sm:mt-6">
-      <div className="relative mb-6 sm:mb-8">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search posts by title or content"
-          aria-label="Search posts"
-          className="h-11 rounded-xl border-border/80 bg-background pl-10"
-        />
+      <div className="mb-6 flex items-center gap-2 sm:mb-8 sm:gap-3">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search posts"
+            className="h-11 rounded-xl border-border/80 bg-background pl-10"
+          />
+        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "latest" | "oldest" | "title_asc")}>
+          <SelectTrigger className="h-11 w-[8.75rem] rounded-xl border-border/80 bg-background">
+            <div className="flex items-center gap-2">
+              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Sort" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="title_asc">Title A-Z</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       <ul className="divide-y divide-border/80">
