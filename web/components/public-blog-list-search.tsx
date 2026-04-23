@@ -15,7 +15,7 @@ type PublicBlogListSearchProps = {
 
 export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "title_asc">("latest");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
 
   if (blogs.length === 0) {
     return (
@@ -27,13 +27,17 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
 
   const sortedBlogs = useMemo(() => {
     const compareBySort = (a: PublicBlog, b: PublicBlog) => {
+      if (sortBy === "most_popular") {
+        const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
+        if (byViews !== 0) return byViews;
+        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+        return bDate - aDate;
+      }
       if (sortBy === "oldest") {
         const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
         const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
         return aDate - bDate;
-      }
-      if (sortBy === "title_asc") {
-        return (a.title || "").localeCompare(b.title || "", undefined, { sensitivity: "base" });
       }
       const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
       const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
@@ -73,7 +77,7 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
             className="h-11 rounded-xl border-border/80 bg-background pl-10"
           />
         </div>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "latest" | "oldest" | "title_asc")}>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "latest" | "oldest" | "most_popular")}>
           <SelectTrigger className="h-11 w-[8.75rem] rounded-xl border-border/80 bg-background">
             <div className="flex items-center gap-2">
               <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
@@ -83,7 +87,7 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
           <SelectContent>
             <SelectItem value="latest">Latest</SelectItem>
             <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="title_asc">Title A-Z</SelectItem>
+            <SelectItem value="most_popular">Most popular</SelectItem>
           </SelectContent>
         </Select>
       </div>

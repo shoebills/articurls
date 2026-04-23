@@ -42,6 +42,8 @@ export interface PublicBlog {
   media: BlogMediaOut[];
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
+  /** Optional aggregate from list endpoint when available. */
+  view_count?: number;
 }
 
 export interface PublicUser {
