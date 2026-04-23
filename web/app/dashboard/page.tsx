@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
@@ -39,6 +39,8 @@ export default function DashboardPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -102,9 +104,33 @@ export default function DashboardPage() {
   }
 
   const filteredBlogs = useMemo(() => {
+    const compareBySort = (a: BlogListItem, b: BlogListItem) => {
+      if (sortBy === "most_popular") {
+        const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
+        if (byViews !== 0) return byViews;
+        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      }
+      if (sortBy === "oldest") {
+        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      }
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    };
+
+    const byStatus =
+      statusFilter === "all"
+        ? blogs
+        : blogs.filter((blog) => {
+            if (statusFilter === "draft") return blog.status === "draft" || blog.status === "scheduled";
+            return blog.status === statusFilter;
+          });
+
     const trimmed = query.trim();
-    if (!trimmed) return blogs;
-    return blogs
+    if (!trimmed) {
+      const rows = [...byStatus];
+      rows.sort(compareBySort);
+      return rows;
+    }
+    return byStatus
       .map((blog) => ({
         blog,
         score: scoreByTitleAndContent(blog.title || "", `${blog.content || ""} ${blog.excerpt || ""}`, trimmed),
@@ -112,10 +138,10 @@ export default function DashboardPage() {
       .filter((row) => row.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return new Date(b.blog.updated_at).getTime() - new Date(a.blog.updated_at).getTime();
+        return compareBySort(a.blog, b.blog);
       })
       .map((row) => row.blog);
-  }, [blogs, query]);
+  }, [blogs, query, sortBy, statusFilter]);
 
   if (loading) {
     return (
@@ -147,15 +173,46 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search posts by title or content"
-          aria-label="Search posts"
-          className="h-11 rounded-xl border-border/80 bg-background pl-10"
-        />
+      <div className="mb-4 flex items-center gap-2 sm:gap-3">
+        <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search posts"
+            className="h-11 rounded-xl border-border/80 bg-background pl-10"
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-11 gap-2 rounded-xl px-3 sm:px-3.5">
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filter</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All statuses</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-11 gap-2 rounded-xl px-3 sm:px-3.5">
+              <ArrowUpDown className="h-4 w-4" />
+              <span className="hidden sm:inline">Sort</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setSortBy("latest")}>Latest</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("oldest")}>Oldest</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>Most popular</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {blogs.length > 0 ? (
