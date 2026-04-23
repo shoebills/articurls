@@ -128,7 +128,7 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px]">
-      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+      <div className="mb-2 flex flex-col gap-3 sm:mb-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center justify-between gap-3 sm:block">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
           <Button
@@ -147,7 +147,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div className="relative mb-4">
+      <div className="relative mb-2">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
           value={query}
