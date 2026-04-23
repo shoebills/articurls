@@ -119,6 +119,18 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
           }
           aria-hidden={!trayLayout}
         >
+          {titleHref ? (
+            <div className="p-1.5 pb-0">
+              <Link
+                href={titleHref}
+                onClick={() => setOpen(false)}
+                className="block w-full rounded-lg px-3 py-2 text-center text-sm font-medium text-foreground transition-colors hover:bg-muted"
+              >
+                ← Back
+              </Link>
+            </div>
+          ) : null}
+
           {links.length > 0 ? (
             <div className="space-y-1.5 p-1.5">
               {links.map((item) => (
@@ -135,7 +147,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
           ) : null}
 
           <div
-            className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}
+            className={`flex flex-col items-center ${links.length > 0 || titleHref ? "border-t border-border/60 p-1.5" : "p-1.5"}`}
           >
             <SubscribeToAuthor
               mode="dialog"
