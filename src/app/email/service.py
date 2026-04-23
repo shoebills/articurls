@@ -66,7 +66,7 @@ def send_password_reset(to_email: str, reset_token: str):
 
     html = (TEMPLATE_DIR / "reset_password.html").read_text()
 
-    reset_url = f"{settings.app_base_url.rstrip('/')}/reset-password?token={reset_token}"
+    reset_url = f"{_api_base()}/reset-password?token={reset_token}"
     html = html.replace("{{ reset_url }}", reset_url)
 
     subject = "Reset your Articurls password"
