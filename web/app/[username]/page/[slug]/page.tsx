@@ -89,6 +89,13 @@ export default async function PublicCustomPage({ params }: Props) {
           </section>
         ) : null}
 
+        <Link
+          href={`/${username}`}
+          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Back
+        </Link>
+
         <article className="space-y-4">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
           <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
