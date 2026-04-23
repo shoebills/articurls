@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
         if (cancelled) return;
         setViews(v);
         setSubs(s);
-        setPosts(postRows.filter((post) => !!post.published_at));
+        setPosts(postRows.filter((post) => post.status === "published"));
         setChartViews(
           viewRows.map((d, i) => ({
             name: vPeriods[i],
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
   }, [token, vPeriod, sPeriod]);
 
   const sortedPosts = useMemo(() => {
-    const rows = [...posts];
+    const rows = posts.filter((post) => post.status === "published");
     const comparePublished = (a: BlogListItem, b: BlogListItem) => {
       const aPub = a.published_at;
       const bPub = b.published_at;
