@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
@@ -25,8 +25,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, Loader2, MoreVertical, PenLine, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Input } from "@/components/ui/input";
+import { scoreByTitleAndContent } from "@/lib/search";
 
 export default function DashboardPage() {
   const router = useRouter();
@@ -36,6 +38,7 @@ export default function DashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
+  const [query, setQuery] = useState("");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -98,6 +101,22 @@ export default function DashboardPage() {
     router.push(`/dashboard/posts/${blogId}/edit`);
   }
 
+  const filteredBlogs = useMemo(() => {
+    const trimmed = query.trim();
+    if (!trimmed) return blogs;
+    return blogs
+      .map((blog) => ({
+        blog,
+        score: scoreByTitleAndContent(blog.title || "", `${blog.content || ""} ${blog.excerpt || ""}`, trimmed),
+      }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return new Date(b.blog.updated_at).getTime() - new Date(a.blog.updated_at).getTime();
+      })
+      .map((row) => row.blog);
+  }, [blogs, query]);
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -127,9 +146,22 @@ export default function DashboardPage() {
           <Link href="/dashboard/posts/new">+ New Post</Link>
         </Button>
       </div>
+
+      <div className="relative mb-6">
+        <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+        <Input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Search posts by title or content"
+          aria-label="Search posts"
+          className="h-11 rounded-xl border-border/80 bg-background pl-10"
+        />
+      </div>
+
       {blogs.length > 0 ? (
+        filteredBlogs.length > 0 ? (
         <ul className="space-y-4">
-          {blogs.map((b) => {
+          {filteredBlogs.map((b) => {
             const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
@@ -232,6 +264,11 @@ export default function DashboardPage() {
             );
           })}
         </ul>
+        ) : (
+          <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+            No posts match your search.
+          </div>
+        )
       ) : (
         <div
           className="mt-10 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200 sm:min-h-[260px]"

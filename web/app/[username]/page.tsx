@@ -7,6 +7,7 @@ import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
+import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -90,30 +91,7 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
           </section>
         ) : null}
-        <section className="mt-10 sm:mt-12">
-          <ul className="divide-y divide-border/80">
-            {blogs.map((b) => (
-              <li key={b.blog_id} className="py-8 first:pt-0">
-                <Link href={`/${username}/blog/${b.slug}`} className="group block rounded-xl py-1 transition-colors hover:bg-muted/30">
-                  <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
-                    {b.title}
-                  </h3>
-                  {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
-                  {b.published_at && (
-                    <time className="mt-3 block text-xs text-muted-foreground" dateTime={b.published_at}>
-                      {new Date(b.published_at).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </time>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {blogs.length === 0 && <p className="text-muted-foreground">No published posts yet.</p>}
-        </section>
+        <PublicBlogListSearch blogs={blogs} username={username} />
         <PublicProfileFooter user={user} />
       </main>
       {user.show_articurls_watermark !== false ? (
