@@ -64,11 +64,21 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
       )}
     >
       <div className="mb-2 flex flex-col gap-1.5">
-        <Button type="button" variant="ghost" size="sm" className="h-9 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+        >
           <Bug className="h-4 w-4" />
           Report a bug
         </Button>
-        <Button type="button" variant="ghost" size="sm" className="h-9 w-full justify-start gap-2 rounded-lg text-muted-foreground hover:text-foreground">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+        >
           <CircleHelp className="h-4 w-4" />
           Support
         </Button>
