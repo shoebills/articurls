@@ -17,7 +17,7 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
 
   if (blogs.length === 0) {
     return (
-      <section className="mt-10 sm:mt-12">
+      <section className="mt-5 sm:mt-6">
         <p className="text-muted-foreground">No published posts yet.</p>
       </section>
     );
@@ -43,7 +43,7 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
   }, [blogs, query]);
 
   return (
-    <section className="mt-10 sm:mt-12">
+    <section className="mt-5 sm:mt-6">
       <div className="relative mb-6 sm:mb-8">
         <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
         <Input
