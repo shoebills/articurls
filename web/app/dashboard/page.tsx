@@ -25,7 +25,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
@@ -193,7 +193,7 @@ export default function DashboardPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All statuses</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
@@ -208,9 +208,18 @@ export default function DashboardPage() {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => setSortBy("latest")}>Latest</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("oldest")}>Oldest</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>Most popular</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("latest")}>
+              <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
+              Latest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+              <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
+              Oldest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
+              <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
+              Most popular
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

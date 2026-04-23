@@ -2,11 +2,12 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Check, Search } from "lucide-react";
 import type { PublicBlog } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -77,19 +78,28 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
             className="h-11 rounded-xl border-border/80 bg-background pl-10"
           />
         </div>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as "latest" | "oldest" | "most_popular")}>
-          <SelectTrigger className="h-11 w-[8.75rem] rounded-xl border-border/80 bg-background">
-            <div className="flex items-center gap-2">
-              <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Sort" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="latest">Latest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="most_popular">Most popular</SelectItem>
-          </SelectContent>
-        </Select>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-11 gap-2 rounded-xl px-3 sm:px-3.5">
+              <ArrowUpDown className="h-4 w-4" />
+              <span>Sort</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setSortBy("latest")}>
+              <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
+              Latest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+              <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
+              Oldest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
+              <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
+              Most popular
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <ul className="divide-y divide-border/80">
