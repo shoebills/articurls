@@ -9,9 +9,7 @@ from ..security import hashing, oauth2
 from ..config import settings
 from ..email.service import send_password_reset, send_verify_new_user
 from ..utils import normalize_email
-from fastapi.responses import HTMLResponse
-import html as html_lib
-from pathlib import Path
+from fastapi.responses import RedirectResponse
 
 router = APIRouter(
     tags=["Authentication"]
@@ -93,12 +91,7 @@ def reset_password(request: authentication.ResetPassword, db: Session = Depends(
 
     return {"message": "Password updated successfully"}
 
-@router.get("/reset-password", response_class=HTMLResponse, include_in_schema=False)
+@router.get("/reset-password", include_in_schema=False)
 def reset_password_form(token: str):
-    safe_token = html_lib.escape(token)
-
-    template_path = Path(__file__).resolve().parent.parent / "web" / "reset_password_form.html"
-    template_html = template_path.read_text()
-
-    rendered = template_html.replace("{{TOKEN}}", safe_token)
-    return rendered
+    target = f"{settings.app_base_url.rstrip('/')}/reset-password?token={token}"
+    return RedirectResponse(url=target, status_code=status.HTTP_307_TEMPORARY_REDIRECT)

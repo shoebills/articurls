@@ -77,6 +77,14 @@ export async function requestPasswordReset(email: string): Promise<{ message: st
   });
 }
 
+export async function resetPassword(token: string, new_password: string): Promise<{ message: string }> {
+  return apiFetch("/reset-password", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token, new_password }),
+  });
+}
+
 export async function resendVerificationEmail(
   email: string,
   plan_choice: "free" | "pro" = "free"
