@@ -96,8 +96,10 @@ export default async function PublicCustomPage({ params }: Props) {
           ← Back
         </Link>
 
-        <article className="space-y-4">
+        <header className="mt-6 sm:mt-8">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
+        </header>
+        <article className="mt-4">
           <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
         </article>
       </main>
