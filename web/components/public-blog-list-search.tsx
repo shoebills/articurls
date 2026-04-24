@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Check, Search } from "lucide-react";
+import { ArrowUpDown, Check, Link2, MessageCircle, Search, Share2 } from "lucide-react";
 import type { PublicBlog } from "@/lib/types";
+import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,61 @@ type PublicBlogListSearchProps = {
 };
 
 const POSTS_PER_PAGE = 10;
+
+function publicBlogPostUrl(userName: string, slug: string) {
+  return `${MARKETING_ORIGIN}/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}`;
+}
+
+function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: string; title: string }) {
+  const url = publicBlogPostUrl(userName, slug);
+  const encodedUrl = encodeURIComponent(url);
+  const encodedText = encodeURIComponent(title || "Read this post");
+
+  async function copyLink() {
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      // Fallback for non-secure contexts
+      window.prompt("Copy link:", url);
+    }
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+          aria-label="Share post"
+        >
+          <Share2 className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuItem onClick={copyLink}>
+          <Link2 className="h-4 w-4" />
+          Copy link
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`} target="_blank" rel="noopener noreferrer">
+            <span className="mr-2 grid w-4 place-items-center text-[13px] font-bold" aria-hidden>
+              X
+            </span>
+            Share on X
+          </a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`} target="_blank" rel="noopener noreferrer">
+            <MessageCircle className="h-4 w-4" />
+            Share on WhatsApp
+          </a>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
@@ -119,21 +175,28 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
       <ul className="divide-y divide-border/80">
         {pagedBlogs.map((b) => (
           <li key={b.blog_id} className="py-8 first:pt-0">
-            <Link href={`/${username}/blog/${b.slug}`} className="group block rounded-xl py-1 transition-colors hover:bg-muted/30">
-              <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
-                {b.title}
-              </h3>
-              {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
-              {b.published_at && (
-                <time className="mt-3 block text-xs text-muted-foreground" dateTime={b.published_at}>
-                  {new Date(b.published_at).toLocaleDateString(undefined, {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </time>
-              )}
-            </Link>
+            <div className="rounded-xl py-1">
+              <Link href={`/${username}/blog/${b.slug}`} className="group block transition-colors hover:bg-muted/30">
+                <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
+                  {b.title}
+                </h3>
+                {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+              </Link>
+              <div className="mt-3 flex items-center justify-between gap-2">
+                {b.published_at ? (
+                  <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+                    {new Date(b.published_at).toLocaleDateString(undefined, {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </time>
+                ) : (
+                  <span className="text-xs text-muted-foreground" aria-hidden />
+                )}
+                <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
+              </div>
+            </div>
           </li>
         ))}
       </ul>
