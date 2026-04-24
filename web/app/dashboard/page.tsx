@@ -30,6 +30,8 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 
+const POSTS_PER_PAGE = 10;
+
 export default function DashboardPage() {
   const router = useRouter();
   const { token } = useAuth();
@@ -41,6 +43,7 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -143,6 +146,17 @@ export default function DashboardPage() {
       .map((row) => row.blog);
   }, [blogs, query, sortBy, statusFilter]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusFilter, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / POSTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedBlogs = useMemo(() => {
+    const start = (currentPage - 1) * POSTS_PER_PAGE;
+    return filteredBlogs.slice(start, start + POSTS_PER_PAGE);
+  }, [filteredBlogs, currentPage]);
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -226,8 +240,9 @@ export default function DashboardPage() {
 
       {blogs.length > 0 ? (
         filteredBlogs.length > 0 ? (
-        <ul className="space-y-4">
-          {filteredBlogs.map((b) => {
+          <>
+            <ul className="space-y-4">
+          {pagedBlogs.map((b) => {
             const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
@@ -329,7 +344,26 @@ export default function DashboardPage() {
             </li>
             );
           })}
-        </ul>
+            </ul>
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             No posts match your search.

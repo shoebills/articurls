@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpDown, Check, Search } from "lucide-react";
 import type { PublicBlog } from "@/lib/types";
@@ -14,9 +14,12 @@ type PublicBlogListSearchProps = {
   username: string;
 };
 
+const POSTS_PER_PAGE = 10;
+
 export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [page, setPage] = useState(1);
 
   if (blogs.length === 0) {
     return (
@@ -65,6 +68,17 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
       .map((row) => row.blog);
   }, [blogs, query, sortBy]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [query, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / POSTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedBlogs = useMemo(() => {
+    const start = (currentPage - 1) * POSTS_PER_PAGE;
+    return sortedBlogs.slice(start, start + POSTS_PER_PAGE);
+  }, [sortedBlogs, currentPage]);
+
   return (
     <section className="mt-5 sm:mt-6">
       <div className="mb-6 flex items-center gap-2 sm:mb-8 sm:gap-3">
@@ -103,7 +117,7 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
       </div>
 
       <ul className="divide-y divide-border/80">
-        {sortedBlogs.map((b) => (
+        {pagedBlogs.map((b) => (
           <li key={b.blog_id} className="py-8 first:pt-0">
             <Link href={`/${username}/blog/${b.slug}`} className="group block rounded-xl py-1 transition-colors hover:bg-muted/30">
               <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
@@ -123,6 +137,27 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
           </li>
         ))}
       </ul>
+
+      {sortedBlogs.length > 0 ? (
+        <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            Page {currentPage} of {totalPages}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+              Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={currentPage >= totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      ) : null}
 
       {sortedBlogs.length === 0 && (
         <p className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
