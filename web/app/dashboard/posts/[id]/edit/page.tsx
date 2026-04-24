@@ -189,7 +189,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
   return (
-    <div className="mx-auto max-w-3xl pb-24">
+    <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard">← Posts</Link>
@@ -198,7 +198,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           <BlogStatusBadge status={blog.status} />
           {liveUrl && (
             <Button variant="outline" size="sm" asChild>
-              <a href={liveUrl} target="_blank" rel="noreferrer">
+              <a href={liveUrl} target="_blank" rel="noopener">
                 <ExternalLink className="mr-1 h-3.5 w-3.5" />
                 View
               </a>

@@ -86,7 +86,7 @@ export default function AnalyticsPage() {
         if (cancelled) return;
         setViews(v);
         setSubs(s);
-        setPosts(postRows);
+        setPosts(postRows.filter((post) => post.status === "published"));
         setChartViews(
           viewRows.map((d, i) => ({
             name: vPeriods[i],
@@ -111,7 +111,7 @@ export default function AnalyticsPage() {
   }, [token, vPeriod, sPeriod]);
 
   const sortedPosts = useMemo(() => {
-    const rows = [...posts];
+    const rows = posts.filter((post) => post.status === "published");
     const comparePublished = (a: BlogListItem, b: BlogListItem) => {
       const aPub = a.published_at;
       const bPub = b.published_at;
@@ -152,8 +152,8 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-10">
-      <h1 className="text-2xl font-bold">Analytics</h1>
+    <div className="mx-auto max-w-[1100px] space-y-10">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
 
       <Tabs defaultValue="views">
         <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">

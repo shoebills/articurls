@@ -25,6 +25,7 @@ class User(Base):
     facebook_link = Column(String, nullable=True)
     linkedin_link = Column(String, nullable=True)
     github_link = Column(String, nullable=True)
+    youtube_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     custom_domain = Column(String, nullable=True, default=None)

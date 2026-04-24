@@ -107,10 +107,25 @@ export default function PagesDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
+    <div className="mx-auto max-w-[1100px] space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Pages</h1>
+        <div className="flex items-center justify-between gap-3 sm:block">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Pages</h1>
+          <Button
+            size="icon"
+            className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+            onClick={() => {
+              setEditingPageId(null);
+              setCreating(true);
+            }}
+            disabled={busy || pages.length >= limit}
+            aria-label="Add new page"
+          >
+            <span className="text-xl leading-none">+</span>
+          </Button>
+        </div>
         <Button
+          className="hidden sm:inline-flex"
           onClick={() => {
             setEditingPageId(null);
             setCreating(true);

@@ -1,14 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createCheckout, getSubscription, getTransactions, ApiError } from "@/lib/api";
+import { createCheckout, getSubscription, getTransactions, ApiError, isProSubscription } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
-import { isProSubscription } from "@/lib/api";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -50,34 +49,51 @@ export default function BillingPage() {
   }
 
   const pro = isProSubscription(sub);
+  const displayTier = pro ? "Pro" : "Free";
+  const subStatus = sub?.status?.toLowerCase() ?? "";
 
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
-      <h1 className="text-2xl font-bold">Billing</h1>
+    <div className="mx-auto max-w-[1100px] space-y-8">
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Current plan</CardTitle>
+      <Card className="overflow-hidden border-border/70 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
+        <CardHeader className="space-y-1 pb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subscription</p>
+          <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="text-lg font-semibold">{pro ? "Pro" : "Free"}</span>
-            {sub && (
-              <Badge variant="secondary">
-                {sub.plan_type} · {sub.status}
-              </Badge>
-            )}
+        <CardContent className="space-y-5 pt-2">
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-3xl font-bold tracking-tight">{displayTier}</p>
+            {pro && sub ? (
+              subStatus === "past_due" ? (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.1] px-3 py-2 text-sm font-medium text-amber-900">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 ring-2 ring-amber-500/30" aria-hidden />
+                  Past due
+                </div>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-sm font-medium text-emerald-800">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" aria-hidden />
+                  Active
+                </div>
+              )
+            ) : null}
           </div>
-          {sub?.current_period_end && (
-            <p className="text-sm text-muted-foreground">
-              Current period ends {format(new Date(sub.current_period_end), "PPP")}
-            </p>
-          )}
-          {!pro && (
-            <Button className="h-11 min-h-11 w-full touch-manipulation sm:h-auto sm:w-auto" onClick={upgrade} disabled={busy}>
+          {sub?.current_period_end ? (
+            <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
+              <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
+              <span>
+                <span className="text-muted-foreground">Period ends </span>
+                <span className="font-medium tabular-nums text-foreground">
+                  {format(new Date(sub.current_period_end), "MMMM d, yyyy")}
+                </span>
+              </span>
+            </div>
+          ) : null}
+          {!pro ? (
+            <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
               {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
             </Button>
-          )}
+          ) : null}
         </CardContent>
       </Card>
 

@@ -5,8 +5,9 @@ import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { Menu } from "lucide-react";
+import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
+import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -81,57 +82,16 @@ export default async function PublicProfilePage({ params }: Props) {
               </div>
             </div>
             <div className="sm:hidden">
-              <div className="flex items-center justify-between gap-3">
-                <p className="truncate text-lg font-semibold">{navBlogName}</p>
-                <details className="relative">
-                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border text-muted-foreground [&::-webkit-details-marker]:hidden">
-                    <Menu className="h-4 w-4" />
-                  </summary>
-                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background p-2 shadow-md">
-                    <div className="space-y-1">
-                      {user.nav_menu_enabled ? (
-                        pages.length > 0 ? (
-                          pages.map((p) => (
-                            <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="block rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                              {p.title}
-                            </Link>
-                          ))
-                        ) : null
-                      ) : null}
-                    </div>
-                    <div className="mt-2 border-t border-border pt-2">
-                      <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                    </div>
-                  </div>
-                </details>
-              </div>
+              <PublicMobileNavMenu
+                title={navBlogName}
+                links={user.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                userName={user.user_name}
+                authorName={user.name}
+              />
             </div>
           </section>
         ) : null}
-        <section className="mt-10 sm:mt-12">
-          <ul className="divide-y divide-border/80">
-            {blogs.map((b) => (
-              <li key={b.blog_id} className="py-8 first:pt-0">
-                <Link href={`/${username}/blog/${b.slug}`} className="group block rounded-xl py-1 transition-colors hover:bg-muted/30">
-                  <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
-                    {b.title}
-                  </h3>
-                  {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
-                  {b.published_at && (
-                    <time className="mt-3 block text-xs text-muted-foreground" dateTime={b.published_at}>
-                      {new Date(b.published_at).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                      })}
-                    </time>
-                  )}
-                </Link>
-              </li>
-            ))}
-          </ul>
-          {blogs.length === 0 && <p className="text-muted-foreground">No published posts yet.</p>}
-        </section>
+        <PublicBlogListSearch blogs={blogs} username={username} />
         <PublicProfileFooter user={user} />
       </main>
       {user.show_articurls_watermark !== false ? (

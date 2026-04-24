@@ -42,6 +42,8 @@ export interface PublicBlog {
   media: BlogMediaOut[];
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
+  /** Optional aggregate from list endpoint when available. */
+  view_count?: number;
 }
 
 export interface PublicUser {
@@ -58,6 +60,7 @@ export interface PublicUser {
   facebook_link: string | null;
   linkedin_link: string | null;
   github_link: string | null;
+  youtube_link: string | null;
   profile_image_url: string | null;
   verification_tick: boolean;
   navbar_enabled: boolean;
@@ -84,6 +87,7 @@ export interface UserSettings {
   facebook_link: string | null;
   linkedin_link: string | null;
   github_link: string | null;
+  youtube_link: string | null;
   profile_image_url: string | null;
   verification_tick: boolean;
   navbar_enabled: boolean;

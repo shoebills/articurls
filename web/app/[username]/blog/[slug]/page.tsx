@@ -5,11 +5,12 @@ import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { Menu } from "lucide-react";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { VerifiedBadge } from "@/components/verified-badge";
+import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
+import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -78,10 +79,14 @@ export default async function PublicBlogPage({ params }: Props) {
   return (
     <article className="min-h-screen bg-background">
       <div className={containerSpacing}>
+        <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
             <div className="hidden items-center justify-between gap-4 sm:flex">
-              <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
+              <Link
+                href={`/${username}`}
+                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+              >
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
@@ -99,33 +104,14 @@ export default async function PublicBlogPage({ params }: Props) {
                 <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
               </div>
             </div>
-            <div className="sm:hidden">
-              <div className="flex items-center justify-between gap-3">
-                <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
-                  {navBlogName}
-                </Link>
-                <details className="relative">
-                  <summary className="flex h-9 w-9 list-none items-center justify-center rounded-md border border-border text-muted-foreground [&::-webkit-details-marker]:hidden">
-                    <Menu className="h-4 w-4" />
-                  </summary>
-                  <div className="absolute right-0 mt-2 w-56 rounded-lg border border-border bg-background p-2 shadow-md">
-                    <div className="space-y-1">
-                      {author.nav_menu_enabled ? (
-                        pages.length > 0 ? (
-                          pages.map((p) => (
-                            <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="block rounded-md px-2 py-1.5 text-sm hover:bg-muted">
-                              {p.title}
-                            </Link>
-                          ))
-                        ) : null
-                      ) : null}
-                    </div>
-                    <div className="mt-2 border-t border-border pt-2">
-                      <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
-                    </div>
-                  </div>
-                </details>
-              </div>
+            <div className="w-full sm:hidden">
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={`/${username}`}
+                links={author.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                userName={author.user_name}
+                authorName={author.name}
+              />
             </div>
           </section>
         ) : null}

@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 export default function BillingSuccessPage() {
   return (
-    <div className="mx-auto max-w-md py-12">
+    <div className="mx-auto max-w-[1100px] py-12">
       <Card>
         <CardHeader>
           <CardTitle>Payment received</CardTitle>

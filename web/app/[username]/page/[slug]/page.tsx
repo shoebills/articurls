@@ -5,6 +5,7 @@ import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -57,26 +58,48 @@ export default async function PublicCustomPage({ params }: Props) {
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
-            <div className="flex items-center justify-between gap-4">
+            <div className="hidden items-center justify-between gap-4 sm:flex">
               <Link href={`/${username}`} className="truncate text-lg font-semibold hover:underline">
                 {navBlogName}
               </Link>
-              <div className="hidden items-center gap-3 sm:flex">
-                {user.nav_menu_enabled && pages.length > 0 ? (
-                  pages.map((p) => (
-                    <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="text-sm text-muted-foreground hover:text-foreground">
-                      {p.title}
-                    </Link>
-                  ))
+              <div className="flex min-w-0 items-center gap-4">
+                {user.nav_menu_enabled ? (
+                  pages.length > 0 ? (
+                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                      {pages.map((p) => (
+                        <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                          {p.title}
+                        </Link>
+                      ))}
+                    </nav>
+                  ) : null
                 ) : null}
                 <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
               </div>
             </div>
+            <div className="sm:hidden">
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={`/${username}`}
+                links={user.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                userName={user.user_name}
+                authorName={user.name}
+              />
+            </div>
           </section>
         ) : null}
 
-        <article className="space-y-4">
+        <Link
+          href={`/${username}`}
+          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+        >
+          ← Back
+        </Link>
+
+        <header className="mt-6 sm:mt-8">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
+        </header>
+        <article className="mt-4">
           <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
         </article>
       </main>
