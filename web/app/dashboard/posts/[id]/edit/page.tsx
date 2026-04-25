@@ -11,6 +11,7 @@ import {
   scheduleBlog,
   unscheduleBlog,
   uploadBlogMedia,
+  deleteBlogMediaByUrl,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -317,7 +318,21 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   )}
                 </Button>
                 {featuredImageUrl ? (
-                  <Button type="button" variant="ghost" onClick={() => setFeaturedImageUrl("")} disabled={uploadingFeatured}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={async () => {
+                      if (token && blog && featuredImageUrl && !content.includes(featuredImageUrl)) {
+                        try {
+                          await deleteBlogMediaByUrl(token, blog.blog_id, featuredImageUrl);
+                        } catch {
+                          // Do not block local removal if cleanup fails.
+                        }
+                      }
+                      setFeaturedImageUrl("");
+                    }}
+                    disabled={uploadingFeatured}
+                  >
                     Remove
                   </Button>
                 ) : null}

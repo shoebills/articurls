@@ -33,7 +33,7 @@ import {
   X,
   Video,
 } from "lucide-react";
-import { ApiError, uploadBlogMedia, uploadPageMedia } from "@/lib/api";
+import { ApiError, deleteBlogMediaByUrl, uploadBlogMedia, uploadPageMedia } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -157,10 +157,19 @@ export function BlogEditor({
     editor.commands.setYoutubeVideo({ src: url });
   }, [editor]);
 
-  const removeSelectedImage = useCallback(() => {
-    if (!editor || !editor.isActive("image")) return;
+  const removeSelectedImage = useCallback(async () => {
+    if (!editor || !isImageSelected) return;
+    const attrs = editor.getAttributes("image");
+    const src = typeof attrs?.src === "string" ? attrs.src : "";
+    if (blogId && token && src) {
+      try {
+        await deleteBlogMediaByUrl(token, blogId, src);
+      } catch {
+        // Keep UX smooth; content removal should still work even if media cleanup fails.
+      }
+    }
     editor.chain().focus().deleteSelection().run();
-  }, [editor]);
+  }, [editor, isImageSelected, blogId, token]);
 
   if (!editor) {
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;

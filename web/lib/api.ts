@@ -398,6 +398,11 @@ export async function deleteBlogMedia(token: string, blogId: number, mediaId: nu
   await apiFetch(`/blog/${blogId}/media/${mediaId}`, { method: "DELETE", token });
 }
 
+export async function deleteBlogMediaByUrl(token: string, blogId: number, url: string): Promise<void> {
+  const q = new URLSearchParams({ url });
+  await apiFetch(`/blog/${blogId}/media?${q.toString()}`, { method: "DELETE", token });
+}
+
 export async function getPublicUser(userName: string): Promise<PublicUser> {
   return apiFetch(`/${encodeURIComponent(userName)}`);
 }

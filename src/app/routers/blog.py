@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
@@ -215,6 +215,47 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
     db.delete(db_media)
     db.commit()
 
+    return {"message": "Media deleted"}
+
+
+@router.delete("/{id}/media", status_code=status.HTTP_200_OK)
+def delete_blog_media_by_url(
+    id: int,
+    url: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_blog = (
+        db.query(models.Blog)
+        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    # Accept either full URL or path-like value by relaxed matching.
+    db_media = (
+        db.query(models.BlogMedia)
+        .filter(
+            models.BlogMedia.blog_id == db_blog.blog_id,
+            models.BlogMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    target = next(
+        (
+            m
+            for m in db_media
+            if m.url == url or url.endswith(m.url) or m.url.endswith(url)
+        ),
+        None,
+    )
+    if not target:
+        return {"message": "Media not found (already removed or external URL)"}
+
+    delete_media(target.storage_key)
+    db.delete(target)
+    db.commit()
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
