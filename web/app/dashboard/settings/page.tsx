@@ -400,9 +400,6 @@ export default function SettingsPage() {
                   <span className="ml-2 hidden sm:inline">Edit</span>
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                {usernameChangesRemaining} of {USERNAME_CHANGE_LIMIT} username changes remaining
-              </p>
             </div>
           </div>
           <div className="space-y-2.5">
