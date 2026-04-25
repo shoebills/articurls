@@ -197,3 +197,13 @@ body {
   height: 0;
   pointer-events: none;
 }
+
+.tiptap-editor .ProseMirror img {
+  transition: box-shadow 140ms ease, outline-color 140ms ease;
+}
+
+.tiptap-editor .ProseMirror img.ProseMirror-selectednode {
+  outline: 3px solid var(--ring);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 6px color-mix(in oklab, var(--ring) 22%, transparent);
+}
