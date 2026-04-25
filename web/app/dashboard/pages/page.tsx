@@ -20,6 +20,7 @@ export default function PagesDashboardPage() {
   const [editTitle, setEditTitle] = useState("");
   const [editContent, setEditContent] = useState("<p></p>");
   const [busy, setBusy] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
 
   async function load() {
@@ -84,27 +85,67 @@ export default function PagesDashboardPage() {
     setEditContent(editingPage.content || "<p></p>");
   }, [editingPage]);
 
-  async function onSaveEdit() {
+  async function onSaveEdit(silent = false) {
     if (!token || !editingPage) return;
     if (!editTitle.trim()) {
       setErr("Page title is required");
       return;
     }
+    const nextTitle = editTitle.trim();
+    const nextContent = editContent;
+    if (editingPage.title === nextTitle && (editingPage.content || "") === nextContent) return;
     setBusy(true);
-    setErr(null);
+    setSaveStatus("saving");
+    if (!silent) setErr(null);
     try {
       const updated = await updatePage(token, editingPage.page_id, {
-        title: editTitle.trim(),
+        title: nextTitle,
         content: editContent,
       });
       setPages((prev) => prev.map((p) => (p.page_id === updated.page_id ? updated : p)));
-      setEditingPageId(null);
+      setSaveStatus("saved");
+      if (!silent) setEditingPageId(null);
     } catch (e) {
+      setSaveStatus("idle");
       setErr(e instanceof ApiError ? e.message : "Failed to save page");
     } finally {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (!editingPage || busy) return;
+    const nextTitle = editTitle.trim();
+    const nextContent = editContent;
+    const dirty = editingPage.title !== nextTitle || (editingPage.content || "") !== nextContent;
+    if (!dirty) return;
+    setSaveStatus("idle");
+    const timer = setTimeout(() => {
+      void onSaveEdit(true);
+    }, 900);
+    return () => clearTimeout(timer);
+  }, [editingPage, editTitle, editContent, busy]);
+
+  useEffect(() => {
+    const flushSave = () => {
+      if (!editingPage || busy) return;
+      const nextTitle = editTitle.trim();
+      const nextContent = editContent;
+      const dirty = editingPage.title !== nextTitle || (editingPage.content || "") !== nextContent;
+      if (dirty) void onSaveEdit(true);
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+    window.addEventListener("beforeunload", flushSave);
+    window.addEventListener("popstate", flushSave);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", flushSave);
+      window.removeEventListener("popstate", flushSave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [editingPage, editTitle, editContent, busy, token]);
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
@@ -186,6 +227,9 @@ export default function PagesDashboardPage() {
             <CardTitle>Edit page</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
+            <p className="text-xs text-muted-foreground">
+              {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : " "}
+            </p>
             <Input
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
@@ -204,7 +248,7 @@ export default function PagesDashboardPage() {
               <Button variant="ghost" onClick={() => setEditingPageId(null)} disabled={busy}>
                 Cancel
               </Button>
-              <Button onClick={onSaveEdit} disabled={busy || !editTitle.trim()}>
+              <Button onClick={() => onSaveEdit(false)} disabled={busy || !editTitle.trim()}>
                 Save changes
               </Button>
             </div>

@@ -49,8 +49,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
+  const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -98,10 +100,30 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
 
-  async function save() {
+  const isDirty = useCallback(() => {
+    if (!blog) return false;
+    const nextSlug = slugCustom.trim() || slugify(title.trim(), { lower: true, strict: true }) || blog.slug;
+    const nextSeoTitle =
+      !seoTitleDirty || seoTitle.trim() === title.trim() ? null : seoTitle.trim() || null;
+    const nextSeoDesc = seoDesc.trim() || null;
+    const nextFeatured = featuredImageUrl.trim() || null;
+    return (
+      blog.title !== title ||
+      blog.content !== content ||
+      blog.notify_subscribers !== notify ||
+      (slugEditable && blog.slug !== nextSlug) ||
+      (blog.seo_title || null) !== nextSeoTitle ||
+      (blog.seo_description || null) !== nextSeoDesc ||
+      (blog.featured_image_url || null) !== nextFeatured
+    );
+  }, [blog, title, content, notify, slugEditable, slugCustom, seoTitleDirty, seoTitle, seoDesc, featuredImageUrl]);
+
+  async function save(silent = false) {
     if (!token || !blog) return;
+    if (!isDirty()) return;
     setSaving(true);
-    setErr(null);
+    setSaveStatus("saving");
+    if (!silent) setErr(null);
     try {
       const body: Parameters<typeof updateBlog>[2] = {
         title,
@@ -130,7 +152,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const updated = await updateBlog(token, blog.blog_id, body);
       applyBlogToForm(updated);
       await refreshUser();
+      setSaveStatus("saved");
     } catch (e) {
+      setSaveStatus("idle");
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
       setSaving(false);
@@ -139,7 +163,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function publish() {
     if (!token || !blog) return;
-    await save();
+    await save(true);
     try {
       const b = await publishBlog(token, blog.blog_id);
       applyBlogToForm(b);
@@ -185,6 +209,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
       setFeaturedImageUrl(media.url);
+      setSaveStatus("idle");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
@@ -207,6 +232,40 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       : null;
 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
+
+  useEffect(() => {
+    if (!blog || saving || !isDirty()) return;
+    setSaveStatus("idle");
+    if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    autosaveTimerRef.current = setTimeout(() => {
+      void save(true);
+    }, 900);
+    return () => {
+      if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
+    };
+  }, [blog, title, content, slugCustom, seoTitle, seoTitleDirty, seoDesc, notify, featuredImageUrl, isDirty, saving]);
+
+  useEffect(() => {
+    const flushSave = () => {
+      if (isDirty() && !saving) {
+        void save(true);
+      }
+    };
+    const onBeforeUnload = () => {
+      flushSave();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") flushSave();
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    window.addEventListener("popstate", flushSave);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener("popstate", flushSave);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [isDirty, saving]);
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
@@ -233,6 +292,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title"
       />
+      <p className="mb-3 text-xs text-muted-foreground">
+        {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : " "}
+      </p>
 
       <BlogEditor
         key={blog.blog_id}
@@ -366,7 +428,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       <Separator className="my-8" />
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={save} disabled={saving}>
+        <Button onClick={() => void save(false)} disabled={saving}>
           {saving ? "Saving…" : "Save"}
         </Button>
         {blog.status === "draft" && (
