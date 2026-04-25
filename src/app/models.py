@@ -41,8 +41,34 @@ class User(Base):
     ads_enabled = Column(Boolean, nullable=False, default=False)
     ad_code = Column(Text, nullable=True)
     ad_frequency = Column(Integer, nullable=False, default=3)
+    username_change_count = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+
+class UsernameClaim(Base):
+    __tablename__ = "username_claims"
+
+    claim_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    claimed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class UsernameChangeAudit(Base):
+    __tablename__ = "username_change_audits"
+
+    audit_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    old_username = Column(String, nullable=False)
+    new_username = Column(String, nullable=False)
+    actor_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
+    actor_email = Column(String, nullable=True)
+    is_admin_override = Column(Boolean, nullable=False, default=False)
+    reason = Column(String, nullable=True)
+    request_ip = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class BlogStatus(str, enum.Enum):
     DRAFT = "draft"

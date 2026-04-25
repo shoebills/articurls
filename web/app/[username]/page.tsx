@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (isReservedUsername(username)) return {};
   const user = await loadUser(username);
   if (!user) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}`;
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
   return {
     title: user.seo_title || `${user.name} — Articurls`,
     description: user.seo_description || undefined,
@@ -49,6 +49,9 @@ export default async function PublicProfilePage({ params }: Props) {
 
   const user = await loadUser(username);
   if (!user) notFound();
+  if (user.user_name.toLowerCase() !== username.toLowerCase()) {
+    permanentRedirect(`/${encodeURIComponent(user.user_name)}`);
+  }
 
   const blogs = await loadBlogs(username);
   const pages = await loadPages(username);

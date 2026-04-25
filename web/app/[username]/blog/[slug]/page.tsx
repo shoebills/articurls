@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
@@ -48,7 +48,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (isReservedUsername(username)) return {};
   const blog = await loadBlog(username, slug);
   if (!blog) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`;
+  const author = await loadUser(username);
+  const canonicalUserName = author?.user_name || username;
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   return {
     title: blog.seo_title || blog.title,
     description: blog.seo_description || undefined,
@@ -67,6 +69,9 @@ export default async function PublicBlogPage({ params }: Props) {
     loadBlogAds(username, slug),
   ]);
   if (!blog || !author) notFound();
+  if (author.user_name.toLowerCase() !== username.toLowerCase()) {
+    permanentRedirect(`/${encodeURIComponent(author.user_name)}/blog/${encodeURIComponent(slug)}`);
+  }
   const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
   const containerSpacing = author.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"

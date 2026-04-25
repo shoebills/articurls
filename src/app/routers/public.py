@@ -2,7 +2,6 @@ import hashlib
 import jwt
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
 from typing import List
 from ..database import get_db
 from .. import models, utils
@@ -17,9 +16,11 @@ router = APIRouter(
 
 
 @router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
-def get_blogs(user_name: str, db: Session = Depends(get_db)):
+def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
@@ -34,7 +35,9 @@ def get_blogs(user_name: str, db: Session = Depends(get_db)):
 @router.get("/{user_name}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
 def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -54,7 +57,9 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
 
 @router.post("/{user_name}/blog/{slug}/view", status_code=status.HTTP_204_NO_CONTENT)
 def track_blog_view(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -99,8 +104,10 @@ def track_blog_view(user_name: str, slug: str, request: Request, db: Session = D
 
 
 @router.get("/{user_name}/blog/{slug}/ads", response_model=blog.PublicBlogAds, status_code=status.HTTP_200_OK)
-def get_blog_ads(user_name: str, slug: str, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+def get_blog_ads(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -129,9 +136,11 @@ def get_blog_ads(user_name: str, slug: str, db: Session = Depends(get_db)):
     }
 
 @router.get("/{user_name}", response_model=user.PublicUser)
-def get_user(user_name: str, db: Session = Depends(get_db)):
+def get_user(user_name: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -140,8 +149,10 @@ def get_user(user_name: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_name}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
-def get_pages(user_name: str, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return (
@@ -153,8 +164,10 @@ def get_pages(user_name: str, db: Session = Depends(get_db)):
 
 
 @router.get("/{user_name}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
-def get_page(user_name: str, slug: str, db: Session = Depends(get_db)):
-    db_user = db.query(models.User).filter(func.lower(models.User.user_name) == user_name.lower()).first()
+def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     db_page = (

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
@@ -35,7 +35,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (isReservedUsername(username)) return {};
   const page = await loadPage(username, slug);
   if (!page) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`;
+  const user = await loadUser(username);
+  const canonicalUserName = user?.user_name || username;
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/page/${encodeURIComponent(slug)}`;
   return {
     title: page.title,
     alternates: { canonical },
@@ -48,6 +50,9 @@ export default async function PublicCustomPage({ params }: Props) {
 
   const [user, pages, page] = await Promise.all([loadUser(username), loadPages(username), loadPage(username, slug)]);
   if (!user || !page) notFound();
+  if (user.user_name.toLowerCase() !== username.toLowerCase()) {
+    permanentRedirect(`/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(slug)}`);
+  }
   const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
   const mainSpacing = user.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"

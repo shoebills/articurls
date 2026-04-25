@@ -11,6 +11,15 @@ from .text import (
     user_by_username,
 )
 from .urls import public_post_url
+from .usernames import (
+    USERNAME_CHANGE_LIMIT,
+    RequestContext,
+    apply_username_change_or_raise,
+    claim_username_or_raise,
+    permanent_username_redirect,
+    resolve_username_to_current,
+    validate_username_or_raise,
+)
 
 __all__ = [
     "DRAFT_SLUG_RE",
@@ -24,8 +33,15 @@ __all__ = [
     "normalize_username",
     "public_post_url",
     "public_user_out",
+    "RequestContext",
+    "USERNAME_CHANGE_LIMIT",
+    "apply_username_change_or_raise",
+    "claim_username_or_raise",
+    "permanent_username_redirect",
     "require_pro",
+    "resolve_username_to_current",
     "unique_blog_slug",
+    "validate_username_or_raise",
     "user_by_email",
     "user_by_username",
 ]

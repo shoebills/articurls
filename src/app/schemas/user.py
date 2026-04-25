@@ -92,6 +92,11 @@ class UpdateProUser(BaseModel):
     nav_menu_enabled: Optional[bool] = None
 
 
+class AdminUsernameChange(BaseModel):
+    user_name: str
+    reason: Optional[str] = None
+
+
 class MonetizationSettings(BaseModel):
     ads_enabled: bool
     ad_code: Optional[str] = None
