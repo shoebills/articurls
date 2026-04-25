@@ -297,11 +297,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 }}
               />
               <div className="flex flex-wrap items-center gap-2">
-                <Input
-                  value={featuredImageUrl}
-                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                  placeholder="https://... or uploaded path"
-                />
                 <Button
                   type="button"
                   variant="outline"
