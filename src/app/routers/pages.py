@@ -97,7 +97,7 @@ def create_page(
     return new_page
 
 
-@router.delete("/{page_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{page_id:int}", status_code=status.HTTP_200_OK)
 def delete_page(
     page_id: int,
     db: Session = Depends(get_db),
@@ -115,7 +115,7 @@ def delete_page(
     return {"message": "Page deleted"}
 
 
-@router.patch("/id/{page_id}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.patch("/id/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def update_page(
     page_id: int,
     request: page_schema.UserPageUpdate,
