@@ -27,6 +27,7 @@ import {
   ListOrdered,
   Minus,
   Redo2,
+  ScanText,
   Underline as UnderlineIcon,
   Undo2,
   X,
@@ -94,10 +95,17 @@ export function BlogEditor({
   }, [editor]);
 
   const addImage = useCallback(async () => {
-    if (!editor || !blogId || !token) {
-      window.alert("Save the draft first to upload images.");
+    if (!editor) return;
+
+    // Pages editor does not upload files yet; allow URL + alt insertion.
+    if (!blogId || !token) {
+      const src = window.prompt("Image URL");
+      if (!src) return;
+      const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
+      editor.chain().focus().setImage({ src: src.trim(), alt: alt.trim() }).run();
       return;
     }
+
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -106,13 +114,22 @@ export function BlogEditor({
       if (!file) return;
       try {
         const media = await uploadBlogMedia(token, blogId, file);
-        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: "" }).run();
+        const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
+        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
       } catch {
         window.alert("Image upload failed.");
       }
     };
     input.click();
   }, [blogId, editor, token]);
+
+  const editSelectedImageAlt = useCallback(() => {
+    if (!editor || !editor.isActive("image")) return;
+    const attrs = editor.getAttributes("image");
+    const nextAlt = window.prompt("Image alt text", attrs.alt || "");
+    if (nextAlt === null) return;
+    editor.chain().focus().updateAttributes("image", { alt: nextAlt.trim() }).run();
+  }, [editor]);
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
@@ -231,6 +248,16 @@ export function BlogEditor({
         <Separator orientation="vertical" className="mx-1 h-6" />
         <Button type="button" variant="ghost" size="icon" onClick={addImage} title="Image">
           <ImageIcon className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={editor.isActive("image") ? "secondary" : "ghost"}
+          size="icon"
+          onClick={editSelectedImageAlt}
+          title="Edit image alt text"
+          disabled={!editor.isActive("image")}
+        >
+          <ScanText className="h-4 w-4" />
         </Button>
         <Button
           type="button"
