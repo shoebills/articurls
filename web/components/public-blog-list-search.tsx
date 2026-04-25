@@ -38,7 +38,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -162,7 +162,7 @@ export function PublicBlogListSearch({ blogs, username, user }: PublicBlogListSe
             className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
-        <DropdownMenu>
+        <DropdownMenu modal={false}>
           <DropdownMenuTrigger asChild>
             <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <ArrowUpDown className="h-4 w-4" />
