@@ -14,6 +14,7 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
   username: string;
+  useDefaultPreviewImage?: boolean;
 };
 
 const POSTS_PER_PAGE = 10;
@@ -73,7 +74,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   );
 }
 
-export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchProps) {
+export function PublicBlogListSearch({ blogs, username, useDefaultPreviewImage = true }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
   const [page, setPage] = useState(1);
@@ -185,10 +186,10 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
                     </h3>
                     {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
                   </div>
-                  {resolveBlogPreviewImage(b) ? (
+                  {resolveBlogPreviewImage(b, useDefaultPreviewImage) ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={resolveBlogPreviewImage(b)}
+                      src={resolveBlogPreviewImage(b, useDefaultPreviewImage)}
                       alt=""
                       className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                     />

@@ -9,10 +9,10 @@ function firstImageFromHtml(html: string | null | undefined): string | null {
 
 type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<PublicBlog, "featured_image_url" | "content">;
 
-export function resolveBlogPreviewImage(blog: BlogLike): string {
+export function resolveBlogPreviewImage(blog: BlogLike, useDefaultFallback = true): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
   if (explicit) return explicit;
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
   if (fromContent) return fromContent;
-  return DEFAULT_BLOG_FEATURED_IMAGE_URL;
+  return useDefaultFallback ? DEFAULT_BLOG_FEATURED_IMAGE_URL : "";
 }

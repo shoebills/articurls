@@ -94,7 +94,7 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
           </section>
         ) : null}
-        <PublicBlogListSearch blogs={blogs} username={username} />
+        <PublicBlogListSearch blogs={blogs} username={username} useDefaultPreviewImage={user.use_default_preview_image} />
         <PublicProfileFooter user={user} />
       </main>
       {user.show_articurls_watermark !== false ? (

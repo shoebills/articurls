@@ -85,6 +85,7 @@ export default function SettingsPage() {
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
   const [verification_tick, setVerificationTick] = useState(false);
+  const [useDefaultPreviewImage, setUseDefaultPreviewImage] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -124,6 +125,7 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(u.verification_tick);
+      setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -156,6 +158,7 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(ctxUser.verification_tick);
+      setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
@@ -183,6 +186,7 @@ export default function SettingsPage() {
         linkedin_link: socialLinks.linkedin_link || null,
         github_link: socialLinks.github_link || null,
         youtube_link: socialLinks.youtube_link || null,
+        use_default_preview_image: useDefaultPreviewImage,
       });
       await refreshUser();
       setSaved(true);
@@ -568,6 +572,15 @@ export default function SettingsPage() {
                 </Button>
               )
             ) : null}
+          </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Default preview image fallback</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Use your global default preview image when a post has no featured image and no inline image.
+              </p>
+            </div>
+            <Switch checked={useDefaultPreviewImage} onCheckedChange={setUseDefaultPreviewImage} />
           </div>
           <div className="border-t border-border/60 pt-6">
             <Button size="lg" onClick={saveBase} disabled={busy}>

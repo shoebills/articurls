@@ -57,11 +57,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     description: blog.seo_description || undefined,
     alternates: { canonical },
     openGraph: {
-      images: [{ url: resolveBlogPreviewImage(blog) }],
+      images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
     },
     twitter: {
       card: "summary_large_image",
-      images: [resolveBlogPreviewImage(blog)],
+      images: [resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true)],
     },
   };
 }

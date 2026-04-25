@@ -35,7 +35,7 @@ const POSTS_PER_PAGE = 10;
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -270,10 +270,10 @@ export default function DashboardPage() {
                     <h2 className="min-w-0 flex-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
                       {b.title || "Untitled"}
                     </h2>
-                    {resolveBlogPreviewImage(b) ? (
+                    {resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={resolveBlogPreviewImage(b)}
+                        src={resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true)}
                         alt=""
                         className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                       />
