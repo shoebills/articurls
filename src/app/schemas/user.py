@@ -34,6 +34,7 @@ class UserSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    username_change_count: int
 
     class Config:
         from_attributes = True

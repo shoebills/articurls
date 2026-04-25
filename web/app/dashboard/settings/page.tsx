@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { getMe, patchMe, patchProMe, uploadProfileImage, ApiError } from "@/lib/api";
+import { getMe, patchMe, patchProMe, uploadProfileImage, checkUsernameAvailability, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { assetUrl } from "@/lib/env";
+import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Camera, Plus, UserRound, X } from "lucide-react";
+import { Camera, Check, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   SiFacebook,
   SiGithub,
@@ -51,6 +52,8 @@ const SOCIAL_OPTIONS: Array<{
   { key: "youtube_link", label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden />, placeholder: "https://youtube.com/@username" },
 ];
 
+const USERNAME_CHANGE_LIMIT = 5;
+
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
   const [name, setName] = useState("");
@@ -75,6 +78,13 @@ export default function SettingsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [usernameChangeCount, setUsernameChangeCount] = useState(0);
+  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
+  const [pendingUsername, setPendingUsername] = useState("");
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    state: "idle" | "checking" | "available" | "taken" | "invalid";
+    message: string;
+  }>({ state: "idle", message: "" });
   const pfpInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -101,6 +111,7 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(u.verification_tick);
+      setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
     }
@@ -132,6 +143,7 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(ctxUser.verification_tick);
+      setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
 
@@ -147,7 +159,6 @@ export default function SettingsPage() {
     try {
       await patchMe(token, {
         name,
-        user_name,
         email,
         bio,
         link,
@@ -230,6 +241,60 @@ export default function SettingsPage() {
     setEnabledSocials((prev) => (prev.includes(socialToAdd) ? prev : [...prev, socialToAdd]));
     setAddingSocial(false);
     setSocialToAdd("");
+  }
+
+  const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
+  const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
+  const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+
+  useEffect(() => {
+    if (!usernameDialogOpen || !token) return;
+    const next = pendingUsername.trim().toLowerCase();
+    if (!next) {
+      setUsernameAvailability({ state: "idle", message: "" });
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setUsernameAvailability({ state: "checking", message: "Checking..." });
+      try {
+        const result = await checkUsernameAvailability(token, next);
+        if (result.available) {
+          setUsernameAvailability({ state: "available", message: "Available" });
+        } else if (result.reason === "taken") {
+          setUsernameAvailability({ state: "taken", message: "Username is taken" });
+        } else {
+          setUsernameAvailability({ state: "invalid", message: result.reason || "Invalid username" });
+        }
+      } catch {
+        setUsernameAvailability({ state: "invalid", message: "Could not validate right now" });
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [pendingUsername, token, usernameDialogOpen]);
+
+  async function saveUsername() {
+    if (!token) return;
+    if (usernameChangesRemaining <= 0) {
+      setUsernameAvailability({ state: "invalid", message: "No username changes remaining" });
+      return;
+    }
+    if (!pendingUsername.trim()) {
+      setUsernameAvailability({ state: "invalid", message: "Username is required" });
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      await patchMe(token, { user_name: pendingUsername.trim().toLowerCase() });
+      await refreshUser();
+      setUserName(pendingUsername.trim().toLowerCase());
+      setUsernameDialogOpen(false);
+      setSaved(true);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Could not update username");
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
@@ -318,11 +383,26 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
-              <Input
-                id="user_name"
-                value={user_name}
-                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
-              />
+              <div className="flex items-center gap-2">
+                <Input id="user_name" value={user_name} readOnly className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 min-h-12 w-12 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
+                  onClick={() => {
+                    setPendingUsername(user_name);
+                    setUsernameAvailability({ state: "idle", message: "" });
+                    setUsernameDialogOpen(true);
+                  }}
+                  aria-label="Edit username"
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="ml-2 hidden sm:inline">Edit</span>
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {usernameChangesRemaining} of {USERNAME_CHANGE_LIMIT} username changes remaining
+              </p>
             </div>
           </div>
           <div className="space-y-2.5">
@@ -483,6 +563,63 @@ export default function SettingsPage() {
       </Card>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Change username</DialogTitle>
+            <DialogDescription>
+              You can change your username up to {USERNAME_CHANGE_LIMIT} times. Remaining: {usernameChangesRemaining}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="username-dialog">Username</Label>
+              <Input
+                id="username-dialog"
+                value={pendingUsername}
+                onChange={(e) => setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+                placeholder="yourusername"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <p className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground break-all">
+              Live URL: {liveProfileUrl}
+            </p>
+            <div className="min-h-5 text-sm">
+              {usernameAvailability.state === "checking" ? (
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
+                </span>
+              ) : usernameAvailability.state === "available" ? (
+                <span className="inline-flex items-center gap-1 text-emerald-600">
+                  <Check className="h-3.5 w-3.5" /> Available
+                </span>
+              ) : usernameAvailability.message ? (
+                <span className="text-destructive">{usernameAvailability.message}</span>
+              ) : null}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={saveUsername}
+              disabled={
+                busy ||
+                usernameChangesRemaining <= 0 ||
+                usernameAvailability.state === "checking" ||
+                usernameAvailability.state === "taken" ||
+                usernameAvailability.state === "invalid"
+              }
+            >
+              Save username
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

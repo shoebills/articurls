@@ -94,6 +94,7 @@ export interface UserSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  username_change_count: number;
 }
 
 export interface UserPage {

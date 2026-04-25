@@ -158,6 +158,28 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
     return db_user
 
 
+@router.get("/username-availability", status_code=status.HTTP_200_OK)
+def username_availability(
+    user_name: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    try:
+        normalized = validate_username_or_raise(user_name)
+    except HTTPException as ex:
+        return {
+            "available": False,
+            "normalized": "",
+            "reason": ex.detail if isinstance(ex.detail, str) else "Invalid username",
+        }
+
+    existing_user = user_by_username(db, normalized)
+    if existing_user and existing_user.user_id != current_user.user_id:
+        return {"available": False, "normalized": normalized, "reason": "taken"}
+
+    return {"available": True, "normalized": normalized, "reason": None}
+
+
 @router.get("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_200_OK)
 def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()

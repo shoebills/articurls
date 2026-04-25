@@ -119,6 +119,14 @@ export async function getMe(token: string): Promise<UserSettings> {
   return apiFetch("/user/me", { token });
 }
 
+export async function checkUsernameAvailability(
+  token: string,
+  user_name: string
+): Promise<{ available: boolean; normalized: string; reason: string | null }> {
+  const q = new URLSearchParams({ user_name });
+  return apiFetch(`/user/username-availability?${q.toString()}`, { token });
+}
+
 export async function patchMe(
   token: string,
   body: Partial<
