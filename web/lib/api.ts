@@ -62,12 +62,28 @@ export async function refreshAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+const apiCache = new Map<string, { data: unknown; timestamp: number }>();
+
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit & { token?: string | null } = {},
+  init: RequestInit & { token?: string | null; disableCache?: boolean } = {},
   isRetry = false
 ): Promise<T> {
-  let { token, headers: h, ...rest } = init;
+  let { token, disableCache, headers: h, ...rest } = init;
+  
+  const method = rest.method || "GET";
+  const cacheKey = `${method}:${path}:${token || ""}`;
+
+  if (!disableCache && method === "GET" && typeof window !== "undefined") {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      return cached.data as T;
+    }
+  }
+
+  if (method !== "GET" && typeof window !== "undefined") {
+    apiCache.clear();
+  }
   
   if (isRetry && typeof window !== "undefined") {
       token = localStorage.getItem("articurls_token") || token;
@@ -100,7 +116,12 @@ export async function apiFetch<T>(
   }
   const text = await res.text();
   if (!text) return undefined as T;
-  return JSON.parse(text) as T;
+  const parsed = JSON.parse(text) as T;
+  
+  if (!disableCache && method === "GET" && typeof window !== "undefined") {
+    apiCache.set(cacheKey, { data: parsed, timestamp: Date.now() });
+  }
+  return parsed;
 }
 
 export async function login(email: string, password: string): Promise<{ access_token: string; token_type: string }> {
