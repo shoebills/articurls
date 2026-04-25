@@ -17,11 +17,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ChevronDown, ChevronUp, Menu, X } from "lucide-react";
 
 export default function DesignDashboardPage() {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [design, setDesign] = useState<DesignSettings>({
     navbar_enabled: false,
     nav_blog_name: null,
@@ -59,13 +61,17 @@ export default function DesignDashboardPage() {
       setPageToAdd(firstAvailable ? String(firstAvailable.page_id) : "");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load design settings");
+    } finally {
+      setLoading(false);
     }
   }
 
   useEffect(() => {
+    if (authLoading || !token) return;
+    setLoading(true);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [authLoading, token]);
 
   async function saveDesign(next: DesignSettings) {
     if (!token) return;
@@ -101,6 +107,17 @@ export default function DesignDashboardPage() {
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
   const previewBlogName = (design.nav_blog_name || "").trim() || "My Blog";
+
+  if (authLoading || loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-6">
+        <Skeleton className="h-9 w-32 sm:h-10 sm:w-48" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-48 w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">

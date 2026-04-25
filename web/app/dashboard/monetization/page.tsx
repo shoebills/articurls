@@ -13,6 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { DropdownMenu, DropdownMenuCheckboxItem, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { ChevronDown } from "lucide-react";
 
 export default function MonetizationPage() {
@@ -89,12 +90,14 @@ export default function MonetizationPage() {
     setAdFrequency(Math.max(2, Math.min(10, Math.floor(parsed))));
   }
 
-  if (authLoading) {
-    return <p className="text-sm text-muted-foreground">Loading…</p>;
-  }
-
-  if (loading) {
-    return <p className="text-sm text-muted-foreground">Loading monetization...</p>;
+  if (authLoading || loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Monetization</h1>
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
   }
 
   return (

@@ -21,6 +21,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Camera, Check, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
@@ -65,7 +66,8 @@ const SOCIAL_OPTIONS: Array<{
 const USERNAME_CHANGE_LIMIT = 5;
 
 export default function SettingsPage() {
-  const { token, isPro, refreshUser, user: ctxUser } = useAuth();
+  const { token, isPro, refreshUser, user: ctxUser, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
@@ -129,12 +131,16 @@ export default function SettingsPage() {
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
   }, [token]);
 
   useEffect(() => {
+    if (authLoading || !token) return;
+    setLoading(true);
     load();
-  }, [load]);
+  }, [authLoading, token, load]);
 
   useEffect(() => {
     if (ctxUser) {
@@ -348,6 +354,16 @@ export default function SettingsPage() {
     } finally {
       setRequestBusy(false);
     }
+  }
+
+  if (authLoading || loading) {
+    return (
+      <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
+        <Skeleton className="h-[600px] w-full" />
+        <Skeleton className="h-[400px] w-full" />
+      </div>
+    );
   }
 
   return (

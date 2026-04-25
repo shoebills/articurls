@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
-  const { token } = useAuth();
+  const { token, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -21,19 +23,25 @@ export default function BillingPage() {
     if (!token) return;
     setErr(null);
     try {
-      const t = await getTransactions(token);
+      const [t, s] = await Promise.all([
+        getTransactions(token).catch(e => {
+          if (e instanceof ApiError) setErr(e.message);
+          return [];
+        }), 
+        getSubscription(token).catch(() => null)
+      ]);
       setTx(t);
-    } catch (e) {
-      setTx([]);
-      if (e instanceof ApiError) setErr(e.message);
+      setSub(s);
+    } finally {
+      setLoading(false);
     }
-    const s = await getSubscription(token);
-    setSub(s);
   }, [token]);
 
   useEffect(() => {
+    if (authLoading || !token) return;
+    setLoading(true);
     load();
-  }, [load]);
+  }, [authLoading, token, load]);
 
   async function upgrade() {
     if (!token) return;
@@ -51,6 +59,16 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
   const displayTier = pro ? "Pro" : "Free";
   const subStatus = sub?.status?.toLowerCase() ?? "";
+
+  if (authLoading || loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
+        <Skeleton className="h-[200px] w-full" />
+        <Skeleton className="h-[300px] w-full" />
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
