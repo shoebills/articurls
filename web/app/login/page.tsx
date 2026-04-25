@@ -35,7 +35,9 @@ function LoginForm() {
     setInfo(null);
     setBusy(true);
     try {
-      await login(email, password);
+      const next = searchParams.get("next");
+      const safeNext = next && next.startsWith("/") ? next : "/dashboard";
+      await login(email, password, safeNext);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Login failed");
     } finally {

@@ -12,6 +12,9 @@ import type {
   PublicUser,
   SubscribersAnalytics,
   SubscriptionOut,
+  AdminUserListItem,
+  AdminPaymentListItem,
+  AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
   UserSettings,
@@ -455,29 +458,35 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
   return new Date(sub.current_period_end) >= new Date();
 }
 
-export async function adminSearchUsers(token: string, q: string): Promise<UserSettings[]> {
-  const query = new URLSearchParams({ q });
-  return apiFetch(`/admin/users/search?${query.toString()}`, { token });
-}
-
-export async function adminGetUserSummary(
+export async function adminListUsers(
   token: string,
-  userId: number
-): Promise<{ user: UserSettings; subscription: SubscriptionOut | null; transaction_count: number; pending_username_requests: number }> {
-  return apiFetch(`/admin/users/${userId}`, { token });
-}
-
-export async function adminGetUsernameAudit(token: string, userId: number): Promise<
-  Array<{ old_username: string; new_username: string; reason: string | null; created_at: string | null; actor_email: string | null }>
-> {
-  return apiFetch(`/admin/users/${userId}/username-audit`, { token });
+  params: { q?: string; plan?: "all" | "free" | "pro"; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
+): Promise<AdminUserListItem[]> {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.plan) query.set("plan", params.plan);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
+  return apiFetch(`/admin/users?${query.toString()}`, { token });
 }
 
 export async function adminListUsernameChangeRequests(
   token: string,
-  status: "pending" | "approved" | "rejected" = "pending"
-): Promise<UsernameChangeRequestOut[]> {
-  const query = new URLSearchParams({ status });
+  params: {
+    status?: "pending" | "approved" | "rejected";
+    q?: string;
+    sort?: "latest" | "oldest";
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<AdminUsernameRequestListItem[]> {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
   return apiFetch(`/admin/username-change-requests?${query.toString()}`, { token });
 }
 
@@ -494,27 +503,14 @@ export async function adminReviewUsernameChangeRequest(
   });
 }
 
-export async function adminOverrideUsername(
+export async function adminListPayments(
   token: string,
-  userId: number,
-  body: { user_name: string; reason?: string }
-): Promise<UserSettings> {
-  return apiFetch(`/admin/users/${userId}/username`, {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export async function adminListPaymentWebhooks(
-  token: string,
-  limit = 50
-): Promise<Array<{ webhook_id: number; event_type: string; processed: boolean; created_at: string }>> {
-  const query = new URLSearchParams({ limit: String(limit) });
-  return apiFetch(`/admin/payments/webhooks?${query.toString()}`, { token });
-}
-
-export async function adminRetryPaymentWebhook(token: string, webhookId: number): Promise<{ detail: string }> {
-  return apiFetch(`/admin/payments/webhooks/${webhookId}/retry`, { method: "POST", token });
+  params: { q?: string; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
+): Promise<AdminPaymentListItem[]> {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
+  return apiFetch(`/admin/payments?${query.toString()}`, { token });
 }

@@ -6,9 +6,9 @@ import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, BadgeDollarSign, Bug, CircleHelp, Shield } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, BadgeDollarSign, Bug, CircleHelp } from "lucide-react";
 
-const baseLinks = [
+const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
@@ -33,7 +33,6 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   const pathname = usePathname();
   const { logout, user } = useAuth();
 
-  const links = user?.is_admin ? [...baseLinks, { href: "/dashboard/admin", label: "Admin", icon: Shield }] : baseLinks;
   const linkItems = links.map(({ href, label, icon: Icon }) => {
     const active =
       href === "/dashboard"

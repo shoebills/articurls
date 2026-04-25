@@ -13,7 +13,7 @@ type AuthContextValue = {
   subscription: SubscriptionOut | null;
   isPro: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 };
@@ -68,12 +68,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, redirectTo = "/dashboard") => {
       const res = await apiLogin(email, password);
       localStorage.setItem(TOKEN_KEY, res.access_token);
       setToken(res.access_token);
       await refreshUser();
-      router.push("/dashboard");
+      router.push(redirectTo);
     },
     [refreshUser, router]
   );

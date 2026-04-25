@@ -109,6 +109,32 @@ export interface UsernameChangeRequestOut {
   created_at: string | null;
 }
 
+export interface AdminUserListItem {
+  user_id: number;
+  name: string;
+  user_name: string;
+  email: string;
+  created_at: string | null;
+  plan: "free" | "pro";
+}
+
+export interface AdminPaymentListItem {
+  transaction_id: number;
+  user_id: number;
+  user_name: string;
+  email: string;
+  amount: number;
+  currency: string;
+  status: string;
+  dodo_payment_id: string | null;
+  created_at: string | null;
+}
+
+export interface AdminUsernameRequestListItem extends UsernameChangeRequestOut {
+  user_name: string;
+  email: string;
+}
+
 export interface UserPage {
   page_id: number;
   user_id: number;
