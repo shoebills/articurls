@@ -1,4 +1,5 @@
 import json
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -16,6 +17,50 @@ router = APIRouter(
     prefix="/billing", 
     tags=["Billing"]
     )
+
+
+def _to_aware_dt(value):
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=timezone.utc)
+    if isinstance(value, str):
+        text = value.strip()
+        if not text:
+            return None
+        if text.endswith("Z"):
+            text = f"{text[:-1]}+00:00"
+        try:
+            parsed = datetime.fromisoformat(text)
+            return parsed if parsed.tzinfo else parsed.replace(tzinfo=timezone.utc)
+        except ValueError:
+            return None
+    return None
+
+
+def _should_apply_period_update(db_sub, incoming_sid, incoming_start, incoming_end):
+    """Prevent stale/parallel webhook events from shrinking active periods."""
+    incoming_end_dt = _to_aware_dt(incoming_end)
+    current_end_dt = _to_aware_dt(getattr(db_sub, "current_period_end", None)) if db_sub else None
+    current_sid = getattr(db_sub, "dodo_subscription_id", None) if db_sub else None
+    current_status = getattr(db_sub, "status", None) if db_sub else None
+
+    if db_sub is None:
+        return True
+
+    # Parallel subscription id while current plan is still active: ignore unless clearly newer.
+    if current_sid and incoming_sid and current_sid != incoming_sid:
+        if current_status in {"active", "past_due"}:
+            if current_end_dt is not None and incoming_end_dt is not None and incoming_end_dt > current_end_dt:
+                return True
+            return False
+        return True
+
+    # Same subscription stream (or sid missing): only move period forward.
+    if current_end_dt is not None and incoming_end_dt is not None and incoming_end_dt <= current_end_dt:
+        return False
+
+    return True
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
@@ -104,12 +149,19 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
+                    incoming_start = getattr(event.data, "previous_billing_date", None)
+                    incoming_end = getattr(event.data, "next_billing_date", None)
+                    apply_period_update = _should_apply_period_update(
+                        db_sub, incoming_dodo_sid, incoming_start, incoming_end
+                    )
+
                     if db_sub:
-                        db_sub.dodo_subscription_id = incoming_dodo_sid
-                        db_sub.plan_type = "pro"
-                        db_sub.status = "active"
-                        db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
-                        db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
+                        if apply_period_update:
+                            db_sub.dodo_subscription_id = incoming_dodo_sid
+                            db_sub.plan_type = "pro"
+                            db_sub.status = "active"
+                            db_sub.current_period_start = incoming_start
+                            db_sub.current_period_end = incoming_end
 
                     else:
                         new_sub = models.Subscriptions(
@@ -160,12 +212,19 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
+                    incoming_start = getattr(event.data, "previous_billing_date", None)
+                    incoming_end = getattr(event.data, "next_billing_date", None)
+                    apply_period_update = _should_apply_period_update(
+                        db_sub, incoming_dodo_sid, incoming_start, incoming_end
+                    )
+
                     if db_sub:
-                        db_sub.dodo_subscription_id = incoming_dodo_sid
-                        db_sub.plan_type = "pro"
-                        db_sub.status = "active"
-                        db_sub.current_period_start = getattr(event.data, "previous_billing_date", None)
-                        db_sub.current_period_end = getattr(event.data, "next_billing_date", None)
+                        if apply_period_update:
+                            db_sub.dodo_subscription_id = incoming_dodo_sid
+                            db_sub.plan_type = "pro"
+                            db_sub.status = "active"
+                            db_sub.current_period_start = incoming_start
+                            db_sub.current_period_end = incoming_end
 
                     else:
                         db_sub = models.Subscriptions(
