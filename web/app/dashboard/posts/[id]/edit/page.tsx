@@ -217,22 +217,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }
 
-  if (loading || !blog) {
-    return (
-      <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
-        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-      </>
-    );
-  }
-
-  const liveUrl =
-    blog.status === "published" && user
-      ? `${MARKETING_ORIGIN}/${user.user_name}/blog/${blog.slug}`
-      : null;
-
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
-
   useEffect(() => {
     if (!blog || saving || !isDirty()) return;
     setSaveStatus("idle");
@@ -266,6 +250,22 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [isDirty, saving]);
+
+  if (loading || !blog) {
+    return (
+      <>
+        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      </>
+    );
+  }
+
+  const liveUrl =
+    blog.status === "published" && user
+      ? `${MARKETING_ORIGIN}/${user.user_name}/blog/${blog.slug}`
+      : null;
+
+  const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
