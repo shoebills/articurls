@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useCallback, useEffect, useState } from "react";
+import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
 import {
@@ -24,7 +24,7 @@ import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Loader2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -43,11 +43,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [seoDesc, setSeoDesc] = useState("");
   const [notify, setNotify] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const featuredInputRef = useRef<HTMLInputElement | null>(null);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -178,11 +180,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function uploadFeaturedImage(file: File) {
     if (!token || !blog) return;
+    setUploadingFeatured(true);
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
       setFeaturedImageUrl(media.url);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
+    } finally {
+      setUploadingFeatured(false);
     }
   }
 
@@ -279,29 +284,40 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <Label>Featured image</Label>
               <p className="text-xs text-muted-foreground">Used for home preview and share cards. 3:2 recommended.</p>
+              <input
+                ref={featuredInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadFeaturedImage(f);
+                  e.currentTarget.value = "";
+                }}
+              />
               <div className="flex flex-wrap items-center gap-2">
                 <Input
                   value={featuredImageUrl}
                   onChange={(e) => setFeaturedImageUrl(e.target.value)}
                   placeholder="https://... or uploaded path"
                 />
-                <label className="inline-flex">
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="sr-only"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) void uploadFeaturedImage(f);
-                      e.currentTarget.value = "";
-                    }}
-                  />
-                  <Button type="button" variant="outline" asChild>
-                    <span>Upload</span>
-                  </Button>
-                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => featuredInputRef.current?.click()}
+                  disabled={uploadingFeatured}
+                >
+                  {uploadingFeatured ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    "Upload"
+                  )}
+                </Button>
                 {featuredImageUrl ? (
-                  <Button type="button" variant="ghost" onClick={() => setFeaturedImageUrl("")}>
+                  <Button type="button" variant="ghost" onClick={() => setFeaturedImageUrl("")} disabled={uploadingFeatured}>
                     Remove
                   </Button>
                 ) : null}
@@ -311,7 +327,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <img
                   src={assetUrl(featuredImageUrl)}
                   alt=""
-                  className="mt-2 aspect-[3/2] w-full rounded-lg border border-border/70 object-cover"
+                  className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
             </div>
