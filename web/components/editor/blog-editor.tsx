@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -39,6 +39,18 @@ import { cn } from "@/lib/utils";
 
 const lowlight = createLowlight(common);
 
+function extractImageSrcsFromHtml(html: string): Set<string> {
+  const urls = new Set<string>();
+  const re = /<img[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi;
+  let match: RegExpExecArray | null = re.exec(html);
+  while (match) {
+    const src = (match[1] || "").trim();
+    if (src) urls.add(src);
+    match = re.exec(html);
+  }
+  return urls;
+}
+
 type BlogEditorProps = {
   content: string;
   onChange: (html: string) => void;
@@ -59,6 +71,8 @@ export function BlogEditor({
   className,
 }: BlogEditorProps) {
   const [selectionTick, setSelectionTick] = useState(0);
+  const prevImageSrcsRef = useRef<Set<string>>(extractImageSrcsFromHtml(content || ""));
+  const deletingSrcsRef = useRef<Set<string>>(new Set());
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -80,7 +94,36 @@ export function BlogEditor({
       },
     },
     onUpdate: ({ editor: ed }) => {
-      onChange(ed.getHTML());
+      const nextHtml = ed.getHTML();
+      onChange(nextHtml);
+
+      if (blogId && token) {
+        const nextSet = extractImageSrcsFromHtml(nextHtml);
+        const removed: string[] = [];
+        prevImageSrcsRef.current.forEach((src) => {
+          if (!nextSet.has(src) && !deletingSrcsRef.current.has(src)) {
+            removed.push(src);
+          }
+        });
+        prevImageSrcsRef.current = nextSet;
+
+        if (removed.length > 0) {
+          removed.forEach((src) => deletingSrcsRef.current.add(src));
+          void Promise.all(
+            removed.map(async (src) => {
+              try {
+                await deleteBlogMediaByUrl(token, blogId, src);
+              } catch {
+                // Best effort only; editor UX should not fail on cleanup issues.
+              } finally {
+                deletingSrcsRef.current.delete(src);
+              }
+            })
+          );
+        }
+      } else {
+        prevImageSrcsRef.current = extractImageSrcsFromHtml(nextHtml);
+      }
     },
     onSelectionUpdate: () => {
       // Force a lightweight re-render so toolbar disabled states reflect node selection changes.
@@ -97,6 +140,7 @@ export function BlogEditor({
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
+    prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
     if (content !== current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
     }
