@@ -18,6 +18,8 @@ async def upload_page_media(
     file: UploadFile = File(...),
     current_user=Depends(oauth2.get_current_user),
 ):
+    if not file:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required")
     stored = await save_media(
         file=file,
         category="pages",

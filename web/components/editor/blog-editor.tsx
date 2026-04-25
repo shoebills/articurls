@@ -33,7 +33,7 @@ import {
   X,
   Video,
 } from "lucide-react";
-import { uploadBlogMedia, uploadPageMedia } from "@/lib/api";
+import { ApiError, uploadBlogMedia, uploadPageMedia } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -134,8 +134,9 @@ export function BlogEditor({
         const media = blogId ? await uploadBlogMedia(token, blogId, file) : await uploadPageMedia(token, file);
         const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
         editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
-      } catch {
-        window.alert("Image upload failed.");
+      } catch (e) {
+        const detail = e instanceof ApiError ? e.message : "Image upload failed.";
+        window.alert(detail);
       }
     };
     input.click();
