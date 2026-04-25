@@ -25,8 +25,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
@@ -160,9 +161,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-        <p className="text-sm">Loading posts…</p>
+      <div className="mx-auto max-w-[1100px] space-y-6">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
+        <div className="flex gap-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <Skeleton className="h-64 w-full" />
+        <Skeleton className="h-64 w-full" />
       </div>
     );
   }
