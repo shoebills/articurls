@@ -45,3 +45,5 @@ class DesignSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: List[int] = []

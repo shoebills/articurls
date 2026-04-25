@@ -5,11 +5,12 @@ import {
   ApiError,
   getDesignSettings,
   listPages,
+  listBlogs,
   patchDesignSettings,
   updateMenuPages,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { DesignSettings, UserPage } from "@/lib/types";
+import type { DesignSettings, UserPage, BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -26,10 +27,14 @@ export default function DesignDashboardPage() {
     nav_blog_name: null,
     nav_menu_enabled: false,
     footer_enabled: false,
+    featured_blogs_enabled: false,
+    featured_blog_ids: [],
   });
   const [pages, setPages] = useState<UserPage[]>([]);
+  const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [menuSelection, setMenuSelection] = useState<number[]>([]);
   const [pageToAdd, setPageToAdd] = useState<string>("");
+  const [blogToAdd, setBlogToAdd] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -38,9 +43,13 @@ export default function DesignDashboardPage() {
   async function load() {
     if (!token) return;
     try {
-      const [d, p] = await Promise.all([getDesignSettings(token), listPages(token)]);
-      setDesign(d);
+      const [d, p, b] = await Promise.all([getDesignSettings(token), listPages(token), listBlogs(token)]);
+      setDesign({
+        ...d,
+        featured_blog_ids: d.featured_blog_ids || [],
+      });
       setPages(p);
+      setBlogs(b.filter((x) => x.status === "published"));
       const selected = [...p]
         .filter((x) => x.show_in_menu)
         .sort((a, b) => (a.menu_order ?? 9999) - (b.menu_order ?? 9999))
@@ -298,6 +307,111 @@ export default function DesignDashboardPage() {
               )}
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Featured blogs</CardTitle>
+          <CardDescription>Pin up to 10 published blogs to the top of your public profile.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="font-medium">Enable featured blogs</p>
+              <p className="text-sm text-muted-foreground">Show a featured section below the search bar.</p>
+            </div>
+            <Switch
+              checked={design.featured_blogs_enabled}
+              onCheckedChange={(v) => saveDesign({ ...design, featured_blogs_enabled: v })}
+              disabled={busy}
+            />
+          </div>
+          {design.featured_blogs_enabled ? (
+            <div className="space-y-3 rounded-lg border p-3">
+              {design.featured_blog_ids.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Add blogs to display.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {design.featured_blog_ids.map((id, idx) => {
+                    const b = blogs.find((x) => x.blog_id === id);
+                    return (
+                      <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                        <span className="truncate">{b?.title || "Unknown blog"}</span>
+                        <div className="flex items-center gap-1 shrink-0 ml-4">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === 0}
+                            onClick={() => {
+                              const next = [...design.featured_blog_ids];
+                              [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                              saveDesign({ ...design, featured_blog_ids: next });
+                            }}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === design.featured_blog_ids.length - 1}
+                            onClick={() => {
+                              const next = [...design.featured_blog_ids];
+                              [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                              saveDesign({ ...design, featured_blog_ids: next });
+                            }}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy}
+                            onClick={() => saveDesign({ ...design, featured_blog_ids: design.featured_blog_ids.filter((x) => x !== id) })}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+              {blogs.filter((b) => !design.featured_blog_ids.includes(b.blog_id)).length > 0 && design.featured_blog_ids.length < 10 ? (
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Select value={blogToAdd} onValueChange={setBlogToAdd}>
+                    <SelectTrigger className="sm:max-w-xs">
+                      <SelectValue placeholder="Add blog to featured" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {blogs
+                        .filter((b) => !design.featured_blog_ids.includes(b.blog_id))
+                        .map((b) => (
+                          <SelectItem key={b.blog_id} value={String(b.blog_id)}>
+                            {b.title}
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    disabled={busy || !blogToAdd}
+                    onClick={() => {
+                      const id = Number(blogToAdd);
+                      if (!Number.isFinite(id)) return;
+                      const next = [...design.featured_blog_ids, id];
+                      saveDesign({ ...design, featured_blog_ids: next });
+                      setBlogToAdd("");
+                    }}
+                  >
+                    Add blog
+                  </Button>
+                </div>
+              ) : design.featured_blog_ids.length >= 10 ? (
+                <p className="text-sm text-muted-foreground mt-2">Maximum 10 blogs allowed.</p>
+              ) : null}
+            </div>
+          ) : null}
         </CardContent>
       </Card>
 

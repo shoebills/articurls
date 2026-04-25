@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { ArrowUpDown, Check, Link2, MessageCircle, Search, Share2 } from "lucide-react";
-import type { PublicBlog } from "@/lib/types";
+import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
@@ -14,7 +14,7 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
   username: string;
-  useDefaultPreviewImage?: boolean;
+  user?: PublicUser;
 };
 
 const POSTS_PER_PAGE = 10;
@@ -74,10 +74,22 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   );
 }
 
-export function PublicBlogListSearch({ blogs, username, useDefaultPreviewImage = true }: PublicBlogListSearchProps) {
+export function PublicBlogListSearch({ blogs, username, user }: PublicBlogListSearchProps) {
+  const useDefaultPreviewImage = user?.use_default_preview_image ?? true;
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
   const [page, setPage] = useState(1);
+
+  const featuredBlogs = useMemo(() => {
+    if (!user?.featured_blogs_enabled) return [];
+    if (!user.featured_blog_ids || user.featured_blog_ids.length === 0) return [];
+    
+    return user.featured_blog_ids
+      .map(id => blogs.find(b => b.blog_id === id))
+      .filter((b): b is PublicBlog => Boolean(b));
+  }, [user, blogs]);
+  
+  const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
 
   if (blogs.length === 0) {
     return (
@@ -173,6 +185,40 @@ export function PublicBlogListSearch({ blogs, username, useDefaultPreviewImage =
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+      {showFeatured ? (
+        <div className="mb-10 sm:mb-14">
+          <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured</h2>
+          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
+            {featuredBlogs.map(b => (
+               <div key={`featured-${b.blog_id}`} className="flex h-full flex-col">
+                 <Link href={`/${username}/blog/${b.slug}`} className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/80 bg-background transition-all hover:shadow-md">
+                   {resolveBlogPreviewImage(b, useDefaultPreviewImage) && (
+                     <div className="aspect-[2/1] w-full shrink-0 overflow-hidden border-b border-border/50 bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={resolveBlogPreviewImage(b, useDefaultPreviewImage)!} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
+                     </div>
+                   )}
+                   <div className="flex flex-1 flex-col p-4 sm:p-5">
+                      <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary sm:text-xl line-clamp-2">{b.title}</h3>
+                      {b.excerpt && <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>}
+                      <div className="mt-auto pt-5 flex items-center justify-between gap-2">
+                        {b.published_at ? (
+                          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+                            {new Date(b.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
+                          </time>
+                        ) : <span aria-hidden />}
+                        <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
+                      </div>
+                   </div>
+                 </Link>
+               </div>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {showFeatured && <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">All posts</h2>}
 
       <ul className="divide-y divide-border/80">
         {pagedBlogs.map((b) => (

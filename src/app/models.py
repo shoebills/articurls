@@ -43,6 +43,8 @@ class User(Base):
     ad_code = Column(Text, nullable=True)
     ad_frequency = Column(Integer, nullable=False, default=3)
     username_change_count = Column(Integer, nullable=False, default=0)
+    featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
+    featured_blog_ids = Column(JSON, nullable=True, default=[])
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 

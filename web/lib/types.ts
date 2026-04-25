@@ -72,6 +72,8 @@ export interface PublicUser {
   use_default_preview_image: boolean;
   /** False for active Pro — hide "Made with Articurls" on public pages. */
   show_articurls_watermark?: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
 }
 
 export interface UserSettings {
@@ -100,6 +102,8 @@ export interface UserSettings {
   use_default_preview_image: boolean;
   username_change_count: number;
   is_admin?: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
 }
 
 export interface UsernameChangeRequestOut {
@@ -154,6 +158,8 @@ export interface DesignSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
 }
 
 export interface MonetizationSettings {

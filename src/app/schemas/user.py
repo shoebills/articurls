@@ -38,6 +38,8 @@ class UserSettings(BaseModel):
     use_default_preview_image: bool = True
     username_change_count: int
     is_admin: bool = False
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: list[int] = []
 
     class Config:
         from_attributes = True
@@ -66,6 +68,8 @@ class PublicUser(BaseModel):
     footer_enabled: bool
     use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: list[int] = []
 
     class Config:
         from_attributes = True

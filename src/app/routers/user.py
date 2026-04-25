@@ -205,6 +205,23 @@ def update_design_settings(
     db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
     db_user.nav_menu_enabled = request.nav_menu_enabled
     db_user.footer_enabled = request.footer_enabled
+    db_user.featured_blogs_enabled = request.featured_blogs_enabled
+    
+    blog_ids = request.featured_blog_ids or []
+    if len(blog_ids) > 10:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 10 featured blogs allowed")
+    
+    if blog_ids:
+        valid_blogs = db.query(models.Blog.blog_id).filter(
+            models.Blog.user_id == current_user.user_id,
+            models.Blog.blog_id.in_(blog_ids),
+            models.Blog.status == "published"
+        ).all()
+        valid_ids = {b[0] for b in valid_blogs}
+        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in valid_ids]
+    else:
+        db_user.featured_blog_ids = []
+        
     db.commit()
     db.refresh(db_user)
     return db_user
