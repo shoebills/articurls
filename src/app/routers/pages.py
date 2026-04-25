@@ -1,15 +1,29 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from slugify import slugify
 from .. import models, utils
 from ..database import get_db
 from ..schemas import page as page_schema
 from ..security import oauth2
+from ..storage.service import save_media
 
 router = APIRouter(
     tags=["Pages"],
     prefix="/pages",
 )
+
+
+@router.post("/media", status_code=status.HTTP_201_CREATED)
+async def upload_page_media(
+    file: UploadFile = File(...),
+    current_user=Depends(oauth2.get_current_user),
+):
+    stored = await save_media(
+        file=file,
+        category="pages",
+        user_id=current_user.user_id,
+    )
+    return {"url": stored.url}
 
 
 def _max_pages_for_user(db: Session, user_id: int) -> int:

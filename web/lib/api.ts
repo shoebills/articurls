@@ -294,6 +294,12 @@ export async function uploadProfileImage(token: string, file: File): Promise<{ p
   return apiFetch("/user/me/profile-image", { method: "POST", token, body: fd });
 }
 
+export async function uploadPageMedia(token: string, file: File): Promise<{ url: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch("/pages/media", { method: "POST", token, body: fd });
+}
+
 export async function listBlogs(token: string): Promise<BlogListItem[]> {
   return apiFetch("/blog/", { token });
 }

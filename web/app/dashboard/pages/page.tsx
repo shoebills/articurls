@@ -154,7 +154,8 @@ export default function PagesDashboardPage() {
             />
             <BlogEditor
               blogId={null}
-              token={null}
+              pageId={null}
+              token={token}
               content={createContent}
               onChange={setCreateContent}
               placeholder="Write your page..."
@@ -193,7 +194,8 @@ export default function PagesDashboardPage() {
             />
             <BlogEditor
               blogId={null}
-              token={null}
+              pageId={editingPage.page_id}
+              token={token}
               content={editContent}
               onChange={setEditContent}
               placeholder="Write your page..."

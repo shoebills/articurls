@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -33,7 +33,7 @@ import {
   X,
   Video,
 } from "lucide-react";
-import { uploadBlogMedia } from "@/lib/api";
+import { uploadBlogMedia, uploadPageMedia } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +44,7 @@ type BlogEditorProps = {
   onChange: (html: string) => void;
   placeholder?: string;
   blogId: number | null;
+  pageId?: number | null;
   token: string | null;
   className?: string;
 };
@@ -53,9 +54,11 @@ export function BlogEditor({
   onChange,
   placeholder = "Tell your story…",
   blogId,
+  pageId = null,
   token,
   className,
 }: BlogEditorProps) {
+  const [selectionTick, setSelectionTick] = useState(0);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -79,8 +82,25 @@ export function BlogEditor({
     onUpdate: ({ editor: ed }) => {
       onChange(ed.getHTML());
     },
+    onSelectionUpdate: () => {
+      // Force a lightweight re-render so toolbar disabled states reflect node selection changes.
+      setSelectionTick((v) => v + 1);
+    },
     immediatelyRender: false,
   });
+
+  const isImageSelected =
+    !!editor &&
+    ((editor.state.selection as { node?: { type?: { name?: string } } }).node?.type?.name === "image" ||
+      editor.isActive("image"));
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if (content !== current) {
+      editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
+    }
+  }, [content, editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -95,14 +115,12 @@ export function BlogEditor({
   }, [editor]);
 
   const addImage = useCallback(async () => {
-    if (!editor) return;
-
-    // Pages editor does not upload files yet; allow URL + alt insertion.
-    if (!blogId || !token) {
-      const src = window.prompt("Image URL");
-      if (!src) return;
-      const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
-      editor.chain().focus().setImage({ src: src.trim(), alt: alt.trim() }).run();
+    if (!editor || !token) {
+      window.alert("Please log in to upload images.");
+      return;
+    }
+    if (!blogId && !pageId) {
+      window.alert("Save first to upload images.");
       return;
     }
 
@@ -113,7 +131,7 @@ export function BlogEditor({
       const file = input.files?.[0];
       if (!file) return;
       try {
-        const media = await uploadBlogMedia(token, blogId, file);
+        const media = blogId ? await uploadBlogMedia(token, blogId, file) : await uploadPageMedia(token, file);
         const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
         editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
       } catch {
@@ -121,15 +139,15 @@ export function BlogEditor({
       }
     };
     input.click();
-  }, [blogId, editor, token]);
+  }, [blogId, pageId, editor, token]);
 
   const editSelectedImageAlt = useCallback(() => {
-    if (!editor || !editor.isActive("image")) return;
+    if (!editor || !isImageSelected) return;
     const attrs = editor.getAttributes("image");
     const nextAlt = window.prompt("Image alt text", attrs.alt || "");
     if (nextAlt === null) return;
     editor.chain().focus().updateAttributes("image", { alt: nextAlt.trim() }).run();
-  }, [editor]);
+  }, [editor, isImageSelected]);
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
@@ -149,6 +167,9 @@ export function BlogEditor({
 
   return (
     <div className={cn("tiptap-editor rounded-lg border border-input bg-background", className)}>
+      <span className="hidden" aria-hidden>
+        {selectionTick}
+      </span>
       <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border p-2 [scrollbar-width:thin] sm:flex-wrap">
         <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
           <Undo2 className="h-4 w-4" />
@@ -251,21 +272,21 @@ export function BlogEditor({
         </Button>
         <Button
           type="button"
-          variant={editor.isActive("image") ? "secondary" : "ghost"}
+          variant={isImageSelected ? "secondary" : "ghost"}
           size="icon"
           onClick={editSelectedImageAlt}
           title="Edit image alt text"
-          disabled={!editor.isActive("image")}
+          disabled={!isImageSelected}
         >
           <ScanText className="h-4 w-4" />
         </Button>
         <Button
           type="button"
-          variant={editor.isActive("image") ? "secondary" : "ghost"}
+          variant={isImageSelected ? "secondary" : "ghost"}
           size="icon"
           onClick={removeSelectedImage}
           title="Remove selected image"
-          disabled={!editor.isActive("image")}
+          disabled={!isImageSelected}
         >
           <X className="h-4 w-4" />
         </Button>
