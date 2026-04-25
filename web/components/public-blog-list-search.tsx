@@ -74,6 +74,74 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   );
 }
 
+function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest" | "most_popular") => void }) {
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+          <ArrowUpDown className="h-4 w-4" />
+          <span>Sort</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuItem onClick={() => setSortBy("latest")}>
+          <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
+          Latest
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+          <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
+          Oldest
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
+          <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
+          Most popular
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function BlogListItemRow({ blog: b, username, useDefaultPreviewImage }: { blog: PublicBlog; username: string; useDefaultPreviewImage: boolean }) {
+  return (
+    <li className="py-8 first:pt-0">
+      <div className="rounded-xl py-1">
+        <Link href={`/${username}/blog/${b.slug}`} className="group block transition-colors hover:bg-muted/30">
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
+                {b.title}
+              </h3>
+              {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+            </div>
+            {resolveBlogPreviewImage(b, useDefaultPreviewImage) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={resolveBlogPreviewImage(b, useDefaultPreviewImage)!}
+                alt=""
+                className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
+              />
+            ) : null}
+          </div>
+        </Link>
+        <div className="mt-3 flex items-center justify-between gap-2">
+          {b.published_at ? (
+            <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+              {new Date(b.published_at).toLocaleDateString(undefined, {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </time>
+          ) : (
+            <span className="text-xs text-muted-foreground" aria-hidden />
+          )}
+          <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
+        </div>
+      </div>
+    </li>
+  );
+}
+
 export function PublicBlogListSearch({ blogs, username, user }: PublicBlogListSearchProps) {
   const useDefaultPreviewImage = user?.use_default_preview_image ?? true;
   const [query, setQuery] = useState("");
@@ -162,102 +230,30 @@ export function PublicBlogListSearch({ blogs, username, user }: PublicBlogListSe
             className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
-        <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
-              <ArrowUpDown className="h-4 w-4" />
-              <span>Sort</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-44">
-            <DropdownMenuItem onClick={() => setSortBy("latest")}>
-              <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
-              Latest
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("oldest")}>
-              <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
-              Oldest
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
-              <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
-              Most popular
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!showFeatured && <SortMenu sortBy={sortBy} setSortBy={setSortBy} />}
       </div>
 
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured</h2>
-          <div className="grid gap-5 sm:gap-6 sm:grid-cols-2">
+          <ul className="divide-y divide-border/80 border-y border-border/80 pt-8">
             {featuredBlogs.map(b => (
-               <div key={`featured-${b.blog_id}`} className="flex h-full flex-col">
-                 <Link href={`/${username}/blog/${b.slug}`} className="group flex h-full flex-col overflow-hidden rounded-xl border border-border/80 bg-background transition-all hover:shadow-md">
-                   {resolveBlogPreviewImage(b, useDefaultPreviewImage) && (
-                     <div className="aspect-[2/1] w-full shrink-0 overflow-hidden border-b border-border/50 bg-muted">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src={resolveBlogPreviewImage(b, useDefaultPreviewImage)!} alt="" className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" />
-                     </div>
-                   )}
-                   <div className="flex flex-1 flex-col p-4 sm:p-5">
-                      <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary sm:text-xl line-clamp-2">{b.title}</h3>
-                      {b.excerpt && <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>}
-                      <div className="mt-auto pt-5 flex items-center justify-between gap-2">
-                        {b.published_at ? (
-                          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
-                            {new Date(b.published_at).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" })}
-                          </time>
-                        ) : <span aria-hidden />}
-                        <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
-                      </div>
-                   </div>
-                 </Link>
-               </div>
+               <BlogListItemRow key={`featured-${b.blog_id}`} blog={b} username={username} useDefaultPreviewImage={useDefaultPreviewImage} />
             ))}
-          </div>
+          </ul>
         </div>
       ) : null}
 
-      {showFeatured && <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">All posts</h2>}
+      {showFeatured && (
+        <div className="mb-5 flex items-center justify-between sm:mb-6">
+          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">All posts</h2>
+          <SortMenu sortBy={sortBy} setSortBy={setSortBy} />
+        </div>
+      )}
 
       <ul className="divide-y divide-border/80">
         {pagedBlogs.map((b) => (
-          <li key={b.blog_id} className="py-8 first:pt-0">
-            <div className="rounded-xl py-1">
-              <Link href={`/${username}/blog/${b.slug}`} className="group block transition-colors hover:bg-muted/30">
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
-                      {b.title}
-                    </h3>
-                    {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
-                  </div>
-                  {resolveBlogPreviewImage(b, useDefaultPreviewImage) ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={resolveBlogPreviewImage(b, useDefaultPreviewImage)}
-                      alt=""
-                      className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
-                    />
-                  ) : null}
-                </div>
-              </Link>
-              <div className="mt-3 flex items-center justify-between gap-2">
-                {b.published_at ? (
-                  <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
-                    {new Date(b.published_at).toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })}
-                  </time>
-                ) : (
-                  <span className="text-xs text-muted-foreground" aria-hidden />
-                )}
-                <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
-              </div>
-            </div>
-          </li>
+          <BlogListItemRow key={b.blog_id} blog={b} username={username} useDefaultPreviewImage={useDefaultPreviewImage} />
         ))}
       </ul>
 
