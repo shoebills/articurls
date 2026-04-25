@@ -561,7 +561,7 @@ export default function SettingsPage() {
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
             <DialogTitle>Change username</DialogTitle>
             <DialogDescription>
@@ -581,7 +581,7 @@ export default function SettingsPage() {
               />
             </div>
             <p className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground break-all">
-              Live URL: {liveProfileUrl}
+              {liveProfileUrl}
             </p>
             <div className="min-h-5 text-sm">
               {usernameAvailability.state === "checking" ? (
