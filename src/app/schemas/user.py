@@ -39,7 +39,7 @@ class UserSettings(BaseModel):
     username_change_count: int
     is_admin: bool = False
     featured_blogs_enabled: bool = False
-    featured_blog_ids: list[int] = []
+    featured_blog_ids: list[int] | None = []
 
     class Config:
         from_attributes = True
@@ -69,7 +69,7 @@ class PublicUser(BaseModel):
     use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
     featured_blogs_enabled: bool = False
-    featured_blog_ids: list[int] = []
+    featured_blog_ids: list[int] | None = []
 
     class Config:
         from_attributes = True
