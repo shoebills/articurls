@@ -322,6 +322,22 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
         detail="Not authorized to perform this action"
     )
     
+    # Delete media objects from storage (R2/local) before DB rows are removed.
+    media_rows = (
+        db.query(models.BlogMedia)
+        .filter(
+            models.BlogMedia.blog_id == db_blog.blog_id,
+            models.BlogMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    for media in media_rows:
+        try:
+            delete_media(media.storage_key)
+        except Exception:
+            # Keep delete resilient even if object was already removed externally.
+            pass
+
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
