@@ -275,7 +275,7 @@ export default function DashboardPage() {
                       <img
                         src={resolveBlogPreviewImage(b)}
                         alt=""
-                        className="hidden aspect-[3/2] w-36 shrink-0 rounded-md border border-border/70 object-cover sm:block"
+                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                       />
                     ) : null}
                   </div>
