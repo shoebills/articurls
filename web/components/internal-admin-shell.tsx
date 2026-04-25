@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, FileCode2, Users, UserRoundPen } from "lucide-react";
+import { CreditCard, FileCode2, LogOut, Users, UserRoundPen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 
 const sections = [
@@ -23,6 +24,7 @@ export function InternalAdminShell({
   children: React.ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const { logout } = useAuth();
 
   return (
     <div className="flex min-h-dvh bg-[#f8fafc]">
@@ -45,12 +47,24 @@ export function InternalAdminShell({
             </Button>
           ))}
         </nav>
+        <div className="mt-6 border-t border-border/70 pt-4">
+          <Button type="button" variant="outline" className="w-full justify-start gap-2" onClick={logout}>
+            <LogOut className="h-4 w-4" />
+            Log out
+          </Button>
+        </div>
       </aside>
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-20 border-b border-border/70 bg-background px-4 py-3 md:hidden">
-          <Button type="button" variant="outline" onClick={() => setOpen((v) => !v)}>
-            Menu
-          </Button>
+          <div className="flex items-center justify-between gap-2">
+            <Button type="button" variant="outline" onClick={() => setOpen((v) => !v)}>
+              Menu
+            </Button>
+            <Button type="button" variant="outline" className="gap-2" onClick={logout}>
+              <LogOut className="h-4 w-4" />
+              Log out
+            </Button>
+          </div>
           {open ? (
             <div className="mt-3 space-y-1">
               {sections.map(({ key, label, icon: Icon }) => (
