@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Response, Request
 from fastapi.security import OAuth2PasswordRequestForm
 from datetime import timedelta
 from sqlalchemy.orm import Session
@@ -16,7 +16,7 @@ router = APIRouter(
 )
 
 @router.post("/login", response_model=token.Token)
-def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
 
     db_user = user_by_email(db, request.username)
     
@@ -40,10 +40,63 @@ def login(request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
+    refresh_token = oauth2.create_refresh_token(db_user.email)
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True, # assumes HTTPS
+        samesite="lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60
+    )
+    
     return {
         "access_token": access_token,
         "token_type": "bearer"
     }
+
+@router.post("/refresh", response_model=token.Token)
+def refresh(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if not refresh_token:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")
+        
+    payload = oauth2.verify_refresh_token(refresh_token)
+    email = payload.get("sub")
+    
+    # Revoke old refresh token
+    oauth2.revoke_refresh_token(refresh_token)
+    
+    new_access_token = oauth2.create_access_token(
+        data={"sub": email},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+    )
+    
+    new_refresh_token = oauth2.create_refresh_token(email)
+    
+    response.set_cookie(
+        key="refresh_token",
+        value=new_refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60
+    )
+    
+    return {
+        "access_token": new_access_token,
+        "token_type": "bearer"
+    }
+
+@router.post("/logout")
+def logout(request: Request, response: Response):
+    refresh_token = request.cookies.get("refresh_token")
+    if refresh_token:
+        oauth2.revoke_refresh_token(refresh_token)
+        
+    response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="lax")
+    return {"message": "Logged out successfully"}
 
 @router.post("/request-password-reset")
 def request_password_reset(request: authentication.RequestPasswordReset, db: Session = Depends(get_db),):

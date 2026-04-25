@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SubscriptionOut, UserSettings } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin } from "@/lib/api";
+import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
 
@@ -14,7 +14,7 @@ type AuthContextValue = {
   isPro: boolean;
   loading: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -78,11 +78,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [refreshUser, router]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
     setSubscription(null);
+    await apiLogout();
     router.push("/login");
   }, [router]);
 

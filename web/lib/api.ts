@@ -44,15 +44,56 @@ async function parseError(res: Response): Promise<string> {
   }
 }
 
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshAccessToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(await parseError(res), res.status);
+  }
+  const data = await res.json() as TokenResponse;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("articurls_token", data.access_token);
+  }
+  return data.access_token;
+}
+
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit & { token?: string | null } = {}
+  init: RequestInit & { token?: string | null } = {},
+  isRetry = false
 ): Promise<T> {
-  const { token, headers: h, ...rest } = init;
+  let { token, headers: h, ...rest } = init;
+  
+  if (isRetry && typeof window !== "undefined") {
+      token = localStorage.getItem("articurls_token") || token;
+  }
+
   const headers = new Headers(h);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const url = path.startsWith("http") ? path : `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, { ...rest, headers });
+  
+  const fetchOptions: RequestInit = { ...rest, headers, credentials: "include" };
+  const res = await fetch(url, fetchOptions);
+  
+  if (res.status === 401 && !isRetry && !path.includes("/refresh") && !path.includes("/login") && !path.includes("/logout")) {
+      try {
+          if (!refreshPromise) {
+              refreshPromise = refreshAccessToken().finally(() => {
+                  refreshPromise = null;
+              });
+          }
+          const newToken = await refreshPromise;
+          return apiFetch<T>(path, { ...init, token: newToken }, true);
+      } catch (err) {
+          throw new ApiError(await parseError(res), res.status);
+      }
+  }
+  
   if (res.status === 204) return undefined as T;
   if (!res.ok) {
     throw new ApiError(await parseError(res), res.status);
@@ -71,6 +112,14 @@ export async function login(email: string, password: string): Promise<{ access_t
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
+}
+
+export async function apiLogout(): Promise<void> {
+  try {
+    await apiFetch("/logout", { method: "POST" });
+  } catch {
+    // Ignore errors on logout
+  }
 }
 
 export async function requestPasswordReset(email: string): Promise<{ message: string }> {
