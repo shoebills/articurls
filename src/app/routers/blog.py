@@ -273,6 +273,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     )
 
     update_data = request.model_dump(exclude_unset=True)
+    title_or_content_changed = False
 
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
@@ -300,8 +301,16 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
                 )
             db_blog.slug = new_slug
 
+    if "title" in update_data and update_data.get("title") != db_blog.title:
+        title_or_content_changed = True
+    if "content" in update_data and update_data.get("content") != db_blog.content:
+        title_or_content_changed = True
+
     for key, value in update_data.items():
         setattr(db_blog, key, value)
+
+    if title_or_content_changed:
+        db_blog.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_blog)
