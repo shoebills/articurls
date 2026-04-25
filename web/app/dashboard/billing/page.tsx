@@ -8,12 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
-  const { token, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { token } = useAuth();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -32,16 +30,14 @@ export default function BillingPage() {
       ]);
       setTx(t);
       setSub(s);
-    } finally {
-      setLoading(false);
+    } catch (e) {
+      setErr("Failed to load billing info");
     }
   }, [token]);
 
   useEffect(() => {
-    if (authLoading || !token) return;
-    setLoading(true);
     load();
-  }, [authLoading, token, load]);
+  }, [load]);
 
   async function upgrade() {
     if (!token) return;
@@ -59,16 +55,6 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
   const displayTier = pro ? "Pro" : "Free";
   const subStatus = sub?.status?.toLowerCase() ?? "";
-
-  if (authLoading || loading) {
-    return (
-      <div className="mx-auto max-w-[1100px] space-y-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
-        <Skeleton className="h-[200px] w-full" />
-        <Skeleton className="h-[300px] w-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">

@@ -8,12 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function SeoDashboardPage() {
-  const { token, refreshUser, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { token, refreshUser } = useAuth();
   const [seoTitle, setSeoTitle] = useState("");
   const [seoDescription, setSeoDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,8 +19,7 @@ export default function SeoDashboardPage() {
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading || !token) return;
-    setLoading(true);
+    if (!token) return;
     (async () => {
       try {
         const seo = await getSeoSettings(token);
@@ -30,11 +27,9 @@ export default function SeoDashboardPage() {
         setSeoDescription(seo.seo_description || "");
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
-      } finally {
-        setLoading(false);
       }
     })();
-  }, [authLoading, token]);
+  }, [token]);
 
   async function onSave() {
     if (!token) return;
@@ -53,15 +48,6 @@ export default function SeoDashboardPage() {
     } finally {
       setBusy(false);
     }
-  }
-
-  if (authLoading || loading) {
-    return (
-      <div className="mx-auto max-w-[1100px] space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
-        <Skeleton className="h-[400px] w-full" />
-      </div>
-    );
   }
 
   return (

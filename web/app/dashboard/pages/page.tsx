@@ -8,12 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { BlogEditor } from "@/components/editor/blog-editor";
 
 export default function PagesDashboardPage() {
-  const { token, isPro, loading: authLoading } = useAuth();
-  const [loading, setLoading] = useState(true);
+  const { token, isPro } = useAuth();
   const [pages, setPages] = useState<UserPage[]>([]);
   const [creating, setCreating] = useState(false);
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
@@ -32,17 +30,13 @@ export default function PagesDashboardPage() {
       setPages(rows);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load pages");
-    } finally {
-      setLoading(false);
     }
   }
 
   useEffect(() => {
-    if (authLoading || !token) return;
-    setLoading(true);
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, token]);
+  }, [token]);
 
   async function onCreate() {
     if (!token) return;
@@ -152,19 +146,6 @@ export default function PagesDashboardPage() {
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
   }, [editingPage, editTitle, editContent, busy, token]);
-
-  if (authLoading || loading) {
-    return (
-      <div className="mx-auto max-w-[1100px] space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Pages</h1>
-        <div className="flex gap-4">
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <Skeleton className="h-[200px] w-full" />
-        <Skeleton className="h-[200px] w-full" />
-      </div>
-    );
-  }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
