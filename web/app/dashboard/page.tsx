@@ -29,6 +29,7 @@ import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVerti
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
+import { resolveBlogPreviewImage } from "@/lib/blog-images";
 
 const POSTS_PER_PAGE = 10;
 
@@ -265,61 +266,18 @@ export default function DashboardPage() {
                 className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
                     <h2 className="min-w-0 flex-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
                       {b.title || "Untitled"}
                     </h2>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          data-card-action="true"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-700"
-                          aria-label={`Actions for ${b.title || "Untitled"}`}
-                          disabled={rowBusyId === b.blog_id}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent data-card-action="true" align="end" className="w-48">
-                        <DropdownMenuItem data-card-action="true" asChild>
-                          <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        {b.status === "published" && (
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            onClick={() => handleArchive(b.blog_id)}
-                            disabled={rowBusyId === b.blog_id}
-                          >
-                            <Archive className="h-4 w-4" />
-                            Archive
-                          </DropdownMenuItem>
-                        )}
-                        {b.status === "archived" && (
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            onClick={() => handlePublishAgain(b.blog_id)}
-                            disabled={rowBusyId === b.blog_id}
-                          >
-                            <ArchiveRestore className="h-4 w-4" />
-                            Unarchive
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          data-card-action="true"
-                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                          onClick={() => setDeleteId(b.blog_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {resolveBlogPreviewImage(b) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveBlogPreviewImage(b)}
+                        alt=""
+                        className="hidden aspect-[3/2] w-36 shrink-0 rounded-md border border-border/70 object-cover sm:block"
+                      />
+                    ) : null}
                   </div>
 
                   <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
@@ -338,6 +296,59 @@ export default function DashboardPage() {
                     <span className="whitespace-nowrap">
                       {views} view{views === 1 ? "" : "s"}
                     </span>
+                    <div className="ml-auto" data-card-action="true">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            data-card-action="true"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                            aria-label={`Actions for ${b.title || "Untitled"}`}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent data-card-action="true" align="end" className="w-48">
+                          <DropdownMenuItem data-card-action="true" asChild>
+                            <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          {b.status === "published" && (
+                            <DropdownMenuItem
+                              data-card-action="true"
+                              onClick={() => handleArchive(b.blog_id)}
+                              disabled={rowBusyId === b.blog_id}
+                            >
+                              <Archive className="h-4 w-4" />
+                              Archive
+                            </DropdownMenuItem>
+                          )}
+                          {b.status === "archived" && (
+                            <DropdownMenuItem
+                              data-card-action="true"
+                              onClick={() => handlePublishAgain(b.blog_id)}
+                              disabled={rowBusyId === b.blog_id}
+                            >
+                              <ArchiveRestore className="h-4 w-4" />
+                              Unarchive
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                            onClick={() => setDeleteId(b.blog_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

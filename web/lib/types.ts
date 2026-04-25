@@ -13,6 +13,7 @@ export interface BlogListItem {
   slug: string;
   seo_title: string | null;
   seo_description: string | null;
+  featured_image_url: string | null;
   notify_subscribers: boolean;
   ads_enabled: boolean;
   status: BlogStatus;
@@ -35,6 +36,7 @@ export interface PublicBlog {
   slug: string;
   seo_title: string | null;
   seo_description: string | null;
+  featured_image_url: string | null;
   ads_enabled: boolean;
   published_at: string | null;
   updated_at: string;

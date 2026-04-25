@@ -104,6 +104,7 @@ class Blog(Base):
     slug = Column(String, index=True, nullable=False)
     seo_title = Column(String, nullable=True)
     seo_description = Column(String, nullable=True)
+    featured_image_url = Column(String, nullable=True)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     ads_enabled = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)

@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { resolveBlogPreviewImage } from "@/lib/blog-images";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -177,10 +178,22 @@ export function PublicBlogListSearch({ blogs, username }: PublicBlogListSearchPr
           <li key={b.blog_id} className="py-8 first:pt-0">
             <div className="rounded-xl py-1">
               <Link href={`/${username}/blog/${b.slug}`} className="group block transition-colors hover:bg-muted/30">
-                <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
-                  {b.title}
-                </h3>
-                {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
+                      {b.title}
+                    </h3>
+                    {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+                  </div>
+                  {resolveBlogPreviewImage(b) ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={resolveBlogPreviewImage(b)}
+                      alt=""
+                      className="hidden aspect-[3/2] w-36 shrink-0 rounded-md border border-border/70 object-cover sm:block"
+                    />
+                  ) : null}
+                </div>
               </Link>
               <div className="mt-3 flex items-center justify-between gap-2">
                 {b.published_at ? (

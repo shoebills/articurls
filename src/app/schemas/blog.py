@@ -29,6 +29,7 @@ class GetBlog(BaseModel):
     slug: str
     seo_title: Optional[str]
     seo_description: Optional[str]
+    featured_image_url: Optional[str]
     notify_subscribers: bool
     ads_enabled: bool
     status: BlogStatus
@@ -55,6 +56,7 @@ class PublicBlog(BaseModel):
     slug: str
     seo_title: Optional[str]
     seo_description: Optional[str]
+    featured_image_url: Optional[str]
     ads_enabled: bool
     published_at: Optional[datetime]
     updated_at: datetime
@@ -75,6 +77,7 @@ class UpdateBlog(BaseModel):
     slug: Optional[str] = None
     seo_title: Optional[str] = None
     seo_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
     notify_subscribers: Optional[bool] = None
     ads_enabled: Optional[bool] = None
 

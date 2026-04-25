@@ -336,6 +336,7 @@ export async function updateBlog(
     slug?: string;
     seo_title?: string | null;
     seo_description?: string | null;
+    featured_image_url?: string | null;
     notify_subscribers?: boolean;
     ads_enabled?: boolean;
   }

@@ -11,6 +11,7 @@ import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { resolveBlogPreviewImage } from "@/lib/blog-images";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -55,6 +56,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: blog.seo_title || blog.title,
     description: blog.seo_description || undefined,
     alternates: { canonical },
+    openGraph: {
+      images: [{ url: resolveBlogPreviewImage(blog) }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [resolveBlogPreviewImage(blog)],
+    },
   };
 }
 

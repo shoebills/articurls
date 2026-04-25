@@ -10,6 +10,7 @@ import {
   archiveBlog,
   scheduleBlog,
   unscheduleBlog,
+  uploadBlogMedia,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -22,7 +23,7 @@ import { Switch } from "@/components/ui/switch";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -41,6 +42,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [seoTitleDirty, setSeoTitleDirty] = useState(false);
   const [seoDesc, setSeoDesc] = useState("");
   const [notify, setNotify] = useState(false);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -64,6 +66,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const seoSynced = !b.seo_title || b.seo_title === b.title;
     setSeoTitleDirty(!seoSynced);
     setSeoDesc(b.seo_description || "");
+    setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
   }, []);
 
@@ -119,6 +122,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (seoDesc.trim()) body.seo_description = seoDesc.trim();
       else body.seo_description = null;
+      body.featured_image_url = featuredImageUrl.trim() || null;
 
       const updated = await updateBlog(token, blog.blog_id, body);
       applyBlogToForm(updated);
@@ -169,6 +173,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Unschedule failed");
+    }
+  }
+
+  async function uploadFeaturedImage(file: File) {
+    if (!token || !blog) return;
+    try {
+      const media = await uploadBlogMedia(token, blog.blog_id, file);
+      setFeaturedImageUrl(media.url);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     }
   }
 
@@ -261,6 +275,45 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <Label>SEO description</Label>
               <Input value={seoDesc} onChange={(e) => setSeoDesc(e.target.value)} placeholder="Defaults from content" />
+            </div>
+            <div className="space-y-2">
+              <Label>Featured image</Label>
+              <p className="text-xs text-muted-foreground">Used for home preview and share cards. 3:2 recommended.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                <Input
+                  value={featuredImageUrl}
+                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                  placeholder="https://... or uploaded path"
+                />
+                <label className="inline-flex">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) void uploadFeaturedImage(f);
+                      e.currentTarget.value = "";
+                    }}
+                  />
+                  <Button type="button" variant="outline" asChild>
+                    <span>Upload</span>
+                  </Button>
+                </label>
+                {featuredImageUrl ? (
+                  <Button type="button" variant="ghost" onClick={() => setFeaturedImageUrl("")}>
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+              {featuredImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={assetUrl(featuredImageUrl)}
+                  alt=""
+                  className="mt-2 aspect-[3/2] w-full rounded-lg border border-border/70 object-cover"
+                />
+              ) : null}
             </div>
             <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
               <div className="min-w-0">
