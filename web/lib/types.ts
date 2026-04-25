@@ -95,6 +95,18 @@ export interface UserSettings {
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   username_change_count: number;
+  is_admin?: boolean;
+}
+
+export interface UsernameChangeRequestOut {
+  request_id: number;
+  user_id: number;
+  desired_username: string;
+  reason: string | null;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  reviewed_by_user_id: number | null;
+  created_at: string | null;
 }
 
 export interface UserPage {

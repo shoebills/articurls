@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 from typing import Optional, Literal
 
 
@@ -35,6 +36,7 @@ class UserSettings(BaseModel):
     nav_menu_enabled: bool
     footer_enabled: bool
     username_change_count: int
+    is_admin: bool = False
 
     class Config:
         from_attributes = True
@@ -96,6 +98,30 @@ class UpdateProUser(BaseModel):
 class AdminUsernameChange(BaseModel):
     user_name: str
     reason: Optional[str] = None
+
+
+class UsernameChangeRequestCreate(BaseModel):
+    desired_username: str
+    reason: Optional[str] = None
+
+
+class UsernameChangeRequestOut(BaseModel):
+    request_id: int
+    user_id: int
+    desired_username: str
+    reason: Optional[str] = None
+    status: str
+    admin_note: Optional[str] = None
+    reviewed_by_user_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UsernameChangeRequestReview(BaseModel):
+    status: Literal["approved", "rejected"]
+    admin_note: Optional[str] = None
 
 
 class MonetizationSettings(BaseModel):

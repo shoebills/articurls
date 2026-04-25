@@ -15,6 +15,7 @@ import type {
   TokenResponse,
   TransactionOut,
   UserSettings,
+  UsernameChangeRequestOut,
   ViewsAnalytics,
 } from "./types";
 
@@ -125,6 +126,22 @@ export async function checkUsernameAvailability(
 ): Promise<{ available: boolean; normalized: string; reason: string | null }> {
   const q = new URLSearchParams({ user_name });
   return apiFetch(`/user/username-availability?${q.toString()}`, { token });
+}
+
+export async function createUsernameChangeRequest(
+  token: string,
+  body: { desired_username: string; reason?: string }
+): Promise<UsernameChangeRequestOut> {
+  return apiFetch("/user/username-change-requests", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listMyUsernameChangeRequests(token: string): Promise<UsernameChangeRequestOut[]> {
+  return apiFetch("/user/username-change-requests", { token });
 }
 
 export async function patchMe(
@@ -436,4 +453,68 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!["active", "past_due"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;
   return new Date(sub.current_period_end) >= new Date();
+}
+
+export async function adminSearchUsers(token: string, q: string): Promise<UserSettings[]> {
+  const query = new URLSearchParams({ q });
+  return apiFetch(`/admin/users/search?${query.toString()}`, { token });
+}
+
+export async function adminGetUserSummary(
+  token: string,
+  userId: number
+): Promise<{ user: UserSettings; subscription: SubscriptionOut | null; transaction_count: number; pending_username_requests: number }> {
+  return apiFetch(`/admin/users/${userId}`, { token });
+}
+
+export async function adminGetUsernameAudit(token: string, userId: number): Promise<
+  Array<{ old_username: string; new_username: string; reason: string | null; created_at: string | null; actor_email: string | null }>
+> {
+  return apiFetch(`/admin/users/${userId}/username-audit`, { token });
+}
+
+export async function adminListUsernameChangeRequests(
+  token: string,
+  status: "pending" | "approved" | "rejected" = "pending"
+): Promise<UsernameChangeRequestOut[]> {
+  const query = new URLSearchParams({ status });
+  return apiFetch(`/admin/username-change-requests?${query.toString()}`, { token });
+}
+
+export async function adminReviewUsernameChangeRequest(
+  token: string,
+  requestId: number,
+  body: { status: "approved" | "rejected"; admin_note?: string }
+): Promise<UsernameChangeRequestOut> {
+  return apiFetch(`/admin/username-change-requests/${requestId}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function adminOverrideUsername(
+  token: string,
+  userId: number,
+  body: { user_name: string; reason?: string }
+): Promise<UserSettings> {
+  return apiFetch(`/admin/users/${userId}/username`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function adminListPaymentWebhooks(
+  token: string,
+  limit = 50
+): Promise<Array<{ webhook_id: number; event_type: string; processed: boolean; created_at: string }>> {
+  const query = new URLSearchParams({ limit: String(limit) });
+  return apiFetch(`/admin/payments/webhooks?${query.toString()}`, { token });
+}
+
+export async function adminRetryPaymentWebhook(token: string, webhookId: number): Promise<{ detail: string }> {
+  return apiFetch(`/admin/payments/webhooks/${webhookId}/retry`, { method: "POST", token });
 }

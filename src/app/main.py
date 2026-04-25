@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .config import settings
-from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages
+from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages, admin
 
 
 app = FastAPI()
@@ -29,6 +29,7 @@ app.include_router(analytics.router)
 app.include_router(public.router)
 app.include_router(billing.router)
 app.include_router(pages.router)
+app.include_router(admin.router)
 
 @app.get("/")
 def home():

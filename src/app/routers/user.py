@@ -13,6 +13,8 @@ from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
 from ..utils import (
+    assert_admin_email,
+    is_admin_email,
     RequestContext,
     apply_username_change_or_raise,
     claim_username_or_raise,
@@ -155,6 +157,7 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
+    setattr(db_user, "is_admin", is_admin_email(db_user.email))
     return db_user
 
 
@@ -344,9 +347,7 @@ def admin_change_username(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    admin_emails = {e.strip().lower() for e in (settings.admin_emails or "").split(",") if e.strip()}
-    if current_user.email.lower() not in admin_emails:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin privileges required")
+    assert_admin_email(current_user.email)
 
     db_user = db.query(models.User).filter(models.User.user_id == target_user_id).first()
     if not db_user:
@@ -372,6 +373,53 @@ def admin_change_username(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     db.refresh(db_user)
     return db_user
+
+
+@router.post("/username-change-requests", response_model=user.UsernameChangeRequestOut, status_code=status.HTTP_201_CREATED)
+def create_username_change_request(
+    request: user.UsernameChangeRequestCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    desired = validate_username_or_raise(request.desired_username)
+    claim = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == desired).first()
+    if claim and claim.user_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username is taken.")
+    if desired == current_user.user_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New username must be different.")
+    existing_pending = (
+        db.query(models.UsernameChangeRequest)
+        .filter(
+            models.UsernameChangeRequest.user_id == current_user.user_id,
+            models.UsernameChangeRequest.status == "pending",
+        )
+        .first()
+    )
+    if existing_pending:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a pending request.")
+    row = models.UsernameChangeRequest(
+        user_id=current_user.user_id,
+        desired_username=desired,
+        reason=(request.reason or "").strip() or None,
+        status="pending",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.get("/username-change-requests", response_model=list[user.UsernameChangeRequestOut], status_code=status.HTTP_200_OK)
+def list_my_username_change_requests(
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    return (
+        db.query(models.UsernameChangeRequest)
+        .filter(models.UsernameChangeRequest.user_id == current_user.user_id)
+        .order_by(models.UsernameChangeRequest.created_at.desc())
+        .all()
+    )
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):

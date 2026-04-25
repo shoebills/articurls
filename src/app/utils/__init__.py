@@ -1,4 +1,5 @@
 from .entitlements import assert_pro, is_pro_entitled, require_pro
+from .admin import assert_admin_email, is_admin_email
 from .serialization import public_user_out
 from .slugs import DRAFT_SLUG_RE, maybe_replace_placeholder_slug_on_publish, unique_blog_slug
 from .text import (
@@ -23,7 +24,9 @@ from .usernames import (
 
 __all__ = [
     "DRAFT_SLUG_RE",
+    "assert_admin_email",
     "assert_pro",
+    "is_admin_email",
     "html_to_plain_text",
     "is_pro_entitled",
     "make_excerpt",

@@ -70,6 +70,20 @@ class UsernameChangeAudit(Base):
     user_agent = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
+
+class UsernameChangeRequest(Base):
+    __tablename__ = "username_change_requests"
+
+    request_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    desired_username = Column(String, nullable=False)
+    reason = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="pending")  # pending|approved|rejected
+    admin_note = Column(String, nullable=True)
+    reviewed_by_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
 class BlogStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"

@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { getMe, patchMe, patchProMe, uploadProfileImage, checkUsernameAvailability, ApiError } from "@/lib/api";
+import {
+  getMe,
+  patchMe,
+  patchProMe,
+  uploadProfileImage,
+  checkUsernameAvailability,
+  createUsernameChangeRequest,
+  listMyUsernameChangeRequests,
+  ApiError,
+} from "@/lib/api";
+import type { UsernameChangeRequestOut } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -85,6 +95,9 @@ export default function SettingsPage() {
     state: "idle" | "checking" | "available" | "taken" | "invalid";
     message: string;
   }>({ state: "idle", message: "" });
+  const [usernameRequestReason, setUsernameRequestReason] = useState("");
+  const [usernameRequests, setUsernameRequests] = useState<UsernameChangeRequestOut[]>([]);
+  const [requestBusy, setRequestBusy] = useState(false);
   const pfpInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -272,6 +285,18 @@ export default function SettingsPage() {
     return () => clearTimeout(timer);
   }, [pendingUsername, token, usernameDialogOpen]);
 
+  useEffect(() => {
+    if (!usernameDialogOpen || !token) return;
+    (async () => {
+      try {
+        const rows = await listMyUsernameChangeRequests(token);
+        setUsernameRequests(rows);
+      } catch {
+        // Non-blocking for dialog UX.
+      }
+    })();
+  }, [token, usernameDialogOpen]);
+
   async function saveUsername() {
     if (!token) return;
     if (usernameChangesRemaining <= 0) {
@@ -294,6 +319,30 @@ export default function SettingsPage() {
       setErr(e instanceof ApiError ? e.message : "Could not update username");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function submitUsernameChangeRequest() {
+    if (!token) return;
+    if (!pendingUsername.trim()) {
+      setUsernameAvailability({ state: "invalid", message: "Username is required" });
+      return;
+    }
+    setRequestBusy(true);
+    setErr(null);
+    try {
+      await createUsernameChangeRequest(token, {
+        desired_username: pendingUsername.trim().toLowerCase(),
+        reason: usernameRequestReason.trim() || undefined,
+      });
+      const rows = await listMyUsernameChangeRequests(token);
+      setUsernameRequests(rows);
+      setUsernameRequestReason("");
+      setSaved(true);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Could not submit request");
+    } finally {
+      setRequestBusy(false);
     }
   }
 
@@ -596,6 +645,28 @@ export default function SettingsPage() {
                 <span className="text-destructive">{usernameAvailability.message}</span>
               ) : null}
             </div>
+            {usernameChangesRemaining <= 0 ? (
+              <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground">
+                  You have reached the self-service limit. Submit an admin review request for legal, safety, or trademark cases.
+                </p>
+                <Textarea
+                  value={usernameRequestReason}
+                  onChange={(e) => setUsernameRequestReason(e.target.value)}
+                  placeholder="Reason for admin review (optional)"
+                  className="min-h-20"
+                />
+                <Button type="button" variant="outline" onClick={submitUsernameChangeRequest} disabled={requestBusy}>
+                  {requestBusy ? "Submitting..." : "Request admin change"}
+                </Button>
+                {usernameRequests.length > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Latest request: {usernameRequests[0].status}
+                    {usernameRequests[0].admin_note ? ` - ${usernameRequests[0].admin_note}` : ""}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
@@ -612,7 +683,7 @@ export default function SettingsPage() {
                 usernameAvailability.state === "invalid"
               }
             >
-              Save username
+              {usernameChangesRemaining <= 0 ? "Save disabled" : "Save username"}
             </Button>
           </DialogFooter>
         </DialogContent>
