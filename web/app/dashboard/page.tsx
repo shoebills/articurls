@@ -266,10 +266,7 @@ export default function DashboardPage() {
                 className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <h2 className="min-w-0 flex-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
-                      {b.title || "Untitled"}
-                    </h2>
+                  <div className="flex items-start gap-4">
                     {resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -278,11 +275,15 @@ export default function DashboardPage() {
                         className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                       />
                     ) : null}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                        {b.title || "Untitled"}
+                      </h2>
+                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
+                        {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
+                      </p>
+                    </div>
                   </div>
-
-                  <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                    {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
-                  </p>
 
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
                     <BlogStatusBadge status={b.status} className="shrink-0" />
