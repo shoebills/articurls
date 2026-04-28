@@ -38,7 +38,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   }
 
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -76,7 +76,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
 
 function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest" | "most_popular") => void }) {
   return (
-    <DropdownMenu modal={false}>
+    <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
           <ArrowUpDown className="h-4 w-4" />
