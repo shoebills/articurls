@@ -100,6 +100,62 @@ def create_category(
     return _category_out(db, new_cat)
 
 
+@router.patch("/menu", response_model=list[cat_schema.CategoryOut], status_code=status.HTTP_200_OK)
+def update_menu_categories(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    raw_ids = payload.get("ordered_category_ids", [])
+    if raw_ids is None:
+        raw_ids = []
+    if not isinstance(raw_ids, list):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="ordered_category_ids must be a list",
+        )
+
+    normalized_ids: list[int] = []
+    for raw_id in raw_ids:
+        try:
+            normalized_ids.append(int(raw_id))
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid category id in menu: {raw_id}",
+            ) from None
+
+    cats = (
+        db.query(models.Category)
+        .filter(models.Category.user_id == current_user.user_id)
+        .order_by(models.Category.created_at.asc())
+        .all()
+    )
+    cats_by_id = {c.category_id: c for c in cats}
+
+    for cat in cats:
+        cat.show_in_menu = False
+        cat.menu_order = None
+
+    for idx, cat_id in enumerate(normalized_ids):
+        if cat_id not in cats_by_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid category id in menu: {cat_id}",
+            )
+        cats_by_id[cat_id].show_in_menu = True
+        cats_by_id[cat_id].menu_order = idx
+
+    db.commit()
+    cats = (
+        db.query(models.Category)
+        .filter(models.Category.user_id == current_user.user_id)
+        .order_by(models.Category.created_at.asc())
+        .all()
+    )
+    return [_category_out(db, c) for c in cats]
+
+
 @router.patch("/{category_id}", response_model=cat_schema.CategoryOut, status_code=status.HTTP_200_OK)
 def update_category(
     category_id: int,
@@ -198,58 +254,3 @@ def get_category_blogs(
         blogs.append(db_blog)
     return blogs
 
-
-@router.patch("/menu", response_model=list[cat_schema.CategoryOut], status_code=status.HTTP_200_OK)
-def update_menu_categories(
-    payload: dict = Body(...),
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    raw_ids = payload.get("ordered_category_ids", [])
-    if raw_ids is None:
-        raw_ids = []
-    if not isinstance(raw_ids, list):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="ordered_category_ids must be a list",
-        )
-
-    normalized_ids: list[int] = []
-    for raw_id in raw_ids:
-        try:
-            normalized_ids.append(int(raw_id))
-        except (TypeError, ValueError):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid category id in menu: {raw_id}",
-            ) from None
-
-    cats = (
-        db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
-        .order_by(models.Category.created_at.asc())
-        .all()
-    )
-    cats_by_id = {c.category_id: c for c in cats}
-
-    for cat in cats:
-        cat.show_in_menu = False
-        cat.menu_order = None
-
-    for idx, cat_id in enumerate(normalized_ids):
-        if cat_id not in cats_by_id:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid category id in menu: {cat_id}",
-            )
-        cats_by_id[cat_id].show_in_menu = True
-        cats_by_id[cat_id].menu_order = idx
-
-    db.commit()
-    cats = (
-        db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
-        .order_by(models.Category.created_at.asc())
-        .all()
-    )
-    return [_category_out(db, c) for c in cats]
