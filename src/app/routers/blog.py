@@ -4,6 +4,7 @@ from sqlalchemy import func
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog
+from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
@@ -11,6 +12,18 @@ from typing import List
 import secrets
 from slugify import slugify
 from datetime import datetime, timezone
+
+
+def _attach_category_ids(db: Session, db_blog):
+    """Attach category_ids list to a blog object for serialization."""
+    cat_ids = [
+        row[0]
+        for row in db.query(models.BlogCategory.category_id)
+        .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+        .all()
+    ]
+    db_blog.category_ids = cat_ids
+    return db_blog
 
 router = APIRouter(
     tags=["Blog"],
@@ -59,6 +72,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
+    _attach_category_ids(db, new_blog)
 
     return new_blog
 
@@ -81,6 +95,7 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     for db_blog, view_count in results:
         db_blog.view_count = view_count
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        _attach_category_ids(db, db_blog)
         blogs.append(db_blog)
         
     return blogs
@@ -92,6 +107,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+    _attach_category_ids(db, db_blog)
     
     return db_blog
 
@@ -314,6 +330,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     return db_blog
 
@@ -384,6 +401,7 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -422,6 +440,7 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     return db_blog
 
@@ -504,5 +523,52 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
+    return db_blog
+
+
+@router.patch("/{id}/categories", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
+def assign_blog_categories(
+    id: int,
+    request: cat_schema.BlogCategoryAssign,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_blog = db.query(models.Blog).filter(
+        models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id
+    ).first()
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    # Validate all category_ids belong to the current user
+    if request.category_ids:
+        valid_cats = (
+            db.query(models.Category.category_id)
+            .filter(
+                models.Category.user_id == current_user.user_id,
+                models.Category.category_id.in_(request.category_ids),
+            )
+            .all()
+        )
+        valid_ids = {row[0] for row in valid_cats}
+        invalid = set(request.category_ids) - valid_ids
+        if invalid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid category ids: {list(invalid)}",
+            )
+
+    # Remove existing assignments
+    db.query(models.BlogCategory).filter(
+        models.BlogCategory.blog_id == db_blog.blog_id
+    ).delete(synchronize_session=False)
+
+    # Add new assignments
+    for cat_id in request.category_ids:
+        db.add(models.BlogCategory(blog_id=db_blog.blog_id, category_id=cat_id))
+
+    db.commit()
+    db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
     return db_blog

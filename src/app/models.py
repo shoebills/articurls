@@ -225,3 +225,34 @@ class UserPage(Base):
     footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    __table_args__ = (
+        UniqueConstraint("user_id", "slug", name="uq_categories_user_slug"),
+        Index("ix_categories_user_menu_order", "user_id", "menu_order"),
+    )
+
+    category_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, nullable=False)
+    show_in_menu = Column(Boolean, nullable=False, default=False)
+    menu_order = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    blog_links = relationship("BlogCategory", back_populates="category", cascade="all, delete-orphan")
+
+
+class BlogCategory(Base):
+    __tablename__ = "blog_categories"
+    __table_args__ = (
+        UniqueConstraint("blog_id", "category_id", name="uq_blog_categories_blog_category"),
+    )
+
+    blog_category_id = Column(Integer, primary_key=True)
+    blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
+    category_id = Column(ForeignKey("categories.category_id"), nullable=False, index=True)
+
+    category = relationship("Category", back_populates="blog_links")

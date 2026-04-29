@@ -12,10 +12,12 @@ import {
   unscheduleBlog,
   uploadBlogMedia,
   deleteBlogMediaByUrl,
+  listCategories,
+  assignBlogCategories,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail } from "@/lib/types";
+import type { BlogDetail, Category } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,7 @@ import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
-import { ChevronDown, ChevronUp, ExternalLink, Loader2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -54,6 +56,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Category assignment state
+  const [allCategories, setAllCategories] = useState<Category[]>([]);
+  const [selectedCatIds, setSelectedCatIds] = useState<number[]>([]);
+  const [catDropdownOpen, setCatDropdownOpen] = useState(false);
+  const [pendingCatIds, setPendingCatIds] = useState<number[]>([]);
+  const [catBusy, setCatBusy] = useState(false);
+
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
     setTitle(b.title);
@@ -73,6 +82,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setMetaDesc(b.meta_description || "");
     setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
+    const blogCatIds = (b as unknown as { category_ids?: number[] }).category_ids || [];
+    setSelectedCatIds(blogCatIds);
+    setPendingCatIds(blogCatIds);
   }, []);
 
   const load = useCallback(async () => {
@@ -87,6 +99,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setLoading(false);
     }
   }, [token, blogId, applyBlogToForm]);
+
+  // Load categories for the dropdown
+  useEffect(() => {
+    if (!token) return;
+    listCategories(token).then(setAllCategories).catch(() => {});
+  }, [token]);
 
   useEffect(() => {
     load();
@@ -421,6 +439,103 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             {!isPro && notify === false && (
               <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
             )}
+            <Separator className="my-2" />
+            <div className="space-y-2">
+              <Label>Assign category</Label>
+              <div className="relative">
+                <button
+                  type="button"
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  onClick={() => {
+                    if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
+                    setCatDropdownOpen(!catDropdownOpen);
+                  }}
+                  disabled={catBusy}
+                >
+                  <span className="truncate text-muted-foreground">
+                    {selectedCatIds.length === 0
+                      ? "Select categories"
+                      : `${selectedCatIds.length} selected`}
+                  </span>
+                  <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
+                </button>
+                {catDropdownOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-border bg-background shadow-md">
+                    {allCategories.length === 0 ? (
+                      <p className="px-3 py-2 text-sm text-muted-foreground">No categories created yet.</p>
+                    ) : (
+                      <div className="max-h-48 overflow-y-auto p-1">
+                        {allCategories.map((cat) => {
+                          const isChecked = pendingCatIds.includes(cat.category_id);
+                          return (
+                            <button
+                              key={cat.category_id}
+                              type="button"
+                              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+                              onClick={() => {
+                                setPendingCatIds((prev) =>
+                                  isChecked
+                                    ? prev.filter((id) => id !== cat.category_id)
+                                    : [...prev, cat.category_id]
+                                );
+                              }}
+                            >
+                              <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                                  isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                                }`}
+                              >
+                                {isChecked && <Check className="h-3 w-3" />}
+                              </span>
+                              <span className="truncate">{cat.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    <div className="border-t p-1.5">
+                      <Button
+                        size="sm"
+                        className="w-full"
+                        disabled={catBusy}
+                        onClick={async () => {
+                          if (!token || !blog) return;
+                          setCatBusy(true);
+                          try {
+                            const updated = await assignBlogCategories(token, blog.blog_id, pendingCatIds);
+                            setSelectedCatIds(pendingCatIds);
+                            applyBlogToForm(updated);
+                          } catch (e) {
+                            setErr(e instanceof ApiError ? e.message : "Failed to assign categories");
+                          } finally {
+                            setCatBusy(false);
+                            setCatDropdownOpen(false);
+                          }
+                        }}
+                      >
+                        {catBusy ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
+                        Apply
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {selectedCatIds.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedCatIds.map((id) => {
+                    const cat = allCategories.find((c) => c.category_id === id);
+                    return cat ? (
+                      <span
+                        key={id}
+                        className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                      >
+                        {cat.name}
+                      </span>
+                    ) : null;
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

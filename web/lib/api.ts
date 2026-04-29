@@ -3,11 +3,13 @@ import type {
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
+  Category,
   DesignSettings,
   MonetizationSettings,
   MetaSettings,
   PublicBlog,
   PublicBlogAds,
+  PublicCategoryBlogsResponse,
   UserPage,
   PublicUser,
   SubscribersAnalytics,
@@ -505,6 +507,64 @@ export async function publicSubscribe(userName: string, email: string): Promise<
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
+}
+
+// ── Categories ────────────────────────────────────────────────────────
+
+export async function listCategories(token: string): Promise<Category[]> {
+  return apiFetch("/categories/", { token });
+}
+
+export async function createCategory(token: string, body: { name: string }): Promise<Category> {
+  return apiFetch("/categories/", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateCategory(token: string, id: number, body: { name: string }): Promise<Category> {
+  return apiFetch(`/categories/${id}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteCategory(token: string, id: number): Promise<void> {
+  await apiFetch(`/categories/${id}`, { method: "DELETE", token });
+}
+
+export async function getCategoryBlogs(token: string, id: number): Promise<BlogListItem[]> {
+  return apiFetch(`/categories/${id}/blogs`, { token });
+}
+
+export async function assignBlogCategories(token: string, blogId: number, category_ids: number[]): Promise<BlogDetail> {
+  return apiFetch(`/blog/${blogId}/categories`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category_ids }),
+  });
+}
+
+export async function updateMenuCategories(token: string, ordered_category_ids: number[]): Promise<Category[]> {
+  return apiFetch("/categories/menu", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_category_ids }),
+  });
+}
+
+export async function getPublicCategories(userName: string): Promise<Category[]> {
+  return apiFetch(`/${encodeURIComponent(userName)}/categories`);
+}
+
+export async function getPublicCategoryBlogs(userName: string, slug: string): Promise<PublicCategoryBlogsResponse> {
+  return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
 }
 
 export async function viewsAnalytics(token: string, period?: string): Promise<ViewsAnalytics> {

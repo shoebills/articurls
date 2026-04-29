@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional
+from typing import List, Optional
 from ..models import BlogStatus
 
 
@@ -39,6 +39,7 @@ class GetBlog(BaseModel):
     updated_at: datetime
     user_id: int
     media: list[BlogMediaOut] = []
+    category_ids: List[int] = []
 
     class Config:
         from_attributes = True
@@ -62,6 +63,7 @@ class PublicBlog(BaseModel):
     updated_at: datetime
     user_id: int
     media: list[BlogMediaOut] = []
+    category_ids: List[int] = []
 
     class Config:
         from_attributes = True

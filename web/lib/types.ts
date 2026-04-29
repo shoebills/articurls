@@ -25,6 +25,7 @@ export interface BlogListItem {
   media: BlogMediaOut[];
   view_count: number;
   excerpt?: string | null;
+  category_ids?: number[];
 }
 
 export type BlogDetail = Omit<BlogListItem, "view_count" | "excerpt">;
@@ -46,6 +47,7 @@ export interface PublicBlog {
   excerpt?: string | null;
   /** Optional aggregate from list endpoint when available. */
   view_count?: number;
+  category_ids?: number[];
 }
 
 export interface PublicUser {
@@ -220,4 +222,20 @@ export interface SubscribersAnalytics {
   current_subscribers: number;
   subscribed: number;
   unsubscribed: number;
+}
+
+export interface Category {
+  category_id: number;
+  user_id: number;
+  name: string;
+  slug: string;
+  blog_count: number;
+  show_in_menu: boolean;
+  menu_order: number | null;
+  created_at: string;
+}
+
+export interface PublicCategoryBlogsResponse {
+  category: { category_id: number; name: string; slug: string };
+  blogs: PublicBlog[];
 }

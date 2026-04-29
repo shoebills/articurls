@@ -6,12 +6,14 @@ import {
   getDesignSettings,
   listPages,
   listBlogs,
+  listCategories,
   patchDesignSettings,
   updateMenuPages,
   updateFooterPages,
+  updateMenuCategories,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { DesignSettings, UserPage, BlogListItem } from "@/lib/types";
+import type { DesignSettings, UserPage, BlogListItem, Category } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -34,8 +36,9 @@ export default function DesignDashboardPage() {
   });
   const [pages, setPages] = useState<UserPage[]>([]);
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
-  const [menuSelection, setMenuSelection] = useState<number[]>([]);
-  const [pageToAdd, setPageToAdd] = useState<string>("");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [menuCatSelection, setMenuCatSelection] = useState<number[]>([]);
+  const [catToAdd, setCatToAdd] = useState<string>("");
   const [footerSelection, setFooterSelection] = useState<number[]>([]);
   const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
@@ -43,24 +46,27 @@ export default function DesignDashboardPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const pagesById = useMemo(() => new Map(pages.map((p) => [p.page_id, p])), [pages]);
+  const catsById = useMemo(() => new Map(categories.map((c) => [c.category_id, c])), [categories]);
 
   async function load() {
     if (!token) return;
     try {
-      const [d, p, b] = await Promise.all([getDesignSettings(token), listPages(token), listBlogs(token)]);
+      const [d, p, b, c] = await Promise.all([getDesignSettings(token), listPages(token), listBlogs(token), listCategories(token)]);
       setDesign({
         ...d,
         featured_blog_ids: d.featured_blog_ids || [],
       });
       setPages(p);
       setBlogs(b.filter((x) => x.status === "published"));
-      const selected = [...p]
+      setCategories(c);
+      // Category menu selection
+      const selectedCats = [...c]
         .filter((x) => x.show_in_menu)
         .sort((a, b) => (a.menu_order ?? 9999) - (b.menu_order ?? 9999))
-        .map((x) => x.page_id);
-      setMenuSelection(selected);
-      const firstAvailable = p.find((x) => !selected.includes(x.page_id));
-      setPageToAdd(firstAvailable ? String(firstAvailable.page_id) : "");
+        .map((x) => x.category_id);
+      setMenuCatSelection(selectedCats);
+      const firstCatAvailable = c.find((x) => !selectedCats.includes(x.category_id));
+      setCatToAdd(firstCatAvailable ? String(firstCatAvailable.category_id) : "");
       const selectedFooter = [...p]
         .filter((x) => x.show_in_footer)
         .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999))
@@ -97,9 +103,9 @@ export default function DesignDashboardPage() {
     setBusy(true);
     setErr(null);
     try {
-      const rows = await updateMenuPages(token, nextSelection);
-      setPages(rows);
-      setMenuSelection(nextSelection);
+      const rows = await updateMenuCategories(token, nextSelection);
+      setCategories(rows);
+      setMenuCatSelection(nextSelection);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save menu");
     } finally {
@@ -122,11 +128,11 @@ export default function DesignDashboardPage() {
     }
   }
 
-  const available = pages.filter((p) => !menuSelection.includes(p.page_id));
+  const availableCats = categories.filter((c) => !menuCatSelection.includes(c.category_id));
   const footerAvailable = pages.filter((p) => !footerSelection.includes(p.page_id));
-  const selectedMenuPages = menuSelection
-    .map((id) => pagesById.get(id))
-    .filter((p): p is UserPage => Boolean(p));
+  const selectedMenuCats = menuCatSelection
+    .map((id) => catsById.get(id))
+    .filter((c): c is Category => Boolean(c));
   const selectedFooterPages = footerSelection
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
@@ -174,7 +180,7 @@ export default function DesignDashboardPage() {
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div>
                   <p className="font-medium">Enable menu</p>
-                  <p className="text-sm text-muted-foreground">Show custom pages in navbar.</p>
+                  <p className="text-sm text-muted-foreground">Show categories in navbar.</p>
                 </div>
                 <Switch
                   checked={design.nav_menu_enabled}
@@ -184,24 +190,24 @@ export default function DesignDashboardPage() {
               </div>
               {design.nav_menu_enabled ? (
                 <div className="space-y-3 rounded-lg border p-3">
-                  {pages.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Add pages to display.</p>
+                  {categories.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Create categories first from the Categories section.</p>
                   ) : (
                     <>
-                      {menuSelection.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Add pages to display.</p>
+                      {menuCatSelection.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Add categories to display.</p>
                       ) : (
                         <ul className="space-y-2">
-                          {menuSelection.map((id, idx) => (
+                          {menuCatSelection.map((id, idx) => (
                             <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                              <span>{pagesById.get(id)?.title || "Untitled"}</span>
+                              <span>{catsById.get(id)?.name || "Untitled"}</span>
                               <div className="flex items-center gap-1">
                                 <Button
                                   variant="ghost"
                                   size="icon"
                                   disabled={busy || idx === 0}
                                   onClick={() => {
-                                    const next = [...menuSelection];
+                                    const next = [...menuCatSelection];
                                     [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
                                     saveMenu(next);
                                   }}
@@ -211,9 +217,9 @@ export default function DesignDashboardPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  disabled={busy || idx === menuSelection.length - 1}
+                                  disabled={busy || idx === menuCatSelection.length - 1}
                                   onClick={() => {
-                                    const next = [...menuSelection];
+                                    const next = [...menuCatSelection];
                                     [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
                                     saveMenu(next);
                                   }}
@@ -224,7 +230,7 @@ export default function DesignDashboardPage() {
                                   variant="ghost"
                                   size="icon"
                                   disabled={busy}
-                                  onClick={() => saveMenu(menuSelection.filter((x) => x !== id))}
+                                  onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
                                 >
                                   <X className="h-4 w-4" />
                                 </Button>
@@ -233,33 +239,33 @@ export default function DesignDashboardPage() {
                           ))}
                         </ul>
                       )}
-                      {available.length > 0 ? (
+                      {availableCats.length > 0 ? (
                         <div className="flex flex-col gap-2 sm:flex-row">
-                          <Select value={pageToAdd} onValueChange={setPageToAdd}>
+                          <Select value={catToAdd} onValueChange={setCatToAdd}>
                             <SelectTrigger className="sm:max-w-xs">
-                              <SelectValue placeholder="Add page to menu" />
+                              <SelectValue placeholder="Add category to menu" />
                             </SelectTrigger>
                             <SelectContent>
-                              {available.map((p) => (
-                                <SelectItem key={p.page_id} value={String(p.page_id)}>
-                                  {p.title}
+                              {availableCats.map((c) => (
+                                <SelectItem key={c.category_id} value={String(c.category_id)}>
+                                  {c.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </Select>
                           <Button
                             variant="outline"
-                            disabled={busy || !pageToAdd}
+                            disabled={busy || !catToAdd}
                             onClick={() => {
-                              const id = Number(pageToAdd);
+                              const id = Number(catToAdd);
                               if (!Number.isFinite(id)) return;
-                              const next = [...menuSelection, id];
+                              const next = [...menuCatSelection, id];
                               saveMenu(next);
-                              const nextAvailable = available.find((p) => p.page_id !== id);
-                              setPageToAdd(nextAvailable ? String(nextAvailable.page_id) : "");
+                              const nextAvailable = availableCats.find((c) => c.category_id !== id);
+                              setCatToAdd(nextAvailable ? String(nextAvailable.category_id) : "");
                             }}
                           >
-                            Add page
+                            Add category
                           </Button>
                         </div>
                       ) : null}
@@ -284,16 +290,16 @@ export default function DesignDashboardPage() {
                   </div>
                   <div className="rounded-md border bg-background p-2">
                     {design.nav_menu_enabled ? (
-                      selectedMenuPages.length > 0 ? (
+                      selectedMenuCats.length > 0 ? (
                         <div className="space-y-1">
-                          {selectedMenuPages.map((p) => (
-                            <p key={p.page_id} className="rounded px-2 py-1 text-sm hover:bg-muted">
-                              {p.title}
+                          {selectedMenuCats.map((c) => (
+                            <p key={c.category_id} className="rounded px-2 py-1 text-sm hover:bg-muted">
+                              {c.name}
                             </p>
                           ))}
                         </div>
                       ) : (
-                        <p className="px-2 py-1 text-sm text-muted-foreground">Add pages to display.</p>
+                        <p className="px-2 py-1 text-sm text-muted-foreground">Add categories to display.</p>
                       )
                     ) : null}
                     <div className="mt-2 border-t pt-2">
@@ -316,16 +322,22 @@ export default function DesignDashboardPage() {
                     <span className="truncate text-lg font-semibold">{previewBlogName}</span>
                     <div className="flex min-w-0 items-center gap-4">
                       {design.nav_menu_enabled ? (
-                        selectedMenuPages.length > 0 ? (
-                          <div className="flex min-w-0 items-center gap-3">
-                            {selectedMenuPages.map((p) => (
-                              <span key={p.page_id} className="truncate text-sm text-muted-foreground">
-                                {p.title}
-                              </span>
-                            ))}
-                          </div>
+                        selectedMenuCats.length > 0 ? (
+                          selectedMenuCats.length <= 5 ? (
+                            <div className="flex min-w-0 items-center gap-3">
+                              {selectedMenuCats.map((c) => (
+                                <span key={c.category_id} className="truncate text-sm text-muted-foreground">
+                                  {c.name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
+                              <Menu className="h-4 w-4" />
+                            </span>
+                          )
                         ) : (
-                          <span className="text-sm text-muted-foreground">Add pages to display.</span>
+                          <span className="text-sm text-muted-foreground">Add categories to display.</span>
                         )
                       ) : null}
                       <Button size="sm">Subscribe</Button>
