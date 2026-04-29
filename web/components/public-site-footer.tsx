@@ -18,9 +18,9 @@ export function PublicSiteFooter({ user, pages }: PublicSiteFooterProps) {
   return (
     <footer className="mt-12 border-t border-border/80 pt-8">
       <nav aria-label="Footer links">
-        <ul className="mx-auto grid w-full max-w-3xl grid-cols-3 justify-items-center gap-2 text-sm sm:grid-cols-5">
+        <ul className="mx-auto flex w-full max-w-3xl flex-wrap justify-center gap-y-2 text-sm">
           {footerPages.map((page) => (
-            <li key={page.page_id} className="w-full text-center">
+            <li key={page.page_id} className="w-1/3 px-1 text-center sm:w-1/5 sm:px-2">
               <Link
                 href={`/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`}
                 className="text-muted-foreground hover:text-foreground hover:underline"
