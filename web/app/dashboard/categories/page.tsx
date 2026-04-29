@@ -339,34 +339,34 @@ export default function CategoriesDashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="truncate text-xl font-semibold text-foreground">{cat.name}</p>
-                      <p className="mt-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-base font-semibold text-foreground">{cat.name}</p>
+                      <p className="mt-0.5 text-sm text-muted-foreground">
                         {cat.blog_count ?? 0} {cat.blog_count === 1 ? "blog" : "blogs"}
                       </p>
                     </div>
-                    <div className="flex shrink-0 items-start gap-2" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-10 w-10 text-muted-foreground hover:text-foreground"
+                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
                         onClick={() => {
                           setEditingId(cat.category_id);
                           setEditName(cat.name);
                         }}
                         disabled={busy}
                       >
-                        <Pencil className="h-4 w-4" />
+                        <Pencil className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => setDeleteId(cat.category_id)}
                         disabled={busy}
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
@@ -428,9 +428,6 @@ export default function CategoriesDashboardPage() {
                                 {isChecked && <Check className="h-3 w-3" />}
                               </span>
                               <span className="min-w-0 flex-1 truncate">{b.title || "Untitled"}</span>
-                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                                {b.status}
-                              </span>
                             </button>
                           );
                         })}

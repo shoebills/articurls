@@ -26,11 +26,11 @@ app.include_router(blog.router)
 app.include_router(user.router)
 app.include_router(subscribers.router)
 app.include_router(analytics.router)
-app.include_router(public.router)
 app.include_router(billing.router)
 app.include_router(pages.router)
 app.include_router(admin.router)
 app.include_router(categories.router)
+app.include_router(public.router)
 
 @app.get("/")
 def home():
