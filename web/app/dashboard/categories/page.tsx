@@ -4,10 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ApiError,
   listCategories,
+  listBlogs,
   createCategory,
   updateCategory,
   deleteCategory,
   getCategoryBlogs,
+  setCategoryBlogs,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { Category, BlogListItem } from "@/lib/types";
@@ -24,11 +26,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 
 export default function CategoriesDashboardPage() {
   const { token, isPro } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
+  const [allBlogs, setAllBlogs] = useState<BlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [createName, setCreateName] = useState("");
@@ -36,8 +39,10 @@ export default function CategoriesDashboardPage() {
   const [editName, setEditName] = useState("");
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [expandedBlogs, setExpandedBlogs] = useState<BlogListItem[]>([]);
+  const [catBlogIds, setCatBlogIds] = useState<number[]>([]); // blogs currently assigned
+  const [pendingBlogIds, setPendingBlogIds] = useState<number[]>([]); // pending selection
   const [expandedLoading, setExpandedLoading] = useState(false);
+  const [applyBusy, setApplyBusy] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
@@ -47,8 +52,9 @@ export default function CategoriesDashboardPage() {
     if (!token) return;
     setErr(null);
     try {
-      const rows = await listCategories(token);
+      const [rows, blogs] = await Promise.all([listCategories(token), listBlogs(token)]);
       setCategories(rows);
+      setAllBlogs(blogs);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load categories");
     } finally {
@@ -109,7 +115,8 @@ export default function CategoriesDashboardPage() {
       setDeleteId(null);
       if (expandedId === deleteId) {
         setExpandedId(null);
-        setExpandedBlogs([]);
+        setCatBlogIds([]);
+        setPendingBlogIds([]);
       }
       await load();
     } catch (e) {
@@ -124,7 +131,9 @@ export default function CategoriesDashboardPage() {
     setExpandedLoading(true);
     try {
       const blogs = await getCategoryBlogs(token, catId);
-      setExpandedBlogs(blogs);
+      const ids = blogs.map((b) => b.blog_id);
+      setCatBlogIds(ids);
+      setPendingBlogIds(ids);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load category blogs");
     } finally {
@@ -135,12 +144,48 @@ export default function CategoriesDashboardPage() {
   function handleExpand(catId: number) {
     if (expandedId === catId) {
       setExpandedId(null);
-      setExpandedBlogs([]);
+      setCatBlogIds([]);
+      setPendingBlogIds([]);
     } else {
       setExpandedId(catId);
       loadCategoryBlogs(catId);
     }
   }
+
+  async function onApplyBlogs() {
+    if (!token || expandedId == null) return;
+    setApplyBusy(true);
+    setErr(null);
+    try {
+      const updatedCat = await setCategoryBlogs(token, expandedId, pendingBlogIds);
+      setCatBlogIds(pendingBlogIds);
+      // Update category blog_count locally
+      setCategories((prev) =>
+        prev.map((c) => (c.category_id === expandedId ? { ...c, blog_count: updatedCat.blog_count } : c))
+      );
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to update category blogs");
+    } finally {
+      setApplyBusy(false);
+    }
+  }
+
+  // Sort blogs: checked first, then unchecked, alphabetical within each group
+  const sortedBlogs = useMemo(() => {
+    const pending = new Set(pendingBlogIds);
+    return [...allBlogs].sort((a, b) => {
+      const aChecked = pending.has(a.blog_id) ? 0 : 1;
+      const bChecked = pending.has(b.blog_id) ? 0 : 1;
+      if (aChecked !== bChecked) return aChecked - bChecked;
+      return (a.title || "").localeCompare(b.title || "");
+    });
+  }, [allBlogs, pendingBlogIds]);
+
+  const hasChanges = useMemo(() => {
+    if (catBlogIds.length !== pendingBlogIds.length) return true;
+    const s = new Set(catBlogIds);
+    return pendingBlogIds.some((id) => !s.has(id));
+  }, [catBlogIds, pendingBlogIds]);
 
   if (loading) {
     return (
@@ -329,16 +374,17 @@ export default function CategoriesDashboardPage() {
               </CardContent>
 
               {expandedId === cat.category_id && editingId !== cat.category_id && (
-                <div className="border-t border-border/70 bg-muted/10 px-5 py-4">
+                <div className="border-t border-border/70 bg-muted/10 px-5 py-4" onClick={(e) => e.stopPropagation()}>
                   <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">Blogs in “{cat.name}”</p>
+                    <p className="text-sm font-medium">Manage blogs in &ldquo;{cat.name}&rdquo;</p>
                     <Button
                       variant="ghost"
                       size="sm"
                       className="h-9"
                       onClick={() => {
                         setExpandedId(null);
-                        setExpandedBlogs([]);
+                        setCatBlogIds([]);
+                        setPendingBlogIds([]);
                       }}
                     >
                       <ArrowLeft className="mr-1 h-3.5 w-3.5" />
@@ -349,21 +395,60 @@ export default function CategoriesDashboardPage() {
                     <div className="flex items-center justify-center py-4">
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
-                  ) : expandedBlogs.length === 0 ? (
+                  ) : allBlogs.length === 0 ? (
                     <p className="py-3 text-sm text-muted-foreground">
-                      No blogs in this category yet. Assign blogs from the post editor.
+                      No blog posts yet. Create a post first.
                     </p>
                   ) : (
-                    <ul className="space-y-2">
-                      {expandedBlogs.map((b) => (
-                        <li key={b.blog_id} className="flex items-center justify-between rounded-2xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm">
-                          <span className="truncate">{b.title || "Untitled"}</span>
-                          <span className="ml-3 shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                            {b.status}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
+                    <>
+                      <div className="max-h-72 space-y-1 overflow-y-auto">
+                        {sortedBlogs.map((b) => {
+                          const isChecked = pendingBlogIds.includes(b.blog_id);
+                          return (
+                            <button
+                              key={b.blog_id}
+                              type="button"
+                              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted/60"
+                              onClick={() => {
+                                setPendingBlogIds((prev) =>
+                                  isChecked
+                                    ? prev.filter((id) => id !== b.blog_id)
+                                    : [...prev, b.blog_id]
+                                );
+                              }}
+                              disabled={applyBusy}
+                            >
+                              <span
+                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
+                                  isChecked
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-muted-foreground/40"
+                                }`}
+                              >
+                                {isChecked && <Check className="h-3 w-3" />}
+                              </span>
+                              <span className="min-w-0 flex-1 truncate">{b.title || "Untitled"}</span>
+                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                                {b.status}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+                        <p className="text-xs text-muted-foreground">
+                          {pendingBlogIds.length} selected
+                        </p>
+                        <Button
+                          size="sm"
+                          onClick={onApplyBlogs}
+                          disabled={applyBusy || !hasChanges}
+                        >
+                          {applyBusy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                          Apply
+                        </Button>
+                      </div>
+                    </>
                   )}
                 </div>
               )}

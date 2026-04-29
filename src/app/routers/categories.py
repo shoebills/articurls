@@ -254,3 +254,55 @@ def get_category_blogs(
         blogs.append(db_blog)
     return blogs
 
+
+@router.put("/{category_id}/blogs", response_model=cat_schema.CategoryOut, status_code=status.HTTP_200_OK)
+def set_category_blogs(
+    category_id: int,
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    """Replace all blog assignments for this category with the given blog_ids."""
+    db_cat = (
+        db.query(models.Category)
+        .filter(
+            models.Category.category_id == category_id,
+            models.Category.user_id == current_user.user_id,
+        )
+        .first()
+    )
+    if not db_cat:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+
+    raw_ids = payload.get("blog_ids", [])
+    if not isinstance(raw_ids, list):
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="blog_ids must be a list")
+
+    blog_ids: list[int] = []
+    for rid in raw_ids:
+        try:
+            blog_ids.append(int(rid))
+        except (TypeError, ValueError):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid blog id: {rid}") from None
+
+    if blog_ids:
+        valid = (
+            db.query(models.Blog.blog_id)
+            .filter(models.Blog.user_id == current_user.user_id, models.Blog.blog_id.in_(blog_ids))
+            .all()
+        )
+        valid_ids = {row[0] for row in valid}
+        invalid = set(blog_ids) - valid_ids
+        if invalid:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid blog ids: {list(invalid)}")
+
+    # Remove existing links for this category
+    db.query(models.BlogCategory).filter(models.BlogCategory.category_id == category_id).delete(synchronize_session=False)
+
+    # Add new links
+    for bid in blog_ids:
+        db.add(models.BlogCategory(blog_id=bid, category_id=category_id))
+
+    db.commit()
+    db.refresh(db_cat)
+    return _category_out(db, db_cat)
