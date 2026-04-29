@@ -14,7 +14,6 @@ import type { Category, BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import {
@@ -295,14 +294,14 @@ export default function CategoriesDashboardPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0">
                       <p className="truncate text-xl font-semibold text-foreground">{cat.name}</p>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <Badge variant="muted">{cat.blog_count ?? 0} {cat.blog_count === 1 ? "blog" : "blogs"}</Badge>
-                      </div>
+                      <p className="mt-2 text-sm text-muted-foreground">
+                        {cat.blog_count ?? 0} {cat.blog_count === 1 ? "blog" : "blogs"}
+                      </p>
                     </div>
-                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex shrink-0 items-start gap-2" onClick={(e) => e.stopPropagation()}>
                       <Button
                         variant="ghost"
                         size="icon"
