@@ -14,6 +14,7 @@ import type { Category, BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import {
@@ -248,100 +249,100 @@ export default function CategoriesDashboardPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((cat) => (
-            <div key={cat.category_id}>
-              <Card
-                className={`cursor-pointer rounded-xl border transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm ${
-                  expandedId === cat.category_id ? "border-slate-300 shadow-sm" : "border-[#e5e7eb]"
-                }`}
-                onClick={() => {
-                  if (editingId !== cat.category_id) handleExpand(cat.category_id);
-                }}
-              >
-                <CardContent className="p-5">
-                  {editingId === cat.category_id ? (
-                    <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        disabled={busy}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") onSaveEdit();
-                          if (e.key === "Escape") {
-                            setEditingId(null);
-                            setEditName("");
-                          }
+            <Card
+              key={cat.category_id}
+              className={`overflow-hidden rounded-3xl border transition duration-200 ${
+                expandedId === cat.category_id ? "border-slate-300 shadow-md" : "border-border/80 shadow-sm hover:border-slate-300 hover:shadow-md"
+              }`}
+              onClick={() => {
+                if (editingId !== cat.category_id) handleExpand(cat.category_id);
+              }}
+            >
+              <CardContent className="p-5">
+                {editingId === cat.category_id ? (
+                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
+                    <Input
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      disabled={busy}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") onSaveEdit();
+                        if (e.key === "Escape") {
+                          setEditingId(null);
+                          setEditName("");
+                        }
+                      }}
+                      autoFocus
+                    />
+                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                          setEditingId(null);
+                          setEditName("");
                         }}
-                        autoFocus
-                      />
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditName("");
-                          }}
-                          disabled={busy}
-                        >
-                          Cancel
-                        </Button>
-                        <Button size="sm" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
-                          Save
-                        </Button>
+                        disabled={busy}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" className="w-full sm:w-auto" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
+                        Save
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0">
+                      <p className="truncate text-xl font-semibold text-foreground">{cat.name}</p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <Badge variant="muted">{cat.blog_count ?? 0} {cat.blog_count === 1 ? "blog" : "blogs"}</Badge>
                       </div>
                     </div>
-                  ) : (
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-medium text-slate-900">{cat.name}</p>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                          {cat.blog_count} {cat.blog_count === 1 ? "blog" : "blogs"}
-                        </p>
-                      </div>
-                      <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                          onClick={() => {
-                            setEditingId(cat.category_id);
-                            setEditName(cat.name);
-                          }}
-                          disabled={busy}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => setDeleteId(cat.category_id)}
-                          disabled={busy}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
+                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          setEditingId(cat.category_id);
+                          setEditName(cat.name);
+                        }}
+                        disabled={busy}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-10 w-10 text-muted-foreground hover:text-destructive"
+                        onClick={() => setDeleteId(cat.category_id)}
+                        disabled={busy}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
                     </div>
-                  )}
-                </CardContent>
-              </Card>
+                  </div>
+                )}
+              </CardContent>
 
               {expandedId === cat.category_id && editingId !== cat.category_id && (
-                <div className="mt-2 rounded-lg border border-border/70 bg-muted/20 p-3">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-medium">Blogs in "{cat.name}"</p>
+                <div className="border-t border-border/70 bg-muted/10 px-5 py-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium">Blogs in “{cat.name}”</p>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs"
+                      className="h-9"
                       onClick={() => {
                         setExpandedId(null);
                         setExpandedBlogs([]);
                       }}
                     >
-                      <ArrowLeft className="mr-1 h-3 w-3" />
+                      <ArrowLeft className="mr-1 h-3.5 w-3.5" />
                       Close
                     </Button>
                   </div>
@@ -350,22 +351,24 @@ export default function CategoriesDashboardPage() {
                       <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                     </div>
                   ) : expandedBlogs.length === 0 ? (
-                    <p className="py-3 text-center text-sm text-muted-foreground">
+                    <p className="py-3 text-sm text-muted-foreground">
                       No blogs in this category yet. Assign blogs from the post editor.
                     </p>
                   ) : (
-                    <ul className="space-y-1">
+                    <ul className="space-y-2">
                       {expandedBlogs.map((b) => (
-                        <li key={b.blog_id} className="flex items-center justify-between rounded-md px-2 py-1.5 text-sm hover:bg-muted/50">
+                        <li key={b.blog_id} className="flex items-center justify-between rounded-2xl border border-border/70 bg-background px-3 py-2 text-sm shadow-sm">
                           <span className="truncate">{b.title || "Untitled"}</span>
-                          <span className="ml-2 shrink-0 text-xs text-muted-foreground capitalize">{b.status}</span>
+                          <span className="ml-3 shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                            {b.status}
+                          </span>
                         </li>
                       ))}
                     </ul>
                   )}
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       )}
