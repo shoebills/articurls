@@ -55,7 +55,7 @@ def make_excerpt(text: str, max_len: int = 160) -> str:
     return cleaned[:max_len].rstrip() + "..."
 
 
-def make_seo_description(content: str, max_len: int = 160) -> str:
+def make_meta_description(content: str, max_len: int = 160) -> str:
     if not content:
         return ""
 

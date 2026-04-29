@@ -20,16 +20,16 @@ router = APIRouter(
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # SEO
-    if request.seo_title is not None:
-        candidate_seo_title = request.seo_title
+    # Meta
+    if request.meta_title is not None:
+        candidate_meta_title = request.meta_title
     else:
-        candidate_seo_title = None
+        candidate_meta_title = None
 
-    if request.seo_description is not None:
-        candidate_seo_description = request.seo_description
+    if request.meta_description is not None:
+        candidate_meta_description = request.meta_description
     else:
-        candidate_seo_description = None
+        candidate_meta_description = None
 
     # Slug
     if request.slug:
@@ -50,8 +50,8 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         content=request.content,
         user_id=current_user.user_id,
         slug=candidate_slug,
-        seo_title=candidate_seo_title,
-        seo_description=candidate_seo_description,
+        meta_title=candidate_meta_title,
+        meta_description=candidate_meta_description,
         notify_subscribers=request.notify_subscribers,
         status=models.BlogStatus.DRAFT,
     )

@@ -16,8 +16,8 @@ class UserSettings(BaseModel):
     name: str
     user_name: str
     email: EmailStr
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -49,8 +49,8 @@ class UserSettings(BaseModel):
 class PublicUser(BaseModel):
     name: str
     user_name: str
-    seo_title: str
-    seo_description: str
+    meta_title: str
+    meta_description: str
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -81,8 +81,8 @@ class UpdateUser(BaseModel):
     name: Optional[str] = None
     user_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -148,14 +148,14 @@ class MonetizationSettingsUpdate(BaseModel):
     ad_frequency: Optional[int] = None
 
 
-class SeoSettings(BaseModel):
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+class MetaSettings(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class SeoSettingsUpdate(BaseModel):
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+class MetaSettingsUpdate(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None

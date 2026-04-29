@@ -1,1 +1,1 @@
-Blogging web application for writing minimal articles with almost zero technical overhead and with a good SEO.
+Blogging web application for writing minimal articles with almost zero technical overhead and with good metadata controls.

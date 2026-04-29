@@ -37,8 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!user) return { title: "Not found" };
   const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
   return {
-    title: user.seo_title || `${user.name} — Articurls`,
-    description: user.seo_description || undefined,
+    title: user.meta_title || `${user.name} — Articurls`,
+    description: user.meta_description || undefined,
     alternates: { canonical },
   };
 }

@@ -5,7 +5,7 @@ import type {
   BlogMediaOut,
   DesignSettings,
   MonetizationSettings,
-  SeoSettings,
+  MetaSettings,
   PublicBlog,
   PublicBlogAds,
   UserPage,
@@ -225,8 +225,8 @@ export async function patchMe(
       | "name"
       | "user_name"
       | "email"
-      | "seo_title"
-      | "seo_description"
+      | "meta_title"
+      | "meta_description"
       | "bio"
       | "link"
       | "contact_email"
@@ -271,15 +271,15 @@ export async function getDesignSettings(token: string): Promise<DesignSettings> 
   return apiFetch("/user/design", { token });
 }
 
-export async function getSeoSettings(token: string): Promise<SeoSettings> {
-  return apiFetch("/user/seo", { token });
+export async function getMetaSettings(token: string): Promise<MetaSettings> {
+  return apiFetch("/user/meta", { token });
 }
 
-export async function patchSeoSettings(
+export async function patchMetaSettings(
   token: string,
-  body: Partial<SeoSettings>
-): Promise<SeoSettings> {
-  return apiFetch("/user/seo", {
+  body: Partial<MetaSettings>
+): Promise<MetaSettings> {
+  return apiFetch("/user/meta", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },
@@ -394,8 +394,8 @@ export async function createBlog(
     title: string;
     content: string;
     slug?: string;
-    seo_title?: string;
-    seo_description?: string;
+    meta_title?: string;
+    meta_description?: string;
     notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {
@@ -414,8 +414,8 @@ export async function updateBlog(
     title?: string;
     content?: string;
     slug?: string;
-    seo_title?: string | null;
-    seo_description?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
     featured_image_url?: string | null;
     notify_subscribers?: boolean;
     ads_enabled?: boolean;

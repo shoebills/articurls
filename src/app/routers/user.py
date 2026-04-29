@@ -56,8 +56,8 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
                            user_name=user_name, 
                            email=email, 
                            password=hashed_password, 
-                           seo_title=f"{request.name}'s Blog",
-                           seo_description=f"Explore all the blogs published by {request.name} on Articurls.",
+                           meta_title=f"{request.name}'s Blog",
+                           meta_description=f"Explore all the blogs published by {request.name} on Articurls.",
                            profile_image_url=settings.default_profile_image_url)
 
     db.add(new_user)
@@ -228,17 +228,17 @@ def update_design_settings(
     return db_user
 
 
-@router.get("/seo", response_model=user.SeoSettings, status_code=status.HTTP_200_OK)
-def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+@router.get("/meta", response_model=user.MetaSettings, status_code=status.HTTP_200_OK)
+def get_meta_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return db_user
 
 
-@router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_seo_settings(
-    request: user.SeoSettingsUpdate,
+@router.patch("/meta", response_model=user.MetaSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_meta_settings(
+    request: user.MetaSettingsUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -248,10 +248,10 @@ def update_seo_settings(
 
     update_data = request.model_dump(exclude_unset=True)
 
-    if "seo_title" in update_data:
-        db_user.seo_title = (update_data["seo_title"] or "").strip() or None
-    if "seo_description" in update_data:
-        db_user.seo_description = (update_data["seo_description"] or "").strip() or None
+    if "meta_title" in update_data:
+        db_user.meta_title = (update_data["meta_title"] or "").strip() or None
+    if "meta_description" in update_data:
+        db_user.meta_description = (update_data["meta_description"] or "").strip() or None
 
     db.commit()
     db.refresh(db_user)

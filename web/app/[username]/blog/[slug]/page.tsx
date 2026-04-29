@@ -54,8 +54,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonicalUserName = author?.user_name || username;
   const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   return {
-    title: blog.seo_title || blog.title,
-    description: blog.seo_description || undefined,
+    title: blog.meta_title || blog.title,
+    description: blog.meta_description || undefined,
     alternates: { canonical },
     openGraph: {
       images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],

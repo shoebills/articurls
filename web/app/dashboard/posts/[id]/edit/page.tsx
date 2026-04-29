@@ -39,9 +39,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [slugCustom, setSlugCustom] = useState("");
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoTitleDirty, setSeoTitleDirty] = useState(false);
-  const [seoDesc, setSeoDesc] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaTitleDirty, setMetaTitleDirty] = useState(false);
+  const [metaDesc, setMetaDesc] = useState("");
   const [notify, setNotify] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
@@ -67,10 +67,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const slugMatchesTitle = derived !== "" && b.slug === derived;
       setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : b.slug);
     }
-    setSeoTitle(b.seo_title || "");
-    const seoSynced = !b.seo_title || b.seo_title === b.title;
-    setSeoTitleDirty(!seoSynced);
-    setSeoDesc(b.seo_description || "");
+    setMetaTitle(b.meta_title || "");
+    const metaSynced = !b.meta_title || b.meta_title === b.title;
+    setMetaTitleDirty(!metaSynced);
+    setMetaDesc(b.meta_description || "");
     setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
   }, []);
@@ -93,30 +93,30 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }, [load]);
 
   useEffect(() => {
-    if (!seoTitleDirty) {
-      setSeoTitle(title);
+    if (!metaTitleDirty) {
+      setMetaTitle(title);
     }
-  }, [title, seoTitleDirty]);
+  }, [title, metaTitleDirty]);
 
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
 
   const isDirty = useCallback(() => {
     if (!blog) return false;
     const nextSlug = slugCustom.trim() || slugify(title.trim(), { lower: true, strict: true }) || blog.slug;
-    const nextSeoTitle =
-      !seoTitleDirty || seoTitle.trim() === title.trim() ? null : seoTitle.trim() || null;
-    const nextSeoDesc = seoDesc.trim() || null;
+    const nextMetaTitle =
+      !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
+    const nextMetaDesc = metaDesc.trim() || null;
     const nextFeatured = featuredImageUrl.trim() || null;
     return (
       blog.title !== title ||
       blog.content !== content ||
       blog.notify_subscribers !== notify ||
       (slugEditable && blog.slug !== nextSlug) ||
-      (blog.seo_title || null) !== nextSeoTitle ||
-      (blog.seo_description || null) !== nextSeoDesc ||
+      (blog.meta_title || null) !== nextMetaTitle ||
+      (blog.meta_description || null) !== nextMetaDesc ||
       (blog.featured_image_url || null) !== nextFeatured
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, seoTitleDirty, seoTitle, seoDesc, featuredImageUrl]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDesc, featuredImageUrl]);
 
   async function save(silent = false) {
     if (!token || !blog) return;
@@ -137,16 +137,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         body.slug = nextSlug;
       }
 
-      if (!seoTitleDirty || seoTitle.trim() === title.trim()) {
-        body.seo_title = null;
-      } else if (seoTitle.trim()) {
-        body.seo_title = seoTitle.trim();
+      if (!metaTitleDirty || metaTitle.trim() === title.trim()) {
+        body.meta_title = null;
+      } else if (metaTitle.trim()) {
+        body.meta_title = metaTitle.trim();
       } else {
-        body.seo_title = null;
+        body.meta_title = null;
       }
 
-      if (seoDesc.trim()) body.seo_description = seoDesc.trim();
-      else body.seo_description = null;
+      if (metaDesc.trim()) body.meta_description = metaDesc.trim();
+      else body.meta_description = null;
       body.featured_image_url = featuredImageUrl.trim() || null;
 
       const updated = await updateBlog(token, blog.blog_id, body);
@@ -227,7 +227,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, seoTitle, seoTitleDirty, seoDesc, notify, featuredImageUrl, isDirty, saving]);
+  }, [blog, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc, notify, featuredImageUrl, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -310,7 +310,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
           onClick={() => setAdvancedOpen(!advancedOpen)}
         >
-          Advanced — slug, SEO, email to subscribers
+          Advanced — slug, meta, email to subscribers
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
@@ -330,19 +330,19 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               </p>
             </div>
             <div className="space-y-2">
-              <Label>SEO title</Label>
+              <Label>Meta title</Label>
               <Input
-                value={seoTitle}
+                value={metaTitle}
                 onChange={(e) => {
-                  setSeoTitleDirty(true);
-                  setSeoTitle(e.target.value);
+                  setMetaTitleDirty(true);
+                  setMetaTitle(e.target.value);
                 }}
                 placeholder="Same as post title"
               />
             </div>
             <div className="space-y-2">
-              <Label>SEO description</Label>
-              <Input value={seoDesc} onChange={(e) => setSeoDesc(e.target.value)} placeholder="Defaults from content" />
+              <Label>Meta description</Label>
+              <Input value={metaDesc} onChange={(e) => setMetaDesc(e.target.value)} placeholder="Defaults from content" />
             </div>
             <div className="space-y-2">
               <Label>Featured image</Label>

@@ -11,8 +11,8 @@ export interface BlogListItem {
   title: string;
   content: string;
   slug: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   featured_image_url: string | null;
   notify_subscribers: boolean;
   ads_enabled: boolean;
@@ -34,8 +34,8 @@ export interface PublicBlog {
   title: string;
   content: string;
   slug: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   featured_image_url: string | null;
   ads_enabled: boolean;
   published_at: string | null;
@@ -51,8 +51,8 @@ export interface PublicBlog {
 export interface PublicUser {
   name: string;
   user_name: string;
-  seo_title: string;
-  seo_description: string;
+  meta_title: string;
+  meta_description: string;
   bio: string | null;
   link: string | null;
   contact_email: string | null;
@@ -82,8 +82,8 @@ export interface UserSettings {
   name: string;
   user_name: string;
   email: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   bio: string | null;
   link: string | null;
   contact_email: string | null;
@@ -173,9 +173,9 @@ export interface MonetizationSettings {
   ad_frequency: number;
 }
 
-export interface SeoSettings {
-  seo_title: string | null;
-  seo_description: string | null;
+export interface MetaSettings {
+  meta_title: string | null;
+  meta_description: string | null;
 }
 
 export interface PublicBlogAds {

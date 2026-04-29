@@ -5,7 +5,7 @@ from .slugs import DRAFT_SLUG_RE, maybe_replace_placeholder_slug_on_publish, uni
 from .text import (
     html_to_plain_text,
     make_excerpt,
-    make_seo_description,
+    make_meta_description,
     normalize_email,
     normalize_username,
     user_by_email,
@@ -30,7 +30,7 @@ __all__ = [
     "html_to_plain_text",
     "is_pro_entitled",
     "make_excerpt",
-    "make_seo_description",
+    "make_meta_description",
     "maybe_replace_placeholder_slug_on_publish",
     "normalize_email",
     "normalize_username",

@@ -17,8 +17,8 @@ class CreateBlog(BaseModel):
     title: str
     content: str
     slug: Optional[str] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     notify_subscribers: bool = False
 
 
@@ -27,8 +27,8 @@ class GetBlog(BaseModel):
     title: str
     content: str
     slug: str
-    seo_title: Optional[str]
-    seo_description: Optional[str]
+    meta_title: Optional[str]
+    meta_description: Optional[str]
     featured_image_url: Optional[str]
     notify_subscribers: bool
     ads_enabled: bool
@@ -54,8 +54,8 @@ class PublicBlog(BaseModel):
     title: str
     content: str
     slug: str
-    seo_title: Optional[str]
-    seo_description: Optional[str]
+    meta_title: Optional[str]
+    meta_description: Optional[str]
     featured_image_url: Optional[str]
     ads_enabled: bool
     published_at: Optional[datetime]
@@ -75,8 +75,8 @@ class UpdateBlog(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
     slug: Optional[str] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
     notify_subscribers: Optional[bool] = None
     ads_enabled: Optional[bool] = None
