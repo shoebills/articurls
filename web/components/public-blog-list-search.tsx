@@ -15,6 +15,7 @@ type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
   username: string;
   user?: PublicUser;
+  hideFeatured?: boolean;
 };
 
 const POSTS_PER_PAGE = 10;
@@ -209,20 +210,21 @@ function BlogListItemRow({ blog: b, username, useDefaultPreviewImage }: { blog: 
   );
 }
 
-export function PublicBlogListSearch({ blogs, username, user }: PublicBlogListSearchProps) {
+export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: PublicBlogListSearchProps) {
   const useDefaultPreviewImage = user?.use_default_preview_image ?? true;
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
+    if (hideFeatured) return [];
     if (!user?.featured_blogs_enabled) return [];
     if (!user.featured_blog_ids || user.featured_blog_ids.length === 0) return [];
     
     return user.featured_blog_ids
       .map(id => blogs.find(b => b.blog_id === id))
       .filter((b): b is PublicBlog => Boolean(b));
-  }, [user, blogs]);
+  }, [user, blogs, hideFeatured]);
   
   const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
 
