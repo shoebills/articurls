@@ -441,11 +441,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             )}
             <Separator className="my-2" />
             <div className="space-y-2">
-              <Label>Assign category</Label>
-              <div className="relative">
+              <div className="flex items-center justify-between gap-4">
+                <Label>Assign category</Label>
+                <p className="text-xs text-muted-foreground">Choose one or more categories for this post.</p>
+              </div>
+              <div className="relative inline-flex min-w-[14rem] max-w-full">
                 <button
                   type="button"
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                     setCatDropdownOpen(!catDropdownOpen);
@@ -460,18 +463,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {catDropdownOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-1 w-full rounded-md border border-border bg-background shadow-md">
+                  <div className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
-                      <p className="px-3 py-2 text-sm text-muted-foreground">No categories created yet.</p>
+                      <p className="px-3 py-3 text-sm text-muted-foreground">No categories created yet.</p>
                     ) : (
-                      <div className="max-h-48 overflow-y-auto p-1">
+                      <div className="max-h-56 min-w-[14rem] overflow-y-auto p-1">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
                             <button
                               key={cat.category_id}
                               type="button"
-                              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm hover:bg-muted"
+                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
                               onClick={() => {
                                 setPendingCatIds((prev) =>
                                   isChecked
@@ -493,7 +496,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         })}
                       </div>
                     )}
-                    <div className="border-t p-1.5">
+                    <div className="border-t border-border/70 p-2">
                       <Button
                         size="sm"
                         className="w-full"

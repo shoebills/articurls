@@ -11,8 +11,9 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { Category, BlogListItem } from "@/lib/types";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import {
@@ -185,20 +186,29 @@ export default function CategoriesDashboardPage() {
 
       {creating && (
         <Card>
-          <CardContent className="space-y-4 pt-6">
-            <Input
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="Category name"
-              disabled={busy}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") onCreate();
-              }}
-              autoFocus
-            />
-            <div className="flex justify-end gap-2">
+          <CardHeader className="pb-0">
+            <CardTitle>New category</CardTitle>
+            <CardDescription>Add a category to organize your blog posts.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-0">
+            <div className="space-y-2">
+              <Label htmlFor="new-category-name">Category name</Label>
+              <Input
+                id="new-category-name"
+                value={createName}
+                onChange={(e) => setCreateName(e.target.value)}
+                placeholder="Enter category name"
+                disabled={busy}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onCreate();
+                }}
+                autoFocus
+              />
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
               <Button
-                variant="ghost"
+                variant="outline"
+                className="w-full sm:w-auto"
                 onClick={() => {
                   setCreating(false);
                   setCreateName("");
@@ -207,8 +217,8 @@ export default function CategoriesDashboardPage() {
               >
                 Cancel
               </Button>
-              <Button onClick={onCreate} disabled={busy || !createName.trim()}>
-                Create
+              <Button className="w-full sm:w-auto" onClick={onCreate} disabled={busy || !createName.trim()}>
+                Create category
               </Button>
             </div>
           </CardContent>
