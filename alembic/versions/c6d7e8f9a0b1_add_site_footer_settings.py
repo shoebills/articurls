@@ -1,7 +1,7 @@
 """add site footer settings
 
 Revision ID: c6d7e8f9a0b1
-Revises: b2c3d4e5f6a7
+Revises: c4d5e6f7g8h9
 Create Date: 2026-04-30 01:40:00.000000
 """
 
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision: str = "c6d7e8f9a0b1"
-down_revision: Union[str, Sequence[str], None] = "b2c3d4e5f6a7"
+down_revision: Union[str, Sequence[str], None] = "c4d5e6f7g8h9"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
