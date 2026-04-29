@@ -434,37 +434,6 @@ export default function DesignDashboardPage() {
               disabled={busy}
             />
           </div>
-          <div className="space-y-3 border-t border-border/70 pt-4">
-            <p className="text-sm font-medium">Live preview of footer</p>
-            {design.footer_enabled ? (
-              <div className="rounded-xl border bg-muted/20 p-4">
-                <div className="rounded-md border bg-background p-4">
-                  <h3 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">About the author</h3>
-                  <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
-                    <div>
-                      <p className="font-semibold leading-tight">Your Name</p>
-                    </div>
-                  </div>
-                  <p className="mt-5 text-sm text-muted-foreground">Your bio will appear here.</p>
-                  <p className="mt-5 text-sm font-medium text-foreground underline underline-offset-4">your-link.com</p>
-                  <div className="mt-6 flex items-center gap-2.5">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
-                      in
-                    </span>
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
-                      x
-                    </span>
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-xs text-muted-foreground">
-                      ig
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">About section under blogs is disabled.</p>
-            )}
-          </div>
         </CardContent>
       </Card>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
