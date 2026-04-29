@@ -8,6 +8,7 @@ import {
   listBlogs,
   patchDesignSettings,
   updateMenuPages,
+  updateFooterPages,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { DesignSettings, UserPage, BlogListItem } from "@/lib/types";
@@ -27,6 +28,7 @@ export default function DesignDashboardPage() {
     nav_blog_name: null,
     nav_menu_enabled: false,
     footer_enabled: false,
+    site_footer_enabled: false,
     featured_blogs_enabled: false,
     featured_blog_ids: [],
   });
@@ -34,6 +36,8 @@ export default function DesignDashboardPage() {
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [menuSelection, setMenuSelection] = useState<number[]>([]);
   const [pageToAdd, setPageToAdd] = useState<string>("");
+  const [footerSelection, setFooterSelection] = useState<number[]>([]);
+  const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -57,6 +61,13 @@ export default function DesignDashboardPage() {
       setMenuSelection(selected);
       const firstAvailable = p.find((x) => !selected.includes(x.page_id));
       setPageToAdd(firstAvailable ? String(firstAvailable.page_id) : "");
+      const selectedFooter = [...p]
+        .filter((x) => x.show_in_footer)
+        .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999))
+        .map((x) => x.page_id);
+      setFooterSelection(selectedFooter);
+      const firstFooterAvailable = p.find((x) => !selectedFooter.includes(x.page_id));
+      setFooterPageToAdd(firstFooterAvailable ? String(firstFooterAvailable.page_id) : "");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load design settings");
     }
@@ -96,8 +107,27 @@ export default function DesignDashboardPage() {
     }
   }
 
+  async function saveFooter(nextSelection: number[]) {
+    if (!token) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      const rows = await updateFooterPages(token, nextSelection);
+      setPages(rows);
+      setFooterSelection(nextSelection);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to save footer links");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const available = pages.filter((p) => !menuSelection.includes(p.page_id));
+  const footerAvailable = pages.filter((p) => !footerSelection.includes(p.page_id));
   const selectedMenuPages = menuSelection
+    .map((id) => pagesById.get(id))
+    .filter((p): p is UserPage => Boolean(p));
+  const selectedFooterPages = footerSelection
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
   const previewBlogName = (design.nav_blog_name || "").trim() || "My Blog";
@@ -418,7 +448,7 @@ export default function DesignDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Footer</CardTitle>
-          <CardDescription>Show an About section below individual blog posts.</CardDescription>
+          <CardDescription>Control About section under blogs and site footer content.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-3">
@@ -434,6 +464,103 @@ export default function DesignDashboardPage() {
               disabled={busy}
             />
           </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="font-medium">Enable footer</p>
+              <p className="text-sm text-muted-foreground">
+                Shows selected pages at the bottom of public pages.
+              </p>
+            </div>
+            <Switch
+              checked={design.site_footer_enabled}
+              onCheckedChange={(v) => saveDesign({ ...design, site_footer_enabled: v })}
+              disabled={busy}
+            />
+          </div>
+
+          {design.site_footer_enabled ? (
+            <div className="space-y-3 rounded-lg border p-3">
+              <div className="space-y-2">
+                <Label>Footer pages</Label>
+                {selectedFooterPages.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Add pages to display in footer.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {footerSelection.map((id, idx) => (
+                      <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                        <span>{pagesById.get(id)?.title || "Untitled"}</span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === 0}
+                            onClick={() => {
+                              const next = [...footerSelection];
+                              [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                              saveFooter(next);
+                            }}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === footerSelection.length - 1}
+                            onClick={() => {
+                              const next = [...footerSelection];
+                              [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                              saveFooter(next);
+                            }}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy}
+                            onClick={() => saveFooter(footerSelection.filter((x) => x !== id))}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {footerAvailable.length > 0 ? (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Select value={footerPageToAdd} onValueChange={setFooterPageToAdd}>
+                      <SelectTrigger className="sm:max-w-xs">
+                        <SelectValue placeholder="Add page to footer" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {footerAvailable.map((p) => (
+                          <SelectItem key={p.page_id} value={String(p.page_id)}>
+                            {p.title}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      disabled={busy || !footerPageToAdd}
+                      onClick={() => {
+                        const id = Number(footerPageToAdd);
+                        if (!Number.isFinite(id)) return;
+                        const next = [...footerSelection, id];
+                        saveFooter(next);
+                        const nextAvailable = footerAvailable.find((p) => p.page_id !== id);
+                        setFooterPageToAdd(nextAvailable ? String(nextAvailable.page_id) : "");
+                      }}
+                    >
+                      Add page
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
         </CardContent>
       </Card>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

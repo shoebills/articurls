@@ -7,6 +7,7 @@ import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
+import { PublicSiteFooter } from "@/components/public-site-footer";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -94,6 +95,7 @@ export default async function PublicProfilePage({ params }: Props) {
           </section>
         ) : null}
         <PublicBlogListSearch blogs={blogs} username={username} user={user} />
+        <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a

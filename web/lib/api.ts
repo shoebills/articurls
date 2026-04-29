@@ -351,6 +351,15 @@ export async function updateMenuPages(token: string, ordered_page_ids: number[])
   });
 }
 
+export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
+  return apiFetch("/pages/footer", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_page_ids }),
+  });
+}
+
 export async function getPublicPages(userName: string): Promise<UserPage[]> {
   return apiFetch(`/${encodeURIComponent(userName)}/pages`);
 }

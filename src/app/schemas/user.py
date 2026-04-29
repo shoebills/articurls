@@ -35,6 +35,7 @@ class UserSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    site_footer_enabled: bool = False
     use_default_preview_image: bool = True
     username_change_count: int
     is_admin: bool = False
@@ -66,6 +67,7 @@ class PublicUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    site_footer_enabled: bool = False
     use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
     featured_blogs_enabled: bool = False

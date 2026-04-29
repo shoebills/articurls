@@ -6,6 +6,7 @@ import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { PublicSiteFooter } from "@/components/public-site-footer";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -107,6 +108,7 @@ export default async function PublicCustomPage({ params }: Props) {
         <article className="mt-4">
           <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
         </article>
+        <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a

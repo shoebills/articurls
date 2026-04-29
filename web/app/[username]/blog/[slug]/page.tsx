@@ -12,6 +12,7 @@ import { VerifiedBadge } from "@/components/verified-badge";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { PublicSiteFooter } from "@/components/public-site-footer";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -182,6 +183,7 @@ export default async function PublicBlogPage({ params }: Props) {
           <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
         </div>
         <PublicProfileFooter user={author} />
+        <PublicSiteFooter user={author} pages={pages} />
       </div>
       {author.show_articurls_watermark !== false ? (
         <a

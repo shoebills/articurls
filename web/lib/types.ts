@@ -69,6 +69,7 @@ export interface PublicUser {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
   use_default_preview_image: boolean;
   /** False for active Pro — hide "Made with Articurls" on public pages. */
   show_articurls_watermark?: boolean;
@@ -99,6 +100,7 @@ export interface UserSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
   use_default_preview_image: boolean;
   username_change_count: number;
   is_admin?: boolean;
@@ -151,6 +153,8 @@ export interface UserPage {
   content: string;
   show_in_menu: boolean;
   menu_order: number | null;
+  show_in_footer: boolean;
+  footer_order: number | null;
 }
 
 export interface DesignSettings {
@@ -158,6 +162,7 @@ export interface DesignSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
 }
