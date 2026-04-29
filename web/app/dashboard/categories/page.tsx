@@ -351,7 +351,8 @@ export default function CategoriesDashboardPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={() => {
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setEditingId(cat.category_id);
                           setEditName(cat.name);
                         }}
@@ -363,7 +364,10 @@ export default function CategoriesDashboardPage() {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteId(cat.category_id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeleteId(cat.category_id);
+                        }}
                         disabled={busy}
                       >
                         <Trash2 className="h-3.5 w-3.5" />
