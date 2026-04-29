@@ -27,6 +27,20 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   const url = publicBlogPostUrl(userName, slug);
   const encodedUrl = encodeURIComponent(url);
   const encodedText = encodeURIComponent(title || "Read this post");
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    window.addEventListener("wheel", close, { passive: true });
+    window.addEventListener("touchmove", close, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", close);
+      window.removeEventListener("wheel", close);
+      window.removeEventListener("touchmove", close);
+    };
+  }, [open]);
 
   async function copyLink() {
     try {
@@ -38,7 +52,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           type="button"
@@ -46,6 +60,16 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
           size="icon"
           className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Share post"
+          onPointerDown={(e) => {
+            if (e.pointerType === "touch") e.preventDefault();
+          }}
+          onClick={() => setOpen((prev) => !prev)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((prev) => !prev);
+            }
+          }}
         >
           <Share2 className="h-4 w-4" />
         </Button>
@@ -75,10 +99,39 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
 }
 
 function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest" | "most_popular") => void }) {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const close = () => setOpen(false);
+    window.addEventListener("scroll", close, { passive: true });
+    window.addEventListener("wheel", close, { passive: true });
+    window.addEventListener("touchmove", close, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", close);
+      window.removeEventListener("wheel", close);
+      window.removeEventListener("touchmove", close);
+    };
+  }, [open]);
+
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+        <Button
+          type="button"
+          variant="outline"
+          className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5"
+          onPointerDown={(e) => {
+            if (e.pointerType === "touch") e.preventDefault();
+          }}
+          onClick={() => setOpen((prev) => !prev)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((prev) => !prev);
+            }
+          }}
+        >
           <ArrowUpDown className="h-4 w-4" />
           <span>Sort</span>
         </Button>
