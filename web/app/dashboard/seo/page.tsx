@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
-export default function MetaDashboardPage() {
+export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
@@ -26,7 +26,7 @@ export default function MetaDashboardPage() {
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
       } catch (e) {
-        setErr(e instanceof ApiError ? e.message : "Failed to load meta settings");
+        setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       }
     })();
   }, [token]);
@@ -44,7 +44,7 @@ export default function MetaDashboardPage() {
       await refreshUser();
       setSaved(true);
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to save meta settings");
+      setErr(e instanceof ApiError ? e.message : "Failed to save SEO settings");
     } finally {
       setBusy(false);
     }
@@ -52,17 +52,17 @@ export default function MetaDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Meta settings</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
       {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Search appearance</CardTitle>
-          <CardDescription>Edit your public meta title and meta description.</CardDescription>
+          <CardDescription>Edit your public SEO title and SEO description.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
-            <Label htmlFor="meta_title">Public meta title</Label>
+            <Label htmlFor="meta_title">SEO title</Label>
             <Input
               id="meta_title"
               value={metaTitle}
@@ -71,7 +71,7 @@ export default function MetaDashboardPage() {
             />
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="meta_description">Public meta description</Label>
+            <Label htmlFor="meta_description">SEO description</Label>
             <Textarea
               id="meta_description"
               value={metaDescription}
@@ -82,7 +82,7 @@ export default function MetaDashboardPage() {
           </div>
           <div className="border-t border-border/60 pt-4">
             <Button onClick={onSave} disabled={busy}>
-              Save meta settings
+              Save SEO settings
             </Button>
           </div>
         </CardContent>

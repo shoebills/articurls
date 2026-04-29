@@ -13,7 +13,7 @@ const links = [
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/design", label: "Design", icon: Palette },
-  { href: "/dashboard/meta", label: "Meta", icon: Search },
+  { href: "/dashboard/seo", label: "SEO", icon: Search },
   { href: "/dashboard/monetization", label: "Monetization", icon: BadgeDollarSign },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
