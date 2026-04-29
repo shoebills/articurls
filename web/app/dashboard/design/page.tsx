@@ -418,14 +418,14 @@ export default function DesignDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Footer</CardTitle>
-          <CardDescription>Show your profile summary below your public content.</CardDescription>
+          <CardDescription>Show an About section below individual blog posts.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
-              <p className="font-medium">Enable footer</p>
+              <p className="font-medium">Enable about section under blogs</p>
               <p className="text-sm text-muted-foreground">
-                Displays profile image, name, bio, link, and socials below your blogs/content.
+                Displays profile image, name, bio, link, and socials below blog pages.
               </p>
             </div>
             <Switch
@@ -462,7 +462,7 @@ export default function DesignDashboardPage() {
                 </div>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Footer disabled.</p>
+              <p className="text-sm text-muted-foreground">About section under blogs is disabled.</p>
             )}
           </div>
         </CardContent>

@@ -6,7 +6,6 @@ import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
-import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 
 type Props = { params: Promise<{ username: string }> };
@@ -95,7 +94,6 @@ export default async function PublicProfilePage({ params }: Props) {
           </section>
         ) : null}
         <PublicBlogListSearch blogs={blogs} username={username} user={user} />
-        <PublicProfileFooter user={user} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a
