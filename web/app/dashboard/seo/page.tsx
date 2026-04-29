@@ -58,11 +58,11 @@ export default function SeoDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Search appearance</CardTitle>
-          <CardDescription>Edit your public SEO title and SEO description.</CardDescription>
+          <CardDescription>Edit your meta title and description.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
-            <Label htmlFor="meta_title">SEO title</Label>
+            <Label htmlFor="meta_title">Meta title</Label>
             <Input
               id="meta_title"
               value={metaTitle}
@@ -71,7 +71,7 @@ export default function SeoDashboardPage() {
             />
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="meta_description">SEO description</Label>
+            <Label htmlFor="meta_description">Meta description</Label>
             <Textarea
               id="meta_description"
               value={metaDescription}
