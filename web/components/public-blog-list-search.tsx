@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpDown, Check, Link2, MessageCircle, Search, Share2 } from "lucide-react";
 import type { PublicBlog, PublicUser } from "@/lib/types";
@@ -28,6 +28,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
   const encodedUrl = encodeURIComponent(url);
   const encodedText = encodeURIComponent(title || "Read this post");
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -51,10 +52,16 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
     }
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) triggerRef.current?.blur();
+  }
+
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
+          ref={triggerRef}
           type="button"
           variant="ghost"
           size="icon"
@@ -100,6 +107,7 @@ function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: 
 
 function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest" | "most_popular") => void }) {
   const [open, setOpen] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -114,10 +122,16 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
     };
   }, [open]);
 
+  function handleOpenChange(nextOpen: boolean) {
+    setOpen(nextOpen);
+    if (!nextOpen) triggerRef.current?.blur();
+  }
+
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
+    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
+          ref={triggerRef}
           type="button"
           variant="outline"
           className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5"
