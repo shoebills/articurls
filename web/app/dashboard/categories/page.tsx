@@ -293,18 +293,18 @@ export default function CategoriesDashboardPage() {
           </Button>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {categories.map((cat) => (
             <Card
               key={cat.category_id}
-              className={`flex flex-col overflow-hidden rounded-3xl border transition duration-200 ${
+              className={`overflow-hidden rounded-3xl border transition duration-200 ${
                 expandedId === cat.category_id ? "border-slate-300 shadow-md" : "border-border/80 shadow-sm hover:border-slate-300 hover:shadow-md"
               }`}
               onClick={() => {
                 if (editingId !== cat.category_id) handleExpand(cat.category_id);
               }}
             >
-              <CardContent className={`p-5${expandedId === cat.category_id ? "" : " my-auto"}`}>
+              <CardContent className="p-5">
                 {editingId === cat.category_id ? (
                   <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                     <Input
