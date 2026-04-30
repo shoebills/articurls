@@ -355,14 +355,14 @@ export default function CategoriesDashboardPage() {
                     </div>
                   ) : (
                     /* ── Category display ── */
-                    <div className="relative flex items-start gap-4 p-5 sm:p-6">
+                    <div className="relative flex items-center gap-3.5 p-4 sm:p-5">
                       {/* Icon accent */}
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors duration-200 group-hover:bg-slate-200/80 group-hover:text-slate-600">
-                        <Tag className="h-[18px] w-[18px]" aria-hidden />
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors duration-200 group-hover:bg-slate-200/80 group-hover:text-slate-600">
+                        <Tag className="h-4 w-4" aria-hidden />
                       </div>
 
                       {/* Title + metadata */}
-                      <div className="min-w-0 flex-1 pt-0.5">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate text-[15px] font-semibold leading-snug tracking-tight text-slate-900">
                           {cat.name}
                         </p>
