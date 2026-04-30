@@ -65,7 +65,8 @@ export default function CategoriesDashboardPage() {
         closeDropdown();
       }
     }
-    function handleScroll() {
+    function handleScroll(e: Event) {
+      if (dropdownRef.current?.contains(e.target as Node)) return;
       closeDropdown();
     }
     function handleKeyDown(e: KeyboardEvent) {
@@ -332,7 +333,7 @@ export default function CategoriesDashboardPage() {
 
             return (
               /* Relative wrapper so the floating dropdown positions against the card */
-              <div key={cat.category_id} className="relative">
+              <div key={cat.category_id} ref={isExpanded ? dropdownRef : undefined} className="relative">
                 <Card
                   className={`group cursor-pointer overflow-hidden rounded-xl border bg-white transition-[box-shadow,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                     isExpanded
@@ -444,7 +445,7 @@ export default function CategoriesDashboardPage() {
                 {/* ── Floating blog assignment dropdown ── */}
                 {isExpanded && !isEditing && (
                   <div
-                    ref={dropdownRef}
+
                     className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
                     onClick={(e) => e.stopPropagation()}
                     onMouseDown={(e) => e.stopPropagation()}
