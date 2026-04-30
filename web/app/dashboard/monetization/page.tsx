@@ -223,13 +223,6 @@ export default function MonetizationPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Paywall blogs</CardTitle>
-          <CardDescription>Coming soon.</CardDescription>
-        </CardHeader>
-      </Card>
-
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
