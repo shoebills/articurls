@@ -294,167 +294,204 @@ export default function CategoriesDashboardPage() {
         </div>
       ) : (
         <div className="grid items-start gap-4 sm:grid-cols-2 xl:grid-cols-3">
-          {categories.map((cat) => (
-            <Card
-              key={cat.category_id}
-              className={`overflow-hidden rounded-3xl border transition duration-200 ${
-                expandedId === cat.category_id ? "border-slate-300 shadow-md" : "border-border/80 shadow-sm hover:border-slate-300 hover:shadow-md"
-              }`}
-              onClick={() => {
-                if (editingId !== cat.category_id) handleExpand(cat.category_id);
-              }}
-            >
-              <CardContent className="p-5">
-                {editingId === cat.category_id ? (
-                  <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
-                    <Input
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      disabled={busy}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") onSaveEdit();
-                        if (e.key === "Escape") {
-                          setEditingId(null);
-                          setEditName("");
-                        }
-                      }}
-                      autoFocus
-                    />
-                    <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                          setEditingId(null);
-                          setEditName("");
-                        }}
-                        disabled={busy}
-                      >
-                        Cancel
-                      </Button>
-                      <Button size="sm" className="w-full sm:w-auto" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
-                        Save
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-base font-semibold text-foreground">{cat.name}</p>
-                      <p className="mt-0.5 text-sm text-muted-foreground">
-                        {cat.blog_count ?? 0} {cat.blog_count === 1 ? "blog" : "blogs"}
-                      </p>
-                    </div>
-                    <div className="flex shrink-0 items-center gap-1" onClick={(e) => e.stopPropagation()}>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingId(cat.category_id);
-                          setEditName(cat.name);
-                        }}
-                        disabled={busy}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setDeleteId(cat.category_id);
-                        }}
-                        disabled={busy}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </CardContent>
+          {categories.map((cat) => {
+            const isExpanded = expandedId === cat.category_id;
+            const isEditing = editingId === cat.category_id;
+            const count = cat.blog_count ?? 0;
 
-              {expandedId === cat.category_id && editingId !== cat.category_id && (
-                <div className="border-t border-border/70 bg-muted/10 px-5 py-4" onClick={(e) => e.stopPropagation()}>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <p className="text-sm font-medium">Manage blogs in &ldquo;{cat.name}&rdquo;</p>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-9"
-                      onClick={() => {
-                        setExpandedId(null);
-                        setCatBlogIds([]);
-                        setPendingBlogIds([]);
-                      }}
-                    >
-                      <ArrowLeft className="mr-1 h-3.5 w-3.5" />
-                      Close
-                    </Button>
-                  </div>
-                  {expandedLoading ? (
-                    <div className="flex items-center justify-center py-4">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
-                  ) : allBlogs.length === 0 ? (
-                    <p className="py-3 text-sm text-muted-foreground">
-                      No blog posts yet. Create a post first.
-                    </p>
-                  ) : (
-                    <>
-                      <div className="max-h-72 space-y-1 overflow-y-auto">
-                        {sortedBlogs.map((b) => {
-                          const isChecked = pendingBlogIds.includes(b.blog_id);
-                          return (
-                            <button
-                              key={b.blog_id}
-                              type="button"
-                              className="flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors hover:bg-muted/60"
-                              onClick={() => {
-                                setPendingBlogIds((prev) =>
-                                  isChecked
-                                    ? prev.filter((id) => id !== b.blog_id)
-                                    : [...prev, b.blog_id]
-                                );
-                              }}
-                              disabled={applyBusy}
-                            >
-                              <span
-                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border transition-colors ${
-                                  isChecked
-                                    ? "border-primary bg-primary text-primary-foreground"
-                                    : "border-muted-foreground/40"
-                                }`}
-                              >
-                                {isChecked && <Check className="h-3 w-3" />}
-                              </span>
-                              <span className="min-w-0 flex-1 truncate">{b.title || "Untitled"}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
-                      <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
-                        <p className="text-xs text-muted-foreground">
-                          {pendingBlogIds.length} selected
-                        </p>
+            return (
+              <Card
+                key={cat.category_id}
+                className={`group cursor-pointer overflow-hidden rounded-xl border bg-white transition-[box-shadow,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                  isExpanded
+                    ? "border-slate-300 shadow-md"
+                    : "border-[#e5e7eb] shadow-sm hover:border-slate-300 hover:shadow-md"
+                }`}
+                tabIndex={0}
+                onClick={() => {
+                  if (!isEditing) handleExpand(cat.category_id);
+                }}
+                onKeyDown={(e) => {
+                  if (!isEditing && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    handleExpand(cat.category_id);
+                  }
+                }}
+              >
+                <CardContent className="p-0">
+                  {isEditing ? (
+                    /* ── Inline edit form ── */
+                    <div className="space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
+                      <Input
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        disabled={busy}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") onSaveEdit();
+                          if (e.key === "Escape") {
+                            setEditingId(null);
+                            setEditName("");
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
                         <Button
+                          variant="outline"
                           size="sm"
-                          onClick={onApplyBlogs}
-                          disabled={applyBusy || !hasChanges}
+                          className="w-full sm:w-auto"
+                          onClick={() => {
+                            setEditingId(null);
+                            setEditName("");
+                          }}
+                          disabled={busy}
                         >
-                          {applyBusy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                          Apply
+                          Cancel
+                        </Button>
+                        <Button size="sm" className="w-full sm:w-auto" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
+                          Save
                         </Button>
                       </div>
-                    </>
+                    </div>
+                  ) : (
+                    /* ── Category display ── */
+                    <div className="relative flex items-start gap-4 p-5 sm:p-6">
+                      {/* Icon accent */}
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors duration-200 group-hover:bg-slate-200/80 group-hover:text-slate-600">
+                        <Tag className="h-[18px] w-[18px]" aria-hidden />
+                      </div>
+
+                      {/* Title + metadata */}
+                      <div className="min-w-0 flex-1 pt-0.5">
+                        <p className="truncate text-[15px] font-semibold leading-snug tracking-tight text-slate-900">
+                          {cat.name}
+                        </p>
+                        <p className="mt-1 text-sm leading-none text-slate-500">
+                          {count} {count === 1 ? "blog" : "blogs"}
+                        </p>
+                      </div>
+
+                      {/* Action icons — top-right */}
+                      <div
+                        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingId(cat.category_id);
+                            setEditName(cat.name);
+                          }}
+                          disabled={busy}
+                          aria-label={`Edit ${cat.name}`}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteId(cat.category_id);
+                          }}
+                          disabled={busy}
+                          aria-label={`Delete ${cat.name}`}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
                   )}
-                </div>
-              )}
-            </Card>
-          ))}
+                </CardContent>
+
+                {/* ── Expanded blog assignment panel ── */}
+                {isExpanded && !isEditing && (
+                  <div className="border-t border-border/60 bg-slate-50/60 px-5 py-4 sm:px-6" onClick={(e) => e.stopPropagation()}>
+                    <div className="mb-3 flex items-center justify-between gap-3">
+                      <p className="text-sm font-medium text-slate-700">Manage blogs in &ldquo;{cat.name}&rdquo;</p>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 gap-1 text-slate-500 hover:text-slate-700"
+                        onClick={() => {
+                          setExpandedId(null);
+                          setCatBlogIds([]);
+                          setPendingBlogIds([]);
+                        }}
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                        Close
+                      </Button>
+                    </div>
+                    {expandedLoading ? (
+                      <div className="flex items-center justify-center py-6">
+                        <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
+                      </div>
+                    ) : allBlogs.length === 0 ? (
+                      <p className="py-4 text-center text-sm text-slate-400">
+                        No blog posts yet. Create a post first.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                          {sortedBlogs.map((b) => {
+                            const isChecked = pendingBlogIds.includes(b.blog_id);
+                            return (
+                              <button
+                                key={b.blog_id}
+                                type="button"
+                                className={`flex w-full items-center gap-2.5 rounded-lg px-2.5 py-2 text-left text-sm transition-colors ${
+                                  isChecked
+                                    ? "bg-slate-100/80 text-slate-900"
+                                    : "text-slate-600 hover:bg-slate-100/60"
+                                }`}
+                                onClick={() => {
+                                  setPendingBlogIds((prev) =>
+                                    isChecked
+                                      ? prev.filter((id) => id !== b.blog_id)
+                                      : [...prev, b.blog_id]
+                                  );
+                                }}
+                                disabled={applyBusy}
+                              >
+                                <span
+                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-[4px] border transition-colors ${
+                                    isChecked
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-slate-300"
+                                  }`}
+                                >
+                                  {isChecked && <Check className="h-3 w-3" />}
+                                </span>
+                                <span className="min-w-0 flex-1 truncate">{b.title || "Untitled"}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+                          <p className="text-xs text-slate-400">
+                            {pendingBlogIds.length} selected
+                          </p>
+                          <Button
+                            size="sm"
+                            onClick={onApplyBlogs}
+                            disabled={applyBusy || !hasChanges}
+                          >
+                            {applyBusy && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+                            Apply
+                          </Button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
 
