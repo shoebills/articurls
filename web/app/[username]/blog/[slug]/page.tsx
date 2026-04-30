@@ -3,7 +3,7 @@ import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
-import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
+import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
@@ -45,6 +45,12 @@ async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAd
   return res.json();
 }
 
+async function loadCategories(username: string): Promise<Category[]> {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
   if (isReservedUsername(username)) return {};
@@ -71,10 +77,11 @@ export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
   if (isReservedUsername(username)) notFound();
 
-  const [blog, author, pages, adConfig] = await Promise.all([
+  const [blog, author, pages, categories, adConfig] = await Promise.all([
     loadBlog(username, slug),
     loadUser(username),
     loadPages(username),
+    loadCategories(username),
     loadBlogAds(username, slug),
   ]);
   if (!blog || !author) notFound();
@@ -90,13 +97,17 @@ export default async function PublicBlogPage({ params }: Props) {
       ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
       : [{ type: "html" as const, html: blog.content }];
 
+  const catLinks = categories.map((c) => ({ href: `/${username}/category/${c.slug}`, label: c.name }));
+  const showDesktopInline = categories.length > 0 && categories.length <= 5;
+  const showDesktopMenuIcon = categories.length > 5;
+
   return (
     <article className="min-h-screen bg-background">
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
-            <div className="hidden items-center justify-between gap-4 sm:flex">
+            <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={`/${username}`}
                 className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
@@ -104,25 +115,23 @@ export default async function PublicBlogPage({ params }: Props) {
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
-                {author.nav_menu_enabled ? (
-                  pages.length > 0 ? (
-                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                      {pages.map((p) => (
-                        <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                          {p.title}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null
+                {author.nav_menu_enabled && showDesktopInline ? (
+                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                    {categories.map((c) => (
+                      <Link key={c.category_id} href={`/${username}/category/${c.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                        {c.name}
+                      </Link>
+                    ))}
+                  </nav>
                 ) : null}
                 <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
               </div>
             </div>
-            <div className="w-full sm:hidden">
+            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
                 titleHref={`/${username}`}
-                links={author.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                links={author.nav_menu_enabled ? catLinks : []}
                 userName={author.user_name}
                 authorName={author.name}
               />
