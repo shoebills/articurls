@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ApiError,
   listCategories,
@@ -46,7 +46,43 @@ export default function CategoriesDashboardPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const limit = isPro ? Infinity : 3;
+
+  /* ── Close dropdown helper ── */
+  const closeDropdown = useCallback(() => {
+    setExpandedId(null);
+    setCatBlogIds([]);
+    setPendingBlogIds([]);
+  }, []);
+
+  /* ── Click-outside & scroll & escape dismissal ── */
+  useEffect(() => {
+    if (expandedId == null) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        closeDropdown();
+      }
+    }
+    function handleScroll() {
+      closeDropdown();
+    }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeDropdown();
+    }
+
+    // Use capture for scroll so we catch scrolls on any ancestor
+    document.addEventListener("mousedown", handleClickOutside);
+    window.addEventListener("scroll", handleScroll, true);
+    document.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      window.removeEventListener("scroll", handleScroll, true);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [expandedId, closeDropdown]);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -113,11 +149,7 @@ export default function CategoriesDashboardPage() {
     try {
       await deleteCategory(token, deleteId);
       setDeleteId(null);
-      if (expandedId === deleteId) {
-        setExpandedId(null);
-        setCatBlogIds([]);
-        setPendingBlogIds([]);
-      }
+      if (expandedId === deleteId) closeDropdown();
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to delete category");
@@ -143,9 +175,7 @@ export default function CategoriesDashboardPage() {
 
   function handleExpand(catId: number) {
     if (expandedId === catId) {
-      setExpandedId(null);
-      setCatBlogIds([]);
-      setPendingBlogIds([]);
+      closeDropdown();
     } else {
       setExpandedId(catId);
       loadCategoryBlogs(catId);
@@ -163,6 +193,7 @@ export default function CategoriesDashboardPage() {
       setCategories((prev) =>
         prev.map((c) => (c.category_id === expandedId ? { ...c, blog_count: updatedCat.blog_count } : c))
       );
+      closeDropdown();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to update category blogs");
     } finally {
@@ -300,144 +331,151 @@ export default function CategoriesDashboardPage() {
             const count = cat.blog_count ?? 0;
 
             return (
-              <Card
-                key={cat.category_id}
-                className={`group cursor-pointer overflow-hidden rounded-xl border bg-white transition-[box-shadow,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                  isExpanded
-                    ? "border-slate-300 shadow-md"
-                    : "border-[#e5e7eb] shadow-sm hover:border-slate-300 hover:shadow-md"
-                }`}
-                tabIndex={0}
-                onClick={() => {
-                  if (!isEditing) handleExpand(cat.category_id);
-                }}
-                onKeyDown={(e) => {
-                  if (!isEditing && (e.key === "Enter" || e.key === " ")) {
-                    e.preventDefault();
-                    handleExpand(cat.category_id);
-                  }
-                }}
-              >
-                <CardContent className="p-0 sm:p-0">
-                  {isEditing ? (
-                    /* ── Inline edit form ── */
-                    <div className="space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
-                      <Input
-                        value={editName}
-                        onChange={(e) => setEditName(e.target.value)}
-                        disabled={busy}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") onSaveEdit();
-                          if (e.key === "Escape") {
-                            setEditingId(null);
-                            setEditName("");
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full sm:w-auto"
-                          onClick={() => {
-                            setEditingId(null);
-                            setEditName("");
-                          }}
+              /* Relative wrapper so the floating dropdown positions against the card */
+              <div key={cat.category_id} className="relative">
+                <Card
+                  className={`group cursor-pointer overflow-hidden rounded-xl border bg-white transition-[box-shadow,border-color] duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+                    isExpanded
+                      ? "border-slate-300 shadow-md"
+                      : "border-[#e5e7eb] shadow-sm hover:border-slate-300 hover:shadow-md"
+                  }`}
+                  tabIndex={0}
+                  onClick={() => {
+                    if (!isEditing) handleExpand(cat.category_id);
+                  }}
+                  onKeyDown={(e) => {
+                    if (!isEditing && (e.key === "Enter" || e.key === " ")) {
+                      e.preventDefault();
+                      handleExpand(cat.category_id);
+                    }
+                  }}
+                >
+                  <CardContent className="p-0 sm:p-0">
+                    {isEditing ? (
+                      /* ── Inline edit form ── */
+                      <div className="space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
+                        <Input
+                          value={editName}
+                          onChange={(e) => setEditName(e.target.value)}
                           disabled={busy}
-                        >
-                          Cancel
-                        </Button>
-                        <Button size="sm" className="w-full sm:w-auto" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
-                          Save
-                        </Button>
-                      </div>
-                    </div>
-                  ) : (
-                    /* ── Category display ── */
-                    <div className="relative flex items-center gap-3.5 p-4 sm:p-5">
-                      {/* Icon accent */}
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors duration-200 group-hover:bg-slate-200/80 group-hover:text-slate-600">
-                        <Tag className="h-4 w-4" aria-hidden />
-                      </div>
-
-                      {/* Title + metadata */}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate text-[15px] font-semibold leading-snug tracking-tight text-slate-900">
-                          {cat.name}
-                        </p>
-                        <p className="mt-1 text-sm leading-none text-slate-500">
-                          {count} {count === 1 ? "blog" : "blogs"}
-                        </p>
-                      </div>
-
-                      {/* Action icons — top-right */}
-                      <div
-                        className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingId(cat.category_id);
-                            setEditName(cat.name);
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") onSaveEdit();
+                            if (e.key === "Escape") {
+                              setEditingId(null);
+                              setEditName("");
+                            }
                           }}
-                          disabled={busy}
-                          aria-label={`Edit ${cat.name}`}
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setDeleteId(cat.category_id);
-                          }}
-                          disabled={busy}
-                          aria-label={`Delete ${cat.name}`}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
+                          autoFocus
+                        />
+                        <div className="flex flex-col gap-2 sm:flex-row sm:justify-end">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full sm:w-auto"
+                            onClick={() => {
+                              setEditingId(null);
+                              setEditName("");
+                            }}
+                            disabled={busy}
+                          >
+                            Cancel
+                          </Button>
+                          <Button size="sm" className="w-full sm:w-auto" onClick={onSaveEdit} disabled={busy || !editName.trim()}>
+                            Save
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </CardContent>
+                    ) : (
+                      /* ── Category display ── */
+                      <div className="relative flex items-center gap-3.5 p-4 sm:p-5">
+                        {/* Icon accent */}
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 transition-colors duration-200 group-hover:bg-slate-200/80 group-hover:text-slate-600">
+                          <Tag className="h-4 w-4" aria-hidden />
+                        </div>
 
-                {/* ── Expanded blog assignment panel ── */}
+                        {/* Title + metadata */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-[15px] font-semibold leading-snug tracking-tight text-slate-900">
+                            {cat.name}
+                          </p>
+                          <p className="mt-1 text-sm leading-none text-slate-500">
+                            {count} {count === 1 ? "blog" : "blogs"}
+                          </p>
+                        </div>
+
+                        {/* Action icons — top-right */}
+                        <div
+                          className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-within:opacity-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingId(cat.category_id);
+                              setEditName(cat.name);
+                            }}
+                            disabled={busy}
+                            aria-label={`Edit ${cat.name}`}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteId(cat.category_id);
+                            }}
+                            disabled={busy}
+                            aria-label={`Delete ${cat.name}`}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* ── Floating blog assignment dropdown ── */}
                 {isExpanded && !isEditing && (
-                  <div className="border-t border-border/60 bg-slate-50/60 px-5 py-4 sm:px-6" onClick={(e) => e.stopPropagation()}>
-                    <div className="mb-3 flex items-center justify-between gap-3">
-                      <p className="text-sm font-medium text-slate-700">Manage blogs in &ldquo;{cat.name}&rdquo;</p>
+                  <div
+                    ref={dropdownRef}
+                    className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg"
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between gap-3 border-b border-border/60 px-4 py-3">
+                      <p className="text-sm font-medium text-slate-700">
+                        Manage blogs in &ldquo;{cat.name}&rdquo;
+                      </p>
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 gap-1 text-slate-500 hover:text-slate-700"
-                        onClick={() => {
-                          setExpandedId(null);
-                          setCatBlogIds([]);
-                          setPendingBlogIds([]);
-                        }}
+                        className="h-7 gap-1 px-2 text-xs text-slate-500 hover:text-slate-700"
+                        onClick={closeDropdown}
                       >
-                        <ArrowLeft className="h-3.5 w-3.5" />
+                        <ArrowLeft className="h-3 w-3" />
                         Close
                       </Button>
                     </div>
+
                     {expandedLoading ? (
-                      <div className="flex items-center justify-center py-6">
+                      <div className="flex items-center justify-center py-8">
                         <Loader2 className="h-5 w-5 animate-spin text-slate-400" />
                       </div>
                     ) : allBlogs.length === 0 ? (
-                      <p className="py-4 text-center text-sm text-slate-400">
+                      <p className="px-4 py-6 text-center text-sm text-slate-400">
                         No blog posts yet. Create a post first.
                       </p>
                     ) : (
                       <>
-                        <div className="max-h-72 space-y-0.5 overflow-y-auto">
+                        {/* 5 visible rows × 36px = 180px */}
+                        <div className="max-h-[180px] overflow-y-auto px-1.5 py-1.5">
                           {sortedBlogs.map((b) => {
                             const isChecked = pendingBlogIds.includes(b.blog_id);
                             return (
@@ -472,12 +510,13 @@ export default function CategoriesDashboardPage() {
                             );
                           })}
                         </div>
-                        <div className="mt-3 flex items-center justify-between border-t border-border/60 pt-3">
+                        <div className="flex items-center justify-between border-t border-border/60 px-4 py-2.5">
                           <p className="text-xs text-slate-400">
                             {pendingBlogIds.length} selected
                           </p>
                           <Button
                             size="sm"
+                            className="h-8"
                             onClick={onApplyBlogs}
                             disabled={applyBusy || !hasChanges}
                           >
@@ -489,7 +528,7 @@ export default function CategoriesDashboardPage() {
                     )}
                   </div>
                 )}
-              </Card>
+              </div>
             );
           })}
         </div>
@@ -517,3 +556,4 @@ export default function CategoriesDashboardPage() {
     </div>
   );
 }
+
