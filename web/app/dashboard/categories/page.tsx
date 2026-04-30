@@ -318,7 +318,7 @@ export default function CategoriesDashboardPage() {
                   }
                 }}
               >
-                <CardContent className="p-0">
+                <CardContent className="p-0 sm:p-0">
                   {isEditing ? (
                     /* ── Inline edit form ── */
                     <div className="space-y-3 p-5" onClick={(e) => e.stopPropagation()}>
