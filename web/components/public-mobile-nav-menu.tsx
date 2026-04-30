@@ -76,7 +76,7 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
   }, [open]);
 
   return (
-    <div ref={rootRef} className="relative sm:hidden [--mobile-nav-rail-gap:2px]">
+    <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
       <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
           <Link
