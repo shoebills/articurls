@@ -68,17 +68,18 @@ export default async function PublicProfilePage({ params }: Props) {
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
 
   const catLinks = categories.map((c) => ({ href: `/${username}/category/${c.slug}`, label: c.name }));
-  const hasCategories = categories.length > 0;
+  const showDesktopInline = categories.length > 0 && categories.length <= 5;
+  const showDesktopMenuIcon = categories.length > 5;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
-            <div className="hidden items-center justify-between gap-4 sm:flex">
+            <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <p className="truncate text-lg font-semibold">{navBlogName}</p>
               <div className="flex min-w-0 items-center gap-4">
-                {user.nav_menu_enabled && hasCategories ? (
+                {user.nav_menu_enabled && showDesktopInline ? (
                   <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
                     {categories.map((c) => (
                       <Link key={c.category_id} href={`/${username}/category/${c.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
@@ -92,7 +93,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 </div>
               </div>
             </div>
-            <div className="sm:hidden">
+            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
                 links={user.nav_menu_enabled ? catLinks : []}

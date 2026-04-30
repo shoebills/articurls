@@ -323,13 +323,19 @@ export default function DesignDashboardPage() {
                     <div className="flex min-w-0 items-center gap-4">
                       {design.nav_menu_enabled ? (
                         selectedMenuCats.length > 0 ? (
-                          <div className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                            {selectedMenuCats.map((c) => (
-                              <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
-                                {c.name}
-                              </span>
-                            ))}
-                          </div>
+                          selectedMenuCats.length <= 5 ? (
+                            <div className="flex min-w-0 items-center gap-3">
+                              {selectedMenuCats.map((c) => (
+                                <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
+                                  {c.name}
+                                </span>
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
+                              <Menu className="h-4 w-4" />
+                            </span>
+                          )
                         ) : (
                           <span className="text-sm text-muted-foreground">Add categories to display.</span>
                         )
