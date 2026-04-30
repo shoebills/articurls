@@ -394,7 +394,7 @@ export default function DesignDashboardPage() {
 
       {/* Featured blogs */}
       <SectionPanel
-        title="Featured blogs"
+        title="Body"
         description="Pin up to 10 published blogs to the top of your public profile."
         open={openSection === "featured"}
         onToggle={() => toggle("featured")}
