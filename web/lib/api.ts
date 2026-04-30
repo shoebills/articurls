@@ -509,6 +509,11 @@ export async function publicSubscribe(userName: string, email: string): Promise<
   });
 }
 
+/** Public: confirm a subscription via the token from the confirmation email. */
+export async function confirmSubscription(token: string): Promise<{ message: string }> {
+  return apiFetch(`/confirm-subscription?token=${encodeURIComponent(token)}`);
+}
+
 // ── Categories ────────────────────────────────────────────────────────
 
 export async function listCategories(token: string): Promise<Category[]> {
