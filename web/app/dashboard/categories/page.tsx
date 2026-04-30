@@ -297,14 +297,14 @@ export default function CategoriesDashboardPage() {
           {categories.map((cat) => (
             <Card
               key={cat.category_id}
-              className={`overflow-hidden rounded-3xl border transition duration-200 ${
+              className={`flex flex-col overflow-hidden rounded-3xl border transition duration-200 ${
                 expandedId === cat.category_id ? "border-slate-300 shadow-md" : "border-border/80 shadow-sm hover:border-slate-300 hover:shadow-md"
               }`}
               onClick={() => {
                 if (editingId !== cat.category_id) handleExpand(cat.category_id);
               }}
             >
-              <CardContent className="p-5">
+              <CardContent className={`p-5${expandedId === cat.category_id ? "" : " my-auto"}`}>
                 {editingId === cat.category_id ? (
                   <div className="space-y-3" onClick={(e) => e.stopPropagation()}>
                     <Input
