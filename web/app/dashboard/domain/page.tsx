@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Copy, Check, AlertCircle, Loader2, ExternalLink } from "lucide-react";
 import {
   addCustomDomain,
@@ -13,11 +12,14 @@ import {
   verifyCustomDomain,
   deleteCustomDomain,
   getSubscription,
+  ApiError,
 } from "@/lib/api";
+import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
 
 export default function DomainSettingsPage() {
   const router = useRouter();
+  const { token } = useAuth();
   const [domain, setDomain] = useState<CustomDomain | null>(null);
   const [dnsInstructions, setDnsInstructions] = useState<DNSRecord[]>([]);
   const [hostname, setHostname] = useState("");
@@ -30,13 +32,19 @@ export default function DomainSettingsPage() {
   const [isPro, setIsPro] = useState(false);
   const [checkingPro, setCheckingPro] = useState(true);
 
-  useEffect(() => {
-    checkProStatus();
-  }, []);
-
-  async function checkProStatus() {
+  const loadDomain = useCallback(async () => {
     try {
-      const token = localStorage.getItem("access_token");
+      if (!token) return;
+
+      const data = await getCustomDomain(token);
+      setDomain(data);
+    } catch (err) {
+      console.error("Failed to load domain:", err);
+    }
+  }, [token]);
+
+  const checkProStatus = useCallback(async () => {
+    try {
       if (!token) {
         router.push("/login");
         return;
@@ -57,19 +65,11 @@ export default function DomainSettingsPage() {
     } finally {
       setCheckingPro(false);
     }
-  }
+  }, [loadDomain, router, token]);
 
-  async function loadDomain() {
-    try {
-      const token = localStorage.getItem("access_token");
-      if (!token) return;
-
-      const data = await getCustomDomain(token);
-      setDomain(data);
-    } catch (err) {
-      console.error("Failed to load domain:", err);
-    }
-  }
+  useEffect(() => {
+    checkProStatus();
+  }, [checkProStatus]);
 
   async function handleAddDomain(e: React.FormEvent) {
     e.preventDefault();
@@ -84,7 +84,6 @@ export default function DomainSettingsPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("access_token");
       if (!token) {
         router.push("/login");
         return;
@@ -101,8 +100,8 @@ export default function DomainSettingsPage() {
       setDnsInstructions(result.dns_instructions);
       setHostname("");
       setSuccess("Domain added successfully! Please configure your DNS records.");
-    } catch (err: any) {
-      setError(err.message || "Failed to add domain");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to add domain");
     } finally {
       setLoading(false);
     }
@@ -114,7 +113,6 @@ export default function DomainSettingsPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("access_token");
       if (!token) {
         router.push("/login");
         return;
@@ -136,11 +134,11 @@ export default function DomainSettingsPage() {
           setDnsInstructions(result.dns_instructions);
         }
       }
-    } catch (err: any) {
-      if (err.status === 429) {
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 429) {
         setError("Please wait a few seconds before verifying again.");
       } else {
-        setError(err.message || "Failed to verify domain");
+        setError(err instanceof ApiError ? err.message : "Failed to verify domain");
       }
     } finally {
       setVerifying(false);
@@ -157,7 +155,6 @@ export default function DomainSettingsPage() {
     setSuccess("");
 
     try {
-      const token = localStorage.getItem("access_token");
       if (!token) {
         router.push("/login");
         return;
@@ -167,8 +164,8 @@ export default function DomainSettingsPage() {
       setDomain(null);
       setDnsInstructions([]);
       setSuccess("Domain removed successfully.");
-    } catch (err: any) {
-      setError(err.message || "Failed to delete domain");
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to delete domain");
     } finally {
       setDeleting(false);
     }
@@ -266,17 +263,17 @@ export default function DomainSettingsPage() {
       </div>
 
       {error && (
-        <Alert variant="destructive">
-          <AlertCircle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
+        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{error}</p>
+        </div>
       )}
 
       {success && (
-        <Alert className="border-green-200 bg-green-50 text-green-900">
-          <Check className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
-        </Alert>
+        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+          <Check className="mt-0.5 h-4 w-4 shrink-0" />
+          <p>{success}</p>
+        </div>
       )}
 
       {!domain?.hostname ? (
