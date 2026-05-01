@@ -10,6 +10,7 @@ import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { getPublicPostUrl } from "@/lib/public-url";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -173,7 +174,7 @@ function BlogListItemRow({ blog: b, username, useDefaultPreviewImage }: { blog: 
   return (
     <li className="py-8 first:pt-0">
       <div className="rounded-xl py-1">
-        <Link href={`/${username}/blog/${b.slug}`} className="group block transition-colors hover:bg-muted/30">
+        <Link href={getPublicPostUrl(username, b.slug)} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">

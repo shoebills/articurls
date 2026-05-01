@@ -8,6 +8,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
+import { getPublicCategoryUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -67,7 +68,7 @@ export default async function PublicProfilePage({ params }: Props) {
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
 
-  const catLinks = categories.map((c) => ({ href: `/${username}/category/${c.slug}`, label: c.name }));
+  const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
 
@@ -82,7 +83,7 @@ export default async function PublicProfilePage({ params }: Props) {
                 {user.nav_menu_enabled && showDesktopInline ? (
                   <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
                     {categories.map((c) => (
-                      <Link key={c.category_id} href={`/${username}/category/${c.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                      <Link key={c.category_id} href={getPublicCategoryUrl(c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                         {c.name}
                       </Link>
                     ))}

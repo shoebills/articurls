@@ -13,6 +13,7 @@ import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { PublicSiteFooter } from "@/components/public-site-footer";
+import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -97,7 +98,7 @@ export default async function PublicBlogPage({ params }: Props) {
       ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
       : [{ type: "html" as const, html: blog.content }];
 
-  const catLinks = categories.map((c) => ({ href: `/${username}/category/${c.slug}`, label: c.name }));
+  const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
 
@@ -109,7 +110,7 @@ export default async function PublicBlogPage({ params }: Props) {
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
-                href={`/${username}`}
+                href={getPublicProfileUrl()}
                 className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
               >
                 {navBlogName}
@@ -118,7 +119,7 @@ export default async function PublicBlogPage({ params }: Props) {
                 {author.nav_menu_enabled && showDesktopInline ? (
                   <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
                     {categories.map((c) => (
-                      <Link key={c.category_id} href={`/${username}/category/${c.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                      <Link key={c.category_id} href={getPublicCategoryUrl(c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                         {c.name}
                       </Link>
                     ))}
@@ -130,7 +131,7 @@ export default async function PublicBlogPage({ params }: Props) {
             <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
-                titleHref={`/${username}`}
+                titleHref={getPublicProfileUrl()}
                 links={author.nav_menu_enabled ? catLinks : []}
                 userName={author.user_name}
                 authorName={author.name}
@@ -139,7 +140,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </section>
         ) : null}
         <Link
-          href={`/${username}`}
+          href={getPublicProfileUrl()}
           className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back
@@ -150,7 +151,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Link
-              href={`/${author.user_name}`}
+              href={getPublicProfileUrl()}
               className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
             >
               {author.profile_image_url ? (

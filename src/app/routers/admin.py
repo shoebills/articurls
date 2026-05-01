@@ -259,3 +259,52 @@ def admin_retry_payment_webhook(webhook_id: int, db: Session = Depends(get_db), 
     row.processed = False
     db.commit()
     return {"detail": "Webhook marked for retry", "webhook_id": webhook_id}
+
+
+@router.get("/domains", status_code=status.HTTP_200_OK)
+def admin_list_domains(
+    q: str = Query("", description="Search by username/email/domain"),
+    status_filter: str = Query("all", description="all|active|grace|expired|pending"),
+    sort: str = Query("latest", description="latest|oldest"),
+    limit: int = Query(50, ge=1, le=200),
+    offset: int = Query(0, ge=0),
+    db: Session = Depends(get_db),
+    current_user=Depends(_require_admin),
+):
+    """List all custom domains with their status for admin management."""
+    query = db.query(models.User).filter(models.User.custom_domain.isnot(None))
+    
+    needle = q.strip().lower()
+    if needle:
+        query = query.filter(
+            or_(
+                func.lower(models.User.user_name).contains(needle),
+                func.lower(models.User.email).contains(needle),
+                func.lower(models.User.custom_domain).contains(needle),
+            )
+        )
+    
+    if status_filter in {"active", "grace", "expired", "pending", "none"}:
+        query = query.filter(models.User.domain_status == status_filter)
+    
+    if sort == "oldest":
+        query = query.order_by(models.User.created_at.asc().nulls_last())
+    else:
+        query = query.order_by(models.User.created_at.desc().nulls_last())
+    
+    rows = query.offset(offset).limit(limit).all()
+    
+    return [
+        {
+            "user_id": user.user_id,
+            "user_name": user.user_name,
+            "email": user.email,
+            "custom_domain": user.custom_domain,
+            "domain_status": user.domain_status,
+            "verified_at": user.verified_at,
+            "grace_started_at": user.grace_started_at,
+            "grace_expires_at": user.grace_expires_at,
+            "created_at": user.created_at,
+        }
+        for user in rows
+    ]

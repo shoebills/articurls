@@ -30,7 +30,7 @@ function buildRuntimeHosts(appOrigin: string, marketingOrigin: string): string[]
   const hosts: string[] = [];
   for (const origin of [appOrigin, marketingOrigin]) {
     try {
-      hosts.push(new URL(origin).host);
+      hosts.push(new URL(origin).hostname);
     } catch {
       // ignore malformed env
     }
@@ -54,12 +54,13 @@ export function middleware(request: NextRequest) {
   const host = request.nextUrl.hostname;
   const { pathname, search } = request.nextUrl;
 
-  // CASE 1: Custom domain — pass through for now.
-  // Domain lookup via fetch() cannot run in Edge middleware.
-  // Custom domain routing will be handled inside /custom-domain pages
-  // once Cloudflare proxying is configured.
+  // CASE 1: Custom domain — rewrite to /custom-domain route
+  // Domain status check happens server-side in the /custom-domain page
   if (!isInternalDomain(host, runtimeHosts)) {
     if (isExemptPath(pathname)) return NextResponse.next();
+
+    // Rewrite to /custom-domain route and pass hostname via header
+    // The server-side page will handle domain lookup and lifecycle
     const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
     rewriteUrl.pathname = `/custom-domain/${segments.join("/")}`;
