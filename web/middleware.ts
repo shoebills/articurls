@@ -19,7 +19,6 @@ const STATIC_INTERNAL_DOMAINS = [
   "api.articurls.com",
   "blogs.articurls.com",
   "fallback.articurls.com",
-  "origin.articurls.com",
 ];
 
 function isExemptPath(pathname: string): boolean {

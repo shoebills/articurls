@@ -4,7 +4,11 @@ import type {
   BlogListItem,
   BlogMediaOut,
   Category,
+  CustomDomain,
   DesignSettings,
+  DNSRecord,
+  DomainAddResponse,
+  DomainVerifyResponse,
   MonetizationSettings,
   MetaSettings,
   PublicBlog,
@@ -679,4 +683,38 @@ export async function adminListPayments(
   if (typeof params.limit === "number") query.set("limit", String(params.limit));
   if (typeof params.offset === "number") query.set("offset", String(params.offset));
   return apiFetch(`/admin/payments?${query.toString()}`, { token });
+}
+
+
+// ── Custom Domain API ────────────────────────────────────────────────────────
+
+export async function addCustomDomain(token: string, hostname: string): Promise<DomainAddResponse> {
+  return apiFetch("/settings/domain", {
+    method: "POST",
+    token,
+    body: JSON.stringify({ hostname }),
+  });
+}
+
+export async function getCustomDomain(token: string): Promise<CustomDomain | null> {
+  try {
+    return await apiFetch<CustomDomain>("/settings/domain", { token });
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export async function verifyCustomDomain(token: string): Promise<DomainVerifyResponse> {
+  return apiFetch("/settings/domain/verify", {
+    method: "POST",
+    token,
+  });
+}
+
+export async function deleteCustomDomain(token: string): Promise<{ message: string }> {
+  return apiFetch("/settings/domain", {
+    method: "DELETE",
+    token,
+  });
 }

@@ -239,3 +239,32 @@ export interface PublicCategoryBlogsResponse {
   category: { category_id: number; name: string; slug: string };
   blogs: PublicBlog[];
 }
+
+export type DomainStatus = "none" | "pending" | "active" | "grace" | "expired";
+
+export interface DNSRecord {
+  type: "TXT" | "CNAME";
+  name: string;
+  value: string;
+  purpose: "ownership" | "ssl" | "routing";
+}
+
+export interface CustomDomain {
+  hostname: string | null;
+  domain_status: DomainStatus;
+  verified_at: string | null;
+  grace_started_at: string | null;
+  grace_expires_at: string | null;
+}
+
+export interface DomainAddResponse {
+  hostname: string;
+  domain_status: DomainStatus;
+  dns_instructions: DNSRecord[];
+}
+
+export interface DomainVerifyResponse {
+  verification_status: "verified" | "pending" | "already_verified";
+  domain_status: DomainStatus;
+  dns_instructions: DNSRecord[] | null;
+}
