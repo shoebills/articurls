@@ -13,7 +13,7 @@ Backfills domain_status from the existing is_domain_verified flag:
   - custom_domain IS NULL      → "none"
 
 Revision ID: e3f4a5b6c7d8
-Revises: d4e5f6a7b8c1
+Revises: e1f2a3b4c5d6
 Create Date: 2026-05-01
 
 """
@@ -24,7 +24,7 @@ import sqlalchemy as sa
 from alembic import op
 
 revision: str = "e3f4a5b6c7d8"
-down_revision: Union[str, Sequence[str], None] = "d4e5f6a7b8c1"
+down_revision: Union[str, Sequence[str], None] = "e1f2a3b4c5d6"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
