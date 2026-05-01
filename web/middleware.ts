@@ -29,7 +29,24 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (request.nextUrl.hostname !== appHost) return NextResponse.next();
+  const host = request.nextUrl.hostname;
+
+  let marketingHost = "";
+  try {
+    marketingHost = new URL(marketingOrigin).hostname;
+  } catch {
+    return NextResponse.next();
+  }
+
+  if (host !== appHost && host !== marketingHost) {
+    const { pathname, search } = request.nextUrl;
+    if (isExemptPath(pathname)) return NextResponse.next();
+    const rewriteUrl = request.nextUrl.clone();
+    rewriteUrl.pathname = `/custom-domain${pathname === "/" ? "" : pathname}`;
+    return NextResponse.rewrite(rewriteUrl);
+  }
+
+  if (host !== appHost) return NextResponse.next();
 
   const { pathname, search } = request.nextUrl;
   if (isExemptPath(pathname)) return NextResponse.next();
