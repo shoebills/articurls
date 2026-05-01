@@ -1,5 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+const APP_HOST = "app.articurls.com";
+const MARKETING_HOST = "articurls.com";
+
 const APP_ALLOWED_PREFIXES = [
   "/dashboard",
   "/login",
@@ -49,22 +52,13 @@ async function lookupCustomDomain(
 }
 
 export async function middleware(request: NextRequest) {
-  const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "");
-  const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "");
+  const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "") || `https://${MARKETING_HOST}`;
   const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
-
-  if (!appOrigin || !marketingOrigin) return NextResponse.next();
-
-  let appHost = "";
-  try {
-    appHost = new URL(appOrigin).hostname;
-  } catch {
-    return NextResponse.next();
-  }
 
   const host = request.nextUrl.hostname;
   const { pathname, search } = request.nextUrl;
 
+  // CASE 1: Custom domain (not an internal articurls domain)
   if (!isInternalDomain(host)) {
     if (isExemptPath(pathname)) return NextResponse.next();
 
@@ -92,17 +86,29 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (host !== appHost) return NextResponse.next();
+  // CASE 2: Main marketing domain (articurls.com)
+  // Allow normal routing: /[username], /[username]/blog/[slug], etc.
+  if (host === MARKETING_HOST) {
+    return NextResponse.next();
+  }
 
-  if (isExemptPath(pathname)) return NextResponse.next();
+  // CASE 3: App domain (app.articurls.com)
+  // Dashboard, login, signup, etc.
+  if (host === APP_HOST) {
+    if (isExemptPath(pathname)) return NextResponse.next();
 
-  const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-  );
+    const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
+      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    );
 
-  if (allowedOnAppHost) return NextResponse.next();
+    if (allowedOnAppHost) return NextResponse.next();
 
-  return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
+    // Redirect non-dashboard paths to marketing domain
+    return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
+  }
+
+  // All other internal domains (api, blogs, fallback, origin) pass through
+  return NextResponse.next();
 }
 
 export const config = {
