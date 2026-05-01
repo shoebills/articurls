@@ -43,7 +43,11 @@ class Settings(BaseSettings):
 
     app_base_url: str = "http://localhost:3000"
     admin_emails: str = ""
+    
     internal_api_secret: str = ""
+    cloudflare_api_token: str = ""
+    cloudflare_zone_id: str = ""
+    cloudflare_fallback_origin: str = "fallback.articurls.com"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
