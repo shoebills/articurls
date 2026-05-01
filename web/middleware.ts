@@ -16,7 +16,7 @@ const APP_ALLOWED_PREFIXES = [
 const EXEMPT_PREFIXES = ["/_next", "/api"];
 const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml"];
 
-const INTERNAL_DOMAINS = [
+const STATIC_INTERNAL_DOMAINS = [
   "articurls.com",
   "app.articurls.com",
   "api.articurls.com",
@@ -29,8 +29,9 @@ function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-function isInternalDomain(host: string): boolean {
-  return INTERNAL_DOMAINS.includes(host.toLowerCase());
+function isInternalDomain(host: string, extraHosts: string[]): boolean {
+  const h = host.toLowerCase();
+  return STATIC_INTERNAL_DOMAINS.includes(h) || extraHosts.includes(h);
 }
 
 async function lookupCustomDomain(
@@ -52,14 +53,28 @@ async function lookupCustomDomain(
 }
 
 export async function middleware(request: NextRequest) {
-  const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "") || `https://${MARKETING_HOST}`;
+  const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "");
+  const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "");
   const apiUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") || "http://localhost:8000";
+
+  if (!appOrigin || !marketingOrigin) return NextResponse.next();
+
+  // Derive runtime hosts from env so local dev (localhost:3000) is never
+  // mistaken for a custom domain.
+  const runtimeHosts: string[] = [];
+  for (const origin of [appOrigin, marketingOrigin]) {
+    try {
+      runtimeHosts.push(new URL(origin).host); // host = hostname + optional port
+    } catch {
+      // ignore malformed env
+    }
+  }
 
   const host = request.nextUrl.hostname;
   const { pathname, search } = request.nextUrl;
 
-  // CASE 1: Custom domain (not an internal articurls domain)
-  if (!isInternalDomain(host)) {
+  // CASE 1: Custom domain (not an internal or env-configured articurls host)
+  if (!isInternalDomain(host, runtimeHosts)) {
     if (isExemptPath(pathname)) return NextResponse.next();
 
     const domainInfo = await lookupCustomDomain(host, apiUrl);
@@ -86,29 +101,26 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // CASE 2: Main marketing domain (articurls.com)
-  // Allow normal routing: /[username], /[username]/blog/[slug], etc.
-  if (host === MARKETING_HOST) {
+  // CASE 2: Main marketing domain — allow all path-based routing untouched
+  let appHost = "";
+  try {
+    appHost = new URL(appOrigin).hostname;
+  } catch {
     return NextResponse.next();
   }
 
-  // CASE 3: App domain (app.articurls.com)
-  // Dashboard, login, signup, etc.
-  if (host === APP_HOST) {
-    if (isExemptPath(pathname)) return NextResponse.next();
+  if (host !== appHost) return NextResponse.next();
 
-    const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
-      (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
-    );
+  // CASE 3: App domain (app.articurls.com / app host from env)
+  if (isExemptPath(pathname)) return NextResponse.next();
 
-    if (allowedOnAppHost) return NextResponse.next();
+  const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+  );
 
-    // Redirect non-dashboard paths to marketing domain
-    return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
-  }
+  if (allowedOnAppHost) return NextResponse.next();
 
-  // All other internal domains (api, blogs, fallback, origin) pass through
-  return NextResponse.next();
+  return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
 }
 
 export const config = {
