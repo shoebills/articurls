@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound, redirect } from "next/navigation";
+import { notFound, permanentRedirect, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
@@ -17,6 +17,17 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ slug?: string[] }> };
+
+function normalizeCustomDomainSegments(segments: string[], username: string): string[] {
+  if (segments[0]?.toLowerCase() === username.toLowerCase()) {
+    return segments.slice(1);
+  }
+  return segments;
+}
+
+function canonicalUrlForCustomDomain(host: string, segments: string[]): string {
+  return segments.length > 0 ? `https://${host}/${segments.join("/")}` : `https://${host}`;
+}
 
 // ── Data loaders ─────────────────────────────────────────────────────────────
 
@@ -122,15 +133,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const username = await resolveUsername(host);
   if (!username) return {};
 
-  const { slug: segments = [] } = await params;
+  const { slug: rawSegments = [] } = await params;
+  const segments = normalizeCustomDomainSegments(rawSegments, username);
+  const canonical = canonicalUrlForCustomDomain(host, segments);
 
   // Blog post: /blog/[slug]
   if (segments[0] === "blog" && segments[1]) {
     const postSlug = segments[1];
     const [blog, author] = await Promise.all([loadBlog(username, postSlug), loadUser(username)]);
     if (!blog) return { title: "Not found" };
-    // Canonical always points to articurls.com
-    const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(postSlug)}`;
     return {
       title: blog.meta_title || blog.title,
       description: blog.meta_description || undefined,
@@ -145,10 +156,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  if (segments[0] === "page" && segments[1]) {
+    const page = await loadPage(username, segments[1]);
+    if (!page) return { title: "Not found" };
+    return {
+      title: page.title,
+      alternates: { canonical },
+    };
+  }
+
+  if (segments[0] === "category" && segments[1]) {
+    const [user, data] = await Promise.all([loadUser(username), loadCategoryBlogs(username, segments[1])]);
+    if (!user || !data) return { title: "Not found" };
+    const categoryName = data.category.name || segments[1];
+    return {
+      title: `${categoryName} — ${user.name}`,
+      description: `Browse all ${categoryName} posts by ${user.name}.`,
+      alternates: { canonical },
+    };
+  }
+
   // Profile page
   const user = await loadUser(username);
   if (!user) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}`;
   return {
     title: user.meta_title || `${user.name} — Articurls`,
     description: user.meta_description || undefined,
@@ -180,8 +210,13 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   const username = domainInfo.username;
-  const { slug: segments = [] } = await params;
+  const { slug: rawSegments = [] } = await params;
+  const segments = normalizeCustomDomainSegments(rawSegments, username);
   const siteOrigin = `https://${host}`;
+
+  if (rawSegments.length !== segments.length) {
+    permanentRedirect(canonicalUrlForCustomDomain(host, segments));
+  }
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
   if (segments[0] === "blog" && segments[1]) {
