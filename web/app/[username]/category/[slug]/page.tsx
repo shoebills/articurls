@@ -8,6 +8,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
+import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -80,7 +81,7 @@ export default async function PublicCategoryPage({ params }: Props) {
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
 
-  const catLinks = categories.map((c) => ({ href: `/${username}/category/${c.slug}`, label: c.name }));
+  const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
 
@@ -97,7 +98,7 @@ export default async function PublicCategoryPage({ params }: Props) {
                     {categories.map((c) => (
                       <Link
                         key={c.category_id}
-                        href={`/${username}/category/${c.slug}`}
+                        href={getPublicCategoryUrl(username, c.slug)}
                         className={`whitespace-nowrap text-sm ${
                           c.slug === slug
                             ? "font-medium text-foreground"
@@ -127,7 +128,7 @@ export default async function PublicCategoryPage({ params }: Props) {
 
         <div className="mb-6 flex items-center gap-3">
           <Link
-            href={`/${username}`}
+            href={getPublicProfileUrl(username)}
             className="text-sm text-muted-foreground hover:text-foreground"
           >
             ← All posts

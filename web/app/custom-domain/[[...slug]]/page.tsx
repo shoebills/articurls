@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { notFound, permanentRedirect, redirect } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
@@ -17,17 +17,6 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ slug?: string[] }> };
-
-function normalizeCustomDomainSegments(segments: string[], username: string): string[] {
-  if (segments[0]?.toLowerCase() === username.toLowerCase()) {
-    return segments.slice(1);
-  }
-  return segments;
-}
-
-function canonicalUrlForCustomDomain(host: string, segments: string[]): string {
-  return segments.length > 0 ? `https://${host}/${segments.join("/")}` : `https://${host}`;
-}
 
 // ── Data loaders ─────────────────────────────────────────────────────────────
 
@@ -134,8 +123,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!username) return {};
 
   const { slug: rawSegments = [] } = await params;
-  const segments = normalizeCustomDomainSegments(rawSegments, username);
-  const canonical = canonicalUrlForCustomDomain(host, segments);
+  const segments = rawSegments;
+  const canonical = `https://${host}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
 
   // Blog post: /blog/[slug]
   if (segments[0] === "blog" && segments[1]) {
@@ -210,13 +199,8 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   const username = domainInfo.username;
-  const { slug: rawSegments = [] } = await params;
-  const segments = normalizeCustomDomainSegments(rawSegments, username);
+  const { slug: segments = [] } = await params;
   const siteOrigin = `https://${host}`;
-
-  if (rawSegments.length !== segments.length) {
-    permanentRedirect(canonicalUrlForCustomDomain(host, segments));
-  }
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
   if (segments[0] === "blog" && segments[1]) {
