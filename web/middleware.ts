@@ -50,7 +50,16 @@ export function middleware(request: NextRequest) {
 
   const runtimeHosts = buildRuntimeHosts(appOrigin, marketingOrigin);
 
-  const host = request.nextUrl.hostname;
+  // request.nextUrl.hostname on Vercel is always the deployment domain
+  // (blogs.articurls.com). The real public-facing hostname comes from
+  // x-original-host which Cloudflare SaaS sets via a CF Worker, or from
+  // x-forwarded-host. Fall back to nextUrl.hostname for direct Vercel hits.
+  const rawHost =
+    request.headers.get("x-original-host") ||
+    request.headers.get("x-forwarded-host") ||
+    request.nextUrl.hostname;
+  const host = rawHost.toLowerCase().split(",")[0].trim();
+
   const { pathname, search } = request.nextUrl;
 
   // CASE 1: Custom domain — rewrite to /custom-domain route

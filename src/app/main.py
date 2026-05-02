@@ -13,6 +13,7 @@ _cors = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors or ["http://localhost:3000"],
+    allow_origin_regex=r"https://.*",  # allow all custom domains over HTTPS
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
