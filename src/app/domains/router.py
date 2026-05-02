@@ -31,8 +31,12 @@ def _invalidate_domain_cache(hostname: str) -> None:
 def extract_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
     """
     Extract complete DNS instructions from Cloudflare response.
-    Includes ownership TXT, ALL SSL TXT records, and CNAME routing record.
-    Sets verified=True for records Cloudflare has confirmed as detected.
+
+    Prefers Delegated DCV (single CNAME for SSL) over per-cert TXT records
+    when available — this works even on DNS providers that only allow one
+    TXT record per name (e.g. Hostinger).
+
+    Falls back to individual TXT validation_records if no delegation CNAME exists.
     """
     dns_instructions = []
 
@@ -48,21 +52,35 @@ def extract_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
             verified=ownership_verified,
         ))
 
-    # SSL validation TXT records — one per certificate (ECDSA + RSA)
     ssl_info = cf_result.get("ssl", {})
     ssl_active = ssl_info.get("status") == "active"
-    validation_records = ssl_info.get("validation_records", [])
-    for record in validation_records:
-        if record.get("txt_name") and record.get("txt_value"):
-            # Cloudflare sets status="active" on each record when it's been detected
-            record_verified = ssl_active or record.get("status") == "active"
-            dns_instructions.append(DNSRecord(
-                type="TXT",
-                name=record["txt_name"],
-                value=record["txt_value"],
-                purpose="ssl",
-                verified=record_verified,
-            ))
+
+    # Prefer Delegated DCV CNAME — one record covers both ECDSA + RSA certs
+    # and survives renewals without needing new TXT records.
+    dcv_delegation = ssl_info.get("dcv_delegation_records", [])
+    if dcv_delegation:
+        for dcv in dcv_delegation:
+            if dcv.get("cname") and dcv.get("cname_target"):
+                dns_instructions.append(DNSRecord(
+                    type="CNAME",
+                    name=dcv["cname"],
+                    value=dcv["cname_target"],
+                    purpose="ssl",
+                    verified=ssl_active,
+                ))
+    else:
+        # Fallback: individual TXT records per certificate (ECDSA + RSA)
+        validation_records = ssl_info.get("validation_records", [])
+        for record in validation_records:
+            if record.get("txt_name") and record.get("txt_value"):
+                record_verified = ssl_active or record.get("status") == "active"
+                dns_instructions.append(DNSRecord(
+                    type="TXT",
+                    name=record["txt_name"],
+                    value=record["txt_value"],
+                    purpose="ssl",
+                    verified=record_verified,
+                ))
 
     # CNAME routing record — verified once hostname status is active
     dns_instructions.append(DNSRecord(
@@ -70,7 +88,7 @@ def extract_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
         name=hostname,
         value=settings.cloudflare_fallback_origin,
         purpose="routing",
-        verified=ownership_verified,  # hostname active = CNAME is resolving
+        verified=ownership_verified,
     ))
 
     return dns_instructions

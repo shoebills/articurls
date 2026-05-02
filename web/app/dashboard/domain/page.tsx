@@ -300,15 +300,18 @@ export default function DomainSettingsPage() {
 
               <div className="space-y-3">
                 {(() => {
-                  // Count SSL records to label duplicates clearly
                   const sslRecords = dnsInstructions.filter(r => r.purpose === "ssl");
-                  const hasMultipleSsl = sslRecords.length > 1;
+                  const hasMultipleSslTxt = sslRecords.filter(r => r.type === "TXT").length > 1;
                   let sslCounter = 0;
                   return dnsInstructions.map((record, idx) => {
                     let label: string | undefined;
-                    if (record.purpose === "ssl" && hasMultipleSsl) {
-                      sslCounter++;
-                      label = `SSL certificate (${sslCounter} of ${sslRecords.length})`;
+                    if (record.purpose === "ssl") {
+                      if (record.type === "CNAME") {
+                        label = "SSL certificate (delegated)";
+                      } else if (hasMultipleSslTxt) {
+                        sslCounter++;
+                        label = `SSL certificate (${sslCounter} of ${sslRecords.filter(r => r.type === "TXT").length})`;
+                      }
                     }
                     return (
                       <DnsRecordCard
@@ -324,11 +327,25 @@ export default function DomainSettingsPage() {
                 })()}
               </div>
 
-              {dnsInstructions.filter(r => r.purpose === "ssl").length > 1 && (
-                <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                  Two SSL records are required — add both TXT values for the same name. Some DNS providers support multiple TXT records with the same name; if yours doesn't, try the second value first.
-                </p>
-              )}
+              {(() => {
+                const sslTxtRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "TXT");
+                const sslCnameRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "CNAME");
+                if (sslCnameRecords.length > 0) {
+                  return (
+                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                      The SSL record uses delegated validation — add this single CNAME once and it covers all future certificate renewals automatically.
+                    </p>
+                  );
+                }
+                if (sslTxtRecords.length > 1) {
+                  return (
+                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                      Two SSL TXT records are required (same name, different values). If your DNS provider only allows one TXT record per name, add the first value, wait for it to validate, then replace it with the second value.
+                    </p>
+                  );
+                }
+                return null;
+              })()}
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
