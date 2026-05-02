@@ -28,6 +28,7 @@ export default function DomainSettingsPage() {
   const [loading, setLoading] = useState(false);
   const [verifying, setVerifying] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -69,15 +70,11 @@ export default function DomainSettingsPage() {
 
     try {
       const result = await addCustomDomain(token, hostname);
-      setDomain({
-        hostname: result.hostname,
-        domain_status: result.domain_status,
-        verified_at: null,
-        grace_started_at: null,
-        grace_expires_at: null,
-      });
-      setDnsInstructions(result.dns_instructions);
+      // Store DNS instructions from the add response
+      setDnsInstructions(result.dns_instructions ?? []);
       setHostname("");
+      // Reload from server to get canonical state
+      await loadDomain(token);
       setSuccess("Domain added. Configure your DNS records below, then click Verify.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add domain");
@@ -115,12 +112,12 @@ export default function DomainSettingsPage() {
   }
 
   async function handleDeleteDomain() {
-    if (!confirm("Remove this custom domain? This cannot be undone.")) return;
     if (!token) { router.push("/login"); return; }
 
     setDeleting(true);
     setError("");
     setSuccess("");
+    setConfirmDelete(false);
 
     try {
       await deleteCustomDomain(token);
@@ -225,15 +222,36 @@ export default function DomainSettingsPage() {
               <p className="font-mono text-base font-semibold">{domain.hostname}</p>
               <StatusBadge status={domain.domain_status} />
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDeleteDomain}
-              disabled={deleting}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
-            >
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove"}
-            </Button>
+            {confirmDelete ? (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Remove domain?</span>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDeleteDomain}
+                  disabled={deleting}
+                >
+                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, remove"}
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setConfirmDelete(false)}
+                  disabled={deleting}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+              >
+                Remove
+              </Button>
+            )}
           </div>
 
           {/* Active state */}
