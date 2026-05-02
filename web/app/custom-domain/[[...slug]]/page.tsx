@@ -189,16 +189,12 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   const username = domainInfo.username;
-  const { slug: rawSegments = [] } = await params;
-  // Strip username prefix if present — happens when user navigates to /username/blog/slug
-  // on a custom domain (e.g. from old links or direct URL entry)
-  const segments = rawSegments[0]?.toLowerCase() === username.toLowerCase()
-    ? rawSegments.slice(1)
-    : rawSegments;
+  const { slug: segments = [] } = await params;
   const siteOrigin = `https://${host}`;
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
-  if (segments[0] === "blog" && segments[1]) {
+  if (segments[0] === "blog") {
+    if (!segments[1]) notFound();
     const postSlug = segments[1];
 
     const [blog, author, pages, categories, adConfig] = await Promise.all([
@@ -315,7 +311,8 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   // ── Custom page: /page/[slug] ─────────────────────────────────────────────
-  if (segments[0] === "page" && segments[1]) {
+  if (segments[0] === "page") {
+    if (!segments[1]) notFound();
     const pageSlug = segments[1];
     const [user, pages, categories, page] = await Promise.all([
       loadUser(username),
@@ -392,7 +389,8 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   // ── Category page: /category/[slug] ───────────────────────────────────────
-  if (segments[0] === "category" && segments[1]) {
+  if (segments[0] === "category") {
+    if (!segments[1]) notFound();
     const categorySlug = segments[1];
     const [user, pages, categories, data] = await Promise.all([
       loadUser(username),
@@ -489,6 +487,9 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   // ── Profile / home ────────────────────────────────────────────────────────
+  // Only render homepage for the root path — any other unrecognised segment is a 404
+  if (segments.length > 0) notFound();
+
   const [user, blogs, pages, categories] = await Promise.all([
     loadUser(username),
     loadBlogs(username),
