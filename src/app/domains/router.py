@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
 from typing import List
+import json
 
 from ..database import get_db
 from .. import models
@@ -10,10 +11,19 @@ from ..security.oauth2 import get_current_user
 from ..utils import require_pro
 from ..config import settings
 from ..cloudflare.client import CloudflareClient
+from ..redis_client import redis_client
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
 from .utils import normalize_hostname, validate_hostname
 
 router = APIRouter(tags=["Domain"])
+
+
+def _invalidate_domain_cache(hostname: str) -> None:
+    """Clear cached domain lookup for a hostname."""
+    try:
+        redis_client.delete(f"domain_lookup:{hostname}")
+    except Exception:
+        pass
 
 
 # ── Helper functions ─────────────────────────────────────────────────────────
@@ -125,6 +135,7 @@ def add_domain(
             detail="This domain is already in use by another account.",
         )
 
+    _invalidate_domain_cache(hostname)
     return DomainAddResponse(
         hostname=hostname,
         domain_status=models.DomainStatus.PENDING,
@@ -243,6 +254,7 @@ def verify_domain(
         db_user.is_domain_verified = True
         db_user.verified_at = datetime.now(timezone.utc)
         db.commit()
+        _invalidate_domain_cache(db_user.custom_domain)
         
         return DomainVerifyOut(
             verification_status="verified",
@@ -279,6 +291,7 @@ def delete_domain(
         cf_client.delete_custom_hostname(db_user.cloudflare_hostname_id)
         # Ignore result - we clear DB fields regardless
 
+    old_domain = db_user.custom_domain
     # Clear database fields
     db_user.custom_domain = None
     db_user.domain_status = models.DomainStatus.NONE
@@ -289,10 +302,17 @@ def delete_domain(
     db_user.grace_expires_at = None
 
     db.commit()
+    if old_domain:
+        _invalidate_domain_cache(old_domain)
     return {"message": "Custom domain removed."}
 
 
+import json
+from ..redis_client import redis_client
+
 # ── Internal endpoint (middleware → API) ─────────────────────────────────────
+
+_DOMAIN_CACHE_TTL = 60  # seconds
 
 @router.get("/internal/domain-lookup", response_model=DomainLookupOut, status_code=status.HTTP_200_OK)
 def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)):
@@ -301,6 +321,16 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     normalized = normalize_hostname(hostname)
+    cache_key = f"domain_lookup:{normalized}"
+
+    # Try cache first
+    try:
+        cached = redis_client.get(cache_key)
+        if cached:
+            return json.loads(cached)
+    except Exception:
+        pass  # Redis unavailable — fall through to DB
+
     db_user = (
         db.query(models.User)
         .filter(models.User.custom_domain.ilike(normalized))
@@ -310,4 +340,12 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
-    return {"username": db_user.user_name, "domain_status": db_user.domain_status}
+    result = {"username": db_user.user_name, "domain_status": db_user.domain_status}
+
+    # Cache the result
+    try:
+        redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
+    except Exception:
+        pass  # Redis unavailable — serve uncached
+
+    return result
