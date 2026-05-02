@@ -63,9 +63,14 @@ export function middleware(request: NextRequest) {
     const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
     rewriteUrl.pathname = segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
-    const response = NextResponse.rewrite(rewriteUrl);
-    response.headers.set("x-original-host", host);
-    return response;
+    return NextResponse.rewrite(rewriteUrl, {
+      request: {
+        headers: new Headers({
+          ...Object.fromEntries(request.headers),
+          "x-original-host": host,
+        }),
+      },
+    });
   }
 
   // CASE 2: Marketing domain (articurls.com / localhost in dev)
