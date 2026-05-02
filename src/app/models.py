@@ -41,9 +41,10 @@ class User(Base):
     custom_domain = Column(String, nullable=True, default=None)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
     domain_status = Column(String, nullable=False, default=DomainStatus.NONE)
-    cloudflare_hostname_id = Column(String, nullable=True, default=None) # Cloudflare Custom Hostnames API id, stored so we can delete it on removal.
+    cloudflare_hostname_id = Column(String, nullable=True, default=None)
+    domain_dns_instructions = Column(JSON, nullable=True, default=None)  # cached DNS records from Cloudflare
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None) # starts when subscription ends
+    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     verification_tick = Column(Boolean, nullable=False, default=False)

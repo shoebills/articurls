@@ -251,6 +251,7 @@ export interface DNSRecord {
   name: string;
   value: string;
   purpose: "ownership" | "ssl" | "routing";
+  verified: boolean;
 }
 
 export interface CustomDomain {

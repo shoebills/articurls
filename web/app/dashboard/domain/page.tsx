@@ -299,16 +299,36 @@ export default function DomainSettingsPage() {
               </div>
 
               <div className="space-y-3">
-                {dnsInstructions.map((record, idx) => (
-                  <DnsRecordCard
-                    key={idx}
-                    record={record}
-                    idx={idx}
-                    copiedField={copiedField}
-                    onCopy={copy}
-                  />
-                ))}
+                {(() => {
+                  // Count SSL records to label duplicates clearly
+                  const sslRecords = dnsInstructions.filter(r => r.purpose === "ssl");
+                  const hasMultipleSsl = sslRecords.length > 1;
+                  let sslCounter = 0;
+                  return dnsInstructions.map((record, idx) => {
+                    let label: string | undefined;
+                    if (record.purpose === "ssl" && hasMultipleSsl) {
+                      sslCounter++;
+                      label = `SSL certificate (${sslCounter} of ${sslRecords.length})`;
+                    }
+                    return (
+                      <DnsRecordCard
+                        key={idx}
+                        record={record}
+                        idx={idx}
+                        copiedField={copiedField}
+                        onCopy={copy}
+                        overrideLabel={label}
+                      />
+                    );
+                  });
+                })()}
               </div>
+
+              {dnsInstructions.filter(r => r.purpose === "ssl").length > 1 && (
+                <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                  Two SSL records are required — add both TXT values for the same name. Some DNS providers support multiple TXT records with the same name; if yours doesn't, try the second value first.
+                </p>
+              )}
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
@@ -415,11 +435,13 @@ function DnsRecordCard({
   idx,
   copiedField,
   onCopy,
+  overrideLabel,
 }: {
   record: DNSRecord;
   idx: number;
   copiedField: string | null;
   onCopy: (text: string, key: string) => void;
+  overrideLabel?: string;
 }) {
   const purposeLabel: Record<string, string> = {
     ownership: "Ownership verification",
@@ -430,9 +452,15 @@ function DnsRecordCard({
   return (
     <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-          {purposeLabel[record.purpose] ?? record.purpose}
-        </span>
+        <div className="flex items-center gap-2">
+          <span
+            className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
+            title={record.verified ? "Detected by Cloudflare" : "Not yet detected"}
+          />
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {overrideLabel ?? purposeLabel[record.purpose] ?? record.purpose}
+          </span>
+        </div>
         <span className="rounded bg-background px-2 py-0.5 text-xs font-mono font-medium border">
           {record.type}
         </span>

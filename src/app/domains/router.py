@@ -32,39 +32,47 @@ def extract_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
     """
     Extract complete DNS instructions from Cloudflare response.
     Includes ownership TXT, ALL SSL TXT records, and CNAME routing record.
+    Sets verified=True for records Cloudflare has confirmed as detected.
     """
     dns_instructions = []
-    
+
     # Ownership verification TXT record
     ownership = cf_result.get("ownership_verification", {})
+    ownership_verified = cf_result.get("status") == "active"
     if ownership.get("name") and ownership.get("value"):
         dns_instructions.append(DNSRecord(
             type="TXT",
             name=ownership["name"],
             value=ownership["value"],
-            purpose="ownership"
+            purpose="ownership",
+            verified=ownership_verified,
         ))
-    
-    # SSL validation TXT records - include ALL records
+
+    # SSL validation TXT records — one per certificate (ECDSA + RSA)
     ssl_info = cf_result.get("ssl", {})
+    ssl_active = ssl_info.get("status") == "active"
     validation_records = ssl_info.get("validation_records", [])
     for record in validation_records:
         if record.get("txt_name") and record.get("txt_value"):
+            # Cloudflare sets status="active" on each record when it's been detected
+            record_verified = ssl_active or record.get("status") == "active"
             dns_instructions.append(DNSRecord(
                 type="TXT",
                 name=record["txt_name"],
                 value=record["txt_value"],
-                purpose="ssl"
+                purpose="ssl",
+                verified=record_verified,
             ))
-    
-    # CNAME routing record
+
+    # CNAME routing record — verified once hostname status is active
     dns_instructions.append(DNSRecord(
         type="CNAME",
         name=hostname,
         value=settings.cloudflare_fallback_origin,
-        purpose="routing"
+        purpose="routing",
+        verified=ownership_verified,  # hostname active = CNAME is resolving
     ))
-    
+
     return dns_instructions
 
 
@@ -124,24 +132,16 @@ def add_domain(
             detail="Failed to create custom hostname in Cloudflare. Please try again.",
         )
 
-    # Cloudflare generates SSL validation records asynchronously — the POST
-    # response often has an empty validation_records list. Fetch the hostname
-    # immediately after creation to get the fully-populated response.
-    hostname_id = cf_result.get("id")
-    if hostname_id:
-        import time as _time
-        _time.sleep(1)  # brief wait for CF to populate SSL records
-        fetched = cf_client.get_custom_hostname(hostname_id)
-        if fetched:
-            cf_result = fetched
-
-    # Extract complete DNS instructions
+    # Extract whatever DNS instructions are available immediately (may only have
+    # ownership + CNAME; SSL records are generated async by Cloudflare).
+    # A background task will poll and update them once both SSL records appear.
     dns_instructions = extract_dns_instructions(cf_result, hostname)
 
     # Update database
     db_user.custom_domain = hostname
     db_user.domain_status = models.DomainStatus.PENDING
     db_user.cloudflare_hostname_id = cf_result.get("id")
+    db_user.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
     db_user.is_domain_verified = False
     db_user.verified_at = None
     db_user.grace_started_at = None
@@ -151,7 +151,6 @@ def add_domain(
         db.commit()
     except IntegrityError:
         db.rollback()
-        # Clean up Cloudflare hostname if DB fails
         if cf_result.get("id"):
             cf_client.delete_custom_hostname(cf_result["id"])
         raise HTTPException(
@@ -160,6 +159,14 @@ def add_domain(
         )
 
     _invalidate_domain_cache(hostname)
+
+    # Dispatch background task to poll until both SSL records appear
+    from ..workers.tasks import poll_domain_ssl_records
+    poll_domain_ssl_records.apply_async(
+        args=[db_user.user_id],
+        countdown=3,  # start after 3 seconds
+    )
+
     return DomainAddResponse(
         hostname=hostname,
         domain_status=models.DomainStatus.PENDING,
@@ -173,36 +180,19 @@ def get_domain(
     current_user=Depends(get_current_user),
 ):
     """
-    Get current domain configuration.
-    For pending domains with Cloudflare hostname, fetches updated status and DNS instructions.
+    Get current domain configuration including cached DNS instructions.
     """
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    dns_instructions = None
 
-    # If domain is pending and has Cloudflare hostname, check for updates
-    if (db_user.domain_status == models.DomainStatus.PENDING and 
-        db_user.cloudflare_hostname_id):
-        
-        cf_client = CloudflareClient()
-        cf_result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
-        
-        if cf_result:
-            hostname_status = cf_result.get("status")
-            ssl_info = cf_result.get("ssl", {})
-            ssl_status = ssl_info.get("status")
-            
-            if hostname_status == "active" and ssl_status == "active":
-                db_user.domain_status = models.DomainStatus.ACTIVE
-                db_user.is_domain_verified = True
-                db_user.verified_at = datetime.now(timezone.utc)
-                db.commit()
-                _invalidate_domain_cache(db_user.custom_domain)
-            else:
-                # Return complete DNS instructions so page refresh shows all records
-                dns_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
+    # Deserialize cached DNS instructions from DB
+    dns_instructions = None
+    if db_user.domain_dns_instructions and db_user.domain_status == models.DomainStatus.PENDING:
+        try:
+            dns_instructions = [DNSRecord(**r) for r in db_user.domain_dns_instructions]
+        except Exception:
+            dns_instructions = None
 
     result = DomainOut(
         custom_domain=db_user.custom_domain,
@@ -328,11 +318,11 @@ def delete_domain(
         # Ignore result - we clear DB fields regardless
 
     old_domain = db_user.custom_domain
-    # Clear database fields
     db_user.custom_domain = None
     db_user.domain_status = models.DomainStatus.NONE
     db_user.is_domain_verified = False
     db_user.cloudflare_hostname_id = None
+    db_user.domain_dns_instructions = None
     db_user.verified_at = None
     db_user.grace_started_at = None
     db_user.grace_expires_at = None

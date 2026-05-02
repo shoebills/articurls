@@ -11,7 +11,8 @@ class DNSRecord(BaseModel):
     type: str
     name: str
     value: str
-    purpose: str  # "ownership" or "ssl"
+    purpose: str  # "ownership" | "ssl" | "routing"
+    verified: bool = False  # True when Cloudflare confirms this record is detected
 
 
 class DomainOut(BaseModel):
