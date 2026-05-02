@@ -132,7 +132,7 @@ def add_domain(
     )
 
 
-@router.get("/settings/domain", response_model=DomainOut, response_model_by_alias=True, status_code=status.HTTP_200_OK)
+@router.get("/settings/domain", response_model=DomainOut, response_model_by_alias=False, status_code=status.HTTP_200_OK)
 def get_domain(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),

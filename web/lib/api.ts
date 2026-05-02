@@ -699,7 +699,14 @@ export async function addCustomDomain(token: string, hostname: string): Promise<
 
 export async function getCustomDomain(token: string): Promise<CustomDomain | null> {
   try {
-    return await apiFetch<CustomDomain>("/settings/domain", { token, disableCache: true });
+    const data = await apiFetch<CustomDomain & { custom_domain?: string | null }>("/settings/domain", {
+      token,
+      disableCache: true,
+    });
+    return {
+      ...data,
+      hostname: data.hostname ?? data.custom_domain ?? null,
+    };
   } catch (e) {
     if (e instanceof ApiError && e.status === 404) return null;
     throw e;
