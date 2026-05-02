@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ApiError, getSeoSettings, patchSeoSettings } from "@/lib/api";
+import { ApiError, getMetaSettings, patchMetaSettings } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,8 +12,8 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
-  const [seoTitle, setSeoTitle] = useState("");
-  const [seoDescription, setSeoDescription] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -22,9 +22,9 @@ export default function SeoDashboardPage() {
     if (!token) return;
     (async () => {
       try {
-        const seo = await getSeoSettings(token);
-        setSeoTitle(seo.seo_title || "");
-        setSeoDescription(seo.seo_description || "");
+        const meta = await getMetaSettings(token);
+        setMetaTitle(meta.meta_title || "");
+        setMetaDescription(meta.meta_description || "");
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       }
@@ -37,9 +37,9 @@ export default function SeoDashboardPage() {
     setSaved(false);
     setErr(null);
     try {
-      await patchSeoSettings(token, {
-        seo_title: seoTitle || null,
-        seo_description: seoDescription || null,
+      await patchMetaSettings(token, {
+        meta_title: metaTitle || null,
+        meta_description: metaDescription || null,
       });
       await refreshUser();
       setSaved(true);
@@ -58,31 +58,31 @@ export default function SeoDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>Search appearance</CardTitle>
-          <CardDescription>Edit your public SEO title and description.</CardDescription>
+          <CardDescription>Edit your meta title and description.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
-            <Label htmlFor="seo_title">Public SEO title</Label>
+            <Label htmlFor="meta_title">Meta title</Label>
             <Input
-              id="seo_title"
-              value={seoTitle}
-              onChange={(e) => setSeoTitle(e.target.value)}
+              id="meta_title"
+              value={metaTitle}
+              onChange={(e) => setMetaTitle(e.target.value)}
               placeholder="Your site title on search engines"
             />
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="seo_description">Public SEO description</Label>
+            <Label htmlFor="meta_description">Meta description</Label>
             <Textarea
-              id="seo_description"
-              value={seoDescription}
-              onChange={(e) => setSeoDescription(e.target.value)}
+              id="meta_description"
+              value={metaDescription}
+              onChange={(e) => setMetaDescription(e.target.value)}
               placeholder="Short summary for search previews"
               rows={3}
             />
           </div>
           <div className="border-t border-border/60 pt-4">
             <Button onClick={onSave} disabled={busy}>
-              Save SEO
+              Save SEO settings
             </Button>
           </div>
         </CardContent>

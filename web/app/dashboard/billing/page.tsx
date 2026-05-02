@@ -21,14 +21,18 @@ export default function BillingPage() {
     if (!token) return;
     setErr(null);
     try {
-      const t = await getTransactions(token);
+      const [t, s] = await Promise.all([
+        getTransactions(token).catch(e => {
+          if (e instanceof ApiError) setErr(e.message);
+          return [];
+        }), 
+        getSubscription(token).catch(() => null)
+      ]);
       setTx(t);
+      setSub(s);
     } catch (e) {
-      setTx([]);
-      if (e instanceof ApiError) setErr(e.message);
+      setErr("Failed to load billing info");
     }
-    const s = await getSubscription(token);
-    setSub(s);
   }, [token]);
 
   useEffect(() => {

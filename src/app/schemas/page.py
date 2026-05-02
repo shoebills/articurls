@@ -22,6 +22,8 @@ class UserPageOut(UserPageBase):
     slug: str
     show_in_menu: bool
     menu_order: Optional[int] = None
+    show_in_footer: bool
+    footer_order: Optional[int] = None
 
     class Config:
         from_attributes = True
@@ -45,3 +47,6 @@ class DesignSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    site_footer_enabled: bool = False
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: list[int] | None = []

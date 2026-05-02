@@ -1,6 +1,7 @@
 import jwt
-from fastapi import Depends, APIRouter, HTTPException, status
+from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import IntegrityError
 from ..database import get_db
 from .. import models
 from ..security import hashing, oauth2
@@ -11,7 +12,18 @@ from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import save_image_local
-from ..utils import normalize_email, normalize_username, require_pro, user_by_email, user_by_username
+from ..utils import (
+    assert_admin_email,
+    is_admin_email,
+    RequestContext,
+    apply_username_change_or_raise,
+    claim_username_or_raise,
+    normalize_email,
+    require_pro,
+    user_by_email,
+    user_by_username,
+    validate_username_or_raise,
+)
 
 router = APIRouter(
     tags=["User"],
@@ -19,10 +31,10 @@ router = APIRouter(
 )
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
-def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
+def create_user(request: user.CreateUser, req: Request, db: Session = Depends(get_db)):
 
     email = normalize_email(str(request.email))
-    user_name = normalize_username(request.user_name)
+    user_name = validate_username_or_raise(request.user_name)
 
     db_email = user_by_email(db, email)
 
@@ -44,11 +56,26 @@ def create_user(request: user.CreateUser, db: Session = Depends(get_db)):
                            user_name=user_name, 
                            email=email, 
                            password=hashed_password, 
-                           seo_title=f"{request.name}'s Blog",
-                           seo_description=f"Explore all the blogs published by {request.name} on Articurls.",
+                           meta_title=f"{request.name}'s Blog",
+                           meta_description=f"Explore all the blogs published by {request.name} on Articurls.",
                            profile_image_url=settings.default_profile_image_url)
 
     db.add(new_user)
+    db.flush()
+    claim_username_or_raise(db, new_user.user_id, user_name)
+    db.add(
+        models.UsernameChangeAudit(
+            user_id=new_user.user_id,
+            old_username=user_name,
+            new_username=user_name,
+            actor_user_id=new_user.user_id,
+            actor_email=email,
+            is_admin_override=False,
+            reason="account_created",
+            request_ip=req.client.host if req.client else None,
+            user_agent=req.headers.get("user-agent"),
+        )
+    )
     db.commit()
     db.refresh(new_user)
 
@@ -130,7 +157,30 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
+    setattr(db_user, "is_admin", is_admin_email(db_user.email))
     return db_user
+
+
+@router.get("/username-availability", status_code=status.HTTP_200_OK)
+def username_availability(
+    user_name: str,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    try:
+        normalized = validate_username_or_raise(user_name)
+    except HTTPException as ex:
+        return {
+            "available": False,
+            "normalized": "",
+            "reason": ex.detail if isinstance(ex.detail, str) else "Invalid username",
+        }
+
+    existing_user = user_by_username(db, normalized)
+    if existing_user and existing_user.user_id != current_user.user_id:
+        return {"available": False, "normalized": normalized, "reason": "taken"}
+
+    return {"available": True, "normalized": normalized, "reason": None}
 
 
 @router.get("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_200_OK)
@@ -155,22 +205,40 @@ def update_design_settings(
     db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
     db_user.nav_menu_enabled = request.nav_menu_enabled
     db_user.footer_enabled = request.footer_enabled
+    db_user.site_footer_enabled = request.site_footer_enabled
+    db_user.featured_blogs_enabled = request.featured_blogs_enabled
+    
+    blog_ids = request.featured_blog_ids or []
+    if len(blog_ids) > 10:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 10 featured blogs allowed")
+    
+    if blog_ids:
+        valid_blogs = db.query(models.Blog.blog_id).filter(
+            models.Blog.user_id == current_user.user_id,
+            models.Blog.blog_id.in_(blog_ids),
+            models.Blog.status == "published"
+        ).all()
+        valid_ids = {b[0] for b in valid_blogs}
+        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in valid_ids]
+    else:
+        db_user.featured_blog_ids = []
+        
     db.commit()
     db.refresh(db_user)
     return db_user
 
 
-@router.get("/seo", response_model=user.SeoSettings, status_code=status.HTTP_200_OK)
-def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+@router.get("/meta", response_model=user.MetaSettings, status_code=status.HTTP_200_OK)
+def get_meta_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return db_user
 
 
-@router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_seo_settings(
-    request: user.SeoSettingsUpdate,
+@router.patch("/meta", response_model=user.MetaSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_meta_settings(
+    request: user.MetaSettingsUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -180,10 +248,10 @@ def update_seo_settings(
 
     update_data = request.model_dump(exclude_unset=True)
 
-    if "seo_title" in update_data:
-        db_user.seo_title = (update_data["seo_title"] or "").strip() or None
-    if "seo_description" in update_data:
-        db_user.seo_description = (update_data["seo_description"] or "").strip() or None
+    if "meta_title" in update_data:
+        db_user.meta_title = (update_data["meta_title"] or "").strip() or None
+    if "meta_description" in update_data:
+        db_user.meta_description = (update_data["meta_description"] or "").strip() or None
 
     db.commit()
     db.refresh(db_user)
@@ -230,7 +298,12 @@ def update_monetization_settings(
     return db_user
 
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
+def update_user(
+    request: user.UpdateUser,
+    req: Request,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
     
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -246,19 +319,19 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
         update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
 
     if "user_name" in update_data and update_data["user_name"] is not None:
-        normalized_user_name = normalize_username(update_data["user_name"])
-        if not normalized_user_name:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Username is required",
-            )
-        existing_user = user_by_username(db, normalized_user_name)
-        if existing_user and existing_user.user_id != db_user.user_id:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Username already registered",
-            )
-        update_data["user_name"] = normalized_user_name
+        apply_username_change_or_raise(
+            db,
+            db_user=db_user,
+            new_username_raw=update_data.pop("user_name"),
+            actor_user_id=current_user.user_id,
+            actor_email=current_user.email,
+            request_context=RequestContext(
+                ip=req.client.host if req.client else None,
+                user_agent=req.headers.get("user-agent"),
+            ),
+            is_admin_override=False,
+            reason="self_service",
+        )
 
     if "bio" in update_data and update_data["bio"] is not None:
         word_count = len(update_data["bio"].split())
@@ -274,10 +347,97 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
             value = settings.default_profile_image_url
         setattr(db_user, key, value)
 
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     db.refresh(db_user)
 
     return db_user
+
+
+@router.patch("/admin/{target_user_id}/username", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
+def admin_change_username(
+    target_user_id: int,
+    request: user.AdminUsernameChange,
+    req: Request,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    assert_admin_email(current_user.email)
+
+    db_user = db.query(models.User).filter(models.User.user_id == target_user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    apply_username_change_or_raise(
+        db,
+        db_user=db_user,
+        new_username_raw=request.user_name,
+        actor_user_id=current_user.user_id,
+        actor_email=current_user.email,
+        request_context=RequestContext(
+            ip=req.client.host if req.client else None,
+            user_agent=req.headers.get("user-agent"),
+        ),
+        is_admin_override=True,
+        reason=(request.reason or "").strip() or "admin_override",
+    )
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
+    db.refresh(db_user)
+    return db_user
+
+
+@router.post("/username-change-requests", response_model=user.UsernameChangeRequestOut, status_code=status.HTTP_201_CREATED)
+def create_username_change_request(
+    request: user.UsernameChangeRequestCreate,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    desired = validate_username_or_raise(request.desired_username)
+    claim = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == desired).first()
+    if claim and claim.user_id != current_user.user_id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username is taken.")
+    if desired == current_user.user_name:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New username must be different.")
+    existing_pending = (
+        db.query(models.UsernameChangeRequest)
+        .filter(
+            models.UsernameChangeRequest.user_id == current_user.user_id,
+            models.UsernameChangeRequest.status == "pending",
+        )
+        .first()
+    )
+    if existing_pending:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a pending request.")
+    row = models.UsernameChangeRequest(
+        user_id=current_user.user_id,
+        desired_username=desired,
+        reason=(request.reason or "").strip() or None,
+        status="pending",
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
+
+
+@router.get("/username-change-requests", response_model=list[user.UsernameChangeRequestOut], status_code=status.HTTP_200_OK)
+def list_my_username_change_requests(
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    return (
+        db.query(models.UsernameChangeRequest)
+        .filter(models.UsernameChangeRequest.user_id == current_user.user_id)
+        .order_by(models.UsernameChangeRequest.created_at.desc())
+        .all()
+    )
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):

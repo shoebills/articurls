@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
-import type { PublicBlog, PublicBlogAds, PublicUser, UserPage } from "@/lib/types";
+import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
@@ -11,6 +11,9 @@ import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { VerifiedBadge } from "@/components/verified-badge";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { PublicSiteFooter } from "@/components/public-site-footer";
+import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -43,16 +46,31 @@ async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAd
   return res.json();
 }
 
+async function loadCategories(username: string): Promise<Category[]> {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
   if (isReservedUsername(username)) return {};
   const blog = await loadBlog(username, slug);
   if (!blog) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`;
+  const author = await loadUser(username);
+  const canonicalUserName = author?.user_name || username;
+  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   return {
-    title: blog.seo_title || blog.title,
-    description: blog.seo_description || undefined,
+    title: blog.meta_title || blog.title,
+    description: blog.meta_description || undefined,
     alternates: { canonical },
+    openGraph: {
+      images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true)],
+    },
   };
 }
 
@@ -60,13 +78,17 @@ export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
   if (isReservedUsername(username)) notFound();
 
-  const [blog, author, pages, adConfig] = await Promise.all([
+  const [blog, author, pages, categories, adConfig] = await Promise.all([
     loadBlog(username, slug),
     loadUser(username),
     loadPages(username),
+    loadCategories(username),
     loadBlogAds(username, slug),
   ]);
   if (!blog || !author) notFound();
+  if (author.user_name.toLowerCase() !== username.toLowerCase()) {
+    permanentRedirect(`/${encodeURIComponent(author.user_name)}/blog/${encodeURIComponent(slug)}`);
+  }
   const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
   const containerSpacing = author.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
@@ -76,39 +98,41 @@ export default async function PublicBlogPage({ params }: Props) {
       ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
       : [{ type: "html" as const, html: blog.content }];
 
+  const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
+  const showDesktopInline = categories.length > 0 && categories.length <= 5;
+  const showDesktopMenuIcon = categories.length > 5;
+
   return (
     <article className="min-h-screen bg-background">
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
-            <div className="hidden items-center justify-between gap-4 sm:flex">
+            <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
-                href={`/${username}`}
+                href={getPublicProfileUrl(username)}
                 className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
               >
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
-                {author.nav_menu_enabled ? (
-                  pages.length > 0 ? (
-                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                      {pages.map((p) => (
-                        <Link key={p.page_id} href={`/${username}/page/${p.slug}`} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                          {p.title}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null
+                {author.nav_menu_enabled && showDesktopInline ? (
+                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                    {categories.map((c) => (
+                      <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                        {c.name}
+                      </Link>
+                    ))}
+                  </nav>
                 ) : null}
                 <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
               </div>
             </div>
-            <div className="w-full sm:hidden">
+            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
-                titleHref={`/${username}`}
-                links={author.nav_menu_enabled ? pages.map((p) => ({ href: `/${username}/page/${p.slug}`, label: p.title })) : []}
+                titleHref={getPublicProfileUrl(username)}
+                links={author.nav_menu_enabled ? catLinks : []}
                 userName={author.user_name}
                 authorName={author.name}
               />
@@ -116,7 +140,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </section>
         ) : null}
         <Link
-          href={`/${username}`}
+          href={getPublicProfileUrl(username)}
           className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back
@@ -127,7 +151,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Link
-              href={`/${author.user_name}`}
+              href={getPublicProfileUrl(username)}
               className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
             >
               {author.profile_image_url ? (
@@ -169,6 +193,7 @@ export default async function PublicBlogPage({ params }: Props) {
           <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
         </div>
         <PublicProfileFooter user={author} />
+        <PublicSiteFooter user={author} pages={pages} />
       </div>
       {author.show_articurls_watermark !== false ? (
         <a

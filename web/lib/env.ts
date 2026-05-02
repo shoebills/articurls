@@ -37,3 +37,7 @@ export function assetUrl(path: string | null | undefined): string {
   if (path.startsWith("http://") || path.startsWith("https://")) return path;
   return `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
+
+/** Fallback 3:2 image for blog previews/share cards when post has no image. */
+export const DEFAULT_BLOG_FEATURED_IMAGE_URL =
+  process.env.NEXT_PUBLIC_DEFAULT_BLOG_FEATURED_IMAGE_URL?.trim() || "";

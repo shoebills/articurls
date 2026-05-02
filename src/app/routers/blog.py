@@ -1,9 +1,10 @@
-from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog
+from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
@@ -11,6 +12,18 @@ from typing import List
 import secrets
 from slugify import slugify
 from datetime import datetime, timezone
+
+
+def _attach_category_ids(db: Session, db_blog):
+    """Attach category_ids list to a blog object for serialization."""
+    cat_ids = [
+        row[0]
+        for row in db.query(models.BlogCategory.category_id)
+        .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+        .all()
+    ]
+    db_blog.category_ids = cat_ids
+    return db_blog
 
 router = APIRouter(
     tags=["Blog"],
@@ -20,16 +33,16 @@ router = APIRouter(
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # SEO
-    if request.seo_title is not None:
-        candidate_seo_title = request.seo_title
+    # Meta
+    if request.meta_title is not None:
+        candidate_meta_title = request.meta_title
     else:
-        candidate_seo_title = None
+        candidate_meta_title = None
 
-    if request.seo_description is not None:
-        candidate_seo_description = request.seo_description
+    if request.meta_description is not None:
+        candidate_meta_description = request.meta_description
     else:
-        candidate_seo_description = None
+        candidate_meta_description = None
 
     # Slug
     if request.slug:
@@ -50,8 +63,8 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         content=request.content,
         user_id=current_user.user_id,
         slug=candidate_slug,
-        seo_title=candidate_seo_title,
-        seo_description=candidate_seo_description,
+        meta_title=candidate_meta_title,
+        meta_description=candidate_meta_description,
         notify_subscribers=request.notify_subscribers,
         status=models.BlogStatus.DRAFT,
     )
@@ -59,6 +72,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
+    _attach_category_ids(db, new_blog)
 
     return new_blog
 
@@ -81,6 +95,7 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     for db_blog, view_count in results:
         db_blog.view_count = view_count
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        _attach_category_ids(db, db_blog)
         blogs.append(db_blog)
         
     return blogs
@@ -92,6 +107,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+    _attach_category_ids(db, db_blog)
     
     return db_blog
 
@@ -217,6 +233,47 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
 
     return {"message": "Media deleted"}
 
+
+@router.delete("/{id}/media", status_code=status.HTTP_200_OK)
+def delete_blog_media_by_url(
+    id: int,
+    url: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_blog = (
+        db.query(models.Blog)
+        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    # Accept either full URL or path-like value by relaxed matching.
+    db_media = (
+        db.query(models.BlogMedia)
+        .filter(
+            models.BlogMedia.blog_id == db_blog.blog_id,
+            models.BlogMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    target = next(
+        (
+            m
+            for m in db_media
+            if m.url == url or url.endswith(m.url) or m.url.endswith(url)
+        ),
+        None,
+    )
+    if not target:
+        return {"message": "Media not found (already removed or external URL)"}
+
+    delete_media(target.storage_key)
+    db.delete(target)
+    db.commit()
+    return {"message": "Media deleted"}
+
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
@@ -232,6 +289,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     )
 
     update_data = request.model_dump(exclude_unset=True)
+    title_or_content_changed = False
 
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
@@ -259,11 +317,20 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
                 )
             db_blog.slug = new_slug
 
+    if "title" in update_data and update_data.get("title") != db_blog.title:
+        title_or_content_changed = True
+    if "content" in update_data and update_data.get("content") != db_blog.content:
+        title_or_content_changed = True
+
     for key, value in update_data.items():
         setattr(db_blog, key, value)
 
+    if title_or_content_changed:
+        db_blog.updated_at = datetime.now(timezone.utc)
+
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     return db_blog
 
@@ -281,6 +348,22 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
         detail="Not authorized to perform this action"
     )
     
+    # Delete media objects from storage (R2/local) before DB rows are removed.
+    media_rows = (
+        db.query(models.BlogMedia)
+        .filter(
+            models.BlogMedia.blog_id == db_blog.blog_id,
+            models.BlogMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    for media in media_rows:
+        try:
+            delete_media(media.storage_key)
+        except Exception:
+            # Keep delete resilient even if object was already removed externally.
+            pass
+
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
@@ -318,6 +401,7 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -356,6 +440,7 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
     return db_blog
 
@@ -438,5 +523,52 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
 
     db.commit()
     db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
 
+    return db_blog
+
+
+@router.patch("/{id}/categories", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
+def assign_blog_categories(
+    id: int,
+    request: cat_schema.BlogCategoryAssign,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    db_blog = db.query(models.Blog).filter(
+        models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id
+    ).first()
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    # Validate all category_ids belong to the current user
+    if request.category_ids:
+        valid_cats = (
+            db.query(models.Category.category_id)
+            .filter(
+                models.Category.user_id == current_user.user_id,
+                models.Category.category_id.in_(request.category_ids),
+            )
+            .all()
+        )
+        valid_ids = {row[0] for row in valid_cats}
+        invalid = set(request.category_ids) - valid_ids
+        if invalid:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid category ids: {list(invalid)}",
+            )
+
+    # Remove existing assignments
+    db.query(models.BlogCategory).filter(
+        models.BlogCategory.blog_id == db_blog.blog_id
+    ).delete(synchronize_session=False)
+
+    # Add new assignments
+    for cat_id in request.category_ids:
+        db.add(models.BlogCategory(blog_id=db_blog.blog_id, category_id=cat_id))
+
+    db.commit()
+    db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
     return db_blog

@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SubscriptionOut, UserSettings } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin } from "@/lib/api";
+import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
 
@@ -13,8 +13,8 @@ type AuthContextValue = {
   subscription: SubscriptionOut | null;
   isPro: boolean;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  login: (email: string, password: string, redirectTo?: string) => Promise<void>;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -68,21 +68,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string) => {
+    async (email: string, password: string, redirectTo = "/dashboard") => {
       const res = await apiLogin(email, password);
       localStorage.setItem(TOKEN_KEY, res.access_token);
       setToken(res.access_token);
       await refreshUser();
-      router.push("/dashboard");
+      router.push(redirectTo);
     },
     [refreshUser, router]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
     setToken(null);
     setUser(null);
     setSubscription(null);
+    await apiLogout();
     router.push("/login");
   }, [router]);
 

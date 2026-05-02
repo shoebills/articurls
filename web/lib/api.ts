@@ -3,18 +3,28 @@ import type {
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
+  Category,
+  CustomDomain,
   DesignSettings,
+  DNSRecord,
+  DomainAddResponse,
+  DomainVerifyResponse,
   MonetizationSettings,
-  SeoSettings,
+  MetaSettings,
   PublicBlog,
   PublicBlogAds,
+  PublicCategoryBlogsResponse,
   UserPage,
   PublicUser,
   SubscribersAnalytics,
   SubscriptionOut,
+  AdminUserListItem,
+  AdminPaymentListItem,
+  AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
   UserSettings,
+  UsernameChangeRequestOut,
   ViewsAnalytics,
 } from "./types";
 
@@ -40,22 +50,84 @@ async function parseError(res: Response): Promise<string> {
   }
 }
 
+let refreshPromise: Promise<string> | null = null;
+
+export async function refreshAccessToken(): Promise<string> {
+  const res = await fetch(`${API_URL}/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+  });
+  if (!res.ok) {
+    throw new ApiError(await parseError(res), res.status);
+  }
+  const data = await res.json() as TokenResponse;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("articurls_token", data.access_token);
+  }
+  return data.access_token;
+}
+
+const apiCache = new Map<string, { data: unknown; timestamp: number }>();
+
 export async function apiFetch<T>(
   path: string,
-  init: RequestInit & { token?: string | null } = {}
+  init: RequestInit & { token?: string | null; disableCache?: boolean } = {},
+  isRetry = false
 ): Promise<T> {
-  const { token, headers: h, ...rest } = init;
+  let { token, disableCache, headers: h, ...rest } = init;
+  
+  const method = rest.method || "GET";
+  const cacheKey = `${method}:${path}:${token || ""}`;
+
+  if (!disableCache && method === "GET" && typeof window !== "undefined") {
+    const cached = apiCache.get(cacheKey);
+    if (cached && Date.now() - cached.timestamp < 30000) {
+      return cached.data as T;
+    }
+  }
+
+  if (method !== "GET" && typeof window !== "undefined") {
+    apiCache.clear();
+  }
+  
+  if (isRetry && typeof window !== "undefined") {
+      token = localStorage.getItem("articurls_token") || token;
+  }
+
   const headers = new Headers(h);
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const url = path.startsWith("http") ? path : `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
-  const res = await fetch(url, { ...rest, headers });
+  
+  const fetchOptions: RequestInit = { ...rest, headers, credentials: "include" };
+  const res = await fetch(url, fetchOptions);
+  
+  if (res.status === 401 && !isRetry && !path.includes("/refresh") && !path.includes("/login") && !path.includes("/logout")) {
+      try {
+          if (!refreshPromise) {
+              refreshPromise = refreshAccessToken().finally(() => {
+                  refreshPromise = null;
+              });
+          }
+          const newToken = await refreshPromise;
+          return apiFetch<T>(path, { ...init, token: newToken }, true);
+      } catch (err) {
+          throw new ApiError(await parseError(res), res.status);
+      }
+  }
+  
   if (res.status === 204) return undefined as T;
   if (!res.ok) {
     throw new ApiError(await parseError(res), res.status);
   }
   const text = await res.text();
   if (!text) return undefined as T;
-  return JSON.parse(text) as T;
+  const parsed = JSON.parse(text) as T;
+  
+  if (!disableCache && method === "GET" && typeof window !== "undefined") {
+    apiCache.set(cacheKey, { data: parsed, timestamp: Date.now() });
+  }
+  return parsed;
 }
 
 export async function login(email: string, password: string): Promise<{ access_token: string; token_type: string }> {
@@ -67,6 +139,14 @@ export async function login(email: string, password: string): Promise<{ access_t
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
+}
+
+export async function apiLogout(): Promise<void> {
+  try {
+    await apiFetch("/logout", { method: "POST" });
+  } catch {
+    // Ignore errors on logout
+  }
 }
 
 export async function requestPasswordReset(email: string): Promise<{ message: string }> {
@@ -119,6 +199,30 @@ export async function getMe(token: string): Promise<UserSettings> {
   return apiFetch("/user/me", { token });
 }
 
+export async function checkUsernameAvailability(
+  token: string,
+  user_name: string
+): Promise<{ available: boolean; normalized: string; reason: string | null }> {
+  const q = new URLSearchParams({ user_name });
+  return apiFetch(`/user/username-availability?${q.toString()}`, { token });
+}
+
+export async function createUsernameChangeRequest(
+  token: string,
+  body: { desired_username: string; reason?: string }
+): Promise<UsernameChangeRequestOut> {
+  return apiFetch("/user/username-change-requests", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function listMyUsernameChangeRequests(token: string): Promise<UsernameChangeRequestOut[]> {
+  return apiFetch("/user/username-change-requests", { token });
+}
+
 export async function patchMe(
   token: string,
   body: Partial<
@@ -127,8 +231,8 @@ export async function patchMe(
       | "name"
       | "user_name"
       | "email"
-      | "seo_title"
-      | "seo_description"
+      | "meta_title"
+      | "meta_description"
       | "bio"
       | "link"
       | "contact_email"
@@ -139,6 +243,7 @@ export async function patchMe(
       | "linkedin_link"
       | "github_link"
       | "youtube_link"
+      | "use_default_preview_image"
       | "profile_image_url"
     >
   >
@@ -172,15 +277,15 @@ export async function getDesignSettings(token: string): Promise<DesignSettings> 
   return apiFetch("/user/design", { token });
 }
 
-export async function getSeoSettings(token: string): Promise<SeoSettings> {
-  return apiFetch("/user/seo", { token });
+export async function getMetaSettings(token: string): Promise<MetaSettings> {
+  return apiFetch("/user/meta", { token });
 }
 
-export async function patchSeoSettings(
+export async function patchMetaSettings(
   token: string,
-  body: Partial<SeoSettings>
-): Promise<SeoSettings> {
-  return apiFetch("/user/seo", {
+  body: Partial<MetaSettings>
+): Promise<MetaSettings> {
+  return apiFetch("/user/meta", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },
@@ -252,6 +357,15 @@ export async function updateMenuPages(token: string, ordered_page_ids: number[])
   });
 }
 
+export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
+  return apiFetch("/pages/footer", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_page_ids }),
+  });
+}
+
 export async function getPublicPages(userName: string): Promise<UserPage[]> {
   return apiFetch(`/${encodeURIComponent(userName)}/pages`);
 }
@@ -264,6 +378,12 @@ export async function uploadProfileImage(token: string, file: File): Promise<{ p
   const fd = new FormData();
   fd.append("file", file);
   return apiFetch("/user/me/profile-image", { method: "POST", token, body: fd });
+}
+
+export async function uploadPageMedia(token: string, file: File): Promise<{ url: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch("/pages/media", { method: "POST", token, body: fd });
 }
 
 export async function listBlogs(token: string): Promise<BlogListItem[]> {
@@ -280,8 +400,8 @@ export async function createBlog(
     title: string;
     content: string;
     slug?: string;
-    seo_title?: string;
-    seo_description?: string;
+    meta_title?: string;
+    meta_description?: string;
     notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {
@@ -300,8 +420,9 @@ export async function updateBlog(
     title?: string;
     content?: string;
     slug?: string;
-    seo_title?: string | null;
-    seo_description?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    featured_image_url?: string | null;
     notify_subscribers?: boolean;
     ads_enabled?: boolean;
   }
@@ -362,6 +483,11 @@ export async function deleteBlogMedia(token: string, blogId: number, mediaId: nu
   await apiFetch(`/blog/${blogId}/media/${mediaId}`, { method: "DELETE", token });
 }
 
+export async function deleteBlogMediaByUrl(token: string, blogId: number, url: string): Promise<void> {
+  const q = new URLSearchParams({ url });
+  await apiFetch(`/blog/${blogId}/media?${q.toString()}`, { method: "DELETE", token });
+}
+
 export async function getPublicUser(userName: string): Promise<PublicUser> {
   return apiFetch(`/${encodeURIComponent(userName)}`);
 }
@@ -385,6 +511,78 @@ export async function publicSubscribe(userName: string, email: string): Promise<
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
+}
+
+/** Public: confirm a subscription via the token from the confirmation email. */
+export async function confirmSubscription(token: string): Promise<{ message: string }> {
+  return apiFetch(`/confirm-subscription?token=${encodeURIComponent(token)}`);
+}
+
+// ── Categories ────────────────────────────────────────────────────────
+
+export async function listCategories(token: string): Promise<Category[]> {
+  return apiFetch("/categories/", { token });
+}
+
+export async function createCategory(token: string, body: { name: string }): Promise<Category> {
+  return apiFetch("/categories/", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateCategory(token: string, id: number, body: { name: string }): Promise<Category> {
+  return apiFetch(`/categories/${id}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteCategory(token: string, id: number): Promise<void> {
+  await apiFetch(`/categories/${id}`, { method: "DELETE", token });
+}
+
+export async function getCategoryBlogs(token: string, id: number): Promise<BlogListItem[]> {
+  return apiFetch(`/categories/${id}/blogs`, { token });
+}
+
+export async function setCategoryBlogs(token: string, categoryId: number, blog_ids: number[]): Promise<Category> {
+  return apiFetch(`/categories/${categoryId}/blogs`, {
+    method: "PUT",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ blog_ids }),
+  });
+}
+
+export async function assignBlogCategories(token: string, blogId: number, category_ids: number[]): Promise<BlogDetail> {
+  return apiFetch(`/blog/${blogId}/categories`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ category_ids }),
+  });
+}
+
+export async function updateMenuCategories(token: string, ordered_category_ids: number[]): Promise<Category[]> {
+  return apiFetch("/categories/menu", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ ordered_category_ids }),
+  });
+}
+
+export async function getPublicCategories(userName: string): Promise<Category[]> {
+  return apiFetch(`/${encodeURIComponent(userName)}/categories`);
+}
+
+export async function getPublicCategoryBlogs(userName: string, slug: string): Promise<PublicCategoryBlogsResponse> {
+  return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
 }
 
 export async function viewsAnalytics(token: string, period?: string): Promise<ViewsAnalytics> {
@@ -428,4 +626,103 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!["active", "past_due"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;
   return new Date(sub.current_period_end) >= new Date();
+}
+
+export async function adminListUsers(
+  token: string,
+  params: { q?: string; plan?: "all" | "free" | "pro"; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
+): Promise<AdminUserListItem[]> {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.plan) query.set("plan", params.plan);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
+  return apiFetch(`/admin/users?${query.toString()}`, { token });
+}
+
+export async function adminListUsernameChangeRequests(
+  token: string,
+  params: {
+    status?: "pending" | "approved" | "rejected";
+    q?: string;
+    sort?: "latest" | "oldest";
+    limit?: number;
+    offset?: number;
+  } = {}
+): Promise<AdminUsernameRequestListItem[]> {
+  const query = new URLSearchParams();
+  if (params.status) query.set("status", params.status);
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
+  return apiFetch(`/admin/username-change-requests?${query.toString()}`, { token });
+}
+
+export async function adminReviewUsernameChangeRequest(
+  token: string,
+  requestId: number,
+  body: { status: "approved" | "rejected"; admin_note?: string }
+): Promise<UsernameChangeRequestOut> {
+  return apiFetch(`/admin/username-change-requests/${requestId}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function adminListPayments(
+  token: string,
+  params: { q?: string; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
+): Promise<AdminPaymentListItem[]> {
+  const query = new URLSearchParams();
+  if (params.q) query.set("q", params.q);
+  if (params.sort) query.set("sort", params.sort);
+  if (typeof params.limit === "number") query.set("limit", String(params.limit));
+  if (typeof params.offset === "number") query.set("offset", String(params.offset));
+  return apiFetch(`/admin/payments?${query.toString()}`, { token });
+}
+
+
+// ── Custom Domain API ────────────────────────────────────────────────────────
+
+export async function addCustomDomain(token: string, hostname: string): Promise<DomainAddResponse> {
+  return apiFetch("/settings/domain", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ hostname }),
+  });
+}
+
+export async function getCustomDomain(token: string): Promise<CustomDomain | null> {
+  try {
+    const data = await apiFetch<CustomDomain & { custom_domain?: string | null }>("/settings/domain", {
+      token,
+      disableCache: true,
+    });
+    return {
+      ...data,
+      hostname: data.hostname ?? data.custom_domain ?? null,
+    };
+  } catch (e) {
+    if (e instanceof ApiError && e.status === 404) return null;
+    throw e;
+  }
+}
+
+export async function verifyCustomDomain(token: string): Promise<DomainVerifyResponse> {
+  return apiFetch("/settings/domain/verify", {
+    method: "POST",
+    token,
+  });
+}
+
+export async function deleteCustomDomain(token: string): Promise<{ message: string }> {
+  return apiFetch("/settings/domain", {
+    method: "DELETE",
+    token,
+  });
 }

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, EmailStr
+from datetime import datetime
 from typing import Optional, Literal
 
 
@@ -15,8 +16,8 @@ class UserSettings(BaseModel):
     name: str
     user_name: str
     email: EmailStr
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -34,6 +35,14 @@ class UserSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    site_footer_enabled: bool = False
+    use_default_preview_image: bool = True
+    username_change_count: int
+    is_admin: bool = False
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: list[int] | None = []
+    custom_domain: Optional[str] = None
+    domain_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -42,8 +51,8 @@ class UserSettings(BaseModel):
 class PublicUser(BaseModel):
     name: str
     user_name: str
-    seo_title: str
-    seo_description: str
+    meta_title: str
+    meta_description: str
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -60,7 +69,13 @@ class PublicUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
     footer_enabled: bool
+    site_footer_enabled: bool = False
+    use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
+    featured_blogs_enabled: bool = False
+    featured_blog_ids: list[int] | None = []
+    custom_domain: Optional[str] = None
+    domain_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -70,8 +85,8 @@ class UpdateUser(BaseModel):
     name: Optional[str] = None
     user_name: Optional[str] = None
     email: Optional[EmailStr] = None
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     bio: Optional[str] = None
     link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
@@ -83,6 +98,7 @@ class UpdateUser(BaseModel):
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
+    use_default_preview_image: Optional[bool] = None
 
 
 class UpdateProUser(BaseModel):
@@ -90,6 +106,35 @@ class UpdateProUser(BaseModel):
     navbar_enabled: Optional[bool] = None
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
+
+
+class AdminUsernameChange(BaseModel):
+    user_name: str
+    reason: Optional[str] = None
+
+
+class UsernameChangeRequestCreate(BaseModel):
+    desired_username: str
+    reason: Optional[str] = None
+
+
+class UsernameChangeRequestOut(BaseModel):
+    request_id: int
+    user_id: int
+    desired_username: str
+    reason: Optional[str] = None
+    status: str
+    admin_note: Optional[str] = None
+    reviewed_by_user_id: Optional[int] = None
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UsernameChangeRequestReview(BaseModel):
+    status: Literal["approved", "rejected"]
+    admin_note: Optional[str] = None
 
 
 class MonetizationSettings(BaseModel):
@@ -107,14 +152,14 @@ class MonetizationSettingsUpdate(BaseModel):
     ad_frequency: Optional[int] = None
 
 
-class SeoSettings(BaseModel):
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+class MetaSettings(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
     class Config:
         from_attributes = True
 
 
-class SeoSettingsUpdate(BaseModel):
-    seo_title: Optional[str] = None
-    seo_description: Optional[str] = None
+class MetaSettingsUpdate(BaseModel):
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None

@@ -1,15 +1,31 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from slugify import slugify
 from .. import models, utils
 from ..database import get_db
 from ..schemas import page as page_schema
 from ..security import oauth2
+from ..storage.service import save_media
 
 router = APIRouter(
     tags=["Pages"],
     prefix="/pages",
 )
+
+
+@router.post("/media", status_code=status.HTTP_201_CREATED)
+async def upload_page_media(
+    file: UploadFile = File(...),
+    current_user=Depends(oauth2.get_current_user),
+):
+    if not file:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required")
+    stored = await save_media(
+        file=file,
+        category="pages",
+        user_id=current_user.user_id,
+    )
+    return {"url": stored.url}
 
 
 def _max_pages_for_user(db: Session, user_id: int) -> int:
@@ -81,7 +97,7 @@ def create_page(
     return new_page
 
 
-@router.delete("/{page_id}", status_code=status.HTTP_200_OK)
+@router.delete("/{page_id:int}", status_code=status.HTTP_200_OK)
 def delete_page(
     page_id: int,
     db: Session = Depends(get_db),
@@ -99,7 +115,7 @@ def delete_page(
     return {"message": "Page deleted"}
 
 
-@router.patch("/id/{page_id}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.patch("/id/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def update_page(
     page_id: int,
     request: page_schema.UserPageUpdate,
@@ -176,6 +192,61 @@ def update_menu_pages(
             )
         pages_by_id[page_id].show_in_menu = True
         pages_by_id[page_id].menu_order = idx
+
+    db.commit()
+    return (
+        db.query(models.UserPage)
+        .filter(models.UserPage.user_id == current_user.user_id)
+        .order_by(models.UserPage.created_at.asc())
+        .all()
+    )
+
+
+@router.patch("/footer", response_model=list[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
+def update_footer_pages(
+    payload: dict = Body(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    raw_ids = payload.get("ordered_page_ids", [])
+    if raw_ids is None:
+        raw_ids = []
+    if not isinstance(raw_ids, list):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="ordered_page_ids must be a list",
+        )
+
+    normalized_ids: list[int] = []
+    for raw_id in raw_ids:
+        try:
+            normalized_ids.append(int(raw_id))
+        except (TypeError, ValueError):
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid page id in footer: {raw_id}",
+            ) from None
+
+    pages = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.user_id == current_user.user_id)
+        .order_by(models.UserPage.created_at.asc())
+        .all()
+    )
+    pages_by_id = {p.page_id: p for p in pages}
+
+    for page in pages:
+        page.show_in_footer = False
+        page.footer_order = None
+
+    for idx, page_id in enumerate(normalized_ids):
+        if page_id not in pages_by_id:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Invalid page id in footer: {page_id}",
+            )
+        pages_by_id[page_id].show_in_footer = True
+        pages_by_id[page_id].footer_order = idx
 
     db.commit()
     return (

@@ -6,6 +6,15 @@ from sqlalchemy import Column, String, Integer, Enum, DateTime, Text, JSON, Inde
 class Base(DeclarativeBase):
     pass
 
+
+class DomainStatus:
+    """Allowed values for User.domain_status."""
+    NONE = "none"        # No custom domain configured
+    PENDING = "pending"  # Domain saved, TXT ownership not yet verified
+    ACTIVE = "active"    # Verified + Pro subscription active
+    GRACE = "grace"      # Pro lapsed; domain still serving, 30-day countdown
+    EXPIRED = "expired"  # Grace period over; 301 redirect to articurls URL
+
 class User(Base):
     __tablename__ = "users"
 
@@ -14,8 +23,8 @@ class User(Base):
     user_name = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    seo_title = Column(String, nullable=True)
-    seo_description = Column(String, nullable=True)
+    meta_title = Column(String, nullable=True)
+    meta_description = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
     link = Column(String, nullable=True)
     contact_email = Column(String, nullable=True)
@@ -28,21 +37,73 @@ class User(Base):
     youtube_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
+
     custom_domain = Column(String, nullable=True, default=None)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
+    domain_status = Column(String, nullable=False, default=DomainStatus.NONE)
+    cloudflare_hostname_id = Column(String, nullable=True, default=None)
+    domain_dns_instructions = Column(JSON, nullable=True, default=None)  # cached DNS records from Cloudflare
+    verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
+
     verification_tick = Column(Boolean, nullable=False, default=False)
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
     footer_enabled = Column(Boolean, nullable=False, default=False)
+    site_footer_enabled = Column(Boolean, nullable=False, default=False)
+    use_default_preview_image = Column(Boolean, nullable=False, default=True)
     robots_mode = Column(String, nullable=False, default="auto")
     robots_custom_rules = Column(Text, nullable=True)
     sitemap_enabled = Column(Boolean, nullable=False, default=True)
     ads_enabled = Column(Boolean, nullable=False, default=False)
     ad_code = Column(Text, nullable=True)
     ad_frequency = Column(Integer, nullable=False, default=3)
+    username_change_count = Column(Integer, nullable=False, default=0)
+    featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
+    featured_blog_ids = Column(JSON, nullable=True, default=[])
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+
+class UsernameClaim(Base):
+    __tablename__ = "username_claims"
+
+    claim_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    username = Column(String, unique=True, nullable=False, index=True)
+    claimed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class UsernameChangeAudit(Base):
+    __tablename__ = "username_change_audits"
+
+    audit_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    old_username = Column(String, nullable=False)
+    new_username = Column(String, nullable=False)
+    actor_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
+    actor_email = Column(String, nullable=True)
+    is_admin_override = Column(Boolean, nullable=False, default=False)
+    reason = Column(String, nullable=True)
+    request_ip = Column(String, nullable=True)
+    user_agent = Column(String, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+
+class UsernameChangeRequest(Base):
+    __tablename__ = "username_change_requests"
+
+    request_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    desired_username = Column(String, nullable=False)
+    reason = Column(String, nullable=True)
+    status = Column(String, nullable=False, default="pending")  # pending|approved|rejected
+    admin_note = Column(String, nullable=True)
+    reviewed_by_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
+    reviewed_at = Column(DateTime(timezone=True), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 class BlogStatus(str, enum.Enum):
     DRAFT = "draft"
@@ -62,15 +123,16 @@ class Blog(Base):
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String, index=True, nullable=False)
-    seo_title = Column(String, nullable=True)
-    seo_description = Column(String, nullable=True)
+    meta_title = Column(String, nullable=True)
+    meta_description = Column(String, nullable=True)
+    featured_image_url = Column(String, nullable=True)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     ads_enabled = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
 
 class BlogMedia(Base):
@@ -176,5 +238,38 @@ class UserPage(Base):
     content = Column(Text, nullable=False, default="")
     show_in_menu = Column(Boolean, nullable=False, default=False)
     menu_order = Column(Integer, nullable=True)
+    show_in_footer = Column(Boolean, nullable=False, default=False)
+    footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+
+
+class Category(Base):
+    __tablename__ = "categories"
+    __table_args__ = (
+        UniqueConstraint("user_id", "slug", name="uq_categories_user_slug"),
+        Index("ix_categories_user_menu_order", "user_id", "menu_order"),
+    )
+
+    category_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, nullable=False)
+    show_in_menu = Column(Boolean, nullable=False, default=False)
+    menu_order = Column(Integer, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+
+    blog_links = relationship("BlogCategory", back_populates="category", cascade="all, delete-orphan")
+
+
+class BlogCategory(Base):
+    __tablename__ = "blog_categories"
+    __table_args__ = (
+        UniqueConstraint("blog_id", "category_id", name="uq_blog_categories_blog_category"),
+    )
+
+    blog_category_id = Column(Integer, primary_key=True)
+    blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
+    category_id = Column(ForeignKey("categories.category_id"), nullable=False, index=True)
+
+    category = relationship("Category", back_populates="blog_links")

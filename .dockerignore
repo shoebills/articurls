@@ -2,6 +2,7 @@
 .env.*
 .git
 .gitignore
+.codex
 
 __pycache__/
 *.pyc

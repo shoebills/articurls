@@ -11,8 +11,9 @@ export interface BlogListItem {
   title: string;
   content: string;
   slug: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  featured_image_url: string | null;
   notify_subscribers: boolean;
   ads_enabled: boolean;
   status: BlogStatus;
@@ -24,6 +25,7 @@ export interface BlogListItem {
   media: BlogMediaOut[];
   view_count: number;
   excerpt?: string | null;
+  category_ids?: number[];
 }
 
 export type BlogDetail = Omit<BlogListItem, "view_count" | "excerpt">;
@@ -33,8 +35,9 @@ export interface PublicBlog {
   title: string;
   content: string;
   slug: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
+  featured_image_url: string | null;
   ads_enabled: boolean;
   published_at: string | null;
   updated_at: string;
@@ -44,13 +47,14 @@ export interface PublicBlog {
   excerpt?: string | null;
   /** Optional aggregate from list endpoint when available. */
   view_count?: number;
+  category_ids?: number[];
 }
 
 export interface PublicUser {
   name: string;
   user_name: string;
-  seo_title: string;
-  seo_description: string;
+  meta_title: string;
+  meta_description: string;
   bio: string | null;
   link: string | null;
   contact_email: string | null;
@@ -67,8 +71,14 @@ export interface PublicUser {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
+  use_default_preview_image: boolean;
   /** False for active Pro — hide "Made with Articurls" on public pages. */
   show_articurls_watermark?: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
+  custom_domain?: string | null;
+  domain_status?: DomainStatus | null;
 }
 
 export interface UserSettings {
@@ -76,8 +86,8 @@ export interface UserSettings {
   name: string;
   user_name: string;
   email: string;
-  seo_title: string | null;
-  seo_description: string | null;
+  meta_title: string | null;
+  meta_description: string | null;
   bio: string | null;
   link: string | null;
   contact_email: string | null;
@@ -94,6 +104,51 @@ export interface UserSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
+  use_default_preview_image: boolean;
+  username_change_count: number;
+  is_admin?: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
+  custom_domain?: string | null;
+  domain_status?: DomainStatus | null;
+}
+
+export interface UsernameChangeRequestOut {
+  request_id: number;
+  user_id: number;
+  desired_username: string;
+  reason: string | null;
+  status: "pending" | "approved" | "rejected";
+  admin_note: string | null;
+  reviewed_by_user_id: number | null;
+  created_at: string | null;
+}
+
+export interface AdminUserListItem {
+  user_id: number;
+  name: string;
+  user_name: string;
+  email: string;
+  created_at: string | null;
+  plan: "free" | "pro";
+}
+
+export interface AdminPaymentListItem {
+  transaction_id: number;
+  user_id: number;
+  user_name: string;
+  email: string;
+  amount: number;
+  currency: string;
+  status: string;
+  dodo_payment_id: string | null;
+  created_at: string | null;
+}
+
+export interface AdminUsernameRequestListItem extends UsernameChangeRequestOut {
+  user_name: string;
+  email: string;
 }
 
 export interface UserPage {
@@ -104,6 +159,8 @@ export interface UserPage {
   content: string;
   show_in_menu: boolean;
   menu_order: number | null;
+  show_in_footer: boolean;
+  footer_order: number | null;
 }
 
 export interface DesignSettings {
@@ -111,6 +168,9 @@ export interface DesignSettings {
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
+  site_footer_enabled: boolean;
+  featured_blogs_enabled: boolean;
+  featured_blog_ids: number[];
 }
 
 export interface MonetizationSettings {
@@ -119,9 +179,9 @@ export interface MonetizationSettings {
   ad_frequency: number;
 }
 
-export interface SeoSettings {
-  seo_title: string | null;
-  seo_description: string | null;
+export interface MetaSettings {
+  meta_title: string | null;
+  meta_description: string | null;
 }
 
 export interface PublicBlogAds {
@@ -166,4 +226,51 @@ export interface SubscribersAnalytics {
   current_subscribers: number;
   subscribed: number;
   unsubscribed: number;
+}
+
+export interface Category {
+  category_id: number;
+  user_id: number;
+  name: string;
+  slug: string;
+  blog_count: number;
+  show_in_menu: boolean;
+  menu_order: number | null;
+  created_at: string;
+}
+
+export interface PublicCategoryBlogsResponse {
+  category: { category_id: number; name: string; slug: string };
+  blogs: PublicBlog[];
+}
+
+export type DomainStatus = "none" | "pending" | "active" | "grace" | "expired";
+
+export interface DNSRecord {
+  type: "TXT" | "CNAME";
+  name: string;
+  value: string;
+  purpose: "ownership" | "ssl" | "routing";
+  verified: boolean;
+}
+
+export interface CustomDomain {
+  hostname: string | null;
+  domain_status: DomainStatus;
+  verified_at: string | null;
+  grace_started_at: string | null;
+  grace_expires_at: string | null;
+  dns_instructions?: DNSRecord[] | null;
+}
+
+export interface DomainAddResponse {
+  hostname: string;
+  domain_status: DomainStatus;
+  dns_instructions: DNSRecord[];
+}
+
+export interface DomainVerifyResponse {
+  verification_status: "verified" | "pending" | "already_verified";
+  domain_status: DomainStatus;
+  dns_instructions: DNSRecord[] | null;
 }

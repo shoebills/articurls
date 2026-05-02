@@ -1,7 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { getMe, patchMe, patchProMe, uploadProfileImage, ApiError } from "@/lib/api";
+import {
+  getMe,
+  patchMe,
+  patchProMe,
+  uploadProfileImage,
+  checkUsernameAvailability,
+  createUsernameChangeRequest,
+  listMyUsernameChangeRequests,
+  ApiError,
+} from "@/lib/api";
+import type { UsernameChangeRequestOut } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,9 +21,10 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { assetUrl } from "@/lib/env";
+import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Camera, Plus, UserRound, X } from "lucide-react";
+import { Camera, Check, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   SiFacebook,
   SiGithub,
@@ -51,6 +62,8 @@ const SOCIAL_OPTIONS: Array<{
   { key: "youtube_link", label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden />, placeholder: "https://youtube.com/@username" },
 ];
 
+const USERNAME_CHANGE_LIMIT = 5;
+
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
   const [name, setName] = useState("");
@@ -72,9 +85,20 @@ export default function SettingsPage() {
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
   const [verification_tick, setVerificationTick] = useState(false);
+  const [useDefaultPreviewImage, setUseDefaultPreviewImage] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [usernameChangeCount, setUsernameChangeCount] = useState(0);
+  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
+  const [pendingUsername, setPendingUsername] = useState("");
+  const [usernameAvailability, setUsernameAvailability] = useState<{
+    state: "idle" | "checking" | "available" | "taken" | "invalid";
+    message: string;
+  }>({ state: "idle", message: "" });
+  const [usernameRequestReason, setUsernameRequestReason] = useState("");
+  const [usernameRequests, setUsernameRequests] = useState<UsernameChangeRequestOut[]>([]);
+  const [requestBusy, setRequestBusy] = useState(false);
   const pfpInputRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
@@ -101,6 +125,8 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(u.verification_tick);
+      setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
+      setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
     }
@@ -132,6 +158,8 @@ export default function SettingsPage() {
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
       setVerificationTick(ctxUser.verification_tick);
+      setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
+      setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
 
@@ -147,7 +175,6 @@ export default function SettingsPage() {
     try {
       await patchMe(token, {
         name,
-        user_name,
         email,
         bio,
         link,
@@ -159,6 +186,7 @@ export default function SettingsPage() {
         linkedin_link: socialLinks.linkedin_link || null,
         github_link: socialLinks.github_link || null,
         youtube_link: socialLinks.youtube_link || null,
+        use_default_preview_image: useDefaultPreviewImage,
       });
       await refreshUser();
       setSaved(true);
@@ -230,6 +258,102 @@ export default function SettingsPage() {
     setEnabledSocials((prev) => (prev.includes(socialToAdd) ? prev : [...prev, socialToAdd]));
     setAddingSocial(false);
     setSocialToAdd("");
+  }
+
+  const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
+  const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
+  const activeCustomDomain =
+    ctxUser?.custom_domain && (ctxUser.domain_status === "active" || ctxUser.domain_status === "grace")
+      ? ctxUser.custom_domain
+      : null;
+  const liveProfileUrl = activeCustomDomain
+    ? `https://${activeCustomDomain}`
+    : `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+
+  useEffect(() => {
+    if (!usernameDialogOpen || !token) return;
+    const next = pendingUsername.trim().toLowerCase();
+    if (!next) {
+      setUsernameAvailability({ state: "idle", message: "" });
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setUsernameAvailability({ state: "checking", message: "Checking..." });
+      try {
+        const result = await checkUsernameAvailability(token, next);
+        if (result.available) {
+          setUsernameAvailability({ state: "available", message: "Available" });
+        } else if (result.reason === "taken") {
+          setUsernameAvailability({ state: "taken", message: "Username is taken" });
+        } else {
+          setUsernameAvailability({ state: "invalid", message: result.reason || "Invalid username" });
+        }
+      } catch {
+        setUsernameAvailability({ state: "invalid", message: "Could not validate right now" });
+      }
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [pendingUsername, token, usernameDialogOpen]);
+
+  useEffect(() => {
+    if (!usernameDialogOpen || !token) return;
+    (async () => {
+      try {
+        const rows = await listMyUsernameChangeRequests(token);
+        setUsernameRequests(rows);
+      } catch {
+        // Non-blocking for dialog UX.
+      }
+    })();
+  }, [token, usernameDialogOpen]);
+
+  async function saveUsername() {
+    if (!token) return;
+    if (usernameChangesRemaining <= 0) {
+      setUsernameAvailability({ state: "invalid", message: "No username changes remaining" });
+      return;
+    }
+    if (!pendingUsername.trim()) {
+      setUsernameAvailability({ state: "invalid", message: "Username is required" });
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    try {
+      await patchMe(token, { user_name: pendingUsername.trim().toLowerCase() });
+      await refreshUser();
+      setUserName(pendingUsername.trim().toLowerCase());
+      setUsernameDialogOpen(false);
+      setSaved(true);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Could not update username");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitUsernameChangeRequest() {
+    if (!token) return;
+    if (!pendingUsername.trim()) {
+      setUsernameAvailability({ state: "invalid", message: "Username is required" });
+      return;
+    }
+    setRequestBusy(true);
+    setErr(null);
+    try {
+      await createUsernameChangeRequest(token, {
+        desired_username: pendingUsername.trim().toLowerCase(),
+        reason: usernameRequestReason.trim() || undefined,
+      });
+      const rows = await listMyUsernameChangeRequests(token);
+      setUsernameRequests(rows);
+      setUsernameRequestReason("");
+      setSaved(true);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Could not submit request");
+    } finally {
+      setRequestBusy(false);
+    }
   }
 
   return (
@@ -318,11 +442,23 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
-              <Input
-                id="user_name"
-                value={user_name}
-                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
-              />
+              <div className="flex items-center gap-2">
+                <Input id="user_name" value={user_name} readOnly className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="h-12 min-h-12 w-12 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
+                  onClick={() => {
+                    setPendingUsername(user_name);
+                    setUsernameAvailability({ state: "idle", message: "" });
+                    setUsernameDialogOpen(true);
+                  }}
+                  aria-label="Edit username"
+                >
+                  <Pencil className="h-4 w-4" />
+                  <span className="ml-2 hidden sm:inline">Edit</span>
+                </Button>
+              </div>
             </div>
           </div>
           <div className="space-y-2.5">
@@ -443,6 +579,15 @@ export default function SettingsPage() {
               )
             ) : null}
           </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Default preview image fallback</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Use your global default preview image when a post has no featured image and no inline image.
+              </p>
+            </div>
+            <Switch checked={useDefaultPreviewImage} onCheckedChange={setUseDefaultPreviewImage} />
+          </div>
           <div className="border-t border-border/60 pt-6">
             <Button size="lg" onClick={saveBase} disabled={busy}>
               Save profile
@@ -483,6 +628,85 @@ export default function SettingsPage() {
       </Card>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Change username</DialogTitle>
+            <DialogDescription>
+              You can change your username up to {USERNAME_CHANGE_LIMIT} times. Remaining: {usernameChangesRemaining}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-2">
+              <Label htmlFor="username-dialog">Username</Label>
+              <Input
+                id="username-dialog"
+                value={pendingUsername}
+                onChange={(e) => setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+                placeholder="yourusername"
+                autoCapitalize="none"
+                autoCorrect="off"
+              />
+            </div>
+            <p className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground break-all">
+              {liveProfileUrl}
+            </p>
+            <div className="min-h-5 text-sm">
+              {usernameAvailability.state === "checking" ? (
+                <span className="inline-flex items-center gap-1 text-muted-foreground">
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
+                </span>
+              ) : usernameAvailability.state === "available" ? (
+                <span className="inline-flex items-center gap-1 text-emerald-600">
+                  <Check className="h-3.5 w-3.5" /> Available
+                </span>
+              ) : usernameAvailability.message ? (
+                <span className="text-destructive">{usernameAvailability.message}</span>
+              ) : null}
+            </div>
+            {usernameChangesRemaining <= 0 ? (
+              <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
+                <p className="text-xs text-muted-foreground">
+                  You have reached the self-service limit. Submit an admin review request for legal, safety, or trademark cases.
+                </p>
+                <Textarea
+                  value={usernameRequestReason}
+                  onChange={(e) => setUsernameRequestReason(e.target.value)}
+                  placeholder="Reason for admin review (optional)"
+                  className="min-h-20"
+                />
+                <Button type="button" variant="outline" onClick={submitUsernameChangeRequest} disabled={requestBusy}>
+                  {requestBusy ? "Submitting..." : "Request admin change"}
+                </Button>
+                {usernameRequests.length > 0 ? (
+                  <p className="text-xs text-muted-foreground">
+                    Latest request: {usernameRequests[0].status}
+                    {usernameRequests[0].admin_note ? ` - ${usernameRequests[0].admin_note}` : ""}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={saveUsername}
+              disabled={
+                busy ||
+                usernameChangesRemaining <= 0 ||
+                usernameAvailability.state === "checking" ||
+                usernameAvailability.state === "taken" ||
+                usernameAvailability.state === "invalid"
+              }
+            >
+              {usernameChangesRemaining <= 0 ? "Save disabled" : "Save username"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

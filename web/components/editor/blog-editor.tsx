@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
@@ -27,22 +27,36 @@ import {
   ListOrdered,
   Minus,
   Redo2,
+  ScanText,
   Underline as UnderlineIcon,
   Undo2,
   X,
   Video,
 } from "lucide-react";
-import { uploadBlogMedia } from "@/lib/api";
+import { ApiError, deleteBlogMediaByUrl, uploadBlogMedia, uploadPageMedia } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 const lowlight = createLowlight(common);
+
+function extractImageSrcsFromHtml(html: string): Set<string> {
+  const urls = new Set<string>();
+  const re = /<img[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi;
+  let match: RegExpExecArray | null = re.exec(html);
+  while (match) {
+    const src = (match[1] || "").trim();
+    if (src) urls.add(src);
+    match = re.exec(html);
+  }
+  return urls;
+}
 
 type BlogEditorProps = {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
   blogId: number | null;
+  pageId?: number | null;
   token: string | null;
   className?: string;
 };
@@ -52,9 +66,13 @@ export function BlogEditor({
   onChange,
   placeholder = "Tell your story…",
   blogId,
+  pageId = null,
   token,
   className,
 }: BlogEditorProps) {
+  const [selectionTick, setSelectionTick] = useState(0);
+  const prevImageSrcsRef = useRef<Set<string>>(extractImageSrcsFromHtml(content || ""));
+  const deletingSrcsRef = useRef<Set<string>>(new Set());
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -76,10 +94,57 @@ export function BlogEditor({
       },
     },
     onUpdate: ({ editor: ed }) => {
-      onChange(ed.getHTML());
+      const nextHtml = ed.getHTML();
+      onChange(nextHtml);
+
+      if (blogId && token) {
+        const nextSet = extractImageSrcsFromHtml(nextHtml);
+        const removed: string[] = [];
+        prevImageSrcsRef.current.forEach((src) => {
+          if (!nextSet.has(src) && !deletingSrcsRef.current.has(src)) {
+            removed.push(src);
+          }
+        });
+        prevImageSrcsRef.current = nextSet;
+
+        if (removed.length > 0) {
+          removed.forEach((src) => deletingSrcsRef.current.add(src));
+          void Promise.all(
+            removed.map(async (src) => {
+              try {
+                await deleteBlogMediaByUrl(token, blogId, src);
+              } catch {
+                // Best effort only; editor UX should not fail on cleanup issues.
+              } finally {
+                deletingSrcsRef.current.delete(src);
+              }
+            })
+          );
+        }
+      } else {
+        prevImageSrcsRef.current = extractImageSrcsFromHtml(nextHtml);
+      }
+    },
+    onSelectionUpdate: () => {
+      // Force a lightweight re-render so toolbar disabled states reflect node selection changes.
+      setSelectionTick((v) => v + 1);
     },
     immediatelyRender: false,
   });
+
+  const isImageSelected =
+    !!editor &&
+    ((editor.state.selection as { node?: { type?: { name?: string } } }).node?.type?.name === "image" ||
+      editor.isActive("image"));
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
+    if (content !== current) {
+      editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
+    }
+  }, [content, editor]);
 
   const setLink = useCallback(() => {
     if (!editor) return;
@@ -94,10 +159,15 @@ export function BlogEditor({
   }, [editor]);
 
   const addImage = useCallback(async () => {
-    if (!editor || !blogId || !token) {
-      window.alert("Save the draft first to upload images.");
+    if (!editor || !token) {
+      window.alert("Please log in to upload images.");
       return;
     }
+    if (!blogId && !pageId) {
+      window.alert("Save first to upload images.");
+      return;
+    }
+
     const input = document.createElement("input");
     input.type = "file";
     input.accept = "image/*";
@@ -105,14 +175,24 @@ export function BlogEditor({
       const file = input.files?.[0];
       if (!file) return;
       try {
-        const media = await uploadBlogMedia(token, blogId, file);
-        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: "" }).run();
-      } catch {
-        window.alert("Image upload failed.");
+        const media = blogId ? await uploadBlogMedia(token, blogId, file) : await uploadPageMedia(token, file);
+        const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
+        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
+      } catch (e) {
+        const detail = e instanceof ApiError ? e.message : "Image upload failed.";
+        window.alert(detail);
       }
     };
     input.click();
-  }, [blogId, editor, token]);
+  }, [blogId, pageId, editor, token]);
+
+  const editSelectedImageAlt = useCallback(() => {
+    if (!editor || !isImageSelected) return;
+    const attrs = editor.getAttributes("image");
+    const nextAlt = window.prompt("Image alt text", attrs.alt || "");
+    if (nextAlt === null) return;
+    editor.chain().focus().updateAttributes("image", { alt: nextAlt.trim() }).run();
+  }, [editor, isImageSelected]);
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
@@ -121,10 +201,19 @@ export function BlogEditor({
     editor.commands.setYoutubeVideo({ src: url });
   }, [editor]);
 
-  const removeSelectedImage = useCallback(() => {
-    if (!editor || !editor.isActive("image")) return;
+  const removeSelectedImage = useCallback(async () => {
+    if (!editor || !isImageSelected) return;
+    const attrs = editor.getAttributes("image");
+    const src = typeof attrs?.src === "string" ? attrs.src : "";
+    if (blogId && token && src) {
+      try {
+        await deleteBlogMediaByUrl(token, blogId, src);
+      } catch {
+        // Keep UX smooth; content removal should still work even if media cleanup fails.
+      }
+    }
     editor.chain().focus().deleteSelection().run();
-  }, [editor]);
+  }, [editor, isImageSelected, blogId, token]);
 
   if (!editor) {
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;
@@ -132,6 +221,9 @@ export function BlogEditor({
 
   return (
     <div className={cn("tiptap-editor rounded-lg border border-input bg-background", className)}>
+      <span className="hidden" aria-hidden>
+        {selectionTick}
+      </span>
       <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border p-2 [scrollbar-width:thin] sm:flex-wrap">
         <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
           <Undo2 className="h-4 w-4" />
@@ -234,11 +326,21 @@ export function BlogEditor({
         </Button>
         <Button
           type="button"
-          variant={editor.isActive("image") ? "secondary" : "ghost"}
+          variant={isImageSelected ? "secondary" : "ghost"}
+          size="icon"
+          onClick={editSelectedImageAlt}
+          title="Edit image alt text"
+          disabled={!isImageSelected}
+        >
+          <ScanText className="h-4 w-4" />
+        </Button>
+        <Button
+          type="button"
+          variant={isImageSelected ? "secondary" : "ghost"}
           size="icon"
           onClick={removeSelectedImage}
           title="Remove selected image"
-          disabled={!editor.isActive("image")}
+          disabled={!isImageSelected}
         >
           <X className="h-4 w-4" />
         </Button>

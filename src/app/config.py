@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int
+    refresh_token_expire_days: int = 7
 
     redis_url: str
 
@@ -41,6 +42,12 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     app_base_url: str = "http://localhost:3000"
+    admin_emails: str = ""
+    
+    internal_api_secret: str = ""
+    cloudflare_api_token: str = ""
+    cloudflare_zone_id: str = ""
+    cloudflare_fallback_origin: str = "fallback.articurls.com"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

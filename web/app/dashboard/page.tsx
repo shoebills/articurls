@@ -29,10 +29,13 @@ import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVerti
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
+import { resolveBlogPreviewImage } from "@/lib/blog-images";
+
+const POSTS_PER_PAGE = 10;
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [blogs, setBlogs] = useState<BlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
@@ -41,6 +44,7 @@ export default function DashboardPage() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [page, setPage] = useState(1);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -143,6 +147,17 @@ export default function DashboardPage() {
       .map((row) => row.blog);
   }, [blogs, query, sortBy, statusFilter]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusFilter, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / POSTS_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedBlogs = useMemo(() => {
+    const start = (currentPage - 1) * POSTS_PER_PAGE;
+    return filteredBlogs.slice(start, start + POSTS_PER_PAGE);
+  }, [filteredBlogs, currentPage]);
+
   if (loading) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
@@ -226,8 +241,9 @@ export default function DashboardPage() {
 
       {blogs.length > 0 ? (
         filteredBlogs.length > 0 ? (
-        <ul className="space-y-4">
-          {filteredBlogs.map((b) => {
+          <>
+            <ul className="space-y-4">
+          {pagedBlogs.map((b) => {
             const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
@@ -250,66 +266,24 @@ export default function DashboardPage() {
                 className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <h2 className="min-w-0 flex-1 text-lg font-medium leading-snug tracking-tight text-slate-900">
-                      {b.title || "Untitled"}
-                    </h2>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          data-card-action="true"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 text-slate-500 hover:text-slate-700"
-                          aria-label={`Actions for ${b.title || "Untitled"}`}
-                          disabled={rowBusyId === b.blog_id}
-                        >
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent data-card-action="true" align="end" className="w-48">
-                        <DropdownMenuItem data-card-action="true" asChild>
-                          <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
-                            <Pencil className="h-4 w-4" />
-                            Edit
-                          </Link>
-                        </DropdownMenuItem>
-                        {b.status === "published" && (
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            onClick={() => handleArchive(b.blog_id)}
-                            disabled={rowBusyId === b.blog_id}
-                          >
-                            <Archive className="h-4 w-4" />
-                            Archive
-                          </DropdownMenuItem>
-                        )}
-                        {b.status === "archived" && (
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            onClick={() => handlePublishAgain(b.blog_id)}
-                            disabled={rowBusyId === b.blog_id}
-                          >
-                            <ArchiveRestore className="h-4 w-4" />
-                            Unarchive
-                          </DropdownMenuItem>
-                        )}
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          data-card-action="true"
-                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                          onClick={() => setDeleteId(b.blog_id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                  <div className="flex items-start gap-4">
+                    {resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true)}
+                        alt=""
+                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
+                      />
+                    ) : null}
+                    <div className="min-w-0 flex-1 space-y-1">
+                      <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                        {b.title || "Untitled"}
+                      </h2>
+                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
+                        {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
+                      </p>
+                    </div>
                   </div>
-
-                  <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                    {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
-                  </p>
 
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
                     <BlogStatusBadge status={b.status} className="shrink-0" />
@@ -323,13 +297,85 @@ export default function DashboardPage() {
                     <span className="whitespace-nowrap">
                       {views} view{views === 1 ? "" : "s"}
                     </span>
+                    <div className="ml-auto" data-card-action="true">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            data-card-action="true"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                            aria-label={`Actions for ${b.title || "Untitled"}`}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent data-card-action="true" align="end" className="w-48">
+                          <DropdownMenuItem data-card-action="true" asChild>
+                            <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
+                              <Pencil className="h-4 w-4" />
+                              Edit
+                            </Link>
+                          </DropdownMenuItem>
+                          {b.status === "published" && (
+                            <DropdownMenuItem
+                              data-card-action="true"
+                              onClick={() => handleArchive(b.blog_id)}
+                              disabled={rowBusyId === b.blog_id}
+                            >
+                              <Archive className="h-4 w-4" />
+                              Archive
+                            </DropdownMenuItem>
+                          )}
+                          {b.status === "archived" && (
+                            <DropdownMenuItem
+                              data-card-action="true"
+                              onClick={() => handlePublishAgain(b.blog_id)}
+                              disabled={rowBusyId === b.blog_id}
+                            >
+                              <ArchiveRestore className="h-4 w-4" />
+                              Unarchive
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                            onClick={() => setDeleteId(b.blog_id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             </li>
             );
           })}
-        </ul>
+            </ul>
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Page {currentPage} of {totalPages}
+              </p>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                  Prev
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={currentPage >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          </>
         ) : (
           <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
             No posts match your search.

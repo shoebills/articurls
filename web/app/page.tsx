@@ -33,7 +33,7 @@ export default function MarketingPage() {
     },
     {
       icon: Search,
-      title: "SEO controls",
+      title: "Meta controls",
       description: "Set post metadata without touching extra tools.",
     },
     {
@@ -145,7 +145,7 @@ export default function MarketingPage() {
                 {
                   step: "02",
                   title: "Set publish details",
-                  body: "Choose slug, SEO, schedule, and whether to notify subscribers.",
+                  body: "Choose slug, meta fields, schedule, and whether to notify subscribers.",
                 },
                 {
                   step: "03",
@@ -215,7 +215,7 @@ export default function MarketingPage() {
                   <p className="text-4xl font-semibold tracking-tight">$0<span className="text-base font-normal text-muted-foreground">/mo</span></p>
                 </CardHeader>
                 <CardContent className="flex-1 space-y-3 px-6 text-sm">
-                  {["Unlimited posts", "Post scheduling", "SEO fields", "Reader analytics", "One page in nav"].map((x) => (
+                  {["Unlimited posts", "Post scheduling", "Meta fields", "Reader analytics", "One page in nav"].map((x) => (
                     <div key={x} className="flex items-center gap-2.5">
                       <Check className="h-4 w-4 text-emerald-700" aria-hidden />
                       <span className="text-muted-foreground">{x}</span>
