@@ -293,10 +293,10 @@ def verify_domain(
 
     # STRICT activation condition - use EXACT Cloudflare status values
     if hostname_status == "active" and ssl_status == "active":
-        # Domain is fully verified and active
         db_user.domain_status = models.DomainStatus.ACTIVE
         db_user.is_domain_verified = True
         db_user.verified_at = datetime.now(timezone.utc)
+        db_user.domain_dns_instructions = None  # clear cached instructions on activation
         db.commit()
         _invalidate_domain_cache(db_user.custom_domain)
         
@@ -306,13 +306,43 @@ def verify_domain(
             dns_instructions=None
         )
     
-    # Not ready yet - return current DNS instructions
-    dns_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
+    # Not ready yet — build DNS instructions, merging with cached records.
+    # When Cloudflare validates a record it removes it from the response,
+    # so we keep cached records and mark them verified=True if they've disappeared.
+    fresh_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
+    fresh_keys = {(r.name, r.value) for r in fresh_instructions}
+
+    # Start with fresh records
+    merged: List[DNSRecord] = list(fresh_instructions)
+
+    # Re-add any cached records that are no longer in the CF response (= verified)
+    if db_user.domain_dns_instructions:
+        try:
+            cached = [DNSRecord(**r) for r in db_user.domain_dns_instructions]
+            for cached_record in cached:
+                if (cached_record.name, cached_record.value) not in fresh_keys:
+                    # Not in fresh response = Cloudflare already validated it
+                    merged.append(DNSRecord(
+                        type=cached_record.type,
+                        name=cached_record.name,
+                        value=cached_record.value,
+                        purpose=cached_record.purpose,
+                        verified=True,
+                    ))
+        except Exception:
+            pass
+
+    # Sort: routing last, verified records after unverified within each group
+    merged.sort(key=lambda r: (r.purpose == "routing", r.verified))
+
+    # Update DB cache with merged state
+    db_user.domain_dns_instructions = [r.model_dump() for r in merged]
+    db.commit()
 
     return DomainVerifyOut(
         verification_status="pending",
         domain_status=db_user.domain_status,
-        dns_instructions=dns_instructions if dns_instructions else None
+        dns_instructions=merged if merged else None
     )
 
 
