@@ -262,7 +262,13 @@ export default function SettingsPage() {
 
   const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
-  const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+  const activeCustomDomain =
+    ctxUser?.custom_domain && (ctxUser.domain_status === "active" || ctxUser.domain_status === "grace")
+      ? ctxUser.custom_domain
+      : null;
+  const liveProfileUrl = activeCustomDomain
+    ? `https://${activeCustomDomain}`
+    : `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
 
   useEffect(() => {
     if (!usernameDialogOpen || !token) return;

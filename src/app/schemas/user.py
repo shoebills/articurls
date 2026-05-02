@@ -41,6 +41,8 @@ class UserSettings(BaseModel):
     is_admin: bool = False
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
+    custom_domain: Optional[str] = None
+    domain_status: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -72,6 +74,8 @@ class PublicUser(BaseModel):
     show_articurls_watermark: bool = True
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
+    custom_domain: Optional[str] = None
+    domain_status: Optional[str] = None
 
     class Config:
         from_attributes = True

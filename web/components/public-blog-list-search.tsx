@@ -17,16 +17,31 @@ type PublicBlogListSearchProps = {
   username: string;
   user?: PublicUser;
   hideFeatured?: boolean;
+  useCustomDomain?: boolean;
+  siteOrigin?: string;
 };
 
 const POSTS_PER_PAGE = 10;
 
-function publicBlogPostUrl(userName: string, slug: string) {
-  return `${MARKETING_ORIGIN}/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}`;
+function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
+  const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
+  return `${siteOrigin || MARKETING_ORIGIN}${path}`;
 }
 
-function BlogPostShareMenu({ userName, slug, title }: { userName: string; slug: string; title: string }) {
-  const url = publicBlogPostUrl(userName, slug);
+function BlogPostShareMenu({
+  userName,
+  slug,
+  title,
+  useCustomDomain = false,
+  siteOrigin,
+}: {
+  userName: string;
+  slug: string;
+  title: string;
+  useCustomDomain?: boolean;
+  siteOrigin?: string;
+}) {
+  const url = publicBlogPostUrl(userName, slug, useCustomDomain, siteOrigin);
   const encodedUrl = encodeURIComponent(url);
   const encodedText = encodeURIComponent(title || "Read this post");
   const [open, setOpen] = useState(false);
@@ -170,11 +185,23 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
   );
 }
 
-function BlogListItemRow({ blog: b, username, useDefaultPreviewImage }: { blog: PublicBlog; username: string; useDefaultPreviewImage: boolean }) {
+function BlogListItemRow({
+  blog: b,
+  username,
+  useDefaultPreviewImage,
+  useCustomDomain = false,
+  siteOrigin,
+}: {
+  blog: PublicBlog;
+  username: string;
+  useDefaultPreviewImage: boolean;
+  useCustomDomain?: boolean;
+  siteOrigin?: string;
+}) {
   return (
     <li className="py-8 first:pt-0">
       <div className="rounded-xl py-1">
-        <Link href={getPublicPostUrl(username, b.slug)} className="group block transition-colors hover:bg-muted/30">
+        <Link href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
               <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
@@ -204,14 +231,20 @@ function BlogListItemRow({ blog: b, username, useDefaultPreviewImage }: { blog: 
           ) : (
             <span className="text-xs text-muted-foreground" aria-hidden />
           )}
-          <BlogPostShareMenu userName={username} slug={b.slug} title={b.title} />
+          <BlogPostShareMenu
+            userName={username}
+            slug={b.slug}
+            title={b.title}
+            useCustomDomain={useCustomDomain}
+            siteOrigin={siteOrigin}
+          />
         </div>
       </div>
     </li>
   );
 }
 
-export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: PublicBlogListSearchProps) {
+export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
   const useDefaultPreviewImage = user?.use_default_preview_image ?? true;
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
@@ -228,14 +261,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: Pu
   }, [user, blogs, hideFeatured]);
   
   const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
-
-  if (blogs.length === 0) {
-    return (
-      <section className="mt-5 sm:mt-6">
-        <p className="text-muted-foreground">No published posts yet.</p>
-      </section>
-    );
-  }
 
   const sortedBlogs = useMemo(() => {
     const compareBySort = (a: PublicBlog, b: PublicBlog) => {
@@ -276,16 +301,20 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: Pu
       .map((row) => row.blog);
   }, [blogs, query, sortBy]);
 
-  useEffect(() => {
-    setPage(1);
-  }, [query, sortBy]);
-
   const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / POSTS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
   const pagedBlogs = useMemo(() => {
     const start = (currentPage - 1) * POSTS_PER_PAGE;
     return sortedBlogs.slice(start, start + POSTS_PER_PAGE);
   }, [sortedBlogs, currentPage]);
+
+  if (blogs.length === 0) {
+    return (
+      <section className="mt-5 sm:mt-6">
+        <p className="text-muted-foreground">No published posts yet.</p>
+      </section>
+    );
+  }
 
   return (
     <section className="mt-5 sm:mt-6">
@@ -294,13 +323,24 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: Pu
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
             placeholder="Search"
             aria-label="Search posts"
             className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
-        {!showFeatured && <SortMenu sortBy={sortBy} setSortBy={setSortBy} />}
+        {!showFeatured && (
+          <SortMenu
+            sortBy={sortBy}
+            setSortBy={(next) => {
+              setSortBy(next);
+              setPage(1);
+            }}
+          />
+        )}
       </div>
 
       {showFeatured ? (
@@ -308,7 +348,14 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: Pu
           <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured</h2>
           <ul className="divide-y divide-border/80 border-y border-border/80 pt-8">
             {featuredBlogs.map(b => (
-               <BlogListItemRow key={`featured-${b.blog_id}`} blog={b} username={username} useDefaultPreviewImage={useDefaultPreviewImage} />
+               <BlogListItemRow
+                 key={`featured-${b.blog_id}`}
+                 blog={b}
+                 username={username}
+                 useDefaultPreviewImage={useDefaultPreviewImage}
+                 useCustomDomain={useCustomDomain}
+                 siteOrigin={siteOrigin}
+               />
             ))}
           </ul>
         </div>
@@ -323,7 +370,14 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured }: Pu
 
       <ul className="divide-y divide-border/80">
         {pagedBlogs.map((b) => (
-          <BlogListItemRow key={b.blog_id} blog={b} username={username} useDefaultPreviewImage={useDefaultPreviewImage} />
+          <BlogListItemRow
+            key={b.blog_id}
+            blog={b}
+            username={username}
+            useDefaultPreviewImage={useDefaultPreviewImage}
+            useCustomDomain={useCustomDomain}
+            siteOrigin={siteOrigin}
+          />
         ))}
       </ul>
 

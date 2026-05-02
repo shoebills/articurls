@@ -1,12 +1,14 @@
 import Link from "next/link";
 import type { PublicUser, UserPage } from "@/lib/types";
+import { getPublicPageUrl } from "@/lib/public-url";
 
 type PublicSiteFooterProps = {
   user: PublicUser;
   pages: UserPage[];
+  useCustomDomain?: boolean;
 };
 
-export function PublicSiteFooter({ user, pages }: PublicSiteFooterProps) {
+export function PublicSiteFooter({ user, pages, useCustomDomain = false }: PublicSiteFooterProps) {
   if (!user.site_footer_enabled) return null;
 
   const footerPages = [...pages]
@@ -22,7 +24,7 @@ export function PublicSiteFooter({ user, pages }: PublicSiteFooterProps) {
           {footerPages.map((page) => (
             <li key={page.page_id} className="w-1/3 px-1 text-center sm:w-1/5 sm:px-2">
               <Link
-                href={`/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`}
+                href={getPublicPageUrl(user.user_name, page.slug, { customDomain: useCustomDomain })}
                 className="text-muted-foreground hover:text-foreground hover:underline"
               >
                 {page.title}

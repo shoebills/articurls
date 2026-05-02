@@ -77,6 +77,8 @@ export interface PublicUser {
   show_articurls_watermark?: boolean;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
+  custom_domain?: string | null;
+  domain_status?: DomainStatus | null;
 }
 
 export interface UserSettings {
@@ -108,6 +110,8 @@ export interface UserSettings {
   is_admin?: boolean;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
+  custom_domain?: string | null;
+  domain_status?: DomainStatus | null;
 }
 
 export interface UsernameChangeRequestOut {

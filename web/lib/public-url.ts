@@ -1,21 +1,24 @@
-/**
- * URL helpers for public blog and profile pages.
- * 
- * These generate RELATIVE URLs that work automatically on both:
- * - articurls.com/[username] (path-based routing)
- * - custom domains (domain-based routing)
- * 
- * DO NOT include domain or username prefix in these helpers.
- */
+type PublicUrlOptions = {
+  customDomain?: boolean;
+};
 
-export function getPublicPostUrl(username: string, slug: string): string {
-  return `/blog/${slug}`;
+function basePath(username: string, options?: PublicUrlOptions): string {
+  if (options?.customDomain) return "";
+  return `/${encodeURIComponent(username)}`;
 }
 
-export function getPublicProfileUrl(): string {
-  return `/`;
+export function getPublicPostUrl(username: string, slug: string, options?: PublicUrlOptions): string {
+  return `${basePath(username, options)}/blog/${encodeURIComponent(slug)}`;
 }
 
-export function getPublicCategoryUrl(slug: string): string {
-  return `/category/${slug}`;
+export function getPublicProfileUrl(username: string, options?: PublicUrlOptions): string {
+  return basePath(username, options) || "/";
+}
+
+export function getPublicCategoryUrl(username: string, slug: string, options?: PublicUrlOptions): string {
+  return `${basePath(username, options)}/category/${encodeURIComponent(slug)}`;
+}
+
+export function getPublicPageUrl(username: string, slug: string, options?: PublicUrlOptions): string {
+  return `${basePath(username, options)}/page/${encodeURIComponent(slug)}`;
 }

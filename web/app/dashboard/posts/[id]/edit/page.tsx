@@ -280,7 +280,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const liveUrl =
     blog.status === "published" && user
-      ? `${MARKETING_ORIGIN}/${user.user_name}/blog/${blog.slug}`
+      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+        ? `https://${user.custom_domain}/blog/${encodeURIComponent(blog.slug)}`
+        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
       : null;
 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
