@@ -37,18 +37,6 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
   }
 }
 
-async function resolveUsername(host: string): Promise<string | null> {
-  const info = await resolveDomainInfo(host);
-  if (!info) return null;
-  
-  // Only allow "active" and "grace" status
-  if (info.domain_status === "active" || info.domain_status === "grace") {
-    return info.username;
-  }
-  
-  return null;
-}
-
 async function loadUser(username: string): Promise<PublicUser | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (!res.ok) return null;
@@ -119,8 +107,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const host = h.get("x-original-host");
   if (!host) return {};
 
-  const username = await resolveUsername(host);
-  if (!username) return {};
+  const domainInfo = await resolveDomainInfo(host);
+  if (!domainInfo) return {};
+  if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") return {};
+  const username = domainInfo.username;
 
   const { slug: rawSegments = [] } = await params;
   const segments = rawSegments;
