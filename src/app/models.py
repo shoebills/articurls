@@ -7,12 +7,11 @@ class Base(DeclarativeBase):
     pass
 
 
-class DomainStatus:
-    """Allowed values for User.domain_status."""
-    NONE = "none"        # No custom domain configured
-    PENDING = "pending"  # Domain saved, TXT ownership not yet verified
-    ACTIVE = "active"    # Verified + Pro subscription active
-    GRACE = "grace"      # Pro lapsed; domain still serving, 30-day countdown
+class DomainStatus(str, enum.Enum):
+    NONE    = "none"     # No custom domain configured
+    PENDING = "pending"  # Domain saved, ownership not yet verified
+    ACTIVE  = "active"   # Verified + Pro subscription active
+    GRACE   = "grace"    # Pro lapsed; domain still serving, 30-day countdown
     EXPIRED = "expired"  # Grace period over; 301 redirect to articurls URL
 
 class User(Base):
@@ -40,7 +39,7 @@ class User(Base):
 
     custom_domain = Column(String, nullable=True, default=None)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
-    domain_status = Column(String, nullable=False, default=DomainStatus.NONE)
+    domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
     cloudflare_hostname_id = Column(String, nullable=True, default=None)
     domain_dns_instructions = Column(JSON, nullable=True, default=None)  # cached DNS records from Cloudflare
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)

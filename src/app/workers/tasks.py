@@ -116,6 +116,33 @@ def expired_pro_fallback():
             if db_user:
                 db_user.verification_tick = False
 
+                # Handle custom domain lifecycle when Pro lapses
+                if db_user.domain_status == models.DomainStatus.ACTIVE:
+                    # Move to grace period — domain still serves for 30 days
+                    from datetime import timedelta
+                    db_user.domain_status = models.DomainStatus.GRACE
+                    db_user.grace_started_at = now
+                    db_user.grace_expires_at = now + timedelta(days=30)
+                    # Invalidate Redis cache so middleware sees new status
+                    try:
+                        from .celery_app import celery as _celery
+                        from ..redis_client import redis_client
+                        if db_user.custom_domain:
+                            redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                    except Exception:
+                        pass
+
+                elif db_user.domain_status == models.DomainStatus.GRACE:
+                    # Check if grace period has expired
+                    if db_user.grace_expires_at and db_user.grace_expires_at < now:
+                        db_user.domain_status = models.DomainStatus.EXPIRED
+                        try:
+                            from ..redis_client import redis_client
+                            if db_user.custom_domain:
+                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                        except Exception:
+                            pass
+
             sub.plan_type = "free"
             if sub.status != "cancelled":
                 sub.status = "inactive"
@@ -148,7 +175,7 @@ def poll_domain_ssl_records(self, user_id: int):
             return  # Already resolved
 
         cf_client = CloudflareClient()
-        cf_result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
+        cf_result = cf_client.get_custom_hostname_sync(db_user.cloudflare_hostname_id)
 
         if not cf_result:
             # Use current retry count for backoff (not next, so first retry is 3s)

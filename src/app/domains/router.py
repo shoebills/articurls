@@ -98,7 +98,7 @@ def extract_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
 # ── Authenticated user endpoints ─────────────────────────────────────────────
 
 @router.post("/settings/domain", response_model=DomainAddResponse, status_code=status.HTTP_200_OK)
-def add_domain(
+async def add_domain(
     body: DomainIn,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -130,7 +130,7 @@ def add_domain(
     # Create custom hostname in Cloudflare
     cf_client = CloudflareClient()
     try:
-        cf_result = cf_client.create_custom_hostname(hostname)
+        cf_result = await cf_client.create_custom_hostname(hostname)
     except CloudflareError as e:
         import json as _json
         try:
@@ -170,7 +170,7 @@ def add_domain(
     except IntegrityError:
         db.rollback()
         if cf_result.get("id"):
-            cf_client.delete_custom_hostname(cf_result["id"])
+            await cf_client.delete_custom_hostname(cf_result["id"])
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This domain is already in use by another account.",
@@ -193,7 +193,7 @@ def add_domain(
 
 
 @router.get("/settings/domain", response_model=DomainOut, response_model_by_alias=False, status_code=status.HTTP_200_OK)
-def get_domain(
+async def get_domain(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -224,7 +224,7 @@ def get_domain(
 
 
 @router.post("/settings/domain/verify", response_model=DomainVerifyOut, status_code=status.HTTP_200_OK)
-def verify_domain(
+async def verify_domain(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     _pro=Depends(require_pro),
@@ -261,13 +261,12 @@ def verify_domain(
     cf_result = None
     
     try:
-        cf_result = cf_client.force_recheck(db_user.cloudflare_hostname_id)
+        cf_result = await cf_client.force_recheck(db_user.cloudflare_hostname_id)
     except Exception:
-        pass  # Ignore force_recheck failures
-    
-    # Fallback: get current status
+        pass
+
     if not cf_result:
-        cf_result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
+        cf_result = await cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
     
     if not cf_result:
         # Cloudflare failure - do NOT change DB, return pending
@@ -338,7 +337,7 @@ def verify_domain(
 
 
 @router.delete("/settings/domain", status_code=status.HTTP_200_OK)
-def delete_domain(
+async def delete_domain(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -353,8 +352,7 @@ def delete_domain(
     # Delete from Cloudflare if hostname_id exists
     if db_user.cloudflare_hostname_id:
         cf_client = CloudflareClient()
-        cf_client.delete_custom_hostname(db_user.cloudflare_hostname_id)
-        # Ignore result - we clear DB fields regardless
+        await cf_client.delete_custom_hostname(db_user.cloudflare_hostname_id)
 
     old_domain = db_user.custom_domain
     db_user.custom_domain = None
@@ -379,7 +377,7 @@ _DOMAIN_CACHE_TTL = 60  # seconds
 @router.get("/internal/domain-lookup", response_model=DomainLookupOut, status_code=status.HTTP_200_OK)
 def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)):
     secret = settings.internal_api_secret
-    if secret and request.headers.get("x-internal-secret") != secret:
+    if not secret or request.headers.get("x-internal-secret") != secret:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
     normalized = normalize_hostname(hostname)
@@ -402,7 +400,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
-    result = {"username": db_user.user_name, "domain_status": db_user.domain_status}
+    result = {"username": db_user.user_name, "domain_status": db_user.domain_status.value if hasattr(db_user.domain_status, 'value') else db_user.domain_status}
 
     # Cache the result
     try:
