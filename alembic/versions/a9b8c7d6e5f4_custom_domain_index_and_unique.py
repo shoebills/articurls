@@ -25,8 +25,9 @@ def upgrade() -> None:
 
     # Full unique index on lower(custom_domain) — covers all non-null values
     # regardless of domain_status. Prevents duplicate claims at DB level.
+    # IF NOT EXISTS guards against re-running on a DB that already has it.
     op.execute("""
-        CREATE UNIQUE INDEX uq_users_custom_domain_lower
+        CREATE UNIQUE INDEX IF NOT EXISTS uq_users_custom_domain_lower
         ON users (lower(custom_domain))
         WHERE custom_domain IS NOT NULL;
     """)
