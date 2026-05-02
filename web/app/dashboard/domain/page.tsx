@@ -37,7 +37,11 @@ export default function DomainSettingsPage() {
   const loadDomain = useCallback(async (tok: string) => {
     try {
       const data = await getCustomDomain(tok);
-      setDomain(data); // null means no domain configured
+      setDomain(data);
+      // Populate DNS instructions from GET response (for page refresh)
+      if (data?.dns_instructions && data.dns_instructions.length > 0) {
+        setDnsInstructions(data.dns_instructions);
+      }
     } catch {
       setDomain(null);
     }
@@ -200,9 +204,7 @@ export default function DomainSettingsPage() {
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-sm text-yellow-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
               <p>
-                <strong>www subdomains may not work</strong> if your domain is on Cloudflare and has a proxied www record.
-                To fix this, go to your Cloudflare DNS and set the www record to <strong>DNS-only</strong> (grey cloud) before adding it here.
-                Alternatively, use a different subdomain like <span className="font-mono">blog.example.com</span>.
+                Make sure to add all DNS records shown after adding — including the SSL TXT record at <span className="font-mono">_acme-challenge.www.yourdomain.com</span>. If your domain is on Cloudflare, also set the www record to <strong>DNS-only</strong> (grey cloud).
               </p>
             </div>
           )}

@@ -20,6 +20,7 @@ class DomainOut(BaseModel):
     verified_at: Optional[datetime] = None
     grace_started_at: Optional[datetime] = None
     grace_expires_at: Optional[datetime] = None
+    dns_instructions: Optional[List[DNSRecord]] = None
 
     model_config = {"from_attributes": True, "populate_by_name": True}
 

@@ -259,6 +259,7 @@ export interface CustomDomain {
   verified_at: string | null;
   grace_started_at: string | null;
   grace_expires_at: string | null;
+  dns_instructions?: DNSRecord[] | null;
 }
 
 export interface DomainAddResponse {

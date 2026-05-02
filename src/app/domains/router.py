@@ -124,6 +124,17 @@ def add_domain(
             detail="Failed to create custom hostname in Cloudflare. Please try again.",
         )
 
+    # Cloudflare generates SSL validation records asynchronously — the POST
+    # response often has an empty validation_records list. Fetch the hostname
+    # immediately after creation to get the fully-populated response.
+    hostname_id = cf_result.get("id")
+    if hostname_id:
+        import time as _time
+        _time.sleep(1)  # brief wait for CF to populate SSL records
+        fetched = cf_client.get_custom_hostname(hostname_id)
+        if fetched:
+            cf_result = fetched
+
     # Extract complete DNS instructions
     dns_instructions = extract_dns_instructions(cf_result, hostname)
 
@@ -163,12 +174,14 @@ def get_domain(
 ):
     """
     Get current domain configuration.
-    For pending domains with Cloudflare hostname, fetches updated status.
+    For pending domains with Cloudflare hostname, fetches updated status and DNS instructions.
     """
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
+    dns_instructions = None
+
     # If domain is pending and has Cloudflare hostname, check for updates
     if (db_user.domain_status == models.DomainStatus.PENDING and 
         db_user.cloudflare_hostname_id):
@@ -177,19 +190,29 @@ def get_domain(
         cf_result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
         
         if cf_result:
-            # Check if domain became active
-            hostname_status = cf_result.get("status", "pending")
+            hostname_status = cf_result.get("status")
             ssl_info = cf_result.get("ssl", {})
-            ssl_status = ssl_info.get("status", "pending_validation")
+            ssl_status = ssl_info.get("status")
             
             if hostname_status == "active" and ssl_status == "active":
-                # Update to active status
                 db_user.domain_status = models.DomainStatus.ACTIVE
                 db_user.is_domain_verified = True
                 db_user.verified_at = datetime.now(timezone.utc)
                 db.commit()
-    
-    return db_user
+                _invalidate_domain_cache(db_user.custom_domain)
+            else:
+                # Return complete DNS instructions so page refresh shows all records
+                dns_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
+
+    result = DomainOut(
+        custom_domain=db_user.custom_domain,
+        domain_status=db_user.domain_status,
+        verified_at=db_user.verified_at,
+        grace_started_at=db_user.grace_started_at,
+        grace_expires_at=db_user.grace_expires_at,
+        dns_instructions=dns_instructions,
+    )
+    return result
 
 
 @router.post("/settings/domain/verify", response_model=DomainVerifyOut, status_code=status.HTTP_200_OK)
