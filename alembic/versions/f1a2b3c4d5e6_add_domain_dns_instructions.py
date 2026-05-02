@@ -1,7 +1,7 @@
 """add_domain_dns_instructions
 
 Revision ID: f1a2b3c4d5e6
-Revises: 2d3e4f5a6b7c
+Revises: e3f4a5b6c7d8
 Create Date: 2026-05-02
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSONB
 
 revision = 'f1a2b3c4d5e6'
-down_revision = '2d3e4f5a6b7c'
+down_revision = 'e3f4a5b6c7d8'
 branch_labels = None
 depends_on = None
 
