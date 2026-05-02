@@ -10,7 +10,7 @@ from .. import models
 from ..security.oauth2 import get_current_user
 from ..utils import require_pro
 from ..config import settings
-from ..cloudflare.client import CloudflareClient
+from ..cloudflare.client import CloudflareClient, CloudflareError
 from ..redis_client import redis_client
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
 from .utils import normalize_hostname, validate_hostname
@@ -103,7 +103,20 @@ def add_domain(
 
     # Create custom hostname in Cloudflare
     cf_client = CloudflareClient()
-    cf_result = cf_client.create_custom_hostname(hostname)
+    try:
+        cf_result = cf_client.create_custom_hostname(hostname)
+    except CloudflareError as e:
+        import json as _json
+        try:
+            cf_body = _json.loads(e.body)
+            cf_errors = cf_body.get("errors", [])
+            detail = cf_errors[0].get("message", "Cloudflare error") if cf_errors else "Cloudflare error"
+        except Exception:
+            detail = e.body or "Cloudflare error"
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail=f"Cloudflare: {detail}",
+        )
     
     if not cf_result:
         raise HTTPException(

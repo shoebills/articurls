@@ -196,6 +196,16 @@ export default function DomainSettingsPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             Subdomains only — e.g. <span className="font-mono">blog.example.com</span>. Root domains are not supported.
           </p>
+          {hostname.trim().toLowerCase().startsWith("www.") && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-sm text-yellow-900">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
+              <p>
+                <strong>www subdomains may not work</strong> if your domain is on Cloudflare and has a proxied www record.
+                To fix this, go to your Cloudflare DNS and set the www record to <strong>DNS-only</strong> (grey cloud) before adding it here.
+                Alternatively, use a different subdomain like <span className="font-mono">blog.example.com</span>.
+              </p>
+            </div>
+          )}
           <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
             <Input
               type="text"
@@ -300,6 +310,9 @@ export default function DomainSettingsPage() {
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
+                {domain.hostname?.startsWith("www.") && (
+                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> record is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
+                )}
               </p>
 
               <Button onClick={handleVerifyDomain} disabled={verifying} className="w-full">

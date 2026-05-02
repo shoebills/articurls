@@ -7,6 +7,13 @@ from typing import Optional, Dict, Any, List
 from ..config import settings
 
 
+class CloudflareError(Exception):
+    def __init__(self, status_code: int, body: str):
+        self.status_code = status_code
+        self.body = body
+        super().__init__(f"Cloudflare API error {status_code}: {body}")
+
+
 class CloudflareClient:
     def __init__(self):
         self.api_token = settings.cloudflare_api_token
@@ -66,7 +73,10 @@ class CloudflareClient:
                     if data.get("success"):
                         return data.get("result")
                 
-                return None
+                # Raise with full Cloudflare error so caller can surface it
+                raise CloudflareError(response.status_code, response.text)
+        except CloudflareError:
+            raise
         except Exception as e:
             print(f"Cloudflare create_custom_hostname error: {e}")
             return None
