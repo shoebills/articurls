@@ -7,9 +7,6 @@ class Base(DeclarativeBase):
     pass
 
 
-# ---------------------------------------------------------------------------
-# Domain status constants
-# ---------------------------------------------------------------------------
 class DomainStatus:
     """Allowed values for User.domain_status."""
     NONE = "none"        # No custom domain configured
@@ -41,31 +38,13 @@ class User(Base):
     profile_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
 
-    # ── Custom domain ────────────────────────────────────────────────────────
-    # The hostname the user wants to serve their blog from (e.g. "blog.example.com").
-    # Uniqueness is enforced by a case-insensitive partial index (see migration).
     custom_domain = Column(String, nullable=True, default=None)
-
-    # Legacy boolean kept for backward-compatible reads.
-    # No longer the source of truth — use domain_status instead.
     is_domain_verified = Column(Boolean, nullable=False, default=False)
-
-    # State machine for the custom domain lifecycle.
-    # Valid values defined in DomainStatus above.
     domain_status = Column(String, nullable=False, default=DomainStatus.NONE)
-
-    # Cloudflare Custom Hostnames API id, stored so we can delete it on removal.
-    cloudflare_hostname_id = Column(String, nullable=True, default=None)
-
-    # When the domain passed TXT verification.
+    cloudflare_hostname_id = Column(String, nullable=True, default=None) # Cloudflare Custom Hostnames API id, stored so we can delete it on removal.
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
-
-    # When the subscription lapsed and the grace period started.
-    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
-
-    # Absolute deadline: grace_started_at + 30 days, pre-computed for easy querying.
+    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None) # starts when subscription ends
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    # ── End custom domain ────────────────────────────────────────────────────
 
     verification_tick = Column(Boolean, nullable=False, default=False)
     navbar_enabled = Column(Boolean, nullable=False, default=True)

@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { Copy, Check, AlertCircle, Loader2, ExternalLink } from "lucide-react";
+import { Copy, Check, AlertCircle, Loader2, Globe } from "lucide-react";
 import {
   addCustomDomain,
   getCustomDomain,
   verifyCustomDomain,
   deleteCustomDomain,
   getSubscription,
+  isProSubscription,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -20,7 +21,8 @@ import type { CustomDomain, DNSRecord } from "@/lib/types";
 export default function DomainSettingsPage() {
   const router = useRouter();
   const { token } = useAuth();
-  const [domain, setDomain] = useState<CustomDomain | null>(null);
+
+  const [domain, setDomain] = useState<CustomDomain | null | undefined>(undefined); // undefined = not loaded yet
   const [dnsInstructions, setDnsInstructions] = useState<DNSRecord[]>([]);
   const [hostname, setHostname] = useState("");
   const [loading, setLoading] = useState(false);
@@ -29,66 +31,43 @@ export default function DomainSettingsPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isPro, setIsPro] = useState(false);
-  const [checkingPro, setCheckingPro] = useState(true);
+  const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
 
-  const loadDomain = useCallback(async () => {
+  const loadDomain = useCallback(async (tok: string) => {
     try {
-      if (!token) return;
-
-      const data = await getCustomDomain(token);
-      setDomain(data);
-    } catch (err) {
-      console.error("Failed to load domain:", err);
+      const data = await getCustomDomain(tok);
+      setDomain(data); // null means no domain configured
+    } catch {
+      setDomain(null);
     }
-  }, [token]);
-
-  const checkProStatus = useCallback(async () => {
-    try {
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
-      const subscription = await getSubscription(token);
-      const isProActive =
-        subscription?.plan_type === "pro" &&
-        ["active", "past_due"].includes(subscription.status);
-
-      setIsPro(isProActive);
-
-      if (isProActive) {
-        await loadDomain();
-      }
-    } catch (err) {
-      console.error("Failed to check Pro status:", err);
-    } finally {
-      setCheckingPro(false);
-    }
-  }, [loadDomain, router, token]);
+  }, []);
 
   useEffect(() => {
-    checkProStatus();
-  }, [checkProStatus]);
+    if (!token) return;
+
+    getSubscription(token)
+      .then((sub) => {
+        const pro = isProSubscription(sub);
+        setIsPro(pro);
+        if (pro) loadDomain(token);
+        else setDomain(null);
+      })
+      .catch(() => {
+        setIsPro(false);
+        setDomain(null);
+      });
+  }, [token, loadDomain]);
 
   async function handleAddDomain(e: React.FormEvent) {
     e.preventDefault();
-
-    if (!hostname.trim()) {
-      setError("Please enter a domain");
-      return;
-    }
+    if (!hostname.trim()) { setError("Please enter a domain"); return; }
+    if (!token) { router.push("/login"); return; }
 
     setLoading(true);
     setError("");
     setSuccess("");
 
     try {
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       const result = await addCustomDomain(token, hostname);
       setDomain({
         hostname: result.hostname,
@@ -99,7 +78,7 @@ export default function DomainSettingsPage() {
       });
       setDnsInstructions(result.dns_instructions);
       setHostname("");
-      setSuccess("Domain added successfully! Please configure your DNS records.");
+      setSuccess("Domain added. Configure your DNS records below, then click Verify.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add domain");
     } finally {
@@ -108,31 +87,21 @@ export default function DomainSettingsPage() {
   }
 
   async function handleVerifyDomain() {
+    if (!token) { router.push("/login"); return; }
     setVerifying(true);
     setError("");
     setSuccess("");
 
     try {
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       const result = await verifyCustomDomain(token);
 
-      if (result.verification_status === "verified") {
-        await loadDomain();
+      if (result.verification_status === "verified" || result.verification_status === "already_verified") {
+        await loadDomain(token);
         setDnsInstructions([]);
-        setSuccess("Domain verified successfully! Your custom domain is now active.");
-      } else if (result.verification_status === "already_verified") {
-        setSuccess("Domain is already verified.");
+        setSuccess("Domain verified! Your custom domain is now active.");
       } else {
-        setError(
-          "Domain not verified yet. Please ensure your DNS records are configured correctly and try again in a few minutes."
-        );
-        if (result.dns_instructions) {
-          setDnsInstructions(result.dns_instructions);
-        }
+        setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
+        if (result.dns_instructions) setDnsInstructions(result.dns_instructions);
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -146,74 +115,34 @@ export default function DomainSettingsPage() {
   }
 
   async function handleDeleteDomain() {
-    if (!confirm("Are you sure you want to remove this domain? This action cannot be undone.")) {
-      return;
-    }
+    if (!confirm("Remove this custom domain? This cannot be undone.")) return;
+    if (!token) { router.push("/login"); return; }
 
     setDeleting(true);
     setError("");
     setSuccess("");
 
     try {
-      if (!token) {
-        router.push("/login");
-        return;
-      }
-
       await deleteCustomDomain(token);
       setDomain(null);
       setDnsInstructions([]);
-      setSuccess("Domain removed successfully.");
+      setSuccess("Domain removed.");
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Failed to delete domain");
+      setError(err instanceof ApiError ? err.message : "Failed to remove domain");
     } finally {
       setDeleting(false);
     }
   }
 
-  function copyToClipboard(text: string, field: string) {
+  function copy(text: string, key: string) {
     navigator.clipboard.writeText(text).then(() => {
-      setCopiedField(field);
+      setCopiedField(key);
       setTimeout(() => setCopiedField(null), 2000);
     });
   }
 
-  function getStatusBadge(status: string) {
-    switch (status) {
-      case "active":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
-            <Check className="h-3.5 w-3.5" />
-            Active
-          </span>
-        );
-      case "pending":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            Pending Verification
-          </span>
-        );
-      case "grace":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-800">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Grace Period
-          </span>
-        );
-      case "expired":
-        return (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">
-            <AlertCircle className="h-3.5 w-3.5" />
-            Expired
-          </span>
-        );
-      default:
-        return null;
-    }
-  }
-
-  if (checkingPro) {
+  // ── Loading state ──────────────────────────────────────────────────────────
+  if (isPro === null || domain === undefined) {
     return (
       <div className="flex min-h-[400px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -221,30 +150,21 @@ export default function DomainSettingsPage() {
     );
   }
 
+  // ── Upgrade prompt ─────────────────────────────────────────────────────────
   if (!isPro) {
     return (
-      <div className="mx-auto max-w-4xl space-y-6 p-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Custom Domain</h1>
-          <p className="mt-2 text-muted-foreground">
-            Connect your own domain to your blog
-          </p>
-        </div>
-
+      <div className="mx-auto max-w-2xl space-y-6 p-6">
+        <PageHeader />
         <Card className="p-8 text-center">
-          <div className="mx-auto max-w-md space-y-4">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
-              <ExternalLink className="h-8 w-8 text-primary" />
+          <div className="mx-auto max-w-sm space-y-4">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+              <Globe className="h-7 w-7 text-primary" />
             </div>
-            <h2 className="text-2xl font-semibold">Upgrade to Pro</h2>
-            <p className="text-muted-foreground">
-              Custom domains are available on the Pro plan. Upgrade now to connect your own domain to your blog.
+            <h2 className="text-xl font-semibold">Pro plan required</h2>
+            <p className="text-sm text-muted-foreground">
+              Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
             </p>
-            <Button
-              size="lg"
-              onClick={() => router.push("/dashboard/billing")}
-              className="mt-4"
-            >
+            <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
               Upgrade to Pro
             </Button>
           </div>
@@ -253,14 +173,10 @@ export default function DomainSettingsPage() {
     );
   }
 
+  // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Custom Domain</h1>
-        <p className="mt-2 text-muted-foreground">
-          Connect your own domain to your blog
-        </p>
-      </div>
+    <div className="mx-auto max-w-2xl space-y-6 p-6">
+      <PageHeader />
 
       {error && (
         <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -276,168 +192,257 @@ export default function DomainSettingsPage() {
         </div>
       )}
 
-      {!domain?.hostname ? (
+      {/* No domain configured */}
+      {!domain?.hostname && (
         <Card className="p-6">
-          <h2 className="text-lg font-semibold">Add Custom Domain</h2>
+          <h2 className="text-base font-semibold">Add Custom Domain</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enter your subdomain (e.g., blog.example.com). Root domains are not supported.
+            Subdomains only — e.g. <span className="font-mono">blog.example.com</span>. Root domains are not supported.
           </p>
-
-          <form onSubmit={handleAddDomain} className="mt-6 space-y-4">
-            <div>
-              <Input
-                type="text"
-                placeholder="blog.example.com"
-                value={hostname}
-                onChange={(e) => setHostname(e.target.value)}
-                disabled={loading}
-                className="font-mono"
-              />
-            </div>
-
-            <Button type="submit" disabled={loading}>
+          <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
+            <Input
+              type="text"
+              placeholder="blog.example.com"
+              value={hostname}
+              onChange={(e) => setHostname(e.target.value)}
+              disabled={loading}
+              className="font-mono"
+            />
+            <Button type="submit" disabled={loading} className="shrink-0">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Add Domain
             </Button>
           </form>
         </Card>
-      ) : (
-        <Card className="p-6">
-          <div className="flex items-start justify-between">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold font-mono">{domain.hostname}</h2>
-              <div className="flex items-center gap-2">
-                {getStatusBadge(domain.domain_status)}
-              </div>
+      )}
+
+      {/* Domain configured */}
+      {domain?.hostname && (
+        <Card className="divide-y divide-border/70">
+          {/* Header row */}
+          <div className="flex items-center justify-between p-5">
+            <div className="space-y-1.5">
+              <p className="font-mono text-base font-semibold">{domain.hostname}</p>
+              <StatusBadge status={domain.domain_status} />
             </div>
             <Button
-              variant="destructive"
+              variant="outline"
               size="sm"
               onClick={handleDeleteDomain}
               disabled={deleting}
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
             >
-              {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Remove
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Remove"}
             </Button>
           </div>
 
-          {domain.domain_status === "active" && domain.verified_at && (
-            <div className="mt-6 rounded-lg bg-green-50 p-4">
-              <p className="text-sm font-medium text-green-900">
-                Your custom domain is live!
-              </p>
-              <p className="mt-1 text-sm text-green-700">
-                Visit{" "}
+          {/* Active state */}
+          {domain.domain_status === "active" && (
+            <div className="p-5">
+              <p className="text-sm text-muted-foreground">
+                Your blog is live at{" "}
                 <a
                   href={`https://${domain.hostname}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-medium underline"
+                  className="font-medium text-foreground underline underline-offset-4"
                 >
                   https://{domain.hostname}
                 </a>
               </p>
-              <p className="mt-2 text-xs text-green-600">
-                Verified on {new Date(domain.verified_at).toLocaleDateString()}
-              </p>
+              {domain.verified_at && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Verified {new Date(domain.verified_at).toLocaleDateString()}
+                </p>
+              )}
             </div>
           )}
 
+          {/* Pending state — DNS instructions */}
           {domain.domain_status === "pending" && dnsInstructions.length > 0 && (
-            <div className="mt-6 space-y-6">
+            <div className="space-y-5 p-5">
               <div>
-                <h3 className="text-sm font-semibold">DNS Configuration</h3>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  Add these DNS records to your domain provider:
+                <p className="text-sm font-medium">Configure DNS records</p>
+                <p className="mt-0.5 text-sm text-muted-foreground">
+                  Add these records at your domain registrar, then click Verify.
                 </p>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {dnsInstructions.map((record, idx) => (
-                  <div
+                  <DnsRecordCard
                     key={idx}
-                    className="rounded-lg border bg-muted/30 p-4 space-y-3"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">
-                        {record.purpose === "ownership" && "1. Ownership Verification (TXT)"}
-                        {record.purpose === "ssl" && "2. SSL Certificate (TXT)"}
-                        {record.purpose === "routing" && "3. Traffic Routing (CNAME)"}
-                      </span>
-                      <span className="rounded bg-background px-2 py-1 text-xs font-mono">
-                        {record.type}
-                      </span>
-                    </div>
-
-                    <div className="space-y-2">
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Name
-                        </label>
-                        <div className="mt-1 flex items-center gap-2">
-                          <code className="flex-1 rounded bg-background px-3 py-2 text-sm font-mono">
-                            {record.name}
-                          </code>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyToClipboard(record.name, `name-${idx}`)}
-                          >
-                            {copiedField === `name-${idx}` ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-
-                      <div>
-                        <label className="text-xs font-medium text-muted-foreground">
-                          Value
-                        </label>
-                        <div className="mt-1 flex items-center gap-2">
-                          <code className="flex-1 truncate rounded bg-background px-3 py-2 text-sm font-mono">
-                            {record.value}
-                          </code>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() => copyToClipboard(record.value, `value-${idx}`)}
-                          >
-                            {copiedField === `value-${idx}` ? (
-                              <Check className="h-4 w-4" />
-                            ) : (
-                              <Copy className="h-4 w-4" />
-                            )}
-                          </Button>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                    record={record}
+                    idx={idx}
+                    copiedField={copiedField}
+                    onCopy={copy}
+                  />
                 ))}
               </div>
 
-              <div className="rounded-lg bg-blue-50 p-4">
-                <p className="text-sm text-blue-900">
-                  <strong>Note:</strong> DNS changes can take up to 48 hours to propagate, but usually complete within a few minutes.
-                </p>
-              </div>
+              <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
+                DNS changes typically propagate within minutes, but can take up to 48 hours.
+              </p>
 
-              <Button
-                onClick={handleVerifyDomain}
-                disabled={verifying}
-                className="w-full"
-              >
+              <Button onClick={handleVerifyDomain} disabled={verifying} className="w-full">
                 {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Verify Domain
               </Button>
             </div>
           )}
+
+          {/* Pending but no DNS instructions yet (just added, page refreshed) */}
+          {domain.domain_status === "pending" && dnsInstructions.length === 0 && (
+            <div className="space-y-4 p-5">
+              <p className="text-sm text-muted-foreground">
+                DNS records are required to verify this domain. Click below to load them.
+              </p>
+              <Button onClick={handleVerifyDomain} disabled={verifying} variant="outline" className="w-full">
+                {verifying && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Check Verification Status
+              </Button>
+            </div>
+          )}
+
+          {/* Grace period */}
+          {domain.domain_status === "grace" && (
+            <div className="p-5">
+              <p className="text-sm text-muted-foreground">
+                Your Pro subscription has lapsed. Your custom domain is still active during the grace period.{" "}
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/billing")}
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Renew now
+                </button>{" "}
+                to keep it.
+              </p>
+              {domain.grace_expires_at && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Grace period ends {new Date(domain.grace_expires_at).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Expired */}
+          {domain.domain_status === "expired" && (
+            <div className="p-5">
+              <p className="text-sm text-muted-foreground">
+                This domain has expired and is no longer serving your blog.{" "}
+                <button
+                  type="button"
+                  onClick={() => router.push("/dashboard/billing")}
+                  className="font-medium text-foreground underline underline-offset-4"
+                >
+                  Upgrade to Pro
+                </button>{" "}
+                to reactivate it.
+              </p>
+            </div>
+          )}
         </Card>
       )}
+    </div>
+  );
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────
+
+function PageHeader() {
+  return (
+    <div>
+      <h1 className="text-2xl font-bold tracking-tight">Custom Domain</h1>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Connect your own domain to your blog
+      </p>
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; className: string }> = {
+    active:  { label: "Active",              className: "bg-green-100 text-green-800" },
+    pending: { label: "Pending verification", className: "bg-yellow-100 text-yellow-800" },
+    grace:   { label: "Grace period",         className: "bg-orange-100 text-orange-800" },
+    expired: { label: "Expired",              className: "bg-red-100 text-red-800" },
+  };
+  const s = map[status];
+  if (!s) return null;
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
+      {s.label}
+    </span>
+  );
+}
+
+function DnsRecordCard({
+  record,
+  idx,
+  copiedField,
+  onCopy,
+}: {
+  record: DNSRecord;
+  idx: number;
+  copiedField: string | null;
+  onCopy: (text: string, key: string) => void;
+}) {
+  const purposeLabel: Record<string, string> = {
+    ownership: "Ownership verification",
+    ssl:       "SSL certificate",
+    routing:   "Traffic routing",
+  };
+
+  return (
+    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          {purposeLabel[record.purpose] ?? record.purpose}
+        </span>
+        <span className="rounded bg-background px-2 py-0.5 text-xs font-mono font-medium border">
+          {record.type}
+        </span>
+      </div>
+
+      <CopyRow label="Name"  value={record.name}  fieldKey={`name-${idx}`}  copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label="Value" value={record.value} fieldKey={`value-${idx}`} copiedField={copiedField} onCopy={onCopy} />
+    </div>
+  );
+}
+
+function CopyRow({
+  label,
+  value,
+  fieldKey,
+  copiedField,
+  onCopy,
+}: {
+  label: string;
+  value: string;
+  fieldKey: string;
+  copiedField: string | null;
+  onCopy: (text: string, key: string) => void;
+}) {
+  const copied = copiedField === fieldKey;
+  return (
+    <div>
+      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
+      <div className="flex items-center gap-2">
+        <code className="min-w-0 flex-1 truncate rounded bg-background px-3 py-1.5 text-xs font-mono border">
+          {value}
+        </code>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="h-8 w-8 shrink-0"
+          onClick={() => onCopy(value, fieldKey)}
+          aria-label={`Copy ${label}`}
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
     </div>
   );
 }
