@@ -62,7 +62,7 @@ export function middleware(request: NextRequest) {
     // The server-side page will handle domain lookup and lifecycle
     const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
-    rewriteUrl.pathname = `/custom-domain/${segments.join("/")}`;
+    rewriteUrl.pathname = segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
     const response = NextResponse.rewrite(rewriteUrl);
     response.headers.set("x-original-host", host);
     return response;
