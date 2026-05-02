@@ -9,6 +9,7 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl } from "@/lib/public-url";
+import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -42,7 +43,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (isReservedUsername(username)) return {};
   const user = await loadUser(username);
   if (!user) return { title: "Not found" };
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
+  const marketingPath = `/${encodeURIComponent(user.user_name)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
   return {
     title: user.meta_title || `${user.name} — Articurls`,
     description: user.meta_description || undefined,
@@ -59,6 +61,10 @@ export default async function PublicProfilePage({ params }: Props) {
   if (user.user_name.toLowerCase() !== username.toLowerCase()) {
     permanentRedirect(`/${encodeURIComponent(user.user_name)}`);
   }
+
+  // 301 redirect to custom domain when active — strongest SEO consolidation signal
+  const customRedirect = getCustomDomainRedirectUrl(user, "/");
+  if (customRedirect) permanentRedirect(customRedirect);
 
   const blogs = await loadBlogs(username);
   const pages = await loadPages(username);

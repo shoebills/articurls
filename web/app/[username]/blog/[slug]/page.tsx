@@ -14,6 +14,7 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -59,7 +60,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!blog) return { title: "Not found" };
   const author = await loadUser(username);
   const canonicalUserName = author?.user_name || username;
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
+  const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
+  const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
+  const canonical = author
+    ? resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath)
+    : `${MARKETING_ORIGIN}${marketingPath}`;
   return {
     title: blog.meta_title || blog.title,
     description: blog.meta_description || undefined,
@@ -89,6 +94,11 @@ export default async function PublicBlogPage({ params }: Props) {
   if (author.user_name.toLowerCase() !== username.toLowerCase()) {
     permanentRedirect(`/${encodeURIComponent(author.user_name)}/blog/${encodeURIComponent(slug)}`);
   }
+
+  // 301 redirect to custom domain when active — strongest SEO consolidation signal
+  const customRedirect = getCustomDomainRedirectUrl(author, `/blog/${encodeURIComponent(slug)}`);
+  if (customRedirect) permanentRedirect(customRedirect);
+
   const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
   const containerSpacing = author.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"

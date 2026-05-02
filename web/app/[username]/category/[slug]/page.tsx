@@ -9,6 +9,7 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -48,7 +49,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!user) return { title: "Not found" };
   const data = await loadCategoryBlogs(username, slug);
   const catName = data?.category?.name || slug;
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
+  const marketingPath = `/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
+  const customDomainPath = `/category/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath);
   return {
     title: `${catName} — ${user.name}`,
     description: `Browse all ${catName} posts by ${user.name} on Articurls.`,
@@ -65,6 +68,10 @@ export default async function PublicCategoryPage({ params }: Props) {
   if (user.user_name.toLowerCase() !== username.toLowerCase()) {
     permanentRedirect(`/${encodeURIComponent(user.user_name)}/category/${slug}`);
   }
+
+  // 301 redirect to custom domain when active — strongest SEO consolidation signal
+  const customRedirect = getCustomDomainRedirectUrl(user, `/category/${encodeURIComponent(slug)}`);
+  if (customRedirect) permanentRedirect(customRedirect);
 
   const [data, pages, categories] = await Promise.all([
     loadCategoryBlogs(username, slug),

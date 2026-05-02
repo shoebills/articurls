@@ -8,6 +8,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -45,7 +46,11 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!page) return { title: "Not found" };
   const user = await loadUser(username);
   const canonicalUserName = user?.user_name || username;
-  const canonical = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUserName)}/page/${encodeURIComponent(slug)}`;
+  const marketingPath = `/${encodeURIComponent(canonicalUserName)}/page/${encodeURIComponent(slug)}`;
+  const customDomainPath = `/page/${encodeURIComponent(slug)}`;
+  const canonical = user
+    ? resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath)
+    : `${MARKETING_ORIGIN}${marketingPath}`;
   return {
     title: page.title,
     alternates: { canonical },
@@ -61,6 +66,11 @@ export default async function PublicCustomPage({ params }: Props) {
   if (user.user_name.toLowerCase() !== username.toLowerCase()) {
     permanentRedirect(`/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(slug)}`);
   }
+
+  // 301 redirect to custom domain when active — strongest SEO consolidation signal
+  const customRedirect = getCustomDomainRedirectUrl(user, `/page/${encodeURIComponent(slug)}`);
+  if (customRedirect) permanentRedirect(customRedirect);
+
   const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
   const mainSpacing = user.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
