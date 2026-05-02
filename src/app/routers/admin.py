@@ -308,3 +308,30 @@ def admin_list_domains(
         }
         for user in rows
     ]
+
+
+@router.get("/domains/{user_id}/cloudflare-raw", status_code=status.HTTP_200_OK)
+def admin_domain_cloudflare_raw(
+    user_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(_require_admin),
+):
+    """Return raw Cloudflare API response for a user's custom hostname. For debugging only."""
+    from ..cloudflare.client import CloudflareClient
+
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    if not db_user.cloudflare_hostname_id:
+        return {"error": "No cloudflare_hostname_id stored for this user"}
+
+    cf_client = CloudflareClient()
+    result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
+    return {
+        "user_id": db_user.user_id,
+        "user_name": db_user.user_name,
+        "custom_domain": db_user.custom_domain,
+        "domain_status_db": db_user.domain_status,
+        "cloudflare_hostname_id": db_user.cloudflare_hostname_id,
+        "cloudflare_raw": result,
+    }
