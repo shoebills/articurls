@@ -189,7 +189,12 @@ export default async function CustomDomainPage({ params }: Props) {
   }
 
   const username = domainInfo.username;
-  const { slug: segments = [] } = await params;
+  const { slug: rawSegments = [] } = await params;
+  // Strip username prefix if present — happens when user navigates to /username/blog/slug
+  // on a custom domain (e.g. from old links or direct URL entry)
+  const segments = rawSegments[0]?.toLowerCase() === username.toLowerCase()
+    ? rawSegments.slice(1)
+    : rawSegments;
   const siteOrigin = `https://${host}`;
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
