@@ -372,9 +372,6 @@ def delete_domain(
     return {"message": "Custom domain removed."}
 
 
-import json
-from ..redis_client import redis_client
-
 # ── Internal endpoint (middleware → API) ─────────────────────────────────────
 
 _DOMAIN_CACHE_TTL = 60  # seconds
