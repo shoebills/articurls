@@ -256,15 +256,6 @@ def verify_domain(
             dns_instructions=None
         )
 
-    # Simple rate limiting: prevent verify calls within 3 seconds
-    if db_user.updated_at:
-        time_since_update = (datetime.now(timezone.utc) - db_user.updated_at).total_seconds()
-        if time_since_update < 3:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Please wait a few seconds before verifying again.",
-            )
-
     # Try to force recheck in Cloudflare (safe - doesn't block on failure)
     cf_client = CloudflareClient()
     cf_result = None

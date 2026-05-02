@@ -101,8 +101,33 @@ export default function DomainSettingsPage() {
         setDnsInstructions([]);
         setSuccess("Domain verified! Your custom domain is now active.");
       } else {
+        const updatedInstructions = result.dns_instructions ?? dnsInstructions;
+        setDnsInstructions(updatedInstructions);
+
+        // If all records are verified but CF hasn't flipped status yet,
+        // retry once automatically after 3 seconds instead of making user click again
+        const allVerified = updatedInstructions.length > 0 && updatedInstructions.every(r => r.verified);
+        if (allVerified) {
+          setTimeout(async () => {
+            try {
+              const retry = await verifyCustomDomain(token);
+              if (retry.verification_status === "verified" || retry.verification_status === "already_verified") {
+                await loadDomain(token);
+                setDnsInstructions([]);
+                setSuccess("Domain verified! Your custom domain is now active.");
+              } else if (retry.dns_instructions) {
+                setDnsInstructions(retry.dns_instructions);
+              }
+            } catch {
+              // silent — user can still click verify manually
+            } finally {
+              setVerifying(false);
+            }
+          }, 3000);
+          return; // keep spinner going during the auto-retry
+        }
+
         setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
-        if (result.dns_instructions) setDnsInstructions(result.dns_instructions);
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
