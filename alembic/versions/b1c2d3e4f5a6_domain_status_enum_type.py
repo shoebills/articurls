@@ -22,6 +22,9 @@ def upgrade() -> None:
     # Create the enum type
     op.execute("CREATE TYPE domain_status_enum AS ENUM ('none', 'pending', 'active', 'grace', 'expired');")
 
+    # Must drop the default before changing column type
+    op.execute("ALTER TABLE users ALTER COLUMN domain_status DROP DEFAULT;")
+
     # Cast the existing column to the new type
     op.execute("""
         ALTER TABLE users
@@ -29,7 +32,7 @@ def upgrade() -> None:
         USING domain_status::domain_status_enum;
     """)
 
-    # Set the default using the enum type
+    # Re-set the default using the enum type
     op.execute("ALTER TABLE users ALTER COLUMN domain_status SET DEFAULT 'none'::domain_status_enum;")
 
 
