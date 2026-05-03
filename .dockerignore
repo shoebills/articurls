@@ -3,6 +3,7 @@
 .git
 .gitignore
 .codex
+.envrc
 
 __pycache__/
 *.pyc
@@ -11,6 +12,7 @@ __pycache__/
 
 .vscode
 .idea
+.zed
 
 tests/
 test.py
