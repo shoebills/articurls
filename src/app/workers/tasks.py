@@ -33,7 +33,7 @@ def send_post_emails(blog_id: int):
         existing_log = db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id, 
                                                          models.EmailLogs.user_id == db_user.user_id).first()
 
-        if existing_log:
+        if existing_log and existing_log.status == "sent":
             return
 
         db_subscribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == db_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).all()
@@ -41,12 +41,17 @@ def send_post_emails(blog_id: int):
         if not db_subscribers:
             return
         
-        new_log = models.EmailLogs(blog_id=db_blog.blog_id,
-                                   user_id=db_user.user_id,
-                                   total_recipients=len(db_subscribers),
-                                   status="pending")
-        
-        db.add(new_log)
+        new_log = existing_log  # reuse failed log if present
+        if new_log:
+            new_log.total_recipients = len(db_subscribers)
+            new_log.status = "pending"
+            new_log.sent_at = None
+        else:
+            new_log = models.EmailLogs(blog_id=db_blog.blog_id,
+                                       user_id=db_user.user_id,
+                                       total_recipients=len(db_subscribers),
+                                       status="pending")
+            db.add(new_log)
         db.commit()
         
         blog_url = public_post_url(db_user, db_blog, db)
