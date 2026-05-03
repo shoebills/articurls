@@ -135,8 +135,6 @@ def update_page(
         title = (update_data["title"] or "").strip()
         if not title:
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
-        if title != db_page.title:
-            db_page.slug = _unique_page_slug(db, current_user.user_id, title)
         db_page.title = title
 
     if "content" in update_data:
