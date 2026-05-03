@@ -409,6 +409,12 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
+    # Only serve active and grace domains — pending/expired/none return 404
+    # This prevents domain squatting: a user claiming a domain they don't own
+    # cannot redirect traffic even if the real owner points DNS at us.
+    if db_user.domain_status not in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
+
     result = {"username": db_user.user_name, "domain_status": db_user.domain_status.value if hasattr(db_user.domain_status, 'value') else db_user.domain_status}
 
     # Cache the result
