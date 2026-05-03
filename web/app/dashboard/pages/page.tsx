@@ -14,7 +14,7 @@ import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
 export default function PagesDashboardPage() {
-  const { token, isPro } = useAuth();
+  const { token, isPro, user } = useAuth();
   const [pages, setPages] = useState<UserPage[]>([]);
   const [creating, setCreating] = useState(false);
   const [editingPageId, setEditingPageId] = useState<number | null>(null);
