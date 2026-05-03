@@ -52,7 +52,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath)
     : `${MARKETING_ORIGIN}${marketingPath}`;
   return {
-    title: page.title,
+    title: page.meta_title || page.title,
+    description: page.meta_description || undefined,
     alternates: { canonical },
   };
 }

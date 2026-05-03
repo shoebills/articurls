@@ -14,12 +14,17 @@ class UserPageCreate(UserPageBase):
 class UserPageUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    slug: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
 
 class UserPageOut(UserPageBase):
     page_id: int
     user_id: int
     slug: str
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
     show_in_menu: bool
     menu_order: Optional[int] = None
     show_in_footer: bool

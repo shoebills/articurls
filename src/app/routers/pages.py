@@ -131,6 +131,7 @@ def update_page(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
 
     update_data = request.model_dump(exclude_unset=True)
+
     if "title" in update_data:
         title = (update_data["title"] or "").strip()
         if not title:
@@ -139,6 +140,34 @@ def update_page(
 
     if "content" in update_data:
         db_page.content = update_data["content"] or ""
+
+    if "slug" in update_data:
+        new_slug = (update_data["slug"] or "").strip()
+        if new_slug and new_slug != db_page.slug:
+            # Validate slug format
+            from slugify import slugify as _slugify
+            normalized = _slugify(new_slug) or ""
+            if not normalized:
+                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid slug")
+            # Check uniqueness
+            conflict = (
+                db.query(models.UserPage)
+                .filter(
+                    models.UserPage.user_id == current_user.user_id,
+                    models.UserPage.slug == normalized,
+                    models.UserPage.page_id != page_id,
+                )
+                .first()
+            )
+            if conflict:
+                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already in use by another page")
+            db_page.slug = normalized
+
+    if "meta_title" in update_data:
+        db_page.meta_title = (update_data["meta_title"] or "").strip() or None
+
+    if "meta_description" in update_data:
+        db_page.meta_description = (update_data["meta_description"] or "").strip() or None
 
     db.commit()
     db.refresh(db_page)

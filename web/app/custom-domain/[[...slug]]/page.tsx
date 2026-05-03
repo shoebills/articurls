@@ -139,7 +139,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const page = await loadPage(username, segments[1]);
     if (!page) return { title: "Not found" };
     return {
-      title: page.title,
+      title: page.meta_title || page.title,
+      description: page.meta_description || undefined,
       alternates: { canonical },
     };
   }

@@ -235,6 +235,8 @@ class UserPage(Base):
     title = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     content = Column(Text, nullable=False, default="")
+    meta_title = Column(String, nullable=True)
+    meta_description = Column(String, nullable=True)
     show_in_menu = Column(Boolean, nullable=False, default=False)
     menu_order = Column(Integer, nullable=True)
     show_in_footer = Column(Boolean, nullable=False, default=False)

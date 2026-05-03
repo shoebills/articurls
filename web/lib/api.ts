@@ -338,7 +338,7 @@ export async function deletePage(token: string, pageId: number): Promise<void> {
 export async function updatePage(
   token: string,
   pageId: number,
-  body: { title?: string; content?: string }
+  body: { title?: string; content?: string; slug?: string; meta_title?: string | null; meta_description?: string | null }
 ): Promise<UserPage> {
   return apiFetch(`/pages/id/${pageId}`, {
     method: "PATCH",

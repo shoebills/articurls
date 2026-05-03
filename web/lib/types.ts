@@ -157,6 +157,8 @@ export interface UserPage {
   title: string;
   slug: string;
   content: string;
+  meta_title: string | null;
+  meta_description: string | null;
   show_in_menu: boolean;
   menu_order: number | null;
   show_in_footer: boolean;
