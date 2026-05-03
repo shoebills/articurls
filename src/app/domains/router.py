@@ -212,9 +212,16 @@ async def get_domain(
         except Exception:
             dns_instructions = None
 
+    # A manually-removed domain has EXPIRED status but no cloudflare_hostname_id.
+    # Show it as "no domain" in the dashboard so the user can add a new one.
+    is_manually_removed = (
+        db_user.domain_status == models.DomainStatus.EXPIRED
+        and not db_user.cloudflare_hostname_id
+    )
+
     result = DomainOut(
-        custom_domain=db_user.custom_domain,
-        domain_status=db_user.domain_status,
+        custom_domain=None if is_manually_removed else db_user.custom_domain,
+        domain_status=models.DomainStatus.NONE if is_manually_removed else db_user.domain_status,
         verified_at=db_user.verified_at,
         grace_started_at=db_user.grace_started_at,
         grace_expires_at=db_user.grace_expires_at,
@@ -355,8 +362,10 @@ async def delete_domain(
         await cf_client.delete_custom_hostname(db_user.cloudflare_hostname_id)
 
     old_domain = db_user.custom_domain
-    db_user.custom_domain = None
-    db_user.domain_status = models.DomainStatus.NONE
+    # Keep custom_domain so the hostname lookup can still find this user
+    # and issue a 301 redirect to articurls.com/{username}.
+    # Setting EXPIRED triggers permanentRedirect in the custom-domain page.
+    db_user.domain_status = models.DomainStatus.EXPIRED
     db_user.is_domain_verified = False
     db_user.cloudflare_hostname_id = None
     db_user.domain_dns_instructions = None

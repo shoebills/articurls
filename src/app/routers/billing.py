@@ -176,6 +176,18 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                         db.add(new_sub)
                         db_sub = new_sub
 
+                    # Restore domain from grace/expired back to active on renewal
+                    if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+                        if db_user.custom_domain and db_user.is_domain_verified:
+                            db_user.domain_status = models.DomainStatus.ACTIVE
+                            db_user.grace_started_at = None
+                            db_user.grace_expires_at = None
+                            try:
+                                from ..redis_client import redis_client
+                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                            except Exception:
+                                pass
+
                     if db_sub and incoming_dodo_sid:
                         db.query(models.Transactions).filter(
                             models.Transactions.user_id == db_user.user_id,
@@ -237,6 +249,18 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                         )
 
                         db.add(db_sub)
+
+                    # Restore domain from grace/expired back to active on renewal
+                    if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+                        if db_user.custom_domain and db_user.is_domain_verified:
+                            db_user.domain_status = models.DomainStatus.ACTIVE
+                            db_user.grace_started_at = None
+                            db_user.grace_expires_at = None
+                            try:
+                                from ..redis_client import redis_client
+                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                            except Exception:
+                                pass
 
                     if db_sub and incoming_dodo_sid:
                         db.query(models.Transactions).filter(
