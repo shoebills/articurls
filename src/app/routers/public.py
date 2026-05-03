@@ -158,7 +158,10 @@ def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return (
         db.query(models.UserPage)
-        .filter(models.UserPage.user_id == db_user.user_id, models.UserPage.show_in_menu.is_(True))
+        .filter(
+            models.UserPage.user_id == db_user.user_id,
+            (models.UserPage.show_in_menu.is_(True)) | (models.UserPage.show_in_footer.is_(True)),
+        )
         .order_by(models.UserPage.menu_order.asc(), models.UserPage.created_at.asc())
         .all()
     )
