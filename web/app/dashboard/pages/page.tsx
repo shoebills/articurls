@@ -10,7 +10,8 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { BlogEditor } from "@/components/editor/blog-editor";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { MARKETING_ORIGIN } from "@/lib/env";
 
 export default function PagesDashboardPage() {
   const { token, isPro } = useAuth();
@@ -245,7 +246,25 @@ export default function PagesDashboardPage() {
       {editingPage && !creating ? (
         <Card>
           <CardHeader>
-            <CardTitle>Edit page</CardTitle>
+            <div className="flex items-center justify-between gap-3">
+              <CardTitle>Edit page</CardTitle>
+              {(() => {
+                const pageUrl = user?.custom_domain &&
+                  (user.domain_status === "active" || user.domain_status === "grace")
+                  ? `https://${user.custom_domain}/page/${encodeURIComponent(editingPage.slug)}`
+                  : user?.user_name
+                    ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(editingPage.slug)}`
+                    : null;
+                return pageUrl ? (
+                  <Button variant="outline" size="sm" asChild>
+                    <a href={pageUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                      View
+                    </a>
+                  </Button>
+                ) : null;
+              })()}
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-xs text-muted-foreground">

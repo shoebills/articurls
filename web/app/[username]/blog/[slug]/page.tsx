@@ -15,6 +15,7 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
+import { excerptFromHtml } from "@/lib/text";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -67,7 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `${MARKETING_ORIGIN}${marketingPath}`;
   return {
     title: blog.meta_title || blog.title,
-    description: blog.meta_description || undefined,
+    description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
     alternates: { canonical },
     openGraph: {
       images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],

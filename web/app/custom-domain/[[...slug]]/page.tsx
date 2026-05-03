@@ -15,6 +15,7 @@ import { AdSlot } from "@/components/ad-slot";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { excerptFromHtml } from "@/lib/text";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -123,7 +124,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!blog) return { title: "Not found" };
     return {
       title: blog.meta_title || blog.title,
-      description: blog.meta_description || undefined,
+      description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
       alternates: { canonical },
       openGraph: {
         images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],

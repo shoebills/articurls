@@ -52,6 +52,7 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
     if db_blog.status != models.BlogStatus.PUBLISHED:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
 
+    db_blog.excerpt = utils.make_excerpt(db_blog.content)
     return db_blog
 
 
