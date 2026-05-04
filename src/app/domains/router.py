@@ -433,7 +433,7 @@ def users_for_sitemap(request: Request, cursor: int = 0, db: Session = Depends(g
     
     Criteria:
     - domain_status NOT IN (ACTIVE, GRACE) — users without active custom domains
-    - Has at least 1 published blog
+    - Has at least 1 published blog OR at least 1 visible page OR at least 1 visible category with published blogs
     - Paginated by user_id for consistent ordering
     
     Parameters:
@@ -452,10 +452,46 @@ def users_for_sitemap(request: Request, cursor: int = 0, db: Session = Depends(g
     PAGE_SIZE = 500  # Fetch 500 users per page for performance balance
     
     # Query users without active custom domains who have published content
+    # Include users with either published blogs OR visible pages OR visible categories
     # Order by user_id for consistent pagination
+    
+    # Subquery: users with published blogs
+    users_with_blogs = (
+        db.query(models.User.user_id)
+        .join(models.Blog, models.Blog.user_id == models.User.user_id)
+        .filter(
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+    )
+    
+    # Subquery: users with visible pages
+    users_with_pages = (
+        db.query(models.User.user_id)
+        .join(models.UserPage, models.UserPage.user_id == models.User.user_id)
+        .filter(
+            models.UserPage.show_in_footer.is_(True),
+        )
+    )
+    
+    # Subquery: users with visible categories that have published blogs
+    users_with_categories = (
+        db.query(models.User.user_id)
+        .join(models.Category, models.Category.user_id == models.User.user_id)
+        .join(models.BlogCategory, models.BlogCategory.category_id == models.Category.category_id)
+        .join(models.Blog, models.Blog.blog_id == models.BlogCategory.blog_id)
+        .filter(
+            models.Category.show_in_menu.is_(True),
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+    )
+    
+    # Combine: users with blogs OR pages OR categories
+    users_with_content = users_with_blogs.union(users_with_pages).union(users_with_categories).subquery()
+    
+    # Main query: fetch eligible users
     eligible_users = (
         db.query(models.User.user_id, models.User.user_name)
-        .join(models.Blog, models.Blog.user_id == models.User.user_id)
+        .join(users_with_content, models.User.user_id == users_with_content.c.user_id)
         .filter(
             models.User.user_id > cursor,  # Cursor-based pagination
             models.User.domain_status.in_([
@@ -463,9 +499,7 @@ def users_for_sitemap(request: Request, cursor: int = 0, db: Session = Depends(g
                 models.DomainStatus.PENDING,
                 models.DomainStatus.EXPIRED,
             ]),
-            models.Blog.status == models.BlogStatus.PUBLISHED,
         )
-        .distinct()
         .order_by(models.User.user_id)
         .limit(PAGE_SIZE + 1)  # Fetch one extra to check if more pages exist
         .all()

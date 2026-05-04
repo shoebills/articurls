@@ -235,11 +235,12 @@ async function customDomainSitemap(host: string): Promise<Response> {
 /**
  * Root sitemap index for articurls.com — Level 1 of layered architecture.
  * 
- * Returns a sitemap index pointing to /sitemaps/users.xml, which in turn
- * lists all per-user sitemaps.
+ * Returns a sitemap index pointing to:
+ * - /sitemaps/pages.xml (marketing pages)
+ * - /sitemaps/users.xml (user content)
  * 
  * Layered structure:
- * - Level 1: /sitemap.xml → /sitemaps/users.xml
+ * - Level 1: /sitemap.xml → /sitemaps/pages.xml + /sitemaps/users.xml
  * - Level 2: /sitemaps/users.xml → /{username}/sitemap.xml
  * - Level 3: /{username}/sitemap.xml → user's content
  * 
@@ -249,8 +250,12 @@ async function marketingDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
   try {
-    // Return sitemap index pointing to the user sitemap index
+    // Return sitemap index pointing to both marketing pages and user sitemaps
     const sitemaps = [
+      {
+        loc: `${MARKETING_ORIGIN}/sitemaps/pages.xml`,
+        lastmod: today,
+      },
       {
         loc: `${MARKETING_ORIGIN}/sitemaps/users.xml`,
         lastmod: today,
