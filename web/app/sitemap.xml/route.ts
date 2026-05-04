@@ -136,6 +136,18 @@ function buildXml(
   return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</urlset>`;
 }
 
+function buildSitemapIndex(sitemaps: { loc: string; lastmod?: string }[]): string {
+  const items = sitemaps
+    .map(({ loc, lastmod }) => {
+      const parts = [`    <loc>${loc}</loc>`];
+      if (lastmod) parts.push(`    <lastmod>${lastmod}</lastmod>`);
+      return `  <sitemap>\n${parts.join("\n")}\n  </sitemap>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>`;
+}
+
 function isoDate(dateStr: string | null | undefined): string | undefined {
   if (!dateStr) return undefined;
   try {
@@ -221,21 +233,42 @@ async function customDomainSitemap(host: string): Promise<Response> {
 // ── Marketing domain sitemap ──────────────────────────────────────────────────
 
 /**
- * Platform-level sitemap for articurls.com.
+ * Root sitemap index for articurls.com — Level 1 of layered architecture.
  * 
- * IMPORTANT: This sitemap only includes platform marketing pages.
- * Per-user content lives at /[username]/sitemap.xml and is NOT auto-discoverable
- * via a sitemap index. Users must submit their individual sitemap URLs to
- * Google Search Console manually, or rely on internal link discovery.
+ * Returns a sitemap index pointing to /sitemaps/users.xml, which in turn
+ * lists all per-user sitemaps.
  * 
- * To make per-user sitemaps auto-discoverable, convert this to a sitemap index
- * that queries all users with domain_status NOT IN ('active', 'grace') and
- * generates <sitemap> entries pointing to each /[username]/sitemap.xml.
+ * Layered structure:
+ * - Level 1: /sitemap.xml → /sitemaps/users.xml
+ * - Level 2: /sitemaps/users.xml → /{username}/sitemap.xml
+ * - Level 3: /{username}/sitemap.xml → user's content
+ * 
+ * Fallback: If anything fails, returns a basic sitemap with homepage only.
  */
-function marketingDomainSitemap(): Response {
+async function marketingDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
-  // Platform-level pages only. User content lives at /[username]/sitemap.xml.
+  try {
+    // Return sitemap index pointing to the user sitemap index
+    const sitemaps = [
+      {
+        loc: `${MARKETING_ORIGIN}/sitemaps/users.xml`,
+        lastmod: today,
+      },
+    ];
+
+    return new Response(buildSitemapIndex(sitemaps), {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      },
+    });
+  } catch (error) {
+    // Unexpected error — fall through to fallback
+    console.error("Failed to generate sitemap index:", error);
+  }
+
+  // Fallback: Return basic sitemap with platform homepage only
   const entries = [
     { loc: `${MARKETING_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },
   ];

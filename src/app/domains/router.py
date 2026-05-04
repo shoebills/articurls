@@ -424,3 +424,61 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         pass  # Redis unavailable — serve uncached
 
     return result
+
+
+@router.get("/internal/users-for-sitemap", status_code=status.HTTP_200_OK)
+def users_for_sitemap(request: Request, cursor: int = 0, db: Session = Depends(get_db)):
+    """
+    Return users eligible for inclusion in the global sitemap index.
+    
+    Criteria:
+    - domain_status NOT IN (ACTIVE, GRACE) — users without active custom domains
+    - Has at least 1 published blog
+    - Paginated by user_id for consistent ordering
+    
+    Parameters:
+    - cursor: user_id to start from (0 = start from beginning)
+    
+    Returns:
+    - usernames: list of usernames in this page
+    - next_cursor: user_id to use for next page (null if no more)
+    
+    Used by: articurls.com/sitemaps/users.xml to generate sitemap index
+    """
+    secret = settings.internal_api_secret
+    if not secret or request.headers.get("x-internal-secret") != secret:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+    
+    PAGE_SIZE = 500  # Fetch 500 users per page for performance balance
+    
+    # Query users without active custom domains who have published content
+    # Order by user_id for consistent pagination
+    eligible_users = (
+        db.query(models.User.user_id, models.User.user_name)
+        .join(models.Blog, models.Blog.user_id == models.User.user_id)
+        .filter(
+            models.User.user_id > cursor,  # Cursor-based pagination
+            models.User.domain_status.in_([
+                models.DomainStatus.NONE,
+                models.DomainStatus.PENDING,
+                models.DomainStatus.EXPIRED,
+            ]),
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+        .distinct()
+        .order_by(models.User.user_id)
+        .limit(PAGE_SIZE + 1)  # Fetch one extra to check if more pages exist
+        .all()
+    )
+    
+    # Check if there are more pages
+    has_more = len(eligible_users) > PAGE_SIZE
+    users_to_return = eligible_users[:PAGE_SIZE] if has_more else eligible_users
+    
+    # Calculate next cursor
+    next_cursor = users_to_return[-1].user_id if has_more and users_to_return else None
+    
+    return {
+        "usernames": [u.user_name for u in users_to_return],
+        "next_cursor": next_cursor,
+    }
