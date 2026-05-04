@@ -168,5 +168,16 @@ export async function GET(req: NextRequest): Promise<Response> {
     return customDomainRobots(originalHost);
   }
 
+  // app.articurls.com → block everything (dashboard/auth domain)
+  const host = req.headers.get("host") || "";
+  if (host.toLowerCase().startsWith("app.articurls.com")) {
+    return new Response(DISALLOW_ALL, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=86400",
+      },
+    });
+  }
+
   return marketingDomainRobots();
 }

@@ -246,5 +246,11 @@ export async function GET(req: NextRequest): Promise<Response> {
     return customDomainSitemap(originalHost);
   }
 
+  // app.articurls.com → no sitemap (dashboard/auth domain)
+  const host = req.headers.get("host") || "";
+  if (host.toLowerCase().startsWith("app.articurls.com")) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   return marketingDomainSitemap();
 }
