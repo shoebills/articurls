@@ -7,7 +7,7 @@ Categories retain their show_in_menu / menu_order columns — those are
 used for the nav menu and are unaffected by this migration.
 
 Revision ID: b3c4d5e6f7a8
-Revises: f1a2b3c4d5e6
+Revises: c1d2e3f4a5b6
 Create Date: 2026-05-04
 
 """
@@ -15,7 +15,7 @@ from alembic import op
 import sqlalchemy as sa
 
 revision = "b3c4d5e6f7a8"
-down_revision = "f1a2b3c4d5e6"
+down_revision = "c1d2e3f4a5b6"
 branch_labels = None
 depends_on = None
 
