@@ -167,6 +167,8 @@ export interface UserPage {
   meta_description: string | null;
   show_in_footer: boolean;
   footer_order: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface DesignSettings {
