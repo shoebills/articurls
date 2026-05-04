@@ -62,6 +62,14 @@ export function middleware(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
 
+  // Trailing slash normalization — 308 redirect to canonical URL without trailing slash
+  // Exception: root path "/" keeps its trailing slash
+  if (pathname !== "/" && pathname.endsWith("/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(0, -1);
+    return NextResponse.redirect(url, 308);
+  }
+
   // Strip query parameters from public content URLs (SEO consolidation)
   // Preserve query params for auth/dashboard/internal routes
   if (request.nextUrl.searchParams.size > 0) {

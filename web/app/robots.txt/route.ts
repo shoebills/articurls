@@ -114,7 +114,25 @@ async function customDomainRobots(host: string): Promise<Response> {
   }
 
   const siteOrigin = `https://${host}`;
-  let body = `User-agent: *\nAllow: /\n\nSitemap: ${siteOrigin}/sitemap.xml\n`;
+  let body = `User-agent: *
+Allow: /
+
+# System routes — not accessible on custom domains but disallowed to save crawl budget
+Disallow: /dashboard/
+Disallow: /login
+Disallow: /signup
+Disallow: /verify
+Disallow: /forgot-password
+Disallow: /reset-password
+Disallow: /confirm-subscription
+Disallow: /admin
+Disallow: /admin/
+Disallow: /internal
+Disallow: /internal/
+Disallow: /api/
+
+Sitemap: ${siteOrigin}/sitemap.xml
+`;
 
   // Append custom rules when user has opted in
   if (user.robots_mode === "custom" && user.robots_custom_rules?.trim()) {

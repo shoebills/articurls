@@ -122,6 +122,10 @@ export async function GET(
   // If this user has an active or grace custom domain, their canonical sitemap
   // is at https://custom.com/sitemap.xml. Return 404 here so Google removes
   // this URL from its index and consolidates signals on the custom domain.
+  //
+  // IMPORTANT: EXPIRED and PENDING users intentionally fall through here.
+  // - EXPIRED → custom domain 301 redirects to articurls, so articurls sitemap is correct
+  // - PENDING → domain not verified yet, articurls is the only valid canonical
   const domainStatus = user.domain_status ?? "none";
   if (domainStatus === "active" || domainStatus === "grace") {
     return new NextResponse(null, { status: 404 });

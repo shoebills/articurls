@@ -220,6 +220,18 @@ async function customDomainSitemap(host: string): Promise<Response> {
 
 // ── Marketing domain sitemap ──────────────────────────────────────────────────
 
+/**
+ * Platform-level sitemap for articurls.com.
+ * 
+ * IMPORTANT: This sitemap only includes platform marketing pages.
+ * Per-user content lives at /[username]/sitemap.xml and is NOT auto-discoverable
+ * via a sitemap index. Users must submit their individual sitemap URLs to
+ * Google Search Console manually, or rely on internal link discovery.
+ * 
+ * To make per-user sitemaps auto-discoverable, convert this to a sitemap index
+ * that queries all users with domain_status NOT IN ('active', 'grace') and
+ * generates <sitemap> entries pointing to each /[username]/sitemap.xml.
+ */
 function marketingDomainSitemap(): Response {
   const today = new Date().toISOString().split("T")[0];
 
