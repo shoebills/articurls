@@ -430,89 +430,80 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
 def users_for_sitemap(request: Request, cursor: int = 0, db: Session = Depends(get_db)):
     """
     Return users eligible for inclusion in the global sitemap index.
-    
+
     Criteria:
-    - domain_status NOT IN (ACTIVE, GRACE) — users without active custom domains
-    - Has at least 1 published blog OR at least 1 visible page OR at least 1 visible category with published blogs
-    - Paginated by user_id for consistent ordering
-    
-    Parameters:
-    - cursor: user_id to start from (0 = start from beginning)
-    
-    Returns:
-    - usernames: list of usernames in this page
-    - next_cursor: user_id to use for next page (null if no more)
-    
-    Used by: articurls.com/sitemaps/users.xml to generate sitemap index
+    - domain_status IN ('none', 'pending', 'expired') — no active custom domain
+    - Has at least one published blog, OR a visible page (show_in_footer),
+      OR a visible category (show_in_menu) with at least one published blog
+
+    Pagination:
+    - cursor: last seen user_id (0 = start from beginning)
+    - Returns PAGE_SIZE users ordered by user_id ASC
+    - next_cursor is the last user_id in the batch, or null when exhausted
+
+    Uses correlated EXISTS subqueries — no UNION — so ordering is stable and
+    cursor pagination cannot produce duplicates or gaps.
     """
     secret = settings.internal_api_secret
     if not secret or request.headers.get("x-internal-secret") != secret:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-    
-    PAGE_SIZE = 500  # Fetch 500 users per page for performance balance
-    
-    # Query users without active custom domains who have published content
-    # Include users with either published blogs OR visible pages OR visible categories
-    # Order by user_id for consistent pagination
-    
-    # Subquery: users with published blogs
-    users_with_blogs = (
-        db.query(models.User.user_id)
-        .join(models.Blog, models.Blog.user_id == models.User.user_id)
+
+    PAGE_SIZE = 500
+
+    # EXISTS: user has at least one published blog
+    has_blog = (
+        db.query(models.Blog)
         .filter(
+            models.Blog.user_id == models.User.user_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
+        .exists()
     )
-    
-    # Subquery: users with visible pages
-    users_with_pages = (
-        db.query(models.User.user_id)
-        .join(models.UserPage, models.UserPage.user_id == models.User.user_id)
+
+    # EXISTS: user has at least one footer-visible page
+    has_page = (
+        db.query(models.UserPage)
         .filter(
+            models.UserPage.user_id == models.User.user_id,
             models.UserPage.show_in_footer.is_(True),
         )
+        .exists()
     )
-    
-    # Subquery: users with visible categories that have published blogs
-    users_with_categories = (
-        db.query(models.User.user_id)
-        .join(models.Category, models.Category.user_id == models.User.user_id)
+
+    # EXISTS: user has at least one menu-visible category that contains a published blog
+    has_category = (
+        db.query(models.Category)
         .join(models.BlogCategory, models.BlogCategory.category_id == models.Category.category_id)
         .join(models.Blog, models.Blog.blog_id == models.BlogCategory.blog_id)
         .filter(
+            models.Category.user_id == models.User.user_id,
             models.Category.show_in_menu.is_(True),
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
+        .exists()
     )
-    
-    # Combine: users with blogs OR pages OR categories
-    users_with_content = users_with_blogs.union(users_with_pages).union(users_with_categories).subquery()
-    
-    # Main query: fetch eligible users
-    eligible_users = (
+
+    results = (
         db.query(models.User.user_id, models.User.user_name)
-        .join(users_with_content, models.User.user_id == users_with_content.c.user_id)
         .filter(
-            models.User.user_id > cursor,  # Cursor-based pagination
             models.User.domain_status.in_([
                 models.DomainStatus.NONE,
                 models.DomainStatus.PENDING,
                 models.DomainStatus.EXPIRED,
             ]),
+            models.User.user_id > cursor,
+            has_blog | has_page | has_category,
         )
-        .order_by(models.User.user_id)
-        .limit(PAGE_SIZE + 1)  # Fetch one extra to check if more pages exist
+        .order_by(models.User.user_id.asc())
+        .limit(PAGE_SIZE + 1)
         .all()
     )
-    
-    # Check if there are more pages
-    has_more = len(eligible_users) > PAGE_SIZE
-    users_to_return = eligible_users[:PAGE_SIZE] if has_more else eligible_users
-    
-    # Calculate next cursor
-    next_cursor = users_to_return[-1].user_id if has_more and users_to_return else None
-    
+
+    has_more = len(results) > PAGE_SIZE
+    page = results[:PAGE_SIZE] if has_more else results
+    next_cursor = page[-1].user_id if has_more and page else None
+
     return {
-        "usernames": [u.user_name for u in users_to_return],
+        "usernames": [u.user_name for u in page],
         "next_cursor": next_cursor,
     }

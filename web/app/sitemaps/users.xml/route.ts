@@ -55,7 +55,8 @@ function buildXml(
  * Google sitemap limit: Maximum 50,000 URLs per sitemap file.
  * Reference: https://developers.google.com/search/docs/crawling-indexing/sitemaps/build-sitemap
  * 
- * This function enforces the 50,000 entry limit and stops pagination when reached.
+ * This function enforces the 50,000 entry limit and fetches ALL eligible users
+ * without premature stopping. Completeness is prioritized over speed.
  * 
  * TODO: When users exceed 50,000:
  * - Split into multiple sitemap files: /sitemaps/users-1.xml, /sitemaps/users-2.xml, etc.
@@ -63,66 +64,60 @@ function buildXml(
  * - Each file must contain ≤50,000 entries
  */
 async function fetchAllEligibleUsers(): Promise<string[]> {
-  const PAGE_SIZE = 500; // Users per API request
   const MAX_USERS = 50000; // Google's sitemap limit
-  const MAX_ITERATIONS = Math.ceil(MAX_USERS / PAGE_SIZE); // 100 iterations max
-  const TIMEOUT_MS = 8000; // 8 second total timeout
 
-  const allUsernames: string[] = [];
-  let cursor = 0;
-  let iterations = 0;
-  const startTime = Date.now();
+  let cursor: number | null = null;
+  let allUsernames: string[] = [];
+  const seenCursors = new Set<number | null>();
+  
+  // Add initial null cursor to set
+  seenCursors.add(null);
 
   try {
-    while (iterations < MAX_ITERATIONS) {
-      // Check timeout
-      if (Date.now() - startTime > TIMEOUT_MS) {
-        console.warn(`Sitemap user fetch timeout after ${iterations} iterations`);
-        break;
-      }
-
+    while (true) {
       // Check if we've reached Google's limit
-      if (allUsernames.length >= MAX_USERS) {
+      const remainingSlots = MAX_USERS - allUsernames.length;
+      if (remainingSlots <= 0) {
         console.warn(`Reached Google sitemap limit of ${MAX_USERS} users`);
         break;
       }
 
-      const res = await fetch(
-        `${API_URL}/internal/users-for-sitemap?cursor=${cursor}`,
-        {
-          cache: "no-store",
-          headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "" },
-          signal: AbortSignal.timeout(5000), // 5 second timeout per request
-        }
-      );
+      // Build URL with cursor
+      const url: string = cursor
+        ? `${API_URL}/internal/users-for-sitemap?cursor=${cursor}`
+        : `${API_URL}/internal/users-for-sitemap`;
+
+      const res: Response = await fetch(url, {
+        cache: "no-store",
+        headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "" },
+      });
 
       if (!res.ok) {
-        console.error(`Failed to fetch users page ${iterations + 1}: ${res.status}`);
+        console.error(`Failed to fetch users page: ${res.status}`);
         break;
       }
 
-      const data = await res.json();
+      const data: { usernames?: string[]; next_cursor?: number | null } = await res.json();
       const usernames: string[] = data.usernames || [];
-      const nextCursor: number | null = data.next_cursor;
+      const nextCursor: number | null = data.next_cursor ?? null;
 
-      // Add users, but respect the 50k limit
-      const remainingSlots = MAX_USERS - allUsernames.length;
+      // Add users, respecting the 50k limit
       const usersToAdd = usernames.slice(0, remainingSlots);
       allUsernames.push(...usersToAdd);
 
-      // No more pages
-      if (nextCursor === null || nextCursor === undefined) {
+      // No more pages - natural end
+      if (nextCursor === null) {
         break;
       }
 
-      // Stop if we've hit the limit (even if more pages exist)
-      if (allUsernames.length >= MAX_USERS) {
-        console.warn(`Stopped pagination at ${MAX_USERS} users (more may exist)`);
+      // Detect infinite loop (duplicate cursor)
+      if (seenCursors.has(nextCursor)) {
+        console.error(`Duplicate cursor detected: ${nextCursor}. Stopping pagination to prevent infinite loop.`);
         break;
       }
 
+      seenCursors.add(nextCursor);
       cursor = nextCursor;
-      iterations++;
     }
   } catch (error) {
     console.error("Error fetching users for sitemap:", error);
