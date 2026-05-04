@@ -176,7 +176,11 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.user_id == db_user.user_id, models.UserPage.slug == slug)
+        .filter(
+            models.UserPage.user_id == db_user.user_id,
+            models.UserPage.slug == slug,
+            models.UserPage.show_in_footer.is_(True),  # Only return pages visible in footer
+        )
         .first()
     )
     if not db_page:

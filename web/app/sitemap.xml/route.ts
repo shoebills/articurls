@@ -195,6 +195,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
     if (!page.show_in_footer) continue;
     entries.push({
       loc: `${siteOrigin}/page/${encodeURIComponent(page.slug)}`,
+      lastmod: isoDate(page.updated_at),
       changefreq: "monthly",
       priority: "0.6",
     });
@@ -212,7 +213,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
   return new Response(buildXml(entries), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
     },
   });
 }
@@ -230,7 +231,7 @@ function marketingDomainSitemap(): Response {
   return new Response(buildXml(entries), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
     },
   });
 }

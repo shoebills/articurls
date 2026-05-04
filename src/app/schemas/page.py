@@ -1,5 +1,6 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Optional, Union
+from datetime import datetime
 
 
 class UserPageBase(BaseModel):
@@ -27,6 +28,8 @@ class UserPageOut(UserPageBase):
     meta_description: Optional[str] = None
     show_in_footer: bool
     footer_order: Optional[int] = None
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         from_attributes = True

@@ -166,6 +166,7 @@ export async function GET(
     if (!page.show_in_footer) continue;
     entries.push({
       loc: `${base}/page/${encodeURIComponent(page.slug)}`,
+      lastmod: isoDate(page.updated_at),
       changefreq: "monthly",
       priority: "0.6",
     });
@@ -184,7 +185,7 @@ export async function GET(
   return new Response(buildXml(entries), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, stale-while-revalidate=86400",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
     },
   });
 }
