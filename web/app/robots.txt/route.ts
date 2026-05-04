@@ -117,7 +117,6 @@ async function customDomainRobots(host: string): Promise<Response> {
   let body = `User-agent: *
 Allow: /
 
-# System routes — not accessible on custom domains but disallowed to save crawl budget
 Disallow: /dashboard/
 Disallow: /login
 Disallow: /signup
@@ -136,7 +135,7 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
   // Append custom rules when user has opted in
   if (user.robots_mode === "custom" && user.robots_custom_rules?.trim()) {
-    body += `\n# Custom rules\n${user.robots_custom_rules.trim()}\n`;
+    body += `\n${user.robots_custom_rules.trim()}\n`;
   }
 
   return new Response(body, {
@@ -151,7 +150,6 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
 function marketingDomainRobots(): Response {
   const body = `User-agent: *
-# Dashboard and auth — never index
 Disallow: /dashboard/
 Disallow: /login
 Disallow: /signup
@@ -160,8 +158,6 @@ Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /confirm-subscription
 Disallow: /internal/
-
-# API prefix
 Disallow: /api/
 
 Allow: /
