@@ -135,10 +135,13 @@ def update_ads_selection(request: blog.AdsSelectionUpdate, db: Session = Depends
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Ads can only be enabled on published blogs.")
 
     for db_blog in all_blogs:
+        old_updated = db_blog.updated_at
         if db_blog.blog_id in selected_ids:
             db_blog.ads_enabled = True
         else:
             db_blog.ads_enabled = False
+        # Ads toggle is not a meaningful content change — preserve updated_at
+        db_blog.updated_at = old_updated
 
     db.commit()
 
@@ -289,7 +292,6 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     )
 
     update_data = request.model_dump(exclude_unset=True)
-    title_or_content_changed = False
 
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
@@ -317,15 +319,17 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
                 )
             db_blog.slug = new_slug
 
-    if "title" in update_data and update_data.get("title") != db_blog.title:
-        title_or_content_changed = True
-    if "content" in update_data and update_data.get("content") != db_blog.content:
-        title_or_content_changed = True
+    # Separate meaningful content/metadata fields from non-content fields.
+    # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
+    MEANINGFUL_FIELDS = {
+        "title", "content", "meta_title", "meta_description", "featured_image_url",
+    }
+    has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 
     for key, value in update_data.items():
         setattr(db_blog, key, value)
 
-    if title_or_content_changed:
+    if has_meaningful_change:
         db_blog.updated_at = datetime.now(timezone.utc)
 
     db.commit()
@@ -389,15 +393,17 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
         return db_blog
     
     first_publish = db_blog.published_at is None
+    now = datetime.now(timezone.utc)
 
     db_blog.status = models.BlogStatus.PUBLISHED
 
     if first_publish:
         utils.maybe_replace_placeholder_slug_on_publish(db, db_blog)
+        db_blog.published_at = now
 
-    # Only set publish date if first time
-    if first_publish:
-        db_blog.published_at = datetime.now(timezone.utc)
+    # Publishing is a meaningful lifecycle event — bump updated_at so
+    # sitemap lastmod reflects when the post became publicly visible.
+    db_blog.updated_at = now
 
     db.commit()
     db.refresh(db_blog)
@@ -436,7 +442,10 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     if db_blog.status == models.BlogStatus.ARCHIVED:
         return db_blog
     
+    old_updated = db_blog.updated_at
     db_blog.status = models.BlogStatus.ARCHIVED
+    # Archiving is a lifecycle change, not a content change — preserve updated_at
+    db_blog.updated_at = old_updated
 
     db.commit()
     db.refresh(db_blog)
@@ -487,8 +496,11 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             detail="Scheduled time must be in the future"
     )
 
+    old_updated = db_blog.updated_at
     db_blog.status = models.BlogStatus.SCHEDULED
     db_blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
+    # Scheduling is not a meaningful content change — preserve updated_at
+    db_blog.updated_at = old_updated
 
     db.commit()
     db.refresh(db_blog)
@@ -518,8 +530,11 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
             detail="Blog is not scheduled"
     )
 
+    old_updated = db_blog.updated_at
     db_blog.status = models.BlogStatus.DRAFT
     db_blog.scheduled_at = None
+    # Unscheduling is not a meaningful content change — preserve updated_at
+    db_blog.updated_at = old_updated
 
     db.commit()
     db.refresh(db_blog)

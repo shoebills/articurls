@@ -79,6 +79,12 @@ export interface PublicUser {
   featured_blog_ids: number[];
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
+  /** Whether this user's content should appear in sitemaps. Default true. */
+  sitemap_enabled?: boolean;
+  /** "auto" = standard rules, "custom" = use robots_custom_rules. */
+  robots_mode?: string;
+  /** Raw robots rules appended when robots_mode = "custom". */
+  robots_custom_rules?: string | null;
 }
 
 export interface UserSettings {
@@ -159,8 +165,6 @@ export interface UserPage {
   content: string;
   meta_title: string | null;
   meta_description: string | null;
-  show_in_menu: boolean;
-  menu_order: number | null;
   show_in_footer: boolean;
   footer_order: number | null;
 }

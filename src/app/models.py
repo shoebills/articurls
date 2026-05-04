@@ -131,7 +131,7 @@ class Blog(Base):
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
 
 class BlogMedia(Base):
@@ -227,7 +227,6 @@ class UserPage(Base):
     __tablename__ = "user_pages"
     __table_args__ = (
         UniqueConstraint("user_id", "slug", name="uq_user_pages_user_slug"),
-        Index("ix_user_pages_user_menu_order", "user_id", "menu_order"),
     )
 
     page_id = Column(Integer, primary_key=True)
@@ -237,8 +236,6 @@ class UserPage(Base):
     content = Column(Text, nullable=False, default="")
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
-    show_in_menu = Column(Boolean, nullable=False, default=False)
-    menu_order = Column(Integer, nullable=True)
     show_in_footer = Column(Boolean, nullable=False, default=False)
     footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

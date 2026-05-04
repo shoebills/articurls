@@ -76,6 +76,10 @@ class PublicUser(BaseModel):
     featured_blog_ids: list[int] | None = []
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
+    # SEO control fields — consumed by sitemap and robots.txt generation
+    sitemap_enabled: bool = True
+    robots_mode: str = "auto"
+    robots_custom_rules: Optional[str] = None
 
     class Config:
         from_attributes = True

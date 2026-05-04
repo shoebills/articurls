@@ -65,7 +65,14 @@ export function middleware(request: NextRequest) {
   // CASE 1: Custom domain — rewrite to /custom-domain route
   // Domain status check happens server-side in the /custom-domain page
   if (!isInternalDomain(host, runtimeHosts)) {
-    if (isExemptPath(pathname)) return NextResponse.next();
+    // robots.txt and sitemap.xml are exempt from the /custom-domain rewrite
+    // but still need x-original-host so their route handlers can identify
+    // which custom domain is being requested.
+    if (isExemptPath(pathname)) {
+      const res = NextResponse.next();
+      res.headers.set("x-original-host", host);
+      return res;
+    }
 
     // Rewrite to /custom-domain route and pass hostname via header
     // The server-side page will handle domain lookup and lifecycle

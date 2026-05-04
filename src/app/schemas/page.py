@@ -25,8 +25,6 @@ class UserPageOut(UserPageBase):
     slug: str
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    show_in_menu: bool
-    menu_order: Optional[int] = None
     show_in_footer: bool
     footer_order: Optional[int] = None
 

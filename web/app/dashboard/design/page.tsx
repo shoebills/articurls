@@ -8,7 +8,6 @@ import {
   listBlogs,
   listCategories,
   patchDesignSettings,
-  updateMenuPages,
   updateFooterPages,
   updateMenuCategories,
 } from "@/lib/api";

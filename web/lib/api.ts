@@ -348,15 +348,6 @@ export async function updatePage(
   });
 }
 
-export async function updateMenuPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
-  return apiFetch("/pages/menu", {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ordered_page_ids }),
-  });
-}
-
 export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
   return apiFetch("/pages/footer", {
     method: "PATCH",

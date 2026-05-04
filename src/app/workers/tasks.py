@@ -92,6 +92,9 @@ def publish_scheduled_blogs():
             maybe_replace_placeholder_slug_on_publish(db, post)
             post.status = models.BlogStatus.PUBLISHED
             post.published_at = now
+            # Publishing is a meaningful event — bump updated_at so sitemap
+            # lastmod reflects when the post became publicly visible.
+            post.updated_at = now
 
         db.commit()
 
