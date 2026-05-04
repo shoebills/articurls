@@ -39,6 +39,9 @@ export function buildCustomDomainUrl(
  * so that Google consolidates all ranking signals on the custom domain.
  * Otherwise it falls back to the articurls.com marketing URL.
  *
+ * IMPORTANT: Always strips query parameters and fragments to consolidate
+ * ranking signals on a single clean URL.
+ *
  * @param user               Public user object (includes domain info)
  * @param marketingOrigin    e.g. "https://articurls.com"
  * @param marketingPath      Full path on the marketing domain,
@@ -52,10 +55,15 @@ export function resolveCanonicalUrl(
   marketingPath: string,
   customDomainPath: string,
 ): string {
+  // Strip query parameters and fragments to consolidate ranking signals
+  // e.g. "/blog/post?utm_source=twitter#section" → "/blog/post"
+  const cleanMarketingPath = marketingPath.split('?')[0].split('#')[0];
+  const cleanCustomDomainPath = customDomainPath.split('?')[0].split('#')[0];
+  
   if (hasActiveCustomDomain(user)) {
-    return buildCustomDomainUrl(user.custom_domain!, customDomainPath);
+    return buildCustomDomainUrl(user.custom_domain!, cleanCustomDomainPath);
   }
-  return `${marketingOrigin}${marketingPath}`;
+  return `${marketingOrigin}${cleanMarketingPath}`;
 }
 
 /**

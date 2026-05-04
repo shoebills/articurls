@@ -62,6 +62,28 @@ export function middleware(request: NextRequest) {
 
   const { pathname, search } = request.nextUrl;
 
+  // Strip query parameters from public content URLs (SEO consolidation)
+  // Preserve query params for auth/dashboard/internal routes
+  if (request.nextUrl.searchParams.size > 0) {
+    const isPublicContent = 
+      !pathname.startsWith('/dashboard') &&
+      !pathname.startsWith('/login') &&
+      !pathname.startsWith('/signup') &&
+      !pathname.startsWith('/verify') &&
+      !pathname.startsWith('/forgot-password') &&
+      !pathname.startsWith('/reset-password') &&
+      !pathname.startsWith('/confirm-subscription') &&
+      !pathname.startsWith('/internal') &&
+      !pathname.startsWith('/api') &&
+      !pathname.startsWith('/_next');
+    
+    if (isPublicContent) {
+      const url = request.nextUrl.clone();
+      url.search = '';  // Remove all query parameters
+      return NextResponse.redirect(url, 301);
+    }
+  }
+
   // CASE 1: Custom domain — rewrite to /custom-domain route
   // Domain status check happens server-side in the /custom-domain page
   if (!isInternalDomain(host, runtimeHosts)) {

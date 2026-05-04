@@ -23,6 +23,7 @@ if (r2Public) {
 
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["10.106.108.92"],
+  trailingSlash: false,  // Enforce no trailing slash with 308 redirects
   images: {
     remotePatterns,
   },
