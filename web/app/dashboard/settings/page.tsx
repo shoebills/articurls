@@ -84,7 +84,6 @@ export default function SettingsPage() {
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
-  const [verification_tick, setVerificationTick] = useState(false);
   const [useDefaultPreviewImage, setUseDefaultPreviewImage] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -124,7 +123,6 @@ export default function SettingsPage() {
       setEnabledSocials(
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
-      setVerificationTick(u.verification_tick);
       setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
@@ -157,7 +155,6 @@ export default function SettingsPage() {
       setEnabledSocials(
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
-      setVerificationTick(ctxUser.verification_tick);
       setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
@@ -202,7 +199,7 @@ export default function SettingsPage() {
     setBusy(true);
     setErr(null);
     try {
-      await patchProMe(token, { verification_tick });
+      await patchProMe(token, {});
       await refreshUser();
       setSaved(true);
     } catch (e) {
@@ -601,7 +598,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Pro options</CardTitle>
-          <CardDescription>Verification tick and footer controls require an active Pro plan.</CardDescription>
+          <CardDescription>Footer controls require an active Pro plan.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isPro && (
@@ -609,13 +606,6 @@ export default function SettingsPage() {
               Upgrade under Billing to edit these.
             </p>
           )}
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Verification tick</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">Show verified badge on your public profile.</p>
-            </div>
-            <Switch checked={verification_tick} onCheckedChange={setVerificationTick} disabled={!isPro} />
-          </div>
           <p className="text-sm leading-relaxed text-muted-foreground">
             “Remove footer” is applied on the public site when your account is Pro and configured server-side.
           </p>

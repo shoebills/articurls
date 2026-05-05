@@ -122,8 +122,6 @@ def expired_pro_fallback():
         for sub in expired_subscriptions:
             db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
             if db_user:
-                db_user.verification_tick = False
-
                 # Handle custom domain lifecycle when Pro lapses
                 if db_user.domain_status == models.DomainStatus.ACTIVE:
                     # Move to grace period — domain still serves for 30 days

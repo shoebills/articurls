@@ -30,7 +30,6 @@ class UserSettings(BaseModel):
     youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
-    verification_tick: bool
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
@@ -64,7 +63,6 @@ class PublicUser(BaseModel):
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
-    verification_tick: bool
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: bool
@@ -106,7 +104,6 @@ class UpdateUser(BaseModel):
 
 
 class UpdateProUser(BaseModel):
-    verification_tick: Optional[bool] = None
     navbar_enabled: Optional[bool] = None
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None

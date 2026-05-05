@@ -46,7 +46,6 @@ class User(Base):
     grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
-    verification_tick = Column(Boolean, nullable=False, default=False)
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)

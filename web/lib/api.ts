@@ -259,7 +259,6 @@ export async function patchMe(
 export async function patchProMe(
   token: string,
   body: {
-    verification_tick?: boolean;
     navbar_enabled?: boolean;
     nav_blog_name?: string | null;
     nav_menu_enabled?: boolean;

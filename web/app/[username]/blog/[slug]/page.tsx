@@ -8,7 +8,6 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { VerifiedBadge } from "@/components/verified-badge";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
@@ -177,7 +176,6 @@ export default async function PublicBlogPage({ params }: Props) {
               )}
               <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
                 <span className="truncate">{author.name}</span>
-                {author.verification_tick ? <VerifiedBadge /> : null}
               </span>
             </Link>
             {blog.published_at && (

@@ -9,7 +9,6 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { VerifiedBadge } from "@/components/verified-badge";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { AdSlot } from "@/components/ad-slot";
 import { injectAdsIntoHtml } from "@/lib/ad-injection";
@@ -295,7 +294,6 @@ export default async function CustomDomainPage({ params }: Props) {
                 )}
                 <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
                   <span className="truncate">{author.name}</span>
-                  {author.verification_tick ? <VerifiedBadge /> : null}
                 </span>
               </Link>
               {blog.published_at && (

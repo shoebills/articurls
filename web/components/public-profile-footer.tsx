@@ -1,6 +1,5 @@
 import type { PublicUser } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
-import { VerifiedBadge } from "@/components/verified-badge";
 import { MdOutlineEmail } from "react-icons/md";
 import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX, SiYoutube } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
@@ -39,7 +38,6 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
         <div className="min-w-0">
           <p className="inline-flex max-w-full flex-wrap items-center gap-x-1.5 gap-y-0.5 font-semibold leading-tight">
             <span className="min-w-0 break-words">{user.name}</span>
-            {user.verification_tick ? <VerifiedBadge /> : null}
           </p>
         </div>
       </div>

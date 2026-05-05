@@ -66,7 +66,6 @@ export interface PublicUser {
   github_link: string | null;
   youtube_link: string | null;
   profile_image_url: string | null;
-  verification_tick: boolean;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
@@ -105,7 +104,6 @@ export interface UserSettings {
   github_link: string | null;
   youtube_link: string | null;
   profile_image_url: string | null;
-  verification_tick: boolean;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_menu_enabled: boolean;
