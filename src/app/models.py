@@ -25,7 +25,6 @@ class User(Base):
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
-    link = Column(String, nullable=True)
     contact_email = Column(String, nullable=True)
     instagram_link = Column(String, nullable=True)
     x_link = Column(String, nullable=True)

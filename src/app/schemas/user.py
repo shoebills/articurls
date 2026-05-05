@@ -19,7 +19,6 @@ class UserSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     bio: Optional[str] = None
-    link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None
@@ -53,7 +52,6 @@ class PublicUser(BaseModel):
     meta_title: str
     meta_description: str
     bio: Optional[str] = None
-    link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None
@@ -90,7 +88,6 @@ class UpdateUser(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     bio: Optional[str] = None
-    link: Optional[str] = None
     contact_email: Optional[EmailStr] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None

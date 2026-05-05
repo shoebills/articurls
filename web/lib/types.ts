@@ -56,7 +56,6 @@ export interface PublicUser {
   meta_title: string;
   meta_description: string;
   bio: string | null;
-  link: string | null;
   contact_email: string | null;
   instagram_link: string | null;
   x_link: string | null;
@@ -94,7 +93,6 @@ export interface UserSettings {
   meta_title: string | null;
   meta_description: string | null;
   bio: string | null;
-  link: string | null;
   contact_email: string | null;
   instagram_link: string | null;
   x_link: string | null;

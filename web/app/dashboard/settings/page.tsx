@@ -70,7 +70,6 @@ export default function SettingsPage() {
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [bio, setBio] = useState("");
-  const [link, setLink] = useState("");
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>({
     contact_email: "",
     instagram_link: "",
@@ -108,7 +107,6 @@ export default function SettingsPage() {
       setUserName(u.user_name);
       setEmail(u.email);
       setBio(u.bio || "");
-      setLink(u.link || "");
       const nextLinks: Record<SocialPlatform, string> = {
         contact_email: u.contact_email || "",
         instagram_link: u.instagram_link || "",
@@ -140,7 +138,6 @@ export default function SettingsPage() {
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
       setBio(ctxUser.bio || "");
-      setLink(ctxUser.link || "");
       const nextLinks: Record<SocialPlatform, string> = {
         contact_email: ctxUser.contact_email || "",
         instagram_link: ctxUser.instagram_link || "",
@@ -174,7 +171,6 @@ export default function SettingsPage() {
         name,
         email,
         bio,
-        link,
         contact_email: socialLinks.contact_email || null,
         instagram_link: socialLinks.instagram_link || null,
         x_link: socialLinks.x_link || null,
@@ -472,16 +468,6 @@ export default function SettingsPage() {
               placeholder="Optional short bio (max 200 words)"
             />
             <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
-          </div>
-          <div className="space-y-2.5">
-            <Label htmlFor="link">Link in bio</Label>
-            <Input
-              id="link"
-              type="url"
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="https://example.com"
-            />
           </div>
           <div className="space-y-3">
             <Label>Socials</Label>

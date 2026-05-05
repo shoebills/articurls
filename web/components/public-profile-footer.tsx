@@ -44,19 +44,6 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
 
       {user.bio ? <p className="mt-5 whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
 
-      {user.link ? (
-        <p className="mt-5">
-          <a
-            href={normalizePublicLink(user.link)}
-            target="_blank"
-            rel="noreferrer"
-            className="text-sm font-medium text-foreground underline underline-offset-4"
-          >
-            {user.link}
-          </a>
-        </p>
-      ) : null}
-
       {socialItems(user).length > 0 ? (
         <div className="mt-6 flex flex-wrap items-center gap-2.5">
           {socialItems(user).map((item) => {
