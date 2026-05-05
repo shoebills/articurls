@@ -82,7 +82,10 @@ async function customDomainRobots(host: string): Promise<Response> {
 
   if (!domainInfo) {
     return new Response(DISALLOW_ALL, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Vary": "x-original-host",
+      },
     });
   }
 
@@ -95,13 +98,17 @@ async function customDomainRobots(host: string): Promise<Response> {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "public, max-age=300",
+        "Vary": "x-original-host",
       },
     });
   }
 
   if (domain_status !== "active" && domain_status !== "grace") {
     return new Response(DISALLOW_ALL, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Vary": "x-original-host",
+      },
     });
   }
 
@@ -109,7 +116,10 @@ async function customDomainRobots(host: string): Promise<Response> {
 
   if (!user) {
     return new Response(DISALLOW_ALL, {
-      headers: { "Content-Type": "text/plain; charset=utf-8" },
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Vary": "x-original-host",
+      },
     });
   }
 
@@ -151,7 +161,8 @@ Sitemap: ${siteOrigin}/sitemap.xml
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "CDN-Cache-Control": "no-store",
     },
   });
 }
@@ -192,6 +203,7 @@ Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Vary": "Host",
     },
   });
 }
@@ -199,19 +211,27 @@ Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const originalHost = req.headers.get("x-original-host");
+  // Get the actual hostname from the request URL (most reliable)
+  const requestHost = req.nextUrl.hostname;
+  
+  // For custom domains, middleware sets x-original-host
+  // For Vercel deployments, the actual public hostname is in x-forwarded-host or x-original-host
+  const originalHost = req.headers.get("x-original-host") || req.headers.get("x-forwarded-host");
+  
+  // Use originalHost if available (custom domain), otherwise use requestHost
+  const effectiveHost = originalHost || requestHost;
 
   if (originalHost && !isInternalHost(originalHost)) {
     return customDomainRobots(originalHost);
   }
 
   // app.articurls.com → block everything (dashboard/auth domain)
-  const host = req.headers.get("host") || "";
-  if (host.toLowerCase().startsWith("app.articurls.com")) {
+  if (effectiveHost.toLowerCase().startsWith("app.articurls.com")) {
     return new Response(DISALLOW_ALL, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
         "Cache-Control": "public, max-age=86400",
+        "Vary": "Host",
       },
     });
   }
