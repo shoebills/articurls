@@ -71,6 +71,7 @@ class PublicBlog(BaseModel):
 
 class PublicBlogs(PublicBlog):
     excerpt: Optional[str] = None
+    view_count: Optional[int] = None
 
 
 class UpdateBlog(BaseModel):
