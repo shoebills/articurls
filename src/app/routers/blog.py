@@ -389,6 +389,19 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
         detail="Not authorized to perform this action"
     )
 
+    # Validate title and content before publishing
+    if not db_blog.title or not db_blog.title.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Title is required to publish"
+        )
+    
+    if not db_blog.content or not db_blog.content.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Content is required to publish"
+        )
+
     if db_blog.status == models.BlogStatus.PUBLISHED:
         return db_blog
     
@@ -469,6 +482,19 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform this action"
     )
+
+    # Validate title and content before scheduling
+    if not db_blog.title or not db_blog.title.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Title is required to schedule"
+        )
+    
+    if not db_blog.content or not db_blog.content.strip():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Content is required to schedule"
+        )
 
     if db_blog.status == models.BlogStatus.PUBLISHED:
         raise HTTPException(
