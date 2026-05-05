@@ -124,11 +124,21 @@ Disallow: /verify
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /confirm-subscription
-Disallow: /admin
-Disallow: /admin/
-Disallow: /internal
 Disallow: /internal/
 Disallow: /api/
+Disallow: /_next/
+
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
 
 Sitemap: ${siteOrigin}/sitemap.xml
 `;
@@ -150,6 +160,8 @@ Sitemap: ${siteOrigin}/sitemap.xml
 
 function marketingDomainRobots(): Response {
   const body = `User-agent: *
+Allow: /
+
 Disallow: /dashboard/
 Disallow: /login
 Disallow: /signup
@@ -159,8 +171,19 @@ Disallow: /reset-password
 Disallow: /confirm-subscription
 Disallow: /internal/
 Disallow: /api/
+Disallow: /_next/
 
-Allow: /
+User-agent: AhrefsBot
+Crawl-delay: 10
+
+User-agent: SemrushBot
+Crawl-delay: 10
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
 
 Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
 `;
