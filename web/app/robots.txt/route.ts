@@ -162,7 +162,6 @@ Sitemap: ${siteOrigin}/sitemap.xml
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "no-cache, no-store, must-revalidate",
-      "CDN-Cache-Control": "no-store",
     },
   });
 }
