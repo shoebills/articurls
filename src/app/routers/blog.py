@@ -309,15 +309,12 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
             )
 
         if not slug_locked and wants_different_slug:
+            # Get a unique slug (may append -1, -2, etc. if needed)
             resolved = utils.unique_blog_slug(
                 db, current_user.user_id, new_slug, exclude_blog_id=db_blog.blog_id
             )
-            if resolved != new_slug:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="That URL slug is already used by another post.",
-                )
-            db_blog.slug = new_slug
+            # Use the resolved unique slug
+            db_blog.slug = resolved
 
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
@@ -396,7 +393,10 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
             detail="Title is required to publish"
         )
     
-    if not db_blog.content or not db_blog.content.strip():
+    # Check if content is empty (strip HTML tags and whitespace)
+    import re
+    content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
+    if not content_text:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Content is required to publish"
@@ -490,7 +490,10 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             detail="Title is required to schedule"
         )
     
-    if not db_blog.content or not db_blog.content.strip():
+    # Check if content is empty (strip HTML tags and whitespace)
+    import re
+    content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
+    if not content_text:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Content is required to schedule"

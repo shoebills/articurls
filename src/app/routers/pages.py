@@ -85,10 +85,17 @@ def create_page(
     if not title:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
 
+    content = request.content or ""
+    # Check if content is empty (strip HTML tags and whitespace)
+    import re
+    content_text = re.sub(r'<[^>]+>', '', content).strip()
+    if not content_text:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Content is required")
+
     new_page = models.UserPage(
         user_id=current_user.user_id,
         title=title,
-        content=request.content or "",
+        content=content,
         slug=_unique_page_slug(db, current_user.user_id, title),
     )
     db.add(new_page)
@@ -139,7 +146,13 @@ def update_page(
         db_page.title = title
 
     if "content" in update_data:
-        db_page.content = update_data["content"] or ""
+        content = update_data["content"] or ""
+        # Check if content is empty (strip HTML tags and whitespace)
+        import re
+        content_text = re.sub(r'<[^>]+>', '', content).strip()
+        if not content_text:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Content is required")
+        db_page.content = content
 
     if "slug" in update_data:
         new_slug = (update_data["slug"] or "").strip()
