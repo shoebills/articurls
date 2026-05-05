@@ -237,7 +237,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (!blog || saving || !isDirty()) return;
-    setSaveStatus("idle");
+    // Don't reset to idle immediately - keep showing "Saved" until autosave triggers
+    // This prevents flickering between "Saved" → "" → "Saving..." → "Saved"
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       void save(true);
@@ -313,7 +314,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         placeholder="Title"
       />
       <p className="mb-3 text-xs text-muted-foreground">
-        {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : " "}
+        {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : "\u00a0"}
       </p>
 
       <BlogEditor

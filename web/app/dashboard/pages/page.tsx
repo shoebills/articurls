@@ -155,7 +155,8 @@ export default function PagesDashboardPage() {
   // Autosave on field changes
   useEffect(() => {
     if (!editingPage || busy) return;
-    setSaveStatus("idle");
+    // Don't reset to idle immediately - keep showing "Saved" until autosave triggers
+    // This prevents flickering between "Saved" → "" → "Saving..." → "Saved"
     const timer = setTimeout(() => { void onSaveEdit(true); }, 900);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
