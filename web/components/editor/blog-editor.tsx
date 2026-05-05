@@ -137,11 +137,39 @@ export function BlogEditor({
     ((editor.state.selection as { node?: { type?: { name?: string } } }).node?.type?.name === "image" ||
       editor.isActive("image"));
 
+  // Track if editor is focused to prevent overwriting during active editing
+  const isEditorFocusedRef = useRef(false);
+
+  useEffect(() => {
+    if (!editor) return;
+
+    // Track focus state to prevent content overwrites during typing
+    const handleFocus = () => {
+      isEditorFocusedRef.current = true;
+    };
+    const handleBlur = () => {
+      isEditorFocusedRef.current = false;
+    };
+
+    editor.on("focus", handleFocus);
+    editor.on("blur", handleBlur);
+
+    return () => {
+      editor.off("focus", handleFocus);
+      editor.off("blur", handleBlur);
+    };
+  }, [editor]);
+
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
     prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
-    if (content !== current) {
+    
+    // Only update editor content if:
+    // 1. Content is different from current editor state, AND
+    // 2. Editor is not currently focused (user is not actively typing)
+    // This prevents autosave from overwriting content during active editing
+    if (content !== current && !isEditorFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
     }
   }, [content, editor]);
