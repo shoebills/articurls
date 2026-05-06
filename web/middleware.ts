@@ -78,6 +78,7 @@ export function middleware(request: NextRequest) {
       !pathname.startsWith('/dashboard') &&
       !pathname.startsWith('/login') &&
       !pathname.startsWith('/signup') &&
+      !pathname.startsWith('/onboarding') &&
       !pathname.startsWith('/verify') &&
       !pathname.startsWith('/forgot-password') &&
       !pathname.startsWith('/reset-password') &&

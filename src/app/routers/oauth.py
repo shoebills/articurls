@@ -220,6 +220,7 @@ async def google_callback(
             f"email={quote(email)}&"
             f"name={quote(name)}"
         )
+        print(f"[OAuth Callback] Redirecting to onboarding: {onboarding_url}")
         return RedirectResponse(url=onboarding_url, status_code=status.HTTP_302_FOUND)
         
     except HTTPException:
@@ -413,4 +414,5 @@ async def _login_existing_user(
     # Redirect to dashboard with access token in URL
     # Frontend will extract and store it
     dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
+    print(f"[OAuth] Redirecting existing user to dashboard: {dashboard_url}")
     return RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)
