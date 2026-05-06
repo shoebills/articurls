@@ -51,13 +51,13 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get("access_token");
     if (accessToken) {
-      // Store token using the same key as password login
+      // Store token
       localStorage.setItem("articurls_token", accessToken);
       // Remove token from URL
       const url = new URL(window.location.href);
       url.searchParams.delete("access_token");
       window.history.replaceState({}, "", url.toString());
-      // Reload to trigger auth context update
+      // Reload page to let auth context pick up the token
       window.location.reload();
     }
   }, []);
