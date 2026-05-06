@@ -51,12 +51,15 @@ export default function DashboardPage() {
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get("access_token");
     if (accessToken) {
+      console.log("[Dashboard] Found access_token, storing...");
       // Store token
       localStorage.setItem("articurls_token", accessToken);
+      console.log("[Dashboard] Token stored, cleaning URL...");
       // Remove token from URL
       const url = new URL(window.location.href);
       url.searchParams.delete("access_token");
       window.history.replaceState({}, "", url.toString());
+      console.log("[Dashboard] URL cleaned, reloading...");
       // Reload page to let auth context pick up the token
       window.location.reload();
     }
