@@ -19,16 +19,16 @@ export function DashboardGate({ children }: { children: React.ReactNode }) {
     if (!token) router.replace("/login");
   }, [token, loading, router]);
 
-  // Show loading while auth is initializing or if there's an access_token being processed
-  if (loading || !token) {
-    // Check for access_token without using useSearchParams
-    const hasAccessToken = typeof window !== "undefined" && 
-      new URLSearchParams(window.location.search).get("access_token");
-    
-    if (!hasAccessToken && !loading && !token) {
-      return null; // Will redirect in useEffect
+  // If there's an access_token in URL, render children immediately so they can process it
+  if (typeof window !== "undefined") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("access_token")) {
+      return <>{children}</>;
     }
-    
+  }
+
+  // Normal auth check
+  if (loading || !token) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
