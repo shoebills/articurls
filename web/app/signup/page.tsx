@@ -123,33 +123,6 @@ function SignupForm() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleEmailContinue} className="space-y-5">
-              <div className={FIELD_GROUP}>
-                <Label htmlFor="email">Email</Label>
-                <Input 
-                  id="email" 
-                  type="email" 
-                  value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
-                  placeholder="you@example.com"
-                  autoFocus
-                  required 
-                />
-              </div>
-              <Button type="submit" className="w-full" size="lg">
-                Continue
-              </Button>
-            </form>
-            
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-border/60" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-card px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-
             <Button
               type="button"
               variant="outline"
@@ -179,6 +152,33 @@ function SignupForm() {
               </svg>
               Continue with Google
             </Button>
+
+            <div className="relative my-6">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-border/60" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">Or</span>
+              </div>
+            </div>
+
+            <form onSubmit={handleEmailContinue} className="space-y-5">
+              <div className={FIELD_GROUP}>
+                <Label htmlFor="email">Email</Label>
+                <Input 
+                  id="email" 
+                  type="email" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  placeholder="you@example.com"
+                  autoFocus
+                  required 
+                />
+              </div>
+              <Button type="submit" className="w-full" size="lg">
+                Continue
+              </Button>
+            </form>
 
             <p className="mt-8 border-t border-border/60 pt-8 text-center text-sm text-muted-foreground">
               Already have an account?{" "}

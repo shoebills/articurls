@@ -63,8 +63,8 @@ function OnboardingForm() {
         name, // Include the editable name
       });
 
-      // Store token
-      localStorage.setItem("access_token", access_token);
+      // Store token using the same key as password login
+      localStorage.setItem("articurls_token", access_token);
       
       // Redirect to dashboard
       router.replace("/dashboard");
@@ -84,28 +84,32 @@ function OnboardingForm() {
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Complete your profile</CardTitle>
+          <CardTitle className="text-2xl font-bold tracking-tight">Claim your space</CardTitle>
           <CardDescription className="text-base">
-            Choose your username and secure your account
+            Choose your unique username to start publishing
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-5">
             <div className={FIELD_GROUP}>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium">
+                Email
+              </Label>
               <Input
                 id="email"
                 type="email"
                 value={email}
                 disabled
-                className="bg-muted/50 cursor-not-allowed"
+                className="bg-muted/50 cursor-not-allowed text-muted-foreground"
               />
               <p className="text-xs leading-relaxed text-muted-foreground">
-                From your Google account
+                Verified with Google
               </p>
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="name">Display name</Label>
+              <Label htmlFor="name" className="text-sm font-medium">
+                Your name
+              </Label>
               <Input
                 id="name"
                 value={name}
@@ -113,9 +117,14 @@ function OnboardingForm() {
                 placeholder="John Doe"
                 required
               />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                How you'll appear to readers
+              </p>
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="user_name">Username</Label>
+              <Label htmlFor="user_name" className="text-sm font-medium">
+                Username
+              </Label>
               <Input
                 id="user_name"
                 value={user_name}
@@ -126,12 +135,20 @@ function OnboardingForm() {
                 pattern="[a-zA-Z0-9_-]+"
                 title="Letters, numbers, underscore, hyphen"
               />
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Your public URL: articurls.com/{user_name || "username"}
-              </p>
+              {user_name ? (
+                <p className="text-sm leading-relaxed text-foreground font-medium">
+                  articurls.com/<span className="text-primary">{user_name}</span>
+                </p>
+              ) : (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Your blog will live at articurls.com/username
+                </p>
+              )}
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium">
+                Password
+              </Label>
               <PasswordInput
                 id="password"
                 autoComplete="new-password"
@@ -141,15 +158,18 @@ function OnboardingForm() {
                 required
                 minLength={8}
               />
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                Secure your account and content
+              </p>
             </div>
             <Button type="submit" className="w-full" size="lg" disabled={busy}>
               {busy ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  Creating your space...
                 </>
               ) : (
-                "Create account"
+                "Start publishing"
               )}
             </Button>
           </form>
