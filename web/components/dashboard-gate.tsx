@@ -1,30 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export function DashboardGate({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
   const router = useRouter();
+  const [hasAccessToken, setHasAccessToken] = useState(false);
+
+  // Check for access_token on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      setHasAccessToken(!!params.get("access_token"));
+    }
+  }, []);
 
   useEffect(() => {
     if (loading) return;
-    
-    // Don't redirect if there's an access_token in the URL (OAuth callback)
-    const params = new URLSearchParams(window.location.search);
-    const hasAccessToken = params.get("access_token");
-    if (hasAccessToken) return;
-    
+    if (hasAccessToken) return; // Don't redirect during OAuth callback
     if (!token) router.replace("/login");
-  }, [token, loading, router]);
+  }, [token, loading, router, hasAccessToken]);
 
-  // If there's an access_token in URL, render children immediately so they can process it
-  if (typeof window !== "undefined") {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("access_token")) {
-      return <>{children}</>;
-    }
+  // If OAuth callback, always render children
+  if (hasAccessToken) {
+    return <>{children}</>;
   }
 
   // Normal auth check

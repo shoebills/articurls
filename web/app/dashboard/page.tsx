@@ -48,20 +48,30 @@ export default function DashboardPage() {
 
   // Handle access token from OAuth callback (for existing user login)
   useEffect(() => {
+    console.log("[Dashboard] useEffect running, checking for access_token...");
+    console.log("[Dashboard] Current URL:", window.location.href);
     const params = new URLSearchParams(window.location.search);
     const accessToken = params.get("access_token");
+    console.log("[Dashboard] access_token found:", !!accessToken);
+    
     if (accessToken) {
-      console.log("[Dashboard] Found access_token, storing...");
+      console.log("[Dashboard] Storing token in localStorage...");
       // Store token
       localStorage.setItem("articurls_token", accessToken);
-      console.log("[Dashboard] Token stored, cleaning URL...");
+      console.log("[Dashboard] Token stored successfully");
+      console.log("[Dashboard] Verifying storage:", localStorage.getItem("articurls_token") ? "SUCCESS" : "FAILED");
+      
       // Remove token from URL
       const url = new URL(window.location.href);
       url.searchParams.delete("access_token");
+      console.log("[Dashboard] New URL (without token):", url.toString());
       window.history.replaceState({}, "", url.toString());
-      console.log("[Dashboard] URL cleaned, reloading...");
+      console.log("[Dashboard] URL updated, initiating reload...");
+      
       // Reload page to let auth context pick up the token
       window.location.reload();
+    } else {
+      console.log("[Dashboard] No access_token found, skipping OAuth flow");
     }
   }, []);
 
