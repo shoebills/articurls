@@ -29,15 +29,29 @@ def generate_state_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def store_state_token(state: str, ttl: int = 600) -> None:
+def store_state_token(state: str, ttl: int = 1800) -> None:
     """
     Store state token in Redis with TTL for validation.
     
     Args:
         state: The state token to store
-        ttl: Time to live in seconds (default: 10 minutes)
+        ttl: Time to live in seconds (default: 30 minutes)
     """
-    redis_client.set(f"oauth_state:{state}", "valid", ex=ttl)
+    try:
+        result = redis_client.set(f"oauth_state:{state}", "valid", ex=ttl)
+        print(f"[OAuth] State token stored in Redis: {state[:10]}... (TTL: {ttl}s) - Result: {result}")
+        
+        # Verify it was stored
+        verify = redis_client.get(f"oauth_state:{state}")
+        print(f"[OAuth] Verification read: {verify}")
+        
+        if not verify:
+            print(f"[OAuth] WARNING: State token was not stored properly!")
+    except Exception as e:
+        print(f"[OAuth] Redis error during state storage: {e}")
+        import traceback
+        print(f"[OAuth] Traceback: {traceback.format_exc()}")
+        raise
 
 
 def validate_state_token(state: str) -> bool:
@@ -51,13 +65,29 @@ def validate_state_token(state: str) -> bool:
         bool: True if valid, False otherwise
     """
     key = f"oauth_state:{state}"
-    is_valid = redis_client.get(key) is not None
-    
-    if is_valid:
-        # Consume the token (delete it)
-        redis_client.delete(key)
-    
-    return is_valid
+    try:
+        # Check Redis connection
+        redis_client.ping()
+        print(f"[OAuth] Redis ping successful")
+        
+        is_valid = redis_client.get(key) is not None
+        
+        if is_valid:
+            # Consume the token (delete it)
+            redis_client.delete(key)
+            print(f"[OAuth] State token validated and consumed: {state[:10]}...")
+        else:
+            print(f"[OAuth] State token not found in Redis: {state[:10]}...")
+            # Debug: Check if any oauth_state keys exist
+            all_keys = redis_client.keys("oauth_state:*")
+            print(f"[OAuth] Total oauth_state keys in Redis: {len(all_keys)}")
+        
+        return is_valid
+    except Exception as e:
+        print(f"[OAuth] Redis error during state validation: {e}")
+        import traceback
+        print(f"[OAuth] Traceback: {traceback.format_exc()}")
+        return False
 
 
 def get_authorization_url(redirect_uri: str) -> tuple[str, str]:
@@ -115,9 +145,15 @@ async def exchange_code_for_token(code: str, redirect_uri: str) -> Dict[str, Any
     }
     
     async with httpx.AsyncClient() as client:
-        response = await client.post(token_url, data=data)
-        response.raise_for_status()
-        return response.json()
+        try:
+            response = await client.post(token_url, data=data)
+            response.raise_for_status()
+            return response.json()
+        except httpx.HTTPStatusError as e:
+            print(f"Token exchange failed. Status: {e.response.status_code}")
+            print(f"Response: {e.response.text}")
+            print(f"Redirect URI used: {redirect_uri}")
+            raise
 
 
 async def get_google_user_info(access_token: str) -> Dict[str, Any]:
@@ -157,7 +193,18 @@ def store_oauth_session(session_id: str, data: Dict[str, Any], ttl: int = 900) -
         ttl: Time to live in seconds (default: 15 minutes)
     """
     import json
-    redis_client.set(f"oauth_session:{session_id}", json.dumps(data), ex=ttl)
+    try:
+        result = redis_client.set(f"oauth_session:{session_id}", json.dumps(data), ex=ttl)
+        print(f"[OAuth] Session stored in Redis: {session_id[:10]}... (TTL: {ttl}s) - Result: {result}")
+        
+        # Verify it was stored
+        verify = redis_client.get(f"oauth_session:{session_id}")
+        print(f"[OAuth] Session verification read successful: {bool(verify)}")
+    except Exception as e:
+        print(f"[OAuth] Redis error during session storage: {e}")
+        import traceback
+        print(f"[OAuth] Traceback: {traceback.format_exc()}")
+        raise
 
 
 def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
@@ -172,14 +219,30 @@ def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
     """
     import json
     key = f"oauth_session:{session_id}"
-    data = redis_client.get(key)
     
-    if data:
-        # Consume the session (delete it)
-        redis_client.delete(key)
-        return json.loads(data)
-    
-    return None
+    try:
+        # Check Redis connection
+        redis_client.ping()
+        print(f"[OAuth] Redis ping successful for session retrieval")
+        
+        data = redis_client.get(key)
+        
+        if data:
+            # Consume the session (delete it)
+            redis_client.delete(key)
+            print(f"[OAuth] Session retrieved and consumed: {session_id[:10]}...")
+            return json.loads(data)
+        else:
+            print(f"[OAuth] Session not found in Redis: {session_id[:10]}...")
+            # Debug: Check if any oauth_session keys exist
+            all_keys = redis_client.keys("oauth_session:*")
+            print(f"[OAuth] Total oauth_session keys in Redis: {len(all_keys)}")
+            return None
+    except Exception as e:
+        print(f"[OAuth] Redis error during session retrieval: {e}")
+        import traceback
+        print(f"[OAuth] Traceback: {traceback.format_exc()}")
+        return None
 
 
 def generate_session_id() -> str:
