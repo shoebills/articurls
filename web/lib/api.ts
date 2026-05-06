@@ -188,6 +188,19 @@ export async function signup(data: {
   });
 }
 
+export async function completeGoogleSignup(data: {
+  session_id: string;
+  user_name: string;
+  password: string;
+  name: string;
+}): Promise<{ access_token: string; token_type: string }> {
+  return apiFetch("/auth/google/complete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+}
+
 export async function verifyEmail(token: string): Promise<TokenResponse> {
   const q = new URLSearchParams({ token });
   return apiFetch(`/user/verify-new-user?${q.toString()}`);

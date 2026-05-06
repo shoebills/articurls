@@ -26,3 +26,4 @@ class CompleteGoogleSignup(BaseModel):
     session_id: str
     user_name: str
     password: str
+    name: str  # Allow user to edit the name from Google

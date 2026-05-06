@@ -198,8 +198,14 @@ async def google_callback(
         
         store_oauth_session(session_id, session_data.model_dump())
         
-        # Redirect to onboarding page
-        onboarding_url = f"{settings.app_base_url}/onboarding?session_id={session_id}"
+        # Redirect to onboarding page with email and name in URL for display
+        from urllib.parse import quote
+        onboarding_url = (
+            f"{settings.app_base_url}/onboarding?"
+            f"session_id={session_id}&"
+            f"email={quote(email)}&"
+            f"name={quote(name)}"
+        )
         return RedirectResponse(url=onboarding_url, status_code=status.HTTP_302_FOUND)
         
     except HTTPException:
@@ -246,7 +252,6 @@ async def complete_google_signup(
     # Validate session data
     google_id = session_data.get("google_id")
     email = session_data.get("email")
-    name = session_data.get("name")
     picture = session_data.get("picture")
     email_verified = session_data.get("email_verified", False)
     
@@ -255,6 +260,9 @@ async def complete_google_signup(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid session data"
         )
+    
+    # Use the name from the request (user may have edited it)
+    name = request.name
     
     # Validate username
     user_name = validate_username_or_raise(request.user_name)
