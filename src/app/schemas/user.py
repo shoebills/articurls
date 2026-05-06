@@ -15,6 +15,7 @@ class UserSettings(BaseModel):
     name: str
     user_name: str
     email: EmailStr
+    google_id: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     bio: Optional[str] = None

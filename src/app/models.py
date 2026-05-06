@@ -22,6 +22,7 @@ class User(Base):
     user_name = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
+    google_id = Column(String, nullable=True, unique=True, index=True)
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     bio = Column(Text, nullable=True)

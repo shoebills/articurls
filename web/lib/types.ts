@@ -90,6 +90,7 @@ export interface UserSettings {
   name: string;
   user_name: string;
   email: string;
+  google_id?: string | null;
   meta_title: string | null;
   meta_description: string | null;
   bio: string | null;
