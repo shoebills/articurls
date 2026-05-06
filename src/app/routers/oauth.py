@@ -88,32 +88,23 @@ async def google_callback(
     Returns:
         RedirectResponse: Redirect to dashboard or onboarding page
     """
-    print(f"[OAuth Callback] Received - code: {bool(code)}, state: {bool(state)}, error: {error}")
-    
     # Handle OAuth errors
     if error:
-        print(f"[OAuth Callback] Google returned error: {error}")
         error_url = f"{settings.app_base_url}/login?error=oauth_failed"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
     # Validate required parameters
     if not code or not state:
-        print(f"[OAuth Callback] Missing parameters - code: {bool(code)}, state: {bool(state)}")
         error_url = f"{settings.app_base_url}/login?error=invalid_request"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
     # Validate state token (CSRF protection)
-    print(f"[OAuth Callback] Validating state token...")
     if not validate_state_token(state):
-        print(f"[OAuth Callback] State token validation failed")
         error_url = f"{settings.app_base_url}/login?error=invalid_state"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
-    print(f"[OAuth Callback] State token validated successfully")
-    
     try:
         # Exchange code for access token
-        print(f"[OAuth Callback] Exchanging code for token...")
         token_response = await exchange_code_for_token(code, settings.google_redirect_uri)
         access_token = token_response.get("access_token")
         
@@ -124,12 +115,8 @@ async def google_callback(
                 detail="Failed to obtain access token"
             )
         
-        print(f"[OAuth Callback] Token obtained successfully")
-        
         # Get user info from Google
-        print(f"[OAuth Callback] Fetching user info from Google...")
         google_user = await get_google_user_info(access_token)
-        print(f"[OAuth Callback] User info received: email={google_user.get('email')}, verified={google_user.get('verified_email')}")
         
         # Validate Google user info
         google_id = google_user.get("id")
@@ -220,7 +207,6 @@ async def google_callback(
             f"email={quote(email)}&"
             f"name={quote(name)}"
         )
-        print(f"[OAuth Callback] Redirecting to onboarding: {onboarding_url}")
         return RedirectResponse(url=onboarding_url, status_code=status.HTTP_302_FOUND)
         
     except HTTPException:
@@ -414,5 +400,4 @@ async def _login_existing_user(
     # Redirect to dashboard with access token in URL
     # Frontend will extract and store it
     dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
-    print(f"[OAuth] Redirecting existing user to dashboard: {dashboard_url}")
     return RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)

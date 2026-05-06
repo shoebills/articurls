@@ -46,6 +46,22 @@ export default function DashboardPage() {
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
   const [page, setPage] = useState(1);
 
+  // Handle access token from OAuth callback (for existing user login)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const accessToken = params.get("access_token");
+    if (accessToken) {
+      // Store token using the same key as password login
+      localStorage.setItem("articurls_token", accessToken);
+      // Remove token from URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete("access_token");
+      window.history.replaceState({}, "", url.toString());
+      // Reload to trigger auth context update
+      window.location.reload();
+    }
+  }, []);
+
   const load = useCallback(async () => {
     if (!token) return;
     setErr(null);
