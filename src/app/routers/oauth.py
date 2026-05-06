@@ -150,18 +150,39 @@ async def google_callback(
         existing_user_by_email = user_by_email(db, email)
         
         if existing_user_by_email:
-            # Link Google account to existing email user
-            existing_user_by_email.google_id = google_id
+            # SAFEGUARD: Check if this user already has a different Google account linked
+            if existing_user_by_email.google_id and existing_user_by_email.google_id != google_id:
+                # User already linked to a different Google account
+                # This prevents accidentally linking a different Google account
+                error_url = f"{settings.app_base_url}/login?error=different_google_account"
+                return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
             
-            # Update profile picture if not set
-            if not existing_user_by_email.profile_image_url or \
-               existing_user_by_email.profile_image_url == settings.default_profile_image_url:
-                if picture:
-                    existing_user_by_email.profile_image_url = picture
+            # SAFEGUARD: Only link if google_id is not already used by another user
+            if not existing_user_by_email.google_id:
+                # Check if this google_id is already linked to a different account
+                google_id_taken = db.query(models.User).filter(
+                    models.User.google_id == google_id,
+                    models.User.user_id != existing_user_by_email.user_id
+                ).first()
+                
+                if google_id_taken:
+                    # This Google account is already linked to a different email
+                    error_url = f"{settings.app_base_url}/login?error=google_account_already_linked"
+                    return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
+                
+                # Safe to link: Link Google account to existing email user
+                existing_user_by_email.google_id = google_id
+                
+                # Update profile picture if not set
+                if not existing_user_by_email.profile_image_url or \
+                   existing_user_by_email.profile_image_url == settings.default_profile_image_url:
+                    if picture:
+                        existing_user_by_email.profile_image_url = picture
+                
+                db.commit()
+                db.refresh(existing_user_by_email)
             
-            db.commit()
-            db.refresh(existing_user_by_email)
-            
+            # User exists and is properly linked (or was already linked to this Google account)
             return await _login_existing_user(existing_user_by_email, response, db)
         
         # New user - create onboarding session
