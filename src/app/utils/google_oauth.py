@@ -1,13 +1,3 @@
-"""
-Google OAuth utilities for backend-controlled OAuth flow.
-
-This module handles:
-- OAuth client initialization
-- Authorization URL generation with state token
-- Token exchange and validation
-- User info retrieval from Google
-"""
-
 import secrets
 from typing import Dict, Any
 from authlib.integrations.starlette_client import OAuth
@@ -157,14 +147,14 @@ async def get_google_user_info(access_token: str) -> Dict[str, Any]:
         return response.json()
 
 
-def store_oauth_session(session_id: str, data: Dict[str, Any], ttl: int = 300) -> None:
+def store_oauth_session(session_id: str, data: Dict[str, Any], ttl: int = 900) -> None:
     """
     Store temporary OAuth session data in Redis.
     
     Args:
         session_id: Unique session identifier
         data: Session data to store (will be JSON serialized)
-        ttl: Time to live in seconds (default: 5 minutes)
+        ttl: Time to live in seconds (default: 15 minutes)
     """
     import json
     redis_client.set(f"oauth_session:{session_id}", json.dumps(data), ex=ttl)
