@@ -145,14 +145,12 @@ async def google_callback(
         
         if existing_user:
             # Existing Google user - log them in
-            print(f"[OAuth] Existing user login: {email}")
             return await _login_existing_user(existing_user, response, db)
         
         # Check if user exists by email (account linking)
         existing_user_by_email = user_by_email(db, email)
         
         if existing_user_by_email:
-            print(f"[OAuth] Account linking for: {email}")
             # SAFEGUARD: Check if this user already has a different Google account linked
             if existing_user_by_email.google_id and existing_user_by_email.google_id != google_id:
                 # User already linked to a different Google account
@@ -189,7 +187,6 @@ async def google_callback(
             return await _login_existing_user(existing_user_by_email, response, db)
         
         # New user - create onboarding session
-        print(f"[OAuth] New user signup: {email}")
         session_id = generate_session_id()
         
         session_data = GoogleOAuthSession(
@@ -403,5 +400,4 @@ async def _login_existing_user(
     # Redirect to dashboard with access token in URL
     # Frontend will extract and store it
     dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
-    print(f"[OAuth] Login redirect to: {dashboard_url[:80]}...")
     return RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)
