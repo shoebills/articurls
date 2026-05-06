@@ -1,0 +1,202 @@
+"""
+Google OAuth utilities for backend-controlled OAuth flow.
+
+This module handles:
+- OAuth client initialization
+- Authorization URL generation with state token
+- Token exchange and validation
+- User info retrieval from Google
+"""
+
+import secrets
+from typing import Dict, Any
+from authlib.integrations.starlette_client import OAuth
+from ..config import settings
+from ..redis_client import redis_client
+
+
+# Initialize OAuth client
+oauth = OAuth()
+
+oauth.register(
+    name="google",
+    client_id=settings.google_client_id,
+    client_secret=settings.google_client_secret,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={
+        "scope": "openid email profile",
+    },
+)
+
+
+def generate_state_token() -> str:
+    """
+    Generate a secure random state token for CSRF protection.
+    
+    Returns:
+        str: A cryptographically secure random token
+    """
+    return secrets.token_urlsafe(32)
+
+
+def store_state_token(state: str, ttl: int = 600) -> None:
+    """
+    Store state token in Redis with TTL for validation.
+    
+    Args:
+        state: The state token to store
+        ttl: Time to live in seconds (default: 10 minutes)
+    """
+    redis_client.set(f"oauth_state:{state}", "valid", ex=ttl)
+
+
+def validate_state_token(state: str) -> bool:
+    """
+    Validate and consume state token from Redis.
+    
+    Args:
+        state: The state token to validate
+        
+    Returns:
+        bool: True if valid, False otherwise
+    """
+    key = f"oauth_state:{state}"
+    is_valid = redis_client.get(key) is not None
+    
+    if is_valid:
+        # Consume the token (delete it)
+        redis_client.delete(key)
+    
+    return is_valid
+
+
+def get_authorization_url(redirect_uri: str) -> tuple[str, str]:
+    """
+    Generate Google OAuth authorization URL with state token.
+    
+    Args:
+        redirect_uri: The callback URL for OAuth redirect
+        
+    Returns:
+        tuple: (authorization_url, state_token)
+    """
+    state = generate_state_token()
+    store_state_token(state)
+    
+    # Build authorization URL
+    authorization_url = (
+        f"https://accounts.google.com/o/oauth2/v2/auth?"
+        f"client_id={settings.google_client_id}&"
+        f"redirect_uri={redirect_uri}&"
+        f"response_type=code&"
+        f"scope=openid%20email%20profile&"
+        f"state={state}&"
+        f"access_type=offline&"
+        f"prompt=select_account"
+    )
+    
+    return authorization_url, state
+
+
+async def exchange_code_for_token(code: str, redirect_uri: str) -> Dict[str, Any]:
+    """
+    Exchange authorization code for access token.
+    
+    Args:
+        code: Authorization code from Google
+        redirect_uri: The same redirect URI used in authorization
+        
+    Returns:
+        dict: Token response from Google
+        
+    Raises:
+        Exception: If token exchange fails
+    """
+    import httpx
+    
+    token_url = "https://oauth2.googleapis.com/token"
+    
+    data = {
+        "code": code,
+        "client_id": settings.google_client_id,
+        "client_secret": settings.google_client_secret,
+        "redirect_uri": redirect_uri,
+        "grant_type": "authorization_code",
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(token_url, data=data)
+        response.raise_for_status()
+        return response.json()
+
+
+async def get_google_user_info(access_token: str) -> Dict[str, Any]:
+    """
+    Retrieve user information from Google using access token.
+    
+    Args:
+        access_token: Google access token
+        
+    Returns:
+        dict: User information from Google
+        
+    Raises:
+        Exception: If user info retrieval fails
+    """
+    import httpx
+    
+    userinfo_url = "https://www.googleapis.com/oauth2/v2/userinfo"
+    
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.get(userinfo_url, headers=headers)
+        response.raise_for_status()
+        return response.json()
+
+
+def store_oauth_session(session_id: str, data: Dict[str, Any], ttl: int = 300) -> None:
+    """
+    Store temporary OAuth session data in Redis.
+    
+    Args:
+        session_id: Unique session identifier
+        data: Session data to store (will be JSON serialized)
+        ttl: Time to live in seconds (default: 5 minutes)
+    """
+    import json
+    redis_client.set(f"oauth_session:{session_id}", json.dumps(data), ex=ttl)
+
+
+def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
+    """
+    Retrieve and consume OAuth session data from Redis.
+    
+    Args:
+        session_id: Session identifier
+        
+    Returns:
+        dict | None: Session data if found, None otherwise
+    """
+    import json
+    key = f"oauth_session:{session_id}"
+    data = redis_client.get(key)
+    
+    if data:
+        # Consume the session (delete it)
+        redis_client.delete(key)
+        return json.loads(data)
+    
+    return None
+
+
+def generate_session_id() -> str:
+    """
+    Generate a unique session ID for OAuth flow.
+    
+    Returns:
+        str: A cryptographically secure random session ID
+    """
+    return secrets.token_urlsafe(32)

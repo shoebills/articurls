@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     cloudflare_zone_id: str = ""
     cloudflare_fallback_origin: str = "fallback.articurls.com"
 
+    # Google OAuth
+    google_client_id: str = ""
+    google_client_secret: str = ""
+    google_redirect_uri: str = ""
+
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
 settings = Settings()
