@@ -4,6 +4,7 @@ const APP_ALLOWED_PREFIXES = [
   "/dashboard",
   "/login",
   "/signup",
+  "/onboarding",
   "/verify",
   "/forgot-password",
   "/reset-password",
