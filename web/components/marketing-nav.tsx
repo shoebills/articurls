@@ -10,7 +10,7 @@ import { appAuthHref } from "@/lib/env";
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
-  const signupFree = appAuthHref("/signup?plan_choice=free");
+  const signupUrl = appAuthHref("/signup");
   const login = appAuthHref("/login");
 
   useEffect(() => {
@@ -100,7 +100,7 @@ export function MarketingNav() {
               </Link>
             </nav>
             <Button size="sm" className="hidden h-10 min-w-[6.5rem] touch-manipulation md:inline-flex sm:min-w-0" asChild>
-              <a href={signupFree}>Get started</a>
+              <a href={signupUrl}>Get started</a>
             </Button>
             <Button
               type="button"
@@ -128,7 +128,7 @@ export function MarketingNav() {
             {mobileLinks}
             <div className="border-t border-border p-3">
               <Button className="h-11 w-full touch-manipulation" asChild>
-                <a href={signupFree} className="inline-flex w-full items-center justify-center text-center" onClick={() => setOpen(false)}>
+                <a href={signupUrl} className="inline-flex w-full items-center justify-center text-center" onClick={() => setOpen(false)}>
                   Get started — free
                 </a>
               </Button>

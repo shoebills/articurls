@@ -16,8 +16,7 @@ import {
 } from "lucide-react";
 
 export default function MarketingPage() {
-  const signupFree = appAuthHref("/signup?plan_choice=free");
-  const signupPro = appAuthHref("/signup?plan_choice=pro");
+  const signupUrl = appAuthHref("/signup");
   const loginUrl = appAuthHref("/login");
 
   const features = [
@@ -75,7 +74,7 @@ export default function MarketingPage() {
               </p>
               <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>
-                  <a href={signupFree}>Start free</a>
+                  <a href={signupUrl}>Start free</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 min-h-12 bg-background/80" asChild>
                   <a href="#pricing">See pricing</a>
@@ -224,7 +223,7 @@ export default function MarketingPage() {
                 </CardContent>
                 <CardFooter className="p-6 pt-4">
                   <Button className="h-12 w-full" variant="outline" asChild>
-                    <a href={signupFree}>Get started</a>
+                    <a href={signupUrl}>Get started</a>
                   </Button>
                 </CardFooter>
               </Card>
@@ -256,7 +255,7 @@ export default function MarketingPage() {
                 </CardContent>
                 <CardFooter className="p-6 pt-4">
                   <Button className="h-12 w-full shadow-md shadow-primary/20" asChild>
-                    <a href={signupPro}>Start Pro</a>
+                    <a href={signupUrl}>Start Pro</a>
                   </Button>
                 </CardFooter>
               </Card>
@@ -276,7 +275,7 @@ export default function MarketingPage() {
               </div>
               <div className="flex flex-col gap-3 sm:flex-row">
                 <Button size="lg" className="h-12" asChild>
-                  <a href={signupFree}>Create free account</a>
+                  <a href={signupUrl}>Create free account</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12" asChild>
                   <a href={loginUrl} className="inline-flex items-center gap-1.5">

@@ -14,7 +14,6 @@ class RequestPasswordReset(BaseModel):
 
 class ResendVerificationEmail(BaseModel):
     email: EmailStr
-    plan_choice: str = "free"
 
 
 class ResetPassword(BaseModel):

@@ -214,7 +214,6 @@ export interface TransactionOut {
 export interface TokenResponse {
   access_token: string;
   token_type: string;
-  next?: string;
   message?: string;
 }
 

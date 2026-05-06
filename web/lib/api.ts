@@ -166,13 +166,12 @@ export async function resetPassword(token: string, new_password: string): Promis
 }
 
 export async function resendVerificationEmail(
-  email: string,
-  plan_choice: "free" | "pro" = "free"
+  email: string
 ): Promise<{ message: string }> {
   return apiFetch("/resend-verification-email", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, plan_choice }),
+    body: JSON.stringify({ email }),
   });
 }
 
@@ -181,7 +180,6 @@ export async function signup(data: {
   user_name: string;
   email: string;
   password: string;
-  plan_choice: "free" | "pro";
 }): Promise<{ message: string }> {
   return apiFetch("/user/", {
     method: "POST",
@@ -190,8 +188,8 @@ export async function signup(data: {
   });
 }
 
-export async function verifyEmail(token: string, plan_choice: string): Promise<TokenResponse> {
-  const q = new URLSearchParams({ token, plan_choice });
+export async function verifyEmail(token: string): Promise<TokenResponse> {
+  const q = new URLSearchParams({ token });
   return apiFetch(`/user/verify-new-user?${q.toString()}`);
 }
 

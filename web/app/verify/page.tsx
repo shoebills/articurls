@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { verifyEmail, createCheckout, ApiError } from "@/lib/api";
+import { verifyEmail, ApiError } from "@/lib/api";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,7 +18,6 @@ function VerifyInner() {
 
   useEffect(() => {
     const token = searchParams.get("token");
-    const plan_choice = searchParams.get("plan_choice") || "free";
     if (!token) {
       setErr("Missing token");
       setMsg("");
@@ -26,19 +25,9 @@ function VerifyInner() {
     }
     (async () => {
       try {
-        const res = await verifyEmail(token, plan_choice);
+        const res = await verifyEmail(token);
         localStorage.setItem(TOKEN_KEY, res.access_token);
         setMsg(res.message === "Already confirmed" ? "Already verified — redirecting…" : "Verified — redirecting…");
-        if (res.next === "checkout") {
-          try {
-            const { checkout_url } = await createCheckout(res.access_token);
-            window.location.href = checkout_url;
-            return;
-          } catch {
-            window.location.assign("/dashboard/billing");
-            return;
-          }
-        }
         window.location.assign("/dashboard");
       } catch (ex) {
         setErr(ex instanceof ApiError ? ex.message : "Verification failed");

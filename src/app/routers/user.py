@@ -80,13 +80,12 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     db.refresh(new_user)
 
     verify_token = oauth2.create_new_user_token(email)
-    plan_choice = request.plan_choice
-    send_verify_new_user(email, request.name, verify_token, plan_choice)
+    send_verify_new_user(email, request.name, verify_token)
 
     return {"message": "Please check your mailbox to verify your email!"}
 
 @router.get("/verify-new-user", status_code=status.HTTP_200_OK)
-def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db)):
+def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     try:
         payload = oauth2.verify_new_user_token(token)
@@ -112,14 +111,6 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
 
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    if plan_choice not in ("free", "pro"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid plan_choice; use 'free' or 'pro'"
-            )
-    
-    next_step = "checkout" if plan_choice == "pro" else "dashboard"
 
     if db_user.email_verified:
         access_token = oauth2.create_access_token(
@@ -130,8 +121,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
         return {
             "message": "Already confirmed",
             "access_token": access_token,
-            "token_type": "bearer",
-            "next": next_step
+            "token_type": "bearer"
             }
 
     db_user.email_verified = True
@@ -145,8 +135,7 @@ def verify_new_user(token: str, plan_choice: str, db: Session = Depends(get_db))
     
     return {
         "access_token": access_token,
-        "token_type": "bearer",
-        "next": next_step
+        "token_type": "bearer"
         }
 
 @router.get("/me", response_model=user.UserSettings, status_code=status.HTTP_200_OK)

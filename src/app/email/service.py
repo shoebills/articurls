@@ -48,7 +48,7 @@ def send_sub_confirmation_email(to_email: str, blog_name: str, confirm_token: st
 
     send_email(to_email, subject, html)
 
-def send_verify_new_user(to_email: str, blog_name: str, verify_token: str, plan_choice: str):
+def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
 
     html = (TEMPLATE_DIR / "verify_new_user.html").read_text()
 
@@ -56,7 +56,7 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str, plan_
     base = settings.app_base_url.rstrip("/")
     html = html.replace(
         "{{ verify_url }}",
-        f"{base}/verify?token={verify_token}&plan_choice={plan_choice}",
+        f"{base}/verify?token={verify_token}",
     )
 
     subject = "Verify your email for Articurls"

@@ -7,8 +7,7 @@ class CreateUser(BaseModel):
     name: str
     user_name: str
     email: EmailStr
-    password: str
-    plan_choice: Literal["free", "pro"] = "free" 
+    password: str 
 
 
 class UserSettings(BaseModel):

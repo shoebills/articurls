@@ -114,15 +114,9 @@ def resend_verification_email(request: authentication.ResendVerificationEmail, d
     email = normalize_email(str(request.email))
     db_user = user_by_email(db, email)
 
-    if request.plan_choice not in ("free", "pro"):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid plan_choice; use 'free' or 'pro'",
-        )
-
     if db_user and not db_user.email_verified:
         verify_token = oauth2.create_new_user_token(email)
-        send_verify_new_user(email, db_user.name, verify_token, request.plan_choice)
+        send_verify_new_user(email, db_user.name, verify_token)
 
     return {"message": "If your account exists and is not yet verified, a new verification link has been sent."}
 
