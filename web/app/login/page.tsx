@@ -56,7 +56,7 @@ function LoginForm() {
     setResending(true);
     setInfo(null);
     try {
-      const res = await resendVerificationEmail(email.trim(), "free");
+      const res = await resendVerificationEmail(email.trim());
       setInfo(res.message);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Could not resend verification email");
