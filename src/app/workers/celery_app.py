@@ -28,4 +28,9 @@ celery.conf.beat_schedule = {
         "task": "src.app.workers.tasks.expired_pro_fallback",
         "schedule": crontab(minute=0),
     },
+
+    "flush-view-counts": {
+        "task": "src.app.workers.tasks.flush_view_counts",
+        "schedule": 60.0,  # every 60 seconds
+    },
 }

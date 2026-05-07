@@ -27,18 +27,15 @@ def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
 
-    # Query blogs with view counts
+    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
-        db.query(models.Blog, func.count(models.Views.view_id).label("view_count"))
-        .outerjoin(models.Views, models.Blog.blog_id == models.Views.blog_id)
+        db.query(models.Blog)
         .filter(models.Blog.user_id == db_user.user_id, models.Blog.status == models.BlogStatus.PUBLISHED)
-        .group_by(models.Blog.blog_id)
         .all()
     )
 
     blogs = []
-    for db_blog, view_count in results:
-        db_blog.view_count = view_count
+    for db_blog in results:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
         blogs.append(db_blog)
 
@@ -259,23 +256,20 @@ def get_public_category_blogs(user_name: str, slug: str, request: Request, db: S
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    # Query blogs with view counts
+    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
-        db.query(models.Blog, func.count(models.Views.view_id).label("view_count"))
+        db.query(models.Blog)
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)
-        .outerjoin(models.Views, models.Blog.blog_id == models.Views.blog_id)
         .filter(
             models.BlogCategory.category_id == db_cat.category_id,
             models.Blog.user_id == db_user.user_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
-        .group_by(models.Blog.blog_id)
         .all()
     )
 
     blogs = []
-    for db_blog, view_count in results:
-        db_blog.view_count = view_count
+    for db_blog in results:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
         cat_ids = [
             row[0]

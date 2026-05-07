@@ -228,22 +228,19 @@ def get_category_blogs(
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
+    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
-        db.query(models.Blog, func.count(models.Views.view_id).label("view_count"))
+        db.query(models.Blog)
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)
-        .outerjoin(models.Views, models.Blog.blog_id == models.Views.blog_id)
         .filter(
             models.BlogCategory.category_id == category_id,
             models.Blog.user_id == current_user.user_id,
         )
-        .group_by(models.Blog.blog_id)
         .all()
     )
     blogs = []
-    for db_blog, view_count in results:
-        db_blog.view_count = view_count
+    for db_blog in results:
         db_blog.excerpt = make_excerpt(db_blog.content)
-        # Attach category_ids
         cat_ids = [
             row[0]
             for row in db.query(models.BlogCategory.category_id)

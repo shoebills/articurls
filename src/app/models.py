@@ -1,6 +1,6 @@
 import enum
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, String, Integer, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, BigInteger, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean
 
 
 class Base(DeclarativeBase):
@@ -127,6 +127,7 @@ class Blog(Base):
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     ads_enabled = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
+    view_count = Column(BigInteger, nullable=False, default=0)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

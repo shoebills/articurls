@@ -79,21 +79,13 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 @router.get("/", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # returns (blog, views)
-    results = db.query(
-        models.Blog,
-        func.count(models.Views.view_id).label("view_count")
-    ).outerjoin(
-        models.Views, models.Blog.blog_id == models.Views.blog_id
-    ).filter(
+    # Read view_count directly from the denormalized column — no JOIN needed
+    results = db.query(models.Blog).filter(
         models.Blog.user_id == current_user.user_id
-    ).group_by(
-        models.Blog.blog_id
     ).all()
-    
+
     blogs = []
-    for db_blog, view_count in results:
-        db_blog.view_count = view_count
+    for db_blog in results:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
         _attach_category_ids(db, db_blog)
         blogs.append(db_blog)
@@ -145,20 +137,12 @@ def update_ads_selection(request: blog.AdsSelectionUpdate, db: Session = Depends
 
     db.commit()
 
-    results = db.query(
-        models.Blog,
-        func.count(models.Views.view_id).label("view_count")
-    ).outerjoin(
-        models.Views, models.Blog.blog_id == models.Views.blog_id
-    ).filter(
+    results = db.query(models.Blog).filter(
         models.Blog.user_id == current_user.user_id
-    ).group_by(
-        models.Blog.blog_id
     ).all()
 
     blogs = []
-    for db_blog, view_count in results:
-        db_blog.view_count = view_count
+    for db_blog in results:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
         blogs.append(db_blog)
     return blogs
@@ -369,6 +353,13 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
     db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
     db.commit()
+
+    # Clean up orphaned Redis delta key so flush task doesn't try to update a deleted blog
+    try:
+        from ..redis_client import redis_client
+        redis_client.delete(f"views_delta:{blog_id}")
+    except Exception:
+        pass
 
     return {"message": "Blog deleted"}
 

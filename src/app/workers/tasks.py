@@ -1,8 +1,9 @@
 from datetime import datetime, timezone
-from sqlalchemy import func
+from sqlalchemy import func, text
 from .celery_app import celery
 from .. import database, models
 from ..email.service import send_new_post_email
+from ..redis_client import redis_client
 from ..security.oauth2 import create_unsubscribe_token
 from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_post_url
 
@@ -10,8 +11,8 @@ from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, 
 @celery.task
 def record_blog_view(user_id: int, blog_id: int, visitor_hash: str):
     """
-    Record a blog view in the database asynchronously.
-    This prevents blocking the HTTP response while writing to the database.
+    Record a blog view in the database asynchronously and increment
+    the Redis delta counter for the periodic flush to pick up.
     """
     db = database.SessionLocal()
     try:
@@ -22,8 +23,52 @@ def record_blog_view(user_id: int, blog_id: int, visitor_hash: str):
         ))
         db.commit()
     except Exception:
-        # Silently fail - view tracking should not break the user experience
         pass
+    finally:
+        db.close()
+
+    # Increment Redis delta — flush_view_counts will apply this to blogs.view_count
+    try:
+        redis_client.incr(f"views_delta:{blog_id}")
+    except Exception:
+        pass
+
+
+@celery.task
+def flush_view_counts():
+    """
+    Flush Redis view count deltas into the denormalized blogs.view_count column.
+    Runs every 60 seconds via Celery beat.
+
+    Uses GETSET(key, 0) for atomic swap — new INCRs after the swap are safe
+    and will be picked up by the next flush cycle.
+    """
+    db = database.SessionLocal()
+    try:
+        for key in redis_client.scan_iter(match="views_delta:*", count=1000):
+            try:
+                blog_id = int(key.split(":")[-1])
+            except (ValueError, IndexError):
+                continue
+
+            # Atomic: returns old value and resets to 0 in one operation
+            delta = int(redis_client.getset(key, 0) or 0)
+
+            if delta <= 0:
+                continue
+
+            result = db.execute(
+                text("UPDATE blogs SET view_count = view_count + :delta WHERE blog_id = :blog_id"),
+                {"delta": delta, "blog_id": blog_id},
+            )
+
+            # Blog was deleted — clean up the orphaned Redis key
+            if result.rowcount == 0:
+                redis_client.delete(key)
+
+        db.commit()
+    except Exception:
+        db.rollback()
     finally:
         db.close()
 
