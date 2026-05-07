@@ -6,6 +6,7 @@ from sqlalchemy import func
 from typing import List
 from ..database import get_db
 from .. import models, utils
+from ..workers.tasks import record_blog_view
 from ..schemas import blog, user
 from ..schemas import page as page_schema
 from ..config import settings
@@ -104,13 +105,19 @@ def track_blog_view(user_name: str, slug: str, request: Request, db: Session = D
     if is_owner_view:
         return
 
-    ip = (request.client.host if request.client else None) or ""
+    # CF-Connecting-IP is the real client IP set by Cloudflare (safe to trust
+    # because origin is bound to 127.0.0.1 and not reachable externally).
+    # Falls back to X-Forwarded-For for non-Cloudflare proxies, then direct IP.
+    ip = (
+        request.headers.get("cf-connecting-ip")
+        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        or (request.client.host if request.client else None)
+        or ""
+    )
     user_agent = request.headers.get("user-agent", "")
     visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
     
     # Queue the view tracking task to run asynchronously in the background
-    # This prevents blocking the HTTP response while writing to the database
-    from ..workers.tasks import record_blog_view
     record_blog_view.delay(db_user.user_id, db_blog.blog_id, visitor_hash)
 
 
