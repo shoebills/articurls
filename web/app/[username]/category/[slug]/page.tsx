@@ -13,21 +13,23 @@ import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-do
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
+const REVALIDATE = 300;
+
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: REVALIDATE } });
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadCategories(username: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
   return res.json();
 }
@@ -35,7 +37,7 @@ async function loadCategories(username: string): Promise<Category[]> {
 async function loadCategoryBlogs(username: string, slug: string): Promise<PublicCategoryBlogsResponse | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/category/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    { next: { revalidate: REVALIDATE } }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;

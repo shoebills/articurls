@@ -20,8 +20,18 @@ type Props = { params: Promise<{ slug?: string[] }> };
 
 // ── Data loaders ─────────────────────────────────────────────────────────────
 
+// Revalidation window (seconds). Balances freshness with backend load.
+// Domain lookups, user profiles, blog lists, etc. rarely change more than
+// once every few minutes — 300 s (5 min) is a safe default. On a cache miss
+// Next.js serves the stale page instantly and revalidates in the background.
+const REVALIDATE = 300;
+
 async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
   try {
+    // Domain status drives routing decisions (redirect vs serve vs 404),
+    // so it must always be fresh.  The backend already caches the DB
+    // lookup in Redis (300 s TTL with explicit invalidation on status
+    // change), so "no-store" here is cheap — it hits Redis, not the DB.
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
@@ -38,13 +48,13 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return null;
   return res.json();
 }
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
   return res.json();
 }
@@ -52,7 +62,7 @@ async function loadBlogs(username: string): Promise<PublicBlog[]> {
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    { next: { revalidate: REVALIDATE } }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -60,13 +70,13 @@ async function loadBlog(username: string, slug: string): Promise<PublicBlog | nu
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadCategories(username: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
   return res.json();
 }
@@ -74,7 +84,7 @@ async function loadCategories(username: string): Promise<Category[]> {
 async function loadPage(username: string, slug: string): Promise<UserPage | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    { next: { revalidate: REVALIDATE } }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -84,7 +94,7 @@ async function loadPage(username: string, slug: string): Promise<UserPage | null
 async function loadCategoryBlogs(username: string, slug: string): Promise<PublicCategoryBlogsResponse | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/category/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    { next: { revalidate: REVALIDATE } }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -94,7 +104,7 @@ async function loadCategoryBlogs(username: string, slug: string): Promise<Public
 async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAds | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}/ads`,
-    { cache: "no-store" }
+    { next: { revalidate: REVALIDATE } }
   );
   if (!res.ok) return null;
   return res.json();

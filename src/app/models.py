@@ -37,7 +37,7 @@ class User(Base):
     profile_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
 
-    custom_domain = Column(String, nullable=True, default=None)
+    custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
     domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
     cloudflare_hostname_id = Column(String, nullable=True, default=None)

@@ -117,7 +117,7 @@ async def add_domain(
 
     # Check for duplicate domain BEFORE calling Cloudflare
     existing = db.query(models.User).filter(
-        models.User.custom_domain.ilike(hostname),
+        models.User.custom_domain == hostname,
         models.User.user_id != current_user.user_id
     ).first()
     
@@ -381,7 +381,7 @@ async def delete_domain(
 
 # ── Internal endpoint (middleware → API) ─────────────────────────────────────
 
-_DOMAIN_CACHE_TTL = 60  # seconds
+_DOMAIN_CACHE_TTL = 300  # seconds — domains rarely change; 5 min is safe
 
 @router.get("/internal/domain-lookup", response_model=DomainLookupOut, status_code=status.HTTP_200_OK)
 def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)):
@@ -402,7 +402,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
 
     db_user = (
         db.query(models.User)
-        .filter(models.User.custom_domain.ilike(normalized))
+        .filter(models.User.custom_domain == normalized)
         .first()
     )
 
