@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, DEFAULT_BLOG_FEATURED_IMAGE_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -20,6 +20,16 @@ import { faviconIcons } from "@/lib/favicon";
 type Props = { params: Promise<{ username: string; slug: string }> };
 
 const REVALIDATE = 300;
+
+function resolveUserSiteName(user: PublicUser | null | undefined): string {
+  return (user?.nav_blog_name || "").trim() || "My Blog";
+}
+
+function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
+  const profileImage = assetUrl(user?.profile_image_url);
+  if (profileImage) return profileImage;
+  return DEFAULT_BLOG_FEATURED_IMAGE_URL || undefined;
+}
 
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`, {
@@ -68,17 +78,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const canonical = author
     ? resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath)
     : `${MARKETING_ORIGIN}${marketingPath}`;
+  const title = blog.meta_title || blog.title;
+  const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
+  const ogImage =
+    resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) || resolveUserOgImage(author);
+  const siteName = resolveUserSiteName(author);
   return {
-    title: blog.meta_title || blog.title,
-    description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
+    title,
+    description,
     alternates: { canonical },
     icons: faviconIcons(author),
     openGraph: {
-      images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
+      title,
+      description,
+      url: canonical,
+      type: "article",
+      siteName,
+      images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      images: [resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true)],
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
     },
   };
 }

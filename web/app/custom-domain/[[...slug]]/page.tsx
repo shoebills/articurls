@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, DEFAULT_BLOG_FEATURED_IMAGE_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -26,6 +26,16 @@ type Props = { params: Promise<{ slug?: string[] }> };
 // once every few minutes — 300 s (5 min) is a safe default. On a cache miss
 // Next.js serves the stale page instantly and revalidates in the background.
 const REVALIDATE = 300;
+
+function resolveUserSiteName(user: PublicUser | null | undefined): string {
+  return (user?.nav_blog_name || "").trim() || "My Blog";
+}
+
+function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
+  const profileImage = assetUrl(user?.profile_image_url);
+  if (profileImage) return profileImage;
+  return DEFAULT_BLOG_FEATURED_IMAGE_URL || undefined;
+}
 
 async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
   try {
@@ -132,17 +142,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const postSlug = segments[1];
     const [blog, author] = await Promise.all([loadBlog(username, postSlug), loadUser(username)]);
     if (!blog) return { title: "Not found" };
+    const title = blog.meta_title || blog.title;
+    const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
+    const siteName = resolveUserSiteName(author);
+    const ogImage =
+      resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) || resolveUserOgImage(author);
     return {
-      title: blog.meta_title || blog.title,
-      description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
+      title,
+      description,
       alternates: { canonical },
       icons: faviconIcons(author),
       openGraph: {
-        images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
+        title,
+        description,
+        url: canonical,
+        type: "article",
+        siteName,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
-        images: [resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true)],
+        title,
+        description,
+        images: ogImage ? [ogImage] : undefined,
       },
     };
   }
@@ -150,11 +172,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (segments[0] === "page" && segments[1]) {
     const [page, user] = await Promise.all([loadPage(username, segments[1]), loadUser(username)]);
     if (!page) return { title: "Not found" };
+    const title = page.meta_title || page.title;
+    const description = page.meta_description || undefined;
+    const siteName = resolveUserSiteName(user);
+    const ogImage = resolveUserOgImage(user);
     return {
-      title: page.meta_title || page.title,
-      description: page.meta_description || undefined,
+      title,
+      description,
       alternates: { canonical },
       icons: faviconIcons(user),
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        type: "website",
+        siteName,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: ogImage ? [ogImage] : undefined,
+      },
     };
   }
 
@@ -162,22 +202,60 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const [user, data] = await Promise.all([loadUser(username), loadCategoryBlogs(username, segments[1])]);
     if (!user || !data) return { title: "Not found" };
     const categoryName = data.category.name || segments[1];
+    const title = `${categoryName} — ${user.name}`;
+    const description = `Browse all ${categoryName} posts by ${user.name}.`;
+    const siteName = resolveUserSiteName(user);
+    const ogImage =
+      (data.blogs[0] ? resolveBlogPreviewImage(data.blogs[0], user.use_default_preview_image) : "") ||
+      resolveUserOgImage(user);
     return {
-      title: `${categoryName} — ${user.name}`,
-      description: `Browse all ${categoryName} posts by ${user.name}.`,
+      title,
+      description,
       alternates: { canonical },
       icons: faviconIcons(user),
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        type: "website",
+        siteName,
+        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: ogImage ? [ogImage] : undefined,
+      },
     };
   }
 
   // Profile page
   const user = await loadUser(username);
   if (!user) return { title: "Not found" };
+  const title = user.meta_title || `${user.name} — Articurls`;
+  const description = user.meta_description || undefined;
+  const siteName = resolveUserSiteName(user);
+  const ogImage = resolveUserOgImage(user);
   return {
-    title: user.meta_title || `${user.name} — Articurls`,
-    description: user.meta_description || undefined,
+    title,
+    description,
     alternates: { canonical },
     icons: faviconIcons(user),
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      siteName,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
   };
 }
 

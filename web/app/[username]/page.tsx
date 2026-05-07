@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, DEFAULT_BLOG_FEATURED_IMAGE_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -15,6 +15,16 @@ import { faviconIcons } from "@/lib/favicon";
 type Props = { params: Promise<{ username: string }> };
 
 const REVALIDATE = 300;
+
+function resolveUserSiteName(user: PublicUser | null | undefined): string {
+  return (user?.nav_blog_name || "").trim() || "My Blog";
+}
+
+function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
+  const profileImage = assetUrl(user?.profile_image_url);
+  if (profileImage) return profileImage;
+  return DEFAULT_BLOG_FEATURED_IMAGE_URL || undefined;
+}
 
 async function loadUser(username: string): Promise<PublicUser | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
@@ -48,11 +58,29 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!user) return { title: "Not found" };
   const marketingPath = `/${encodeURIComponent(user.user_name)}`;
   const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
+  const title = user.meta_title || `${user.name} — Articurls`;
+  const description = user.meta_description || undefined;
+  const siteName = resolveUserSiteName(user);
+  const ogImage = resolveUserOgImage(user);
   return {
-    title: user.meta_title || `${user.name} — Articurls`,
-    description: user.meta_description || undefined,
+    title,
+    description,
     alternates: { canonical },
     icons: faviconIcons(user),
+    openGraph: {
+      title,
+      description,
+      url: canonical,
+      type: "website",
+      siteName,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: ogImage ? [ogImage] : undefined,
+    },
   };
 }
 
