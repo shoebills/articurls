@@ -152,33 +152,31 @@ export default async function PublicBlogPage({ params }: Props) {
               >
                 {navBlogName}
               </Link>
-              {showSubscriberCollection ? (
-                <div className="flex min-w-0 items-center gap-4">
-                  {author.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                      {categories.map((c) => (
-                        <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                          {c.name}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null}
+              <div className="flex min-w-0 items-center gap-4">
+                {author.nav_menu_enabled && showDesktopInline ? (
+                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                    {categories.map((c) => (
+                      <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                        {c.name}
+                      </Link>
+                    ))}
+                  </nav>
+                ) : null}
+                {showSubscriberCollection ? (
                   <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
-                </div>
-              ) : null}
-            </div>
-            {showSubscriberCollection ? (
-              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
-                  links={showSubscriberCollection && author.nav_menu_enabled ? catLinks : []}
-                  userName={author.user_name}
-                  authorName={author.name}
-                  showSubscribeAction={showSubscriberCollection}
-                />
+                ) : null}
               </div>
-            ) : null}
+            </div>
+            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username)}
+                links={author.nav_menu_enabled ? catLinks : []}
+                userName={author.user_name}
+                authorName={author.name}
+                showSubscribeAction={showSubscriberCollection}
+              />
+            </div>
           </section>
         ) : null}
         <Link
