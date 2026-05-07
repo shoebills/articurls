@@ -134,6 +134,7 @@ Disallow: /verify
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /confirm-subscription
+Disallow: /onboarding
 Disallow: /internal/
 Disallow: /api/
 Disallow: /_next/
@@ -179,6 +180,7 @@ Disallow: /verify
 Disallow: /forgot-password
 Disallow: /reset-password
 Disallow: /confirm-subscription
+Disallow: /onboarding
 Disallow: /internal/
 Disallow: /api/
 Disallow: /_next/
