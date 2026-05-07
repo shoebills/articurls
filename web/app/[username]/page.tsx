@@ -109,6 +109,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
+  const showSubscriberCollection = user.subscriber_collection_enabled === true;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
@@ -117,29 +118,34 @@ export default async function PublicProfilePage({ params }: Props) {
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <p className="truncate text-lg font-semibold">{navBlogName}</p>
-              <div className="flex min-w-0 items-center gap-4">
-                {user.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                    {categories.map((c) => (
-                      <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                        {c.name}
-                      </Link>
-                    ))}
-                  </nav>
-                ) : null}
-                <div className="shrink-0">
-                  <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
+              {showSubscriberCollection ? (
+                <div className="flex min-w-0 items-center gap-4">
+                  {user.nav_menu_enabled && showDesktopInline ? (
+                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                      {categories.map((c) => (
+                        <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                          {c.name}
+                        </Link>
+                      ))}
+                    </nav>
+                  ) : null}
+                  <div className="shrink-0">
+                    <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
+                  </div>
                 </div>
+              ) : null}
+            </div>
+            {showSubscriberCollection ? (
+              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+                <PublicMobileNavMenu
+                  title={navBlogName}
+                  links={showSubscriberCollection && user.nav_menu_enabled ? catLinks : []}
+                  userName={user.user_name}
+                  authorName={user.name}
+                  showSubscribeAction={showSubscriberCollection}
+                />
               </div>
-            </div>
-            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
-              <PublicMobileNavMenu
-                title={navBlogName}
-                links={user.nav_menu_enabled ? catLinks : []}
-                userName={user.user_name}
-                authorName={user.name}
-              />
-            </div>
+            ) : null}
           </section>
         ) : null}
         <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={MARKETING_ORIGIN} />

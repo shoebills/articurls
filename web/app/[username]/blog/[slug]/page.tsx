@@ -137,6 +137,7 @@ export default async function PublicBlogPage({ params }: Props) {
   const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
+  const showSubscriberCollection = author.subscriber_collection_enabled === true;
 
   return (
     <article className="min-h-screen bg-background">
@@ -151,28 +152,33 @@ export default async function PublicBlogPage({ params }: Props) {
               >
                 {navBlogName}
               </Link>
-              <div className="flex min-w-0 items-center gap-4">
-                {author.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
-                    {categories.map((c) => (
-                      <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                        {c.name}
-                      </Link>
-                    ))}
-                  </nav>
-                ) : null}
-                <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
+              {showSubscriberCollection ? (
+                <div className="flex min-w-0 items-center gap-4">
+                  {author.nav_menu_enabled && showDesktopInline ? (
+                    <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                      {categories.map((c) => (
+                        <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
+                          {c.name}
+                        </Link>
+                      ))}
+                    </nav>
+                  ) : null}
+                  <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
+                </div>
+              ) : null}
+            </div>
+            {showSubscriberCollection ? (
+              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+                <PublicMobileNavMenu
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username)}
+                  links={showSubscriberCollection && author.nav_menu_enabled ? catLinks : []}
+                  userName={author.user_name}
+                  authorName={author.name}
+                  showSubscribeAction={showSubscriberCollection}
+                />
               </div>
-            </div>
-            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
-              <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username)}
-                links={author.nav_menu_enabled ? catLinks : []}
-                userName={author.user_name}
-                authorName={author.name}
-              />
-            </div>
+            ) : null}
           </section>
         ) : null}
         <Link
@@ -224,9 +230,11 @@ export default async function PublicBlogPage({ params }: Props) {
             ) : null
           )}
         </div>
-        <div className="mt-14 border-t border-border/80 pt-6">
-          <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
-        </div>
+        {showSubscriberCollection ? (
+          <div className="mt-14 border-t border-border/80 pt-6">
+            <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
+          </div>
+        ) : null}
         <PublicProfileFooter user={author} />
         <PublicSiteFooter user={author} pages={pages} />
       </div>

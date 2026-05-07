@@ -14,11 +14,19 @@ type PublicMobileNavMenuProps = {
   title: string;
   titleHref?: string;
   links: Array<{ href: string; label: string }>;
-  userName: string;
-  authorName: string;
+  userName?: string;
+  authorName?: string;
+  showSubscribeAction?: boolean;
 };
 
-export function PublicMobileNavMenu({ title, titleHref, links, userName, authorName }: PublicMobileNavMenuProps) {
+export function PublicMobileNavMenu({
+  title,
+  titleHref,
+  links,
+  userName,
+  authorName,
+  showSubscribeAction = true,
+}: PublicMobileNavMenuProps) {
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -132,16 +140,20 @@ export function PublicMobileNavMenu({ title, titleHref, links, userName, authorN
                 </Link>
               ))}
             </div>
+          ) : !showSubscribeAction ? (
+            <p className="px-3 py-2 text-center text-sm text-muted-foreground">No categories</p>
           ) : null}
 
-          <div className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}>
-            <SubscribeToAuthor
-              mode="dialog"
-              userName={userName}
-              authorName={authorName}
-              triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
-            />
-          </div>
+          {showSubscribeAction && userName ? (
+            <div className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}>
+              <SubscribeToAuthor
+                mode="dialog"
+                userName={userName}
+                authorName={authorName}
+                triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
+              />
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

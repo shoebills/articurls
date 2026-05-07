@@ -40,6 +40,7 @@ class UserSettings(BaseModel):
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
+    subscriber_collection_enabled: bool = True
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
 
@@ -72,6 +73,7 @@ class PublicUser(BaseModel):
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
+    subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
     # SEO control fields — consumed by sitemap and robots.txt generation
@@ -107,6 +109,7 @@ class UpdateProUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
     favicon_url: Optional[str] = None
+    subscriber_collection_enabled: Optional[bool] = None
 
 
 class AdminUsernameChange(BaseModel):

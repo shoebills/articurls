@@ -39,6 +39,7 @@ export default function SettingsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [subscriberCollectionEnabled, setSubscriberCollectionEnabled] = useState(true);
   const [usernameChangeCount, setUsernameChangeCount] = useState(0);
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
@@ -61,6 +62,7 @@ export default function SettingsPage() {
       setUserName(u.user_name);
       setEmail(u.email);
       setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
+      setSubscriberCollectionEnabled(u.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -77,6 +79,7 @@ export default function SettingsPage() {
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
       setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
+      setSubscriberCollectionEnabled(ctxUser.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
@@ -106,7 +109,9 @@ export default function SettingsPage() {
     setBusy(true);
     setErr(null);
     try {
-      await patchProMe(token, {});
+      await patchProMe(token, {
+        subscriber_collection_enabled: subscriberCollectionEnabled,
+      });
       await refreshUser();
       setSaved(true);
     } catch (e) {
@@ -472,6 +477,19 @@ export default function SettingsPage() {
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Collect subscribers</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Show the subscribe button in your public navigation and below blog posts.
+              </p>
+            </div>
+            <Switch
+              checked={isPro ? subscriberCollectionEnabled : false}
+              onCheckedChange={setSubscriberCollectionEnabled}
+              disabled={!isPro || busy}
+            />
           </div>
           <div className="pt-2">
             <Button size="lg" onClick={savePro} disabled={!isPro || busy}>
