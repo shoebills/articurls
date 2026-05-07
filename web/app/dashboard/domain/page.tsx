@@ -460,8 +460,7 @@ export default function DomainSettingsPage() {
                 <h3 className="text-base font-semibold">Remove custom domain?</h3>
                 <p className="text-sm text-muted-foreground">
                   Removing a verified domain may negatively affect your Google search rankings.
-                  Search engines have already indexed your content under this domain — removing it
-                  will break those links and you may lose accumulated SEO authority.
+                  You may lose accumulated SEO authority.
                 </p>
               </div>
             </div>
@@ -509,10 +508,10 @@ function PageHeader() {
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
-    active:  { label: "Active",              className: "bg-green-100 text-green-800" },
+    active: { label: "Active", className: "bg-green-100 text-green-800" },
     pending: { label: "Pending verification", className: "bg-yellow-100 text-yellow-800" },
-    grace:   { label: "Grace period",         className: "bg-orange-100 text-orange-800" },
-    expired: { label: "Expired",              className: "bg-red-100 text-red-800" },
+    grace: { label: "Grace period", className: "bg-orange-100 text-orange-800" },
+    expired: { label: "Expired", className: "bg-red-100 text-red-800" },
   };
   const s = map[status];
   if (!s) return null;
@@ -538,8 +537,8 @@ function DnsRecordCard({
 }) {
   const purposeLabel: Record<string, string> = {
     ownership: "Ownership verification",
-    ssl:       "SSL certificate",
-    routing:   "Traffic routing",
+    ssl: "SSL certificate",
+    routing: "Traffic routing",
   };
 
   return (
@@ -559,7 +558,7 @@ function DnsRecordCard({
         </span>
       </div>
 
-      <CopyRow label="Name"  value={record.name}  fieldKey={`name-${idx}`}  copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label="Name" value={record.name} fieldKey={`name-${idx}`} copiedField={copiedField} onCopy={onCopy} />
       <CopyRow label="Value" value={record.value} fieldKey={`value-${idx}`} copiedField={copiedField} onCopy={onCopy} />
     </div>
   );
