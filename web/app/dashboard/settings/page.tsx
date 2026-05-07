@@ -378,8 +378,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Separator className="my-2" />
-
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Pro options</CardTitle>
@@ -476,11 +474,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <Separator />
-          <p className="text-sm leading-relaxed text-muted-foreground">
-            “Remove footer” is applied on the public site when your account is Pro and configured server-side.
-          </p>
-          <div className="border-t border-border/60 pt-6">
+          <div className="pt-2">
             <Button size="lg" onClick={savePro} disabled={!isPro || busy}>
               Save Pro settings
             </Button>
