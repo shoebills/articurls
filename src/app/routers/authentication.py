@@ -23,12 +23,12 @@ def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), db
     if not db_user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Invalid Credentials")
+            detail="Email or password is incorrect")
     
     if not hashing.verify_password(request.password, db_user.password):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Invalid Credentials")
+            detail="Email or password is incorrect")
     
     if not db_user.email_verified:
         raise HTTPException(
