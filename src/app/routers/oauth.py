@@ -388,7 +388,16 @@ async def _login_existing_user(
     
     refresh_token = oauth2.create_refresh_token(user.email)
     
-    response.set_cookie(
+    # Redirect to dashboard with access token in URL
+    # Frontend will extract and store it
+    dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
+    redirect = RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)
+    
+    # Set the refresh_token cookie on the actual RedirectResponse that is
+    # returned to the browser.  Previously the cookie was set on the DI
+    # `response` object which is *not* the response sent back when we
+    # return a RedirectResponse — so the cookie was silently discarded.
+    redirect.set_cookie(
         key="refresh_token",
         value=refresh_token,
         httponly=True,
@@ -397,7 +406,4 @@ async def _login_existing_user(
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
-    # Redirect to dashboard with access token in URL
-    # Frontend will extract and store it
-    dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
-    return RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)
+    return redirect
