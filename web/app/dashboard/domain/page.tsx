@@ -29,6 +29,7 @@ export default function DomainSettingsPage() {
   const [verifying, setVerifying] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showSeoWarning, setShowSeoWarning] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -283,7 +284,14 @@ export default function DomainSettingsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setConfirmDelete(true)}
+                onClick={() => {
+                  // Verified domains (active/grace) get an SEO impact warning
+                  if (domain.domain_status === "active" || domain.domain_status === "grace") {
+                    setShowSeoWarning(true);
+                  } else {
+                    setConfirmDelete(true);
+                  }
+                }}
                 className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
               >
                 Remove
@@ -438,6 +446,49 @@ export default function DomainSettingsPage() {
             </div>
           )}
         </Card>
+      )}
+
+      {/* SEO warning dialog for verified domains */}
+      {showSeoWarning && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100">
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-base font-semibold">Remove custom domain?</h3>
+                <p className="text-sm text-muted-foreground">
+                  Removing a verified domain may negatively affect your Google search rankings.
+                  Search engines have already indexed your content under this domain — removing it
+                  will break those links and you may lose accumulated SEO authority.
+                </p>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowSeoWarning(false)}
+                disabled={deleting}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => {
+                  setShowSeoWarning(false);
+                  handleDeleteDomain();
+                }}
+                disabled={deleting}
+              >
+                {deleting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Continue
+              </Button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
