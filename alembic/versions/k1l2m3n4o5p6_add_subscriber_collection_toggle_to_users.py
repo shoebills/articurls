@@ -1,7 +1,7 @@
 """add_subscriber_collection_toggle_to_users
 
 Revision ID: k1l2m3n4o5p6
-Revises: i5j6k7l8m9n0
+Revises: j6k7l8m9n0o1
 Create Date: 2026-05-08
 
 """
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 revision = "k1l2m3n4o5p6"
-down_revision = "i5j6k7l8m9n0"
+down_revision = "j6k7l8m9n0o1"
 branch_labels = None
 depends_on = None
 
