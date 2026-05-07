@@ -9,6 +9,7 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
+import { faviconIcons } from "@/lib/favicon";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -57,6 +58,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: page.meta_title || page.title,
     description: page.meta_description || undefined,
     alternates: { canonical },
+    icons: faviconIcons(user),
   };
 }
 

@@ -10,6 +10,7 @@ import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
+import { faviconIcons } from "@/lib/favicon";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -58,6 +59,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: `${catName} — ${user.name}`,
     description: `Browse all ${catName} posts by ${user.name} on Articurls.`,
     alternates: { canonical },
+    icons: faviconIcons(user),
   };
 }
 

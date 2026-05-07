@@ -73,6 +73,8 @@ export interface PublicUser {
   use_default_preview_image: boolean;
   /** False for active Pro — hide "Made with Articurls" on public pages. */
   show_articurls_watermark?: boolean;
+  /** Custom favicon URL — only set for Pro users. */
+  favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   custom_domain?: string | null;
@@ -111,6 +113,7 @@ export interface UserSettings {
   use_default_preview_image: boolean;
   username_change_count: number;
   is_admin?: boolean;
+  favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   custom_domain?: string | null;

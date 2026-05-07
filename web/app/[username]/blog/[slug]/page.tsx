@@ -15,6 +15,7 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { excerptFromHtml } from "@/lib/text";
+import { faviconIcons } from "@/lib/favicon";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -71,6 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: blog.meta_title || blog.title,
     description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
     alternates: { canonical },
+    icons: faviconIcons(author),
     openGraph: {
       images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
     },

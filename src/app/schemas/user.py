@@ -37,6 +37,7 @@ class UserSettings(BaseModel):
     use_default_preview_image: bool = True
     username_change_count: int
     is_admin: bool = False
+    favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
     custom_domain: Optional[str] = None
@@ -68,6 +69,7 @@ class PublicUser(BaseModel):
     site_footer_enabled: bool = False
     use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
+    favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
     custom_domain: Optional[str] = None
@@ -104,6 +106,7 @@ class UpdateProUser(BaseModel):
     navbar_enabled: Optional[bool] = None
     nav_blog_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
+    favicon_url: Optional[str] = None
 
 
 class AdminUsernameChange(BaseModel):

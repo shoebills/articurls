@@ -460,3 +460,66 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     db.refresh(db_user)
 
     return {"profile_image_url": db_user.profile_image_url}
+
+
+FAVICON_MAX_BYTES = 256 * 1024  # 256KB
+FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon", "image/svg+xml"}
+
+
+@router.post("/me/favicon", status_code=status.HTTP_200_OK)
+async def upload_favicon(
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    is_pro=Depends(require_pro),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    data = await file.read()
+    content_type = file.content_type or ""
+
+    if content_type not in FAVICON_ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only png, jpg, webp, ico, and svg images are allowed for favicons.",
+        )
+    if len(data) > FAVICON_MAX_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Favicon too large (max 256KB).",
+        )
+
+    from uuid import uuid4
+    from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
+
+    ext_map = {**dict.fromkeys(["image/png"], ".png"), "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico", "image/svg+xml": ".svg"}
+    ext = ext_map.get(content_type, _ext_from_content_type(content_type))
+    filename = f"{uuid4().hex}{ext}"
+    storage_key = f"favicons/{current_user.user_id}/{filename}"
+
+    provider = _get_storage_provider()
+    stored = provider.save(data=data, storage_key=storage_key)
+
+    db_user.favicon_url = stored.url
+    db.commit()
+    db.refresh(db_user)
+
+    return {"favicon_url": db_user.favicon_url}
+
+
+@router.delete("/me/favicon", status_code=status.HTTP_200_OK)
+async def delete_favicon(
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db_user.favicon_url = None
+    db.commit()
+    db.refresh(db_user)
+
+    return {"favicon_url": None}

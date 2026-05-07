@@ -6,6 +6,8 @@ import {
   patchMe,
   patchProMe,
   uploadProfileImage,
+  uploadFavicon,
+  deleteFavicon,
   checkUsernameAvailability,
   createUsernameChangeRequest,
   listMyUsernameChangeRequests,
@@ -23,7 +25,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Camera, Check, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
+import { Camera, Check, Globe, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   SiFacebook,
@@ -98,6 +100,8 @@ export default function SettingsPage() {
   const [usernameRequests, setUsernameRequests] = useState<UsernameChangeRequestOut[]>([]);
   const [requestBusy, setRequestBusy] = useState(false);
   const pfpInputRef = useRef<HTMLInputElement>(null);
+  const faviconInputRef = useRef<HTMLInputElement>(null);
+  const [faviconBusy, setFaviconBusy] = useState(false);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -592,6 +596,92 @@ export default function SettingsPage() {
               Upgrade under Billing to edit these.
             </p>
           )}
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label>Blog favicon</Label>
+              <p className="text-sm text-muted-foreground">
+                Custom favicon shown in browser tabs for your blog. Recommended: 512×512 PNG, max 256KB.
+              </p>
+            </div>
+            <div className="flex items-center gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/30">
+                {ctxUser?.favicon_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={assetUrl(ctxUser.favicon_url)}
+                    alt="Favicon"
+                    className="h-8 w-8 object-contain"
+                  />
+                ) : (
+                  <Globe className="h-6 w-6 text-muted-foreground/50" />
+                )}
+              </div>
+              <input
+                ref={faviconInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !token) return;
+                  if (file.size > 256 * 1024) {
+                    setErr("Favicon too large (max 256KB)");
+                    e.target.value = "";
+                    return;
+                  }
+                  setFaviconBusy(true);
+                  setErr(null);
+                  try {
+                    await uploadFavicon(token, file);
+                    await refreshUser();
+                  } catch (ex) {
+                    setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
+                  } finally {
+                    setFaviconBusy(false);
+                    e.target.value = "";
+                  }
+                }}
+                disabled={!isPro || faviconBusy}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!isPro || faviconBusy}
+                  onClick={() => faviconInputRef.current?.click()}
+                >
+                  {faviconBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                  {ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
+                </Button>
+                {ctxUser?.favicon_url ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                    disabled={!isPro || faviconBusy}
+                    onClick={async () => {
+                      if (!token) return;
+                      setFaviconBusy(true);
+                      setErr(null);
+                      try {
+                        await deleteFavicon(token);
+                        await refreshUser();
+                      } catch (ex) {
+                        setErr(ex instanceof ApiError ? ex.message : "Could not remove favicon");
+                      } finally {
+                        setFaviconBusy(false);
+                      }
+                    }}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          </div>
+          <Separator />
           <p className="text-sm leading-relaxed text-muted-foreground">
             “Remove footer” is applied on the public site when your account is Pro and configured server-side.
           </p>

@@ -15,6 +15,7 @@ import { injectAdsIntoHtml } from "@/lib/ad-injection";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
+import { faviconIcons } from "@/lib/favicon";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -135,6 +136,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: blog.meta_title || blog.title,
       description: blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined,
       alternates: { canonical },
+      icons: faviconIcons(author),
       openGraph: {
         images: [{ url: resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) }],
       },
@@ -146,12 +148,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   if (segments[0] === "page" && segments[1]) {
-    const page = await loadPage(username, segments[1]);
+    const [page, user] = await Promise.all([loadPage(username, segments[1]), loadUser(username)]);
     if (!page) return { title: "Not found" };
     return {
       title: page.meta_title || page.title,
       description: page.meta_description || undefined,
       alternates: { canonical },
+      icons: faviconIcons(user),
     };
   }
 
@@ -163,6 +166,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: `${categoryName} — ${user.name}`,
       description: `Browse all ${categoryName} posts by ${user.name}.`,
       alternates: { canonical },
+      icons: faviconIcons(user),
     };
   }
 
@@ -173,6 +177,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     title: user.meta_title || `${user.name} — Articurls`,
     description: user.meta_description || undefined,
     alternates: { canonical },
+    icons: faviconIcons(user),
   };
 }
 

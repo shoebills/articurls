@@ -380,6 +380,16 @@ export async function uploadProfileImage(token: string, file: File): Promise<{ p
   return apiFetch("/user/me/profile-image", { method: "POST", token, body: fd });
 }
 
+export async function uploadFavicon(token: string, file: File): Promise<{ favicon_url: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch("/user/me/favicon", { method: "POST", token, body: fd });
+}
+
+export async function deleteFavicon(token: string): Promise<{ favicon_url: null }> {
+  return apiFetch("/user/me/favicon", { method: "DELETE", token });
+}
+
 export async function uploadPageMedia(token: string, file: File): Promise<{ url: string }> {
   const fd = new FormData();
   fd.append("file", file);
