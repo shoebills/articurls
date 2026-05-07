@@ -71,7 +71,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const blogs = await loadBlogs(username);
   const pages = await loadPages(username);
   const categories = await loadCategories(username);
-  const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
+  const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const mainSpacing = user.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";

@@ -230,7 +230,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
     if (!blog || !author) notFound();
 
-    const navBlogName = (author.nav_blog_name || "").trim() || `${author.name}'s Blog`;
+    const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
     const containerSpacing = author.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -345,7 +345,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
     if (!user || !page) notFound();
 
-    const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
+    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const mainSpacing = user.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -425,7 +425,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
     const blogs = data.blogs;
     const categoryName = data.category.name;
-    const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
+    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const mainSpacing = user.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -521,7 +521,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
   if (!user) notFound();
 
-  const navBlogName = (user.nav_blog_name || "").trim() || `${user.name}'s Blog`;
+  const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const mainSpacing = user.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
