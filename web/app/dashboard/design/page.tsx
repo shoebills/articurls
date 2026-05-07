@@ -743,7 +743,7 @@ export default function DesignDashboardPage() {
 
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <p className="font-medium">Enable footer</p>
+            <p className="font-medium">Enable footer pages</p>
             <p className="text-sm text-muted-foreground">
               Shows selected pages at the bottom of public pages.
             </p>

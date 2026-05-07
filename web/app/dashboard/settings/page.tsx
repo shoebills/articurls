@@ -381,7 +381,6 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Pro options</CardTitle>
-          <CardDescription>Footer controls require an active Pro plan.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isPro && (
