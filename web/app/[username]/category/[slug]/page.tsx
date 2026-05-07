@@ -17,7 +17,7 @@ type Props = { params: Promise<{ username: string; slug: string }> };
 const REVALIDATE = 300;
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();

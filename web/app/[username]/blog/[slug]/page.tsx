@@ -31,7 +31,7 @@ async function loadBlog(username: string, slug: string): Promise<PublicBlog | nu
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }

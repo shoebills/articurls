@@ -49,7 +49,7 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }
