@@ -10,6 +10,36 @@ from ..workers.tasks import record_blog_view
 from ..schemas import blog, user
 from ..schemas import page as page_schema
 from ..config import settings
+from ..redis_client import redis_client
+
+
+# ---------------------------------------------------------------------------
+# View-endpoint rate limiter
+# Allows VIEW_RATE_LIMIT requests per IP per VIEW_RATE_WINDOW seconds.
+# Implemented with a Redis counter + TTL — no extra dependencies needed.
+# ---------------------------------------------------------------------------
+VIEW_RATE_LIMIT = 10   # max POST /view calls
+VIEW_RATE_WINDOW = 60  # per 60-second window
+
+
+def _check_view_rate_limit(ip: str) -> None:
+    """Raise 429 if this IP has exceeded the view-tracking rate limit."""
+    key = f"rl:view:{ip}"
+    try:
+        count = redis_client.incr(key)
+        if count == 1:
+            # First hit in this window — set the expiry
+            redis_client.expire(key, VIEW_RATE_WINDOW)
+        if count > VIEW_RATE_LIMIT:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Too many requests",
+            )
+    except HTTPException:
+        raise
+    except Exception:
+        # Redis unavailable — fail open (don't block legitimate traffic)
+        pass
 
 
 router = APIRouter(
@@ -111,6 +141,9 @@ def track_blog_view(user_name: str, slug: str, request: Request, db: Session = D
         or (request.client.host if request.client else None)
         or ""
     )
+
+    _check_view_rate_limit(ip)
+
     user_agent = request.headers.get("user-agent", "")
     visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
     
