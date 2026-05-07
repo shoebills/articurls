@@ -7,8 +7,22 @@ import type { PublicUser } from "@/lib/types";
  *
  * - Pro users with a custom favicon → their uploaded image
  * - Everyone else → platform default (Articurls favicon)
+ *
+ * When a custom favicon is set we return it as an array of icon descriptors
+ * with explicit `sizes` and `type` so browsers prefer it over the root-layout
+ * favicon.ico that Next.js injects automatically from app/favicon.ico.
  */
 export function faviconIcons(user: PublicUser | null | undefined): Metadata["icons"] {
-  const url = user?.favicon_url ? assetUrl(user.favicon_url) : "/favicon.ico";
-  return { icon: url, apple: url };
+  if (!user?.favicon_url) {
+    return { icon: "/favicon.ico", apple: "/favicon.ico" };
+  }
+
+  const url = assetUrl(user.favicon_url);
+  return {
+    icon: [
+      // Explicit PNG entry wins over the auto-injected favicon.ico
+      { url, type: "image/png", sizes: "any" },
+    ],
+    apple: url,
+  };
 }
