@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   ApiError,
   getDesignSettings,
+  getMe,
   listPages,
   listBlogs,
   listCategories,
   patchDesignSettings,
+  patchMe,
   updateFooterPages,
   updateMenuCategories,
 } from "@/lib/api";
@@ -16,11 +18,48 @@ import type { DesignSettings, UserPage, BlogListItem, Category } from "@/lib/typ
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Menu, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Plus, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  SiFacebook,
+  SiGithub,
+  SiInstagram,
+  SiPinterest,
+  SiYoutube,
+  SiX,
+} from "react-icons/si";
+import { MdOutlineEmail } from "react-icons/md";
+import { FaLinkedinIn } from "react-icons/fa6";
+
+type SocialPlatform =
+  | "contact_email"
+  | "instagram_link"
+  | "x_link"
+  | "pinterest_link"
+  | "facebook_link"
+  | "linkedin_link"
+  | "github_link"
+  | "youtube_link";
+
+const SOCIAL_OPTIONS: Array<{
+  key: SocialPlatform;
+  label: string;
+  icon: ReactNode;
+  placeholder: string;
+}> = [
+  { key: "contact_email", label: "Contact email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden />, placeholder: "hello@example.com" },
+  { key: "instagram_link", label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden />, placeholder: "https://instagram.com/username" },
+  { key: "x_link", label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },
+  { key: "pinterest_link", label: "Pinterest", icon: <SiPinterest className="h-4 w-4" aria-hidden />, placeholder: "https://pinterest.com/username" },
+  { key: "facebook_link", label: "Facebook", icon: <SiFacebook className="h-4 w-4" aria-hidden />, placeholder: "https://facebook.com/username" },
+  { key: "linkedin_link", label: "LinkedIn", icon: <FaLinkedinIn className="h-4 w-4" aria-hidden />, placeholder: "https://linkedin.com/in/username" },
+  { key: "github_link", label: "GitHub", icon: <SiGithub className="h-4 w-4" aria-hidden />, placeholder: "https://github.com/username" },
+  { key: "youtube_link", label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden />, placeholder: "https://youtube.com/@username" },
+];
 
 function SectionPanel({
   title,
@@ -77,6 +116,23 @@ export default function DesignDashboardPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  // Bio and social links state (saved via patchMe, displayed in about section)
+  const [bio, setBio] = useState("");
+  const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>({
+    contact_email: "",
+    instagram_link: "",
+    x_link: "",
+    pinterest_link: "",
+    facebook_link: "",
+    linkedin_link: "",
+    github_link: "",
+    youtube_link: "",
+  });
+  const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
+  const [addingSocial, setAddingSocial] = useState(false);
+  const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
+  const [bioSaved, setBioSaved] = useState(false);
+
   // All sections closed by default
   const [openSection, setOpenSection] = useState<"navbar" | "featured" | "footer" | null>(null);
 
@@ -86,7 +142,13 @@ export default function DesignDashboardPage() {
   async function load() {
     if (!token) return;
     try {
-      const [d, p, b, c] = await Promise.all([getDesignSettings(token), listPages(token), listBlogs(token), listCategories(token)]);
+      const [d, p, b, c, me] = await Promise.all([
+        getDesignSettings(token),
+        listPages(token),
+        listBlogs(token),
+        listCategories(token),
+        getMe(token),
+      ]);
       setDesign({
         ...d,
         featured_blog_ids: d.featured_blog_ids || [],
@@ -108,6 +170,22 @@ export default function DesignDashboardPage() {
       setFooterSelection(selectedFooter);
       const firstFooterAvailable = p.find((x) => !selectedFooter.includes(x.page_id));
       setFooterPageToAdd(firstFooterAvailable ? String(firstFooterAvailable.page_id) : "");
+      // Load bio and social links from user settings
+      const nextLinks: Record<SocialPlatform, string> = {
+        contact_email: me.contact_email || "",
+        instagram_link: me.instagram_link || "",
+        x_link: me.x_link || "",
+        pinterest_link: me.pinterest_link || "",
+        facebook_link: me.facebook_link || "",
+        linkedin_link: me.linkedin_link || "",
+        github_link: me.github_link || "",
+        youtube_link: me.youtube_link || "",
+      };
+      setBio(me.bio || "");
+      setSocialLinks(nextLinks);
+      setEnabledSocials(
+        SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
+      );
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load design settings");
     }
@@ -161,6 +239,44 @@ export default function DesignDashboardPage() {
       setBusy(false);
     }
   }
+
+  async function saveBioSocials() {
+    if (!token) return;
+    if ((bio.trim() ? bio.trim().split(/\s+/).length : 0) > 200) {
+      setErr("Bio must be 200 words or fewer");
+      return;
+    }
+    setBusy(true);
+    setErr(null);
+    setBioSaved(false);
+    try {
+      await patchMe(token, {
+        bio,
+        contact_email: socialLinks.contact_email || null,
+        instagram_link: socialLinks.instagram_link || null,
+        x_link: socialLinks.x_link || null,
+        pinterest_link: socialLinks.pinterest_link || null,
+        facebook_link: socialLinks.facebook_link || null,
+        linkedin_link: socialLinks.linkedin_link || null,
+        github_link: socialLinks.github_link || null,
+        youtube_link: socialLinks.youtube_link || null,
+      });
+      setBioSaved(true);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to save");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function addSocial() {
+    if (!socialToAdd) return;
+    setEnabledSocials((prev) => (prev.includes(socialToAdd) ? prev : [...prev, socialToAdd]));
+    setAddingSocial(false);
+    setSocialToAdd("");
+  }
+
+  const hiddenSocialOptions = SOCIAL_OPTIONS.filter((s) => !enabledSocials.includes(s.key));
 
   const availableCats = categories.filter((c) => !menuCatSelection.includes(c.category_id));
   const footerAvailable = pages.filter((p) => !footerSelection.includes(p.page_id));
@@ -516,6 +632,114 @@ export default function DesignDashboardPage() {
             disabled={busy}
           />
         </div>
+
+        {design.footer_enabled ? (
+          <div className="space-y-4 rounded-lg border p-4">
+            <div className="space-y-2.5">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                maxLength={1400}
+                placeholder="Optional short bio (max 200 words)"
+              />
+              <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
+            </div>
+            <div className="space-y-3">
+              <Label>Socials</Label>
+              {enabledSocials.length > 0 ? (
+                <div className="space-y-3">
+                  {enabledSocials.map((platformKey) => {
+                    const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
+                    if (!option) return null;
+                    return (
+                      <div key={platformKey} className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+                          {option.icon}
+                        </div>
+                        <Input
+                          type={platformKey === "contact_email" ? "email" : "url"}
+                          value={socialLinks[platformKey]}
+                          onChange={(e) =>
+                            setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
+                          }
+                          placeholder={option.placeholder}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
+                            setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
+                          }}
+                          aria-label={`Remove ${option.label}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No socials added yet.</p>
+              )}
+              {hiddenSocialOptions.length > 0 ? (
+                addingSocial ? (
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                    <Select value={socialToAdd} onValueChange={(v) => setSocialToAdd(v as SocialPlatform)}>
+                      <SelectTrigger className="sm:max-w-xs">
+                        <SelectValue placeholder="Select social platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hiddenSocialOptions.map((option) => (
+                          <SelectItem key={option.key} value={option.key}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={addSocial} disabled={!socialToAdd}>
+                        Add
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => { setAddingSocial(false); setSocialToAdd(""); }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={() => {
+                      setAddingSocial(true);
+                      setSocialToAdd(hiddenSocialOptions[0]?.key || "");
+                    }}
+                    aria-label="Add social platform"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )
+              ) : null}
+            </div>
+            <div className="border-t border-border/60 pt-3 flex items-center gap-3">
+              <Button size="sm" onClick={saveBioSocials} disabled={busy}>
+                Save
+              </Button>
+              {bioSaved && <p className="text-sm text-emerald-600">Saved.</p>}
+            </div>
+          </div>
+        ) : null}
 
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>

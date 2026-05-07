@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getMe,
   patchMe,
@@ -18,51 +18,14 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Camera, Check, Globe, Loader2, Pencil, UserRound, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Camera, Check, Globe, Loader2, Pencil, Plus, UserRound, X } from "lucide-react";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  SiFacebook,
-  SiGithub,
-  SiInstagram,
-  SiPinterest,
-  SiYoutube,
-  SiX,
-} from "react-icons/si";
-import { MdOutlineEmail } from "react-icons/md";
-import { FaLinkedinIn } from "react-icons/fa6";
-
-type SocialPlatform =
-  | "contact_email"
-  | "instagram_link"
-  | "x_link"
-  | "pinterest_link"
-  | "facebook_link"
-  | "linkedin_link"
-  | "github_link"
-  | "youtube_link";
-
-const SOCIAL_OPTIONS: Array<{
-  key: SocialPlatform;
-  label: string;
-  icon: ReactNode;
-  placeholder: string;
-}> = [
-  { key: "contact_email", label: "Contact email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden />, placeholder: "hello@example.com" },
-  { key: "instagram_link", label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden />, placeholder: "https://instagram.com/username" },
-  { key: "x_link", label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },
-  { key: "pinterest_link", label: "Pinterest", icon: <SiPinterest className="h-4 w-4" aria-hidden />, placeholder: "https://pinterest.com/username" },
-  { key: "facebook_link", label: "Facebook", icon: <SiFacebook className="h-4 w-4" aria-hidden />, placeholder: "https://facebook.com/username" },
-  { key: "linkedin_link", label: "LinkedIn", icon: <FaLinkedinIn className="h-4 w-4" aria-hidden />, placeholder: "https://linkedin.com/in/username" },
-  { key: "github_link", label: "GitHub", icon: <SiGithub className="h-4 w-4" aria-hidden />, placeholder: "https://github.com/username" },
-  { key: "youtube_link", label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden />, placeholder: "https://youtube.com/@username" },
-];
 
 const USERNAME_CHANGE_LIMIT = 5;
 
@@ -71,20 +34,6 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [bio, setBio] = useState("");
-  const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>({
-    contact_email: "",
-    instagram_link: "",
-    x_link: "",
-    pinterest_link: "",
-    facebook_link: "",
-    linkedin_link: "",
-    github_link: "",
-    youtube_link: "",
-  });
-  const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
-  const [addingSocial, setAddingSocial] = useState(false);
-  const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
   const [useDefaultPreviewImage, setUseDefaultPreviewImage] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -110,21 +59,6 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setBio(u.bio || "");
-      const nextLinks: Record<SocialPlatform, string> = {
-        contact_email: u.contact_email || "",
-        instagram_link: u.instagram_link || "",
-        x_link: u.x_link || "",
-        pinterest_link: u.pinterest_link || "",
-        facebook_link: u.facebook_link || "",
-        linkedin_link: u.linkedin_link || "",
-        github_link: u.github_link || "",
-        youtube_link: u.youtube_link || "",
-      };
-      setSocialLinks(nextLinks);
-      setEnabledSocials(
-        SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
-      );
       setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
@@ -141,21 +75,6 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setBio(ctxUser.bio || "");
-      const nextLinks: Record<SocialPlatform, string> = {
-        contact_email: ctxUser.contact_email || "",
-        instagram_link: ctxUser.instagram_link || "",
-        x_link: ctxUser.x_link || "",
-        pinterest_link: ctxUser.pinterest_link || "",
-        facebook_link: ctxUser.facebook_link || "",
-        linkedin_link: ctxUser.linkedin_link || "",
-        github_link: ctxUser.github_link || "",
-        youtube_link: ctxUser.youtube_link || "",
-      };
-      setSocialLinks(nextLinks);
-      setEnabledSocials(
-        SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
-      );
       setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
@@ -163,10 +82,6 @@ export default function SettingsPage() {
 
   async function saveBase() {
     if (!token) return;
-    if ((bio.trim() ? bio.trim().split(/\s+/).length : 0) > 200) {
-      setErr("Bio must be 200 words or fewer");
-      return;
-    }
     setBusy(true);
     setErr(null);
     setSaved(false);
@@ -174,15 +89,6 @@ export default function SettingsPage() {
       await patchMe(token, {
         name,
         email,
-        bio,
-        contact_email: socialLinks.contact_email || null,
-        instagram_link: socialLinks.instagram_link || null,
-        x_link: socialLinks.x_link || null,
-        pinterest_link: socialLinks.pinterest_link || null,
-        facebook_link: socialLinks.facebook_link || null,
-        linkedin_link: socialLinks.linkedin_link || null,
-        github_link: socialLinks.github_link || null,
-        youtube_link: socialLinks.youtube_link || null,
         use_default_preview_image: useDefaultPreviewImage,
       });
       await refreshUser();
@@ -242,20 +148,12 @@ export default function SettingsPage() {
     }
   }
 
-  const hiddenSocialOptions = SOCIAL_OPTIONS.filter((s) => !enabledSocials.includes(s.key));
   const profileImageUrl = ctxUser?.profile_image_url || "";
   const isDefaultProfileImage =
     !profileImageUrl ||
     profileImageUrl.includes("/users/defaults/") ||
     profileImageUrl.includes("/uploads/defaults/");
   const hasCustomProfileImage = Boolean(profileImageUrl) && !isDefaultProfileImage;
-
-  function addSocial() {
-    if (!socialToAdd) return;
-    setEnabledSocials((prev) => (prev.includes(socialToAdd) ? prev : [...prev, socialToAdd]));
-    setAddingSocial(false);
-    setSocialToAdd("");
-  }
 
   const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
@@ -461,110 +359,6 @@ export default function SettingsPage() {
           <div className="space-y-2.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="space-y-2.5">
-            <Label htmlFor="bio">Bio</Label>
-            <Textarea
-              id="bio"
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              maxLength={1400}
-              placeholder="Optional short bio (max 200 words)"
-            />
-            <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
-          </div>
-          <div className="space-y-3">
-            <Label>Socials</Label>
-            {enabledSocials.length > 0 ? (
-              <div className="space-y-3">
-                {enabledSocials.map((platformKey) => {
-                  const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
-                  if (!option) return null;
-                  return (
-                    <div key={platformKey} className="flex items-center gap-2.5">
-                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
-                        {option.icon}
-                      </div>
-                      <Input
-                        type={platformKey === "contact_email" ? "email" : "url"}
-                        value={socialLinks[platformKey]}
-                        onChange={(e) =>
-                          setSocialLinks((prev) => ({
-                            ...prev,
-                            [platformKey]: e.target.value,
-                          }))
-                        }
-                        placeholder={option.placeholder}
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                        onClick={() => {
-                          setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
-                          setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
-                        }}
-                        aria-label={`Remove ${option.label}`}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">No socials added yet.</p>
-            )}
-
-            {hiddenSocialOptions.length > 0 ? (
-              addingSocial ? (
-                <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-                  <Select value={socialToAdd} onValueChange={(v) => setSocialToAdd(v as SocialPlatform)}>
-                    <SelectTrigger className="sm:max-w-xs">
-                      <SelectValue placeholder="Select social platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hiddenSocialOptions.map((option) => (
-                        <SelectItem key={option.key} value={option.key}>
-                          {option.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-2">
-                    <Button type="button" variant="outline" size="sm" onClick={addSocial} disabled={!socialToAdd}>
-                      Add
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setAddingSocial(false);
-                        setSocialToAdd("");
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10"
-                  onClick={() => {
-                    setAddingSocial(true);
-                    setSocialToAdd(hiddenSocialOptions[0]?.key || "");
-                  }}
-                  aria-label="Add social platform"
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              )
-            ) : null}
           </div>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
