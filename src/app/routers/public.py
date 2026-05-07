@@ -107,12 +107,11 @@ def track_blog_view(user_name: str, slug: str, request: Request, db: Session = D
     ip = (request.client.host if request.client else None) or ""
     user_agent = request.headers.get("user-agent", "")
     visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
-    db.add(models.Views(
-            user_id=db_user.user_id,
-            blog_id=db_blog.blog_id,
-            visitor_hash=visitor_hash,
-        ))
-    db.commit()
+    
+    # Queue the view tracking task to run asynchronously in the background
+    # This prevents blocking the HTTP response while writing to the database
+    from ..workers.tasks import record_blog_view
+    record_blog_view.delay(db_user.user_id, db_blog.blog_id, visitor_hash)
 
 
 @router.get("/{user_name}/blog/{slug}/ads", response_model=blog.PublicBlogAds, status_code=status.HTTP_200_OK)

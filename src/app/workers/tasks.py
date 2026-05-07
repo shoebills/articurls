@@ -8,6 +8,27 @@ from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, 
 
 
 @celery.task
+def record_blog_view(user_id: int, blog_id: int, visitor_hash: str):
+    """
+    Record a blog view in the database asynchronously.
+    This prevents blocking the HTTP response while writing to the database.
+    """
+    db = database.SessionLocal()
+    try:
+        db.add(models.Views(
+            user_id=user_id,
+            blog_id=blog_id,
+            visitor_hash=visitor_hash,
+        ))
+        db.commit()
+    except Exception:
+        # Silently fail - view tracking should not break the user experience
+        pass
+    finally:
+        db.close()
+
+
+@celery.task
 def send_post_emails(blog_id: int):
 
     db = database.SessionLocal()
