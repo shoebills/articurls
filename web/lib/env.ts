@@ -41,3 +41,7 @@ export function assetUrl(path: string | null | undefined): string {
 /** Fallback 3:2 image for blog previews/share cards when post has no image. */
 export const DEFAULT_BLOG_FEATURED_IMAGE_URL =
   process.env.NEXT_PUBLIC_DEFAULT_BLOG_FEATURED_IMAGE_URL?.trim() || "";
+
+/** Default platform favicon served from R2. Empty string in local dev. */
+export const DEFAULT_FAVICON_URL =
+  process.env.NEXT_PUBLIC_DEFAULT_FAVICON_URL?.trim() || "";

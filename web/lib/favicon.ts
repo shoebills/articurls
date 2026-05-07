@@ -3,25 +3,32 @@ import { assetUrl } from "@/lib/env";
 import type { PublicUser } from "@/lib/types";
 
 /**
+ * Platform default favicon hosted on R2.
+ * Set NEXT_PUBLIC_DEFAULT_FAVICON_URL in env to point at favicons/favicon.ico in R2.
+ * Falls back to empty string in local dev (no favicon tag rendered).
+ */
+const DEFAULT_FAVICON_URL =
+  process.env.NEXT_PUBLIC_DEFAULT_FAVICON_URL?.trim() || "";
+
+/**
  * Build the `icons` object for Next.js `generateMetadata()`.
  *
- * - Pro users with a custom favicon → their uploaded image only
- * - Everyone else → platform default (Articurls favicon)
+ * - Pro users with a custom favicon → their uploaded image
+ * - Everyone else → platform favicon from R2 (NEXT_PUBLIC_DEFAULT_FAVICON_URL)
  *
- * When a custom favicon is set we set `shortcut` to the custom URL so
- * Next.js replaces the auto-injected favicon.ico shortcut link rather than
- * appending alongside it. Without this, Chrome picks the favicon.ico
- * (which has explicit sizes="256x256") over the custom PNG.
+ * app/favicon.ico has been deleted from the repo so Next.js no longer
+ * auto-injects a competing <link rel="icon"> tag. This function has
+ * full control over what favicon appears on all public blog pages.
  */
 export function faviconIcons(user: PublicUser | null | undefined): Metadata["icons"] {
-  if (!user?.favicon_url) {
-    return { icon: "/favicon.ico", apple: "/favicon.ico" };
+  const url = user?.favicon_url ? assetUrl(user.favicon_url) : DEFAULT_FAVICON_URL;
+
+  if (!url) {
+    // Local dev with no env var set — browser uses its own default
+    return undefined;
   }
 
-  const url = assetUrl(user.favicon_url);
   return {
-    // shortcut replaces the <link rel="shortcut icon"> Next.js injects from
-    // app/favicon.ico, preventing it from competing with the custom icon
     shortcut: url,
     icon: url,
     apple: url,
