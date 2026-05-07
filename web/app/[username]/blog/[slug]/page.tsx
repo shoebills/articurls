@@ -61,7 +61,7 @@ async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAd
 }
 
 async function loadCategories(username: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
