@@ -49,10 +49,18 @@ class Settings(BaseSettings):
     cloudflare_zone_id: str = ""
     cloudflare_fallback_origin: str = "fallback.articurls.com"
 
-    # Google OAuth
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""
+
+    # Database connection pool settings.
+    # Tune these based on server RAM and PostgreSQL max_connections.
+    # 2GB droplet (testing):  pool_size=5,  max_overflow=5
+    # 8GB droplet (prod):     pool_size=10, max_overflow=20
+    db_pool_size: int = 5
+    db_max_overflow: int = 5
+    db_pool_timeout: int = 30
+    db_pool_recycle: int = 1800
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
