@@ -257,7 +257,7 @@ export default function DomainSettingsPage() {
           {/* Header row */}
           <div className="flex items-center justify-between p-5">
             <div className="space-y-1.5">
-              <p className="font-mono text-base font-semibold">{domain.hostname}</p>
+              <p className="text-base font-semibold tracking-tight">{domain.hostname}</p>
               <StatusBadge status={domain.domain_status} />
             </div>
             {confirmDelete ? (
