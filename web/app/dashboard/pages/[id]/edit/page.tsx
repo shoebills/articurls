@@ -174,7 +174,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }
 
   useEffect(() => {
-    if (!page || saving || !isDirty() || page.status === "published") return;
+    if (!page || saving || !isDirty() || ["published", "archived"].includes(page.status)) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       void save(true);
@@ -186,7 +186,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     const flushSave = () => {
-      if (page?.status === "published") return;
+      if (page && ["published", "archived"].includes(page.status)) return;
       if (isDirty() && !saving) void save(true);
     };
     const onBeforeUnload = () => {
@@ -206,7 +206,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }, [isDirty, saving, page]);
 
   const currentPageId = page?.page_id ?? pageId;
-  const requiresManualUpdate = page?.status === "published";
+  const requiresManualUpdate = page ? ["published", "archived"].includes(page.status) : false;
   const dirty = isDirty();
   const manualDraftKey = `articurls:manual-page-draft:${currentPageId}`;
 

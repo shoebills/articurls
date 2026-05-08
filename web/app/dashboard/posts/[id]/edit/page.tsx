@@ -282,7 +282,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   useEffect(() => {
-    if (!blog || saving || !isDirty() || blog.status === "published") return;
+    if (!blog || saving || !isDirty() || ["scheduled", "published", "archived"].includes(blog.status)) return;
     // Don't reset to idle immediately - keep showing "Saved" until autosave triggers
     // This prevents flickering between "Saved" → "" → "Saving..." → "Saved"
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -296,7 +296,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     const flushSave = () => {
-      if (blog?.status === "published") return;
+      if (blog && ["scheduled", "published", "archived"].includes(blog.status)) return;
       if (isDirty() && !saving) {
         void save(true);
       }
@@ -318,7 +318,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }, [isDirty, saving, blog]);
 
   const currentBlogId = blog?.blog_id ?? blogId;
-  const requiresManualUpdate = blog?.status === "published";
+  const requiresManualUpdate = blog ? ["scheduled", "published", "archived"].includes(blog.status) : false;
   const dirty = isDirty();
   const manualDraftKey = `articurls:manual-post-draft:${currentBlogId}`;
 
@@ -726,9 +726,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </>
         )}
         {blog.status === "scheduled" && (
-          <Button variant="outline" onClick={doUnschedule}>
-            Unschedule
-          </Button>
+          <>
+            <Button variant="outline" onClick={doUnschedule}>
+              Unschedule
+            </Button>
+          </>
         )}
         {blog.status === "published" && (
           <Button variant="outline" onClick={archive}>
