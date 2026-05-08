@@ -1,10 +1,11 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Optional, Union
 from datetime import datetime
+from .. import models
 
 
 class UserPageBase(BaseModel):
-    title: str
+    title: str = ""
     content: str = ""
 
 
@@ -20,12 +21,18 @@ class UserPageUpdate(BaseModel):
     meta_description: Optional[str] = None
 
 
+class UserPageStatusUpdate(BaseModel):
+    status: models.PageStatus
+
+
 class UserPageOut(UserPageBase):
     page_id: int
     user_id: int
     slug: str
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    status: models.PageStatus
+    published_at: Optional[datetime] = None
     show_in_footer: bool
     footer_order: Optional[int] = None
     created_at: datetime

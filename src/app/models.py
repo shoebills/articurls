@@ -110,6 +110,12 @@ class BlogStatus(str, enum.Enum):
     ARCHIVED = "archived"
     SCHEDULED = "scheduled"
 
+
+class PageStatus(str, enum.Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
+
 class Blog(Base):
     __tablename__ = "blogs"
     __table_args__ = (
@@ -237,6 +243,8 @@ class UserPage(Base):
     content = Column(Text, nullable=False, default="")
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
+    status = Column(Enum(PageStatus, name="page_status"), default=PageStatus.DRAFT, nullable=False)
+    published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     show_in_footer = Column(Boolean, nullable=False, default=False)
     footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

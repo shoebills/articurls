@@ -1,6 +1,8 @@
 from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
 from sqlalchemy.orm import Session
 from slugify import slugify
+from datetime import datetime, timezone
+import secrets
 from .. import models, utils
 from ..database import get_db
 from ..schemas import page as page_schema
@@ -50,6 +52,24 @@ def _unique_page_slug(db: Session, user_id: int, title: str) -> str:
     return candidate
 
 
+def _validate_publishable_page(db_page: models.UserPage) -> None:
+    title = (db_page.title or "").strip()
+    if not title:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Title is required to publish",
+        )
+
+    import re
+
+    content_text = re.sub(r"<[^>]+>", "", db_page.content or "").strip()
+    if not content_text:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Content is required to publish",
+        )
+
+
 @router.get("/", response_model=list[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
 def list_pages(
     db: Session = Depends(get_db),
@@ -81,22 +101,16 @@ def create_page(
         )
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
 
-    title = request.title.strip()
-    if not title:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
-
+    title = (request.title or "").strip()
     content = request.content or ""
-    # Check if content is empty (strip HTML tags and whitespace)
-    import re
-    content_text = re.sub(r'<[^>]+>', '', content).strip()
-    if not content_text:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Content is required")
+    base_slug = slugify(title) if title else f"draft-{secrets.token_hex(6)}"
 
     new_page = models.UserPage(
         user_id=current_user.user_id,
         title=title,
         content=content,
-        slug=_unique_page_slug(db, current_user.user_id, title),
+        slug=_unique_page_slug(db, current_user.user_id, base_slug),
+        status=models.PageStatus.DRAFT,
     )
     db.add(new_page)
     db.commit()
@@ -140,23 +154,19 @@ def update_page(
     update_data = request.model_dump(exclude_unset=True)
 
     if "title" in update_data:
-        title = (update_data["title"] or "").strip()
-        if not title:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Title is required")
-        db_page.title = title
+        db_page.title = (update_data["title"] or "").strip()
 
     if "content" in update_data:
-        content = update_data["content"] or ""
-        # Check if content is empty (strip HTML tags and whitespace)
-        import re
-        content_text = re.sub(r'<[^>]+>', '', content).strip()
-        if not content_text:
-            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Content is required")
-        db_page.content = content
+        db_page.content = update_data["content"] or ""
 
     if "slug" in update_data:
         new_slug = (update_data["slug"] or "").strip()
         if new_slug and new_slug != db_page.slug:
+            if db_page.published_at is not None:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Cannot change the URL slug after the page is published.",
+                )
             # Validate slug format
             from slugify import slugify as _slugify
             normalized = _slugify(new_slug) or ""
@@ -182,6 +192,83 @@ def update_page(
     if "meta_description" in update_data:
         db_page.meta_description = (update_data["meta_description"] or "").strip() or None
 
+    db.commit()
+    db.refresh(db_page)
+    return db_page
+
+
+@router.post("/{page_id:int}/publish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def publish_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+
+    _validate_publishable_page(db_page)
+
+    if db_page.status == models.PageStatus.PUBLISHED:
+        return db_page
+
+    now = datetime.now(timezone.utc)
+    first_publish = db_page.published_at is None
+    db_page.status = models.PageStatus.PUBLISHED
+    if first_publish:
+        db_page.published_at = now
+    db_page.updated_at = now
+
+    db.commit()
+    db.refresh(db_page)
+    return db_page
+
+
+@router.post("/{page_id:int}/archive", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def archive_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    if db_page.status != models.PageStatus.PUBLISHED:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only published pages can be archived",
+        )
+
+    db_page.status = models.PageStatus.ARCHIVED
+    db.commit()
+    db.refresh(db_page)
+    return db_page
+
+
+@router.post("/{page_id:int}/draft", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def move_page_to_draft(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    if db_page.status == models.PageStatus.DRAFT:
+        return db_page
+    db_page.status = models.PageStatus.DRAFT
     db.commit()
     db.refresh(db_page)
     return db_page

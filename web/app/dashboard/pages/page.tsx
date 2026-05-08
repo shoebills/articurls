@@ -91,7 +91,7 @@ export default function PagesDashboardPage() {
                     <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
                       {p.title || "Untitled"}
                     </p>
-                    <p className="text-xs text-slate-500">/{p.slug}</p>
+                    <p className="text-xs text-slate-500">/{p.slug} · {p.status}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <Button variant="ghost" asChild disabled={busy}>

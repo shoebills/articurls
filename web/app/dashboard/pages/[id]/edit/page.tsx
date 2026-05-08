@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, getMe, listPages, updatePage } from "@/lib/api";
+import { ApiError, archivePage, listPages, movePageToDraft, publishPage, updatePage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
@@ -51,6 +51,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setMetaDesc(p.meta_description || "");
   }, []);
 
+  const canEditSlug = page?.published_at == null;
+
   const load = useCallback(async () => {
     if (!token || Number.isNaN(pageId)) return;
     setErr(null);
@@ -90,7 +92,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const isDirty = useCallback(() => {
     if (!page) return false;
     const nextTitle = title.trim();
-    const nextSlug = slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug;
+    const nextSlug = canEditSlug
+      ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
+      : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
     const nextMetaDesc = metaDesc.trim() || null;
 
@@ -101,7 +105,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.meta_title || null) !== nextMetaTitle ||
       (page.meta_description || null) !== nextMetaDesc
     );
-  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
+  }, [page, canEditSlug, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
 
   async function save(silent = false) {
     if (!token || !page) return;
@@ -120,11 +124,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setSaveStatus("saving");
     if (!silent) setErr(null);
     try {
-      const nextSlug = nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug;
       const body = {
         title: nextTitle,
         content: nextContent,
-        slug: nextSlug,
+        ...(canEditSlug
+          ? { slug: nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug }
+          : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
         meta_description: nextMetaDesc.trim() || null,
       };
@@ -145,6 +150,23 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function updateStatus(next: "draft" | "published" | "archived") {
+    if (!token || !page) return;
+    setErr(null);
+    try {
+      const updated =
+        next === "published"
+          ? await publishPage(token, page.page_id)
+          : next === "archived"
+            ? await archivePage(token, page.page_id)
+            : await movePageToDraft(token, page.page_id);
+      applyPageToForm(updated);
+      setSaveStatus("saved");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to update page status");
     }
   }
 
@@ -221,6 +243,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : "\u00a0"}
       </p>
+      <p className="mb-3 text-xs text-muted-foreground">Status: {page.status}</p>
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
@@ -241,9 +264,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 value={slugCustom}
                 onChange={(e) => setSlugCustom(e.target.value)}
                 placeholder={slugPlaceholder || "(from title)"}
+                disabled={!canEditSlug}
               />
               <p className="text-xs text-muted-foreground">
-                Updates from title until you edit this field. Must be unique.
+                {canEditSlug
+                  ? "Editable while draft. Lock happens after first publish."
+                  : "Slug is permanently locked after first publish."}
               </p>
             </div>
             <div className="space-y-2">
@@ -275,6 +301,21 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         <Button onClick={() => void save(false)} disabled={saving}>
           {saving ? "Saving…" : "Save"}
         </Button>
+        {page.status !== "published" && (
+          <Button variant="default" onClick={() => void updateStatus("published")} disabled={saving}>
+            Publish
+          </Button>
+        )}
+        {page.status === "published" && (
+          <Button variant="outline" onClick={() => void updateStatus("archived")} disabled={saving}>
+            Archive
+          </Button>
+        )}
+        {page.status !== "draft" && (
+          <Button variant="ghost" onClick={() => void updateStatus("draft")} disabled={saving}>
+            Move to draft
+          </Button>
+        )}
       </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

@@ -1,4 +1,5 @@
 export type BlogStatus = "draft" | "published" | "archived" | "scheduled";
+export type PageStatus = "draft" | "published" | "archived";
 
 export interface BlogMediaOut {
   media_id: number;
@@ -165,6 +166,8 @@ export interface UserPage {
   content: string;
   meta_title: string | null;
   meta_description: string | null;
+  status: PageStatus;
+  published_at: string | null;
   show_in_footer: boolean;
   footer_order: number | null;
   created_at: string;

@@ -208,6 +208,7 @@ def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
         .filter(
             models.UserPage.user_id == db_user.user_id,
             models.UserPage.show_in_footer.is_(True),
+            models.UserPage.status == models.PageStatus.PUBLISHED,
         )
         .order_by(models.UserPage.footer_order.asc(), models.UserPage.created_at.asc())
         .all()
@@ -227,6 +228,7 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
             models.UserPage.user_id == db_user.user_id,
             models.UserPage.slug == slug,
             models.UserPage.show_in_footer.is_(True),  # Only return pages visible in footer
+            models.UserPage.status == models.PageStatus.PUBLISHED,
         )
         .first()
     )
