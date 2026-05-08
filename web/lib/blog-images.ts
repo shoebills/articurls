@@ -1,4 +1,4 @@
-import { DEFAULT_BLOG_FEATURED_IMAGE_URL, assetUrl } from "@/lib/env";
+import { assetUrl } from "@/lib/env";
 import type { BlogListItem, PublicBlog } from "@/lib/types";
 
 function firstImageFromHtml(html: string | null | undefined): string | null {
@@ -9,10 +9,10 @@ function firstImageFromHtml(html: string | null | undefined): string | null {
 
 type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<PublicBlog, "featured_image_url" | "content">;
 
-export function resolveBlogPreviewImage(blog: BlogLike, useDefaultFallback = true): string {
+export function resolveBlogPreviewImage(blog: BlogLike): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
   if (explicit) return explicit;
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
   if (fromContent) return fromContent;
-  return useDefaultFallback ? DEFAULT_BLOG_FEATURED_IMAGE_URL : "";
+  return "";
 }

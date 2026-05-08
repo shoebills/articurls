@@ -284,10 +284,10 @@ export default function DashboardPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    {resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true) ? (
+                    {resolveBlogPreviewImage(b) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={resolveBlogPreviewImage(b, user?.use_default_preview_image ?? true)}
+                        src={resolveBlogPreviewImage(b)}
                         alt=""
                         className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                       />

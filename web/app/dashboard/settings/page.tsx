@@ -35,7 +35,6 @@ export default function SettingsPage() {
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
-  const [useDefaultPreviewImage, setUseDefaultPreviewImage] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -61,7 +60,6 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setUseDefaultPreviewImage(u.use_default_preview_image ?? true);
       setSubscriberCollectionEnabled(u.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
@@ -78,7 +76,6 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setUseDefaultPreviewImage(ctxUser.use_default_preview_image ?? true);
       setSubscriberCollectionEnabled(ctxUser.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
@@ -93,7 +90,6 @@ export default function SettingsPage() {
       await patchMe(token, {
         name,
         email,
-        use_default_preview_image: useDefaultPreviewImage,
       });
       await refreshUser();
       setSaved(true);
@@ -365,15 +361,6 @@ export default function SettingsPage() {
           <div className="space-y-2.5">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Default preview image fallback</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Use your global default preview image when a post has no featured image and no inline image.
-              </p>
-            </div>
-            <Switch checked={useDefaultPreviewImage} onCheckedChange={setUseDefaultPreviewImage} />
           </div>
           <div className="border-t border-border/60 pt-6">
             <Button size="lg" onClick={saveBase} disabled={busy}>

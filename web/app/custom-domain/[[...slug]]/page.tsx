@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_URL, DEFAULT_BLOG_FEATURED_IMAGE_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -34,7 +34,7 @@ function resolveUserSiteName(user: PublicUser | null | undefined): string {
 function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
   const profileImage = assetUrl(user?.profile_image_url);
   if (profileImage) return profileImage;
-  return DEFAULT_BLOG_FEATURED_IMAGE_URL || undefined;
+  return undefined;
 }
 
 async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
@@ -146,7 +146,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
     const siteName = resolveUserSiteName(author);
     const ogImage =
-      resolveBlogPreviewImage(blog, author?.use_default_preview_image ?? true) || resolveUserOgImage(author);
+      resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
     return {
       title,
       description,
@@ -206,7 +206,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = `Browse all ${categoryName} posts by ${user.name}.`;
     const siteName = resolveUserSiteName(user);
     const ogImage =
-      (data.blogs[0] ? resolveBlogPreviewImage(data.blogs[0], user.use_default_preview_image) : "") ||
+      (data.blogs[0] ? resolveBlogPreviewImage(data.blogs[0]) : "") ||
       resolveUserOgImage(user);
     return {
       title,

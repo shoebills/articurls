@@ -188,16 +188,15 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
 function BlogListItemRow({
   blog: b,
   username,
-  useDefaultPreviewImage,
   useCustomDomain = false,
   siteOrigin,
 }: {
   blog: PublicBlog;
   username: string;
-  useDefaultPreviewImage: boolean;
   useCustomDomain?: boolean;
   siteOrigin?: string;
 }) {
+  const previewImage = resolveBlogPreviewImage(b);
   return (
     <li className="py-8 first:pt-0">
       <div className="rounded-xl py-1">
@@ -209,10 +208,10 @@ function BlogListItemRow({
               </h3>
               {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
             </div>
-            {resolveBlogPreviewImage(b, useDefaultPreviewImage) ? (
+            {previewImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={resolveBlogPreviewImage(b, useDefaultPreviewImage)!}
+                src={previewImage}
                 alt=""
                 className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
               />
@@ -245,7 +244,6 @@ function BlogListItemRow({
 }
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
-  const useDefaultPreviewImage = user?.use_default_preview_image ?? true;
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
   const [page, setPage] = useState(1);
@@ -352,7 +350,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
                  key={`featured-${b.blog_id}`}
                  blog={b}
                  username={username}
-                 useDefaultPreviewImage={useDefaultPreviewImage}
                  useCustomDomain={useCustomDomain}
                  siteOrigin={siteOrigin}
                />
@@ -374,7 +371,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             key={b.blog_id}
             blog={b}
             username={username}
-            useDefaultPreviewImage={useDefaultPreviewImage}
             useCustomDomain={useCustomDomain}
             siteOrigin={siteOrigin}
           />

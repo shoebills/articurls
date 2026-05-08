@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, DEFAULT_BLOG_FEATURED_IMAGE_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -23,7 +23,7 @@ function resolveUserSiteName(user: PublicUser | null | undefined): string {
 function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
   const profileImage = assetUrl(user?.profile_image_url);
   if (profileImage) return profileImage;
-  return DEFAULT_BLOG_FEATURED_IMAGE_URL || undefined;
+  return undefined;
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {

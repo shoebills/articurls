@@ -253,7 +253,6 @@ export async function patchMe(
       | "linkedin_link"
       | "github_link"
       | "youtube_link"
-      | "use_default_preview_image"
       | "profile_image_url"
     >
   >
