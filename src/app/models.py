@@ -52,7 +52,6 @@ class User(Base):
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
     footer_enabled = Column(Boolean, nullable=False, default=False)
     site_footer_enabled = Column(Boolean, nullable=False, default=False)
-    use_default_preview_image = Column(Boolean, nullable=False, default=True)
     robots_mode = Column(String, nullable=False, default="auto")
     robots_custom_rules = Column(Text, nullable=True)
     sitemap_enabled = Column(Boolean, nullable=False, default=True)

@@ -34,7 +34,6 @@ class UserSettings(BaseModel):
     nav_menu_enabled: bool
     footer_enabled: bool
     site_footer_enabled: bool = False
-    use_default_preview_image: bool = True
     username_change_count: int
     is_admin: bool = False
     favicon_url: Optional[str] = None
@@ -68,7 +67,6 @@ class PublicUser(BaseModel):
     nav_menu_enabled: bool
     footer_enabled: bool
     site_footer_enabled: bool = False
-    use_default_preview_image: bool = True
     show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False
@@ -101,7 +99,6 @@ class UpdateUser(BaseModel):
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
     profile_image_url: Optional[str] = None
-    use_default_preview_image: Optional[bool] = None
 
 
 class UpdateProUser(BaseModel):
