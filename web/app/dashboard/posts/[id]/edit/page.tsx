@@ -55,6 +55,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [err, setErr] = useState<string | null>(null);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  const slugCustomRef = useRef(slugCustom);
+  const metaTitleRef = useRef(metaTitle);
+  const metaTitleDirtyRef = useRef(metaTitleDirty);
+  const metaDescRef = useRef(metaDesc);
+  const notifyRef = useRef(notify);
+  const featuredImageUrlRef = useRef(featuredImageUrl);
 
   // Category assignment state
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -116,6 +124,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }, [title, metaTitleDirty]);
 
+  useEffect(() => { titleRef.current = title; }, [title]);
+  useEffect(() => { contentRef.current = content; }, [content]);
+  useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
+  useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
+  useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
+  useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
+  useEffect(() => { notifyRef.current = notify; }, [notify]);
+  useEffect(() => { featuredImageUrlRef.current = featuredImageUrl; }, [featuredImageUrl]);
+
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
 
   const isDirty = useCallback(() => {
@@ -139,36 +156,60 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   async function save(silent = false) {
     if (!token || !blog) return;
     if (!isDirty()) return;
+    const nextTitle = title;
+    const nextContent = content;
+    const nextNotify = notify;
+    const nextSlugCustom = slugCustom;
+    const nextMetaTitle = metaTitle;
+    const nextMetaTitleDirty = metaTitleDirty;
+    const nextMetaDesc = metaDesc;
+    const nextFeaturedImageUrl = featuredImageUrl;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
     try {
       const body: Parameters<typeof updateBlog>[2] = {
-        title,
-        content,
-        notify_subscribers: notify,
+        title: nextTitle,
+        content: nextContent,
+        notify_subscribers: nextNotify,
       };
 
       if (slugEditable) {
-        const derived = slugify(title.trim(), { lower: true, strict: true });
-        const nextSlug = slugCustom.trim() || derived || blog.slug;
+        const derived = slugify(nextTitle.trim(), { lower: true, strict: true });
+        const nextSlug = nextSlugCustom.trim() || derived || blog.slug;
         body.slug = nextSlug;
       }
 
-      if (!metaTitleDirty || metaTitle.trim() === title.trim()) {
+      if (!nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle.trim()) {
         body.meta_title = null;
-      } else if (metaTitle.trim()) {
-        body.meta_title = metaTitle.trim();
+      } else if (nextMetaTitle.trim()) {
+        body.meta_title = nextMetaTitle.trim();
       } else {
         body.meta_title = null;
       }
 
-      if (metaDesc.trim()) body.meta_description = metaDesc.trim();
+      if (nextMetaDesc.trim()) body.meta_description = nextMetaDesc.trim();
       else body.meta_description = null;
-      body.featured_image_url = featuredImageUrl.trim() || null;
+      body.featured_image_url = nextFeaturedImageUrl.trim() || null;
 
       const updated = await updateBlog(token, blog.blog_id, body);
-      applyBlogToForm(updated);
+      setBlog(updated);
+      if (titleRef.current === nextTitle) setTitle(updated.title);
+      if (contentRef.current === nextContent) setContent(updated.content);
+      if (notifyRef.current === nextNotify) setNotify(updated.notify_subscribers);
+      if (slugEditable && slugCustomRef.current === nextSlugCustom) {
+        const derived = slugify(updated.title, { lower: true, strict: true });
+        const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(updated.slug);
+        const slugMatchesTitle = derived !== "" && updated.slug === derived;
+        setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : updated.slug);
+      }
+      if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
+        setMetaTitle(updated.meta_title || "");
+        const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
+        setMetaTitleDirty(!metaSynced);
+      }
+      if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
+      if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(updated.featured_image_url || "");
       await refreshUser();
       setSaveStatus("saved");
     } catch (e) {

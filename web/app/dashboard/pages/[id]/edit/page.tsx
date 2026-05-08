@@ -33,6 +33,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const titleRef = useRef(title);
+  const contentRef = useRef(content);
+  const slugCustomRef = useRef(slugCustom);
+  const metaTitleRef = useRef(metaTitle);
+  const metaTitleDirtyRef = useRef(metaTitleDirty);
+  const metaDescRef = useRef(metaDesc);
 
   const applyPageToForm = useCallback((p: UserPage) => {
     setPage(p);
@@ -74,6 +80,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }, [title, metaTitleDirty]);
 
+  useEffect(() => { titleRef.current = title; }, [title]);
+  useEffect(() => { contentRef.current = content; }, [content]);
+  useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
+  useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
+  useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
+  useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
+
   const isDirty = useCallback(() => {
     if (!page) return false;
     const nextTitle = title.trim();
@@ -97,21 +110,35 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       return;
     }
     if (!isDirty()) return;
+    const nextTitle = title.trim();
+    const nextContent = content;
+    const nextSlugCustom = slugCustom;
+    const nextMetaTitle = metaTitle;
+    const nextMetaTitleDirty = metaTitleDirty;
+    const nextMetaDesc = metaDesc;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
     try {
-      const nextTitle = title.trim();
-      const nextSlug = slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug;
+      const nextSlug = nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug;
       const body = {
         title: nextTitle,
-        content,
+        content: nextContent,
         slug: nextSlug,
-        meta_title: !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null,
-        meta_description: metaDesc.trim() || null,
+        meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
+        meta_description: nextMetaDesc.trim() || null,
       };
       const updated = await updatePage(token, page.page_id, body);
-      applyPageToForm(updated);
+      setPage(updated);
+      if (titleRef.current.trim() === nextTitle) setTitle(updated.title || "");
+      if (contentRef.current === nextContent) setContent(updated.content || "<p></p>");
+      if (slugCustomRef.current === nextSlugCustom) setSlugCustom(updated.slug || "");
+      if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
+        setMetaTitle(updated.meta_title || "");
+        const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
+        setMetaTitleDirty(!metaSynced);
+      }
+      if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
       setSaveStatus("saved");
     } catch (e) {
       setSaveStatus("idle");
