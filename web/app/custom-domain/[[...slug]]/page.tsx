@@ -37,6 +37,13 @@ function resolveUserOgImage(user: PublicUser | null | undefined): string | undef
   return undefined;
 }
 
+function resolvePageDescription(page: UserPage): string | undefined {
+  const metaDescription = (page.meta_description || "").trim();
+  if (metaDescription) return metaDescription;
+  const contentDescription = excerptFromHtml(page.content || "").trim();
+  return contentDescription || undefined;
+}
+
 async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
   try {
     // Domain status drives routing decisions (redirect vs serve vs 404),
@@ -173,7 +180,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const [page, user] = await Promise.all([loadPage(username, segments[1]), loadUser(username)]);
     if (!page) return { title: "Not found" };
     const title = page.meta_title || page.title;
-    const description = page.meta_description || undefined;
+    const description = resolvePageDescription(page);
     const siteName = resolveUserSiteName(user);
     const ogImage = resolveUserOgImage(user);
     return {

@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, listPages, movePageToDraft, publishPage, updatePage } from "@/lib/api";
+import { ApiError, archivePage, listPages, publishPage, updatePage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
@@ -154,16 +154,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }
 
-  async function updateStatus(next: "draft" | "published" | "archived") {
+  async function updateStatus(next: "published" | "archived") {
     if (!token || !page) return;
     setErr(null);
     try {
       const updated =
         next === "published"
           ? await publishPage(token, page.page_id)
-          : next === "archived"
-            ? await archivePage(token, page.page_id)
-            : await movePageToDraft(token, page.page_id);
+          : await archivePage(token, page.page_id);
       applyPageToForm(updated);
       setSaveStatus("saved");
     } catch (e) {
@@ -172,7 +170,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }
 
   useEffect(() => {
-    if (!page || saving || !isDirty()) return;
+    if (!page || saving || !isDirty() || page.status === "published") return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
       void save(true);
@@ -184,6 +182,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     const flushSave = () => {
+      if (page?.status === "published") return;
       if (isDirty() && !saving) void save(true);
     };
     const onBeforeUnload = () => {
@@ -200,7 +199,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       window.removeEventListener("popstate", flushSave);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [isDirty, saving]);
+  }, [isDirty, saving, page]);
 
   if (loading || !page) {
     return (
@@ -218,6 +217,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     : null;
 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
+  const requiresManualUpdate = page.status === "published";
+  const dirty = isDirty();
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
@@ -301,9 +302,28 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       <Separator className="my-8" />
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => void save(false)} disabled={saving}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
+        {requiresManualUpdate ? (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                applyPageToForm(page);
+                setErr(null);
+                setSaveStatus("saved");
+              }}
+              disabled={saving || !dirty}
+            >
+              Cancel
+            </Button>
+            <Button onClick={() => void save(false)} disabled={saving || !dirty}>
+              {saving ? "Updating…" : "Update"}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={() => void save(false)} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        )}
         {page.status !== "published" && (
           <Button variant="default" onClick={() => void updateStatus("published")} disabled={saving}>
             Publish
@@ -312,11 +332,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         {page.status === "published" && (
           <Button variant="outline" onClick={() => void updateStatus("archived")} disabled={saving}>
             Archive
-          </Button>
-        )}
-        {page.status !== "draft" && (
-          <Button variant="ghost" onClick={() => void updateStatus("draft")} disabled={saving}>
-            Move to draft
           </Button>
         )}
       </div>

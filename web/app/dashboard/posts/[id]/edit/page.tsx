@@ -277,7 +277,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   useEffect(() => {
-    if (!blog || saving || !isDirty()) return;
+    if (!blog || saving || !isDirty() || blog.status === "published") return;
     // Don't reset to idle immediately - keep showing "Saved" until autosave triggers
     // This prevents flickering between "Saved" → "" → "Saving..." → "Saved"
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -291,6 +291,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     const flushSave = () => {
+      if (blog?.status === "published") return;
       if (isDirty() && !saving) {
         void save(true);
       }
@@ -309,7 +310,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       window.removeEventListener("popstate", flushSave);
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-  }, [isDirty, saving]);
+  }, [isDirty, saving, blog]);
 
   if (loading || !blog) {
     return (
@@ -328,6 +329,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       : null;
 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
+  const requiresManualUpdate = blog.status === "published";
+  const dirty = isDirty();
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
@@ -590,9 +593,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       <Separator className="my-8" />
 
       <div className="flex flex-wrap gap-2">
-        <Button onClick={() => void save(false)} disabled={saving}>
-          {saving ? "Saving…" : "Save"}
-        </Button>
+        {requiresManualUpdate ? (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => {
+                applyBlogToForm(blog);
+                setErr(null);
+                setSaveStatus("saved");
+              }}
+              disabled={saving || !dirty}
+            >
+              Cancel
+            </Button>
+            <Button onClick={() => void save(false)} disabled={saving || !dirty}>
+              {saving ? "Updating…" : "Update"}
+            </Button>
+          </>
+        ) : (
+          <Button onClick={() => void save(false)} disabled={saving}>
+            {saving ? "Saving…" : "Save"}
+          </Button>
+        )}
         {blog.status === "draft" && (
           <>
             <Button variant="default" onClick={publish}>

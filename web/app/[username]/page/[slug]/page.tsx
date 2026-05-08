@@ -10,6 +10,7 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { faviconIcons } from "@/lib/favicon";
+import { excerptFromHtml } from "@/lib/text";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -23,6 +24,13 @@ function resolveUserOgImage(user: PublicUser | null | undefined): string | undef
   const profileImage = assetUrl(user?.profile_image_url);
   if (profileImage) return profileImage;
   return undefined;
+}
+
+function resolvePageDescription(page: UserPage): string | undefined {
+  const metaDescription = (page.meta_description || "").trim();
+  if (metaDescription) return metaDescription;
+  const contentDescription = excerptFromHtml(page.content || "").trim();
+  return contentDescription || undefined;
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
@@ -67,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     ? resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath)
     : `${MARKETING_ORIGIN}${marketingPath}`;
   const title = page.meta_title || page.title;
-  const description = page.meta_description || undefined;
+  const description = resolvePageDescription(page);
   const siteName = resolveUserSiteName(user);
   const ogImage = resolveUserOgImage(user);
   return {
