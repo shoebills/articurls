@@ -180,7 +180,7 @@ export default function DomainSettingsPage() {
   // ── Upgrade prompt ─────────────────────────────────────────────────────────
   if (!isPro) {
     return (
-      <div className="mx-auto max-w-2xl space-y-6 p-6">
+      <div className="mx-auto max-w-[1100px] space-y-6">
         <PageHeader />
         <Card className="p-8 text-center">
           <div className="mx-auto max-w-sm space-y-4">
@@ -202,7 +202,7 @@ export default function DomainSettingsPage() {
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-2xl space-y-6 p-6">
+    <div className="mx-auto max-w-[1100px] space-y-6">
       <PageHeader />
 
       {error && (
@@ -498,7 +498,7 @@ export default function DomainSettingsPage() {
 function PageHeader() {
   return (
     <div>
-      <h1 className="text-2xl font-bold tracking-tight">Custom Domain</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Custom Domain</h1>
       <p className="mt-1 text-sm text-muted-foreground">
         Connect your own domain to your blog
       </p>
