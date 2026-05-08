@@ -364,7 +364,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (!requiresManualUpdate || !dirty) {
+    if (!requiresManualUpdate) {
+      if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
+      window.localStorage.removeItem(manualDraftKey);
+      return;
+    }
+    // Wait until local draft hydration has run; otherwise first render can wipe saved drafts.
+    if (!manualDraftHydratedRef.current) return;
+    if (!dirty) {
       if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
       window.localStorage.removeItem(manualDraftKey);
       return;
