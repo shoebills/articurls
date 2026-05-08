@@ -53,9 +53,11 @@ async function loadCategories(username: string): Promise<Category[]> {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username } = await params;
-  if (isReservedUsername(username)) return {};
+  if (isReservedUsername(username)) {
+    return { robots: { index: false, follow: true } };
+  }
   const user = await loadUser(username);
-  if (!user) return { title: "Not found" };
+  if (!user) return { title: "Not found", robots: { index: false, follow: true } };
   const marketingPath = `/${encodeURIComponent(user.user_name)}`;
   const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
   const title = user.meta_title || `${user.name} — Articurls`;
@@ -65,6 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: false, follow: true },
     alternates: { canonical },
     icons: faviconIcons(user),
     openGraph: {

@@ -34,6 +34,9 @@ export default function DomainSettingsPage() {
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
+  const seoResourcesEnabled =
+    !!domain?.hostname &&
+    (domain.domain_status === "active" || domain.domain_status === "grace");
 
   const loadDomain = useCallback(async (tok: string) => {
     try {
@@ -448,6 +451,27 @@ export default function DomainSettingsPage() {
         </Card>
       )}
 
+      <Card className="p-6">
+        <div className="space-y-1">
+          <h2 className="text-base font-semibold">SEO Resources</h2>
+          <p className="text-sm text-muted-foreground">
+            Add and verify custom domain to enable sitemap and robots.txt.
+          </p>
+        </div>
+        <div className="mt-5 space-y-3">
+          <SeoResourceRow
+            label="sitemap.xml"
+            url={domain?.hostname ? `https://${domain.hostname}/sitemap.xml` : undefined}
+            enabled={seoResourcesEnabled}
+          />
+          <SeoResourceRow
+            label="robots.txt"
+            url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
+            enabled={seoResourcesEnabled}
+          />
+        </div>
+      </Card>
+
       {/* SEO warning dialog for verified domains */}
       {showSeoWarning && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
@@ -596,6 +620,40 @@ function CopyRow({
           {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
         </Button>
       </div>
+    </div>
+  );
+}
+
+function SeoResourceRow({
+  label,
+  url,
+  enabled,
+}: {
+  label: string;
+  url?: string;
+  enabled: boolean;
+}) {
+  return (
+    <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-3">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium">{label}</p>
+        <p className="text-xs text-muted-foreground">
+          {enabled && url ? url : "Unavailable until custom domain is active or in grace period."}
+        </p>
+      </div>
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        disabled={!enabled || !url}
+        onClick={() => {
+          if (enabled && url) {
+            window.open(url, "_blank", "noopener,noreferrer");
+          }
+        }}
+      >
+        View
+      </Button>
     </div>
   );
 }

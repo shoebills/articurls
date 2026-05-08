@@ -13,10 +13,8 @@
  *   - All URLs use https://{custom_domain}/... — NEVER articurls.com.
  *
  * ── Marketing domain request (no x-original-host, or internal hostname) ─────
- *   - Returns platform-level marketing pages only (home page).
- *   - User content is NOT included here; it lives at /[username]/sitemap.xml.
- *   - /[username]/sitemap.xml returns 404 when the user has an active/grace
- *     custom domain, enforcing the one-domain-indexed-at-a-time invariant.
+ *   - Returns platform-level marketing pages sitemap index only.
+ *   - User content is never indexed on articurls.com in the new policy.
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -234,31 +232,21 @@ async function customDomainSitemap(host: string): Promise<Response> {
 // ── Marketing domain sitemap ──────────────────────────────────────────────────
 
 /**
- * Root sitemap index for articurls.com — Level 1 of layered architecture.
- * 
- * Returns a sitemap index pointing to:
+ * Root sitemap index for articurls.com.
+ *
+ * Returns a sitemap index pointing only to:
  * - /sitemaps/pages.xml (marketing pages)
- * - /sitemaps/users.xml (user content)
- * 
- * Layered structure:
- * - Level 1: /sitemap.xml → /sitemaps/pages.xml + /sitemaps/users.xml
- * - Level 2: /sitemaps/users.xml → /{username}/sitemap.xml
- * - Level 3: /{username}/sitemap.xml → user's content
- * 
+ *
  * Fallback: If anything fails, returns a basic sitemap with homepage only.
  */
 async function marketingDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
   try {
-    // Return sitemap index pointing to both marketing pages and user sitemaps
+    // Return sitemap index pointing only to marketing pages
     const sitemaps = [
       {
         loc: `${MARKETING_ORIGIN}/sitemaps/pages.xml`,
-        lastmod: today,
-      },
-      {
-        loc: `${MARKETING_ORIGIN}/sitemaps/users.xml`,
         lastmod: today,
       },
     ];

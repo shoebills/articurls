@@ -58,9 +58,11 @@ async function loadCategoryBlogs(username: string, slug: string): Promise<Public
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { username, slug } = await params;
-  if (isReservedUsername(username)) return {};
+  if (isReservedUsername(username)) {
+    return { robots: { index: false, follow: true } };
+  }
   const user = await loadUser(username);
-  if (!user) return { title: "Not found" };
+  if (!user) return { title: "Not found", robots: { index: false, follow: true } };
   const data = await loadCategoryBlogs(username, slug);
   const catName = data?.category?.name || slug;
   const marketingPath = `/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
@@ -75,6 +77,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    robots: { index: false, follow: true },
     alternates: { canonical },
     icons: faviconIcons(user),
     openGraph: {
