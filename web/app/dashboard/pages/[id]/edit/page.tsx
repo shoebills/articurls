@@ -7,6 +7,7 @@ import { ApiError, archivePage, listPages, movePageToDraft, publishPage, updateP
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
+import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -224,14 +225,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard/pages">← Pages</Link>
         </Button>
-        {liveUrl && (
-          <Button variant="outline" size="sm" asChild>
-            <a href={liveUrl} target="_blank" rel="noopener">
-              <ExternalLink className="mr-1 h-3.5 w-3.5" />
-              View
-            </a>
-          </Button>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <BlogStatusBadge status={page.status} />
+          {liveUrl && (
+            <Button variant="outline" size="sm" asChild>
+              <a href={liveUrl} target="_blank" rel="noopener">
+                <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                View
+              </a>
+            </Button>
+          )}
+        </div>
       </div>
 
       <Input
@@ -243,7 +247,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : "\u00a0"}
       </p>
-      <p className="mb-3 text-xs text-muted-foreground">Status: {page.status}</p>
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
