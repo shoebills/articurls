@@ -115,7 +115,7 @@ export default async function PublicProfilePage({ params }: Props) {
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-muted/15">
+    <div className="min-h-screen bg-background">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
