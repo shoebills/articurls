@@ -55,6 +55,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [err, setErr] = useState<string | null>(null);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const manualDraftHydratedRef = useRef(false);
   const titleRef = useRef(title);
   const contentRef = useRef(content);
   const slugCustomRef = useRef(slugCustom);
@@ -211,6 +212,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
       if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(updated.featured_image_url || "");
       await refreshUser();
+      clearManualDraft();
       setSaveStatus("saved");
     } catch (e) {
       setSaveStatus("idle");
@@ -225,6 +227,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     await save(true);
     try {
       const b = await publishBlog(token, blog.blog_id);
+      clearManualDraft();
       applyBlogToForm(b);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Publish failed");
@@ -235,6 +238,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (!token || !blog) return;
     try {
       const b = await archiveBlog(token, blog.blog_id);
+      clearManualDraft();
       applyBlogToForm(b);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Archive failed");
@@ -331,6 +335,79 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
   const requiresManualUpdate = blog.status === "published";
   const dirty = isDirty();
+  const manualDraftKey = `articurls:manual-post-draft:${blog.blog_id}`;
+
+  const clearManualDraft = useCallback(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.removeItem(manualDraftKey);
+  }, [manualDraftKey]);
+
+  useEffect(() => {
+    manualDraftHydratedRef.current = false;
+  }, [blog.blog_id]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!requiresManualUpdate || manualDraftHydratedRef.current) return;
+    const raw = window.localStorage.getItem(manualDraftKey);
+    manualDraftHydratedRef.current = true;
+    if (!raw) return;
+    try {
+      const draft = JSON.parse(raw) as {
+        title?: string;
+        content?: string;
+        slugCustom?: string;
+        metaTitle?: string;
+        metaTitleDirty?: boolean;
+        metaDesc?: string;
+        notify?: boolean;
+        featuredImageUrl?: string;
+      };
+      if (typeof draft.title === "string") setTitle(draft.title);
+      if (typeof draft.content === "string") setContent(draft.content);
+      if (typeof draft.slugCustom === "string") setSlugCustom(draft.slugCustom);
+      if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
+      if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
+      if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
+      if (typeof draft.notify === "boolean") setNotify(draft.notify);
+      if (typeof draft.featuredImageUrl === "string") setFeaturedImageUrl(draft.featuredImageUrl);
+    } catch {
+      window.localStorage.removeItem(manualDraftKey);
+    }
+  }, [requiresManualUpdate, manualDraftKey]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (!requiresManualUpdate || !dirty) {
+      window.localStorage.removeItem(manualDraftKey);
+      return;
+    }
+    window.localStorage.setItem(
+      manualDraftKey,
+      JSON.stringify({
+        title,
+        content,
+        slugCustom,
+        metaTitle,
+        metaTitleDirty,
+        metaDesc,
+        notify,
+        featuredImageUrl,
+      })
+    );
+  }, [
+    requiresManualUpdate,
+    dirty,
+    manualDraftKey,
+    title,
+    content,
+    slugCustom,
+    metaTitle,
+    metaTitleDirty,
+    metaDesc,
+    notify,
+    featuredImageUrl,
+  ]);
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
@@ -599,6 +676,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               variant="outline"
               onClick={() => {
                 applyBlogToForm(blog);
+                clearManualDraft();
                 setErr(null);
                 setSaveStatus("saved");
               }}
