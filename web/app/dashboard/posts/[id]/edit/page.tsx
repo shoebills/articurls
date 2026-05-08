@@ -316,26 +316,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     };
   }, [isDirty, saving, blog]);
 
-  if (loading || !blog) {
-    return (
-      <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
-        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-      </>
-    );
-  }
-
-  const liveUrl =
-    blog.status === "published" && user
-      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-        ? `https://${user.custom_domain}/blog/${encodeURIComponent(blog.slug)}`
-        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
-      : null;
-
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
-  const requiresManualUpdate = blog.status === "published";
+  const currentBlogId = blog?.blog_id ?? blogId;
+  const requiresManualUpdate = blog?.status === "published";
   const dirty = isDirty();
-  const manualDraftKey = `articurls:manual-post-draft:${blog.blog_id}`;
+  const manualDraftKey = `articurls:manual-post-draft:${currentBlogId}`;
 
   const clearManualDraft = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -344,7 +328,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     manualDraftHydratedRef.current = false;
-  }, [blog.blog_id]);
+  }, [currentBlogId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -408,6 +392,24 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     notify,
     featuredImageUrl,
   ]);
+
+  if (loading || !blog) {
+    return (
+      <>
+        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      </>
+    );
+  }
+
+  const liveUrl =
+    blog.status === "published" && user
+      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+        ? `https://${user.custom_domain}/blog/${encodeURIComponent(blog.slug)}`
+        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
+      : null;
+
+  const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">

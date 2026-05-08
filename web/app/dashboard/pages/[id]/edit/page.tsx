@@ -204,25 +204,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     };
   }, [isDirty, saving, page]);
 
-  if (loading || !page) {
-    return (
-      <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
-        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-      </>
-    );
-  }
-
-  const liveUrl = user
-    ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-      ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
-      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
-    : null;
-
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
-  const requiresManualUpdate = page.status === "published";
+  const currentPageId = page?.page_id ?? pageId;
+  const requiresManualUpdate = page?.status === "published";
   const dirty = isDirty();
-  const manualDraftKey = `articurls:manual-page-draft:${page.page_id}`;
+  const manualDraftKey = `articurls:manual-page-draft:${currentPageId}`;
 
   const clearManualDraft = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -231,7 +216,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     manualDraftHydratedRef.current = false;
-  }, [page.page_id]);
+  }, [currentPageId]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -277,6 +262,23 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       })
     );
   }, [requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+
+  if (loading || !page) {
+    return (
+      <>
+        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      </>
+    );
+  }
+
+  const liveUrl = user
+    ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+      ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
+      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
+    : null;
+
+  const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
