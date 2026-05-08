@@ -55,6 +55,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [err, setErr] = useState<string | null>(null);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const localAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualDraftHydratedRef = useRef(false);
   const titleRef = useRef(title);
   const contentRef = useRef(content);
@@ -323,6 +324,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const clearManualDraft = useCallback(() => {
     if (typeof window === "undefined") return;
+    if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
     window.localStorage.removeItem(manualDraftKey);
   }, [manualDraftKey]);
 
@@ -363,22 +365,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (!requiresManualUpdate || !dirty) {
+      if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
       window.localStorage.removeItem(manualDraftKey);
       return;
     }
-    window.localStorage.setItem(
-      manualDraftKey,
-      JSON.stringify({
-        title,
-        content,
-        slugCustom,
-        metaTitle,
-        metaTitleDirty,
-        metaDesc,
-        notify,
-        featuredImageUrl,
-      })
-    );
+    setSaveStatus("saving");
+    if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
+    localAutosaveTimerRef.current = setTimeout(() => {
+      window.localStorage.setItem(
+        manualDraftKey,
+        JSON.stringify({
+          title,
+          content,
+          slugCustom,
+          metaTitle,
+          metaTitleDirty,
+          metaDesc,
+          notify,
+          featuredImageUrl,
+        })
+      );
+      setSaveStatus("saved");
+    }, 350);
   }, [
     requiresManualUpdate,
     dirty,
@@ -392,6 +400,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     notify,
     featuredImageUrl,
   ]);
+
+  useEffect(() => {
+    return () => {
+      if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
+    };
+  }, []);
 
   if (loading || !blog) {
     return (
@@ -437,7 +451,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         placeholder="Title"
       />
       <p className="mb-3 text-xs text-muted-foreground">
-        {saveStatus === "saving" ? "Saving changes..." : saveStatus === "saved" ? "Saved" : "\u00a0"}
+        {saveStatus === "saving"
+          ? requiresManualUpdate
+            ? "Saving draft changes locally..."
+            : "Saving changes..."
+          : saveStatus === "saved"
+            ? requiresManualUpdate
+              ? "Draft changes saved locally"
+              : "Saved"
+            : "\u00a0"}
       </p>
 
       <BlogEditor
@@ -691,9 +713,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             </Button>
           </>
         ) : (
-          <Button onClick={() => void save(false)} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
-          </Button>
+          <></>
         )}
         {blog.status === "draft" && (
           <>
