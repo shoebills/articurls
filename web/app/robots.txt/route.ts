@@ -127,18 +127,6 @@ async function customDomainRobots(host: string): Promise<Response> {
   let body = `User-agent: *
 Allow: /
 
-Disallow: /dashboard/
-Disallow: /login
-Disallow: /signup
-Disallow: /verify
-Disallow: /forgot-password
-Disallow: /reset-password
-Disallow: /confirm-subscription
-Disallow: /onboarding
-Disallow: /internal/
-Disallow: /api/
-Disallow: /_next/
-
 User-agent: AhrefsBot
 Crawl-delay: 10
 
