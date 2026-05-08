@@ -16,7 +16,6 @@ export interface BlogListItem {
   meta_description: string | null;
   featured_image_url: string | null;
   notify_subscribers: boolean;
-  ads_enabled: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
   published_at: string | null;
@@ -39,7 +38,6 @@ export interface PublicBlog {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
-  ads_enabled: boolean;
   published_at: string | null;
   updated_at: string;
   user_id: number;
@@ -184,21 +182,9 @@ export interface DesignSettings {
   featured_blog_ids: number[];
 }
 
-export interface MonetizationSettings {
-  ads_enabled: boolean;
-  ad_code: string | null;
-  ad_frequency: number;
-}
-
 export interface MetaSettings {
   meta_title: string | null;
   meta_description: string | null;
-}
-
-export interface PublicBlogAds {
-  enabled: boolean;
-  ad_code: string | null;
-  ad_frequency: number;
 }
 
 export interface SubscriptionOut {

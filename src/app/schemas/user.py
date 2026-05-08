@@ -138,21 +138,6 @@ class UsernameChangeRequestReview(BaseModel):
     admin_note: Optional[str] = None
 
 
-class MonetizationSettings(BaseModel):
-    ads_enabled: bool
-    ad_code: Optional[str] = None
-    ad_frequency: int = 3
-
-    class Config:
-        from_attributes = True
-
-
-class MonetizationSettingsUpdate(BaseModel):
-    ads_enabled: Optional[bool] = None
-    ad_code: Optional[str] = None
-    ad_frequency: Optional[int] = None
-
-
 class MetaSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

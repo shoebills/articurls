@@ -3,10 +3,8 @@ import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
-import type { PublicBlog, PublicBlogAds, PublicUser, UserPage, Category } from "@/lib/types";
+import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { injectAdsIntoHtml } from "@/lib/ad-injection";
-import { AdSlot } from "@/components/ad-slot";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -49,14 +47,6 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 async function loadPages(username: string): Promise<UserPage[]> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
   if (!res.ok) return [];
-  return res.json();
-}
-
-async function loadBlogAds(username: string, slug: string): Promise<PublicBlogAds | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}/ads`, {
-    next: { revalidate: REVALIDATE },
-  });
-  if (!res.ok) return null;
   return res.json();
 }
 
@@ -112,12 +102,11 @@ export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
   if (isReservedUsername(username)) notFound();
 
-  const [blog, author, pages, categories, adConfig] = await Promise.all([
+  const [blog, author, pages, categories] = await Promise.all([
     loadBlog(username, slug),
     loadUser(username),
     loadPages(username),
     loadCategories(username),
-    loadBlogAds(username, slug),
   ]);
   if (!blog || !author) notFound();
   if (author.user_name.toLowerCase() !== username.toLowerCase()) {
@@ -132,11 +121,6 @@ export default async function PublicBlogPage({ params }: Props) {
   const containerSpacing = author.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
-  const adSegments =
-    adConfig?.enabled && adConfig.ad_code
-      ? injectAdsIntoHtml(blog.content, adConfig.ad_frequency, 4)
-      : [{ type: "html" as const, html: blog.content }];
-
   const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
@@ -223,13 +207,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </div>
         </header>
         <div className="mt-12">
-          {adSegments.map((segment, idx) =>
-            segment.type === "html" ? (
-              <div key={`html-${idx}`} className="prose-blog" dangerouslySetInnerHTML={{ __html: segment.html }} />
-            ) : adConfig?.ad_code ? (
-              <AdSlot key={segment.key} slotId={segment.key} adCode={adConfig.ad_code} slotType={segment.slotType} />
-            ) : null
-          )}
+          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blog.content }} />
         </div>
         {showSubscriberCollection ? (
           <div className="mt-14 border-t border-border/80 pt-6">
