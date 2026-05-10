@@ -31,11 +31,7 @@ export function publicNavMobileBlogTitleClassName(size: NavBlogNameSize): string
   return cn(NAV_TITLE_ROW, navBlogNameClassName(size, "min-w-0 flex-1 truncate"));
 }
 
-/** Desktop inline nav title — same min-h-9 + items-center as mobile; width rules for centered cluster layout. */
+/** Desktop nav title (left column): same min-h-9 + items-center as mobile; flex-1 + truncate for long names beside a right-aligned menu. */
 export function publicNavDesktopBlogTitleClassName(size: NavBlogNameSize): string {
-  return cn(
-    NAV_TITLE_ROW,
-    "min-w-0 max-w-full shrink-0 truncate",
-    navBlogNameClassName(size),
-  );
+  return cn(NAV_TITLE_ROW, "min-w-0 flex-1 truncate pr-4", navBlogNameClassName(size));
 }

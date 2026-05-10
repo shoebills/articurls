@@ -135,14 +135,13 @@ export default async function PublicBlogPage({ params }: Props) {
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-center")}>
-              <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-between sm:gap-x-6")}>
               <Link href={getPublicProfileUrl(username)} className={publicNavDesktopBlogTitleClassName(blogNameSize)}>
                 {navBlogName}
               </Link>
-              <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
                 {author.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                  <nav className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
                     {categories.map((c) => (
                       <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug)} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                         {c.name}
@@ -153,7 +152,6 @@ export default async function PublicBlogPage({ params }: Props) {
                 {showSubscriberCollection ? (
                   <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
                 ) : null}
-              </div>
               </div>
             </div>
             <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>

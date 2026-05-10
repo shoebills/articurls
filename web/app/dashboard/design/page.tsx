@@ -508,16 +508,15 @@ export default function DesignDashboardPage() {
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex w-full items-center justify-center">
-                  <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+                <div className="flex w-full items-center justify-between gap-x-6">
                   <span className={publicNavDesktopBlogTitleClassName(normalizeNavBlogNameSize(design.nav_blog_name_size))}>
                     {previewBlogName}
                   </span>
-                  <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+                  <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
                     {design.nav_menu_enabled ? (
                       selectedMenuCats.length > 0 ? (
                         selectedMenuCats.length <= 5 ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                          <div className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
                             {selectedMenuCats.map((c) => (
                               <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
                                 {c.name}
@@ -536,7 +535,6 @@ export default function DesignDashboardPage() {
                     <div className="shrink-0">
                       <Button size="sm">Subscribe</Button>
                     </div>
-                  </div>
                   </div>
                 </div>
               </div>
