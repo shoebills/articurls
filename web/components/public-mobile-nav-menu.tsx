@@ -36,8 +36,8 @@ export function PublicMobileNavMenu({
     const root = rootRef.current;
     if (!root || !open) return;
     const rootBox = root.getBoundingClientRect();
-    const section = root.closest("section");
-    const bottomEdge = section ? section.getBoundingClientRect().bottom : rootBox.bottom;
+    const navHost = root.closest("[data-public-nav]");
+    const bottomEdge = navHost ? navHost.getBoundingClientRect().bottom : rootBox.bottom;
     setTrayLayout({
       top: bottomEdge + TRAY_GAP_BELOW_NAVBAR_PX,
       left: rootBox.left,
@@ -103,7 +103,7 @@ export function PublicMobileNavMenu({
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 transition-all duration-200 hover:bg-background hover:text-foreground"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 hover:text-foreground"
         >
           <Menu className="h-4 w-4" />
         </button>
@@ -113,7 +113,7 @@ export function PublicMobileNavMenu({
         <div
           id={menuId}
           className={cn(
-            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-background transition-opacity duration-200 ease-out",
+            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out",
             trayLayout ? "opacity-100" : "pointer-events-none opacity-0"
           )}
           style={

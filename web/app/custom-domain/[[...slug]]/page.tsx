@@ -326,7 +326,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <div className={containerSpacing}>
           <PublicBlogViewTracker userName={username} slug={postSlug} />
           {author.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+            <header className="mb-8 sm:mb-10" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
@@ -359,7 +359,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   showSubscribeAction={showSubscriberCollection}
                 />
               </div>
-            </section>
+            </header>
           ) : null}
           <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground">
             ← Back
@@ -435,9 +435,12 @@ export default async function CustomDomainPage({ params }: Props) {
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+            <header className="mb-8 sm:mb-10" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
-                <Link href={getPublicProfileUrl(username, { customDomain: true })} className="truncate text-lg font-semibold hover:underline">
+                <Link
+                  href={getPublicProfileUrl(username, { customDomain: true })}
+                  className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                >
                   {navBlogName}
                 </Link>
                 <div className="flex min-w-0 items-center gap-4">
@@ -465,7 +468,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   showSubscribeAction={showSubscriberCollection}
                 />
               </div>
-            </section>
+            </header>
           ) : null}
 
           <Link
@@ -519,9 +522,12 @@ export default async function CustomDomainPage({ params }: Props) {
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+            <header className="mb-8 sm:mb-10" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
-                <Link href={getPublicProfileUrl(username, { customDomain: true })} className="truncate text-lg font-semibold hover:underline">
+                <Link
+                  href={getPublicProfileUrl(username, { customDomain: true })}
+                  className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                >
                   {navBlogName}
                 </Link>
                 <div className="flex min-w-0 items-center gap-4">
@@ -555,7 +561,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   showSubscribeAction={showSubscriberCollection}
                 />
               </div>
-            </section>
+            </header>
           ) : null}
 
           <div className="mb-6 flex items-center gap-3">
@@ -623,9 +629,14 @@ export default async function CustomDomainPage({ params }: Props) {
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+          <header className="mb-8 sm:mb-10" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
-              <p className="truncate text-lg font-semibold">{navBlogName}</p>
+              <Link
+                href={getPublicProfileUrl(username, { customDomain: true })}
+                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+              >
+                {navBlogName}
+              </Link>
               <div className="flex min-w-0 items-center gap-4">
                 {user.nav_menu_enabled && showDesktopInline ? (
                   <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
@@ -646,13 +657,14 @@ export default async function CustomDomainPage({ params }: Props) {
             <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
+                titleHref={getPublicProfileUrl(username, { customDomain: true })}
                 links={user.nav_menu_enabled ? catLinks : []}
                 userName={user.user_name}
                 authorName={user.name}
                 showSubscribeAction={showSubscriberCollection}
               />
             </div>
-          </section>
+          </header>
         ) : null}
         <PublicBlogListSearch
           blogs={blogsWithRelativeHrefs}

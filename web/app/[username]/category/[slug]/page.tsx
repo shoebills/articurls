@@ -135,9 +135,14 @@ export default async function PublicCategoryPage({ params }: Props) {
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+          <header className="mb-8 sm:mb-10" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
-              <p className="truncate text-lg font-semibold">{navBlogName}</p>
+              <Link
+                href={getPublicProfileUrl(username)}
+                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+              >
+                {navBlogName}
+              </Link>
               <div className="flex min-w-0 items-center gap-4">
                 {user.nav_menu_enabled && showDesktopInline ? (
                   <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
@@ -166,13 +171,14 @@ export default async function PublicCategoryPage({ params }: Props) {
             <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
               <PublicMobileNavMenu
                 title={navBlogName}
+                titleHref={getPublicProfileUrl(username)}
                 links={user.nav_menu_enabled ? catLinks : []}
                 userName={user.user_name}
                 authorName={user.name}
                 showSubscribeAction={showSubscriberCollection}
               />
             </div>
-          </section>
+          </header>
         ) : null}
 
         <div className="mb-6 flex items-center gap-3">

@@ -129,9 +129,12 @@ export default async function PublicCustomPage({ params }: Props) {
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+          <header className="mb-8 sm:mb-10" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
-              <Link href={getPublicProfileUrl(username)} className="truncate text-lg font-semibold hover:underline">
+              <Link
+                href={getPublicProfileUrl(username)}
+                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+              >
                 {navBlogName}
               </Link>
               <div className="flex min-w-0 items-center gap-4">
@@ -159,7 +162,7 @@ export default async function PublicCustomPage({ params }: Props) {
                 showSubscribeAction={showSubscriberCollection}
               />
             </div>
-          </section>
+          </header>
         ) : null}
 
         <Link

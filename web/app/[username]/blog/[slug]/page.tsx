@@ -131,7 +131,7 @@ export default async function PublicBlogPage({ params }: Props) {
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
+          <header className="mb-8 sm:mb-10" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={getPublicProfileUrl(username)}
@@ -164,7 +164,7 @@ export default async function PublicBlogPage({ params }: Props) {
                 showSubscribeAction={showSubscriberCollection}
               />
             </div>
-          </section>
+          </header>
         ) : null}
         <Link
           href={getPublicProfileUrl(username)}
