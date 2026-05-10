@@ -106,7 +106,7 @@ export function PublicMobileNavMenu({
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 hover:text-foreground"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
         >
           <Menu className="h-4 w-4" />
         </button>

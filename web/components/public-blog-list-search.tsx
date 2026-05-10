@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
+import { cn } from "@/lib/utils";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -82,7 +83,7 @@ function BlogPostShareMenu({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="h-8 w-8 shrink-0 rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm hover:bg-white hover:text-foreground"
           aria-label="Share post"
           onPointerDown={(e) => {
             if (e.pointerType === "touch") e.preventDefault();
@@ -98,7 +99,7 @@ function BlogPostShareMenu({
           <Share2 className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent align="end" className="w-52 bg-white">
         <DropdownMenuItem onClick={copyLink}>
           <Link2 className="h-4 w-4" />
           Copy link
@@ -151,7 +152,7 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
           ref={triggerRef}
           type="button"
           variant="outline"
-          className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5"
+          className="h-12 min-h-12 gap-2 rounded-xl border-border/80 bg-white px-3 shadow-sm hover:bg-white hover:text-foreground sm:h-11 sm:min-h-11 sm:px-3.5"
           onPointerDown={(e) => {
             if (e.pointerType === "touch") e.preventDefault();
           }}
@@ -167,7 +168,7 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
           <span>Sort</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44">
+      <DropdownMenuContent align="end" className="w-44 bg-white">
         <DropdownMenuItem onClick={() => setSortBy("latest")}>
           <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
           Latest
@@ -327,7 +328,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             }}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
+            className="h-12 min-h-12 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
         {!showFeatured && (
@@ -365,7 +366,12 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
         </div>
       )}
 
-      <ul className="divide-y divide-border/80">
+      <ul
+        className={cn(
+          "divide-y divide-border/80",
+          showFeatured && "border-t border-border/80 pt-8"
+        )}
+      >
         {pagedBlogs.map((b) => (
           <BlogListItemRow
             key={b.blog_id}
@@ -383,12 +389,19 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             Page {currentPage} of {totalPages}
           </p>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={currentPage <= 1}
+            >
               Prev
             </Button>
             <Button
               variant="outline"
               size="sm"
+              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
             >
