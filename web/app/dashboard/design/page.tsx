@@ -508,14 +508,14 @@ export default function DesignDashboardPage() {
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex w-full justify-center">
-                  <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
-                  <span className={cn("max-w-full shrink-0", previewBlogNameClass)}>{previewBlogName}</span>
-                  <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+                <div className="flex w-full items-start justify-center">
+                  <div className="inline-flex max-w-full flex-wrap items-start justify-center gap-x-6 gap-y-3">
+                  <span className={cn("max-w-full shrink-0 py-1.5", previewBlogNameClass)}>{previewBlogName}</span>
+                  <div className="flex min-w-0 flex-wrap items-start justify-start gap-4">
                     {design.nav_menu_enabled ? (
                       selectedMenuCats.length > 0 ? (
                         selectedMenuCats.length <= 5 ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                          <div className="flex max-w-full flex-wrap items-start justify-start gap-x-3 gap-y-1">
                             {selectedMenuCats.map((c) => (
                               <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
                                 {c.name}

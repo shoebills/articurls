@@ -330,20 +330,20 @@ export default async function CustomDomainPage({ params }: Props) {
           <PublicBlogViewTracker userName={username} slug={postSlug} />
           {author.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:justify-center")}>
-                <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-start sm:justify-center")}>
+                <div className="inline-flex max-w-full flex-wrap items-start justify-center gap-x-6 gap-y-3">
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
                   className={cn(
-                    "flex min-h-9 min-w-0 max-w-full shrink-0 items-center truncate hover:underline",
+                    "block min-w-0 max-w-full shrink-0 truncate py-1.5 hover:underline",
                     navBlogNameClassName(blogNameSize)
                   )}
                 >
                   {navBlogName}
                 </Link>
-                <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+                <div className="flex min-w-0 flex-wrap items-start justify-start gap-4">
                   {author.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <nav className="flex max-w-full flex-wrap items-start justify-start gap-x-3 gap-y-1">
                       {categories.map((c) => (
                         <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                           {c.name}
@@ -446,20 +446,20 @@ export default async function CustomDomainPage({ params }: Props) {
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:justify-center")}>
-                <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-start sm:justify-center")}>
+                <div className="inline-flex max-w-full flex-wrap items-start justify-center gap-x-6 gap-y-3">
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
                   className={cn(
-                    "flex min-h-9 min-w-0 max-w-full shrink-0 items-center truncate hover:underline",
+                    "block min-w-0 max-w-full shrink-0 truncate py-1.5 hover:underline",
                     navBlogNameClassName(blogNameSize)
                   )}
                 >
                   {navBlogName}
                 </Link>
-                <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+                <div className="flex min-w-0 flex-wrap items-start justify-start gap-4">
                   {user.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <nav className="flex max-w-full flex-wrap items-start justify-start gap-x-3 gap-y-1">
                       {categories.map((c) => (
                         <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                           {c.name}
@@ -540,20 +540,20 @@ export default async function CustomDomainPage({ params }: Props) {
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:justify-center")}>
-                <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-start sm:justify-center")}>
+                <div className="inline-flex max-w-full flex-wrap items-start justify-center gap-x-6 gap-y-3">
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
                   className={cn(
-                    "flex min-h-9 min-w-0 max-w-full shrink-0 items-center truncate hover:underline",
+                    "block min-w-0 max-w-full shrink-0 truncate py-1.5 hover:underline",
                     navBlogNameClassName(blogNameSize)
                   )}
                 >
                   {navBlogName}
                 </Link>
-                <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+                <div className="flex min-w-0 flex-wrap items-start justify-start gap-4">
                   {user.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                    <nav className="flex max-w-full flex-wrap items-start justify-start gap-x-3 gap-y-1">
                       {categories.map((c) => (
                         <Link
                           key={c.category_id}
@@ -654,20 +654,20 @@ export default async function CustomDomainPage({ params }: Props) {
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:justify-center")}>
-              <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
+            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-start sm:justify-center")}>
+              <div className="inline-flex max-w-full flex-wrap items-start justify-center gap-x-6 gap-y-3">
               <Link
                 href={getPublicProfileUrl(username, { customDomain: true })}
                 className={cn(
-                  "flex min-h-9 min-w-0 max-w-full shrink-0 items-center truncate hover:underline",
+                  "block min-w-0 max-w-full shrink-0 truncate py-1.5 hover:underline",
                   navBlogNameClassName(blogNameSize)
                 )}
               >
                 {navBlogName}
               </Link>
-              <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
+              <div className="flex min-w-0 flex-wrap items-start justify-start gap-4">
                 {user.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
+                  <nav className="flex max-w-full flex-wrap items-start justify-start gap-x-3 gap-y-1">
                     {categories.map((c) => (
                       <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
                         {c.name}
