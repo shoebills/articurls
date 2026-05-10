@@ -133,7 +133,8 @@ export default async function PublicCustomPage({ params }: Props) {
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className={`hidden flex-wrap items-center justify-center gap-x-6 gap-y-3 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
+            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:justify-center")}>
+              <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
               <Link
                 href={getPublicProfileUrl(username)}
                 className={cn(
@@ -156,6 +157,7 @@ export default async function PublicCustomPage({ params }: Props) {
                 {showSubscriberCollection ? (
                   <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
                 ) : null}
+              </div>
               </div>
             </div>
             <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>

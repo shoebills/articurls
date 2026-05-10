@@ -508,7 +508,8 @@ export default function DesignDashboardPage() {
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+                <div className="flex w-full justify-center">
+                  <div className="inline-flex max-w-full flex-wrap items-center justify-center gap-x-6 gap-y-3">
                   <span className={cn("max-w-full shrink-0", previewBlogNameClass)}>{previewBlogName}</span>
                   <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
                     {design.nav_menu_enabled ? (
@@ -533,6 +534,7 @@ export default function DesignDashboardPage() {
                     <div className="shrink-0">
                       <Button size="sm">Subscribe</Button>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
