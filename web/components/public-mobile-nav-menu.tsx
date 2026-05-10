@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { navBlogNameClassName, normalizeNavBlogNameSize, type NavBlogNameSize } from "@/lib/nav-blog-name";
+import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
 
 const TRAY_GAP_BELOW_NAVBAR_PX = 8;
@@ -32,7 +32,7 @@ export function PublicMobileNavMenu({
   showSubscribeAction = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
-  const titleClass = navBlogNameClassName(size, "min-w-0 flex-1 truncate");
+  const titleClass = publicNavMobileBlogTitleClassName(size);
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -93,11 +93,11 @@ export function PublicMobileNavMenu({
     <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
       <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
-          <Link href={titleHref} className={cn("flex min-h-9 items-center hover:underline", titleClass)}>
+          <Link href={titleHref} className={titleClass}>
             {title}
           </Link>
         ) : (
-          <p className={cn("flex min-h-9 items-center", titleClass)}>{title}</p>
+          <p className={titleClass}>{title}</p>
         )}
 
         <button

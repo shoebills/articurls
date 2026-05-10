@@ -23,3 +23,19 @@ export function navBlogNameClassName(size: NavBlogNameSize, extra?: string): str
     extra
   );
 }
+
+const NAV_TITLE_ROW = "flex min-h-9 items-center hover:underline";
+
+/** Mobile public nav title — must stay in sync with {@link publicNavDesktopBlogTitleClassName}. */
+export function publicNavMobileBlogTitleClassName(size: NavBlogNameSize): string {
+  return cn(NAV_TITLE_ROW, navBlogNameClassName(size, "min-w-0 flex-1 truncate"));
+}
+
+/** Desktop inline nav title — same min-h-9 + items-center as mobile; width rules for centered cluster layout. */
+export function publicNavDesktopBlogTitleClassName(size: NavBlogNameSize): string {
+  return cn(
+    NAV_TITLE_ROW,
+    "min-w-0 max-w-full shrink-0 truncate",
+    navBlogNameClassName(size),
+  );
+}
