@@ -322,11 +322,11 @@ export default async function CustomDomainPage({ params }: Props) {
     const showSubscriberCollection = author.subscriber_collection_enabled === true;
 
     return (
-      <article className="min-h-screen bg-background">
+      <article className="min-h-screen bg-white">
         <div className={containerSpacing}>
           <PublicBlogViewTracker userName={username} slug={postSlug} />
           {author.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
@@ -432,10 +432,10 @@ export default async function CustomDomainPage({ params }: Props) {
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
 
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link href={getPublicProfileUrl(username, { customDomain: true })} className="truncate text-lg font-semibold hover:underline">
                   {navBlogName}
@@ -516,10 +516,10 @@ export default async function CustomDomainPage({ params }: Props) {
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
 
     return (
-      <div className="min-h-screen bg-background">
+      <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+            <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link href={getPublicProfileUrl(username, { customDomain: true })} className="truncate text-lg font-semibold hover:underline">
                   {navBlogName}
@@ -579,7 +579,7 @@ export default async function CustomDomainPage({ params }: Props) {
               siteOrigin={siteOrigin}
             />
           ) : (
-            <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-8 text-center">
+            <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
             </div>
           )}
@@ -620,10 +620,10 @@ export default async function CustomDomainPage({ params }: Props) {
   const blogsWithRelativeHrefs = blogs;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <p className="truncate text-lg font-semibold">{navBlogName}</p>
               <div className="flex min-w-0 items-center gap-4">

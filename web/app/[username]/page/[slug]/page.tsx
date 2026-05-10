@@ -126,10 +126,10 @@ export default async function PublicCustomPage({ params }: Props) {
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link href={getPublicProfileUrl(username)} className="truncate text-lg font-semibold hover:underline">
                 {navBlogName}
@@ -180,7 +180,7 @@ export default async function PublicCustomPage({ params }: Props) {
       {user.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
           Made with Articurls
         </a>

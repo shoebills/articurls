@@ -127,11 +127,11 @@ export default async function PublicBlogPage({ params }: Props) {
   const showSubscriberCollection = author.subscriber_collection_enabled === true;
 
   return (
-    <article className="min-h-screen bg-background">
+    <article className="min-h-screen bg-white">
       <div className={containerSpacing}>
         <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
-          <section className="mb-8 rounded-lg border border-border/80 bg-muted/30 p-4">
+          <section className="mb-8 rounded-lg border border-border/80 bg-white p-4">
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={getPublicProfileUrl(username)}
@@ -220,7 +220,7 @@ export default async function PublicBlogPage({ params }: Props) {
       {author.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-background/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-background/80"
+          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
           Made with Articurls
         </a>

@@ -327,7 +327,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             }}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
+            className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
         {!showFeatured && (
@@ -378,7 +378,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       </ul>
 
       {sortedBlogs.length > 0 ? (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+        <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
           <p className="text-xs text-muted-foreground sm:text-sm">
             Page {currentPage} of {totalPages}
           </p>
@@ -399,7 +399,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       ) : null}
 
       {sortedBlogs.length === 0 && (
-        <p className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+        <p className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
           No posts match your search.
         </p>
       )}
