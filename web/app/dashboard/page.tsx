@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogListItem } from "@/lib/types";
+import { MARKETING_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
@@ -25,7 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
@@ -122,6 +123,20 @@ export default function DashboardPage() {
 
   function openEditor(blogId: number) {
     router.push(`/dashboard/posts/${blogId}/edit`);
+  }
+
+  async function handleShare(blog: BlogListItem) {
+    if (!user) return;
+    const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
+    const base = hasCustomDomain
+      ? `https://${user.custom_domain}`
+      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
+    const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt("Copy link:", url);
+    }
   }
 
   const filteredBlogs = useMemo(() => {
@@ -335,6 +350,12 @@ export default function DashboardPage() {
                               Edit
                             </Link>
                           </DropdownMenuItem>
+                          {(b.status === "published" || b.status === "archived") && (
+                            <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
+                              <Share2 className="h-4 w-4" />
+                              Share
+                            </DropdownMenuItem>
+                          )}
                           {b.status === "published" && (
                             <DropdownMenuItem
                               data-card-action="true"

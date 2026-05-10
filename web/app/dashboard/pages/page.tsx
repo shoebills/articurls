@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ApiError, archivePage, deletePage, listPages, publishPage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
+import { MARKETING_ORIGIN } from "@/lib/env";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
   DropdownMenu,
@@ -17,10 +18,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 
 export default function PagesDashboardPage() {
-  const { token, isPro } = useAuth();
+  const { token, isPro, user } = useAuth();
   const router = useRouter();
   const [pages, setPages] = useState<UserPage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -87,6 +88,20 @@ export default function PagesDashboardPage() {
       setErr(e instanceof ApiError ? e.message : "Failed to unarchive page");
     } finally {
       setRowBusyId(null);
+    }
+  }
+
+  async function onShare(page: UserPage) {
+    if (!token || !user) return;
+    const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
+    const base = hasCustomDomain
+      ? `https://${user.custom_domain}`
+      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
+    const url = `${base}/page/${encodeURIComponent(page.slug)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt("Copy link:", url);
     }
   }
 
@@ -166,6 +181,16 @@ export default function PagesDashboardPage() {
                               Edit
                             </Link>
                           </DropdownMenuItem>
+                          {(p.status === "published" || p.status === "archived") && (
+                            <DropdownMenuItem
+                              data-card-action="true"
+                              onClick={() => void onShare(p)}
+                              disabled={busy || rowBusyId === p.page_id}
+                            >
+                              <Share2 className="h-4 w-4" />
+                              Share
+                            </DropdownMenuItem>
+                          )}
                           {p.status === "published" && (
                             <DropdownMenuItem
                               data-card-action="true"
