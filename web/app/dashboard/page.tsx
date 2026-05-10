@@ -353,7 +353,7 @@ export default function DashboardPage() {
                           {(b.status === "published" || b.status === "archived") && (
                             <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
                               <Share2 className="h-4 w-4" />
-                              Share
+                              Copy link
                             </DropdownMenuItem>
                           )}
                           {b.status === "published" && (

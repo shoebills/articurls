@@ -188,7 +188,7 @@ export default function PagesDashboardPage() {
                               disabled={busy || rowBusyId === p.page_id}
                             >
                               <Share2 className="h-4 w-4" />
-                              Share
+                              Copy link
                             </DropdownMenuItem>
                           )}
                           {p.status === "published" && (

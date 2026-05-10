@@ -53,7 +53,8 @@ export function PublicDesktopNav({
   authorName,
 }: PublicDesktopNavProps) {
   const size = normalizeNavBlogNameSize(nameSize);
-  const [inlineCount, setInlineCount] = useState(links.length);
+  const [inlineCount, setInlineCount] = useState(0);
+  const [isMeasured, setIsMeasured] = useState(false);
   const navSlotRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
 
@@ -62,6 +63,7 @@ export function PublicDesktopNav({
     const measureRoot = measureRef.current;
     if (!slot || !measureRoot || links.length === 0) {
       setInlineCount(links.length);
+      setIsMeasured(true);
       return;
     }
 
@@ -89,6 +91,7 @@ export function PublicDesktopNav({
       }
     }
     setInlineCount(best);
+    setIsMeasured(true);
   }, [links]);
 
   useLayoutEffect(() => {
@@ -134,7 +137,13 @@ export function PublicDesktopNav({
         {title}
       </Link>
 
-      <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-3">
+      <div
+        ref={navSlotRef}
+        className={cn(
+          "flex min-w-0 flex-1 items-center justify-end gap-x-3 transition-opacity",
+          !isMeasured && "opacity-0"
+        )}
+      >
         {inlineLinks.map((l) => (
           <Link key={l.href} href={l.href} className={linkClass(l.active)}>
             {l.label}
