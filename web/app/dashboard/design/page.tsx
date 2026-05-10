@@ -472,9 +472,11 @@ export default function DesignDashboardPage() {
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile preview</p>
             {design.navbar_enabled ? (
               <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
-                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
+                <div className="relative flex min-h-9 items-center justify-center rounded-md border bg-background px-3 py-2">
+                  <span className={cn("min-w-0 max-w-[calc(100%-3rem)] truncate text-center", previewBlogNameClass)}>
+                    {previewBlogName}
+                  </span>
+                  <span className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border">
                     <Menu className="h-4 w-4" />
                   </span>
                 </div>
@@ -508,13 +510,13 @@ export default function DesignDashboardPage() {
             <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex items-center justify-between gap-4">
-                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
-                  <div className="flex min-w-0 items-center gap-4">
+                <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
+                  <span className={cn("max-w-full shrink-0 text-center", previewBlogNameClass)}>{previewBlogName}</span>
+                  <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
                     {design.nav_menu_enabled ? (
                       selectedMenuCats.length > 0 ? (
                         selectedMenuCats.length <= 5 ? (
-                          <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
                             {selectedMenuCats.map((c) => (
                               <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
                                 {c.name}
@@ -530,7 +532,9 @@ export default function DesignDashboardPage() {
                         <span className="text-sm text-muted-foreground">Add categories to display.</span>
                       )
                     ) : null}
-                    <Button size="sm">Subscribe</Button>
+                    <div className="shrink-0">
+                      <Button size="sm">Subscribe</Button>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -139,19 +139,19 @@ export default async function PublicCategoryPage({ params }: Props) {
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
+            <div className={`hidden flex-wrap items-center justify-center gap-x-6 gap-y-3 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={getPublicProfileUrl(username)}
                 className={cn(
-                  "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                  "flex min-h-9 max-w-full shrink-0 items-center justify-center truncate text-center hover:underline",
                   navBlogNameClassName(blogNameSize)
                 )}
               >
                 {navBlogName}
               </Link>
-              <div className="flex min-w-0 items-center gap-4">
+              <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
                 {user.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex min-w-0 items-center gap-3 overflow-x-auto">
+                  <nav className="flex max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-1">
                     {categories.map((c) => (
                       <Link
                         key={c.category_id}

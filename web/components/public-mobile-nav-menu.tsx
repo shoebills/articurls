@@ -32,7 +32,7 @@ export function PublicMobileNavMenu({
   showSubscribeAction = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
-  const titleClass = navBlogNameClassName(size, "min-w-0 flex-1 truncate");
+  const titleClass = navBlogNameClassName(size, "min-w-0 max-w-full truncate");
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -91,13 +91,21 @@ export function PublicMobileNavMenu({
 
   return (
     <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
-      <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
+      <div className="relative flex min-h-9 items-center justify-center py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
-          <Link href={titleHref} className={cn("flex min-h-9 items-center hover:underline", titleClass)}>
+          <Link
+            href={titleHref}
+            className={cn(
+              "flex min-h-9 w-full max-w-[calc(100%-3rem)] items-center justify-center truncate text-center hover:underline",
+              titleClass
+            )}
+          >
             {title}
           </Link>
         ) : (
-          <p className={cn("flex min-h-9 items-center", titleClass)}>{title}</p>
+          <p className={cn("flex min-h-9 w-full max-w-[calc(100%-3rem)] items-center justify-center truncate text-center", titleClass)}>
+            {title}
+          </p>
         )}
 
         <button
@@ -106,7 +114,7 @@ export function PublicMobileNavMenu({
           aria-expanded={open}
           aria-controls={menuId}
           onClick={() => setOpen((prev) => !prev)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/70 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 hover:text-foreground"
+          className="absolute right-0 top-1/2 flex h-9 w-9 shrink-0 -translate-y-1/2 items-center justify-center rounded-md border border-border/70 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted/40 hover:text-foreground"
         >
           <Menu className="h-4 w-4" />
         </button>
