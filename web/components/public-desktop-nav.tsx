@@ -3,7 +3,6 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -116,11 +115,12 @@ export function PublicDesktopNav({
             {l.label}
           </span>
         ))}
-        <span data-more-measure className="inline-flex shrink-0">
-          <span className="inline-flex h-9 items-center gap-1 rounded-lg border border-border/80 bg-white px-3 text-sm font-medium shadow-sm">
+        <span
+          data-more-measure
+          className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-muted-foreground"
+        >
             More
             <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
-          </span>
         </span>
       </div>
 
@@ -143,14 +143,13 @@ export function PublicDesktopNav({
         {overflowLinks.length > 0 ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
+              <button
                 type="button"
-                variant="outline"
-                className="h-9 shrink-0 gap-1 rounded-lg border-border/80 bg-white px-3 text-sm font-medium shadow-sm hover:bg-white hover:text-foreground"
+                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none"
               >
                 More
                 <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
-              </Button>
+              </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-[10rem] bg-white">
               {overflowLinks.map((l) => (
