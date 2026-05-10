@@ -14,6 +14,8 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
+import { navBlogNameClassName, normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -309,6 +311,7 @@ export default async function CustomDomainPage({ params }: Props) {
     if (!blog || !author) notFound();
 
     const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
+    const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
     const containerSpacing = author.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -326,11 +329,14 @@ export default async function CustomDomainPage({ params }: Props) {
         <div className={containerSpacing}>
           <PublicBlogViewTracker userName={username} slug={postSlug} />
           {author.navbar_enabled ? (
-            <header className="mb-8 sm:mb-10" data-public-nav>
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
-                  className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                  className={cn(
+                    "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                    navBlogNameClassName(blogNameSize)
+                  )}
                 >
                   {navBlogName}
                 </Link>
@@ -353,6 +359,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
                   links={author.nav_menu_enabled ? catLinks : []}
                   userName={author.user_name}
                   authorName={author.name}
@@ -419,6 +426,7 @@ export default async function CustomDomainPage({ params }: Props) {
     if (!user || !page) notFound();
 
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const mainSpacing = user.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -435,11 +443,14 @@ export default async function CustomDomainPage({ params }: Props) {
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <header className="mb-8 sm:mb-10" data-public-nav>
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
-                  className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                  className={cn(
+                    "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                    navBlogNameClassName(blogNameSize)
+                  )}
                 >
                   {navBlogName}
                 </Link>
@@ -462,6 +473,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
@@ -506,6 +518,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const blogs = data.blogs;
     const categoryName = data.category.name;
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const mainSpacing = user.navbar_enabled
       ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
       : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -522,11 +535,14 @@ export default async function CustomDomainPage({ params }: Props) {
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <header className="mb-8 sm:mb-10" data-public-nav>
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
                 <Link
                   href={getPublicProfileUrl(username, { customDomain: true })}
-                  className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                  className={cn(
+                    "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                    navBlogNameClassName(blogNameSize)
+                  )}
                 >
                   {navBlogName}
                 </Link>
@@ -555,6 +571,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
@@ -609,6 +626,7 @@ export default async function CustomDomainPage({ params }: Props) {
   if (!user) notFound();
 
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+  const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
   const mainSpacing = user.navbar_enabled
     ? "mx-auto max-w-3xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
     : "mx-auto max-w-3xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
@@ -629,11 +647,14 @@ export default async function CustomDomainPage({ params }: Props) {
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <header className="mb-8 sm:mb-10" data-public-nav>
+          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={getPublicProfileUrl(username, { customDomain: true })}
-                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                className={cn(
+                  "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                  navBlogNameClassName(blogNameSize)
+                )}
               >
                 {navBlogName}
               </Link>
@@ -658,6 +679,7 @@ export default async function CustomDomainPage({ params }: Props) {
               <PublicMobileNavMenu
                 title={navBlogName}
                 titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                nameSize={blogNameSize}
                 links={user.nav_menu_enabled ? catLinks : []}
                 userName={user.user_name}
                 authorName={user.name}

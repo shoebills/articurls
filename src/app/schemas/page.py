@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import List, Optional, Union
+from typing import List, Literal, Optional, Union
 from datetime import datetime
 from .. import models
 
@@ -58,6 +58,7 @@ class UserPageMenuUpdate(BaseModel):
 class DesignSettings(BaseModel):
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
+    nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
     site_footer_enabled: bool = False

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { navBlogNameClassName, normalizeNavBlogNameSize, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
 
 const TRAY_GAP_BELOW_NAVBAR_PX = 8;
@@ -13,6 +14,8 @@ type TrayLayout = { top: number; left: number; width: number };
 type PublicMobileNavMenuProps = {
   title: string;
   titleHref?: string;
+  /** Blog name size from design settings (default medium). */
+  nameSize?: NavBlogNameSize | string | null;
   links: Array<{ href: string; label: string }>;
   userName?: string;
   authorName?: string;
@@ -22,11 +25,14 @@ type PublicMobileNavMenuProps = {
 export function PublicMobileNavMenu({
   title,
   titleHref,
+  nameSize,
   links,
   userName,
   authorName,
   showSubscribeAction = true,
 }: PublicMobileNavMenuProps) {
+  const size = normalizeNavBlogNameSize(nameSize);
+  const titleClass = navBlogNameClassName(size, "min-w-0 flex-1 truncate");
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -87,14 +93,11 @@ export function PublicMobileNavMenu({
     <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
       <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
         {titleHref ? (
-          <Link
-            href={titleHref}
-            className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
-          >
+          <Link href={titleHref} className={cn("flex min-h-9 items-center hover:underline", titleClass)}>
             {title}
           </Link>
         ) : (
-          <p className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight">{title}</p>
+          <p className={cn("flex min-h-9 items-center", titleClass)}>{title}</p>
         )}
 
         <button

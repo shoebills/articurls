@@ -11,6 +11,8 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { faviconIcons } from "@/lib/favicon";
+import { navBlogNameClassName, normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { cn } from "@/lib/utils";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -113,16 +115,20 @@ export default async function PublicProfilePage({ params }: Props) {
   const showDesktopInline = categories.length > 0 && categories.length <= 5;
   const showDesktopMenuIcon = categories.length > 5;
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
+  const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
 
   return (
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <header className="mb-8 sm:mb-10" data-public-nav>
+          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className={`hidden items-center justify-between gap-4 ${showDesktopMenuIcon ? "" : "sm:flex"}`}>
               <Link
                 href={getPublicProfileUrl(username)}
-                className="flex min-h-9 min-w-0 flex-1 items-center truncate text-lg font-semibold leading-tight hover:underline"
+                className={cn(
+                  "flex min-h-9 min-w-0 flex-1 items-center truncate hover:underline",
+                  navBlogNameClassName(blogNameSize)
+                )}
               >
                 {navBlogName}
               </Link>
@@ -147,6 +153,7 @@ export default async function PublicProfilePage({ params }: Props) {
               <PublicMobileNavMenu
                 title={navBlogName}
                 titleHref={getPublicProfileUrl(username)}
+                nameSize={blogNameSize}
                 links={user.nav_menu_enabled ? catLinks : []}
                 userName={user.user_name}
                 authorName={user.name}

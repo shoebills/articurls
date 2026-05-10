@@ -31,6 +31,7 @@ class UserSettings(BaseModel):
 
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
+    nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
     site_footer_enabled: bool = False
@@ -64,6 +65,7 @@ class PublicUser(BaseModel):
     profile_image_url: Optional[str] = None
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
+    nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
     site_footer_enabled: bool = False

@@ -82,6 +82,11 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Public blog title (navbar) — loaded via `next/font` on `<html>` as `--font-league-spartan` */
+.font-nav-blog-name {
+  font-family: var(--font-league-spartan), ui-sans-serif, system-ui, sans-serif;
+}
+
 /* Subtle grid for marketing / auth backgrounds */
 .bg-dot-pattern {
   background-image: radial-gradient(oklch(0.45 0.04 264 / 0.09) 1px, transparent 1px);

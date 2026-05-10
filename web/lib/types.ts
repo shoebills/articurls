@@ -49,6 +49,8 @@ export interface PublicBlog {
   category_ids?: number[];
 }
 
+export type NavBlogNameSize = "small" | "medium" | "large";
+
 export interface PublicUser {
   name: string;
   user_name: string;
@@ -66,6 +68,7 @@ export interface PublicUser {
   profile_image_url: string | null;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
+  nav_blog_name_size?: NavBlogNameSize;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   site_footer_enabled: boolean;
@@ -106,6 +109,7 @@ export interface UserSettings {
   profile_image_url: string | null;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
+  nav_blog_name_size?: NavBlogNameSize;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   site_footer_enabled: boolean;
@@ -175,6 +179,7 @@ export interface UserPage {
 export interface DesignSettings {
   navbar_enabled: boolean;
   nav_blog_name: string | null;
+  nav_blog_name_size: NavBlogNameSize;
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   site_footer_enabled: boolean;

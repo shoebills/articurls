@@ -14,7 +14,8 @@ import {
   updateMenuCategories,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { DesignSettings, UserPage, BlogListItem, Category } from "@/lib/types";
+import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category } from "@/lib/types";
+import { navBlogNameClassName, normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,6 +100,7 @@ export default function DesignDashboardPage() {
   const [design, setDesign] = useState<DesignSettings>({
     navbar_enabled: false,
     nav_blog_name: null,
+    nav_blog_name_size: "medium",
     nav_menu_enabled: false,
     footer_enabled: false,
     site_footer_enabled: false,
@@ -152,6 +154,7 @@ export default function DesignDashboardPage() {
       setDesign({
         ...d,
         featured_blog_ids: d.featured_blog_ids || [],
+        nav_blog_name_size: d.nav_blog_name_size ?? "medium",
       });
       setPages(p);
       setBlogs(b.filter((x) => x.status === "published"));
@@ -287,6 +290,8 @@ export default function DesignDashboardPage() {
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
   const previewBlogName = (design.nav_blog_name || "").trim() || "My Blog";
+  const previewBlogNameClass = navBlogNameClassName(normalizeNavBlogNameSize(design.nav_blog_name_size));
+  const blogNameSizeOptions: NavBlogNameSize[] = ["small", "medium", "large"];
 
   function toggle(section: "navbar" | "featured" | "footer") {
     setOpenSection((prev) => (prev === section ? null : section));
@@ -317,21 +322,50 @@ export default function DesignDashboardPage() {
 
         {design.navbar_enabled ? (
           <>
-            <div className="space-y-2">
-              <Label htmlFor="blogName">Blog name</Label>
-              <Input
-                id="blogName"
-                value={design.nav_blog_name || ""}
-                onChange={(e) => setDesign((prev) => ({ ...prev, nav_blog_name: e.target.value }))}
-                onBlur={() =>
-                  saveDesign({
-                    ...design,
-                    nav_blog_name: (design.nav_blog_name || "").trim() || null,
-                  })
-                }
-                placeholder="My Blog"
-                disabled={busy}
-              />
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+              <div className="min-w-0 flex-1 space-y-2">
+                <Label htmlFor="blogName">Blog name</Label>
+                <Input
+                  id="blogName"
+                  value={design.nav_blog_name || ""}
+                  onChange={(e) => setDesign((prev) => ({ ...prev, nav_blog_name: e.target.value }))}
+                  onBlur={() =>
+                    saveDesign({
+                      ...design,
+                      nav_blog_name: (design.nav_blog_name || "").trim() || null,
+                    })
+                  }
+                  placeholder="My Blog"
+                  disabled={busy}
+                />
+              </div>
+              <div className="shrink-0 space-y-2 sm:min-w-[220px]">
+                <Label id="blog-name-size-label" className="text-muted-foreground">
+                  Size
+                </Label>
+                <div
+                  role="group"
+                  aria-labelledby="blog-name-size-label"
+                  className="flex rounded-lg border border-border bg-muted/20 p-0.5"
+                >
+                  {blogNameSizeOptions.map((size) => (
+                    <Button
+                      key={size}
+                      type="button"
+                      variant={design.nav_blog_name_size === size ? "default" : "ghost"}
+                      size="sm"
+                      className="h-9 flex-1 rounded-md px-2 text-xs capitalize sm:text-sm"
+                      disabled={busy}
+                      onClick={() => {
+                        if (design.nav_blog_name_size === size) return;
+                        saveDesign({ ...design, nav_blog_name_size: size });
+                      }}
+                    >
+                      {size}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
@@ -439,7 +473,7 @@ export default function DesignDashboardPage() {
             {design.navbar_enabled ? (
               <div className="space-y-2">
                 <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
-                  <span className="truncate text-lg font-semibold">{previewBlogName}</span>
+                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
                     <Menu className="h-4 w-4" />
                   </span>
@@ -475,7 +509,7 @@ export default function DesignDashboardPage() {
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
                 <div className="flex items-center justify-between gap-4">
-                  <span className="truncate text-lg font-semibold">{previewBlogName}</span>
+                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
                   <div className="flex min-w-0 items-center gap-4">
                     {design.nav_menu_enabled ? (
                       selectedMenuCats.length > 0 ? (

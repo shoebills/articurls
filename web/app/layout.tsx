@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono } from "next/font/google";
+import { Inter, JetBrains_Mono, League_Spartan } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -14,6 +14,12 @@ const inter = Inter({
 const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
   variable: "--font-jetbrains-mono",
+  display: "swap",
+});
+
+const leagueSpartan = League_Spartan({
+  subsets: ["latin"],
+  variable: "--font-league-spartan",
   display: "swap",
 });
 
@@ -40,7 +46,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} min-h-dvh antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable} min-h-dvh antialiased`}
       data-theme="light"
       data-scroll-behavior="smooth"
     >

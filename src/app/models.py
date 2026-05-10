@@ -49,6 +49,7 @@ class User(Base):
 
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
+    nav_blog_name_size = Column(String(16), nullable=False, default="medium")
     nav_menu_enabled = Column(Boolean, nullable=False, default=False)
     footer_enabled = Column(Boolean, nullable=False, default=False)
     site_footer_enabled = Column(Boolean, nullable=False, default=False)
