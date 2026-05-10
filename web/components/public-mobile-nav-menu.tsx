@@ -20,6 +20,8 @@ type PublicMobileNavMenuProps = {
   userName?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
+  /** When false, only the title row is shown (no hamburger). */
+  showMenuButton?: boolean;
 };
 
 export function PublicMobileNavMenu({
@@ -30,6 +32,7 @@ export function PublicMobileNavMenu({
   userName,
   authorName,
   showSubscribeAction = true,
+  showMenuButton = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
   const titleClass = publicNavMobileBlogTitleClassName(size);
@@ -91,28 +94,35 @@ export function PublicMobileNavMenu({
 
   return (
     <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
-      <div className="flex items-center justify-between gap-3 py-[var(--mobile-nav-rail-gap)]">
+      <div
+        className={cn(
+          "flex items-center gap-3 py-[var(--mobile-nav-rail-gap)]",
+          showMenuButton ? "justify-between" : "justify-start"
+        )}
+      >
         {titleHref ? (
-          <Link href={titleHref} className={titleClass}>
+          <Link href={titleHref} className={cn(titleClass, !showMenuButton && "!flex-none")}>
             {title}
           </Link>
         ) : (
-          <p className={titleClass}>{title}</p>
+          <p className={cn(titleClass, !showMenuButton && "!flex-none")}>{title}</p>
         )}
 
-        <button
-          type="button"
-          aria-label="Open menu"
-          aria-expanded={open}
-          aria-controls={menuId}
-          onClick={() => setOpen((prev) => !prev)}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
-        >
-          <Menu className="h-4 w-4" />
-        </button>
+        {showMenuButton ? (
+          <button
+            type="button"
+            aria-label="Open menu"
+            aria-expanded={open}
+            aria-controls={menuId}
+            onClick={() => setOpen((prev) => !prev)}
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+          >
+            <Menu className="h-4 w-4" />
+          </button>
+        ) : null}
       </div>
 
-      {open ? (
+      {showMenuButton && open ? (
         <div
           id={menuId}
           className={cn(
@@ -162,3 +172,4 @@ export function PublicMobileNavMenu({
     </div>
   );
 }
+

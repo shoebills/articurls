@@ -5,6 +5,7 @@ import Link from "next/link";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
@@ -14,8 +15,7 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
-import { normalizeNavBlogNameSize, publicNavDesktopBlogTitleClassName } from "@/lib/nav-blog-name";
-import { cn } from "@/lib/utils";
+import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -320,9 +320,10 @@ export default async function CustomDomainPage({ params }: Props) {
       href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
       label: c.name,
     }));
-    const showDesktopInline = categories.length > 0 && categories.length <= 5;
-    const showDesktopMenuIcon = categories.length > 5;
     const showSubscriberCollection = author.subscriber_collection_enabled === true;
+    const desktopLinks = author.nav_menu_enabled ? catLinks : [];
+    const hasMobileNav =
+      (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
     return (
       <article className="min-h-screen bg-white">
@@ -330,26 +331,18 @@ export default async function CustomDomainPage({ params }: Props) {
           <PublicBlogViewTracker userName={username} slug={postSlug} />
           {author.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-between sm:gap-x-6")}>
-                <Link href={getPublicProfileUrl(username, { customDomain: true })} className={publicNavDesktopBlogTitleClassName(blogNameSize)}>
-                  {navBlogName}
-                </Link>
-                <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
-                  {author.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-                      {categories.map((c) => (
-                        <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                          {c.name}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null}
-                  {showSubscriberCollection ? (
-                    <SubscribeToAuthor mode="dialog" userName={author.user_name} authorName={author.name} />
-                  ) : null}
-                </div>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  userName={author.user_name}
+                  authorName={author.name}
+                />
               </div>
-              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+              <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
@@ -358,6 +351,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   userName={author.user_name}
                   authorName={author.name}
                   showSubscribeAction={showSubscriberCollection}
+                  showMenuButton={hasMobileNav}
                 />
               </div>
             </header>
@@ -429,35 +423,28 @@ export default async function CustomDomainPage({ params }: Props) {
       href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
       label: c.name,
     }));
-    const showDesktopInline = categories.length > 0 && categories.length <= 5;
-    const showDesktopMenuIcon = categories.length > 5;
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
+    const desktopLinks = user.nav_menu_enabled ? catLinks : [];
+    const hasMobileNav =
+      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
     return (
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-between sm:gap-x-6")}>
-                <Link href={getPublicProfileUrl(username, { customDomain: true })} className={publicNavDesktopBlogTitleClassName(blogNameSize)}>
-                  {navBlogName}
-                </Link>
-                <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
-                  {user.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-                      {categories.map((c) => (
-                        <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                          {c.name}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null}
-                  {showSubscriberCollection ? (
-                    <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                  ) : null}
-                </div>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  userName={user.user_name}
+                  authorName={user.name}
+                />
               </div>
-              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+              <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
@@ -466,6 +453,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
+                  showMenuButton={hasMobileNav}
                 />
               </div>
             </header>
@@ -515,41 +503,34 @@ export default async function CustomDomainPage({ params }: Props) {
       href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
       label: c.name,
     }));
-    const showDesktopInline = categories.length > 0 && categories.length <= 5;
-    const showDesktopMenuIcon = categories.length > 5;
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
+    const desktopLinks = user.nav_menu_enabled
+      ? categories.map((c) => ({
+          href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+          label: c.name,
+          active: c.slug === categorySlug,
+        }))
+      : [];
+    const hasMobileNav =
+      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
     return (
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-between sm:gap-x-6")}>
-                <Link href={getPublicProfileUrl(username, { customDomain: true })} className={publicNavDesktopBlogTitleClassName(blogNameSize)}>
-                  {navBlogName}
-                </Link>
-                <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
-                  {user.nav_menu_enabled && showDesktopInline ? (
-                    <nav className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-                      {categories.map((c) => (
-                        <Link
-                          key={c.category_id}
-                          href={getPublicCategoryUrl(username, c.slug, { customDomain: true })}
-                          className={`whitespace-nowrap text-sm ${c.slug === categorySlug ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                        >
-                          {c.name}
-                        </Link>
-                      ))}
-                    </nav>
-                  ) : null}
-                  {showSubscriberCollection ? (
-                    <div className="shrink-0">
-                      <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                    </div>
-                  ) : null}
-                </div>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  userName={user.user_name}
+                  authorName={user.name}
+                />
               </div>
-              <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+              <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, { customDomain: true })}
@@ -558,6 +539,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
+                  showMenuButton={hasMobileNav}
                 />
               </div>
             </header>
@@ -618,9 +600,10 @@ export default async function CustomDomainPage({ params }: Props) {
     href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
     label: c.name,
   }));
-  const showDesktopInline = categories.length > 0 && categories.length <= 5;
-  const showDesktopMenuIcon = categories.length > 5;
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
+  const desktopLinks = user.nav_menu_enabled ? catLinks : [];
+  const hasMobileNav =
+    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
   // Rewrite blog hrefs to be relative for custom domain
   const blogsWithRelativeHrefs = blogs;
@@ -630,28 +613,18 @@ export default async function CustomDomainPage({ params }: Props) {
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className={cn("hidden w-full", !showDesktopMenuIcon && "sm:flex sm:items-center sm:justify-between sm:gap-x-6")}>
-              <Link href={getPublicProfileUrl(username, { customDomain: true })} className={publicNavDesktopBlogTitleClassName(blogNameSize)}>
-                {navBlogName}
-              </Link>
-              <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
-                {user.nav_menu_enabled && showDesktopInline ? (
-                  <nav className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-                    {categories.map((c) => (
-                      <Link key={c.category_id} href={getPublicCategoryUrl(username, c.slug, { customDomain: true })} className="whitespace-nowrap text-sm text-muted-foreground hover:text-foreground">
-                        {c.name}
-                      </Link>
-                    ))}
-                  </nav>
-                ) : null}
-                {showSubscriberCollection ? (
-                  <div className="shrink-0">
-                    <SubscribeToAuthor mode="dialog" userName={user.user_name} authorName={user.name} />
-                  </div>
-                ) : null}
-              </div>
+            <div className="hidden w-full sm:block">
+              <PublicDesktopNav
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                nameSize={blogNameSize}
+                links={desktopLinks}
+                showSubscribe={showSubscriberCollection}
+                userName={user.user_name}
+                authorName={user.name}
+              />
             </div>
-            <div className={showDesktopMenuIcon ? "" : "sm:hidden"}>
+            <div className="sm:hidden">
               <PublicMobileNavMenu
                 title={navBlogName}
                 titleHref={getPublicProfileUrl(username, { customDomain: true })}
@@ -660,6 +633,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 userName={user.user_name}
                 authorName={user.name}
                 showSubscribeAction={showSubscriberCollection}
+                showMenuButton={hasMobileNav}
               />
             </div>
           </header>
