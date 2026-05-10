@@ -5,7 +5,7 @@ from fastapi import UploadFile, HTTPException, status
 from ..config import settings
 
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024
+MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 
 
 @dataclass
@@ -92,7 +92,7 @@ def _validate_image_upload(file: UploadFile, data: bytes) -> None:
     if len(data) > MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image too large (max 5MB)",
+            detail="Image too large (max 2MB)",
         )
 
 
