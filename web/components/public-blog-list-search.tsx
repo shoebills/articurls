@@ -83,7 +83,7 @@ function BlogPostShareMenu({
           type="button"
           variant="ghost"
           size="icon"
-          className="h-8 w-8 shrink-0 rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm hover:bg-white hover:text-foreground"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
           aria-label="Share post"
           onPointerDown={(e) => {
             if (e.pointerType === "touch") e.preventDefault();
