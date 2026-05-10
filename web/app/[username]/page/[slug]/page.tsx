@@ -137,7 +137,7 @@ export default async function PublicCustomPage({ params }: Props) {
               <Link
                 href={getPublicProfileUrl(username)}
                 className={cn(
-                  "flex min-h-9 max-w-full shrink-0 items-center justify-center truncate text-center hover:underline",
+                  "flex min-h-9 min-w-0 max-w-full shrink-0 items-center truncate hover:underline",
                   navBlogNameClassName(blogNameSize)
                 )}
               >

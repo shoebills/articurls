@@ -472,11 +472,9 @@ export default function DesignDashboardPage() {
             <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile preview</p>
             {design.navbar_enabled ? (
               <div className="space-y-2">
-                <div className="relative flex min-h-9 items-center justify-center rounded-md border bg-background px-3 py-2">
-                  <span className={cn("min-w-0 max-w-[calc(100%-3rem)] truncate text-center", previewBlogNameClass)}>
-                    {previewBlogName}
-                  </span>
-                  <span className="absolute right-3 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md border">
+                <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
+                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
+                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border">
                     <Menu className="h-4 w-4" />
                   </span>
                 </div>
@@ -511,7 +509,7 @@ export default function DesignDashboardPage() {
             {design.navbar_enabled ? (
               <div className="rounded-md border bg-background px-4 py-3">
                 <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3">
-                  <span className={cn("max-w-full shrink-0 text-center", previewBlogNameClass)}>{previewBlogName}</span>
+                  <span className={cn("max-w-full shrink-0", previewBlogNameClass)}>{previewBlogName}</span>
                   <div className="flex min-w-0 flex-wrap items-center justify-center gap-4">
                     {design.nav_menu_enabled ? (
                       selectedMenuCats.length > 0 ? (
