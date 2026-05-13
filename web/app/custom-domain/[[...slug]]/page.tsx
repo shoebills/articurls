@@ -134,6 +134,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug: rawSegments = [] } = await params;
   const segments = rawSegments;
   const canonical = `https://${host}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
+  const alternates = {
+    canonical,
+    types: { "application/rss+xml": `https://${host}/rss.xml` },
+  };
 
   // Blog post: /blog/[slug]
   if (segments[0] === "blog" && segments[1]) {
@@ -148,7 +152,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates,
       icons: faviconIcons(author),
       openGraph: {
         title,
@@ -177,7 +181,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates,
       icons: faviconIcons(user),
       openGraph: {
         title,
@@ -209,7 +213,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: { canonical },
+      alternates,
       icons: faviconIcons(user),
       openGraph: {
         title,
@@ -238,7 +242,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: { canonical },
+    alternates,
     icons: faviconIcons(user),
     openGraph: {
       title,

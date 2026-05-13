@@ -12,6 +12,14 @@
 import { API_URL } from "@/lib/env";
 import type { PublicBlog, UserPage, Category } from "@/lib/types";
 
+export interface RssItem {
+  title: string;
+  link: string;
+  guid: string;
+  pubDate?: string | null;
+  description?: string | null;
+}
+
 // ── Blogs ────────────────────────────────────────────────────────────────────
 
 /**
@@ -98,4 +106,53 @@ export async function fetchSeoEligibility(
   } catch {
     return null;
   }
+}
+
+function escapeXml(value: string): string {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&apos;");
+}
+
+function toRfc822Date(value: string | null | undefined): string | null {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toUTCString();
+}
+
+/**
+ * Build an RSS 2.0 feed document.
+ */
+export function buildRssXml(input: {
+  title: string;
+  link: string;
+  description: string;
+  language?: string;
+  lastBuildDate?: string | null;
+  items: RssItem[];
+}): string {
+  const language = input.language || "en-US";
+  const lastBuildDate =
+    toRfc822Date(input.lastBuildDate) || new Date().toUTCString();
+
+  const itemsXml = input.items
+    .map((item) => {
+      const parts = [
+        `    <title>${escapeXml(item.title)}</title>`,
+        `    <link>${escapeXml(item.link)}</link>`,
+        `    <guid isPermaLink="true">${escapeXml(item.guid)}</guid>`,
+      ];
+      const pubDate = toRfc822Date(item.pubDate);
+      if (pubDate) parts.push(`    <pubDate>${escapeXml(pubDate)}</pubDate>`);
+      const description = (item.description || "").trim();
+      if (description) parts.push(`    <description>${escapeXml(description)}</description>`);
+      return `  <item>\n${parts.join("\n")}\n  </item>`;
+    })
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0">\n<channel>\n  <title>${escapeXml(input.title)}</title>\n  <link>${escapeXml(input.link)}</link>\n  <description>${escapeXml(input.description)}</description>\n  <language>${escapeXml(language)}</language>\n  <lastBuildDate>${escapeXml(lastBuildDate)}</lastBuildDate>\n${itemsXml}\n</channel>\n</rss>`;
 }

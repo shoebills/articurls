@@ -87,11 +87,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     is_pro: seoEligibility.is_pro,
     domain_status: user.domain_status,
   });
+  const feedUrl = shouldIndex && user
+    ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
+    : undefined;
+  const alternates = feedUrl
+    ? { canonical, types: { "application/rss+xml": feedUrl } }
+    : { canonical };
   return {
     title,
     description,
     robots: { index: shouldIndex, follow: true },
-    alternates: { canonical },
+    alternates,
     icons: faviconIcons(user),
     openGraph: {
       title,
