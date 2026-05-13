@@ -58,7 +58,10 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const originalHost = req.headers.get("x-original-host");
+  const originalHostRaw =
+    req.headers.get("x-original-host") || req.headers.get("x-forwarded-host");
+  const originalHost = originalHostRaw?.toLowerCase().split(",")[0].trim() || "";
+
   if (!originalHost || isInternalHost(originalHost)) {
     return new NextResponse(null, { status: 404 });
   }
