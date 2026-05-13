@@ -29,7 +29,7 @@ import {
 import { ArrowLeft, Check, Loader2, Pencil, Plus, Tag, Trash2 } from "lucide-react";
 
 export default function CategoriesDashboardPage() {
-  const { token, isPro } = useAuth();
+  const { token } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [allBlogs, setAllBlogs] = useState<BlogListItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +47,6 @@ export default function CategoriesDashboardPage() {
   const [err, setErr] = useState<string | null>(null);
 
   const dropdownRef = useRef<HTMLDivElement>(null);
-  const limit = isPro ? Infinity : 3;
 
   /* ── Close dropdown helper ── */
   const closeDropdown = useCallback(() => {
@@ -240,7 +239,7 @@ export default function CategoriesDashboardPage() {
               setEditingId(null);
               setCreating(true);
             }}
-            disabled={busy || categories.length >= limit}
+            disabled={busy}
             aria-label="Create new category"
           >
             <Plus className="h-5 w-5" />
@@ -252,13 +251,13 @@ export default function CategoriesDashboardPage() {
             setEditingId(null);
             setCreating(true);
           }}
-          disabled={busy || categories.length >= limit}
+          disabled={busy}
         >
           Create new
         </Button>
       </div>
       <p className="text-sm text-muted-foreground">
-        Organize your blogs into categories. {isPro ? "Unlimited" : `${categories.length}/${limit}`} categories{isPro ? "" : " on free plan"}.
+        Organize your blogs into categories. {categories.length} categor{categories.length === 1 ? "y" : "ies"}.
       </p>
 
       {creating && (
@@ -319,7 +318,7 @@ export default function CategoriesDashboardPage() {
           </div>
           <Button
             onClick={() => setCreating(true)}
-            disabled={busy || categories.length >= limit}
+            disabled={busy}
           >
             Create new
           </Button>

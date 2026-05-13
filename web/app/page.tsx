@@ -214,7 +214,13 @@ export default function MarketingPage() {
                   <p className="text-4xl font-semibold tracking-tight">$0<span className="text-base font-normal text-muted-foreground">/mo</span></p>
                 </CardHeader>
                 <CardContent className="flex-1 space-y-3 px-6 text-sm">
-                  {["Unlimited posts", "Post scheduling", "Meta fields", "Reader analytics", "One page in nav"].map((x) => (
+                  {[
+                    "Unlimited posts",
+                    "Unlimited pages & categories",
+                    "Post scheduling",
+                    "Meta fields",
+                    "Reader analytics",
+                  ].map((x) => (
                     <div key={x} className="flex items-center gap-2.5">
                       <Check className="h-4 w-4 text-emerald-700" aria-hidden />
                       <span className="text-muted-foreground">{x}</span>
@@ -241,7 +247,7 @@ export default function MarketingPage() {
                 <CardContent className="flex-1 space-y-3 px-6 text-sm">
                   {[
                     "Everything in Free",
-                    "Up to 10 pages in navigation",
+                    "Custom domain & SSL",
                     "Publish emails to subscribers",
                     "Verification badge",
                     "Footer branding removal",

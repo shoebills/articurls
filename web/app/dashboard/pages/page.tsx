@@ -21,15 +21,13 @@ import { format } from "date-fns";
 import { Archive, ArchiveRestore, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 
 export default function PagesDashboardPage() {
-  const { token, isPro, user } = useAuth();
+  const { token, user } = useAuth();
   const router = useRouter();
   const [pages, setPages] = useState<UserPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
-
-  const limit = isPro ? 10 : 1;
 
   async function load() {
     if (!token) return;
@@ -111,13 +109,15 @@ export default function PagesDashboardPage() {
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your pages</h1>
         <Button
           onClick={() => router.push("/dashboard/pages/new")}
-          disabled={busy || pages.length >= limit}
+          disabled={busy}
         >
           Add new page
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground">{pages.length}/{limit} pages</p>
+      <p className="text-sm text-muted-foreground">
+        {pages.length} page{pages.length === 1 ? "" : "s"}
+      </p>
 
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
@@ -127,7 +127,7 @@ export default function PagesDashboardPage() {
           <p className="max-w-md text-sm text-muted-foreground">
             Create your first page and add it to your menu from Design.
           </p>
-          <Button onClick={() => router.push("/dashboard/pages/new")} disabled={busy || pages.length >= limit}>
+          <Button onClick={() => router.push("/dashboard/pages/new")} disabled={busy}>
             Add new page
           </Button>
         </div>

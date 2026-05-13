@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from slugify import slugify
 from datetime import datetime, timezone
 import secrets
-from .. import models, utils
+from .. import models
 from ..database import get_db
 from ..schemas import page as page_schema
 from ..security import oauth2
@@ -28,13 +28,6 @@ async def upload_page_media(
         user_id=current_user.user_id,
     )
     return {"url": stored.url}
-
-
-def _max_pages_for_user(db: Session, user_id: int) -> int:
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return 10 if utils.is_pro_entitled(db_user, db) else 1
 
 
 def _unique_page_slug(db: Session, user_id: int, title: str) -> str:
@@ -89,18 +82,6 @@ def create_page(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    current_count = (
-        db.query(models.UserPage).filter(models.UserPage.user_id == current_user.user_id).count()
-    )
-    max_pages = _max_pages_for_user(db, current_user.user_id)
-    if current_count >= max_pages:
-        detail = (
-            "Free plan supports only one page. Upgrade to Pro for up to 10 pages."
-            if max_pages == 1
-            else "You can create up to 10 pages on Pro."
-        )
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=detail)
-
     title = (request.title or "").strip()
     content = request.content or ""
     base_slug = slugify(title) if title else f"draft-{secrets.token_hex(6)}"

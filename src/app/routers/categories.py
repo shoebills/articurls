@@ -7,14 +7,12 @@ from ..database import get_db
 from ..schemas import category as cat_schema
 from ..schemas import blog as blog_schema
 from ..security import oauth2
-from ..utils import is_pro_entitled, make_excerpt
+from ..utils import make_excerpt
 
 router = APIRouter(
     tags=["Categories"],
     prefix="/categories",
 )
-
-MAX_CATEGORIES_FREE = 3
 
 
 def _unique_category_slug(db: Session, user_id: int, name: str) -> str:
@@ -70,18 +68,6 @@ def create_category(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    current_count = (
-        db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
-        .count()
-    )
-    is_pro = is_pro_entitled(current_user, db)
-    if not is_pro and current_count >= MAX_CATEGORIES_FREE:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail=f"Free plan supports up to {MAX_CATEGORIES_FREE} categories. Upgrade to Pro for unlimited.",
-        )
-
     name = request.name.strip()
     if not name:
         raise HTTPException(
