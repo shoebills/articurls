@@ -45,7 +45,7 @@ async function loadMarketingIndexableUsers(): Promise<InternalSitemapUser[]> {
 export async function GET(_req: NextRequest): Promise<Response> {
   const users = await loadMarketingIndexableUsers();
   const sitemaps = users.map((user) => ({
-    loc: `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(user.username)}.xml`,
+    loc: `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(user.username)}/sitemap.xml`,
     lastmod: toIsoDate(user.updated_at),
   }));
 
