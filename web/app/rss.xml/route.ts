@@ -59,10 +59,18 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 
 export async function GET(req: NextRequest): Promise<Response> {
   const requestHost = req.nextUrl.hostname;
-  const originalHostRaw =
-    req.headers.get("x-original-host") || req.headers.get("x-forwarded-host");
-  const originalHost = originalHostRaw?.toLowerCase().split(",")[0].trim() || "";
-  const effectiveHost = (originalHost || requestHost).toLowerCase();
+  const originalHostRaw = req.headers.get("x-original-host");
+  const forwardedHostRaw = req.headers.get("x-forwarded-host");
+  const hostHeaderRaw = req.headers.get("host");
+
+  const firstHost = (raw: string | null): string =>
+    (raw || "").toLowerCase().split(",")[0].trim();
+
+  const effectiveHost =
+    firstHost(originalHostRaw) ||
+    firstHost(forwardedHostRaw) ||
+    firstHost(hostHeaderRaw) ||
+    requestHost.toLowerCase();
 
   if (!effectiveHost || isInternalHost(effectiveHost)) {
     return new NextResponse(null, { status: 404 });
@@ -105,7 +113,8 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/rss+xml; charset=utf-8",
+      // Use XML content-type so browsers render similarly to sitemap.xml.
+      "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
       "Vary": "x-original-host, x-forwarded-host, host",
     },
