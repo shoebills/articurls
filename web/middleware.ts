@@ -101,9 +101,14 @@ export function middleware(request: NextRequest) {
     // but still need x-original-host so their route handlers can identify
     // which custom domain is being requested.
     if (isExemptPath(pathname)) {
-      const res = NextResponse.next();
-      res.headers.set("x-original-host", host);
-      return res;
+      return NextResponse.next({
+        request: {
+          headers: new Headers({
+            ...Object.fromEntries(request.headers),
+            "x-original-host": host,
+          }),
+        },
+      });
     }
 
     // Rewrite to /custom-domain route and pass hostname via header

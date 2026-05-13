@@ -58,15 +58,17 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 export async function GET(req: NextRequest): Promise<Response> {
+  const requestHost = req.nextUrl.hostname;
   const originalHostRaw =
     req.headers.get("x-original-host") || req.headers.get("x-forwarded-host");
   const originalHost = originalHostRaw?.toLowerCase().split(",")[0].trim() || "";
+  const effectiveHost = (originalHost || requestHost).toLowerCase();
 
-  if (!originalHost || isInternalHost(originalHost)) {
+  if (!effectiveHost || isInternalHost(effectiveHost)) {
     return new NextResponse(null, { status: 404 });
   }
 
-  const domainInfo = await resolveDomainInfo(originalHost);
+  const domainInfo = await resolveDomainInfo(effectiveHost);
   if (!domainInfo) return new NextResponse(null, { status: 404 });
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
     return new NextResponse(null, { status: 404 });
@@ -81,7 +83,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     (a, b) => toTimestamp(b.published_at || b.updated_at) - toTimestamp(a.published_at || a.updated_at),
   );
 
-  const siteOrigin = `https://${originalHost}`;
+  const siteOrigin = `https://${effectiveHost}`;
   const items: RssItem[] = sorted.slice(0, MAX_RSS_ITEMS).map((post) => {
     const link = `${siteOrigin}/blog/${encodeURIComponent(post.slug)}`;
     return {
@@ -105,7 +107,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     headers: {
       "Content-Type": "application/rss+xml; charset=utf-8",
       "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
-      "Vary": "x-original-host",
+      "Vary": "x-original-host, x-forwarded-host, host",
     },
   });
 }
