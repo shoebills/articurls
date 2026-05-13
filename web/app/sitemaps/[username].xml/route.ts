@@ -6,7 +6,9 @@ import type { PublicUser } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-type RouteParams = { params: Promise<{ username: string }> };
+type RouteContext = {
+  params: Promise<Record<string, string | string[] | undefined>>;
+};
 
 function buildXml(
   entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[],
@@ -45,8 +47,20 @@ async function loadUser(username: string): Promise<PublicUser | null> {
   }
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams): Promise<Response> {
-  const { username } = await params;
+function resolveUsernameParam(params: Record<string, string | string[] | undefined>): string | null {
+  const direct = params.username;
+  if (typeof direct === "string" && direct.trim()) return direct;
+
+  // Fallback for typed-route edge cases with dotted segment names.
+  const firstString = Object.values(params).find((value): value is string => typeof value === "string" && value.trim().length > 0);
+  return firstString ?? null;
+}
+
+export async function GET(_req: NextRequest, { params }: RouteContext): Promise<Response> {
+  const routeParams = await params;
+  const username = resolveUsernameParam(routeParams);
+  if (!username) return new NextResponse(null, { status: 404 });
+
   const user = await loadUser(username);
   if (!user) return new NextResponse(null, { status: 404 });
 
