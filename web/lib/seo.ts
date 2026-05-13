@@ -31,3 +31,15 @@ export function shouldIncludeInSitemap(user: {
 }): boolean {
   return user.sitemap_enabled !== false;
 }
+
+/**
+ * Public content on articurls.com is indexable only for Pro users who do not
+ * currently have an active/grace custom domain.
+ */
+export function shouldIndexOnMarketingHost(user: {
+  is_pro: boolean;
+  domain_status?: string | null;
+}): boolean {
+  const hasActiveCustomDomain = isIndexableDomainStatus(user.domain_status);
+  return user.is_pro && !hasActiveCustomDomain;
+}

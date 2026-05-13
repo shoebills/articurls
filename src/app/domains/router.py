@@ -8,7 +8,7 @@ import json
 from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
-from ..utils import require_pro
+from ..utils import require_pro, is_pro_entitled
 from ..config import settings
 from ..cloudflare.client import CloudflareClient, CloudflareError
 from ..redis_client import redis_client
@@ -425,4 +425,55 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
 
     return result
 
+
+@router.get("/internal/sitemap-users", status_code=status.HTTP_200_OK)
+def sitemap_users(request: Request, db: Session = Depends(get_db)):
+    """
+    Internal endpoint used by web sitemap routes to list users whose public
+    content should be indexed on articurls.com (no active/grace custom domain).
+    """
+    secret = settings.internal_api_secret
+    if not secret or request.headers.get("x-internal-secret") != secret:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    rows = (
+        db.query(models.User)
+        .filter(
+            models.User.sitemap_enabled.is_(True),
+            ~models.User.domain_status.in_((models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)),
+        )
+        .all()
+    )
+
+    indexable_users = [row for row in rows if is_pro_entitled(row, db)]
+    indexable_users.sort(key=lambda row: (row.user_name or "").lower())
+
+    return [
+        {
+            "username": db_user.user_name,
+            "updated_at": db_user.updated_at.isoformat() if db_user.updated_at else None,
+        }
+        for db_user in indexable_users
+    ]
+
+
+@router.get("/internal/user-seo-eligibility", status_code=status.HTTP_200_OK)
+def user_seo_eligibility(username: str, request: Request, db: Session = Depends(get_db)):
+    """
+    Internal endpoint for server-rendered metadata decisions.
+    Uses canonical entitlement logic (`is_pro_entitled`) and domain status.
+    """
+    secret = settings.internal_api_secret
+    if not secret or request.headers.get("x-internal-secret") != secret:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
+
+    db_user = db.query(models.User).filter(models.User.user_name == username).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    is_pro = is_pro_entitled(db_user, db)
+    has_active_custom_domain = db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
+    can_index_on_marketing = bool(is_pro and not has_active_custom_domain and db_user.sitemap_enabled)
+
+    return {"is_pro": is_pro, "can_index_on_marketing": can_index_on_marketing}
 

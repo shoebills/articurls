@@ -11,6 +11,8 @@ import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { fetchSeoEligibility } from "@/lib/seo-data";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -58,16 +60,21 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   const user = await loadUser(username);
   if (!user) return { title: "Not found", robots: { index: false, follow: true } };
+  const seoEligibility = await fetchSeoEligibility(user.user_name || username);
   const marketingPath = `/${encodeURIComponent(user.user_name)}`;
   const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
   const title = user.meta_title || `${user.name} — Articurls`;
   const description = user.meta_description || undefined;
   const siteName = resolveUserSiteName(user);
   const ogImage = resolveUserOgImage(user);
+  const shouldIndex = !!seoEligibility && shouldIndexOnMarketingHost({
+    is_pro: seoEligibility.is_pro,
+    domain_status: user.domain_status,
+  });
   return {
     title,
     description,
-    robots: { index: false, follow: true },
+    robots: { index: shouldIndex, follow: true },
     alternates: { canonical },
     icons: faviconIcons(user),
     openGraph: {

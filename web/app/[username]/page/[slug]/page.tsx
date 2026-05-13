@@ -13,6 +13,8 @@ import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-do
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { excerptFromHtml } from "@/lib/text";
+import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { fetchSeoEligibility } from "@/lib/seo-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -70,6 +72,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const page = await loadPage(username, slug);
   if (!page) return { title: "Not found", robots: { index: false, follow: true } };
   const user = await loadUser(username);
+  const seoEligibility = user ? await fetchSeoEligibility(user.user_name || username) : null;
   const canonicalUserName = user?.user_name || username;
   const marketingPath = `/${encodeURIComponent(canonicalUserName)}/page/${encodeURIComponent(slug)}`;
   const customDomainPath = `/page/${encodeURIComponent(slug)}`;
@@ -80,10 +83,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = resolvePageDescription(page);
   const siteName = resolveUserSiteName(user);
   const ogImage = resolveUserOgImage(user);
+  const shouldIndex = !!user && !!seoEligibility && shouldIndexOnMarketingHost({
+    is_pro: seoEligibility.is_pro,
+    domain_status: user.domain_status,
+  });
   return {
     title,
     description,
-    robots: { index: false, follow: true },
+    robots: { index: shouldIndex, follow: true },
     alternates: { canonical },
     icons: faviconIcons(user),
     openGraph: {

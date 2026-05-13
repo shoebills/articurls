@@ -236,6 +236,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
  *
  * Returns a sitemap index pointing only to:
  * - /sitemaps/pages.xml (marketing pages)
+ * - /sitemaps/users.xml (indexable user sitemap index)
  *
  * Fallback: If anything fails, returns a basic sitemap with homepage only.
  */
@@ -247,6 +248,10 @@ async function marketingDomainSitemap(): Promise<Response> {
     const sitemaps = [
       {
         loc: `${MARKETING_ORIGIN}/sitemaps/pages.xml`,
+        lastmod: today,
+      },
+      {
+        loc: `${MARKETING_ORIGIN}/sitemaps/users.xml`,
         lastmod: today,
       },
     ];

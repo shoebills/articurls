@@ -16,6 +16,8 @@ import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-do
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { fetchSeoEligibility } from "@/lib/seo-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -66,6 +68,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const blog = await loadBlog(username, slug);
   if (!blog) return { title: "Not found", robots: { index: false, follow: true } };
   const author = await loadUser(username);
+  const seoEligibility = author ? await fetchSeoEligibility(author.user_name || username) : null;
   const canonicalUserName = author?.user_name || username;
   const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
@@ -77,10 +80,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage =
     resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
   const siteName = resolveUserSiteName(author);
+  const shouldIndex = !!author && !!seoEligibility && shouldIndexOnMarketingHost({
+    is_pro: seoEligibility.is_pro,
+    domain_status: author.domain_status,
+  });
   return {
     title,
     description,
-    robots: { index: false, follow: true },
+    robots: { index: shouldIndex, follow: true },
     alternates: { canonical },
     icons: faviconIcons(author),
     openGraph: {
