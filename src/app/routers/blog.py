@@ -121,6 +121,7 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
         category="blogs",
         user_id=current_user.user_id,
         blog_id=db_blog.blog_id,
+        db=db,
     )
 
     max_sort_order = (

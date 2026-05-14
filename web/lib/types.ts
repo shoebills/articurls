@@ -125,6 +125,12 @@ export interface UserSettings {
   domain_status?: DomainStatus | null;
 }
 
+export interface StorageUsage {
+  used_bytes: number;
+  limit_bytes: number | null;
+  is_unlimited: boolean;
+}
+
 export interface UsernameChangeRequestOut {
   request_id: number;
   user_id: number;

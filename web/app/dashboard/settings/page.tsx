@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getMe,
+  getStorageUsage,
   patchMe,
   patchProMe,
   uploadProfileImage,
@@ -13,7 +14,7 @@ import {
   listMyUsernameChangeRequests,
   ApiError,
 } from "@/lib/api";
-import type { UsernameChangeRequestOut } from "@/lib/types";
+import type { StorageUsage, UsernameChangeRequestOut } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +41,7 @@ export default function SettingsPage() {
   const [busy, setBusy] = useState(false);
   const [subscriberCollectionEnabled, setSubscriberCollectionEnabled] = useState(true);
   const [removeBranding, setRemoveBranding] = useState(true);
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [usernameChangeCount, setUsernameChangeCount] = useState(0);
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
@@ -54,16 +56,25 @@ export default function SettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
 
+  function formatBytes(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+    const units = ["B", "KB", "MB", "GB", "TB"];
+    const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+    const value = bytes / 1024 ** exp;
+    return `${value >= 10 || exp === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[exp]}`;
+  }
+
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const u = await getMe(token);
+      const [u, usage] = await Promise.all([getMe(token), getStorageUsage(token)]);
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
       setSubscriberCollectionEnabled(u.subscriber_collection_enabled ?? true);
       setRemoveBranding(u.remove_branding ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
+      setStorageUsage(usage);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
     }
@@ -164,6 +175,10 @@ export default function SettingsPage() {
   const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+  const usedBytes = storageUsage?.used_bytes ?? 0;
+  const limitBytes = storageUsage?.limit_bytes ?? null;
+  const isUnlimitedStorage = storageUsage?.is_unlimited ?? false;
+  const storagePct = !isUnlimitedStorage && limitBytes ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
 
   useEffect(() => {
     if (!usernameDialogOpen || !token) return;
@@ -365,6 +380,40 @@ export default function SettingsPage() {
               Save profile
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Storage</CardTitle>
+          <CardDescription>
+            {isUnlimitedStorage
+              ? "Unlimited media storage on Pro."
+              : "Free plan includes up to 1 GB total media storage."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground">Used storage</p>
+            <p className="text-sm font-semibold tabular-nums">
+              {formatBytes(usedBytes)} / {isUnlimitedStorage ? "\u221e" : formatBytes(limitBytes || 0)}
+            </p>
+          </div>
+          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
+            {isUnlimitedStorage ? (
+              <div className="h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500" />
+            ) : (
+              <div
+                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 transition-all duration-300"
+                style={{ width: `${storagePct}%` }}
+              />
+            )}
+          </div>
+          {!isUnlimitedStorage ? (
+            <p className="text-xs text-muted-foreground">{storagePct}% of free quota used</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">Unlimited plan active</p>
+          )}
         </CardContent>
       </Card>
 

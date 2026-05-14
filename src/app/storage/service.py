@@ -2,10 +2,15 @@ from pathlib import Path
 from uuid import uuid4
 from dataclasses import dataclass
 from fastapi import UploadFile, HTTPException, status
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 from ..config import settings
+from .. import models
+from ..utils.entitlements import is_pro_entitled
 
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+FREE_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024  # 1GB
 
 
 @dataclass
@@ -111,9 +116,47 @@ def _get_storage_provider():
     return LocalStorageProvider()
 
 
-async def save_media(file: UploadFile, category: str, user_id: int, blog_id: int | None = None) -> StoredMedia:
+def get_user_storage_usage_bytes(db: Session, user_id: int) -> int:
+    blogs_total = (
+        db.query(func.coalesce(func.sum(models.BlogMedia.size_bytes), 0))
+        .filter(models.BlogMedia.user_id == user_id)
+        .scalar()
+    ) or 0
+    pages_total = (
+        db.query(func.coalesce(func.sum(models.PageMedia.size_bytes), 0))
+        .filter(models.PageMedia.user_id == user_id)
+        .scalar()
+    ) or 0
+    return int(blogs_total) + int(pages_total)
+
+
+def ensure_user_storage_quota(db: Session, user_id: int, incoming_size_bytes: int) -> None:
+    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if is_pro_entitled(db_user, db):
+        return
+
+    used = get_user_storage_usage_bytes(db, user_id)
+    if used + incoming_size_bytes > FREE_STORAGE_LIMIT_BYTES:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Free plan storage limit reached (1GB). Upgrade to Pro for unlimited storage.",
+        )
+
+
+async def save_media(
+    file: UploadFile,
+    category: str,
+    user_id: int,
+    blog_id: int | None = None,
+    db: Session | None = None,
+) -> StoredMedia:
     data = await file.read()
     _validate_image_upload(file, data)
+    if db is not None:
+        ensure_user_storage_quota(db, user_id, len(data))
 
     ext = _ext_from_content_type(file.content_type or "")
     filename = f"{uuid4().hex}{ext}"
@@ -133,6 +176,6 @@ def delete_media(storage_key: str) -> None:
     provider.delete(storage_key)
 
 
-async def save_image_local(file: UploadFile, category: str, user_id: int) -> str:
-    stored = await save_media(file=file, category=category, user_id=user_id)
+async def save_image_local(file: UploadFile, category: str, user_id: int, db: Session | None = None) -> str:
+    stored = await save_media(file=file, category=category, user_id=user_id, db=db)
     return stored.url

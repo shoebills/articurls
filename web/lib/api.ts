@@ -16,6 +16,7 @@ import type {
   PublicUser,
   SubscribersAnalytics,
   SubscriptionOut,
+  StorageUsage,
   AdminUserListItem,
   AdminPaymentListItem,
   AdminUsernameRequestListItem,
@@ -206,6 +207,10 @@ export async function verifyEmail(token: string): Promise<TokenResponse> {
 
 export async function getMe(token: string): Promise<UserSettings> {
   return apiFetch("/user/me", { token });
+}
+
+export async function getStorageUsage(token: string): Promise<StorageUsage> {
+  return apiFetch("/user/storage", { token });
 }
 
 export async function checkUsernameAvailability(

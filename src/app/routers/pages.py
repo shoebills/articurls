@@ -39,6 +39,7 @@ async def upload_page_media(
         category="pages",
         user_id=current_user.user_id,
         blog_id=db_page.page_id,
+        db=db,
     )
 
     max_sort_order = (

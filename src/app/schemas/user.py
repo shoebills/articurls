@@ -153,3 +153,9 @@ class MetaSettings(BaseModel):
 class MetaSettingsUpdate(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+
+
+class StorageUsage(BaseModel):
+    used_bytes: int
+    limit_bytes: Optional[int] = None
+    is_unlimited: bool = False

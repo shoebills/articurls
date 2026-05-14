@@ -11,7 +11,12 @@ from ..email.service import send_verify_new_user
 from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
-from ..storage.service import save_image_local
+from ..storage.service import (
+    FREE_STORAGE_LIMIT_BYTES,
+    ensure_user_storage_quota,
+    get_user_storage_usage_bytes,
+    save_image_local,
+)
 from ..utils import (
     assert_admin_email,
     is_admin_email,
@@ -19,6 +24,7 @@ from ..utils import (
     apply_username_change_or_raise,
     claim_username_or_raise,
     normalize_email,
+    is_pro_entitled,
     require_pro,
     user_by_email,
     user_by_username,
@@ -416,7 +422,7 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id)
+    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
     db_user.profile_image_url = image_url
     db.commit()
     db.refresh(db_user)
@@ -452,6 +458,7 @@ async def upload_favicon(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Favicon too large (max 256KB).",
         )
+    ensure_user_storage_quota(db, current_user.user_id, len(data))
 
     from uuid import uuid4
     from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
@@ -469,6 +476,24 @@ async def upload_favicon(
     db.refresh(db_user)
 
     return {"favicon_url": db_user.favicon_url}
+
+
+@router.get("/storage", response_model=user.StorageUsage, status_code=status.HTTP_200_OK)
+def get_storage_usage(
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    is_pro = is_pro_entitled(db_user, db)
+    used_bytes = get_user_storage_usage_bytes(db, current_user.user_id)
+    return {
+        "used_bytes": used_bytes,
+        "limit_bytes": None if is_pro else FREE_STORAGE_LIMIT_BYTES,
+        "is_unlimited": bool(is_pro),
+    }
 
 
 @router.delete("/me/favicon", status_code=status.HTTP_200_OK)
