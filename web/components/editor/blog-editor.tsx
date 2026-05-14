@@ -33,7 +33,13 @@ import {
   X,
   Video,
 } from "lucide-react";
-import { ApiError, deleteBlogMediaByUrl, uploadBlogMedia, uploadPageMedia } from "@/lib/api";
+import {
+  ApiError,
+  deleteBlogMediaByUrl,
+  deletePageMediaByUrl,
+  uploadBlogMedia,
+  uploadPageMedia,
+} from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -97,7 +103,7 @@ export function BlogEditor({
       const nextHtml = ed.getHTML();
       onChange(nextHtml);
 
-      if (blogId && token) {
+      if ((blogId || pageId) && token) {
         const nextSet = extractImageSrcsFromHtml(nextHtml);
         const removed: string[] = [];
         prevImageSrcsRef.current.forEach((src) => {
@@ -112,7 +118,11 @@ export function BlogEditor({
           void Promise.all(
             removed.map(async (src) => {
               try {
-                await deleteBlogMediaByUrl(token, blogId, src);
+                if (blogId) {
+                  await deleteBlogMediaByUrl(token, blogId, src);
+                } else if (pageId) {
+                  await deletePageMediaByUrl(token, pageId, src);
+                }
               } catch {
                 // Best effort only; editor UX should not fail on cleanup issues.
               } finally {
@@ -203,7 +213,9 @@ export function BlogEditor({
       const file = input.files?.[0];
       if (!file) return;
       try {
-        const media = blogId ? await uploadBlogMedia(token, blogId, file) : await uploadPageMedia(token, file);
+        const media = blogId
+          ? await uploadBlogMedia(token, blogId, file)
+          : await uploadPageMedia(token, pageId!, file);
         const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
         editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
       } catch (e) {
@@ -233,15 +245,19 @@ export function BlogEditor({
     if (!editor || !isImageSelected) return;
     const attrs = editor.getAttributes("image");
     const src = typeof attrs?.src === "string" ? attrs.src : "";
-    if (blogId && token && src) {
+    if ((blogId || pageId) && token && src) {
       try {
-        await deleteBlogMediaByUrl(token, blogId, src);
+        if (blogId) {
+          await deleteBlogMediaByUrl(token, blogId, src);
+        } else if (pageId) {
+          await deletePageMediaByUrl(token, pageId, src);
+        }
       } catch {
         // Keep UX smooth; content removal should still work even if media cleanup fails.
       }
     }
     editor.chain().focus().deleteSelection().run();
-  }, [editor, isImageSelected, blogId, token]);
+  }, [editor, isImageSelected, blogId, pageId, token]);
 
   if (!editor) {
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;

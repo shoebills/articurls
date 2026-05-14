@@ -1,5 +1,6 @@
-from fastapi import APIRouter, Body, Depends, File, HTTPException, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from slugify import slugify
 from datetime import datetime, timezone
 import secrets
@@ -7,7 +8,7 @@ from .. import models
 from ..database import get_db
 from ..schemas import page as page_schema
 from ..security import oauth2
-from ..storage.service import save_media
+from ..storage.service import delete_media, save_media
 
 router = APIRouter(
     tags=["Pages"],
@@ -15,19 +16,124 @@ router = APIRouter(
 )
 
 
-@router.post("/media", status_code=status.HTTP_201_CREATED)
+@router.post("/{page_id:int}/media", response_model=page_schema.PageMediaOut, status_code=status.HTTP_201_CREATED)
 async def upload_page_media(
+    page_id: int,
     file: UploadFile = File(...),
+    db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
     if not file:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required")
+
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+
     stored = await save_media(
         file=file,
         category="pages",
         user_id=current_user.user_id,
+        blog_id=db_page.page_id,
     )
-    return {"url": stored.url}
+
+    max_sort_order = (
+        db.query(func.max(models.PageMedia.sort_order))
+        .filter(models.PageMedia.page_id == db_page.page_id)
+        .scalar()
+    )
+    next_sort_order = (max_sort_order or 0) + 1
+
+    new_media = models.PageMedia(
+        page_id=db_page.page_id,
+        user_id=current_user.user_id,
+        url=stored.url,
+        storage_key=stored.storage_key,
+        mime_type=stored.mime_type,
+        size_bytes=stored.size_bytes,
+        sort_order=next_sort_order,
+    )
+    db.add(new_media)
+    db.commit()
+    db.refresh(new_media)
+    return new_media
+
+
+@router.delete("/{page_id:int}/media/{media_id:int}", status_code=status.HTTP_200_OK)
+def delete_page_media(
+    page_id: int,
+    media_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+
+    db_media = (
+        db.query(models.PageMedia)
+        .filter(
+            models.PageMedia.media_id == media_id,
+            models.PageMedia.page_id == db_page.page_id,
+            models.PageMedia.user_id == current_user.user_id,
+        )
+        .first()
+    )
+    if not db_media:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Media with id: {media_id} not found")
+
+    delete_media(db_media.storage_key)
+    db.delete(db_media)
+    db.commit()
+    return {"message": "Media deleted"}
+
+
+@router.delete("/{page_id:int}/media", status_code=status.HTTP_200_OK)
+def delete_page_media_by_url(
+    page_id: int,
+    url: str = Query(...),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+
+    db_media = (
+        db.query(models.PageMedia)
+        .filter(
+            models.PageMedia.page_id == db_page.page_id,
+            models.PageMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    target = next(
+        (
+            m
+            for m in db_media
+            if m.url == url or url.endswith(m.url) or m.url.endswith(url)
+        ),
+        None,
+    )
+    if not target:
+        return {"message": "Media not found (already removed or external URL)"}
+
+    delete_media(target.storage_key)
+    db.delete(target)
+    db.commit()
+    return {"message": "Media deleted"}
 
 
 def _unique_page_slug(db: Session, user_id: int, title: str) -> str:
@@ -112,6 +218,21 @@ def delete_page(
     )
     if not db_page:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+
+    media_rows = (
+        db.query(models.PageMedia)
+        .filter(
+            models.PageMedia.page_id == db_page.page_id,
+            models.PageMedia.user_id == current_user.user_id,
+        )
+        .all()
+    )
+    for media in media_rows:
+        try:
+            delete_media(media.storage_key)
+        except Exception:
+            pass
+
     db.delete(db_page)
     db.commit()
     return {"message": "Page deleted"}

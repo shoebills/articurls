@@ -21,6 +21,15 @@ class UserPageUpdate(BaseModel):
     meta_description: Optional[str] = None
 
 
+class PageMediaOut(BaseModel):
+    media_id: int
+    url: str
+    sort_order: int
+
+    class Config:
+        from_attributes = True
+
+
 class UserPageStatusUpdate(BaseModel):
     status: models.PageStatus
 

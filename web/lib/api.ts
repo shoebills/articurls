@@ -385,10 +385,19 @@ export async function deleteFavicon(token: string): Promise<{ favicon_url: null 
   return apiFetch("/user/me/favicon", { method: "DELETE", token });
 }
 
-export async function uploadPageMedia(token: string, file: File): Promise<{ url: string }> {
+export async function uploadPageMedia(
+  token: string,
+  pageId: number,
+  file: File
+): Promise<BlogMediaOut> {
   const fd = new FormData();
   fd.append("file", file);
-  return apiFetch("/pages/media", { method: "POST", token, body: fd });
+  return apiFetch(`/pages/${pageId}/media`, { method: "POST", token, body: fd });
+}
+
+export async function deletePageMediaByUrl(token: string, pageId: number, url: string): Promise<void> {
+  const q = new URLSearchParams({ url });
+  await apiFetch(`/pages/${pageId}/media?${q.toString()}`, { method: "DELETE", token });
 }
 
 export async function listBlogs(token: string): Promise<BlogListItem[]> {

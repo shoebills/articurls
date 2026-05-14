@@ -247,6 +247,22 @@ class UserPage(Base):
     footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    media = relationship("PageMedia", back_populates="page", cascade="all, delete-orphan", order_by=lambda: PageMedia.sort_order)
+
+
+class PageMedia(Base):
+    __tablename__ = "page_medias"
+
+    media_id = Column(Integer, primary_key=True)
+    page_id = Column(ForeignKey("user_pages.page_id"), nullable=False, index=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    url = Column(String, nullable=False)
+    storage_key = Column(String, nullable=False)
+    mime_type = Column(String, nullable=False)
+    size_bytes = Column(Integer, nullable=False)
+    sort_order = Column(Integer, nullable=False, default=0)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    page = relationship("UserPage", back_populates="media")
 
 
 class Category(Base):
