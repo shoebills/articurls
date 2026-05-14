@@ -79,6 +79,7 @@ export interface PublicUser {
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   subscriber_collection_enabled: boolean;
+  remove_branding: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   /** Whether this user's content should appear in sitemaps. Default true. */
@@ -119,6 +120,7 @@ export interface UserSettings {
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   subscriber_collection_enabled: boolean;
+  remove_branding: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
 }

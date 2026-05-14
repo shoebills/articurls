@@ -39,6 +39,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [subscriberCollectionEnabled, setSubscriberCollectionEnabled] = useState(true);
+  const [removeBranding, setRemoveBranding] = useState(true);
   const [usernameChangeCount, setUsernameChangeCount] = useState(0);
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
@@ -61,6 +62,7 @@ export default function SettingsPage() {
       setUserName(u.user_name);
       setEmail(u.email);
       setSubscriberCollectionEnabled(u.subscriber_collection_enabled ?? true);
+      setRemoveBranding(u.remove_branding ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -77,6 +79,7 @@ export default function SettingsPage() {
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
       setSubscriberCollectionEnabled(ctxUser.subscriber_collection_enabled ?? true);
+      setRemoveBranding(ctxUser.remove_branding ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
@@ -107,6 +110,7 @@ export default function SettingsPage() {
     try {
       await patchProMe(token, {
         subscriber_collection_enabled: subscriberCollectionEnabled,
+        remove_branding: removeBranding,
       });
       await refreshUser();
       setSaved(true);
@@ -469,6 +473,19 @@ export default function SettingsPage() {
             <Switch
               checked={isPro ? subscriberCollectionEnabled : false}
               onCheckedChange={setSubscriberCollectionEnabled}
+              disabled={!isPro || busy}
+            />
+          </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Remove Articurls branding</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Hide the "Made with Articurls" text on your public pages.
+              </p>
+            </div>
+            <Switch
+              checked={isPro ? removeBranding : false}
+              onCheckedChange={setRemoveBranding}
               disabled={!isPro || busy}
             />
           </div>

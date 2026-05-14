@@ -270,6 +270,7 @@ export async function patchProMe(
     nav_blog_name?: string | null;
     nav_menu_enabled?: boolean;
     subscriber_collection_enabled?: boolean;
+    remove_branding?: boolean;
   }
 ): Promise<UserSettings> {
   return apiFetch("/user/pro/me", {

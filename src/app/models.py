@@ -60,6 +60,7 @@ class User(Base):
     featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
+    remove_branding = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 

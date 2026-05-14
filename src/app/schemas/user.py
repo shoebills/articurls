@@ -41,6 +41,7 @@ class UserSettings(BaseModel):
     featured_blogs_enabled: bool = False
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = True
+    remove_branding: bool = True
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
 
@@ -109,6 +110,7 @@ class UpdateProUser(BaseModel):
     nav_menu_enabled: Optional[bool] = None
     favicon_url: Optional[str] = None
     subscriber_collection_enabled: Optional[bool] = None
+    remove_branding: Optional[bool] = None
 
 
 class AdminUsernameChange(BaseModel):
