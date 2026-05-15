@@ -24,7 +24,12 @@ function socialItems(user: PublicUser, useCustomDomain: boolean) {
     ? "/rss.xml"
     : `/${encodeURIComponent(user.user_name)}/rss.xml`;
   return [
-    { key: "rss", href: showRss ? rssHref : null, label: "RSS feed", icon: <Rss className="h-4 w-4" aria-hidden /> },
+    {
+      key: "rss",
+      href: showRss ? rssHref : null,
+      label: "RSS feed",
+      icon: <Rss className="h-[17px] w-[17px]" strokeWidth={2.4} aria-hidden />,
+    },
     { key: "contact_email", href: user.contact_email ? `mailto:${user.contact_email}` : null, label: "Email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden /> },
     { key: "instagram", href: user.instagram_link, label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden /> },
     { key: "x", href: user.x_link, label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden /> },

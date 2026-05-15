@@ -17,8 +17,8 @@ import {
 } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
 
-/** Matches `gap-x-3` (0.75rem) for width math. */
-const LINK_GAP_PX = 12;
+/** Matches `gap-x-6` (1.5rem) for width math. */
+const LINK_GAP_PX = 24;
 
 export type PublicNavDesktopLink = {
   href: string;
@@ -107,7 +107,7 @@ export function PublicDesktopNav({
     <div className="relative flex w-full items-center gap-x-4 sm:gap-x-6">
       <div
         ref={measureRef}
-        className="pointer-events-none absolute -left-[9999px] top-0 flex items-center gap-x-3 opacity-0"
+        className="pointer-events-none absolute -left-[9999px] top-0 flex items-center gap-x-6 opacity-0"
         aria-hidden
       >
         {links.map((l) => (
@@ -134,7 +134,7 @@ export function PublicDesktopNav({
         {title}
       </Link>
 
-      <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-3 overflow-hidden">
+      <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-6 overflow-hidden">
         {inlineLinks.map((l) => (
           <Link key={l.href} href={l.href} className={linkClass(l.active)}>
             {l.label}
