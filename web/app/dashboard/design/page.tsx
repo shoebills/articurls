@@ -661,7 +661,7 @@ export default function DesignDashboardPage() {
           <div>
             <p className="font-medium">Enable about section under blogs</p>
             <p className="text-sm text-muted-foreground">
-              Displays profile image, name, bio, link, and socials below blog pages.
+              Displays profile image, name, and bio below blog pages.
             </p>
           </div>
           <Switch
@@ -684,95 +684,9 @@ export default function DesignDashboardPage() {
               />
               <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
             </div>
-            <div className="space-y-3">
-              <Label>Socials</Label>
-              {enabledSocials.length > 0 ? (
-                <div className="space-y-3">
-                  {enabledSocials.map((platformKey) => {
-                    const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
-                    if (!option) return null;
-                    return (
-                      <div key={platformKey} className="flex items-center gap-2.5">
-                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
-                          {option.icon}
-                        </div>
-                        <Input
-                          type={platformKey === "contact_email" ? "email" : "url"}
-                          value={socialLinks[platformKey]}
-                          onChange={(e) =>
-                            setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
-                          }
-                          placeholder={option.placeholder}
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
-                            setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
-                          }}
-                          aria-label={`Remove ${option.label}`}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No socials added yet.</p>
-              )}
-              {hiddenSocialOptions.length > 0 ? (
-                addingSocial ? (
-                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
-                    <Select value={socialToAdd} onValueChange={(v) => setSocialToAdd(v as SocialPlatform)}>
-                      <SelectTrigger className="sm:max-w-xs">
-                        <SelectValue placeholder="Select social platform" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {hiddenSocialOptions.map((option) => (
-                          <SelectItem key={option.key} value={option.key}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={addSocial} disabled={!socialToAdd}>
-                        Add
-                      </Button>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => { setAddingSocial(false); setSocialToAdd(""); }}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="icon"
-                    className="h-10 w-10"
-                    onClick={() => {
-                      setAddingSocial(true);
-                      setSocialToAdd(hiddenSocialOptions[0]?.key || "");
-                    }}
-                    aria-label="Add social platform"
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                )
-              ) : null}
-            </div>
             <div className="border-t border-border/60 pt-3 flex items-center gap-3">
               <Button size="sm" onClick={saveBioSocials} disabled={busy}>
-                Save
+                Save bio
               </Button>
               {bioSaved && <p className="text-sm text-emerald-600">Saved.</p>}
             </div>
@@ -783,7 +697,7 @@ export default function DesignDashboardPage() {
           <div>
             <p className="font-medium">Enable footer pages</p>
             <p className="text-sm text-muted-foreground">
-              Shows selected pages at the bottom of public pages.
+              Shows selected pages at the bottom of public pages, with social links beneath them.
             </p>
           </div>
           <Switch
@@ -872,6 +786,101 @@ export default function DesignDashboardPage() {
                   </Button>
                 </div>
               ) : null}
+            </div>
+            <div className="space-y-3 border-t border-border/60 pt-3">
+              <Label>Social links (shown below footer pages)</Label>
+              {enabledSocials.length > 0 ? (
+                <div className="space-y-3">
+                  {enabledSocials.map((platformKey) => {
+                    const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
+                    if (!option) return null;
+                    return (
+                      <div key={platformKey} className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
+                          {option.icon}
+                        </div>
+                        <Input
+                          type={platformKey === "contact_email" ? "email" : "url"}
+                          value={socialLinks[platformKey]}
+                          onChange={(e) =>
+                            setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
+                          }
+                          placeholder={option.placeholder}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                          onClick={() => {
+                            setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
+                            setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
+                          }}
+                          aria-label={`Remove ${option.label}`}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground">No social links added yet.</p>
+              )}
+              {hiddenSocialOptions.length > 0 ? (
+                addingSocial ? (
+                  <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+                    <Select value={socialToAdd} onValueChange={(v) => setSocialToAdd(v as SocialPlatform)}>
+                      <SelectTrigger className="sm:max-w-xs">
+                        <SelectValue placeholder="Select social platform" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {hiddenSocialOptions.map((option) => (
+                          <SelectItem key={option.key} value={option.key}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <div className="flex items-center gap-2">
+                      <Button type="button" variant="outline" size="sm" onClick={addSocial} disabled={!socialToAdd}>
+                        Add
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setAddingSocial(false);
+                          setSocialToAdd("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10"
+                    onClick={() => {
+                      setAddingSocial(true);
+                      setSocialToAdd(hiddenSocialOptions[0]?.key || "");
+                    }}
+                    aria-label="Add social platform"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )
+              ) : null}
+              <div className="flex items-center gap-3 border-t border-border/60 pt-3">
+                <Button size="sm" onClick={saveBioSocials} disabled={busy}>
+                  Save social links
+                </Button>
+                {bioSaved && <p className="text-sm text-emerald-600">Saved.</p>}
+              </div>
             </div>
           </div>
         ) : null}

@@ -1,26 +1,5 @@
 import type { PublicUser } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
-import { MdOutlineEmail } from "react-icons/md";
-import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX, SiYoutube } from "react-icons/si";
-import { FaLinkedinIn } from "react-icons/fa6";
-
-function normalizePublicLink(link: string): string {
-  if (/^https?:\/\//i.test(link)) return link;
-  return `https://${link}`;
-}
-
-function socialItems(user: PublicUser) {
-  return [
-    { key: "contact_email", href: user.contact_email ? `mailto:${user.contact_email}` : null, label: "Email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden /> },
-    { key: "instagram", href: user.instagram_link, label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden /> },
-    { key: "x", href: user.x_link, label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden /> },
-    { key: "pinterest", href: user.pinterest_link, label: "Pinterest", icon: <SiPinterest className="h-4 w-4" aria-hidden /> },
-    { key: "facebook", href: user.facebook_link, label: "Facebook", icon: <SiFacebook className="h-4 w-4" aria-hidden /> },
-    { key: "linkedin", href: user.linkedin_link, label: "LinkedIn", icon: <FaLinkedinIn className="h-4 w-4" aria-hidden /> },
-    { key: "github", href: user.github_link, label: "GitHub", icon: <SiGithub className="h-4 w-4" aria-hidden /> },
-    { key: "youtube", href: user.youtube_link, label: "YouTube", icon: <SiYoutube className="h-4 w-4" aria-hidden /> },
-  ].filter((item) => item.href && item.href.trim() !== "");
-}
 
 export function PublicProfileFooter({ user }: { user: PublicUser }) {
   if (!user.footer_enabled) return null;
@@ -43,28 +22,6 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
       </div>
 
       {user.bio ? <p className="mt-5 whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
-
-      {socialItems(user).length > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center gap-2.5">
-          {socialItems(user).map((item) => {
-            const href = item.href as string;
-            const isMail = href.startsWith("mailto:");
-            return (
-              <a
-                key={item.key}
-                href={isMail ? href : normalizePublicLink(href)}
-                target={isMail ? undefined : "_blank"}
-                rel={isMail ? undefined : "noreferrer"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                aria-label={item.label}
-                title={item.label}
-              >
-                {item.icon}
-              </a>
-            );
-          })}
-        </div>
-      ) : null}
     </section>
   );
 }
