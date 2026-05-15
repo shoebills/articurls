@@ -35,6 +35,12 @@ export default function SeoDashboardPage() {
   const seoResourcesEnabled =
     !!domain?.hostname &&
     (domain.domain_status === "active" || domain.domain_status === "grace");
+  const sitemapResourceUrl = seoResourcesEnabled && domain?.hostname
+    ? `https://${domain.hostname}/sitemap.xml`
+    : isPro && username
+      ? `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(username)}/sitemap.xml`
+      : undefined;
+  const sitemapResourceEnabled = Boolean(sitemapResourceUrl);
   const rssResourceUrl = seoResourcesEnabled && domain?.hostname
     ? `https://${domain.hostname}/rss.xml`
     : isPro && username
@@ -144,7 +150,9 @@ export default function SeoDashboardPage() {
       <Card>
         <CardHeader>
           <CardTitle>SEO Resources</CardTitle>
-          <CardDescription>Add and verify custom domain to enable sitemap and robots.txt.</CardDescription>
+          <CardDescription>
+            Sitemap is available for eligible profiles. Custom domain enables domain-level sitemap, robots.txt, and RSS URL.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 px-4 py-3">
@@ -163,8 +171,13 @@ export default function SeoDashboardPage() {
           </div>
           <SeoResourceRow
             label="sitemap.xml"
-            url={domain?.hostname ? `https://${domain.hostname}/sitemap.xml` : undefined}
-            enabled={seoResourcesEnabled}
+            url={sitemapResourceUrl}
+            enabled={sitemapResourceEnabled}
+            unavailableText={
+              !isPro
+                ? "Sitemap is available on Pro."
+                : "Sitemap URL unavailable."
+            }
           />
           <SeoResourceRow
             label="robots.txt"
