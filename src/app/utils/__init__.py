@@ -11,7 +11,7 @@ from .text import (
     user_by_email,
     user_by_username,
 )
-from .urls import public_post_url
+from .urls import public_blog_home_url, public_post_url
 from .usernames import (
     USERNAME_CHANGE_LIMIT,
     RequestContext,
@@ -34,6 +34,7 @@ __all__ = [
     "maybe_replace_placeholder_slug_on_publish",
     "normalize_email",
     "normalize_username",
+    "public_blog_home_url",
     "public_post_url",
     "public_user_out",
     "RequestContext",

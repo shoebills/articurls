@@ -10,6 +10,7 @@ import type {
   DomainAddResponse,
   DomainVerifyResponse,
   MetaSettings,
+  WelcomeEmailSettings,
   PublicBlog,
   PublicCategoryBlogsResponse,
   UserPage,
@@ -299,6 +300,22 @@ export async function patchMetaSettings(
   body: Partial<MetaSettings>
 ): Promise<MetaSettings> {
   return apiFetch("/user/meta", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getWelcomeEmailSettings(token: string): Promise<WelcomeEmailSettings> {
+  return apiFetch("/user/welcome-email", { token });
+}
+
+export async function patchWelcomeEmailSettings(
+  token: string,
+  body: Partial<WelcomeEmailSettings>
+): Promise<WelcomeEmailSettings> {
+  return apiFetch("/user/welcome-email", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },

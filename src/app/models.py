@@ -61,6 +61,10 @@ class User(Base):
     featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
+    welcome_email_enabled = Column(Boolean, nullable=False, default=False)
+    welcome_email_subject = Column(Text, nullable=True)
+    welcome_email_body_html = Column(Text, nullable=True)
+    welcome_email_delay_minutes = Column(Integer, nullable=False, default=0)
     remove_branding = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -166,6 +170,7 @@ class Subscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
     is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
+    welcome_sent_at = Column(DateTime(timezone=True), nullable=True)
 
 class EmailLogs(Base):
     __tablename__ = "email_logs"

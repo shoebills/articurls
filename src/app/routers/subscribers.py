@@ -7,6 +7,7 @@ from .. import models
 from ..schemas import subscribers
 from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
 from ..email.service import send_sub_confirmation_email
+from ..email.scheduling import schedule_welcome_email_after_confirm
 from ..redis_client import redis_client
 from ..utils import normalize_email, is_pro_entitled
 
@@ -135,6 +136,8 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
     db_subscriber.is_confirmed = True
 
     db.commit()
+    db.refresh(db_subscriber)
+    schedule_welcome_email_after_confirm(db, db_subscriber)
 
     return {"message": "Email verified successfully"}
 

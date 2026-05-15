@@ -204,6 +204,13 @@ export interface MetaSettings {
   rss_enabled: boolean;
 }
 
+export interface WelcomeEmailSettings {
+  welcome_email_enabled: boolean;
+  welcome_email_subject: string | null;
+  welcome_email_body_html: string | null;
+  welcome_email_delay_minutes: number;
+}
+
 export interface SubscriptionOut {
   subscription_id: number;
   plan_type: string;

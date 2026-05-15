@@ -8,6 +8,7 @@ from ..security import hashing, oauth2
 from ..schemas import user
 from ..schemas import page as page_schema
 from ..email.service import send_verify_new_user
+from ..email.welcome import sanitize_welcome_body, sanitize_welcome_subject, validate_delay_minutes
 from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
@@ -397,6 +398,55 @@ def list_my_username_change_requests(
         .order_by(models.UsernameChangeRequest.created_at.desc())
         .all()
     )
+
+@router.get("/welcome-email", response_model=user.WelcomeEmailSettings, status_code=status.HTTP_200_OK)
+def get_welcome_email_settings(
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    is_pro=Depends(require_pro),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    return db_user
+
+
+@router.patch("/welcome-email", response_model=user.WelcomeEmailSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_welcome_email_settings(
+    request: user.WelcomeEmailSettingsUpdate,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    is_pro=Depends(require_pro),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    update_data = request.model_dump(exclude_unset=True)
+
+    try:
+        if "welcome_email_subject" in update_data:
+            update_data["welcome_email_subject"] = sanitize_welcome_subject(
+                update_data["welcome_email_subject"]
+            )
+        if "welcome_email_body_html" in update_data:
+            update_data["welcome_email_body_html"] = sanitize_welcome_body(
+                update_data["welcome_email_body_html"]
+            )
+        if "welcome_email_delay_minutes" in update_data and update_data["welcome_email_delay_minutes"] is not None:
+            update_data["welcome_email_delay_minutes"] = validate_delay_minutes(
+                int(update_data["welcome_email_delay_minutes"])
+            )
+    except ValueError as exc:
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    for key, value in update_data.items():
+        setattr(db_user, key, value)
+
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
