@@ -84,7 +84,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     is_pro: seoEligibility.is_pro,
     domain_status: author.domain_status,
   });
-  const feedUrl = shouldIndex && author
+  const feedUrl = shouldIndex && author && author.rss_enabled !== false
     ? `${MARKETING_ORIGIN}/${encodeURIComponent(author.user_name)}/rss.xml`
     : undefined;
   const alternates = feedUrl

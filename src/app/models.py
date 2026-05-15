@@ -56,6 +56,7 @@ class User(Base):
     robots_mode = Column(String, nullable=False, default="auto")
     robots_custom_rules = Column(Text, nullable=True)
     sitemap_enabled = Column(Boolean, nullable=False, default=True)
+    rss_enabled = Column(Boolean, nullable=False, default=True)
     username_change_count = Column(Integer, nullable=False, default=0)
     featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
     featured_blog_ids = Column(JSON, nullable=True, default=[])

@@ -13,4 +13,8 @@ def public_user_out(db: Session, db_user: models.User):
     # Only Pro users can use a custom favicon; free users always get the platform default.
     if not is_pro:
         public_user.favicon_url = None
+        # Keep RSS disabled on marketing-hosted free profiles, but preserve
+        # configured RSS for custom domains that are still active or in grace.
+        if db_user.domain_status not in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
+            public_user.rss_enabled = False
     return public_user

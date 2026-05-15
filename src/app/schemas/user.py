@@ -44,6 +44,7 @@ class UserSettings(BaseModel):
     remove_branding: bool = True
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
+    rss_enabled: bool = True
 
     class Config:
         from_attributes = True
@@ -79,6 +80,7 @@ class PublicUser(BaseModel):
     domain_status: Optional[str] = None
     # SEO control fields — consumed by sitemap and robots.txt generation
     sitemap_enabled: bool = True
+    rss_enabled: bool = True
     robots_mode: str = "auto"
     robots_custom_rules: Optional[str] = None
 
@@ -145,6 +147,7 @@ class UsernameChangeRequestReview(BaseModel):
 class MetaSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    rss_enabled: bool = True
 
     class Config:
         from_attributes = True
@@ -153,6 +156,7 @@ class MetaSettings(BaseModel):
 class MetaSettingsUpdate(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    rss_enabled: Optional[bool] = None
 
 
 class StorageUsage(BaseModel):

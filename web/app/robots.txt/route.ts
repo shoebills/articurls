@@ -140,8 +140,12 @@ User-agent: PetalBot
 Disallow: /
 
 Sitemap: ${siteOrigin}/sitemap.xml
-Feed: ${siteOrigin}/rss.xml
 `;
+
+  if (user.rss_enabled !== false) {
+    body += `Feed: ${siteOrigin}/rss.xml
+`;
+  }
 
   // Append custom rules when user has opted in
   if (user.robots_mode === "custom" && user.robots_custom_rules?.trim()) {

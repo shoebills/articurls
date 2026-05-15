@@ -84,6 +84,8 @@ export interface PublicUser {
   domain_status?: DomainStatus | null;
   /** Whether this user's content should appear in sitemaps. Default true. */
   sitemap_enabled?: boolean;
+  /** Controls RSS feed publishing and discovery. */
+  rss_enabled?: boolean;
   /** "auto" = standard rules, "custom" = use robots_custom_rules. */
   robots_mode?: string;
   /** Raw robots rules appended when robots_mode = "custom". */
@@ -123,6 +125,7 @@ export interface UserSettings {
   remove_branding: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
+  rss_enabled: boolean;
 }
 
 export interface StorageUsage {
@@ -198,6 +201,7 @@ export interface DesignSettings {
 export interface MetaSettings {
   meta_title: string | null;
   meta_description: string | null;
+  rss_enabled: boolean;
 }
 
 export interface SubscriptionOut {

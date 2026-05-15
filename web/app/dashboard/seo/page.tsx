@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import type { CustomDomain } from "@/lib/types";
 
@@ -15,6 +16,7 @@ export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
   const [metaTitle, setMetaTitle] = useState("");
   const [metaDescription, setMetaDescription] = useState("");
+  const [rssEnabled, setRssEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -30,6 +32,7 @@ export default function SeoDashboardPage() {
         const meta = await getMetaSettings(token);
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
+        setRssEnabled(meta.rss_enabled !== false);
         const domainData = await getCustomDomain(token);
         setDomain(domainData);
       } catch (e) {
@@ -47,11 +50,31 @@ export default function SeoDashboardPage() {
       await patchMetaSettings(token, {
         meta_title: metaTitle || null,
         meta_description: metaDescription || null,
+        rss_enabled: rssEnabled,
       });
       await refreshUser();
       setSaved(true);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save SEO settings");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onToggleRss(nextValue: boolean) {
+    if (!token) return;
+    const previous = rssEnabled;
+    setRssEnabled(nextValue);
+    setBusy(true);
+    setSaved(false);
+    setErr(null);
+    try {
+      await patchMetaSettings(token, { rss_enabled: nextValue });
+      await refreshUser();
+      setSaved(true);
+    } catch (e) {
+      setRssEnabled(previous);
+      setErr(e instanceof ApiError ? e.message : "Failed to update RSS setting");
     } finally {
       setBusy(false);
     }
@@ -101,6 +124,20 @@ export default function SeoDashboardPage() {
           <CardDescription>Add and verify custom domain to enable sitemap and robots.txt.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
+          <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 px-4 py-3">
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Enable RSS feed</p>
+              <p className="text-xs text-muted-foreground">
+                When enabled, your RSS feed appears as an icon in the public footer.
+              </p>
+            </div>
+            <Switch
+              checked={rssEnabled}
+              onCheckedChange={onToggleRss}
+              disabled={busy}
+              aria-label="Enable RSS feed"
+            />
+          </div>
           <SeoResourceRow
             label="sitemap.xml"
             url={domain?.hostname ? `https://${domain.hostname}/sitemap.xml` : undefined}
@@ -110,6 +147,11 @@ export default function SeoDashboardPage() {
             label="robots.txt"
             url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
             enabled={seoResourcesEnabled}
+          />
+          <SeoResourceRow
+            label="rss.xml"
+            url={domain?.hostname ? `https://${domain.hostname}/rss.xml` : undefined}
+            enabled={seoResourcesEnabled && rssEnabled}
           />
         </CardContent>
       </Card>

@@ -4,6 +4,7 @@ import { getPublicPageUrl } from "@/lib/public-url";
 import { MdOutlineEmail } from "react-icons/md";
 import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX, SiYoutube } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
+import { Rss } from "lucide-react";
 
 type PublicSiteFooterProps = {
   user: PublicUser;
@@ -12,12 +13,18 @@ type PublicSiteFooterProps = {
 };
 
 function normalizePublicLink(link: string): string {
+  if (link.startsWith("/")) return link;
   if (/^https?:\/\//i.test(link)) return link;
   return `https://${link}`;
 }
 
-function socialItems(user: PublicUser) {
+function socialItems(user: PublicUser, useCustomDomain: boolean) {
+  const showRss = Boolean(user.rss_enabled);
+  const rssHref = useCustomDomain
+    ? "/rss.xml"
+    : `/${encodeURIComponent(user.user_name)}/rss.xml`;
   return [
+    { key: "rss", href: showRss ? rssHref : null, label: "RSS feed", icon: <Rss className="h-4 w-4" aria-hidden /> },
     { key: "contact_email", href: user.contact_email ? `mailto:${user.contact_email}` : null, label: "Email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden /> },
     { key: "instagram", href: user.instagram_link, label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden /> },
     { key: "x", href: user.x_link, label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden /> },
@@ -35,7 +42,7 @@ export function PublicSiteFooter({ user, pages, useCustomDomain = false }: Publi
   const footerPages = [...pages]
     .filter((p) => p.show_in_footer)
     .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999));
-  const socials = socialItems(user);
+  const socials = socialItems(user, useCustomDomain);
 
   if (footerPages.length === 0 && socials.length === 0) return null;
 

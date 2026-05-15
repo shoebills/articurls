@@ -43,6 +43,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
 
   const user = await loadUser(username);
   if (!user) return new NextResponse(null, { status: 404 });
+  if (user.rss_enabled === false) return new NextResponse(null, { status: 404 });
 
   const canonicalUsername = user.user_name || username;
   const seoEligibility = await fetchSeoEligibility(canonicalUsername);

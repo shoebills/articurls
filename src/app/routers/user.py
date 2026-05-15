@@ -248,6 +248,8 @@ def update_meta_settings(
         db_user.meta_title = (update_data["meta_title"] or "").strip() or None
     if "meta_description" in update_data:
         db_user.meta_description = (update_data["meta_description"] or "").strip() or None
+    if "rss_enabled" in update_data:
+        db_user.rss_enabled = bool(update_data["rss_enabled"])
 
     db.commit()
     db.refresh(db_user)
