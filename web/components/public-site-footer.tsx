@@ -58,7 +58,7 @@ export function PublicSiteFooter({ user, pages, useCustomDomain = false }: Publi
         </nav>
       ) : null}
       {socials.length > 0 ? (
-        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5 sm:mt-7">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-5 sm:mt-7">
           {socials.map((item) => {
             const href = item.href as string;
             const isMail = href.startsWith("mailto:");
