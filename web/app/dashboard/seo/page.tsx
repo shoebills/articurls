@@ -1,7 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ApiError, getCustomDomain, getMetaSettings, patchMetaSettings } from "@/lib/api";
+import {
+  ApiError,
+  getCustomDomain,
+  getMe,
+  getMetaSettings,
+  getSubscription,
+  isProSubscription,
+  patchMetaSettings,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -11,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import type { CustomDomain } from "@/lib/types";
+import { MARKETING_ORIGIN } from "@/lib/env";
 
 export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
@@ -21,20 +30,34 @@ export default function SeoDashboardPage() {
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [domain, setDomain] = useState<CustomDomain | null>(null);
+  const [isPro, setIsPro] = useState(false);
+  const [username, setUsername] = useState("");
   const seoResourcesEnabled =
     !!domain?.hostname &&
     (domain.domain_status === "active" || domain.domain_status === "grace");
+  const rssResourceUrl = seoResourcesEnabled && domain?.hostname
+    ? `https://${domain.hostname}/rss.xml`
+    : isPro && username
+      ? `${MARKETING_ORIGIN}/${encodeURIComponent(username)}/rss.xml`
+      : undefined;
+  const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
 
   useEffect(() => {
     if (!token) return;
     (async () => {
       try {
-        const meta = await getMetaSettings(token);
+        const [meta, domainData, me, subscription] = await Promise.all([
+          getMetaSettings(token),
+          getCustomDomain(token),
+          getMe(token),
+          getSubscription(token),
+        ]);
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
         setRssEnabled(meta.rss_enabled !== false);
-        const domainData = await getCustomDomain(token);
         setDomain(domainData);
+        setUsername(me.user_name || "");
+        setIsPro(isProSubscription(subscription));
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       }
@@ -150,8 +173,15 @@ export default function SeoDashboardPage() {
           />
           <SeoResourceRow
             label="rss.xml"
-            url={domain?.hostname ? `https://${domain.hostname}/rss.xml` : undefined}
-            enabled={seoResourcesEnabled && rssEnabled}
+            url={rssResourceUrl}
+            enabled={rssResourceEnabled}
+            unavailableText={
+              !isPro
+                ? "RSS feed is available on Pro."
+                : !rssEnabled
+                  ? "Enable RSS feed to publish your feed URL."
+                  : "RSS URL unavailable."
+            }
           />
         </CardContent>
       </Card>
@@ -165,17 +195,19 @@ function SeoResourceRow({
   label,
   url,
   enabled,
+  unavailableText = "Unavailable until custom domain is active or in grace period.",
 }: {
   label: string;
   url?: string;
   enabled: boolean;
+  unavailableText?: string;
 }) {
   return (
     <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">
-          {enabled && url ? url : "Unavailable until custom domain is active or in grace period."}
+          {enabled && url ? url : unavailableText}
         </p>
       </div>
       <Button
