@@ -6,11 +6,12 @@ import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Tag, Globe } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Tag, Globe, Users } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
+  { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/design", label: "Design", icon: Palette },
