@@ -401,10 +401,10 @@ export default function SettingsPage() {
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
             {isUnlimitedStorage ? (
-              <div className="h-full w-1/3 animate-pulse rounded-full bg-gradient-to-r from-indigo-500 via-violet-500 to-fuchsia-500" />
+              <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600" />
             ) : (
               <div
-                className="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-600 transition-all duration-300"
+                className="h-full rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600"
                 style={{ width: `${storagePct}%` }}
               />
             )}
