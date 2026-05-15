@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { viewsAnalytics, subscribersAnalytics, exportSubscribersCsv, listBlogs, ApiError } from "@/lib/api";
+import { viewsAnalytics, listBlogs, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   LineChart,
   Line,
@@ -28,7 +27,6 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
 
-/** Rolling windows used for comparison charts (same keys as the API `period` query). */
 const CHART_PERIOD_ORDER = ["24h", "7d", "28d", "3m", "6m", "1y"] as const;
 
 function chartPeriodsForSelection(selected: (typeof PERIODS)[number]): (typeof CHART_PERIOD_ORDER)[number][] {
@@ -53,16 +51,8 @@ const POSTS_PAGE_SIZE = 10;
 export default function AnalyticsPage() {
   const { token } = useAuth();
   const [vPeriod, setVPeriod] = useState<(typeof PERIODS)[number]>("28d");
-  const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("28d");
   const [views, setViews] = useState<{ period: string; total_views: number; unique_visitors: number; total_posts: number } | null>(null);
-  const [subs, setSubs] = useState<{
-    period: string;
-    current_subscribers: number;
-    subscribed: number;
-    unsubscribed: number;
-  } | null>(null);
   const [chartViews, setChartViews] = useState<{ name: string; views: number; visitors: number }[]>([]);
-  const [chartSubs, setChartSubs] = useState<{ name: string; gained: number; lost: number }[]>([]);
   const [posts, setPosts] = useState<BlogListItem[]>([]);
   const [postSort, setPostSort] = useState<"most_viewed" | "latest">("most_viewed");
   const [postPage, setPostPage] = useState(1);
@@ -75,30 +65,19 @@ export default function AnalyticsPage() {
       setErr(null);
       try {
         const vPeriods = chartPeriodsForSelection(vPeriod);
-        const sPeriods = chartPeriodsForSelection(sPeriod);
-        const [v, s, viewRows, subRows, postRows] = await Promise.all([
+        const [v, viewRows, postRows] = await Promise.all([
           viewsAnalytics(token, vPeriod),
-          subscribersAnalytics(token, sPeriod),
           Promise.all(vPeriods.map((p) => viewsAnalytics(token, p))),
-          Promise.all(sPeriods.map((p) => subscribersAnalytics(token, p))),
           listBlogs(token),
         ]);
         if (cancelled) return;
         setViews(v);
-        setSubs(s);
         setPosts(postRows.filter((post) => post.status === "published"));
         setChartViews(
           viewRows.map((d, i) => ({
             name: vPeriods[i],
             views: d.total_views,
             visitors: d.unique_visitors,
-          }))
-        );
-        setChartSubs(
-          subRows.map((d, i) => ({
-            name: sPeriods[i],
-            gained: d.subscribed,
-            lost: d.unsubscribed,
           }))
         );
       } catch (e) {
@@ -108,7 +87,7 @@ export default function AnalyticsPage() {
     return () => {
       cancelled = true;
     };
-  }, [token, vPeriod, sPeriod]);
+  }, [token, vPeriod]);
 
   const sortedPosts = useMemo(() => {
     const rows = posts.filter((post) => post.status === "published");
@@ -136,267 +115,162 @@ export default function AnalyticsPage() {
   const safePostPage = Math.min(postPage, postPageCount);
   const pagedPosts = sortedPosts.slice((safePostPage - 1) * POSTS_PAGE_SIZE, safePostPage * POSTS_PAGE_SIZE);
 
-  async function exportCsv() {
-    if (!token) return;
-    try {
-      const blob = await exportSubscribersCsv(token);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "subscribers.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Export failed");
-    }
-  }
-
   return (
     <div className="mx-auto max-w-[1100px] space-y-10">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
 
-      <Tabs defaultValue="views">
-        <TabsList className="grid h-auto w-full grid-cols-2 gap-1 sm:inline-flex sm:h-9 sm:w-auto">
-          <TabsTrigger value="views" className="min-h-11 sm:min-h-8">
-            Views
-          </TabsTrigger>
-          <TabsTrigger value="subscribers" className="min-h-11 sm:min-h-8">
-            Subscribers
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="views" className="space-y-6">
-          <div className="sm:max-w-xs">
-            <Select value={vPeriod} onValueChange={(v) => setVPeriod(v as (typeof PERIODS)[number])}>
-              <SelectTrigger className="touch-manipulation" aria-label="Views time range">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIOD_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardDescription>Total views</CardDescription>
-                <CardTitle className="text-3xl">{views?.total_views ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>Unique visitors</CardDescription>
-                <CardTitle className="text-3xl">{views?.unique_visitors ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>Total posts</CardDescription>
-                <CardTitle className="text-3xl">{views?.total_posts ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
+      <div className="space-y-6">
+        <div className="sm:max-w-xs">
+          <Select value={vPeriod} onValueChange={(v) => setVPeriod(v as (typeof PERIODS)[number])}>
+            <SelectTrigger className="touch-manipulation" aria-label="Views time range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
           <Card>
             <CardHeader>
-              <CardTitle>Views by window</CardTitle>
-              <CardDescription>
-                Each point is total views and unique visitors for that rolling window. The chart includes every window
-                length up to the range you selected.
-              </CardDescription>
+              <CardDescription>Total views</CardDescription>
+              <CardTitle className="text-3xl">{views?.total_views ?? "—"}</CardTitle>
             </CardHeader>
-            <CardContent className="h-56 sm:h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartViews} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line
-                    type="linear"
-                    dataKey="views"
-                    name="Views"
-                    stroke="oklch(0.5 0.2 260)"
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="linear"
-                    dataKey="visitors"
-                    name="Unique visitors"
-                    stroke="oklch(0.55 0.14 200)"
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
           </Card>
           <Card>
-            <CardHeader className="space-y-3">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <CardTitle>Posts</CardTitle>
-                  <CardDescription>Sort by latest published or most viewed.</CardDescription>
-                </div>
-                <div className="w-full sm:w-52">
-                  <Select
-                    value={postSort}
-                    onValueChange={(v) => {
-                      setPostSort(v as "most_viewed" | "latest");
-                      setPostPage(1);
-                    }}
-                  >
-                    <SelectTrigger aria-label="Sort posts list">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="most_viewed">Most viewed</SelectItem>
-                      <SelectItem value="latest">Latest</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+            <CardHeader>
+              <CardDescription>Unique visitors</CardDescription>
+              <CardTitle className="text-3xl">{views?.unique_visitors ?? "—"}</CardTitle>
             </CardHeader>
-            <CardContent>
-              {pagedPosts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No posts yet.</p>
-              ) : (
-                <>
-                  <ul className="divide-y divide-border rounded-lg border border-border">
-                    {pagedPosts.map((post) => (
-                      <li key={post.blog_id} className="px-4 py-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{post.title || "Untitled"}</p>
-                            <p className="mt-1 text-xs text-muted-foreground">
-                              {post.published_at
-                                ? `Published ${new Date(post.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
-                                : "Not published"}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-sm text-muted-foreground">
-                            {post.view_count ?? 0} view{(post.view_count ?? 0) === 1 ? "" : "s"}
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardDescription>Total posts</CardDescription>
+              <CardTitle className="text-3xl">{views?.total_posts ?? "—"}</CardTitle>
+            </CardHeader>
+          </Card>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Views by window</CardTitle>
+            <CardDescription>
+              Each point is total views and unique visitors for that rolling window. The chart includes every window
+              length up to the range you selected.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="h-56 sm:h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartViews} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                <Tooltip />
+                <Legend wrapperStyle={{ fontSize: 12 }} />
+                <Line
+                  type="linear"
+                  dataKey="views"
+                  name="Views"
+                  stroke="oklch(0.5 0.2 260)"
+                  strokeWidth={2}
+                  dot={{ r: 4, strokeWidth: 2 }}
+                  activeDot={{ r: 6 }}
+                />
+                <Line
+                  type="linear"
+                  dataKey="visitors"
+                  name="Unique visitors"
+                  stroke="oklch(0.55 0.14 200)"
+                  strokeWidth={2}
+                  dot={{ r: 4, strokeWidth: 2 }}
+                  activeDot={{ r: 6 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="space-y-3">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <CardTitle>Posts</CardTitle>
+                <CardDescription>Sort by latest published or most viewed.</CardDescription>
+              </div>
+              <div className="w-full sm:w-52">
+                <Select
+                  value={postSort}
+                  onValueChange={(v) => {
+                    setPostSort(v as "most_viewed" | "latest");
+                    setPostPage(1);
+                  }}
+                >
+                  <SelectTrigger aria-label="Sort posts list">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="most_viewed">Most viewed</SelectItem>
+                    <SelectItem value="latest">Latest</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {pagedPosts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No posts yet.</p>
+            ) : (
+              <>
+                <ul className="divide-y divide-border rounded-lg border border-border">
+                  {pagedPosts.map((post) => (
+                    <li key={post.blog_id} className="px-4 py-3">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{post.title || "Untitled"}</p>
+                          <p className="mt-1 text-xs text-muted-foreground">
+                            {post.published_at
+                              ? `Published ${new Date(post.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
+                              : "Not published"}
                           </p>
                         </div>
-                      </li>
-                    ))}
-                  </ul>
-                  <div className="mt-4 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Page {safePostPage} of {postPageCount}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPostPage((p) => Math.max(1, p - 1))}
-                        disabled={safePostPage <= 1}
-                      >
-                        Prev
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setPostPage((p) => Math.min(postPageCount, p + 1))}
-                        disabled={safePostPage >= postPageCount}
-                      >
-                        Next
-                      </Button>
-                    </div>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="subscribers" className="space-y-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-            <div className="w-full sm:max-w-xs">
-              <Select value={sPeriod} onValueChange={(v) => setSPeriod(v as (typeof PERIODS)[number])}>
-                <SelectTrigger className="touch-manipulation" aria-label="Subscribers time range">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PERIOD_OPTIONS.map((o) => (
-                    <SelectItem key={o.value} value={o.value}>
-                      {o.label}
-                    </SelectItem>
+                        <p className="shrink-0 text-sm text-muted-foreground">
+                          {post.view_count ?? 0} view{(post.view_count ?? 0) === 1 ? "" : "s"}
+                        </p>
+                      </div>
+                    </li>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button variant="outline" className="h-11 w-full shrink-0 touch-manipulation sm:h-auto sm:w-auto sm:min-h-9" onClick={exportCsv}>
-              Export CSV
-            </Button>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Card>
-              <CardHeader>
-                <CardDescription>Current subscribers</CardDescription>
-                <CardTitle className="text-3xl">{subs?.current_subscribers ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>New (period)</CardDescription>
-                <CardTitle className="text-3xl">{subs?.subscribed ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-            <Card>
-              <CardHeader>
-                <CardDescription>Unsubscribes (period)</CardDescription>
-                <CardTitle className="text-3xl">{subs?.unsubscribed ?? "—"}</CardTitle>
-              </CardHeader>
-            </Card>
-          </div>
-          <Card>
-            <CardHeader>
-              <CardTitle>Subscribers by window</CardTitle>
-              <CardDescription>
-                New subscriptions and unsubscribes counted within each rolling window, for every window length up to your
-                selected range.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="h-56 sm:h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartSubs} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                  <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                  <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                  <Tooltip />
-                  <Legend wrapperStyle={{ fontSize: 12 }} />
-                  <Line
-                    type="linear"
-                    dataKey="gained"
-                    name="Subscribed"
-                    stroke="oklch(0.5 0.16 145)"
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                  <Line
-                    type="linear"
-                    dataKey="lost"
-                    name="Unsubscribed"
-                    stroke="oklch(0.55 0.2 25)"
-                    strokeWidth={2}
-                    dot={{ r: 4, strokeWidth: 2 }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+                </ul>
+                <div className="mt-4 flex items-center justify-between">
+                  <p className="text-xs text-muted-foreground">
+                    Page {safePostPage} of {postPageCount}
+                  </p>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPostPage((p) => Math.max(1, p - 1))}
+                      disabled={safePostPage <= 1}
+                    >
+                      Prev
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setPostPage((p) => Math.min(postPageCount, p + 1))}
+                      disabled={safePostPage >= postPageCount}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
