@@ -4,7 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { ApiError, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { WelcomeEmailEditor } from "@/components/editor/welcome-email-editor";
-import { WELCOME_EMAIL_STARTER_HTML } from "@/lib/welcome-email-content";
+import {
+  WELCOME_EMAIL_STARTER_HTML,
+  isStoredWelcomeSubjectDefault,
+  welcomeEmailSubjectDisplay,
+} from "@/lib/welcome-email-content";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,21 +32,38 @@ function isEmptyBody(html: string): boolean {
 }
 
 export default function AudienceEmailsPage() {
-  const { token, isPro } = useAuth();
+  const { token, isPro, user } = useAuth();
+  const blogName = (user?.name || "").trim() || "My Blog";
+  const defaultSubject = welcomeEmailSubjectDisplay(blogName);
+
   const [enabled, setEnabled] = useState(false);
-  const [subject, setSubject] = useState("");
+  const [subject, setSubject] = useState(defaultSubject);
+  const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
   const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (subjectUsesDefault) {
+      setSubject(defaultSubject);
+    }
+  }, [defaultSubject, subjectUsesDefault]);
+
   const load = useCallback(async () => {
     if (!token || !isPro) return;
     try {
       const settings = await getWelcomeEmailSettings(token);
       setEnabled(settings.welcome_email_enabled);
-      setSubject(settings.welcome_email_subject || "");
+      const storedSubject = settings.welcome_email_subject;
+      if (isStoredWelcomeSubjectDefault(storedSubject, blogName)) {
+        setSubject(welcomeEmailSubjectDisplay(blogName));
+        setSubjectUsesDefault(true);
+      } else {
+        setSubject(storedSubject!.trim());
+        setSubjectUsesDefault(false);
+      }
       const storedBody = settings.welcome_email_body_html?.trim();
       setBodyHtml(storedBody || WELCOME_EMAIL_STARTER_HTML);
       const delay = String(settings.welcome_email_delay_minutes ?? 0);
@@ -50,7 +71,7 @@ export default function AudienceEmailsPage() {
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load welcome email settings");
     }
-  }, [token, isPro]);
+  }, [token, isPro, blogName]);
 
   useEffect(() => {
     load();
@@ -64,7 +85,8 @@ export default function AudienceEmailsPage() {
     try {
       await patchWelcomeEmailSettings(token, {
         welcome_email_enabled: enabled,
-        welcome_email_subject: subject.trim() || null,
+        welcome_email_subject:
+          subjectUsesDefault || subject.trim() === defaultSubject ? null : subject.trim(),
         welcome_email_body_html: isEmptyBody(bodyHtml) ? null : bodyHtml,
         welcome_email_delay_minutes: Number(delayMinutes),
       });
@@ -141,15 +163,15 @@ export default function AudienceEmailsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="welcome-subject">Subject (optional)</Label>
+                <Label htmlFor="welcome-subject">Subject</Label>
                 <Input
                   id="welcome-subject"
                   value={subject}
                   onChange={(e) => {
                     setSubject(e.target.value);
+                    setSubjectUsesDefault(false);
                     setSaved(false);
                   }}
-                  placeholder="Welcome to {{ blog_name }}'s blog"
                   disabled={!enabled || busy}
                 />
               </div>

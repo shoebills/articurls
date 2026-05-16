@@ -153,12 +153,70 @@ function createEmailButtonExtension() {
       ];
     },
 
+    addKeyboardShortcuts() {
+      return {
+        Backspace: ({ editor }) => {
+          const { state } = editor;
+          const { selection } = state;
+
+          if (selection instanceof NodeSelection && selection.node.type.name === this.name) {
+            return editor.commands.deleteSelection();
+          }
+
+          if (!selection.empty) return false;
+
+          const { $from } = selection;
+          if ($from.parent.type.name !== "paragraph" || $from.parent.content.size !== 0 || $from.parentOffset !== 0) {
+            return false;
+          }
+
+          const depth = $from.depth;
+          const blockIndex = $from.index(depth - 1);
+          if (blockIndex === 0) return false;
+
+          const container = $from.node(depth - 1);
+          if (container.child(blockIndex - 1).type.name !== this.name) return false;
+
+          return editor
+            .chain()
+            .focus()
+            .deleteRange({ from: $from.before(depth), to: $from.after(depth) })
+            .run();
+        },
+        Delete: ({ editor }) => {
+          const { state } = editor;
+          const { selection } = state;
+
+          if (selection instanceof NodeSelection && selection.node.type.name === this.name) {
+            return editor.commands.deleteSelection();
+          }
+
+          if (!selection.empty) return false;
+
+          const { $from } = selection;
+          const depth = $from.depth;
+          const blockIndex = $from.index(depth - 1);
+          const container = $from.node(depth - 1);
+
+          if ($from.parentOffset !== $from.parent.content.size || blockIndex >= container.childCount - 1) {
+            return false;
+          }
+
+          const nodeAfter = container.child(blockIndex + 1);
+          if (nodeAfter.type.name !== this.name) return false;
+
+          const pos = $from.after(depth);
+          return editor.chain().focus().deleteRange({ from: pos, to: pos + nodeAfter.nodeSize }).run();
+        },
+      };
+    },
+
     renderHTML({ HTMLAttributes }) {
       const label = HTMLAttributes.label || DEFAULT_BUTTON_LABEL;
       const href = HTMLAttributes.href || DEFAULT_BUTTON_HREF;
       return [
         "p",
-        { "data-email-button-wrap": "true", style: "margin:0;padding-bottom:35px;" },
+        { "data-email-button-wrap": "true", style: "margin:0 0 1rem;" },
         [
           "a",
           mergeAttributes({
@@ -175,8 +233,7 @@ function createEmailButtonExtension() {
       return ({ node, getPos, editor }) => {
         const wrap = document.createElement("p");
         wrap.dataset.emailButtonWrap = "true";
-        wrap.style.margin = "0";
-        wrap.style.paddingBottom = "35px";
+        wrap.style.margin = "0 0 1rem";
 
         const anchor = document.createElement("a");
         anchor.dataset.emailButton = "true";
@@ -386,6 +443,17 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     setButtonEditPos(null);
   }, [editor, buttonDialogMode, buttonLabel, buttonHref, buttonEditPos]);
 
+  const removeEmailButton = useCallback(() => {
+    if (!editor) return;
+    if (buttonEditPos !== null) {
+      editor.chain().focus().setNodeSelection(buttonEditPos).deleteSelection().run();
+    } else if (editor.isActive("emailButton")) {
+      editor.chain().focus().deleteSelection().run();
+    }
+    setButtonDialogOpen(false);
+    setButtonEditPos(null);
+  }, [editor, buttonEditPos]);
+
   if (!editor) {
     return <div className="min-h-[240px] animate-pulse rounded-lg border border-dashed border-border bg-muted/30" />;
   }
@@ -562,13 +630,22 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
               />
             </div>
           </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setButtonDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="button" onClick={confirmButtonDialog}>
-              {buttonDialogMode === "insert" ? "Insert" : "Save"}
-            </Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+            {buttonDialogMode === "edit" ? (
+              <Button type="button" variant="destructive" onClick={removeEmailButton} className="sm:mr-auto">
+                Remove button
+              </Button>
+            ) : (
+              <span className="hidden sm:block sm:mr-auto" />
+            )}
+            <div className="flex w-full gap-2 sm:w-auto">
+              <Button type="button" variant="outline" onClick={() => setButtonDialogOpen(false)} className="flex-1 sm:flex-none">
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmButtonDialog} className="flex-1 sm:flex-none">
+                {buttonDialogMode === "insert" ? "Insert" : "Save"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
