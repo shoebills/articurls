@@ -28,6 +28,13 @@ const DELAY_OPTIONS = [
   { value: "1440", label: "1 day" },
 ] as const;
 
+const WELCOME_EMAIL_EXPANDED_KEY = "articurls:welcome-email-expanded";
+
+function readWelcomeEmailExpanded(): boolean {
+  if (typeof window === "undefined") return false;
+  return localStorage.getItem(WELCOME_EMAIL_EXPANDED_KEY) === "true";
+}
+
 function isEmptyBody(html: string): boolean {
   const t = html.trim();
   return !t || t === "<p></p>" || t === "<p><br></p>";
@@ -43,10 +50,24 @@ export default function AudienceEmailsPage() {
   const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
   const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    setExpanded(readWelcomeEmailExpanded());
+  }, []);
+
+  const toggleExpanded = useCallback(() => {
+    setExpanded((open) => {
+      const next = !open;
+      if (typeof window !== "undefined") {
+        localStorage.setItem(WELCOME_EMAIL_EXPANDED_KEY, String(next));
+      }
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (subjectUsesDefault) {
@@ -136,11 +157,11 @@ export default function AudienceEmailsPage() {
               tabIndex={0}
               aria-expanded={expanded}
               aria-label={expanded ? "Collapse welcome email settings" : "Expand welcome email settings"}
-              onClick={() => setExpanded((open) => !open)}
+              onClick={toggleExpanded}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
-                  setExpanded((open) => !open);
+                  toggleExpanded();
                 }
               }}
             >
@@ -164,15 +185,15 @@ export default function AudienceEmailsPage() {
             <CardContent className="space-y-5">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
+                  <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
+                    Enable
+                  </Label>
                   <Switch
                     id="welcome-enable"
                     checked={enabled}
                     onCheckedChange={onToggleWelcome}
                     disabled={busy}
                   />
-                  <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
-                    Enable
-                  </Label>
                 </div>
                 {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
               </div>
