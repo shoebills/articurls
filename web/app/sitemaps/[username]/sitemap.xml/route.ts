@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { fetchCategories, fetchPages, fetchPublishedPosts, fetchSeoEligibility } from "@/lib/seo-data";
-import { isIndexableDomainStatus, shouldIncludeInSitemap } from "@/lib/seo";
+import { isIndexableDomainStatus } from "@/lib/seo";
 import type { PublicUser } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -65,10 +65,8 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
   // This sitemap exists only for users indexed on articurls.com:
   // - Pro entitlement
   // - no active/grace custom domain
-  // - sitemap not disabled
   const seoEligibility = await fetchSeoEligibility(user.user_name || username);
   if (!seoEligibility?.can_index_on_marketing) return new NextResponse(null, { status: 404 });
-  if (!shouldIncludeInSitemap(user)) return new NextResponse(null, { status: 404 });
   if (isIndexableDomainStatus(user.domain_status)) return new NextResponse(null, { status: 404 });
 
   const usernamePath = encodeURIComponent(user.user_name || username);

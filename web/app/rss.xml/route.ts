@@ -85,7 +85,6 @@ export async function GET(req: NextRequest): Promise<Response> {
   const user = await loadUser(domainInfo.username);
   if (!user) return new NextResponse(null, { status: 404 });
   if (user.rss_enabled === false) return new NextResponse(null, { status: 404 });
-  if (user.sitemap_enabled === false) return new NextResponse(null, { status: 404 });
 
   const posts = await fetchPublishedPosts(domainInfo.username);
   const sorted = [...posts].sort(

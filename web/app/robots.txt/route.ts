@@ -11,7 +11,6 @@
  *   - pending         → Disallow all (not verified yet).
  *   - expired         → Disallow all (content redirects to articurls).
  *   - unknown host    → Disallow all (safe default).
- *   - robots_mode = "custom" → appends user's robots_custom_rules.
  *
  * ── Marketing domain request (no x-original-host, or internal hostname) ─────
  *   - Blocks dashboard, auth, and internal routes.
@@ -145,11 +144,6 @@ Sitemap: ${siteOrigin}/sitemap.xml
   if (user.rss_enabled !== false) {
     body += `Feed: ${siteOrigin}/rss.xml
 `;
-  }
-
-  // Append custom rules when user has opted in
-  if (user.robots_mode === "custom" && user.robots_custom_rules?.trim()) {
-    body += `\n${user.robots_custom_rules.trim()}\n`;
   }
 
   return new Response(body, {

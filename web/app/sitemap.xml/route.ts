@@ -9,7 +9,6 @@
  * ── Custom domain request (x-original-host is a non-internal hostname) ──────
  *   - Resolves the domain to a username via /internal/domain-lookup.
  *   - Returns 404 for pending/expired/none (don't index unverified domains).
- *   - Returns 404 if sitemap_enabled = false.
  *   - All URLs use https://{custom_domain}/... — NEVER articurls.com.
  *
  * ── Marketing domain request (no x-original-host, or internal hostname) ─────
@@ -173,9 +172,6 @@ async function customDomainSitemap(host: string): Promise<Response> {
   const user = await loadUser(username);
 
   if (!user) return new NextResponse(null, { status: 404 });
-
-  // User has opted out
-  if (user.sitemap_enabled === false) return new NextResponse(null, { status: 404 });
 
   // All URLs use the custom domain — NEVER articurls.com
   const siteOrigin = `https://${host}`;

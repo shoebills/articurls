@@ -439,7 +439,6 @@ def sitemap_users(request: Request, db: Session = Depends(get_db)):
     rows = (
         db.query(models.User)
         .filter(
-            models.User.sitemap_enabled.is_(True),
             ~models.User.domain_status.in_((models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)),
         )
         .all()
@@ -473,7 +472,7 @@ def user_seo_eligibility(username: str, request: Request, db: Session = Depends(
 
     is_pro = is_pro_entitled(db_user, db)
     has_active_custom_domain = db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
-    can_index_on_marketing = bool(is_pro and not has_active_custom_domain and db_user.sitemap_enabled)
+    can_index_on_marketing = bool(is_pro and not has_active_custom_domain)
 
     return {"is_pro": is_pro, "can_index_on_marketing": can_index_on_marketing}
 

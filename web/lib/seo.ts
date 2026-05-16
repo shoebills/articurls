@@ -23,16 +23,6 @@ export function buildBaseUrl(host: string): string {
 }
 
 /**
- * Determines whether a user's blog should be included in sitemap output.
- * Defaults to true; only returns false when explicitly disabled.
- */
-export function shouldIncludeInSitemap(user: {
-  sitemap_enabled?: boolean | null;
-}): boolean {
-  return user.sitemap_enabled !== false;
-}
-
-/**
  * Public content on articurls.com is indexable only for Pro users who do not
  * currently have an active/grace custom domain.
  */
