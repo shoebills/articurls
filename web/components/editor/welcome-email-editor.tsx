@@ -470,7 +470,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         <span className="hidden" aria-hidden>
           {selectionTick}
         </span>
-        <div className="flex flex-wrap items-center gap-0.5 border-b border-border bg-background p-2">
+        <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border bg-background p-2 [scrollbar-width:thin] sm:flex-wrap">
           <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
             <Undo2 className="h-4 w-4" />
           </Button>

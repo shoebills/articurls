@@ -132,7 +132,7 @@ export default function AudienceEmailsPage() {
                 <div className="space-y-1">
                   <CardTitle>Welcome email</CardTitle>
                   <CardDescription>
-                    Send a welcome email after a subscriber confirms their subscription.
+                    Send a welcome email to new subscribers.
                   </CardDescription>
                 </div>
                 <Switch
