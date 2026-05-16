@@ -16,13 +16,15 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ChevronDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const DELAY_OPTIONS = [
   { value: "0", label: "Immediately after confirm" },
   { value: "30", label: "30 minutes" },
   { value: "60", label: "1 hour" },
-  { value: "720", label: "12 hours" },
   { value: "360", label: "6 hours" },
+  { value: "720", label: "12 hours" },
   { value: "1440", label: "1 day" },
 ] as const;
 
@@ -41,6 +43,7 @@ export default function AudienceEmailsPage() {
   const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
   const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
+  const [expanded, setExpanded] = useState(true);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -127,25 +130,45 @@ export default function AudienceEmailsPage() {
           </p>
         ) : (
           <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
+            <CardHeader className="space-y-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="min-w-0 flex-1 space-y-1">
                   <CardTitle>Welcome email</CardTitle>
                   <CardDescription>
                     Send a welcome email to new subscribers.
                   </CardDescription>
                 </div>
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={onToggleWelcome}
-                  disabled={busy}
-                  aria-label="Enable welcome email"
-                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => setExpanded((open) => !open)}
+                  aria-expanded={expanded}
+                  aria-label={expanded ? "Collapse welcome email settings" : "Expand welcome email settings"}
+                >
+                  <ChevronDown
+                    className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")}
+                  />
+                </Button>
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="welcome-enable"
+                    checked={enabled}
+                    onCheckedChange={onToggleWelcome}
+                    disabled={busy}
+                  />
+                  <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
+                    Enable
+                  </Label>
+                </div>
+                {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
               </div>
             </CardHeader>
+            {expanded ? (
             <CardContent className="space-y-5">
-              {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
-
               <div className="space-y-2">
                 <Label htmlFor="welcome-delay">Send delay</Label>
                 <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
@@ -192,6 +215,7 @@ export default function AudienceEmailsPage() {
                 {busy ? "Saving…" : "Save welcome email"}
               </Button>
             </CardContent>
+            ) : null}
           </Card>
         )}
       </div>
