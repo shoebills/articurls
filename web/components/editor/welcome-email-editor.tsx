@@ -548,8 +548,8 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
             Button
           </Button>
         </div>
-        <div className="p-4 sm:p-6">
-          <div className="mx-auto max-w-[600px] rounded-lg border border-[#e5e5e5] bg-white p-6 sm:p-8">
+        <div className="p-0 sm:p-6">
+          <div className="w-full bg-white p-4 sm:mx-auto sm:max-w-[600px] sm:rounded-lg sm:border sm:border-[#e5e5e5] sm:p-8">
             <EditorContent editor={editor} />
           </div>
         </div>
