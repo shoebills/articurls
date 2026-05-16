@@ -240,7 +240,7 @@ body {
 }
 .prose-email a[data-email-button] {
   display: inline-block;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5625rem 1.125rem;
   background: #111111;
   color: #ffffff !important;
   text-decoration: none;

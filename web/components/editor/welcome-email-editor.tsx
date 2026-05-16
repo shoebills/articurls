@@ -35,7 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 
 const BUTTON_STYLE =
-  "display:inline-block;padding:14px 28px;background:#111111;color:#ffffff;text-decoration:none;font-size:14px;border-radius:4px;";
+  "display:inline-block;padding:10.5px 21px;background:#111111;color:#ffffff;text-decoration:none;font-size:14px;border-radius:4px;";
 
 const DEFAULT_BUTTON_LABEL = "Button";
 const DEFAULT_BUTTON_HREF = "https://";
@@ -134,6 +134,9 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const [buttonDialogMode, setButtonDialogMode] = useState<"insert" | "edit">("insert");
   const [buttonLabel, setButtonLabel] = useState(DEFAULT_BUTTON_LABEL);
   const [buttonHref, setButtonHref] = useState(DEFAULT_BUTTON_HREF);
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkHref, setLinkHref] = useState("https://");
+  const [linkIsActive, setLinkIsActive] = useState(false);
   const openButtonDialogRef = useRef<(mode: "insert" | "edit", attrs?: EmailButtonAttrs) => void>(() => {});
 
   const openButtonDialog = useCallback((mode: "insert" | "edit", attrs?: EmailButtonAttrs) => {
@@ -167,18 +170,44 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
       attributes: {
         class: "prose-email max-w-none focus:outline-none min-h-[200px]",
       },
-      handleClick: (view, pos) => {
-        const node = view.state.doc.nodeAt(pos);
+      handleClick: (view, pos, event) => {
+        const target = event.target as HTMLElement | null;
+        const anchor = target?.closest?.('a[data-email-button="true"]');
+        if (!anchor) return false;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        let nodePos = pos;
+        let node = view.state.doc.nodeAt(nodePos);
+        if (node?.type.name !== "emailButton") {
+          try {
+            const domPos = view.posAtDOM(anchor, 0);
+            const $dom = view.state.doc.resolve(domPos);
+            if ($dom.nodeBefore?.type.name === "emailButton") {
+              node = $dom.nodeBefore;
+              nodePos = domPos - node.nodeSize;
+            } else if ($dom.nodeAfter?.type.name === "emailButton") {
+              node = $dom.nodeAfter;
+              nodePos = domPos;
+            } else {
+              node = view.state.doc.nodeAt(domPos);
+              nodePos = domPos;
+            }
+          } catch {
+            return true;
+          }
+        }
+
         if (node?.type.name === "emailButton") {
-          const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, pos));
+          const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos));
           view.dispatch(tr);
           openButtonDialogRef.current("edit", {
             label: String(node.attrs.label || DEFAULT_BUTTON_LABEL),
             href: String(node.attrs.href || DEFAULT_BUTTON_HREF),
           });
-          return true;
         }
-        return false;
+        return true;
       },
     },
     onUpdate: ({ editor: ed }) => onChange(ed.getHTML()),
@@ -204,6 +233,23 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
 
   useEffect(() => {
     if (!editor) return;
+    const root = editor.view.dom;
+    const stopLinkNavigation = (event: MouseEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (target?.closest?.('a[data-email-button="true"]')) {
+        event.preventDefault();
+      }
+    };
+    root.addEventListener("mousedown", stopLinkNavigation, true);
+    root.addEventListener("click", stopLinkNavigation, true);
+    return () => {
+      root.removeEventListener("mousedown", stopLinkNavigation, true);
+      root.removeEventListener("click", stopLinkNavigation, true);
+    };
+  }, [editor]);
+
+  useEffect(() => {
+    if (!editor) return;
     const current = editor.getHTML();
     if (content !== current && !isFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
@@ -216,16 +262,29 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     }
   }, [editor, disabled]);
 
-  const setLink = useCallback(() => {
+  const openLinkDialog = useCallback(() => {
     if (!editor) return;
-    const prev = editor.getAttributes("link").href;
-    const url = window.prompt("URL", prev || "https://");
-    if (url === null) return;
-    if (url === "") {
+    const active = editor.isActive("link");
+    setLinkIsActive(active);
+    setLinkHref(active ? String(editor.getAttributes("link").href || "") : "https://");
+    setLinkDialogOpen(true);
+  }, [editor]);
+
+  const confirmLinkDialog = useCallback(() => {
+    if (!editor) return;
+    const url = linkHref.trim();
+    if (!url) {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
-      return;
+    } else {
+      editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
     }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    setLinkDialogOpen(false);
+  }, [editor, linkHref]);
+
+  const removeLink = useCallback(() => {
+    if (!editor) return;
+    editor.chain().focus().extendMarkRange("link").unsetLink().run();
+    setLinkDialogOpen(false);
   }, [editor]);
 
   const confirmButtonDialog = useCallback(() => {
@@ -307,7 +366,13 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           >
             <UnderlineIcon className="h-4 w-4" />
           </Button>
-          <Button type="button" variant="ghost" size="icon" onClick={setLink}>
+          <Button
+            type="button"
+            variant={editor.isActive("link") ? "secondary" : "ghost"}
+            size="icon"
+            onClick={openLinkDialog}
+            title={editor.isActive("link") ? "Edit or remove link" : "Add link"}
+          >
             <Link2 className="h-4 w-4" />
           </Button>
           <Button
@@ -336,6 +401,53 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           </div>
         </div>
       </div>
+
+      <Dialog open={linkDialogOpen} onOpenChange={setLinkDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{linkIsActive ? "Edit link" : "Add link"}</DialogTitle>
+            <DialogDescription>
+              {linkIsActive
+                ? "Update the URL or remove the link from the selected text."
+                : "Enter a URL for the selected text."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="email-inline-link">URL</Label>
+            <Input
+              id="email-inline-link"
+              type="url"
+              value={linkHref}
+              onChange={(e) => setLinkHref(e.target.value)}
+              placeholder="https://"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  confirmLinkDialog();
+                }
+              }}
+            />
+          </div>
+          <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+            {linkIsActive ? (
+              <Button type="button" variant="destructive" onClick={removeLink} className="sm:mr-auto">
+                Remove link
+              </Button>
+            ) : (
+              <span className="hidden sm:block sm:mr-auto" />
+            )}
+            <div className="flex w-full gap-2 sm:w-auto">
+              <Button type="button" variant="outline" onClick={() => setLinkDialogOpen(false)} className="flex-1 sm:flex-none">
+                Cancel
+              </Button>
+              <Button type="button" onClick={confirmLinkDialog} className="flex-1 sm:flex-none">
+                {linkIsActive ? "Save" : "Add link"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={buttonDialogOpen} onOpenChange={setButtonDialogOpen}>
         <DialogContent className="sm:max-w-md">

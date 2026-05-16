@@ -120,7 +120,7 @@ def inline_fragment_styles(fragment: str) -> str:
     out = style_tag("li", "margin:0 0 8px;font-size:16px;color:#555555;line-height:1.6;", out)
 
     button_style = (
-        "display:inline-block;padding:14px 28px;background:#111111;color:#ffffff;"
+        "display:inline-block;padding:10.5px 21px;background:#111111;color:#ffffff;"
         "text-decoration:none;font-size:14px;border-radius:4px;"
     )
     out = re.sub(
