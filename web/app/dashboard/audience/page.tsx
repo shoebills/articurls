@@ -130,28 +130,38 @@ export default function AudienceEmailsPage() {
           </p>
         ) : (
           <Card>
-            <CardHeader className="space-y-4">
-              <div className="flex items-start justify-between gap-4">
+            <CardHeader
+              className="cursor-pointer"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expanded}
+              aria-label={expanded ? "Collapse welcome email settings" : "Expand welcome email settings"}
+              onClick={() => setExpanded((open) => !open)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  setExpanded((open) => !open);
+                }
+              }}
+            >
+              <div className="flex w-full items-center justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-1">
                   <CardTitle>Welcome email</CardTitle>
                   <CardDescription>
                     Send a welcome email to new subscribers.
                   </CardDescription>
                 </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  className="shrink-0"
-                  onClick={() => setExpanded((open) => !open)}
-                  aria-expanded={expanded}
-                  aria-label={expanded ? "Collapse welcome email settings" : "Expand welcome email settings"}
-                >
-                  <ChevronDown
-                    className={cn("h-4 w-4 transition-transform duration-200", expanded && "rotate-180")}
-                  />
-                </Button>
+                <ChevronDown
+                  className={cn(
+                    "ml-4 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
+                    expanded && "rotate-180"
+                  )}
+                  aria-hidden
+                />
               </div>
+            </CardHeader>
+            {expanded ? (
+            <CardContent className="space-y-5">
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
                   <Switch
@@ -166,9 +176,6 @@ export default function AudienceEmailsPage() {
                 </div>
                 {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
               </div>
-            </CardHeader>
-            {expanded ? (
-            <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="welcome-delay">Send delay</Label>
                 <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
