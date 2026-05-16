@@ -5,7 +5,7 @@ import { ApiError, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/
 import { useAuth } from "@/lib/auth-context";
 import { WelcomeEmailEditor } from "@/components/editor/welcome-email-editor";
 import { WELCOME_EMAIL_STARTER_HTML } from "@/lib/welcome-email-content";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -94,20 +94,10 @@ export default function AudienceEmailsPage() {
     }
   }
 
-  function resetToDefault() {
-    setBodyHtml(WELCOME_EMAIL_STARTER_HTML);
-    setSaved(false);
-  }
-
   return (
     <>
       <div className="space-y-6">
-        <section className="space-y-2">
-          <h2 className="text-xl font-semibold tracking-tight">Email Automation</h2>
-          <p className="text-sm text-muted-foreground">
-            Send a welcome email after a subscriber confirms their subscription.
-          </p>
-        </section>
+        <h2 className="text-xl font-semibold tracking-tight">Email Automation</h2>
 
         {!isPro ? (
           <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
@@ -117,7 +107,12 @@ export default function AudienceEmailsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <CardTitle>Welcome email</CardTitle>
+                <div className="space-y-1">
+                  <CardTitle>Welcome email</CardTitle>
+                  <CardDescription>
+                    Send a welcome email after a subscriber confirms their subscription.
+                  </CardDescription>
+                </div>
                 <Switch
                   checked={enabled}
                   onCheckedChange={onToggleWelcome}
@@ -159,27 +154,17 @@ export default function AudienceEmailsPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                <Label>Message</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={resetToDefault}
-                  disabled={!enabled || busy}
-                >
-                  Reset to default
-                </Button>
-              </div>
-
-              <WelcomeEmailEditor
+              <div className="space-y-2">
+                <Label>Body</Label>
+                <WelcomeEmailEditor
                 content={bodyHtml}
                 onChange={(html) => {
                   setBodyHtml(html);
                   setSaved(false);
                 }}
                 disabled={!enabled || busy}
-              />
+                />
+              </div>
 
               <Button onClick={onSave} disabled={busy}>
                 {busy ? "Saving…" : "Save welcome email"}

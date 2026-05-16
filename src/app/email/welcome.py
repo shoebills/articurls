@@ -115,9 +115,21 @@ def inline_fragment_styles(fragment: str) -> str:
     out = style_tag("h2", "margin:0 0 20px;font-size:28px;font-weight:bold;color:#111111;line-height:1.3;", out)
     out = style_tag("h3", "margin:0 0 16px;font-size:22px;font-weight:bold;color:#111111;line-height:1.3;", out)
     out = style_tag("p", "margin:0 0 16px;font-size:16px;color:#555555;line-height:1.6;", out)
-    out = style_tag("ul", "margin:0 0 16px;padding-left:24px;font-size:16px;color:#555555;line-height:1.6;", out)
-    out = style_tag("ol", "margin:0 0 16px;padding-left:24px;font-size:16px;color:#555555;line-height:1.6;", out)
-    out = style_tag("li", "margin:0 0 8px;font-size:16px;color:#555555;line-height:1.6;", out)
+    out = style_tag(
+        "ul",
+        "margin:0 0 16px;padding-left:24px;list-style-type:disc;font-size:16px;color:#555555;line-height:1.6;",
+        out,
+    )
+    out = style_tag(
+        "ol",
+        "margin:0 0 16px;padding-left:24px;list-style-type:decimal;font-size:16px;color:#555555;line-height:1.6;",
+        out,
+    )
+    out = style_tag(
+        "li",
+        "margin:0 0 8px;display:list-item;font-size:16px;color:#555555;line-height:1.6;",
+        out,
+    )
 
     button_style = (
         "display:inline-block;padding:10.5px 21px;background:#111111;color:#ffffff;"

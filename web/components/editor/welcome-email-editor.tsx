@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Node, mergeAttributes } from "@tiptap/core";
 import { NodeSelection } from "@tiptap/pm/state";
 import { EditorContent, useEditor } from "@tiptap/react";
@@ -34,8 +34,9 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const BUTTON_STYLE =
-  "display:inline-block;padding:10.5px 21px;background:#111111;color:#ffffff;text-decoration:none;font-size:14px;border-radius:4px;";
+/** 25% smaller than original 14px × 28px — applied in editor and exported HTML */
+const BUTTON_PADDING = "10.5px 21px";
+const BUTTON_STYLE = `display:inline-block;padding:${BUTTON_PADDING};background:#111111;color:#ffffff;text-decoration:none;font-size:14px;border-radius:4px;line-height:1.2;`;
 
 const DEFAULT_BUTTON_LABEL = "Button";
 const DEFAULT_BUTTON_HREF = "https://";
@@ -45,71 +46,142 @@ type EmailButtonAttrs = {
   href: string;
 };
 
-const EmailButton = Node.create({
-  name: "emailButton",
-  group: "block",
-  atom: true,
-  selectable: true,
-  addAttributes() {
-    return {
-      label: { default: DEFAULT_BUTTON_LABEL },
-      href: { default: DEFAULT_BUTTON_HREF },
-    };
-  },
-  parseHTML() {
-    return [
-      {
-        tag: 'a[data-email-button="true"]',
-        getAttrs: (element) => {
-          if (typeof element === "string") return false;
-          const anchor = element as HTMLAnchorElement;
-          return {
-            label: (anchor.textContent || "").trim() || DEFAULT_BUTTON_LABEL,
-            href: anchor.getAttribute("href") || DEFAULT_BUTTON_HREF,
-          };
+type EmailButtonStorage = {
+  onEdit: ((pos: number, attrs: EmailButtonAttrs) => void) | null;
+};
+
+function readButtonAttrsFromAnchor(anchor: HTMLAnchorElement): EmailButtonAttrs {
+  return {
+    label: (anchor.textContent || "").trim() || DEFAULT_BUTTON_LABEL,
+    href: anchor.getAttribute("href") || DEFAULT_BUTTON_HREF,
+  };
+}
+
+function createEmailButtonExtension() {
+  return Node.create<unknown, EmailButtonStorage>({
+    name: "emailButton",
+    group: "block",
+    atom: true,
+    selectable: true,
+
+    addStorage() {
+      return { onEdit: null };
+    },
+
+    addAttributes() {
+      return {
+        label: { default: DEFAULT_BUTTON_LABEL },
+        href: { default: DEFAULT_BUTTON_HREF },
+      };
+    },
+
+    parseHTML() {
+      return [
+        {
+          tag: 'p[data-email-button-wrap]',
+          getAttrs: (element) => {
+            if (typeof element === "string") return false;
+            const el = element as HTMLElement;
+            const anchor = el.querySelector('a[data-email-button="true"]');
+            if (!anchor) return false;
+            return readButtonAttrsFromAnchor(anchor as HTMLAnchorElement);
+          },
         },
-      },
-    ];
-  },
-  renderHTML({ HTMLAttributes }) {
-    const label = HTMLAttributes.label || DEFAULT_BUTTON_LABEL;
-    const href = HTMLAttributes.href || DEFAULT_BUTTON_HREF;
-    return [
-      "p",
-      { "data-email-button-wrap": "true", style: "margin:0;padding-bottom:35px;" },
-      [
-        "a",
-        mergeAttributes({
-          "data-email-button": "true",
-          href,
-          style: BUTTON_STYLE,
-        }),
-        label,
-      ],
-    ];
-  },
-  addCommands() {
-    return {
-      insertEmailButton:
-        (attrs?: Partial<EmailButtonAttrs>) =>
-        ({ commands }) =>
-          commands.insertContent({
-            type: this.name,
-            attrs: {
-              label: attrs?.label?.trim() || DEFAULT_BUTTON_LABEL,
-              href: attrs?.href?.trim() || DEFAULT_BUTTON_HREF,
-            },
+        {
+          tag: 'a[data-email-button="true"]',
+          getAttrs: (element) => {
+            if (typeof element === "string") return false;
+            return readButtonAttrsFromAnchor(element as HTMLAnchorElement);
+          },
+        },
+      ];
+    },
+
+    renderHTML({ HTMLAttributes }) {
+      const label = HTMLAttributes.label || DEFAULT_BUTTON_LABEL;
+      const href = HTMLAttributes.href || DEFAULT_BUTTON_HREF;
+      return [
+        "p",
+        { "data-email-button-wrap": "true", style: "margin:0;padding-bottom:35px;" },
+        [
+          "a",
+          mergeAttributes({
+            "data-email-button": "true",
+            href,
+            style: BUTTON_STYLE,
           }),
-      updateEmailButton:
-        (attrs: EmailButtonAttrs) =>
-        ({ commands }) =>
-          commands.updateAttributes(this.name, {
-            label: attrs.label.trim() || DEFAULT_BUTTON_LABEL,
-            href: attrs.href.trim() || DEFAULT_BUTTON_HREF,
-          }),
-    };
-  },
-});
+          label,
+        ],
+      ];
+    },
+
+    addNodeView() {
+      return ({ node, getPos, editor }) => {
+        const wrap = document.createElement("p");
+        wrap.dataset.emailButtonWrap = "true";
+        wrap.style.margin = "0";
+        wrap.style.paddingBottom = "35px";
+
+        const anchor = document.createElement("a");
+        anchor.dataset.emailButton = "true";
+        anchor.style.cssText = BUTTON_STYLE;
+        anchor.href = String(node.attrs.href || DEFAULT_BUTTON_HREF);
+        anchor.textContent = String(node.attrs.label || DEFAULT_BUTTON_LABEL);
+
+        const openEdit = (event: Event) => {
+          event.preventDefault();
+          event.stopPropagation();
+          const pos = getPos();
+          if (typeof pos !== "number") return;
+          editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, pos)));
+          const onEdit = editor.storage.emailButton?.onEdit;
+          onEdit?.(pos, {
+            label: String(node.attrs.label || DEFAULT_BUTTON_LABEL),
+            href: String(node.attrs.href || DEFAULT_BUTTON_HREF),
+          });
+        };
+
+        anchor.addEventListener("mousedown", (event) => event.preventDefault());
+        anchor.addEventListener("click", openEdit);
+
+        wrap.appendChild(anchor);
+
+        return {
+          dom: wrap,
+          update: (updatedNode) => {
+            if (updatedNode.type.name !== "emailButton") return false;
+            anchor.href = String(updatedNode.attrs.href || DEFAULT_BUTTON_HREF);
+            anchor.textContent = String(updatedNode.attrs.label || DEFAULT_BUTTON_LABEL);
+            return true;
+          },
+          ignoreMutation: () => true,
+        };
+      };
+    },
+
+    addCommands() {
+      return {
+        insertEmailButton:
+          (attrs?: Partial<EmailButtonAttrs>) =>
+          ({ commands }) =>
+            commands.insertContent({
+              type: this.name,
+              attrs: {
+                label: attrs?.label?.trim() || DEFAULT_BUTTON_LABEL,
+                href: attrs?.href?.trim() || DEFAULT_BUTTON_HREF,
+              },
+            }),
+        updateEmailButton:
+          (attrs: EmailButtonAttrs) =>
+          ({ commands }) =>
+            commands.updateAttributes(this.name, {
+              label: attrs.label.trim() || DEFAULT_BUTTON_LABEL,
+              href: attrs.href.trim() || DEFAULT_BUTTON_HREF,
+            }),
+      };
+    },
+  });
+}
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -117,6 +189,10 @@ declare module "@tiptap/core" {
       insertEmailButton: (attrs?: Partial<EmailButtonAttrs>) => ReturnType;
       updateEmailButton: (attrs: EmailButtonAttrs) => ReturnType;
     };
+  }
+
+  interface Storage {
+    emailButton: EmailButtonStorage;
   }
 }
 
@@ -132,23 +208,22 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const isFocusedRef = useRef(false);
   const [buttonDialogOpen, setButtonDialogOpen] = useState(false);
   const [buttonDialogMode, setButtonDialogMode] = useState<"insert" | "edit">("insert");
+  const [buttonEditPos, setButtonEditPos] = useState<number | null>(null);
   const [buttonLabel, setButtonLabel] = useState(DEFAULT_BUTTON_LABEL);
   const [buttonHref, setButtonHref] = useState(DEFAULT_BUTTON_HREF);
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkHref, setLinkHref] = useState("https://");
   const [linkIsActive, setLinkIsActive] = useState(false);
-  const openButtonDialogRef = useRef<(mode: "insert" | "edit", attrs?: EmailButtonAttrs) => void>(() => {});
 
-  const openButtonDialog = useCallback((mode: "insert" | "edit", attrs?: EmailButtonAttrs) => {
+  const emailButtonExtension = useMemo(() => createEmailButtonExtension(), []);
+
+  const openButtonDialog = useCallback((mode: "insert" | "edit", attrs?: EmailButtonAttrs, pos?: number) => {
     setButtonDialogMode(mode);
+    setButtonEditPos(mode === "edit" ? (pos ?? null) : null);
     setButtonLabel(attrs?.label?.trim() || DEFAULT_BUTTON_LABEL);
     setButtonHref(attrs?.href?.trim() || DEFAULT_BUTTON_HREF);
     setButtonDialogOpen(true);
   }, []);
-
-  useEffect(() => {
-    openButtonDialogRef.current = openButtonDialog;
-  }, [openButtonDialog]);
 
   const editor = useEditor({
     extensions: [
@@ -162,7 +237,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
       Underline,
       Link.configure({ openOnClick: false, autolink: true }),
       Placeholder.configure({ placeholder: "Write your welcome message…" }),
-      EmailButton,
+      emailButtonExtension,
     ],
     content,
     editable: !disabled,
@@ -170,50 +245,18 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
       attributes: {
         class: "prose-email max-w-none focus:outline-none min-h-[200px]",
       },
-      handleClick: (view, pos, event) => {
-        const target = event.target as HTMLElement | null;
-        const anchor = target?.closest?.('a[data-email-button="true"]');
-        if (!anchor) return false;
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        let nodePos = pos;
-        let node = view.state.doc.nodeAt(nodePos);
-        if (node?.type.name !== "emailButton") {
-          try {
-            const domPos = view.posAtDOM(anchor, 0);
-            const $dom = view.state.doc.resolve(domPos);
-            if ($dom.nodeBefore?.type.name === "emailButton") {
-              node = $dom.nodeBefore;
-              nodePos = domPos - node.nodeSize;
-            } else if ($dom.nodeAfter?.type.name === "emailButton") {
-              node = $dom.nodeAfter;
-              nodePos = domPos;
-            } else {
-              node = view.state.doc.nodeAt(domPos);
-              nodePos = domPos;
-            }
-          } catch {
-            return true;
-          }
-        }
-
-        if (node?.type.name === "emailButton") {
-          const tr = view.state.tr.setSelection(NodeSelection.create(view.state.doc, nodePos));
-          view.dispatch(tr);
-          openButtonDialogRef.current("edit", {
-            label: String(node.attrs.label || DEFAULT_BUTTON_LABEL),
-            href: String(node.attrs.href || DEFAULT_BUTTON_HREF),
-          });
-        }
-        return true;
-      },
     },
     onUpdate: ({ editor: ed }) => onChange(ed.getHTML()),
     onSelectionUpdate: () => setSelectionTick((v) => v + 1),
     immediatelyRender: false,
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    editor.storage.emailButton.onEdit = (pos, attrs) => {
+      openButtonDialog("edit", attrs, pos);
+    };
+  }, [editor, openButtonDialog]);
 
   useEffect(() => {
     if (!editor) return;
@@ -228,23 +271,6 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     return () => {
       editor.off("focus", onFocus);
       editor.off("blur", onBlur);
-    };
-  }, [editor]);
-
-  useEffect(() => {
-    if (!editor) return;
-    const root = editor.view.dom;
-    const stopLinkNavigation = (event: MouseEvent) => {
-      const target = event.target as HTMLElement | null;
-      if (target?.closest?.('a[data-email-button="true"]')) {
-        event.preventDefault();
-      }
-    };
-    root.addEventListener("mousedown", stopLinkNavigation, true);
-    root.addEventListener("click", stopLinkNavigation, true);
-    return () => {
-      root.removeEventListener("mousedown", stopLinkNavigation, true);
-      root.removeEventListener("click", stopLinkNavigation, true);
     };
   }, [editor]);
 
@@ -295,11 +321,14 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     };
     if (buttonDialogMode === "insert") {
       editor.chain().focus().insertEmailButton(attrs).run();
+    } else if (buttonEditPos !== null) {
+      editor.chain().focus().setNodeSelection(buttonEditPos).updateEmailButton(attrs).run();
     } else {
       editor.chain().focus().updateEmailButton(attrs).run();
     }
     setButtonDialogOpen(false);
-  }, [editor, buttonDialogMode, buttonLabel, buttonHref]);
+    setButtonEditPos(null);
+  }, [editor, buttonDialogMode, buttonLabel, buttonHref, buttonEditPos]);
 
   if (!editor) {
     return <div className="min-h-[240px] animate-pulse rounded-lg border border-dashed border-border bg-muted/30" />;
