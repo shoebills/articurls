@@ -180,3 +180,14 @@ class WelcomeEmailSettingsUpdate(BaseModel):
     welcome_email_subject: Optional[str] = None
     welcome_email_body_html: Optional[str] = None
     welcome_email_delay_minutes: Optional[int] = None
+
+
+class WelcomeEmailPreviewIn(BaseModel):
+    welcome_email_subject: Optional[str] = None
+    welcome_email_body_html: Optional[str] = None
+    use_default_body: bool = False
+
+
+class WelcomeEmailPreviewOut(BaseModel):
+    subject: str
+    html: str

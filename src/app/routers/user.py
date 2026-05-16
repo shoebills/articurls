@@ -8,7 +8,12 @@ from ..security import hashing, oauth2
 from ..schemas import user
 from ..schemas import page as page_schema
 from ..email.service import send_verify_new_user
-from ..email.welcome import sanitize_welcome_body, sanitize_welcome_subject, validate_delay_minutes
+from ..email.welcome import (
+    render_welcome_email,
+    sanitize_welcome_body,
+    sanitize_welcome_subject,
+    validate_delay_minutes,
+)
 from datetime import timedelta
 from ..config import settings
 from fastapi import UploadFile, File
@@ -30,6 +35,7 @@ from ..utils import (
     user_by_email,
     user_by_username,
     validate_username_or_raise,
+    public_blog_home_url,
 )
 
 router = APIRouter(
@@ -446,6 +452,38 @@ def update_welcome_email_settings(
     db.commit()
     db.refresh(db_user)
     return db_user
+
+
+@router.post("/welcome-email/preview", response_model=user.WelcomeEmailPreviewOut, status_code=status.HTTP_200_OK)
+def preview_welcome_email(
+    request: user.WelcomeEmailPreviewIn,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    is_pro=Depends(require_pro),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    blog_name = db_user.name
+    blog_url = public_blog_home_url(db_user)
+    unsubscribe_url = f"{settings.public_base_url.rstrip('/')}/unsubscribe?token=preview"
+
+    custom_body = None
+    if not request.use_default_body:
+        try:
+            custom_body = sanitize_welcome_body(request.welcome_email_body_html)
+        except ValueError as exc:
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(exc))
+
+    subject, html = render_welcome_email(
+        blog_name=blog_name,
+        blog_url=blog_url,
+        unsubscribe_url=unsubscribe_url,
+        custom_subject=request.welcome_email_subject,
+        custom_body_html=custom_body,
+    )
+    return {"subject": subject, "html": html}
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)

@@ -211,6 +211,11 @@ export interface WelcomeEmailSettings {
   welcome_email_delay_minutes: number;
 }
 
+export interface WelcomeEmailPreview {
+  subject: string;
+  html: string;
+}
+
 export interface SubscriptionOut {
   subscription_id: number;
   plan_type: string;
