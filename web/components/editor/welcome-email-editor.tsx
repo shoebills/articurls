@@ -65,7 +65,7 @@ type EmailButtonAttrs = {
 };
 
 type EmailButtonStorage = {
-  onEdit: ((pos: number, attrs: EmailButtonAttrs) => void) | null;
+  onEdit: ((pos: number) => void) | null;
 };
 
 function readButtonAttrsFromAnchor(anchor: HTMLAnchorElement): EmailButtonAttrs {
@@ -246,12 +246,10 @@ function createEmailButtonExtension() {
           event.stopPropagation();
           const pos = getPos();
           if (typeof pos !== "number") return;
+          const currentNode = editor.state.doc.nodeAt(pos);
+          if (!currentNode || currentNode.type.name !== "emailButton") return;
           editor.view.dispatch(editor.state.tr.setSelection(NodeSelection.create(editor.state.doc, pos)));
-          const onEdit = editor.storage.emailButton?.onEdit;
-          onEdit?.(pos, {
-            label: String(node.attrs.label || DEFAULT_BUTTON_LABEL),
-            href: String(node.attrs.href || DEFAULT_BUTTON_HREF),
-          });
+          editor.storage.emailButton?.onEdit?.(pos);
         };
 
         anchor.addEventListener("mousedown", (event) => event.preventDefault());
@@ -366,8 +364,13 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
 
   useEffect(() => {
     if (!editor) return;
-    editor.storage.emailButton.onEdit = (pos, attrs) => {
-      openButtonDialog("edit", attrs, pos);
+    editor.storage.emailButton.onEdit = (pos) => {
+      const node = editor.state.doc.nodeAt(pos);
+      if (!node || node.type.name !== "emailButton") return;
+      openButtonDialog("edit", {
+        label: String(node.attrs.label || DEFAULT_BUTTON_LABEL),
+        href: String(node.attrs.href || DEFAULT_BUTTON_HREF),
+      }, pos);
     };
   }, [editor, openButtonDialog]);
 
