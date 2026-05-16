@@ -5,7 +5,7 @@ import { ApiError, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/
 import { useAuth } from "@/lib/auth-context";
 import { WelcomeEmailEditor } from "@/components/editor/welcome-email-editor";
 import { WELCOME_EMAIL_STARTER_HTML } from "@/lib/welcome-email-content";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -31,8 +31,7 @@ export default function AudienceEmailsPage() {
   const { token, isPro } = useAuth();
   const [enabled, setEnabled] = useState(false);
   const [subject, setSubject] = useState("");
-  const [bodyHtml, setBodyHtml] = useState("");
-  const [useDefaultBody, setUseDefaultBody] = useState(true);
+  const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -44,10 +43,8 @@ export default function AudienceEmailsPage() {
       const settings = await getWelcomeEmailSettings(token);
       setEnabled(settings.welcome_email_enabled);
       setSubject(settings.welcome_email_subject || "");
-      const storedBody = settings.welcome_email_body_html || "";
-      const hasCustom = Boolean(storedBody.trim());
-      setUseDefaultBody(!hasCustom);
-      setBodyHtml(hasCustom ? storedBody : WELCOME_EMAIL_STARTER_HTML);
+      const storedBody = settings.welcome_email_body_html?.trim();
+      setBodyHtml(storedBody || WELCOME_EMAIL_STARTER_HTML);
       const delay = String(settings.welcome_email_delay_minutes ?? 0);
       setDelayMinutes(DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0");
     } catch (e) {
@@ -68,7 +65,7 @@ export default function AudienceEmailsPage() {
       await patchWelcomeEmailSettings(token, {
         welcome_email_enabled: enabled,
         welcome_email_subject: subject.trim() || null,
-        welcome_email_body_html: useDefaultBody || isEmptyBody(bodyHtml) ? null : bodyHtml,
+        welcome_email_body_html: isEmptyBody(bodyHtml) ? null : bodyHtml,
         welcome_email_delay_minutes: Number(delayMinutes),
       });
       setSaved(true);
@@ -97,11 +94,8 @@ export default function AudienceEmailsPage() {
     }
   }
 
-  function onToggleCustomMessage(next: boolean) {
-    setUseDefaultBody(!next);
-    if (next && isEmptyBody(bodyHtml)) {
-      setBodyHtml(WELCOME_EMAIL_STARTER_HTML);
-    }
+  function resetToDefault() {
+    setBodyHtml(WELCOME_EMAIL_STARTER_HTML);
     setSaved(false);
   }
 
@@ -123,12 +117,7 @@ export default function AudienceEmailsPage() {
           <Card>
             <CardHeader>
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                <div className="space-y-1">
-                  <CardTitle>Welcome email</CardTitle>
-                  <CardDescription>
-                    Customize the message or use the built-in template. Every send uses the same polished email layout.
-                  </CardDescription>
-                </div>
+                <CardTitle>Welcome email</CardTitle>
                 <Switch
                   checked={enabled}
                   onCheckedChange={onToggleWelcome}
@@ -170,34 +159,27 @@ export default function AudienceEmailsPage() {
                 />
               </div>
 
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="space-y-1">
-                  <Label htmlFor="custom-message">Custom message</Label>
-                  <p className="text-sm text-muted-foreground">
-                    {useDefaultBody
-                      ? "Using the built-in welcome template."
-                      : "Edit your welcome copy in the layout below."}
-                  </p>
-                </div>
-                <Switch
-                  id="custom-message"
-                  checked={!useDefaultBody}
-                  onCheckedChange={onToggleCustomMessage}
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                <Label>Message</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={resetToDefault}
                   disabled={!enabled || busy}
-                  aria-label="Use custom welcome message"
-                />
+                >
+                  Reset to default
+                </Button>
               </div>
 
-              {!useDefaultBody && enabled ? (
-                <WelcomeEmailEditor
-                  content={bodyHtml}
-                  onChange={(html) => {
-                    setBodyHtml(html);
-                    setSaved(false);
-                  }}
-                  disabled={busy}
-                />
-              ) : null}
+              <WelcomeEmailEditor
+                content={bodyHtml}
+                onChange={(html) => {
+                  setBodyHtml(html);
+                  setSaved(false);
+                }}
+                disabled={!enabled || busy}
+              />
 
               <Button onClick={onSave} disabled={busy}>
                 {busy ? "Saving…" : "Save welcome email"}
