@@ -27,8 +27,15 @@ def _strip_disallowed_tags(html: str) -> str:
         html,
         flags=re.IGNORECASE,
     )
+    # Only strip real <button> elements — not data-email-button attributes on anchors.
     html = re.sub(
-        r"<(iframe|object|embed|form|input|textarea|select|button)\b[^>]*>.*?</\1>",
+        r"<button\b[^>]*>.*?</button>",
+        "",
+        html,
+        flags=re.IGNORECASE | re.DOTALL,
+    )
+    html = re.sub(
+        r"<(iframe|object|embed|form|input|textarea|select)\b[^>]*>.*?</\1>",
         "",
         html,
         flags=re.IGNORECASE | re.DOTALL,

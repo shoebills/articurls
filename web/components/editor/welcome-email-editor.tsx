@@ -7,6 +7,24 @@ import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
+
+/** Do not treat CTA anchors as inline link marks — they are emailButton blocks. */
+const WelcomeEmailLink = Link.extend({
+  parseHTML() {
+    return [
+      {
+        tag: 'a[href]:not([data-email-button])',
+        getAttrs: (element) => {
+          if (typeof element === "string") return false;
+          const el = element as HTMLAnchorElement;
+          if (el.getAttribute("data-email-button") === "true") return false;
+          const href = el.getAttribute("href");
+          return href ? { href } : false;
+        },
+      },
+    ];
+  },
+});
 import Placeholder from "@tiptap/extension-placeholder";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -70,8 +88,31 @@ function createEmailButtonExtension() {
 
     addAttributes() {
       return {
-        label: { default: DEFAULT_BUTTON_LABEL },
-        href: { default: DEFAULT_BUTTON_HREF },
+        label: {
+          default: DEFAULT_BUTTON_LABEL,
+          parseHTML: (element) => {
+            if (typeof element === "string") return DEFAULT_BUTTON_LABEL;
+            const anchor = element as HTMLElement;
+            if (anchor.tagName === "A") {
+              return (anchor.textContent || "").trim() || DEFAULT_BUTTON_LABEL;
+            }
+            const inner = anchor.querySelector('a[data-email-button="true"]');
+            return (inner?.textContent || "").trim() || DEFAULT_BUTTON_LABEL;
+          },
+        },
+        href: {
+          default: DEFAULT_BUTTON_HREF,
+          parseHTML: (element) => {
+            if (typeof element === "string") return DEFAULT_BUTTON_HREF;
+            const el = element as HTMLElement;
+            const anchor = el.tagName === "A" ? el : el.querySelector('a[data-email-button="true"]');
+            return anchor?.getAttribute("href") || DEFAULT_BUTTON_HREF;
+          },
+          renderHTML: (attributes) => {
+            if (!attributes.href) return {};
+            return { href: attributes.href };
+          },
+        },
       };
     },
 
@@ -79,6 +120,7 @@ function createEmailButtonExtension() {
       return [
         {
           tag: 'p[data-email-button-wrap]',
+          priority: 1000,
           getAttrs: (element) => {
             if (typeof element === "string") return false;
             const el = element as HTMLElement;
@@ -89,9 +131,23 @@ function createEmailButtonExtension() {
         },
         {
           tag: 'a[data-email-button="true"]',
+          priority: 1000,
           getAttrs: (element) => {
             if (typeof element === "string") return false;
             return readButtonAttrsFromAnchor(element as HTMLAnchorElement);
+          },
+        },
+        {
+          tag: "p",
+          priority: 999,
+          getAttrs: (element) => {
+            if (typeof element === "string") return false;
+            const el = element as HTMLElement;
+            const anchor = el.querySelector(':scope > a[data-email-button="true"]');
+            if (!anchor) return false;
+            const childElements = Array.from(el.children);
+            if (childElements.length !== 1 || childElements[0] !== anchor) return false;
+            return readButtonAttrsFromAnchor(anchor as HTMLAnchorElement);
           },
         },
       ];
@@ -235,9 +291,9 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         horizontalRule: false,
       }),
       Underline,
-      Link.configure({ openOnClick: false, autolink: true }),
-      Placeholder.configure({ placeholder: "Write your welcome message…" }),
+      WelcomeEmailLink.configure({ openOnClick: false, autolink: true }),
       emailButtonExtension,
+      Placeholder.configure({ placeholder: "Write your welcome message…" }),
     ],
     content,
     editable: !disabled,
