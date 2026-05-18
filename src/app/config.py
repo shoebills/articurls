@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     database_password: str
     database_name: str
     database_username: str
+    database_sslmode: Optional[str] = None
 
     secret_key: str
     algorithm: str

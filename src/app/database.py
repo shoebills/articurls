@@ -1,8 +1,28 @@
+from urllib.parse import quote_plus
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from .config import settings
 
-SQLALCHEMY_DATABASE_URL = (f"postgresql+psycopg://{settings.database_username}:"f"{settings.database_password}@"f"{settings.database_hostname}:"f"{settings.database_port}/"f"{settings.database_name}")
+def _resolve_sslmode() -> str | None:
+    if settings.database_sslmode:
+        return settings.database_sslmode
+
+    host = settings.database_hostname.lower()
+    # Managed providers generally require TLS.
+    if host.endswith(".ondigitalocean.com") or "neon.tech" in host:
+        return "require"
+    return None
+
+
+_sslmode = _resolve_sslmode()
+_query = f"?sslmode={_sslmode}" if _sslmode else ""
+
+SQLALCHEMY_DATABASE_URL = (
+    f"postgresql+psycopg://{quote_plus(settings.database_username)}:"
+    f"{quote_plus(settings.database_password)}@"
+    f"{settings.database_hostname}:{settings.database_port}/"
+    f"{settings.database_name}{_query}"
+)
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
