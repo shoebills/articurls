@@ -1,0 +1,6 @@
+# Public HTTPS for Umami. Caddy obtains a Let's Encrypt cert automatically.
+# Set ANALYTICS_HOSTNAME in docker-compose (default: analytics.articurls.com).
+
+{$ANALYTICS_HOSTNAME:analytics.articurls.com} {
+	reverse_proxy umami:3000
+}
