@@ -1,9 +1,9 @@
 import {
   getUmamiOrigin,
+  injectVisitorIpIntoUmamiPayload,
   isUmamiProxyConfigured,
   resolveForwardUserAgent,
   resolveVisitorIp,
-  UMAMI_VISITOR_IP_HEADER,
 } from "@/lib/umami-server";
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
@@ -14,7 +14,9 @@ export async function POST(request: Request) {
   }
 
   const origin = getUmamiOrigin();
-  const body = await request.arrayBuffer();
+  const clientIp = resolveVisitorIp(request);
+  const rawBody = await request.arrayBuffer();
+  const body = injectVisitorIpIntoUmamiPayload(rawBody, clientIp);
 
   const forwardHeaders = new Headers();
   const contentType = request.headers.get("content-type");
@@ -29,11 +31,6 @@ export async function POST(request: Request) {
   const referer = request.headers.get("referer");
   if (referer) {
     forwardHeaders.set("Referer", referer);
-  }
-
-  const clientIp = resolveVisitorIp(request);
-  if (clientIp) {
-    forwardHeaders.set(UMAMI_VISITOR_IP_HEADER, clientIp);
   }
 
   try {

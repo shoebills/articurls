@@ -2,6 +2,7 @@
  * Server-only Umami configuration for Next.js Route Handlers and rewrites.
  * Never import this from client components — UMAMI_ORIGIN must not leak to the browser.
  */
+import { ipAddress } from "@vercel/functions";
 
 /** Normalized Umami origin (no trailing slash), or empty when analytics is not configured. */
 export function getUmamiOrigin(): string {
@@ -14,28 +15,19 @@ export function isUmamiProxyConfigured(): boolean {
 }
 
 /**
- * Header Vercel sets on server-side POST to Umami. Must match Umami CLIENT_IP_HEADER.
- * Do not use X-Forwarded-For — Cloudflare on analytics.articurls.com overwrites it with
- * the Vercel egress IP (US), which breaks geo even when SKIP_LOCATION_HEADERS=1.
- */
-export const UMAMI_VISITOR_IP_HEADER = "x-articurls-visitor-ip";
-
-/**
- * Real visitor IP from the incoming browser request on Vercel (+ Cloudflare in front of articurls.com).
- * Prefer CF-Connecting-IP when present, then Vercel's x-real-ip (canonical on Vercel).
+ * Real visitor IP from the browser request hitting Vercel.
+ * Uses Vercel's hardened ipAddress() (CF-Connecting-IP / x-real-ip / x-forwarded-for).
  */
 export function resolveVisitorIp(request: Request): string {
+  const fromVercel = ipAddress(request);
+  if (fromVercel) return fromVercel;
+
+  // Local dev fallback when Vercel proxy headers are absent.
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   if (cfIp) return cfIp;
 
   const realIp = request.headers.get("x-real-ip")?.trim();
   if (realIp) return realIp;
-
-  const vercelForwarded = request.headers.get("x-vercel-forwarded-for")?.trim();
-  if (vercelForwarded) {
-    const first = vercelForwarded.split(",")[0]?.trim();
-    if (first) return first;
-  }
 
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -44,6 +36,33 @@ export function resolveVisitorIp(request: Request): string {
   }
 
   return "";
+}
+
+type UmamiSendBody = {
+  type?: string;
+  payload?: Record<string, unknown>;
+};
+
+/**
+ * Inject payload.ip before forwarding to Umami.
+ *
+ * Umami getClientInfo() uses payload.ip when present and runs MaxMind geo on it,
+ * skipping CF/Vercel location headers (which reflect Vercel egress on analytics.*).
+ * This is the supported server-side proxy pattern — not header spoofing.
+ */
+export function injectVisitorIpIntoUmamiPayload(body: ArrayBuffer, clientIp: string): BodyInit {
+  if (!clientIp) return body;
+
+  try {
+    const parsed = JSON.parse(new TextDecoder().decode(body)) as UmamiSendBody;
+    if (!parsed.payload || typeof parsed.payload !== "object") {
+      return body;
+    }
+    parsed.payload.ip = clientIp;
+    return JSON.stringify(parsed);
+  } catch {
+    return body;
+  }
 }
 
 const FALLBACK_USER_AGENT =
