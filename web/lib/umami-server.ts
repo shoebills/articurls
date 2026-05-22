@@ -14,12 +14,28 @@ export function isUmamiProxyConfigured(): boolean {
 }
 
 /**
- * Real visitor IP from the incoming browser request on Vercel + Cloudflare.
- * Order matches Vercel verified-proxy behavior (CF-Connecting-IP first).
+ * Header Vercel sets on server-side POST to Umami. Must match Umami CLIENT_IP_HEADER.
+ * Do not use X-Forwarded-For — Cloudflare on analytics.articurls.com overwrites it with
+ * the Vercel egress IP (US), which breaks geo even when SKIP_LOCATION_HEADERS=1.
+ */
+export const UMAMI_VISITOR_IP_HEADER = "x-articurls-visitor-ip";
+
+/**
+ * Real visitor IP from the incoming browser request on Vercel (+ Cloudflare in front of articurls.com).
+ * Prefer CF-Connecting-IP when present, then Vercel's x-real-ip (canonical on Vercel).
  */
 export function resolveVisitorIp(request: Request): string {
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   if (cfIp) return cfIp;
+
+  const realIp = request.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+
+  const vercelForwarded = request.headers.get("x-vercel-forwarded-for")?.trim();
+  if (vercelForwarded) {
+    const first = vercelForwarded.split(",")[0]?.trim();
+    if (first) return first;
+  }
 
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
@@ -27,7 +43,7 @@ export function resolveVisitorIp(request: Request): string {
     if (first) return first;
   }
 
-  return request.headers.get("x-real-ip")?.trim() || "";
+  return "";
 }
 
 const FALLBACK_USER_AGENT =

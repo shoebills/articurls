@@ -3,6 +3,7 @@ import {
   isUmamiProxyConfigured,
   resolveForwardUserAgent,
   resolveVisitorIp,
+  UMAMI_VISITOR_IP_HEADER,
 } from "@/lib/umami-server";
 
 const UPSTREAM_TIMEOUT_MS = 10_000;
@@ -32,8 +33,7 @@ export async function POST(request: Request) {
 
   const clientIp = resolveVisitorIp(request);
   if (clientIp) {
-    forwardHeaders.set("X-Forwarded-For", clientIp);
-    forwardHeaders.set("X-Real-IP", clientIp);
+    forwardHeaders.set(UMAMI_VISITOR_IP_HEADER, clientIp);
   }
 
   try {
