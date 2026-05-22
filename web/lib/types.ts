@@ -269,7 +269,7 @@ export interface DNSRecord {
   type: "TXT" | "CNAME";
   name: string;
   value: string;
-  purpose: "ownership" | "ssl" | "routing";
+  purpose: "ownership" | "ssl" | "routing" | "vercel";
   verified: boolean;
 }
 
@@ -292,4 +292,6 @@ export interface DomainVerifyResponse {
   verification_status: "verified" | "pending" | "already_verified";
   domain_status: DomainStatus;
   dns_instructions: DNSRecord[] | null;
+  monitor_status?: string | null;
+  message?: string | null;
 }

@@ -3,7 +3,7 @@
  *
  * The middleware exempts /robots.txt from the custom-domain rewrite, so ALL
  * requests for /robots.txt — whether from articurls.com or blog.example.com —
- * land here. The x-original-host header (set by middleware for custom domains)
+ * land here. resolveTenantHost() reads Host (CF SaaS) or x-original-host (legacy Worker).
  * is used to distinguish the two cases.
  *
  * ── Custom domain request (x-original-host is a non-internal hostname) ──────
@@ -21,28 +21,17 @@
 
 import { NextRequest } from "next/server";
 import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import {
+  buildRuntimeHostsFromEnv,
+  isInternalHost,
+  resolveTenantHostFromRequest,
+} from "@/lib/request-host";
 
 export const dynamic = "force-dynamic";
 
-// ── Internal domain list (mirrors middleware.ts) ──────────────────────────────
-
-const INTERNAL_HOSTNAMES = new Set([
-  "articurls.com",
-  "app.articurls.com",
-  "api.articurls.com",
-  "blogs.articurls.com",
-  "fallback.articurls.com",
-]);
-
-function isInternalHost(host: string): boolean {
-  const h = host.toLowerCase();
-  if (INTERNAL_HOSTNAMES.has(h)) return true;
-  return h === "localhost" || h.startsWith("localhost:") || h === "127.0.0.1";
-}
-
 const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
 
-// ── Domain resolution ─────────────────────────────────────────────────────────
+// ── Domain lookup ─────────────────────────────────────────────────────────────
 
 async function resolveDomainInfo(
   host: string,
@@ -199,22 +188,14 @@ Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<Response> {
-  // Get the actual hostname from the request URL (most reliable)
-  const requestHost = req.nextUrl.hostname;
-  
-  // For custom domains, middleware sets x-original-host
-  // For Vercel deployments, the actual public hostname is in x-forwarded-host or x-original-host
-  const originalHost = req.headers.get("x-original-host") || req.headers.get("x-forwarded-host");
-  
-  // Use originalHost if available (custom domain), otherwise use requestHost
-  const effectiveHost = originalHost || requestHost;
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const tenantHost = resolveTenantHostFromRequest(req, runtimeHosts);
 
-  if (originalHost && !isInternalHost(originalHost)) {
-    return customDomainRobots(originalHost);
+  if (!isInternalHost(tenantHost, runtimeHosts)) {
+    return customDomainRobots(tenantHost);
   }
 
-  // app.articurls.com → block everything (dashboard/auth domain)
-  if (effectiveHost.toLowerCase().startsWith("app.articurls.com")) {
+  if (tenantHost.toLowerCase().startsWith("app.articurls.com")) {
     return new Response(DISALLOW_ALL, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

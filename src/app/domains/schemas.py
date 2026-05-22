@@ -11,8 +11,8 @@ class DNSRecord(BaseModel):
     type: str
     name: str
     value: str
-    purpose: str  # "ownership" | "ssl" | "routing"
-    verified: bool = False  # True when Cloudflare confirms this record is detected
+    purpose: str  # "ownership" | "ssl" | "routing" | "vercel"
+    verified: bool = False  # True when provider confirms this record is detected
 
 
 class DomainOut(BaseModel):
@@ -36,6 +36,7 @@ class DomainVerifyOut(BaseModel):
     verification_status: str
     domain_status: str
     dns_instructions: Optional[List[DNSRecord]] = None
+    message: Optional[str] = None
 
 
 class DomainLookupOut(BaseModel):

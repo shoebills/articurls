@@ -3,6 +3,11 @@ import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import {
+  buildRuntimeHostsFromEnv,
+  isInternalHost,
+  resolveTenantHostFromHeaders,
+} from "@/lib/request-host";
 import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
@@ -123,8 +128,9 @@ async function loadCategoryBlogs(username: string, slug: string): Promise<Public
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const h = await headers();
-  const host = h.get("x-original-host");
-  if (!host) return {};
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
+  if (isInternalHost(host, runtimeHosts)) return {};
 
   const domainInfo = await resolveDomainInfo(host);
   if (!domainInfo) return {};
@@ -265,9 +271,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CustomDomainPage({ params }: Props) {
   const h = await headers();
-  const host = h.get("x-original-host");
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
 
-  if (!host) notFound();
+  if (isInternalHost(host, runtimeHosts)) notFound();
 
   // Check domain status and handle lifecycle
   const domainInfo = await resolveDomainInfo(host);

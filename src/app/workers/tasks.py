@@ -278,64 +278,46 @@ def expired_pro_fallback():
 @celery.task(bind=True, max_retries=8)
 def poll_domain_ssl_records(self, user_id: int):
     """
-    Poll Cloudflare until SSL validation records are available,
-    then update the cached DNS instructions in the DB.
-
-    Retries with exponential backoff: 3s, 6s, 12s, 24s, 48s, 96s, 192s, 384s
+    Poll Cloudflare until SSL records are ready and activation completes (CF + Vercel).
+    Retries: 3s, 6s, 12s, … up to ~21 min total.
     """
     from ..cloudflare.client import CloudflareClient
-    from ..domains.router import extract_dns_instructions
+    from ..domains.activation import apply_domain_verification, build_dns_instructions
+    from ..domains.cf_dns import is_cloudflare_ready
 
     db = database.SessionLocal()
     try:
         db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-        if not db_user:
-            return
-        if not db_user.cloudflare_hostname_id:
+        if not db_user or not db_user.cloudflare_hostname_id:
             return
         if db_user.domain_status != models.DomainStatus.PENDING:
-            return  # Already resolved
+            return
 
         cf_client = CloudflareClient()
         cf_result = cf_client.get_custom_hostname_sync(db_user.cloudflare_hostname_id)
-
         if not cf_result:
-            # Use current retry count for backoff (not next, so first retry is 3s)
             raise self.retry(countdown=3 * (2 ** self.request.retries))
 
-        hostname_status = cf_result.get("status")
-        ssl_info = cf_result.get("ssl", {})
-        ssl_status = ssl_info.get("status")
-
-        # Domain fully active — update DB and stop
-        if hostname_status == "active" and ssl_status == "active":
-            db_user.domain_status = models.DomainStatus.ACTIVE
-            db_user.is_domain_verified = True
-            db_user.verified_at = datetime.now(timezone.utc)
-            db_user.domain_dns_instructions = None
+        if is_cloudflare_ready(cf_result):
+            result = apply_domain_verification(db_user, cf_result)
             db.commit()
-            try:
-                from ..redis_client import redis_client
-                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-            except Exception:
-                pass
-            return
+            if result.verification_status == "verified":
+                return
+            raise self.retry(countdown=3 * (2 ** self.request.retries))
 
-        # Check if we have useful SSL records (either delegation CNAME or TXT records)
-        dcv_delegation = ssl_info.get("dcv_delegation_records", [])
-        validation_records = ssl_info.get("validation_records", [])
+        ssl_info = cf_result.get("ssl") or {}
+        dcv_delegation = ssl_info.get("dcv_delegation_records") or []
+        validation_records = ssl_info.get("validation_records") or []
         has_ssl_records = bool(dcv_delegation) or len(validation_records) >= 2
 
-        # Always update DB with latest records
-        dns_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
-        db_user.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
+        instructions = build_dns_instructions(cf_result, db_user.custom_domain or "")
+        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
         db.commit()
 
-        # Keep retrying until we have complete SSL records
         if not has_ssl_records:
             raise self.retry(countdown=3 * (2 ** self.request.retries))
 
     except self.MaxRetriesExceededError:
-        pass  # Give up — user can click verify to trigger a fresh check
+        pass
     finally:
         db.close()

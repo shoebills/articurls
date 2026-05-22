@@ -8,6 +8,7 @@ from .. import models
 from ..database import get_db
 from ..security.oauth2 import get_current_user
 from ..schemas import user as user_schema
+from ..config import settings
 from ..utils import (
     RequestContext,
     apply_username_change_or_raise,
@@ -326,7 +327,7 @@ def admin_domain_cloudflare_raw(
         return {"error": "No cloudflare_hostname_id stored for this user"}
 
     cf_client = CloudflareClient()
-    result = cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
+    result = cf_client.get_custom_hostname_sync(db_user.cloudflare_hostname_id)
     return {
         "user_id": db_user.user_id,
         "user_name": db_user.user_name,

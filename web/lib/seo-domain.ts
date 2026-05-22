@@ -6,8 +6,7 @@
  */
 
 import { API_URL } from "@/lib/env";
-
-// ── Types ────────────────────────────────────────────────────────────────────
+import { isCustomDomainHost, buildRuntimeHostsFromEnv } from "@/lib/request-host";
 
 export interface DomainLookupResult {
   username: string;
@@ -15,25 +14,10 @@ export interface DomainLookupResult {
   custom_domain: string | null;
 }
 
-// ── Platform hosts (not user custom domains) ─────────────────────────────────
-
-const PLATFORM_HOSTS = new Set([
-  "articurls.com",
-  "app.articurls.com",
-  "api.articurls.com",
-  "blogs.articurls.com",
-  "fallback.articurls.com",
-]);
-
-/**
- * Returns `true` when `host` is a user-owned custom domain
- * (i.e. NOT one of the platform's own subdomains).
- */
+/** True when host is a customer domain, not articurls platform infrastructure. */
 export function isCustomDomain(host: string): boolean {
-  return !PLATFORM_HOSTS.has(host.toLowerCase());
+  return isCustomDomainHost(host, buildRuntimeHostsFromEnv());
 }
-
-// ── Domain resolver ──────────────────────────────────────────────────────────
 
 /**
  * Resolve a hostname to the owning user and domain status via the

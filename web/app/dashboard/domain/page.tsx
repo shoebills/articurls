@@ -18,6 +18,8 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
 
+const FALLBACK_ORIGIN = "fallback.articurls.com";
+
 export default function DomainSettingsPage() {
   const router = useRouter();
   const { token } = useAuth();
@@ -31,6 +33,7 @@ export default function DomainSettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSeoWarning, setShowSeoWarning] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
@@ -42,6 +45,8 @@ export default function DomainSettingsPage() {
       // Populate DNS instructions from GET response (for page refresh)
       if (data?.dns_instructions && data.dns_instructions.length > 0) {
         setDnsInstructions(data.dns_instructions);
+      } else if (data?.domain_status === "active") {
+        setDnsInstructions([]);
       }
     } catch {
       setDomain(null);
@@ -71,6 +76,7 @@ export default function DomainSettingsPage() {
 
     setLoading(true);
     setError("");
+    setInfo("");
     setSuccess("");
 
     try {
@@ -92,6 +98,7 @@ export default function DomainSettingsPage() {
     if (!token) { router.push("/login"); return; }
     setVerifying(true);
     setError("");
+    setInfo("");
     setSuccess("");
 
     try {
@@ -105,9 +112,13 @@ export default function DomainSettingsPage() {
         const updatedInstructions = result.dns_instructions ?? dnsInstructions;
         setDnsInstructions(updatedInstructions);
 
-        // If all records are verified but CF hasn't flipped status yet,
-        // retry once automatically after 3 seconds instead of making user click again
-        const allVerified = updatedInstructions.length > 0 && updatedInstructions.every(r => r.verified);
+        if (result.message) {
+          setInfo(result.message);
+        } else {
+          setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
+        }
+
+        const allVerified = updatedInstructions.length > 0 && updatedInstructions.every((r) => r.verified);
         if (allVerified) {
           setTimeout(async () => {
             try {
@@ -115,20 +126,20 @@ export default function DomainSettingsPage() {
               if (retry.verification_status === "verified" || retry.verification_status === "already_verified") {
                 await loadDomain(token);
                 setDnsInstructions([]);
+                setInfo("");
                 setSuccess("Domain verified! Your custom domain is now active.");
               } else if (retry.dns_instructions) {
                 setDnsInstructions(retry.dns_instructions);
+                if (retry.message) setInfo(retry.message);
               }
             } catch {
-              // silent — user can still click verify manually
+              // user can click Verify again
             } finally {
               setVerifying(false);
             }
           }, 3000);
-          return; // keep spinner going during the auto-retry
+          return;
         }
-
-        setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -146,6 +157,7 @@ export default function DomainSettingsPage() {
 
     setDeleting(true);
     setError("");
+    setInfo("");
     setSuccess("");
     setConfirmDelete(false);
 
@@ -212,6 +224,13 @@ export default function DomainSettingsPage() {
         </div>
       )}
 
+      {info && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <p>{info}</p>
+        </div>
+      )}
+
       {success && (
         <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
           <Check className="mt-0.5 h-4 w-4 shrink-0" />
@@ -224,20 +243,32 @@ export default function DomainSettingsPage() {
         <Card className="p-6">
           <h2 className="text-base font-semibold">Add Custom Domain</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Subdomains only — e.g. <span className="font-mono">blog.example.com</span>. Root domains are not supported.
+            Subdomains only — e.g. <span className="font-mono">www.example.com</span> or{" "}
+            <span className="font-mono">blog.example.com</span>. Root domains are not supported directly.
           </p>
           {hostname.trim().toLowerCase().startsWith("www.") && (
             <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-sm text-yellow-900">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
               <p>
-                Make sure to add all DNS records shown after adding — including the SSL TXT record at <span className="font-mono">_acme-challenge.www.yourdomain.com</span>. If your domain is on Cloudflare, also set the www record to <strong>DNS-only</strong> (grey cloud).
+                Make sure to add all DNS records shown after adding — including ownership, SSL, and routing records.
+                If your domain is on Cloudflare, set the routing CNAME to <strong>DNS-only</strong> (grey cloud).
               </p>
             </div>
           )}
+          <div className="mt-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+            <p>
+              After adding, you will get DNS records including a routing CNAME to{" "}
+              <span className="font-mono">{FALLBACK_ORIGIN}</span>. Cloudflare handles SSL for your domain.
+              A Vercel domain verification TXT record may also be required before the domain goes live.
+              Optional: at your registrar, redirect <span className="font-mono">example.com</span> →{" "}
+              <span className="font-mono">www.example.com</span> so the bare domain works too.
+            </p>
+          </div>
           <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
             <Input
               type="text"
-              placeholder="blog.example.com"
+              placeholder="www.example.com"
               value={hostname}
               onChange={(e) => setHostname(e.target.value)}
               disabled={loading}
@@ -333,8 +364,8 @@ export default function DomainSettingsPage() {
 
               <div className="space-y-3">
                 {(() => {
-                  const sslRecords = dnsInstructions.filter(r => r.purpose === "ssl");
-                  const hasMultipleSslTxt = sslRecords.filter(r => r.type === "TXT").length > 1;
+                  const sslRecords = dnsInstructions.filter((r) => r.purpose === "ssl");
+                  const hasMultipleSslTxt = sslRecords.filter((r) => r.type === "TXT").length > 1;
                   let sslCounter = 0;
                   return dnsInstructions.map((record, idx) => {
                     let label: string | undefined;
@@ -343,7 +374,7 @@ export default function DomainSettingsPage() {
                         label = "SSL certificate (delegated)";
                       } else if (hasMultipleSslTxt) {
                         sslCounter++;
-                        label = `SSL certificate (${sslCounter} of ${sslRecords.filter(r => r.type === "TXT").length})`;
+                        label = `SSL certificate (${sslCounter} of ${sslRecords.filter((r) => r.type === "TXT").length})`;
                       }
                     }
                     return (
@@ -361,8 +392,9 @@ export default function DomainSettingsPage() {
               </div>
 
               {(() => {
-                const sslTxtRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "TXT");
-                const sslCnameRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "CNAME");
+                const sslTxtRecords = dnsInstructions.filter((r) => r.purpose === "ssl" && r.type === "TXT");
+                const sslCnameRecords = dnsInstructions.filter((r) => r.purpose === "ssl" && r.type === "CNAME");
+                const hasVercel = dnsInstructions.some((r) => r.purpose === "vercel");
                 if (sslCnameRecords.length > 0) {
                   return (
                     <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
@@ -377,13 +409,26 @@ export default function DomainSettingsPage() {
                     </p>
                   );
                 }
-                return null;
+                if (hasVercel) {
+                  return (
+                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                      Point your subdomain routing CNAME to <span className="font-mono">{FALLBACK_ORIGIN}</span>.
+                      After Cloudflare shows connected, add the Vercel domain verification TXT record if shown below — your domain stays pending until both steps complete.
+                    </p>
+                  );
+                }
+                return (
+                  <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                    Point your subdomain routing CNAME to <span className="font-mono">{FALLBACK_ORIGIN}</span>.
+                    Add all ownership and SSL records at your registrar or DNS provider.
+                  </p>
+                );
               })()}
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
                 {domain.hostname?.startsWith("www.") && (
-                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> record is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
+                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> routing CNAME is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
                 )}
               </p>
 
@@ -539,6 +584,7 @@ function DnsRecordCard({
     ownership: "Ownership verification",
     ssl: "SSL certificate",
     routing: "Traffic routing",
+    vercel: "Vercel domain verification",
   };
 
   return (
@@ -547,7 +593,7 @@ function DnsRecordCard({
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
-            title={record.verified ? "Detected by Cloudflare" : "Not yet detected"}
+            title={record.verified ? "Detected" : "Not yet detected"}
           />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {overrideLabel ?? purposeLabel[record.purpose] ?? record.purpose}

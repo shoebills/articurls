@@ -46,9 +46,14 @@ class Settings(BaseSettings):
     admin_emails: str = ""
     
     internal_api_secret: str = ""
+
     cloudflare_api_token: str = ""
     cloudflare_zone_id: str = ""
     cloudflare_fallback_origin: str = "fallback.articurls.com"
+
+    vercel_api_token: str = ""
+    vercel_project_name: str = ""
+    vercel_team_id: str = ""
 
     google_client_id: str = ""
     google_client_secret: str = ""

@@ -2,24 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_URL } from "@/lib/env";
 import type { PublicUser } from "@/lib/types";
 import { buildRssXml, fetchPublishedPosts, type RssItem } from "@/lib/seo-data";
+import {
+  buildRuntimeHostsFromEnv,
+  isInternalHost,
+  resolveTenantHostFromRequest,
+} from "@/lib/request-host";
 
 export const dynamic = "force-dynamic";
 
 const MAX_RSS_ITEMS = 100;
-
-const INTERNAL_HOSTNAMES = new Set([
-  "articurls.com",
-  "app.articurls.com",
-  "api.articurls.com",
-  "blogs.articurls.com",
-  "fallback.articurls.com",
-]);
-
-function isInternalHost(host: string): boolean {
-  const h = host.toLowerCase();
-  if (INTERNAL_HOSTNAMES.has(h)) return true;
-  return h === "localhost" || h.startsWith("localhost:") || h === "127.0.0.1";
-}
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) return 0;
@@ -58,26 +49,16 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 export async function GET(req: NextRequest): Promise<Response> {
-  const requestHost = req.nextUrl.hostname;
-  const originalHostRaw = req.headers.get("x-original-host");
-  const forwardedHostRaw = req.headers.get("x-forwarded-host");
-  const hostHeaderRaw = req.headers.get("host");
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const effectiveHost = resolveTenantHostFromRequest(req, runtimeHosts);
 
-  const firstHost = (raw: string | null): string =>
-    (raw || "").toLowerCase().split(",")[0].trim();
-
-  const effectiveHost =
-    firstHost(originalHostRaw) ||
-    firstHost(forwardedHostRaw) ||
-    firstHost(hostHeaderRaw) ||
-    requestHost.toLowerCase();
-
-  if (!effectiveHost || isInternalHost(effectiveHost)) {
+  if (!effectiveHost || isInternalHost(effectiveHost, runtimeHosts)) {
     return new NextResponse(null, { status: 404 });
   }
 
   const domainInfo = await resolveDomainInfo(effectiveHost);
   if (!domainInfo) return new NextResponse(null, { status: 404 });
+
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
     return new NextResponse(null, { status: 404 });
   }
@@ -113,10 +94,9 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   return new Response(xml, {
     headers: {
-      // Use XML content-type so browsers render similarly to sitemap.xml.
       "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
-      "Vary": "x-original-host, x-forwarded-host, host",
+      "Vary": "Host, x-original-host, x-forwarded-host",
     },
   });
 }
