@@ -6,7 +6,6 @@ import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
@@ -146,7 +145,6 @@ export default async function PublicBlogPage({ params }: Props) {
   return (
     <article className="min-h-screen bg-white">
       <div className={containerSpacing}>
-        <PublicBlogViewTracker userName={username} slug={slug} />
         {author.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className="hidden w-full sm:block">

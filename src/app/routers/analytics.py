@@ -35,55 +35,6 @@ def get_since(period: Optional[str]):
         return None
     return datetime.now(timezone.utc) - delta
 
-@router.get("/blog/{id}/views", status_code=status.HTTP_200_OK)
-def get_blog_views(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
-
-    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id).first()
-
-    if not db_blog:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
-    
-    total_views = db.query(func.count(models.Views.view_id)).filter(models.Views.blog_id == id).scalar()
-
-    unique_visitors = db.query(func.count(func.distinct(models.Views.visitor_hash))).filter(models.Views.blog_id == id).scalar()
-
-    return {
-        "blog_id": id,
-        "total_views": total_views,
-        "unique_visitors": unique_visitors
-    }
-
-@router.get("/views", status_code=status.HTTP_200_OK)
-def views_analytics(db: Session = Depends(get_db), period: Optional[str] = "all", current_user = Depends(get_current_user)):
-
-    total_posts = db.query(func.count(models.Blog.blog_id)).filter(
-        models.Blog.user_id == current_user.user_id,
-        models.Blog.status == models.BlogStatus.PUBLISHED
-    ).scalar()
-
-    since = get_since(period)
-
-    views_query = db.query(models.Views).join(
-        models.Blog,
-        models.Blog.blog_id == models.Views.blog_id
-    ).filter(
-        models.Views.user_id == current_user.user_id,
-        models.Blog.user_id == current_user.user_id,
-        models.Blog.status == models.BlogStatus.PUBLISHED
-    )
-
-    if since:
-        views_query = views_query.filter(models.Views.visited_at >= since)
-
-    total_views = views_query.with_entities(func.count(models.Views.view_id)).scalar()
-    unique_visitors = views_query.with_entities(func.count(func.distinct(models.Views.visitor_hash))).scalar()
-
-    return {
-        "period": period,
-        "total_posts": total_posts,
-        "total_views": total_views,
-        "unique_visitors": unique_visitors
-    }
 
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -107,6 +58,7 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         "subscribed": subscribed,
         "unsubscribed": unsubscribed
     }
+
 
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):

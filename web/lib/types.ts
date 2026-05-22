@@ -23,12 +23,11 @@ export interface BlogListItem {
   updated_at: string;
   user_id: number;
   media: BlogMediaOut[];
-  view_count: number;
   excerpt?: string | null;
   category_ids?: number[];
 }
 
-export type BlogDetail = Omit<BlogListItem, "view_count" | "excerpt">;
+export type BlogDetail = Omit<BlogListItem, "excerpt">;
 
 export interface PublicBlog {
   blog_id: number;
@@ -45,7 +44,6 @@ export interface PublicBlog {
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
   /** Optional aggregate from list endpoint when available. */
-  view_count?: number;
   category_ids?: number[];
 }
 
@@ -233,13 +231,6 @@ export interface TokenResponse {
   access_token: string;
   token_type: string;
   message?: string;
-}
-
-export interface ViewsAnalytics {
-  period: string;
-  total_posts: number;
-  total_views: number;
-  unique_visitors: number;
 }
 
 export interface SubscribersAnalytics {

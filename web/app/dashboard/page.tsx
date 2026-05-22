@@ -44,7 +44,7 @@ export default function DashboardPage() {
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
 
   // Handle access token from OAuth callback (for existing user login)
@@ -141,11 +141,6 @@ export default function DashboardPage() {
 
   const filteredBlogs = useMemo(() => {
     const compareBySort = (a: BlogListItem, b: BlogListItem) => {
-      if (sortBy === "most_popular") {
-        const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
-        if (byViews !== 0) return byViews;
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      }
       if (sortBy === "oldest") {
         return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
       }
@@ -263,10 +258,6 @@ export default function DashboardPage() {
               <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
               Oldest
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
-              <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
-              Most popular
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -276,7 +267,6 @@ export default function DashboardPage() {
           <>
             <ul className="space-y-4">
           {pagedBlogs.map((b) => {
-            const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
               <Card
@@ -323,12 +313,6 @@ export default function DashboardPage() {
                       ·
                     </span>
                     <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">
-                      {views} view{views === 1 ? "" : "s"}
-                    </span>
                     <div className="ml-auto" data-card-action="true">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

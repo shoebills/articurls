@@ -19,8 +19,7 @@ export function isUmamiProxyConfigured(): boolean {
  *
  * Cloudflare sits in front of articurls.com and tenant custom domains. CF sets
  * cf-connecting-ip to the visitor; x-real-ip (what ipAddress() reads) is often
- * the Cloudflare edge PoP (e.g. Singapore for IN users) — same pattern as
- * src/app/routers/public.py track_blog_view.
+ * the Cloudflare edge PoP (e.g. Singapore for IN users).
  */
 export function resolveVisitorIp(request: Request): string {
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();

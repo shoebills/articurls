@@ -136,7 +136,6 @@ class Blog(Base):
     featured_image_url = Column(String, nullable=True)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
-    view_count = Column(BigInteger, nullable=False, default=0)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

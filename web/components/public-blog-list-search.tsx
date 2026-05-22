@@ -123,7 +123,7 @@ function BlogPostShareMenu({
   );
 }
 
-function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest" | "most_popular") => void }) {
+function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest") => void }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -176,10 +176,6 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
         <DropdownMenuItem onClick={() => setSortBy("oldest")}>
           <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
           Oldest
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
-          <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
-          Most popular
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
@@ -246,7 +242,7 @@ function BlogListItemRow({
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -263,13 +259,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   const sortedBlogs = useMemo(() => {
     const compareBySort = (a: PublicBlog, b: PublicBlog) => {
-      if (sortBy === "most_popular") {
-        const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
-        if (byViews !== 0) return byViews;
-        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
-        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
-        return bDate - aDate;
-      }
       if (sortBy === "oldest") {
         const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
         const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;

@@ -27,7 +27,6 @@ import type {
   UmamiDashboard,
   UserSettings,
   UsernameChangeRequestOut,
-  ViewsAnalytics,
 } from "./types";
 
 export class ApiError extends Error {
@@ -623,11 +622,6 @@ export async function getPublicCategories(userName: string): Promise<Category[]>
 
 export async function getPublicCategoryBlogs(userName: string, slug: string): Promise<PublicCategoryBlogsResponse> {
   return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
-}
-
-export async function viewsAnalytics(token: string, period?: string): Promise<ViewsAnalytics> {
-  const q = period ? `?period=${encodeURIComponent(period)}` : "";
-  return apiFetch(`/analytics/views${q}`, { token });
 }
 
 export async function subscribersAnalytics(token: string, period?: string): Promise<SubscribersAnalytics> {

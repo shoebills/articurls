@@ -79,7 +79,6 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 @router.get("/", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # Read view_count directly from the denormalized column — no JOIN needed
     results = db.query(models.Blog).filter(
         models.Blog.user_id == current_user.user_id
     ).all()
@@ -307,16 +306,8 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
             pass
 
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
-    db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
     db.commit()
-
-    # Clean up orphaned Redis delta key so flush task doesn't try to update a deleted blog
-    try:
-        from ..redis_client import redis_client
-        redis_client.delete(f"views_delta:{blog_id}")
-    except Exception:
-        pass
 
     return {"message": "Blog deleted"}
 
