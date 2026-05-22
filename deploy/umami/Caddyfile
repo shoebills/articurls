@@ -3,4 +3,12 @@
 
 {$ANALYTICS_HOSTNAME:analytics.articurls.com} {
 	reverse_proxy umami:3000
+
+	# Allow the share dashboard to be embedded in app.articurls.com.
+	# Umami's official image bakes ALLOWED_FRAME_URLS at build time so the
+	# runtime env var has no effect — strip the restrictive headers here instead.
+	header {
+		-X-Frame-Options
+		Content-Security-Policy "frame-ancestors 'self' https://app.articurls.com"
+	}
 }

@@ -289,29 +289,15 @@ function ProDashboard({ token }: { token: string }) {
 
   // Ready — render the Umami share iframe
   return (
-    <div className="space-y-3">
-      <p className="text-xs text-muted-foreground">
-        Powered by{" "}
-        <a
-          href="https://umami.is"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="underline underline-offset-4"
-        >
-          Umami
-        </a>
-        . Data updates in real time.
-      </p>
-      <div className="overflow-hidden rounded-xl border border-border bg-background shadow-sm">
-        <iframe
-          src={state.shareUrl}
-          title="Analytics dashboard"
-          className="h-[700px] w-full"
-          loading="lazy"
-          // Umami share pages are sandboxed — allow scripts for the dashboard to render
-          sandbox="allow-scripts allow-same-origin allow-popups"
-        />
-      </div>
+    <div className="overflow-hidden rounded-xl border border-border bg-background shadow-sm">
+      <iframe
+        src={state.shareUrl}
+        title="Analytics dashboard"
+        className="h-[700px] w-full"
+        loading="lazy"
+        // Umami share pages are sandboxed — allow scripts for the dashboard to render
+        sandbox="allow-scripts allow-same-origin allow-popups"
+      />
     </div>
   );
 }
