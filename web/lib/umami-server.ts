@@ -16,18 +16,18 @@ export function isUmamiProxyConfigured(): boolean {
 
 /**
  * Real visitor IP from the browser request hitting Vercel.
- * Uses Vercel's hardened ipAddress() (CF-Connecting-IP / x-real-ip / x-forwarded-for).
+ *
+ * Cloudflare sits in front of articurls.com and tenant custom domains. CF sets
+ * cf-connecting-ip to the visitor; x-real-ip (what ipAddress() reads) is often
+ * the Cloudflare edge PoP (e.g. Singapore for IN users) — same pattern as
+ * src/app/routers/public.py track_blog_view.
  */
 export function resolveVisitorIp(request: Request): string {
-  const fromVercel = ipAddress(request);
-  if (fromVercel) return fromVercel;
-
-  // Local dev fallback when Vercel proxy headers are absent.
   const cfIp = request.headers.get("cf-connecting-ip")?.trim();
   if (cfIp) return cfIp;
 
-  const realIp = request.headers.get("x-real-ip")?.trim();
-  if (realIp) return realIp;
+  const fromVercel = ipAddress(request);
+  if (fromVercel) return fromVercel;
 
   const forwarded = request.headers.get("x-forwarded-for");
   if (forwarded) {
