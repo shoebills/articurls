@@ -77,6 +77,10 @@ def mark_domain_active(db_user: models.User, hostname: str) -> None:
     except Exception:
         pass
 
+    from ..umami.service import enqueue_umami_domain_sync
+
+    enqueue_umami_domain_sync(db_user.user_id)
+
 
 def apply_domain_verification(
     db_user: models.User,

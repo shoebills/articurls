@@ -63,6 +63,7 @@ class User(Base):
     welcome_email_body_html = Column(Text, nullable=True)
     welcome_email_delay_minutes = Column(Integer, nullable=False, default=0)
     remove_branding = Column(Boolean, nullable=False, default=True)
+    umami_website_id = Column(String(36), nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 

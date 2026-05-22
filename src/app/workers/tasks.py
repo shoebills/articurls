@@ -321,3 +321,56 @@ def poll_domain_ssl_records(self, user_id: int):
         pass
     finally:
         db.close()
+
+
+@celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
+def provision_umami_website(self, user_id: int):
+    """Create an Umami website for a user if not already provisioned."""
+    from ..umami.client import UmamiClient
+    from ..umami.service import provision_umami_website_for_user
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        provision_umami_website_for_user(db, user_id)
+    finally:
+        db.close()
+
+
+@celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
+def sync_umami_website_domain(self, user_id: int):
+    """Update Umami website domain when custom domain becomes active."""
+    from ..umami.client import UmamiClient
+    from ..umami.service import sync_umami_website_domain_for_user
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        sync_umami_website_domain_for_user(db, user_id)
+    finally:
+        db.close()
+
+
+@celery.task
+def backfill_umami_websites():
+    """Enqueue Umami provisioning for all users missing umami_website_id."""
+    from ..umami.client import UmamiClient
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        rows = (
+            db.query(models.User.user_id)
+            .filter(models.User.umami_website_id.is_(None))
+            .all()
+        )
+        for (user_id,) in rows:
+            provision_umami_website.delay(user_id)
+    finally:
+        db.close()

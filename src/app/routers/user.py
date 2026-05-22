@@ -23,6 +23,7 @@ from ..storage.service import (
     get_user_storage_usage_bytes,
     save_image_local,
 )
+from ..umami.service import enqueue_umami_provision
 from ..utils import (
     assert_admin_email,
     is_admin_email,
@@ -91,6 +92,8 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     )
     db.commit()
     db.refresh(new_user)
+
+    enqueue_umami_provision(new_user.user_id)
 
     verify_token = oauth2.create_new_user_token(email)
     send_verify_new_user(email, request.name, verify_token)

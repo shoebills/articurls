@@ -79,6 +79,7 @@ class PublicUser(BaseModel):
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
     rss_enabled: bool = True
+    umami_website_id: Optional[str] = None
 
     class Config:
         from_attributes = True

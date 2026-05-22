@@ -340,7 +340,11 @@ async def complete_google_signup(
     
     db.commit()
     db.refresh(new_user)
-    
+
+    from ..umami.service import enqueue_umami_provision
+
+    enqueue_umami_provision(new_user.user_id)
+
     # Issue tokens
     access_token = oauth2.create_access_token(
         data={"sub": new_user.email},

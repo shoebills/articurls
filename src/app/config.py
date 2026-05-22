@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = ""
 
+    umami_api_url: str = ""
+    umami_api_username: str = ""
+    umami_api_password: str = ""
+
     # Database connection pool settings.
     # Tune these based on server RAM and PostgreSQL max_connections.
     # 2GB droplet (testing):  pool_size=5,  max_overflow=5

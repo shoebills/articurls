@@ -84,6 +84,8 @@ export interface PublicUser {
   domain_status?: DomainStatus | null;
   /** Controls RSS feed publishing and discovery. */
   rss_enabled?: boolean;
+  /** Umami website UUID for first-party analytics (Step 6 tracker). */
+  umami_website_id?: string | null;
 }
 
 export interface UserSettings {
