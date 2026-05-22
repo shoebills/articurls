@@ -24,6 +24,7 @@ import type {
   AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
+  UmamiDashboard,
   UserSettings,
   UsernameChangeRequestOut,
   ViewsAnalytics,
@@ -764,4 +765,8 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
     method: "DELETE",
     token,
   });
+}
+
+export async function getUmamiDashboard(token: string): Promise<UmamiDashboard> {
+  return apiFetch("/analytics/umami-dashboard", { token, disableCache: true });
 }

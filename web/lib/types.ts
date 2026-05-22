@@ -296,3 +296,7 @@ export interface DomainVerifyResponse {
   dns_instructions: DNSRecord[] | null;
   message?: string | null;
 }
+
+export interface UmamiDashboard {
+  share_url: string;
+}

@@ -116,3 +116,45 @@ class UmamiClient:
             f"/api/websites/{website_id}",
             json=payload,
         )
+
+    def get_share_sync(self, website_id: str) -> Optional[str]:
+        """Return the share URL for the first existing share of a website, or None."""
+        try:
+            data = self._request_sync("GET", f"/api/websites/{website_id}/shares")
+            shares = data.get("data", [])
+            if not shares:
+                return None
+            slug = shares[0].get("slug")
+            if not slug:
+                return None
+            return f"{self.base_url}/share/{slug}"
+        except UmamiError as exc:
+            if exc.status_code == 404:
+                return None
+            raise
+
+    def enable_share_sync(self, website_id: str, name: str = "Analytics") -> str:
+        """Create a share page for a website and return the share URL."""
+        data = self._request_sync(
+            "POST",
+            f"/api/websites/{website_id}/shares",
+            json={
+                "name": name,
+                "parameters": {
+                    "overview": True,
+                    "events": True,
+                    "sessions": True,
+                },
+            },
+        )
+        slug = data.get("slug")
+        if not slug:
+            raise UmamiError(500, "Missing slug in Umami share response")
+        return f"{self.base_url}/share/{slug}"
+
+    def get_or_create_share_sync(self, website_id: str, name: str = "Analytics") -> str:
+        """Return the share URL, creating a share page if none exists."""
+        existing = self.get_share_sync(website_id)
+        if existing:
+            return existing
+        return self.enable_share_sync(website_id, name=name)

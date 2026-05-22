@@ -4,6 +4,7 @@ from sqlalchemy import func
 from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
+from ..utils.entitlements import require_pro
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi.responses import StreamingResponse
@@ -132,3 +133,52 @@ def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get
         media_type="text/csv; charset=utf-8",
         headers={"Content-Disposition": "attachment; filename=subscribers.csv"},
     ) 
+
+
+@router.get("/umami-dashboard", status_code=status.HTTP_200_OK)
+def get_umami_dashboard(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    """
+    Return the Umami share URL for the current Pro user's website.
+
+    The share URL is cached on the user row after the first call.
+    If the user has no Umami website yet, returns 404 so the frontend
+    can show a graceful "not ready" state rather than an error.
+    """
+    from ..umami.client import UmamiClient, UmamiError
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet. Please try again in a moment.",
+        )
+
+    # Return cached share URL if already stored
+    if current_user.umami_share_url:
+        return {"share_url": current_user.umami_share_url}
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        share_url = client.get_or_create_share_sync(current_user.umami_website_id)
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics dashboard: {exc.body}",
+        )
+
+    # Cache on user row so subsequent calls are instant
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if db_user:
+        db_user.umami_share_url = share_url
+        db.commit()
+
+    return {"share_url": share_url}
