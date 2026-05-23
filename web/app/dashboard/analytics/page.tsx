@@ -80,9 +80,9 @@ const COLORS = [
   "oklch(0.56 0.17 200)",
 ];
 
-function formatDuration(ms: number): string {
-  if (!ms || ms <= 0) return "0s";
-  const totalSeconds = Math.round(ms / 1000);
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return "0s";
+  const totalSeconds = Math.round(seconds);
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   if (m === 0) return `${s}s`;
