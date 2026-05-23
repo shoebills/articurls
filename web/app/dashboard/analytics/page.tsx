@@ -46,12 +46,7 @@ import {
   Globe,
   FileText,
   ArrowUpRight,
-  Search,
-  MessageCircle,
   ExternalLink,
-  Image,
-  Users2,
-  Video,
   Zap,
   Compass,
 } from "lucide-react";
@@ -72,6 +67,42 @@ import {
   SiFedora,
   SiAndroid,
   SiIos,
+  SiGoogle,
+  SiX,
+  SiInstagram,
+  SiFacebook,
+
+  SiYoutube,
+  SiReddit,
+  SiDiscord,
+  SiGithub,
+  SiPinterest,
+  SiTiktok,
+  SiWhatsapp,
+  SiTelegram,
+  SiSlack,
+  SiQuora,
+  SiMedium,
+  SiTumblr,
+  SiFlickr,
+  SiVimeo,
+  SiTwitch,
+  SiSpotify,
+  SiSoundcloud,
+  SiStackoverflow,
+  SiCodepen,
+  SiCodesandbox,
+  SiGitlab,
+  SiBitbucket,
+  SiDevdotto,
+  SiHashnode,
+  SiDribbble,
+  SiBehance,
+  SiFigma,
+  SiCanva,
+  SiProducthunt,
+  SiYcombinator,
+  SiBaidu,
 } from "react-icons/si";
 import {
   AreaChart,
@@ -153,66 +184,45 @@ const COUNTRY_NAMES: Record<string, string> = {
 
 function getReferrerIcon(domain: string) {
   const domainLower = domain.toLowerCase();
-  if (domainLower.includes("google")) return Search;
-  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return MessageCircle;
-  if (domainLower.includes("instagram")) return Image;
-  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return Users;
-  if (domainLower.includes("linkedin")) return Users2;
-  if (domainLower.includes("youtube")) return Video;
-  if (domainLower.includes("reddit")) return MessageCircle;
-  if (domainLower.includes("discord")) return MessageCircle;
-  if (domainLower.includes("github")) return Users2;
-  if (domainLower.includes("pinterest")) return Image;
-  if (domainLower.includes("tiktok")) return Video;
-  if (domainLower.includes("whatsapp")) return MessageCircle;
-  if (domainLower.includes("telegram")) return MessageCircle;
-  if (domainLower.includes("slack")) return MessageCircle;
-  if (domainLower.includes("quora")) return MessageCircle;
-  if (domainLower.includes("medium")) return FileText;
-  if (domainLower.includes("tumblr")) return Image;
-  if (domainLower.includes("flickr")) return Image;
-  if (domainLower.includes("vimeo")) return Video;
-  if (domainLower.includes("twitch")) return Video;
-  if (domainLower.includes("spotify")) return Video;
-  if (domainLower.includes("soundcloud")) return Video;
-  if (domainLower.includes("apple")) return MonitorIcon;
-  if (domainLower.includes("amazon")) return MonitorIcon;
-  if (domainLower.includes("ebay")) return MonitorIcon;
-  if (domainLower.includes("etsy")) return MonitorIcon;
-  if (domainLower.includes("shopify")) return MonitorIcon;
-  if (domainLower.includes("stripe")) return MonitorIcon;
-  if (domainLower.includes("paypal")) return MonitorIcon;
-  if (domainLower.includes("coinbase")) return MonitorIcon;
-  if (domainLower.includes("binance")) return MonitorIcon;
-  if (domainLower.includes("kraken")) return MonitorIcon;
-  if (domainLower.includes("duckduckgo")) return Search;
-  if (domainLower.includes("bing")) return Search;
-  if (domainLower.includes("yahoo")) return Search;
-  if (domainLower.includes("baidu")) return Search;
-  if (domainLower.includes("yandex")) return Search;
-  if (domainLower.includes("ask")) return Search;
-  if (domainLower.includes("aol")) return Search;
-  if (domainLower.includes("excite")) return Search;
-  if (domainLower.includes("lycos")) return Search;
-  if (domainLower.includes("stackoverflow")) return MessageCircle;
-  if (domainLower.includes("stackexchange")) return MessageCircle;
-  if (domainLower.includes("codepen")) return FileText;
-  if (domainLower.includes("codesandbox")) return FileText;
-  if (domainLower.includes("gitlab")) return Users2;
-  if (domainLower.includes("bitbucket")) return Users2;
-  if (domainLower.includes("dev.to")) return FileText;
-  if (domainLower.includes("hashnode")) return FileText;
-  if (domainLower.includes("dribbble")) return Image;
-  if (domainLower.includes("behance")) return Image;
-  if (domainLower.includes("figma")) return Image;
-  if (domainLower.includes("canva")) return Image;
-  if (domainLower.includes("producthunt")) return FileText;
-  if (domainLower.includes("hackernews")) return MessageCircle;
-  if (domainLower.includes("lobsters")) return MessageCircle;
-  if (domainLower.includes("designernews")) return MessageCircle;
-  if (domainLower.includes("news.ycombinator")) return MessageCircle;
-  if (domainLower.includes("indiehackers")) return MessageCircle;
-  if (domainLower.includes("beta.page")) return MessageCircle;
+  if (domainLower.includes("google")) return SiGoogle;
+  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return SiX;
+  if (domainLower.includes("instagram")) return SiInstagram;
+  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return SiFacebook;
+  if (domainLower.includes("linkedin")) return Globe;
+  if (domainLower.includes("youtube")) return SiYoutube;
+  if (domainLower.includes("reddit")) return SiReddit;
+  if (domainLower.includes("discord")) return SiDiscord;
+  if (domainLower.includes("github")) return SiGithub;
+  if (domainLower.includes("pinterest")) return SiPinterest;
+  if (domainLower.includes("tiktok")) return SiTiktok;
+  if (domainLower.includes("whatsapp")) return SiWhatsapp;
+  if (domainLower.includes("telegram")) return SiTelegram;
+  if (domainLower.includes("slack")) return SiSlack;
+  if (domainLower.includes("quora")) return SiQuora;
+  if (domainLower.includes("medium")) return SiMedium;
+  if (domainLower.includes("tumblr")) return SiTumblr;
+  if (domainLower.includes("flickr")) return SiFlickr;
+  if (domainLower.includes("vimeo")) return SiVimeo;
+  if (domainLower.includes("twitch")) return SiTwitch;
+  if (domainLower.includes("spotify")) return SiSpotify;
+  if (domainLower.includes("soundcloud")) return SiSoundcloud;
+  if (domainLower.includes("duckduckgo")) return SiDuckduckgo;
+  if (domainLower.includes("bing")) return Globe;
+  if (domainLower.includes("yahoo")) return Globe;
+  if (domainLower.includes("baidu")) return SiBaidu;
+  if (domainLower.includes("stackoverflow") || domainLower.includes("stackexchange")) return SiStackoverflow;
+  if (domainLower.includes("codepen")) return SiCodepen;
+  if (domainLower.includes("codesandbox")) return SiCodesandbox;
+  if (domainLower.includes("gitlab")) return SiGitlab;
+  if (domainLower.includes("bitbucket")) return SiBitbucket;
+  if (domainLower.includes("dev.to")) return SiDevdotto;
+  if (domainLower.includes("hashnode")) return SiHashnode;
+  if (domainLower.includes("dribbble")) return SiDribbble;
+  if (domainLower.includes("behance")) return SiBehance;
+  if (domainLower.includes("figma")) return SiFigma;
+  if (domainLower.includes("canva")) return SiCanva;
+  if (domainLower.includes("producthunt")) return SiProducthunt;
+  if (domainLower.includes("hackernews") || domainLower.includes("news.ycombinator")) return SiYcombinator;
   return ExternalLink;
 }
 
