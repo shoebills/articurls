@@ -32,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import {
   BarChart2,
   Users,
@@ -217,13 +217,7 @@ function NativeAnalytics({ token }: { token: string }) {
           <Skeleton className="h-56 sm:h-72 w-full rounded-lg border" />
         </div>
       ) : (
-        <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="w-full sm:w-auto overflow-x-auto touch-pan-x">
-            <TabsTrigger value="overview" className="flex-1 sm:flex-none text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="tech" className="hidden sm:flex text-xs sm:text-sm">Tech</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+        <div className="space-y-4 sm:space-y-6">
             <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <KpiCard
                 title="Pageviews"
@@ -398,9 +392,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 </Card>
               )}
             </div>
-          </TabsContent>
 
-          <TabsContent value="tech">
             {tech ? (
               <div className="grid gap-4 lg:grid-cols-3">
                 {tech.browsers.length > 0 && (
@@ -471,8 +463,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 </CardHeader>
               </Card>
             )}
-          </TabsContent>
-        </Tabs>
+        </div>
       )}
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
