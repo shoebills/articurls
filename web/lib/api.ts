@@ -24,7 +24,6 @@ import type {
   AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
-  UmamiDashboard,
   UmamiMetricsRow,
   UmamiTimeseriesItem,
   UmamiOverviewResponse,
@@ -780,10 +779,6 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
     method: "DELETE",
     token,
   });
-}
-
-export async function getUmamiDashboard(token: string): Promise<UmamiDashboard> {
-  return apiFetch("/analytics/umami-dashboard", { token, disableCache: true });
 }
 
 export type AnalyticsPeriod = "24h" | "7d" | "28d" | "3m" | "6m" | "1y" | "all";

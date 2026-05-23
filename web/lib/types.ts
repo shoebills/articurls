@@ -349,7 +349,3 @@ export interface UmamiRealtimeResponse {
   referrers: Record<string, number>;
   events: Array<Record<string, unknown>>;
 }
-
-export interface UmamiDashboard {
-  share_url: string;
-}
