@@ -3,90 +3,580 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getUmamiDashboard,
   getSubscription,
   isProSubscription,
   ApiError,
+  AnalyticsPeriod,
+  getUmamiOverview,
+  getUmamiTimeseries,
+  getUmamiPages,
+  getUmamiSources,
+  getUmamiGeo,
+  getUmamiTech,
+  getUmamiRealtime,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiRealtimeResponse,
+  UmamiMetricsRow,
+  UmamiTimeseriesItem,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart2, Loader2 } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  BarChart2,
+  Users,
+  Eye,
+  Monitor,
+  Loader2,
+  Activity,
+} from "lucide-react";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
+} from "recharts";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 
-type DashboardState =
-  | { status: "loading" }
-  | { status: "ready"; shareUrl: string }
-  | { status: "not_provisioned" }
-  | { status: "error"; message: string };
+const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
+  { value: "24h", label: "Last 24h" },
+  { value: "7d", label: "Last 7 days" },
+  { value: "28d", label: "Last 28 days" },
+  { value: "3m", label: "Last 3 months" },
+  { value: "6m", label: "Last 6 months" },
+  { value: "1y", label: "Last year" },
+  { value: "all", label: "All time" },
+];
 
-function ProDashboard({ token }: { token: string }) {
-  const [state, setState] = useState<DashboardState>({ status: "loading" });
+const COLORS = [
+  "oklch(0.6 0.15 145)",
+  "oklch(0.55 0.2 25)",
+  "oklch(0.58 0.18 280)",
+  "oklch(0.62 0.16 30)",
+  "oklch(0.56 0.17 200)",
+];
+
+function RealtimePanel({ token }: { token: string }) {
+  const [data, setData] = useState<UmamiRealtimeResponse | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const data = await getUmamiDashboard(token);
-        if (!cancelled) setState({ status: "ready", shareUrl: data.share_url });
-      } catch (e) {
-        if (cancelled) return;
-        if (e instanceof ApiError && e.status === 404) {
-          setState({ status: "not_provisioned" });
-        } else {
-          setState({
-            status: "error",
-            message: e instanceof ApiError ? e.message : "Failed to load analytics dashboard",
-          });
-        }
+        const d = await getUmamiRealtime(token);
+        if (!cancelled) setData(d);
+      } catch {
+        // ignore errors for realtime, just stay null
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => { cancelled = true; };
   }, [token]);
 
-  if (state.status === "loading") {
+  if (loading || !data) {
     return (
-      <div className="flex min-h-[500px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
-  if (state.status === "not_provisioned") {
-    return (
-      <Card className="p-8 text-center">
-        <div className="mx-auto max-w-sm space-y-3">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-muted">
-            <BarChart2 className="h-7 w-7 text-muted-foreground" />
-          </div>
-          <h2 className="text-base font-semibold">Dashboard not ready yet</h2>
-          <p className="text-sm text-muted-foreground">
-            Your analytics website is being set up. This usually takes less than a minute — refresh
-            the page to check again.
-          </p>
-        </div>
-      </Card>
-    );
-  }
-
-  if (state.status === "error") {
-    return (
-      <Card className="p-8 text-center">
-        <div className="mx-auto max-w-sm space-y-3">
-          <p className="text-sm text-destructive">{state.message}</p>
-        </div>
+      <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+            <Skeleton className="h-6 w-32" />
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Skeleton className="h-12 w-40" />
+        </CardContent>
       </Card>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border bg-background shadow-sm">
-      <iframe
-        src={state.shareUrl}
-        title="Analytics dashboard"
-        className="h-[700px] w-full"
-        loading="lazy"
-        sandbox="allow-scripts allow-same-origin allow-popups"
-      />
+    <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100">
+          <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          Real‑time
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
+          {data.active_visitors}
+        </div>
+        <p className="text-sm text-emerald-800/80 dark:text-emerald-200/80">
+          Active visitors right now
+        </p>
+        {Object.keys(data.urls).length > 0 && (
+          <div>
+            <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-300/70 mb-2">
+              Top pages
+            </p>
+            <ul className="text-sm space-y-1">
+              {Object.entries(data.urls as Record<string, number>)
+                .sort(([_, a], [__, b]) => b - a)
+                .slice(0, 3)
+                .map(([url, count]) => (
+                  <li key={url} className="flex justify-between text-emerald-900/80 dark:text-emerald-200/80">
+                    <span className="truncate max-w-[200px]">{url}</span>
+                    <span className="font-medium">{count}</span>
+                  </li>
+                ))}
+            </ul>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function KpiCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+}: {
+  title: string;
+  value: string | number;
+  description?: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <CardDescription className="flex items-center gap-2">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+          {title}
+        </CardDescription>
+        <CardTitle className="text-3xl sm:text-4xl">{value}</CardTitle>
+        {description && (
+          <CardDescription>{description}</CardDescription>
+        )}
+      </CardHeader>
+    </Card>
+  );
+}
+
+function KpiCardSkeleton() {
+  return (
+    <Card>
+      <CardHeader className="pb-2">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-8 w-28 mt-2" />
+      </CardHeader>
+    </Card>
+  );
+}
+
+function NativeAnalytics({ token }: { token: string }) {
+  const [period, setPeriod] = useState<AnalyticsPeriod>("7d");
+  const [overview, setOverview] = useState<UmamiOverviewResponse | null>(null);
+  const [timeseries, setTimeseries] = useState<UmamiTimeseriesResponse | null>(null);
+  const [pages, setPages] = useState<UmamiPagesResponse | null>(null);
+  const [sources, setSources] = useState<UmamiSourcesResponse | null>(null);
+  const [geo, setGeo] = useState<UmamiGeoResponse | null>(null);
+  const [tech, setTech] = useState<UmamiTechResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setLoading(true);
+      setErr(null);
+      try {
+        const [o, t, p, s, g, te] = await Promise.all([
+          getUmamiOverview(token, period),
+          getUmamiTimeseries(token, period),
+          getUmamiPages(token, period),
+          getUmamiSources(token, period),
+          getUmamiGeo(token, period),
+          getUmamiTech(token, period),
+        ]);
+        if (!cancelled) {
+          setOverview(o);
+          setTimeseries(t);
+          setPages(p);
+          setSources(s);
+          setGeo(g);
+          setTech(te);
+        }
+      } catch (e) {
+        if (!cancelled) {
+          setErr(e instanceof ApiError ? e.message : "Failed to load analytics");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [token, period]);
+
+  return (
+    <div className="space-y-8">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Full visitor analytics for your blog.
+          </p>
+        </div>
+        <div className="w-full sm:max-w-xs">
+          <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
+            <SelectTrigger className="touch-manipulation" aria-label="Analytics time range">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {PERIOD_OPTIONS.map((o) => (
+                <SelectItem key={o.value} value={o.value}>
+                  {o.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+          </div>
+          <Skeleton className="h-72 w-full rounded-lg border" />
+        </div>
+      ) : (
+        <Tabs defaultValue="overview" className="space-y-6">
+          <TabsList className="w-full sm:w-auto">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="pages">Pages</TabsTrigger>
+            <TabsTrigger value="sources">Sources</TabsTrigger>
+            <TabsTrigger value="geo">Geo</TabsTrigger>
+            <TabsTrigger value="tech">Tech</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="overview" className="space-y-6">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <RealtimePanel token={token} />
+              <KpiCard
+                title="Pageviews"
+                value={overview?.overview.pageviews ?? "—"}
+                icon={Eye}
+              />
+              <KpiCard
+                title="Visitors"
+                value={overview?.overview.visitors ?? "—"}
+                icon={Users}
+              />
+              <KpiCard
+                title="Visits"
+                value={overview?.overview.visits ?? "—"}
+                icon={Monitor}
+              />
+            </div>
+
+            {timeseries && (timeseries.pageviews.length > 0 || timeseries.visitors.length > 0) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Traffic</CardTitle>
+                  <CardDescription>Pageviews and visitors over time.</CardDescription>
+                </CardHeader>
+                <CardContent className="h-64 sm:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={timeseries.pageviews.map((p: UmamiTimeseriesItem, i: number) => ({
+                      x: p.x,
+                      pageviews: p.y,
+                      visitors: timeseries.visitors[i]?.y ?? 0,
+                    }))}
+                    margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
+                      <defs>
+                        <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.3}/>
+                          <stop offset="95%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="x" tick={{ fontSize: 12 }} />
+                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
+                      <Tooltip />
+                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <Area
+                        type="monotone"
+                        dataKey="pageviews"
+                        name="Pageviews"
+                        stroke="oklch(0.6 0.15 145)"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorPageviews)"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="visitors"
+                        name="Visitors"
+                        stroke="oklch(0.58 0.18 280)"
+                        strokeWidth={2}
+                        fillOpacity={1}
+                        fill="url(#colorVisitors)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              {pages && pages.rows.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Top pages</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={pages.rows.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 11 }} width={140} />
+                        <Tooltip />
+                        <Bar dataKey="y" name="Visitors" fill="oklch(0.6 0.15 145)" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+              {sources && sources.referrers.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Referrers</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={sources.referrers.slice(0, 10)} layout="vertical">
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
+                        <XAxis type="number" tick={{ fontSize: 12 }} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 11 }} width={140} />
+                        <Tooltip />
+                        <Bar dataKey="y" name="Visitors" fill="oklch(0.58 0.18 280)" radius={[0, 4, 4, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="pages">
+            {pages && pages.rows.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>All pages</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {pages.rows.map((row: UmamiMetricsRow, i: number) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <span className="truncate max-w-[300px] text-sm">
+                          {row.x}
+                        </span>
+                        <span className="font-medium text-sm">
+                          {row.y}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>No page data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sources">
+            {sources && sources.referrers.length > 0 ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>All referrers</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-2">
+                    {sources.referrers.map((row: UmamiMetricsRow, i: number) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <span className="truncate max-w-[300px] text-sm">
+                          {row.x}
+                        </span>
+                        <span className="font-medium text-sm">
+                          {row.y}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>No referrer data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="geo">
+            {geo && geo.countries.length > 0 ? (
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Countries</CardTitle>
+                  </CardHeader>
+                  <CardContent className="h-72">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={geo.countries.slice(0, 10)}
+                          cx="50%"
+                          cy="50%"
+                          labelLine={false}
+                          label={({ x }) => `${x}`}
+                          outerRadius={80}
+                          fill="#8884d8"
+                          dataKey="y"
+                        >
+                          {geo.countries.slice(0, 10).map((_: UmamiMetricsRow, index: number) => (
+                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>All countries</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {geo.countries.map((row: UmamiMetricsRow, i: number) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                          <span className="text-sm">
+                            {row.x}
+                          </span>
+                          <span className="font-medium text-sm">
+                            {row.y}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>No geographic data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="tech">
+            {tech ? (
+              <div className="grid gap-6 lg:grid-cols-3">
+                {tech.browsers.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Browsers</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <span className="text-sm">{row.x}</span>
+                            <span className="font-medium text-sm">{row.y}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                {tech.os.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>OS</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <span className="text-sm">{row.x}</span>
+                            <span className="font-medium text-sm">{row.y}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+                {tech.devices.length > 0 && (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Devices</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <span className="text-sm capitalize">{row.x}</span>
+                            <span className="font-medium text-sm">{row.y}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle>No technical data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
+
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
 }
@@ -112,18 +602,9 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
-        {isPro && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            Full visitor analytics for your blog.
-          </p>
-        )}
-      </div>
-
+    <div className="mx-auto max-w-[1100px]">
       {isPro ? (
-        <ProDashboard token={token} />
+        <NativeAnalytics token={token} />
       ) : (
         <Card className="p-8">
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">

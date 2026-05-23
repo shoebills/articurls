@@ -90,3 +90,41 @@ def enqueue_umami_domain_sync(user_id: int) -> None:
     from ..workers.tasks import sync_umami_website_domain
 
     sync_umami_website_domain.delay(user_id)
+
+
+def get_umami_period_timestamps(period: str) -> tuple[int, int]:
+    """Map period string like '24h', '7d' to startAt/endAt ms timestamps."""
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+    end_at = int(now.timestamp() * 1000)
+
+    if period == "24h":
+        start_at = int((now - timedelta(hours=24)).timestamp() * 1000)
+    elif period == "7d":
+        start_at = int((now - timedelta(days=7)).timestamp() * 1000)
+    elif period == "28d":
+        start_at = int((now - timedelta(days=28)).timestamp() * 1000)
+    elif period == "3m":
+        start_at = int((now - timedelta(days=90)).timestamp() * 1000)
+    elif period == "6m":
+        start_at = int((now - timedelta(days=180)).timestamp() * 1000)
+    elif period == "1y":
+        start_at = int((now - timedelta(days=365)).timestamp() * 1000)
+    elif period == "all":
+        start_at = 0
+    else:
+        start_at = int((now - timedelta(days=7)).timestamp() * 1000)
+
+    return start_at, end_at
+
+
+def get_umami_period_unit(period: str) -> str:
+    """Get appropriate time unit for timeseries for a given period."""
+    if period == "24h":
+        return "hour"
+    elif period in ("7d", "28d"):
+        return "day"
+    else:
+        return "month"
+

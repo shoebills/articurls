@@ -25,9 +25,30 @@ import type {
   TokenResponse,
   TransactionOut,
   UmamiDashboard,
+  UmamiMetricsRow,
+  UmamiTimeseriesItem,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiRealtimeResponse,
   UserSettings,
   UsernameChangeRequestOut,
 } from "./types";
+
+export type {
+  UmamiMetricsRow,
+  UmamiTimeseriesItem,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiRealtimeResponse,
+};
 
 export class ApiError extends Error {
   constructor(
@@ -763,4 +784,64 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
 
 export async function getUmamiDashboard(token: string): Promise<UmamiDashboard> {
   return apiFetch("/analytics/umami-dashboard", { token, disableCache: true });
+}
+
+export type AnalyticsPeriod = "24h" | "7d" | "28d" | "3m" | "6m" | "1y" | "all";
+
+export async function getUmamiOverview(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+): Promise<UmamiOverviewResponse> {
+  const q = new URLSearchParams({ period });
+  return apiFetch(`/analytics/umami/overview?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiTimeseries(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+): Promise<UmamiTimeseriesResponse> {
+  const q = new URLSearchParams({ period });
+  return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiPages(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiPagesResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiSources(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiSourcesResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/sources?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiGeo(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiGeoResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/geo?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiTech(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiTechResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/tech?${q.toString()}`, { token, disableCache: true });
+}
+
+export async function getUmamiRealtime(
+  token: string,
+): Promise<UmamiRealtimeResponse> {
+  return apiFetch("/analytics/umami/realtime", { token, disableCache: true });
 }

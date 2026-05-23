@@ -73,18 +73,28 @@ class UmamiClient:
     ) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
         with httpx.Client(timeout=30.0) as client:
+            kwargs: Dict[str, Any] = {}
+            if method.upper() == "GET" and json:
+                kwargs["params"] = json
+            elif json:
+                kwargs["json"] = json
             response = client.request(
                 method,
                 url,
-                json=json,
                 headers=self._auth_headers_sync(),
+                **kwargs,
             )
             if response.status_code == 401:
+                kwargs_retry: Dict[str, Any] = {}
+                if method.upper() == "GET" and json:
+                    kwargs_retry["params"] = json
+                elif json:
+                    kwargs_retry["json"] = json
                 response = client.request(
                     method,
                     url,
-                    json=json,
                     headers=self._auth_headers_sync(force_login=True),
+                    **kwargs_retry,
                 )
             if response.status_code >= 400:
                 raise UmamiError(response.status_code, response.text)
@@ -158,3 +168,77 @@ class UmamiClient:
         if existing:
             return existing
         return self.enable_share_sync(website_id, name=name)
+
+    def get_website_stats_sync(
+        self,
+        website_id: str,
+        *,
+        start_at: int,
+        end_at: int,
+    ) -> Dict[str, Any]:
+        """Return core stats (pageviews, visitors, sessions, etc.) for a date range."""
+        return self._request_sync(
+            "GET",
+            f"/api/websites/{website_id}/stats",
+            json={"startAt": start_at, "endAt": end_at},
+        )
+
+    def get_website_pageviews_sync(
+        self,
+        website_id: str,
+        *,
+        start_at: int,
+        end_at: int,
+        unit: str = "day",
+        timezone: Optional[str] = None,
+    ) -> Dict[str, Any]:
+        """Return pageviews timeseries data."""
+        payload = {
+            "startAt": start_at,
+            "endAt": end_at,
+            "unit": unit,
+        }
+        if timezone:
+            payload["timezone"] = timezone
+        return self._request_sync(
+            "GET",
+            f"/api/websites/{website_id}/pageviews",
+            json=payload,
+        )
+
+    def get_website_metrics_sync(
+        self,
+        website_id: str,
+        *,
+        start_at: int,
+        end_at: int,
+        type: str,
+        limit: int = 100,
+        offset: int = 0,
+    ) -> list[Dict[str, Any]]:
+        """Return metrics by dimension (path, referrer, country, browser, etc.)."""
+        return self._request_sync(
+            "GET",
+            f"/api/websites/{website_id}/metrics",
+            json={
+                "startAt": start_at,
+                "endAt": end_at,
+                "type": type,
+                "limit": limit,
+                "offset": offset,
+            },
+        )
+
+    def get_website_active_sync(self, website_id: str) -> Dict[str, Any]:
+        """Return active visitors in the last 5 minutes."""
+        return self._request_sync(
+            "GET",
+            f"/api/websites/{website_id}/active",
+        )
+
+    def get_realtime_sync(self, website_id: str) -> Dict[str, Any]:
+        """Return realtime analytics (last 30 minutes)."""
+        return self._request_sync(
+            "GET",
+            f"/api/realtime/{website_id}",
+        )

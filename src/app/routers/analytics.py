@@ -134,3 +134,325 @@ def get_umami_dashboard(
         db.commit()
 
     return {"share_url": share_url}
+
+
+@router.get("/umami/overview", status_code=status.HTTP_200_OK)
+def get_umami_overview(
+    period: str = "7d",
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+        stats = client.get_website_stats_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+        )
+
+        return {
+            "period": period,
+            "overview": {
+                "pageviews": stats.get("pageviews", 0),
+                "visitors": stats.get("visitors", 0),
+                "visits": stats.get("sessions", 0),
+                "bounce_rate": stats.get("bounceRate", 0),
+                "avg_visit_time": stats.get("visitTime", 0),
+            },
+            "change": None,
+        }
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/timeseries", status_code=status.HTTP_200_OK)
+def get_umami_timeseries(
+    period: str = "7d",
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps, get_umami_period_unit
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+        unit = get_umami_period_unit(period)
+
+        pageviews_data = client.get_website_pageviews_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            unit=unit,
+        )
+
+        return {
+            "period": period,
+            "unit": unit,
+            "pageviews": pageviews_data.get("pageviews", []),
+            "visitors": pageviews_data.get("visitors", []),
+        }
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/pages", status_code=status.HTTP_200_OK)
+def get_umami_pages(
+    period: str = "7d",
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+        pages = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="path",
+            limit=limit,
+        )
+
+        return {"period": period, "rows": pages}
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/sources", status_code=status.HTTP_200_OK)
+def get_umami_sources(
+    period: str = "7d",
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+        referrers = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="referrer",
+            limit=limit,
+        )
+
+        return {"period": period, "referrers": referrers}
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/geo", status_code=status.HTTP_200_OK)
+def get_umami_geo(
+    period: str = "7d",
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+        countries = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="country",
+            limit=limit,
+        )
+
+        return {"period": period, "countries": countries}
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/tech", status_code=status.HTTP_200_OK)
+def get_umami_tech(
+    period: str = "7d",
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+    from ..umami.service import get_umami_period_timestamps
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        start_at, end_at = get_umami_period_timestamps(period)
+
+        browsers = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="browser",
+            limit=limit,
+        )
+        os_list = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="os",
+            limit=limit,
+        )
+        devices = client.get_website_metrics_sync(
+            current_user.umami_website_id,
+            start_at=start_at,
+            end_at=end_at,
+            type="device",
+            limit=limit,
+        )
+
+        return {
+            "period": period,
+            "browsers": browsers,
+            "os": os_list,
+            "devices": devices,
+        }
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )
+
+
+@router.get("/umami/realtime", status_code=status.HTTP_200_OK)
+def get_umami_realtime(
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    _pro=Depends(require_pro),
+):
+    from ..umami.client import UmamiClient, UmamiError
+
+    if not current_user.umami_website_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Umami website not provisioned yet.",
+        )
+
+    client = UmamiClient()
+    if not client.configured:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Analytics service is not configured.",
+        )
+
+    try:
+        realtime = client.get_realtime_sync(current_user.umami_website_id)
+
+        return {
+            "active_visitors": realtime.get("totals", {}).get("visitors", 0),
+            "urls": realtime.get("urls", {}),
+            "countries": realtime.get("countries", {}),
+            "referrers": realtime.get("referrers", {}),
+            "events": realtime.get("events", []),
+        }
+    except UmamiError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=f"Failed to retrieve analytics: {exc.body}",
+        )

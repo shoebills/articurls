@@ -288,6 +288,68 @@ export interface DomainVerifyResponse {
   message?: string | null;
 }
 
+export interface UmamiMetricsRow {
+  x: string;
+  y: number;
+}
+
+export interface UmamiOverview {
+  pageviews: number;
+  visitors: number;
+  visits?: number;
+  bounce_rate?: number;
+  avg_visit_time?: number;
+}
+
+export interface UmamiOverviewResponse {
+  period: string;
+  overview: UmamiOverview;
+  change?: Record<string, number>;
+}
+
+export interface UmamiTimeseriesItem {
+  x: string;
+  t?: string;
+  y: number;
+}
+
+export interface UmamiTimeseriesResponse {
+  period: string;
+  unit: string;
+  pageviews: UmamiTimeseriesItem[];
+  visitors: UmamiTimeseriesItem[];
+}
+
+export interface UmamiPagesResponse {
+  period: string;
+  rows: UmamiMetricsRow[];
+}
+
+export interface UmamiSourcesResponse {
+  period: string;
+  referrers: UmamiMetricsRow[];
+}
+
+export interface UmamiGeoResponse {
+  period: string;
+  countries: UmamiMetricsRow[];
+}
+
+export interface UmamiTechResponse {
+  period: string;
+  browsers: UmamiMetricsRow[];
+  os: UmamiMetricsRow[];
+  devices: UmamiMetricsRow[];
+}
+
+export interface UmamiRealtimeResponse {
+  active_visitors: number;
+  urls: Record<string, number>;
+  countries: Record<string, number>;
+  referrers: Record<string, number>;
+  events: Array<Record<string, unknown>>;
+}
+
 export interface UmamiDashboard {
   share_url: string;
 }
