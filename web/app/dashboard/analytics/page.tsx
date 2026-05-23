@@ -227,7 +227,6 @@ function NativeAnalytics({ token }: { token: string }) {
             <TabsTrigger value="overview" className="flex-1 sm:flex-none text-xs sm:text-sm">Overview</TabsTrigger>
             <TabsTrigger value="pages" className="flex-1 sm:flex-none text-xs sm:text-sm">Pages</TabsTrigger>
             <TabsTrigger value="sources" className="flex-1 sm:flex-none text-xs sm:text-sm">Sources</TabsTrigger>
-            <TabsTrigger value="geo" className="hidden sm:flex text-xs sm:text-sm">Geo</TabsTrigger>
             <TabsTrigger value="tech" className="hidden sm:flex text-xs sm:text-sm">Tech</TabsTrigger>
           </TabsList>
 
@@ -320,69 +319,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 </CardContent>
               </Card>
             )}
-          </TabsContent>
 
-          <TabsContent value="pages">
-            {pages && pages.rows.length > 0 ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">All pages</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-1 sm:space-y-2">
-                    {pages.rows.map((row: UmamiMetricsRow, i: number) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
-                          {row.x}
-                        </span>
-                        <span className="font-medium text-xs sm:text-sm">
-                          {row.y}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sources">
-            {sources && sources.referrers.length > 0 ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">All referrers</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-1 sm:space-y-2">
-                    {sources.referrers.map((row: UmamiMetricsRow, i: number) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
-                          {row.x}
-                        </span>
-                        <span className="font-medium text-xs sm:text-sm">
-                          {row.y}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="geo">
             {geo && geo.countries.length > 0 ? (
               <div className="grid gap-4 lg:grid-cols-2">
                 <Card>
@@ -449,6 +386,66 @@ function NativeAnalytics({ token }: { token: string }) {
               <Card>
                 <CardHeader>
                   <CardTitle className="text-base sm:text-lg">No geographic data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="pages">
+            {pages && pages.rows.length > 0 ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">All pages</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-1 sm:space-y-2">
+                    {pages.rows.map((row: UmamiMetricsRow, i: number) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
+                          {row.x}
+                        </span>
+                        <span className="font-medium text-xs sm:text-sm">
+                          {row.y}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
+                </CardHeader>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="sources">
+            {sources && sources.referrers.length > 0 ? (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">All referrers</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <div className="space-y-1 sm:space-y-2">
+                    {sources.referrers.map((row: UmamiMetricsRow, i: number) => (
+                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
+                          {row.x}
+                        </span>
+                        <span className="font-medium text-xs sm:text-sm">
+                          {row.y}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
                 </CardHeader>
               </Card>
             )}
