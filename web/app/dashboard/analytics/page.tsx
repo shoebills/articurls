@@ -46,6 +46,13 @@ import {
   Globe,
   FileText,
   ArrowUpRight,
+  Search,
+  X,
+  MessageCircle,
+  ExternalLink,
+  Image,
+  Users2,
+  Video,
 } from "lucide-react";
 import {
   AreaChart,
@@ -77,6 +84,92 @@ const COLORS = [
   "oklch(0.62 0.16 30)",
   "oklch(0.56 0.17 200)",
 ];
+
+function getCountryFlag(code: string): string {
+  const codeUpper = code.toUpperCase();
+  if (codeUpper.length !== 2) return "";
+  const offset = 0x1F1E6;
+  const first = codeUpper.charCodeAt(0) - 0x41 + offset;
+  const second = codeUpper.charCodeAt(1) - 0x41 + offset;
+  return String.fromCodePoint(first, second);
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+  SG: "Singapore",
+  IN: "India",
+  US: "United States",
+  NL: "Netherlands",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  CA: "Canada",
+  AU: "Australia",
+  JP: "Japan",
+  CN: "China",
+  BR: "Brazil",
+  RU: "Russia",
+  KR: "South Korea",
+  MX: "Mexico",
+  ES: "Spain",
+  IT: "Italy",
+  ID: "Indonesia",
+  TH: "Thailand",
+  MY: "Malaysia",
+  PH: "Philippines",
+  VN: "Vietnam",
+  PL: "Poland",
+  TR: "Turkey",
+  SA: "Saudi Arabia",
+  AE: "United Arab Emirates",
+  IL: "Israel",
+  EG: "Egypt",
+  ZA: "South Africa",
+  NG: "Nigeria",
+  KE: "Kenya",
+  AR: "Argentina",
+  CL: "Chile",
+  CO: "Colombia",
+  PE: "Peru",
+};
+
+function getReferrerIcon(domain: string) {
+  const domainLower = domain.toLowerCase();
+  if (domainLower.includes("google")) return Search;
+  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return X;
+  if (domainLower.includes("instagram")) return Image;
+  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return Users2;
+  if (domainLower.includes("linkedin")) return Users;
+  if (domainLower.includes("youtube")) return Video;
+  if (domainLower.includes("reddit")) return MessageCircle;
+  return ExternalLink;
+}
+
+function getBrowserIcon(browser: string) {
+  const browserLower = browser.toLowerCase();
+  if (browserLower.includes("chrome")) return MonitorIcon;
+  if (browserLower.includes("firefox")) return MonitorIcon;
+  if (browserLower.includes("safari")) return MonitorIcon;
+  if (browserLower.includes("edge")) return MonitorIcon;
+  return MonitorIcon;
+}
+
+function getOsIcon(os: string) {
+  const osLower = os.toLowerCase();
+  if (osLower.includes("windows")) return Laptop;
+  if (osLower.includes("mac")) return Laptop;
+  if (osLower.includes("linux")) return Laptop;
+  if (osLower.includes("android")) return Smartphone;
+  if (osLower.includes("ios")) return Smartphone;
+  return Laptop;
+}
+
+function getDeviceIcon(device: string) {
+  const deviceLower = device.toLowerCase();
+  if (deviceLower.includes("mobile")) return Smartphone;
+  if (deviceLower.includes("tablet")) return Smartphone;
+  if (deviceLower.includes("desktop")) return Laptop;
+  return Laptop;
+}
 
 function formatDuration(seconds: number): string {
   if (!seconds || seconds <= 0) return "0s";
@@ -323,9 +416,12 @@ function NativeAnalytics({ token }: { token: string }) {
                     <div className="space-y-1 sm:space-y-2">
                       {pages.rows.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                            {row.x}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                              {row.x}
+                            </span>
+                          </div>
                           <span className="font-medium text-xs sm:text-sm">
                             {row.y}
                           </span>
@@ -352,16 +448,22 @@ function NativeAnalytics({ token }: { token: string }) {
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
-                      {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                            {row.x}
-                          </span>
-                          <span className="font-medium text-xs sm:text-sm">
-                            {row.y}
-                          </span>
-                        </div>
-                      ))}
+                      {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                        const ReferrerIcon = getReferrerIcon(row.x);
+                        return (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div className="flex items-center gap-2">
+                              <ReferrerIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                                {row.x}
+                              </span>
+                            </div>
+                            <span className="font-medium text-xs sm:text-sm">
+                              {row.y}
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </CardContent>
                 </Card>
@@ -385,9 +487,12 @@ function NativeAnalytics({ token }: { token: string }) {
                     <div className="space-y-1 sm:space-y-2">
                       {geo.countries.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <span className="text-xs sm:text-sm">
-                            {row.x}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getCountryFlag(row.x)}</span>
+                            <span className="text-xs sm:text-sm">
+                              {COUNTRY_NAMES[row.x.toUpperCase()] || row.x}
+                            </span>
+                          </div>
                           <span className="font-medium text-xs sm:text-sm">
                             {row.y}
                           </span>
@@ -417,12 +522,18 @@ function NativeAnalytics({ token }: { token: string }) {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
-                        {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
-                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-xs sm:text-sm">{row.x}</span>
-                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                          </div>
-                        ))}
+                        {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const BrowserIcon = getBrowserIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <BrowserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -437,12 +548,18 @@ function NativeAnalytics({ token }: { token: string }) {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
-                        {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
-                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-xs sm:text-sm">{row.x}</span>
-                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                          </div>
-                        ))}
+                        {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const OsIcon = getOsIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <OsIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
@@ -457,12 +574,18 @@ function NativeAnalytics({ token }: { token: string }) {
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
-                        {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
-                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-xs sm:text-sm capitalize">{row.x}</span>
-                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                          </div>
-                        ))}
+                        {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const DeviceIcon = getDeviceIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <DeviceIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm capitalize">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
