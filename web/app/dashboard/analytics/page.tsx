@@ -453,22 +453,36 @@ function NativeAnalytics({ token }: { token: string }) {
                   </CardHeader>
                   <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <PieChart>
+                      <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                         <Pie
-                          data={geo.countries.slice(0, 10)}
+                          data={geo.countries.slice(0, 6)}
                           cx="50%"
                           cy="50%"
-                          labelLine={false}
-                          label={({ x }) => `${x}`}
+                          innerRadius={40}
                           outerRadius={70}
-                          fill="#8884d8"
+                          paddingAngle={3}
                           dataKey="y"
+                          nameKey="x"
                         >
-                          {geo.countries.slice(0, 10).map((_: UmamiMetricsRow, index: number) => (
+                          {geo.countries.slice(0, 6).map((_: UmamiMetricsRow, index: number) => (
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            borderRadius: "8px",
+                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "hsl(var(--background))",
+                          }}
+                        />
+                        <Legend
+                          layout="vertical"
+                          verticalAlign="middle"
+                          align="right"
+                          iconType="circle"
+                          wrapperStyle={{ fontSize: "11px", paddingLeft: "8px" }}
+                        />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
