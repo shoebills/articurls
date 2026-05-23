@@ -47,7 +47,6 @@ import {
   FileText,
   ArrowUpRight,
   Search,
-  X,
   MessageCircle,
   ExternalLink,
   Image,
@@ -135,12 +134,65 @@ const COUNTRY_NAMES: Record<string, string> = {
 function getReferrerIcon(domain: string) {
   const domainLower = domain.toLowerCase();
   if (domainLower.includes("google")) return Search;
-  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return X;
+  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return MessageCircle;
   if (domainLower.includes("instagram")) return Image;
-  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return Users2;
-  if (domainLower.includes("linkedin")) return Users;
+  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return Users;
+  if (domainLower.includes("linkedin")) return Users2;
   if (domainLower.includes("youtube")) return Video;
   if (domainLower.includes("reddit")) return MessageCircle;
+  if (domainLower.includes("discord")) return MessageCircle;
+  if (domainLower.includes("github")) return Users2;
+  if (domainLower.includes("pinterest")) return Image;
+  if (domainLower.includes("tiktok")) return Video;
+  if (domainLower.includes("whatsapp")) return MessageCircle;
+  if (domainLower.includes("telegram")) return MessageCircle;
+  if (domainLower.includes("slack")) return MessageCircle;
+  if (domainLower.includes("quora")) return MessageCircle;
+  if (domainLower.includes("medium")) return FileText;
+  if (domainLower.includes("tumblr")) return Image;
+  if (domainLower.includes("flickr")) return Image;
+  if (domainLower.includes("vimeo")) return Video;
+  if (domainLower.includes("twitch")) return Video;
+  if (domainLower.includes("spotify")) return Video;
+  if (domainLower.includes("soundcloud")) return Video;
+  if (domainLower.includes("apple")) return MonitorIcon;
+  if (domainLower.includes("amazon")) return MonitorIcon;
+  if (domainLower.includes("ebay")) return MonitorIcon;
+  if (domainLower.includes("etsy")) return MonitorIcon;
+  if (domainLower.includes("shopify")) return MonitorIcon;
+  if (domainLower.includes("stripe")) return MonitorIcon;
+  if (domainLower.includes("paypal")) return MonitorIcon;
+  if (domainLower.includes("coinbase")) return MonitorIcon;
+  if (domainLower.includes("binance")) return MonitorIcon;
+  if (domainLower.includes("kraken")) return MonitorIcon;
+  if (domainLower.includes("duckduckgo")) return Search;
+  if (domainLower.includes("bing")) return Search;
+  if (domainLower.includes("yahoo")) return Search;
+  if (domainLower.includes("baidu")) return Search;
+  if (domainLower.includes("yandex")) return Search;
+  if (domainLower.includes("ask")) return Search;
+  if (domainLower.includes("aol")) return Search;
+  if (domainLower.includes("excite")) return Search;
+  if (domainLower.includes("lycos")) return Search;
+  if (domainLower.includes("stackoverflow")) return MessageCircle;
+  if (domainLower.includes("stackexchange")) return MessageCircle;
+  if (domainLower.includes("codepen")) return FileText;
+  if (domainLower.includes("codesandbox")) return FileText;
+  if (domainLower.includes("gitlab")) return Users2;
+  if (domainLower.includes("bitbucket")) return Users2;
+  if (domainLower.includes("dev.to")) return FileText;
+  if (domainLower.includes("hashnode")) return FileText;
+  if (domainLower.includes("dribbble")) return Image;
+  if (domainLower.includes("behance")) return Image;
+  if (domainLower.includes("figma")) return Image;
+  if (domainLower.includes("canva")) return Image;
+  if (domainLower.includes("producthunt")) return FileText;
+  if (domainLower.includes("hackernews")) return MessageCircle;
+  if (domainLower.includes("lobsters")) return MessageCircle;
+  if (domainLower.includes("designernews")) return MessageCircle;
+  if (domainLower.includes("news.ycombinator")) return MessageCircle;
+  if (domainLower.includes("indiehackers")) return MessageCircle;
+  if (domainLower.includes("beta.page")) return MessageCircle;
   return ExternalLink;
 }
 
@@ -150,6 +202,30 @@ function getBrowserIcon(browser: string) {
   if (browserLower.includes("firefox")) return MonitorIcon;
   if (browserLower.includes("safari")) return MonitorIcon;
   if (browserLower.includes("edge")) return MonitorIcon;
+  if (browserLower.includes("opera")) return MonitorIcon;
+  if (browserLower.includes("brave")) return MonitorIcon;
+  if (browserLower.includes("vivaldi")) return MonitorIcon;
+  if (browserLower.includes("duckduckgo")) return MonitorIcon;
+  if (browserLower.includes("samsung")) return MonitorIcon;
+  if (browserLower.includes("uc browser")) return MonitorIcon;
+  if (browserLower.includes("yandex")) return MonitorIcon;
+  if (browserLower.includes("maxthon")) return MonitorIcon;
+  if (browserLower.includes("puffin")) return MonitorIcon;
+  if (browserLower.includes("sleipnir")) return MonitorIcon;
+  if (browserLower.includes("palemoon")) return MonitorIcon;
+  if (browserLower.includes("waterfox")) return MonitorIcon;
+  if (browserLower.includes("librewolf")) return MonitorIcon;
+  if (browserLower.includes("falkon")) return MonitorIcon;
+  if (browserLower.includes("konqueror")) return MonitorIcon;
+  if (browserLower.includes("epiphany")) return MonitorIcon;
+  if (browserLower.includes("midori")) return MonitorIcon;
+  if (browserLower.includes("luakit")) return MonitorIcon;
+  if (browserLower.includes("qutebrowser")) return MonitorIcon;
+  if (browserLower.includes("surf")) return MonitorIcon;
+  if (browserLower.includes("uzbl")) return MonitorIcon;
+  if (browserLower.includes("vimb")) return MonitorIcon;
+  if (browserLower.includes("dillo")) return MonitorIcon;
+  if (browserLower.includes("netsurf")) return MonitorIcon;
   return MonitorIcon;
 }
 
@@ -158,8 +234,13 @@ function getOsIcon(os: string) {
   if (osLower.includes("windows")) return Laptop;
   if (osLower.includes("mac")) return Laptop;
   if (osLower.includes("linux")) return Laptop;
+  if (osLower.includes("ubuntu")) return Laptop;
+  if (osLower.includes("debian")) return Laptop;
+  if (osLower.includes("fedora")) return Laptop;
   if (osLower.includes("android")) return Smartphone;
   if (osLower.includes("ios")) return Smartphone;
+  if (osLower.includes("ipad") || osLower.includes("ipod")) return Smartphone;
+  if (osLower.includes("chrome")) return MonitorIcon;
   return Laptop;
 }
 
@@ -167,7 +248,9 @@ function getDeviceIcon(device: string) {
   const deviceLower = device.toLowerCase();
   if (deviceLower.includes("mobile")) return Smartphone;
   if (deviceLower.includes("tablet")) return Smartphone;
+  if (deviceLower.includes("ipad")) return Smartphone;
   if (deviceLower.includes("desktop")) return Laptop;
+  if (deviceLower.includes("laptop")) return Laptop;
   return Laptop;
 }
 
