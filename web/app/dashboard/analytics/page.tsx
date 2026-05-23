@@ -102,23 +102,23 @@ function KpiCard({
 }) {
   return (
     <Card>
-      <CardContent className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3 sm:p-4 lg:p-5">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">
+            <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
               {title}
             </p>
-            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
               {value}
             </p>
             {description && (
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
                 {description}
               </p>
             )}
           </div>
           <div className="shrink-0 mt-0.5">
-            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground opacity-70" />
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
           </div>
         </div>
       </CardContent>
@@ -129,13 +129,13 @@ function KpiCard({
 function KpiCardSkeleton() {
   return (
     <Card>
-      <CardContent className="p-4 sm:p-5">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3 sm:p-4 lg:p-5">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
           <div className="flex-1 min-w-0">
-            <Skeleton className="h-3.5 w-20 mb-2" />
-            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-3 w-16 sm:h-3.5 sm:w-20 mb-2" />
+            <Skeleton className="h-6 w-24 sm:h-8 sm:w-28" />
           </div>
-          <Skeleton className="h-5 w-5 shrink-0 rounded-md" />
+          <Skeleton className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 rounded-md" />
         </div>
       </CardContent>
     </Card>
@@ -213,7 +213,7 @@ function NativeAnalytics({ token }: { token: string }) {
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />
@@ -232,7 +232,7 @@ function NativeAnalytics({ token }: { token: string }) {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
-            <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
               <KpiCard
                 title="Pageviews"
                 value={overview?.overview.pageviews ?? "—"}
