@@ -121,14 +121,21 @@ def get_umami_overview(
             end_at=end_at,
         )
 
+        visits = stats.get("visits", 0)
+        bounces = stats.get("bounces", 0)
+        totaltime = stats.get("totaltime", 0)
+
+        bounce_rate = round((bounces / visits * 100), 1) if visits > 0 else 0
+        avg_visit_time = round(totaltime / visits) if visits > 0 else 0
+
         return {
             "period": period,
             "overview": {
                 "pageviews": stats.get("pageviews", 0),
                 "visitors": stats.get("visitors", 0),
-                "visits": stats.get("visits", 0),
-                "bounce_rate": stats.get("bounces", 0),
-                "avg_visit_time": stats.get("totaltime", 0),
+                "visits": visits,
+                "bounce_rate": bounce_rate,
+                "avg_visit_time": avg_visit_time,
             },
             "change": None,
         }
