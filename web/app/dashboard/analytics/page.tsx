@@ -13,14 +13,12 @@ import {
   getUmamiSources,
   getUmamiGeo,
   getUmamiTech,
-  getUmamiRealtime,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
   UmamiPagesResponse,
   UmamiSourcesResponse,
   UmamiGeoResponse,
   UmamiTechResponse,
-  UmamiRealtimeResponse,
   UmamiMetricsRow,
   UmamiTimeseriesItem,
 } from "@/lib/api";
@@ -40,11 +38,11 @@ import {
   Users,
   Eye,
   Loader2,
-  Activity,
+  TrendingDown,
+  Clock,
   Smartphone,
   Laptop,
   Monitor as MonitorIcon,
-  Layout,
 } from "lucide-react";
 import {
   AreaChart,
@@ -82,90 +80,13 @@ const COLORS = [
   "oklch(0.56 0.17 200)",
 ];
 
-function RealtimePanel({ token }: { token: string }) {
-  const [data, setData] = useState<UmamiRealtimeResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      try {
-        const d = await getUmamiRealtime(token);
-        if (!cancelled) setData(d);
-      } catch {
-        // ignore errors for realtime, just stay null
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => { cancelled = true; };
-  }, [token]);
-
-  if (loading) {
-    return (
-      <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base text-emerald-900 dark:text-emerald-100">
-            <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
-            <Skeleton className="h-5 w-24" />
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-0 pb-4">
-          <Skeleton className="h-10 w-20" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  return (
-    <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2 text-base text-emerald-900 dark:text-emerald-100">
-          <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
-          Real-time
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="pt-0 pb-4">
-        {data ? (
-          <div className="space-y-3">
-            <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-400">
-              {data.active_visitors}
-            </div>
-            <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-200/80">
-              Active visitors right now
-            </p>
-            {Object.keys(data.urls).length > 0 && (
-              <div className="pt-2">
-                <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-300/70 mb-2">
-                  Top pages
-                </p>
-                <ul className="text-xs sm:text-sm space-y-1">
-                  {Object.entries(data.urls as Record<string, number>)
-                    .sort(([, a], [, b]) => b - a)
-                    .slice(0, 3)
-                    .map(([url, count]) => (
-                      <li key={url} className="flex justify-between text-emerald-900/80 dark:text-emerald-200/80">
-                        <span className="truncate max-w-[180px] sm:max-w-[200px]">{url}</span>
-                        <span className="font-medium">{count}</span>
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="space-y-3">
-            <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-400">
-              0
-            </div>
-            <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-200/80">
-              Active visitors right now
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
+function formatDuration(ms: number): string {
+  if (!ms || ms <= 0) return "0s";
+  const totalSeconds = Math.round(ms / 1000);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${s}s`;
 }
 
 function KpiCard({
@@ -297,9 +218,6 @@ function NativeAnalytics({ token }: { token: string }) {
 
           <TabsContent value="overview" className="space-y-4 sm:space-y-6">
             <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
-              <div className="col-span-2 lg:col-span-1">
-                <RealtimePanel token={token} />
-              </div>
               <KpiCard
                 title="Pageviews"
                 value={overview?.overview.pageviews ?? "—"}
@@ -311,9 +229,14 @@ function NativeAnalytics({ token }: { token: string }) {
                 icon={Users}
               />
               <KpiCard
-                title="Visits"
-                value={overview?.overview.visits ?? "—"}
-                icon={Layout}
+                title="Bounce Rate"
+                value={overview?.overview.bounce_rate != null ? `${overview.overview.bounce_rate}%` : "—"}
+                icon={TrendingDown}
+              />
+              <KpiCard
+                title="Avg Duration"
+                value={overview?.overview.avg_visit_time != null ? formatDuration(overview.overview.avg_visit_time) : "—"}
+                icon={Clock}
               />
             </div>
 
