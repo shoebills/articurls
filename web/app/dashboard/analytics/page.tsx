@@ -52,7 +52,27 @@ import {
   Image,
   Users2,
   Video,
+  Zap,
+  Compass,
 } from "lucide-react";
+import {
+  SiGooglechrome,
+  SiFirefox,
+  SiSafari,
+  SiOpera,
+  SiBrave,
+  SiVivaldi,
+  SiDuckduckgo,
+  SiSamsung,
+  SiTorbrowser,
+  SiApple,
+  SiLinux,
+  SiUbuntu,
+  SiDebian,
+  SiFedora,
+  SiAndroid,
+  SiIos,
+} from "react-icons/si";
 import {
   AreaChart,
   Area,
@@ -198,48 +218,50 @@ function getReferrerIcon(domain: string) {
 
 function getBrowserIcon(browser: string) {
   const browserLower = browser.toLowerCase();
-  if (browserLower.includes("chrome")) return MonitorIcon;
-  if (browserLower.includes("firefox")) return MonitorIcon;
-  if (browserLower.includes("safari")) return MonitorIcon;
-  if (browserLower.includes("edge")) return MonitorIcon;
-  if (browserLower.includes("opera")) return MonitorIcon;
-  if (browserLower.includes("brave")) return MonitorIcon;
-  if (browserLower.includes("vivaldi")) return MonitorIcon;
-  if (browserLower.includes("duckduckgo")) return MonitorIcon;
-  if (browserLower.includes("samsung")) return MonitorIcon;
-  if (browserLower.includes("uc browser")) return MonitorIcon;
-  if (browserLower.includes("yandex")) return MonitorIcon;
-  if (browserLower.includes("maxthon")) return MonitorIcon;
-  if (browserLower.includes("puffin")) return MonitorIcon;
-  if (browserLower.includes("sleipnir")) return MonitorIcon;
-  if (browserLower.includes("palemoon")) return MonitorIcon;
-  if (browserLower.includes("waterfox")) return MonitorIcon;
-  if (browserLower.includes("librewolf")) return MonitorIcon;
-  if (browserLower.includes("falkon")) return MonitorIcon;
-  if (browserLower.includes("konqueror")) return MonitorIcon;
-  if (browserLower.includes("epiphany")) return MonitorIcon;
-  if (browserLower.includes("midori")) return MonitorIcon;
-  if (browserLower.includes("luakit")) return MonitorIcon;
-  if (browserLower.includes("qutebrowser")) return MonitorIcon;
-  if (browserLower.includes("surf")) return MonitorIcon;
-  if (browserLower.includes("uzbl")) return MonitorIcon;
-  if (browserLower.includes("vimb")) return MonitorIcon;
-  if (browserLower.includes("dillo")) return MonitorIcon;
-  if (browserLower.includes("netsurf")) return MonitorIcon;
-  return MonitorIcon;
+  if (browserLower.includes("chrome")) return SiGooglechrome;
+  if (browserLower.includes("firefox")) return SiFirefox;
+  if (browserLower.includes("safari")) return SiSafari;
+  if (browserLower.includes("edge")) return MonitorIcon; // No dedicated Edge icon in react-icons/si, fallback to Monitor
+  if (browserLower.includes("opera")) return SiOpera;
+  if (browserLower.includes("brave")) return SiBrave;
+  if (browserLower.includes("vivaldi")) return SiVivaldi;
+  if (browserLower.includes("duckduckgo")) return SiDuckduckgo;
+  if (browserLower.includes("samsung")) return SiSamsung;
+  if (browserLower.includes("yandex")) return Compass; // fallback lucide icon
+  if (browserLower.includes("torbrowser") || browserLower.includes("tor browser") || browserLower.includes("tor ")) return SiTorbrowser;
+  if (browserLower.includes("librewolf")) return Zap; // LibreWolf fork of Firefox, use flame-like icon
+  if (browserLower.includes("uc browser")) return Globe;
+  if (browserLower.includes("maxthon")) return Globe;
+  if (browserLower.includes("puffin")) return Globe;
+  if (browserLower.includes("sleipnir")) return Globe;
+  if (browserLower.includes("palemoon")) return Globe;
+  if (browserLower.includes("waterfox")) return Globe;
+  if (browserLower.includes("falkon")) return Globe;
+  if (browserLower.includes("konqueror")) return Globe;
+  if (browserLower.includes("epiphany")) return Globe;
+  if (browserLower.includes("midori")) return Globe;
+  if (browserLower.includes("luakit")) return Globe;
+  if (browserLower.includes("qutebrowser")) return Globe;
+  if (browserLower.includes("surf")) return Globe;
+  if (browserLower.includes("uzbl")) return Globe;
+  if (browserLower.includes("vimb")) return Globe;
+  if (browserLower.includes("dillo")) return Globe;
+  if (browserLower.includes("netsurf")) return Globe;
+  return Globe;
 }
 
 function getOsIcon(os: string) {
   const osLower = os.toLowerCase();
-  if (osLower.includes("windows")) return Laptop;
-  if (osLower.includes("mac")) return Laptop;
-  if (osLower.includes("linux")) return Laptop;
-  if (osLower.includes("ubuntu")) return Laptop;
-  if (osLower.includes("debian")) return Laptop;
-  if (osLower.includes("fedora")) return Laptop;
-  if (osLower.includes("android")) return Smartphone;
-  if (osLower.includes("ios")) return Smartphone;
-  if (osLower.includes("ipad") || osLower.includes("ipod")) return Smartphone;
+  if (osLower === "windows" || osLower.startsWith("windows ")) return MonitorIcon; // use Monitor for Windows
+  if (osLower.includes("mac")) return SiApple;
+  if (osLower.includes("ubuntu")) return SiUbuntu;
+  if (osLower.includes("debian")) return SiDebian;
+  if (osLower.includes("fedora")) return SiFedora;
+  if (osLower.includes("linux")) return SiLinux;
+  if (osLower.includes("android")) return SiAndroid;
+  if (osLower.includes("ios")) return SiIos;
+  if (osLower.includes("ipad")) return SiIos;
+  if (osLower.includes("ipod")) return SiIos;
   if (osLower.includes("chrome")) return MonitorIcon;
   return Laptop;
 }
