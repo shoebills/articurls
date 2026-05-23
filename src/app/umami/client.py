@@ -69,14 +69,18 @@ class UmamiClient:
         method: str,
         path: str,
         *,
+        params: Optional[Dict[str, Any]] = None,
         json: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
         with httpx.Client(timeout=30.0) as client:
             kwargs: Dict[str, Any] = {}
-            if method.upper() == "GET" and json:
+            if params:
+                kwargs["params"] = params
+            # For backwards compatibility, if json is provided and no params, treat as params for GET
+            if method.upper() == "GET" and json and not params:
                 kwargs["params"] = json
-            elif json:
+            elif json and not params:
                 kwargs["json"] = json
             response = client.request(
                 method,
@@ -86,9 +90,11 @@ class UmamiClient:
             )
             if response.status_code == 401:
                 kwargs_retry: Dict[str, Any] = {}
-                if method.upper() == "GET" and json:
+                if params:
+                    kwargs_retry["params"] = params
+                if method.upper() == "GET" and json and not params:
                     kwargs_retry["params"] = json
-                elif json:
+                elif json and not params:
                     kwargs_retry["json"] = json
                 response = client.request(
                     method,
