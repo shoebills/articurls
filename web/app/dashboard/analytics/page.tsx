@@ -253,39 +253,52 @@ function NativeAnalytics({ token }: { token: string }) {
                       pageviews: p.y,
                       visitors: timeseries.visitors[i]?.y ?? 0,
                     }))}
-                    margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
+                    margin={{ top: 12, right: 12, left: 0, bottom: 8 }}>
                       <defs>
                         <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
+                          <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35}/>
+                          <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
                         </linearGradient>
                         <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.3}/>
-                          <stop offset="95%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
+                          <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.35}/>
+                          <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="x" tick={{ fontSize: 10 }} />
-                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
-                      <Tooltip contentStyle={{ fontSize: 12 }} />
-                      <Legend wrapperStyle={{ fontSize: 11 }} />
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
+                      <XAxis dataKey="x" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} />
+                      <Tooltip
+                        contentStyle={{
+                          fontSize: 12,
+                          borderRadius: "10px",
+                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "hsl(var(--background))",
+                          boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
+                        }}
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
+                        iconType="circle"
+                      />
                       <Area
                         type="monotone"
                         dataKey="pageviews"
                         name="Pageviews"
                         stroke="oklch(0.6 0.15 145)"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorPageviews)"
+                        activeDot={{ r: 5 }}
                       />
                       <Area
                         type="monotone"
                         dataKey="visitors"
                         name="Visitors"
                         stroke="oklch(0.58 0.18 280)"
-                        strokeWidth={2}
+                        strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorVisitors)"
+                        activeDot={{ r: 5 }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
@@ -301,12 +314,31 @@ function NativeAnalytics({ token }: { token: string }) {
                   </CardHeader>
                   <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={pages.rows.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10 }} />
-                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
-                        <Bar dataKey="y" name="Visitors" fill="oklch(0.6 0.15 145)" radius={[0, 4, 4, 0]} />
+                      <BarChart data={pages.rows.slice(0, 10)} layout="vertical" margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                        <defs>
+                          <linearGradient id="colorPages" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="oklch(0.6 0.15 145)" />
+                            <stop offset="100%" stopColor="oklch(0.65 0.18 155)" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} vertical={true} opacity={0.3} />
+                        <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} tickLine={false} axisLine={false} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            borderRadius: "8px",
+                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "hsl(var(--background))",
+                          }}
+                        />
+                        <Bar
+                          dataKey="y"
+                          name="Visitors"
+                          fill="url(#colorPages)"
+                          radius={[0, 8, 8, 0]}
+                          barSize={18}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
@@ -319,12 +351,31 @@ function NativeAnalytics({ token }: { token: string }) {
                   </CardHeader>
                   <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={sources.referrers.slice(0, 10)} layout="vertical">
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 10 }} />
-                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} />
-                        <Tooltip contentStyle={{ fontSize: 12 }} />
-                        <Bar dataKey="y" name="Visitors" fill="oklch(0.58 0.18 280)" radius={[0, 4, 4, 0]} />
+                      <BarChart data={sources.referrers.slice(0, 10)} layout="vertical" margin={{ top: 4, right: 8, left: 0, bottom: 4 }}>
+                        <defs>
+                          <linearGradient id="colorReferrers" x1="0" y1="0" x2="1" y2="0">
+                            <stop offset="0%" stopColor="oklch(0.58 0.18 280)" />
+                            <stop offset="100%" stopColor="oklch(0.63 0.2 290)" />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} vertical={true} opacity={0.3} />
+                        <XAxis type="number" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} tickLine={false} axisLine={false} />
+                        <Tooltip
+                          contentStyle={{
+                            fontSize: 12,
+                            borderRadius: "8px",
+                            border: "1px solid hsl(var(--border))",
+                            backgroundColor: "hsl(var(--background))",
+                          }}
+                        />
+                        <Bar
+                          dataKey="y"
+                          name="Visitors"
+                          fill="url(#colorReferrers)"
+                          radius={[0, 8, 8, 0]}
+                          barSize={18}
+                        />
                       </BarChart>
                     </ResponsiveContainer>
                   </CardContent>
