@@ -43,6 +43,9 @@ import {
   Smartphone,
   Laptop,
   Monitor as MonitorIcon,
+  Globe,
+  FileText,
+  ArrowUpRight,
 } from "lucide-react";
 import {
   AreaChart,
@@ -311,7 +314,10 @@ function NativeAnalytics({ token }: { token: string }) {
               {pages && pages.rows.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <FileText className="h-4 w-4" />
+                      Pages
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -339,7 +345,10 @@ function NativeAnalytics({ token }: { token: string }) {
               {sources && sources.referrers.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <ArrowUpRight className="h-4 w-4" />
+                      Sources
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -367,7 +376,10 @@ function NativeAnalytics({ token }: { token: string }) {
               {geo && geo.countries.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
+                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                      <Globe className="h-4 w-4" />
+                      Countries
+                    </CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
