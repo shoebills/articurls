@@ -53,11 +53,6 @@ import {
   Tooltip,
   ResponsiveContainer,
   Legend,
-  BarChart,
-  Bar,
-  PieChart,
-  Pie,
-  Cell,
 } from "recharts";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -223,10 +218,8 @@ function NativeAnalytics({ token }: { token: string }) {
         </div>
       ) : (
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex overflow-x-auto touch-pan-x">
+          <TabsList className="w-full sm:w-auto overflow-x-auto touch-pan-x">
             <TabsTrigger value="overview" className="flex-1 sm:flex-none text-xs sm:text-sm">Overview</TabsTrigger>
-            <TabsTrigger value="pages" className="flex-1 sm:flex-none text-xs sm:text-sm">Pages</TabsTrigger>
-            <TabsTrigger value="sources" className="flex-1 sm:flex-none text-xs sm:text-sm">Sources</TabsTrigger>
             <TabsTrigger value="tech" className="hidden sm:flex text-xs sm:text-sm">Tech</TabsTrigger>
           </TabsList>
 
@@ -320,55 +313,71 @@ function NativeAnalytics({ token }: { token: string }) {
               </Card>
             )}
 
-            {geo && geo.countries.length > 0 ? (
-              <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
+              {pages && pages.rows.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-1 sm:space-y-2">
+                      {pages.rows.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                          <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                            {row.x}
+                          </span>
+                          <span className="font-medium text-xs sm:text-sm">
+                            {row.y}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {sources && sources.referrers.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <div className="space-y-1 sm:space-y-2">
+                      {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                          <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                            {row.x}
+                          </span>
+                          <span className="font-medium text-xs sm:text-sm">
+                            {row.y}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
+                  </CardHeader>
+                </Card>
+              )}
+
+              {geo && geo.countries.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-48 sm:h-64 pt-0">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <PieChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
-                        <Pie
-                          data={geo.countries.slice(0, 6)}
-                          cx="50%"
-                          cy="50%"
-                          innerRadius={40}
-                          outerRadius={70}
-                          paddingAngle={3}
-                          dataKey="y"
-                          nameKey="x"
-                        >
-                          {geo.countries.slice(0, 6).map((_: UmamiMetricsRow, index: number) => (
-                            <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                          ))}
-                        </Pie>
-                        <Tooltip
-                          contentStyle={{
-                            fontSize: 12,
-                            borderRadius: "8px",
-                            border: "1px solid hsl(var(--border))",
-                            backgroundColor: "hsl(var(--background))",
-                          }}
-                        />
-                        <Legend
-                          layout="vertical"
-                          verticalAlign="middle"
-                          align="right"
-                          iconType="circle"
-                          wrapperStyle={{ fontSize: "11px", paddingLeft: "8px" }}
-                        />
-                      </PieChart>
-                    </ResponsiveContainer>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">All countries</CardTitle>
-                  </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
-                      {geo.countries.map((row: UmamiMetricsRow, i: number) => (
+                      {geo.countries.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
                           <span className="text-xs sm:text-sm">
                             {row.x}
@@ -381,74 +390,14 @@ function NativeAnalytics({ token }: { token: string }) {
                     </div>
                   </CardContent>
                 </Card>
-              </div>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No geographic data yet</CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="pages">
-            {pages && pages.rows.length > 0 ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">All pages</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-1 sm:space-y-2">
-                    {pages.rows.map((row: UmamiMetricsRow, i: number) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
-                          {row.x}
-                        </span>
-                        <span className="font-medium text-xs sm:text-sm">
-                          {row.y}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="sources">
-            {sources && sources.referrers.length > 0 ? (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">All referrers</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="space-y-1 sm:space-y-2">
-                    {sources.referrers.map((row: UmamiMetricsRow, i: number) => (
-                      <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
-                          {row.x}
-                        </span>
-                        <span className="font-medium text-xs sm:text-sm">
-                          {row.y}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
-                </CardHeader>
-              </Card>
-            )}
+              ) : (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base sm:text-lg">No geographic data yet</CardTitle>
+                  </CardHeader>
+                </Card>
+              )}
+            </div>
           </TabsContent>
 
           <TabsContent value="tech">
