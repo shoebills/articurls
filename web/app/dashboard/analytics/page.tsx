@@ -102,16 +102,26 @@ function KpiCard({
 }) {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
-          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
-          {title}
-        </CardDescription>
-        <CardTitle className="text-2xl sm:text-3xl lg:text-4xl">{value}</CardTitle>
-        {description && (
-          <CardDescription className="text-xs">{description}</CardDescription>
-        )}
-      </CardHeader>
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium mb-1">
+              {title}
+            </p>
+            <p className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+              {value}
+            </p>
+            {description && (
+              <p className="text-xs text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 mt-0.5">
+            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground opacity-70" />
+          </div>
+        </div>
+      </CardContent>
     </Card>
   );
 }
@@ -119,10 +129,15 @@ function KpiCard({
 function KpiCardSkeleton() {
   return (
     <Card>
-      <CardHeader className="pb-3">
-        <Skeleton className="h-3.5 w-20" />
-        <Skeleton className="h-7 w-24 mt-2" />
-      </CardHeader>
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <Skeleton className="h-3.5 w-20 mb-2" />
+            <Skeleton className="h-8 w-28" />
+          </div>
+          <Skeleton className="h-5 w-5 shrink-0 rounded-md" />
+        </div>
+      </CardContent>
     </Card>
   );
 }
