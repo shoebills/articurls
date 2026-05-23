@@ -39,9 +39,12 @@ import {
   BarChart2,
   Users,
   Eye,
-  Monitor,
   Loader2,
   Activity,
+  Smartphone,
+  Laptop,
+  Monitor as MonitorIcon,
+  Layout,
 } from "lucide-react";
 import {
   AreaChart,
@@ -98,17 +101,17 @@ function RealtimePanel({ token }: { token: string }) {
     return () => { cancelled = true; };
   }, [token]);
 
-  if (loading || !data) {
+  if (loading) {
     return (
       <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            <Skeleton className="h-6 w-32" />
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base text-emerald-900 dark:text-emerald-100">
+            <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
+            <Skeleton className="h-5 w-24" />
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <Skeleton className="h-12 w-40" />
+        <CardContent className="pt-0 pb-4">
+          <Skeleton className="h-10 w-20" />
         </CardContent>
       </Card>
     );
@@ -116,35 +119,48 @@ function RealtimePanel({ token }: { token: string }) {
 
   return (
     <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/30 dark:to-emerald-900/20 border-emerald-200 dark:border-emerald-800">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-emerald-900 dark:text-emerald-100">
-          <Activity className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-          Real‑time
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base text-emerald-900 dark:text-emerald-100">
+          <Activity className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-600 dark:text-emerald-400" />
+          Real-time
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-400">
-          {data.active_visitors}
-        </div>
-        <p className="text-sm text-emerald-800/80 dark:text-emerald-200/80">
-          Active visitors right now
-        </p>
-        {Object.keys(data.urls).length > 0 && (
-          <div>
-            <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-300/70 mb-2">
-              Top pages
+      <CardContent className="pt-0 pb-4">
+        {data ? (
+          <div className="space-y-3">
+            <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-400">
+              {data.active_visitors}
+            </div>
+            <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-200/80">
+              Active visitors right now
             </p>
-            <ul className="text-sm space-y-1">
-              {Object.entries(data.urls as Record<string, number>)
-                .sort(([_, a], [__, b]) => b - a)
-                .slice(0, 3)
-                .map(([url, count]) => (
-                  <li key={url} className="flex justify-between text-emerald-900/80 dark:text-emerald-200/80">
-                    <span className="truncate max-w-[200px]">{url}</span>
-                    <span className="font-medium">{count}</span>
-                  </li>
-                ))}
-            </ul>
+            {Object.keys(data.urls).length > 0 && (
+              <div className="pt-2">
+                <p className="text-xs font-medium text-emerald-900/70 dark:text-emerald-300/70 mb-2">
+                  Top pages
+                </p>
+                <ul className="text-xs sm:text-sm space-y-1">
+                  {Object.entries(data.urls as Record<string, number>)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 3)
+                    .map(([url, count]) => (
+                      <li key={url} className="flex justify-between text-emerald-900/80 dark:text-emerald-200/80">
+                        <span className="truncate max-w-[180px] sm:max-w-[200px]">{url}</span>
+                        <span className="font-medium">{count}</span>
+                      </li>
+                    ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-3xl sm:text-4xl font-bold text-emerald-700 dark:text-emerald-400">
+              0
+            </div>
+            <p className="text-xs sm:text-sm text-emerald-800/80 dark:text-emerald-200/80">
+              Active visitors right now
+            </p>
           </div>
         )}
       </CardContent>
@@ -165,14 +181,14 @@ function KpiCard({
 }) {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <CardDescription className="flex items-center gap-2">
-          <Icon className="h-4 w-4 text-muted-foreground" />
+      <CardHeader className="pb-3">
+        <CardDescription className="flex items-center gap-2 text-xs sm:text-sm">
+          <Icon className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           {title}
         </CardDescription>
-        <CardTitle className="text-3xl sm:text-4xl">{value}</CardTitle>
+        <CardTitle className="text-2xl sm:text-3xl lg:text-4xl">{value}</CardTitle>
         {description && (
-          <CardDescription>{description}</CardDescription>
+          <CardDescription className="text-xs">{description}</CardDescription>
         )}
       </CardHeader>
     </Card>
@@ -182,9 +198,9 @@ function KpiCard({
 function KpiCardSkeleton() {
   return (
     <Card>
-      <CardHeader className="pb-2">
-        <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-8 w-28 mt-2" />
+      <CardHeader className="pb-3">
+        <Skeleton className="h-3.5 w-20" />
+        <Skeleton className="h-7 w-24 mt-2" />
       </CardHeader>
     </Card>
   );
@@ -235,17 +251,17 @@ function NativeAnalytics({ token }: { token: string }) {
   }, [token, period]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Analytics</h1>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
             Full visitor analytics for your blog.
           </p>
         </div>
-        <div className="w-full sm:max-w-xs">
+        <div className="w-full sm:w-auto sm:max-w-xs">
           <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
-            <SelectTrigger className="touch-manipulation" aria-label="Analytics time range">
+            <SelectTrigger className="touch-manipulation h-11 sm:h-auto" aria-label="Analytics time range">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -261,27 +277,29 @@ function NativeAnalytics({ token }: { token: string }) {
 
       {loading ? (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
             <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />
             <KpiCardSkeleton />
           </div>
-          <Skeleton className="h-72 w-full rounded-lg border" />
+          <Skeleton className="h-56 sm:h-72 w-full rounded-lg border" />
         </div>
       ) : (
         <Tabs defaultValue="overview" className="space-y-6">
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="pages">Pages</TabsTrigger>
-            <TabsTrigger value="sources">Sources</TabsTrigger>
-            <TabsTrigger value="geo">Geo</TabsTrigger>
-            <TabsTrigger value="tech">Tech</TabsTrigger>
+          <TabsList className="w-full sm:w-auto grid grid-cols-3 sm:inline-flex overflow-x-auto touch-pan-x">
+            <TabsTrigger value="overview" className="flex-1 sm:flex-none text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="pages" className="flex-1 sm:flex-none text-xs sm:text-sm">Pages</TabsTrigger>
+            <TabsTrigger value="sources" className="flex-1 sm:flex-none text-xs sm:text-sm">Sources</TabsTrigger>
+            <TabsTrigger value="geo" className="hidden sm:flex text-xs sm:text-sm">Geo</TabsTrigger>
+            <TabsTrigger value="tech" className="hidden sm:flex text-xs sm:text-sm">Tech</TabsTrigger>
           </TabsList>
 
-          <TabsContent value="overview" className="space-y-6">
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              <RealtimePanel token={token} />
+          <TabsContent value="overview" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-2 lg:grid-cols-4">
+              <div className="col-span-2 lg:col-span-1">
+                <RealtimePanel token={token} />
+              </div>
               <KpiCard
                 title="Pageviews"
                 value={overview?.overview.pageviews ?? "—"}
@@ -295,17 +313,17 @@ function NativeAnalytics({ token }: { token: string }) {
               <KpiCard
                 title="Visits"
                 value={overview?.overview.visits ?? "—"}
-                icon={Monitor}
+                icon={Layout}
               />
             </div>
 
             {timeseries && (timeseries.pageviews.length > 0 || timeseries.visitors.length > 0) && (
               <Card>
-                <CardHeader>
-                  <CardTitle>Traffic</CardTitle>
-                  <CardDescription>Pageviews and visitors over time.</CardDescription>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Pageviews and visitors over time.</CardDescription>
                 </CardHeader>
-                <CardContent className="h-64 sm:h-80">
+                <CardContent className="h-48 sm:h-64 lg:h-80 pt-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={timeseries.pageviews.map((p: UmamiTimeseriesItem, i: number) => ({
                       x: p.x,
@@ -324,10 +342,10 @@ function NativeAnalytics({ token }: { token: string }) {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                      <XAxis dataKey="x" tick={{ fontSize: 12 }} />
-                      <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                      <Tooltip />
-                      <Legend wrapperStyle={{ fontSize: 12 }} />
+                      <XAxis dataKey="x" tick={{ fontSize: 10 }} />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                      <Tooltip contentStyle={{ fontSize: 12 }} />
+                      <Legend wrapperStyle={{ fontSize: 11 }} />
                       <Area
                         type="monotone"
                         dataKey="pageviews"
@@ -352,19 +370,19 @@ function NativeAnalytics({ token }: { token: string }) {
               </Card>
             )}
 
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-2">
               {pages && pages.rows.length > 0 && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Top pages</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Top pages</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-72">
+                  <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={pages.rows.slice(0, 10)} layout="vertical" margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="x" type="category" tick={{ fontSize: 11 }} width={140} />
-                        <Tooltip />
+                        <XAxis type="number" tick={{ fontSize: 10 }} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} />
+                        <Tooltip contentStyle={{ fontSize: 12 }} />
                         <Bar dataKey="y" name="Visitors" fill="oklch(0.6 0.15 145)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -373,16 +391,16 @@ function NativeAnalytics({ token }: { token: string }) {
               )}
               {sources && sources.referrers.length > 0 && (
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Referrers</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Referrers</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-72">
+                  <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={sources.referrers.slice(0, 10)} layout="vertical">
                         <CartesianGrid strokeDasharray="3 3" className="stroke-border" horizontal={false} />
-                        <XAxis type="number" tick={{ fontSize: 12 }} />
-                        <YAxis dataKey="x" type="category" tick={{ fontSize: 11 }} width={140} />
-                        <Tooltip />
+                        <XAxis type="number" tick={{ fontSize: 10 }} />
+                        <YAxis dataKey="x" type="category" tick={{ fontSize: 9 }} width={100} />
+                        <Tooltip contentStyle={{ fontSize: 12 }} />
                         <Bar dataKey="y" name="Visitors" fill="oklch(0.58 0.18 280)" radius={[0, 4, 4, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
@@ -395,17 +413,17 @@ function NativeAnalytics({ token }: { token: string }) {
           <TabsContent value="pages">
             {pages && pages.rows.length > 0 ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>All pages</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">All pages</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+                <CardContent className="pt-0">
+                  <div className="space-y-1 sm:space-y-2">
                     {pages.rows.map((row: UmamiMetricsRow, i: number) => (
                       <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[300px] text-sm">
+                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
                           {row.x}
                         </span>
-                        <span className="font-medium text-sm">
+                        <span className="font-medium text-xs sm:text-sm">
                           {row.y}
                         </span>
                       </div>
@@ -416,7 +434,7 @@ function NativeAnalytics({ token }: { token: string }) {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>No page data yet</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
                 </CardHeader>
               </Card>
             )}
@@ -425,17 +443,17 @@ function NativeAnalytics({ token }: { token: string }) {
           <TabsContent value="sources">
             {sources && sources.referrers.length > 0 ? (
               <Card>
-                <CardHeader>
-                  <CardTitle>All referrers</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">All referrers</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
+                <CardContent className="pt-0">
+                  <div className="space-y-1 sm:space-y-2">
                     {sources.referrers.map((row: UmamiMetricsRow, i: number) => (
                       <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                        <span className="truncate max-w-[300px] text-sm">
+                        <span className="truncate max-w-[220px] sm:max-w-[300px] text-xs sm:text-sm">
                           {row.x}
                         </span>
-                        <span className="font-medium text-sm">
+                        <span className="font-medium text-xs sm:text-sm">
                           {row.y}
                         </span>
                       </div>
@@ -446,7 +464,7 @@ function NativeAnalytics({ token }: { token: string }) {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>No referrer data yet</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
                 </CardHeader>
               </Card>
             )}
@@ -454,12 +472,12 @@ function NativeAnalytics({ token }: { token: string }) {
 
           <TabsContent value="geo">
             {geo && geo.countries.length > 0 ? (
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="grid gap-4 lg:grid-cols-2">
                 <Card>
-                  <CardHeader>
-                    <CardTitle>Countries</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
                   </CardHeader>
-                  <CardContent className="h-72">
+                  <CardContent className="h-48 sm:h-64 pt-0">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
@@ -468,7 +486,7 @@ function NativeAnalytics({ token }: { token: string }) {
                           cy="50%"
                           labelLine={false}
                           label={({ x }) => `${x}`}
-                          outerRadius={80}
+                          outerRadius={70}
                           fill="#8884d8"
                           dataKey="y"
                         >
@@ -476,23 +494,23 @@ function NativeAnalytics({ token }: { token: string }) {
                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                           ))}
                         </Pie>
-                        <Tooltip />
+                        <Tooltip contentStyle={{ fontSize: 12 }} />
                       </PieChart>
                     </ResponsiveContainer>
                   </CardContent>
                 </Card>
                 <Card>
-                  <CardHeader>
-                    <CardTitle>All countries</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">All countries</CardTitle>
                   </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
+                  <CardContent className="pt-0">
+                    <div className="space-y-1 sm:space-y-2">
                       {geo.countries.map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <span className="text-sm">
+                          <span className="text-xs sm:text-sm">
                             {row.x}
                           </span>
-                          <span className="font-medium text-sm">
+                          <span className="font-medium text-xs sm:text-sm">
                             {row.y}
                           </span>
                         </div>
@@ -504,7 +522,7 @@ function NativeAnalytics({ token }: { token: string }) {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>No geographic data yet</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">No geographic data yet</CardTitle>
                 </CardHeader>
               </Card>
             )}
@@ -512,18 +530,21 @@ function NativeAnalytics({ token }: { token: string }) {
 
           <TabsContent value="tech">
             {tech ? (
-              <div className="grid gap-6 lg:grid-cols-3">
+              <div className="grid gap-4 lg:grid-cols-3">
                 {tech.browsers.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Browsers</CardTitle>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <MonitorIcon className="h-4 w-4" />
+                        Browsers
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
+                    <CardContent className="pt-0">
+                      <div className="space-y-1 sm:space-y-2">
                         {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                           <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-sm">{row.x}</span>
-                            <span className="font-medium text-sm">{row.y}</span>
+                            <span className="text-xs sm:text-sm">{row.x}</span>
+                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
                           </div>
                         ))}
                       </div>
@@ -532,15 +553,18 @@ function NativeAnalytics({ token }: { token: string }) {
                 )}
                 {tech.os.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>OS</CardTitle>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <Laptop className="h-4 w-4" />
+                        OS
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
+                    <CardContent className="pt-0">
+                      <div className="space-y-1 sm:space-y-2">
                         {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                           <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-sm">{row.x}</span>
-                            <span className="font-medium text-sm">{row.y}</span>
+                            <span className="text-xs sm:text-sm">{row.x}</span>
+                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
                           </div>
                         ))}
                       </div>
@@ -549,15 +573,18 @@ function NativeAnalytics({ token }: { token: string }) {
                 )}
                 {tech.devices.length > 0 && (
                   <Card>
-                    <CardHeader>
-                      <CardTitle>Devices</CardTitle>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        Devices
+                      </CardTitle>
                     </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
+                    <CardContent className="pt-0">
+                      <div className="space-y-1 sm:space-y-2">
                         {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                           <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <span className="text-sm capitalize">{row.x}</span>
-                            <span className="font-medium text-sm">{row.y}</span>
+                            <span className="text-xs sm:text-sm capitalize">{row.x}</span>
+                            <span className="font-medium text-xs sm:text-sm">{row.y}</span>
                           </div>
                         ))}
                       </div>
@@ -568,7 +595,7 @@ function NativeAnalytics({ token }: { token: string }) {
             ) : (
               <Card>
                 <CardHeader>
-                  <CardTitle>No technical data yet</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">No technical data yet</CardTitle>
                 </CardHeader>
               </Card>
             )}
@@ -602,25 +629,25 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px]">
+    <div className="mx-auto max-w-[1100px] px-4 sm:px-0">
       {isPro ? (
         <NativeAnalytics token={token} />
       ) : (
-        <Card className="p-8">
+        <Card className="p-6 sm:p-8">
           <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <BarChart2 className="h-7 w-7 text-primary" />
+            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
+              <BarChart2 className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
             <div className="flex-1 space-y-1">
-              <h2 className="text-lg font-semibold">Unlock full analytics with Pro</h2>
-              <p className="text-sm text-muted-foreground">
+              <h2 className="text-base sm:text-lg font-semibold">Unlock full analytics with Pro</h2>
+              <p className="text-xs sm:text-sm text-muted-foreground">
                 Pro gives you a real-time dashboard with page views, unique visitors, referrers,
                 countries, devices, and more — powered by Umami.
               </p>
             </div>
             <Button
               onClick={() => router.push("/dashboard/billing")}
-              className="shrink-0"
+              className="shrink-0 h-10 sm:h-auto"
             >
               Upgrade to Pro
             </Button>
