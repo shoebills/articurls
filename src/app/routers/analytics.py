@@ -126,9 +126,9 @@ def get_umami_overview(
             "overview": {
                 "pageviews": stats.get("pageviews", 0),
                 "visitors": stats.get("visitors", 0),
-                "visits": stats.get("sessions", 0),
-                "bounce_rate": stats.get("bounceRate", 0),
-                "avg_visit_time": stats.get("visitTime", 0),
+                "visits": stats.get("visits", 0),
+                "bounce_rate": stats.get("bounces", 0),
+                "avg_visit_time": stats.get("totaltime", 0),
             },
             "change": None,
         }

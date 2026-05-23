@@ -177,10 +177,11 @@ class UmamiClient:
         end_at: int,
     ) -> Dict[str, Any]:
         """Return core stats (pageviews, visitors, sessions, etc.) for a date range."""
+        params = {"startAt": start_at, "endAt": end_at}
         return self._request_sync(
             "GET",
             f"/api/websites/{website_id}/stats",
-            json={"startAt": start_at, "endAt": end_at},
+            params=params,
         )
 
     def get_website_pageviews_sync(
@@ -193,17 +194,17 @@ class UmamiClient:
         timezone: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Return pageviews timeseries data."""
-        payload = {
+        params = {
             "startAt": start_at,
             "endAt": end_at,
             "unit": unit,
         }
         if timezone:
-            payload["timezone"] = timezone
+            params["timezone"] = timezone
         return self._request_sync(
             "GET",
             f"/api/websites/{website_id}/pageviews",
-            json=payload,
+            params=params,
         )
 
     def get_website_metrics_sync(
@@ -217,16 +218,17 @@ class UmamiClient:
         offset: int = 0,
     ) -> list[Dict[str, Any]]:
         """Return metrics by dimension (path, referrer, country, browser, etc.)."""
+        params = {
+            "startAt": start_at,
+            "endAt": end_at,
+            "type": type,
+            "limit": limit,
+            "offset": offset,
+        }
         return self._request_sync(
             "GET",
             f"/api/websites/{website_id}/metrics",
-            json={
-                "startAt": start_at,
-                "endAt": end_at,
-                "type": type,
-                "limit": limit,
-                "offset": offset,
-            },
+            params=params,
         )
 
     def get_website_active_sync(self, website_id: str) -> Dict[str, Any]:
