@@ -363,6 +363,15 @@ function KpiCardSkeleton() {
   );
 }
 
+function MetricsTableHeader({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between pb-1 mb-1 border-b text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">
+      <span>{label}</span>
+      <span>Visitors</span>
+    </div>
+  );
+}
+
 function NativeAnalytics({ token }: { token: string }) {
   const [period, setPeriod] = useState<AnalyticsPeriod>("7d");
   const [overview, setOverview] = useState<UmamiOverviewResponse | null>(null);
@@ -561,6 +570,7 @@ function NativeAnalytics({ token }: { token: string }) {
                     <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
+                    <MetricsTableHeader label="Page" />
                     <div className="space-y-1 sm:space-y-2">
                       {pages.rows.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
@@ -592,6 +602,7 @@ function NativeAnalytics({ token }: { token: string }) {
                     <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
+                    <MetricsTableHeader label="Source" />
                     <div className="space-y-1 sm:space-y-2">
                       {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
                         const ReferrerIcon = getReferrerIcon(row.x);
@@ -626,6 +637,7 @@ function NativeAnalytics({ token }: { token: string }) {
                     <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
+                    <MetricsTableHeader label="Country" />
                     <div className="space-y-1 sm:space-y-2">
                       {geo.countries.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
@@ -660,6 +672,7 @@ function NativeAnalytics({ token }: { token: string }) {
                       <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
+                      <MetricsTableHeader label="Browser" />
                       <div className="space-y-1 sm:space-y-2">
                         {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
                           const BrowserIcon = getBrowserIcon(row.x);
@@ -683,6 +696,7 @@ function NativeAnalytics({ token }: { token: string }) {
                       <CardTitle className="text-base sm:text-lg">OS</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
+                      <MetricsTableHeader label="OS" />
                       <div className="space-y-1 sm:space-y-2">
                         {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
                           const OsIcon = getOsIcon(row.x);
@@ -706,6 +720,7 @@ function NativeAnalytics({ token }: { token: string }) {
                       <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
+                      <MetricsTableHeader label="Device" />
                       <div className="space-y-1 sm:space-y-2">
                         {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
                           const DeviceIcon = getDeviceIcon(row.x);
