@@ -43,7 +43,6 @@ import {
   Laptop,
   Monitor as MonitorIcon,
   Globe,
-  FileText,
   ExternalLink,
   Zap,
   Compass,
@@ -372,6 +371,20 @@ function MetricsTableHeader({ label }: { label: string }) {
   );
 }
 
+function PathStatusDot({ status }: { status?: "live" | "deleted" }) {
+  if (status === "live") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_2px_rgba(34,197,94,0.55)]" />
+    );
+  }
+  if (status === "deleted") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_2px_rgba(239,68,68,0.55)]" />
+    );
+  }
+  return <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/40" />;
+}
+
 function NativeAnalytics({ token }: { token: string }) {
   const [period, setPeriod] = useState<AnalyticsPeriod>("7d");
   const [overview, setOverview] = useState<UmamiOverviewResponse | null>(null);
@@ -575,7 +588,7 @@ function NativeAnalytics({ token }: { token: string }) {
                       {pages.rows.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
                           <div className="flex items-center gap-2">
-                            <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                            <PathStatusDot status={row.status} />
                             <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
                               {row.x}
                             </span>
@@ -585,6 +598,16 @@ function NativeAnalytics({ token }: { token: string }) {
                           </span>
                         </div>
                       ))}
+                    </div>
+                    <div className="mt-3 flex items-center gap-4 text-[10px] sm:text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_6px_2px_rgba(34,197,94,0.55)]" />
+                        Live
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_6px_2px_rgba(239,68,68,0.55)]" />
+                        Deleted
+                      </span>
                     </div>
                   </CardContent>
                 </Card>

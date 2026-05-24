@@ -245,7 +245,54 @@ def get_umami_pages(
             limit=limit,
         )
 
-        return {"period": period, "rows": pages}
+        published_blog_slugs = {
+            row[0]
+            for row in db.query(models.Blog.slug)
+            .filter(
+                models.Blog.user_id == current_user.user_id,
+                models.Blog.status == models.BlogStatus.PUBLISHED,
+            )
+            .all()
+        }
+        published_page_slugs = {
+            row[0]
+            for row in db.query(models.UserPage.slug)
+            .filter(
+                models.UserPage.user_id == current_user.user_id,
+                models.UserPage.status == models.PageStatus.PUBLISHED,
+            )
+            .all()
+        }
+
+        SYSTEM_PATHS = {"/", "/rss.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe"}
+
+        def resolve_path_status(path: str) -> str:
+            p = path.strip().rstrip("/") or "/"
+            if p in SYSTEM_PATHS:
+                return "live"
+            # custom domain: /blog/{slug} or /page/{slug}
+            if p.startswith("/blog/"):
+                slug = p[len("/blog/"):]
+                return "live" if slug in published_blog_slugs else "deleted"
+            if p.startswith("/page/"):
+                slug = p[len("/page/"):]
+                return "live" if slug in published_page_slugs else "deleted"
+            # shared domain: /{username}/blog/{slug} or /{username}/page/{slug}
+            parts = p.lstrip("/").split("/")
+            if len(parts) >= 3 and parts[1] == "blog":
+                slug = "/".join(parts[2:])
+                return "live" if slug in published_blog_slugs else "deleted"
+            if len(parts) >= 3 and parts[1] == "page":
+                slug = "/".join(parts[2:])
+                return "live" if slug in published_page_slugs else "deleted"
+            return "deleted"
+
+        enriched = [
+            {"x": row["x"], "y": row["y"], "status": resolve_path_status(row["x"])}
+            for row in pages
+        ]
+
+        return {"period": period, "rows": enriched}
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
