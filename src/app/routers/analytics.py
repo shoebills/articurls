@@ -254,12 +254,30 @@ def get_umami_pages(
             )
             .all()
         }
+        archived_blog_slugs = {
+            row[0]
+            for row in db.query(models.Blog.slug)
+            .filter(
+                models.Blog.user_id == current_user.user_id,
+                models.Blog.status == models.BlogStatus.ARCHIVED,
+            )
+            .all()
+        }
         published_page_slugs = {
             row[0]
             for row in db.query(models.UserPage.slug)
             .filter(
                 models.UserPage.user_id == current_user.user_id,
                 models.UserPage.status == models.PageStatus.PUBLISHED,
+            )
+            .all()
+        }
+        archived_page_slugs = {
+            row[0]
+            for row in db.query(models.UserPage.slug)
+            .filter(
+                models.UserPage.user_id == current_user.user_id,
+                models.UserPage.status == models.PageStatus.ARCHIVED,
             )
             .all()
         }
@@ -275,10 +293,18 @@ def get_umami_pages(
             # custom domain: /blog/{slug} or /page/{slug}
             if p.startswith("/blog/"):
                 slug = p[len("/blog/"):]
-                return "live" if slug in published_blog_slugs else "deleted"
+                if slug in published_blog_slugs:
+                    return "live"
+                if slug in archived_blog_slugs:
+                    return "archived"
+                return "deleted"
             if p.startswith("/page/"):
                 slug = p[len("/page/"):]
-                return "live" if slug in published_page_slugs else "deleted"
+                if slug in published_page_slugs:
+                    return "live"
+                if slug in archived_page_slugs:
+                    return "archived"
+                return "deleted"
             parts = p.lstrip("/").split("/")
             # shared domain: /{username} — profile homepage
             if len(parts) == 1 and parts[0].lower() == username_lower:
@@ -286,10 +312,18 @@ def get_umami_pages(
             # shared domain: /{username}/blog/{slug} or /{username}/page/{slug}
             if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "blog":
                 slug = "/".join(parts[2:])
-                return "live" if slug in published_blog_slugs else "deleted"
+                if slug in published_blog_slugs:
+                    return "live"
+                if slug in archived_blog_slugs:
+                    return "archived"
+                return "deleted"
             if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "page":
                 slug = "/".join(parts[2:])
-                return "live" if slug in published_page_slugs else "deleted"
+                if slug in published_page_slugs:
+                    return "live"
+                if slug in archived_page_slugs:
+                    return "archived"
+                return "deleted"
             # shared domain: /{username}/category/* — always live (category pages)
             if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "category":
                 return "live"

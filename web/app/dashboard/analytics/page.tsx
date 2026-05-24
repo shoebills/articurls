@@ -371,7 +371,7 @@ function MetricsTableHeader({ label }: { label: string }) {
   );
 }
 
-function PathStatusDot({ status }: { status?: "live" | "deleted" }) {
+function PathStatusDot({ status }: { status?: "live" | "deleted" | "archived" }) {
   if (status === "live") {
     return (
       <span className="shrink-0 h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px_rgba(34,197,94,0.3)]" />
@@ -382,7 +382,12 @@ function PathStatusDot({ status }: { status?: "live" | "deleted" }) {
       <span className="shrink-0 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_4px_1px_rgba(239,68,68,0.3)]" />
     );
   }
-  return <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/40" />;
+  if (status === "archived") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/50" />
+    );
+  }
+  return <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/25" />;
 }
 
 function NativeAnalytics({ token }: { token: string }) {
@@ -603,6 +608,10 @@ function NativeAnalytics({ token }: { token: string }) {
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px_rgba(34,197,94,0.3)]" />
                         Live
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        Archived
                       </span>
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_4px_1px_rgba(239,68,68,0.3)]" />

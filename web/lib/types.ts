@@ -291,7 +291,7 @@ export interface DomainVerifyResponse {
 export interface UmamiMetricsRow {
   x: string;
   y: number;
-  status?: "live" | "deleted";
+  status?: "live" | "archived" | "deleted";
 }
 
 export interface UmamiOverview {
