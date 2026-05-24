@@ -637,13 +637,14 @@ function NativeAnalytics({ token }: { token: string }) {
                     <MetricsTableHeader label="Source" />
                     <div className="space-y-1 sm:space-y-2">
                       {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
-                        const ReferrerIcon = getReferrerIcon(row.x);
+                        const isDirect = !row.x || row.x.trim() === "";
+                        const ReferrerIcon = isDirect ? Globe : getReferrerIcon(row.x);
                         return (
                           <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
                             <div className="flex items-center gap-2">
                               <ReferrerIcon className="h-3.5 w-3.5 text-muted-foreground" />
                               <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                                {row.x}
+                                {isDirect ? "Direct" : row.x}
                               </span>
                             </div>
                             <span className="font-medium text-xs sm:text-sm">
