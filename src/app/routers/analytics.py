@@ -266,6 +266,8 @@ def get_umami_pages(
 
         SYSTEM_PATHS = {"/", "/rss.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe"}
 
+        username_lower = current_user.user_name.lower()
+
         def resolve_path_status(path: str) -> str:
             p = path.strip().rstrip("/") or "/"
             if p in SYSTEM_PATHS:
@@ -277,14 +279,20 @@ def get_umami_pages(
             if p.startswith("/page/"):
                 slug = p[len("/page/"):]
                 return "live" if slug in published_page_slugs else "deleted"
-            # shared domain: /{username}/blog/{slug} or /{username}/page/{slug}
             parts = p.lstrip("/").split("/")
-            if len(parts) >= 3 and parts[1] == "blog":
+            # shared domain: /{username} — profile homepage
+            if len(parts) == 1 and parts[0].lower() == username_lower:
+                return "live"
+            # shared domain: /{username}/blog/{slug} or /{username}/page/{slug}
+            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "blog":
                 slug = "/".join(parts[2:])
                 return "live" if slug in published_blog_slugs else "deleted"
-            if len(parts) >= 3 and parts[1] == "page":
+            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "page":
                 slug = "/".join(parts[2:])
                 return "live" if slug in published_page_slugs else "deleted"
+            # shared domain: /{username}/category/* — always live (category pages)
+            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "category":
+                return "live"
             return "deleted"
 
         enriched = [
