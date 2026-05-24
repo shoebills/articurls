@@ -540,7 +540,7 @@ function NativeAnalytics({ token }: { token: string }) {
                         tickLine={false}
                         axisLine={false}
                       />
-                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
                       <Tooltip
                         labelFormatter={trafficTooltipLabelFormatter}
                         contentStyle={{
