@@ -8,6 +8,7 @@ from ..utils.entitlements import require_pro
 from datetime import datetime, timedelta, timezone
 from typing import Optional
 from fastapi.responses import StreamingResponse
+from urllib.parse import urlparse
 import io
 import csv
 
@@ -34,6 +35,16 @@ def get_since(period: Optional[str]):
     if delta is None:
         return None
     return datetime.now(timezone.utc) - delta
+
+
+def normalize_referrer_host(value: str) -> str:
+    raw = value.strip().lower()
+    if not raw:
+        return ""
+
+    parsed = urlparse(raw if "://" in raw else f"https://{raw}")
+    host = parsed.netloc or parsed.path.split("/")[0]
+    return host.lower().strip()
 
 
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
@@ -98,7 +109,7 @@ def get_umami_overview(
     _pro=Depends(require_pro),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
+    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
 
     if not current_user.umami_website_id:
         raise HTTPException(
@@ -275,8 +286,13 @@ def get_umami_sources(
             type="referrer",
             limit=limit,
         )
+        internal_domains = umami_internal_domains()
+        filtered_referrers = [
+            row for row in referrers
+            if normalize_referrer_host(str(row.get("x", ""))) not in internal_domains
+        ]
 
-        return {"period": period, "referrers": referrers}
+        return {"period": period, "referrers": filtered_referrers}
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

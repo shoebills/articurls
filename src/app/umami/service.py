@@ -19,6 +19,26 @@ def umami_marketing_domain() -> str:
     return host.lower().strip()
 
 
+def umami_app_domain() -> str:
+    parsed = urlparse(settings.app_base_url.strip())
+    host = parsed.netloc or parsed.path.split("/")[0]
+    return host.lower().strip()
+
+
+def umami_internal_domains() -> set[str]:
+    domains = {umami_marketing_domain(), umami_app_domain()}
+    expanded: set[str] = set()
+
+    for domain in domains:
+        if not domain:
+            continue
+        expanded.add(domain)
+        if not domain.startswith("www."):
+            expanded.add(f"www.{domain}")
+
+    return expanded
+
+
 def umami_website_name(user: models.User) -> str:
     return f"{user.user_name} — Articurls"
 
@@ -127,4 +147,3 @@ def get_umami_period_unit(period: str) -> str:
         return "day"
     else:
         return "month"
-
