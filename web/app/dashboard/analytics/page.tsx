@@ -413,7 +413,7 @@ function NativeAnalytics({ token }: { token: string }) {
     <div className="space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-base sm:text-lg font-bold tracking-tight">Analytics</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
         </div>
         <div className="w-auto shrink-0">
           <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
@@ -679,10 +679,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 {tech.devices.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                        <Smartphone className="h-4 w-4" />
-                        Devices
-                      </CardTitle>
+                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
