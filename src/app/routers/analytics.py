@@ -373,13 +373,29 @@ def get_umami_sources(
             start_at=start_at,
             end_at=end_at,
             type="referrer",
-            limit=limit,
+            limit=500,
         )
         internal_domains = umami_internal_domains()
         filtered_referrers = [
             row for row in referrers
             if normalize_referrer_host(str(row.get("x", ""))) not in internal_domains
         ]
+
+        try:
+            stats = client.get_website_stats_sync(
+                current_user.umami_website_id,
+                start_at=start_at,
+                end_at=end_at,
+            )
+            total_visitors = (stats.get("visitors") or {}).get("value", 0)
+            referred_visitors = sum(int(row.get("y", 0)) for row in referrers)
+            direct_count = total_visitors - referred_visitors
+            if direct_count > 0:
+                filtered_referrers = [{"x": "", "y": direct_count}] + filtered_referrers[:limit - 1]
+            else:
+                filtered_referrers = filtered_referrers[:limit]
+        except Exception:
+            filtered_referrers = filtered_referrers[:limit]
 
         return {"period": period, "referrers": filtered_referrers}
     except UmamiError as exc:
