@@ -410,14 +410,11 @@ function NativeAnalytics({ token }: { token: string }) {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Full visitor analytics for your blog.
-          </p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight">Analytics</h1>
         </div>
-        <div className="w-full sm:w-auto sm:max-w-xs">
+        <div className="flex-shrink-0 w-full sm:w-auto sm:max-w-xs">
           <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
             <SelectTrigger className="touch-manipulation h-11 sm:h-auto" aria-label="Analytics time range">
               <SelectValue />
@@ -537,7 +534,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
-                    <CardDescription>Views</CardDescription>
+                    <CardDescription>Pageviews</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -568,8 +565,8 @@ function NativeAnalytics({ token }: { token: string }) {
               {sources && sources.referrers.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
-                    <CardDescription>Visitors</CardDescription>
+                    <CardTitle className="text-base sm:text-lg">Referrers</CardTitle>
+                    <CardDescription>Referrers</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
