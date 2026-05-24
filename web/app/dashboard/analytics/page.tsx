@@ -104,6 +104,10 @@ import {
   SiBaidu,
 } from "react-icons/si";
 import {
+  FaEdge,
+  FaLinkedinIn,
+} from "react-icons/fa6";
+import {
   AreaChart,
   Area,
   XAxis,
@@ -187,7 +191,7 @@ function getReferrerIcon(domain: string) {
   if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return SiX;
   if (domainLower.includes("instagram")) return SiInstagram;
   if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return SiFacebook;
-  if (domainLower.includes("linkedin")) return Globe;
+  if (domainLower.includes("linkedin")) return FaLinkedinIn;
   if (domainLower.includes("youtube")) return SiYoutube;
   if (domainLower.includes("reddit")) return SiReddit;
   if (domainLower.includes("discord")) return SiDiscord;
@@ -230,7 +234,7 @@ function getBrowserIcon(browser: string) {
   if (browserLower.includes("chrome")) return SiGooglechrome;
   if (browserLower.includes("firefox")) return SiFirefox;
   if (browserLower.includes("safari")) return SiSafari;
-  if (browserLower.includes("edge")) return MonitorIcon; // No dedicated Edge icon in react-icons/si, fallback to Monitor
+  if (browserLower.includes("edge")) return FaEdge;
   if (browserLower.includes("opera")) return SiOpera;
   if (browserLower.includes("brave")) return SiBrave;
   if (browserLower.includes("vivaldi")) return SiVivaldi;
@@ -280,7 +284,7 @@ function getDeviceIcon(device: string) {
   if (deviceLower.includes("mobile")) return Smartphone;
   if (deviceLower.includes("tablet")) return Smartphone;
   if (deviceLower.includes("ipad")) return Smartphone;
-  if (deviceLower.includes("desktop")) return Laptop;
+  if (deviceLower.includes("desktop")) return MonitorIcon;
   if (deviceLower.includes("laptop")) return Laptop;
   return Laptop;
 }
