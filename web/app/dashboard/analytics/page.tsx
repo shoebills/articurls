@@ -20,7 +20,6 @@ import {
   UmamiGeoResponse,
   UmamiTechResponse,
   UmamiMetricsRow,
-  UmamiTimeseriesItem,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -392,6 +391,21 @@ function NativeAnalytics({ token }: { token: string }) {
     return () => { cancelled = true; };
   }, [token, period]);
 
+  const trafficSeries = timeseries
+    ? Array.from(
+        new Set([
+          ...timeseries.pageviews.map((point) => point.x),
+          ...timeseries.visitors.map((point) => point.x),
+        ]),
+      )
+        .sort()
+        .map((x) => ({
+          x,
+          pageviews: timeseries.pageviews.find((point) => point.x === x)?.y ?? 0,
+          visitors: timeseries.visitors.find((point) => point.x === x)?.y ?? 0,
+        }))
+    : [];
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
@@ -460,12 +474,10 @@ function NativeAnalytics({ token }: { token: string }) {
                 </CardHeader>
                 <CardContent className="h-48 sm:h-64 lg:h-80 pt-0">
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={timeseries.pageviews.map((p: UmamiTimeseriesItem, i: number) => ({
-                      x: p.x,
-                      pageviews: p.y,
-                      visitors: timeseries.visitors[i]?.y ?? 0,
-                    }))}
-                    margin={{ top: 12, right: 12, left: 0, bottom: 8 }}>
+                    <AreaChart
+                      data={trafficSeries}
+                      margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
+                    >
                       <defs>
                         <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
                           <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35}/>

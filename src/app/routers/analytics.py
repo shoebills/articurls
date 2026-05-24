@@ -180,11 +180,18 @@ def get_umami_timeseries(
             unit=unit,
         )
 
+        # Umami's pageviews endpoint returns `sessions` for the secondary series
+        # in current docs/API versions. Keep exposing `visitors` to the frontend
+        # so we can fix the flat line without changing the chart contract.
+        visitors_series = pageviews_data.get("visitors")
+        if visitors_series is None:
+            visitors_series = pageviews_data.get("sessions", [])
+
         return {
             "period": period,
             "unit": unit,
             "pageviews": pageviews_data.get("pageviews", []),
-            "visitors": pageviews_data.get("visitors", []),
+            "visitors": visitors_series,
         }
     except UmamiError as exc:
         raise HTTPException(
