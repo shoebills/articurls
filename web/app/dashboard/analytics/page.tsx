@@ -44,7 +44,6 @@ import {
   Monitor as MonitorIcon,
   Globe,
   FileText,
-  ArrowUpRight,
   ExternalLink,
   Zap,
   Compass,
@@ -412,16 +411,13 @@ function NativeAnalytics({ token }: { token: string }) {
 
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Analytics</h1>
-          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
-            Full visitor analytics for your blog.
-          </p>
+          <h1 className="text-base sm:text-lg font-bold tracking-tight">Analytics</h1>
         </div>
-        <div className="w-full sm:w-auto sm:max-w-xs">
+        <div className="w-auto shrink-0">
           <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
-            <SelectTrigger className="touch-manipulation h-11 sm:h-auto" aria-label="Analytics time range">
+            <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Analytics time range">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -538,10 +534,7 @@ function NativeAnalytics({ token }: { token: string }) {
               {pages && pages.rows.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <FileText className="h-4 w-4" />
-                      Pages
-                    </CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -572,10 +565,7 @@ function NativeAnalytics({ token }: { token: string }) {
               {sources && sources.referrers.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <ArrowUpRight className="h-4 w-4" />
-                      Sources
-                    </CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -609,10 +599,7 @@ function NativeAnalytics({ token }: { token: string }) {
               {geo && geo.countries.length > 0 ? (
                 <Card>
                   <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                      <Globe className="h-4 w-4" />
-                      Countries
-                    </CardTitle>
+                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -646,10 +633,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 {tech.browsers.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                        <MonitorIcon className="h-4 w-4" />
-                        Browsers
-                      </CardTitle>
+                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
@@ -672,10 +656,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 {tech.os.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                        <Laptop className="h-4 w-4" />
-                        OS
-                      </CardTitle>
+                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">

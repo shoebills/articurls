@@ -105,13 +105,27 @@ export default function PagesDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your pages</h1>
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="flex items-center justify-between gap-3 sm:block">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your pages</h1>
+          <Button
+            asChild
+            size="icon"
+            className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+            aria-label="Create new page"
+            disabled={busy}
+          >
+            <Link href="/dashboard/pages/new">
+              <span className="text-xl leading-none">+</span>
+            </Link>
+          </Button>
+        </div>
         <Button
-          onClick={() => router.push("/dashboard/pages/new")}
+          asChild
+          className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
           disabled={busy}
         >
-          Add new page
+          <Link href="/dashboard/pages/new">+ New Page</Link>
         </Button>
       </div>
 

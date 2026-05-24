@@ -256,9 +256,6 @@ export default function CategoriesDashboardPage() {
           Create new
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Organize your blogs into categories. {categories.length} categor{categories.length === 1 ? "y" : "ies"}.
-      </p>
 
       {creating && (
         <Card>
@@ -556,4 +553,3 @@ export default function CategoriesDashboardPage() {
     </div>
   );
 }
-
