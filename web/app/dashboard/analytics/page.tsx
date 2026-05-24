@@ -622,9 +622,12 @@ function NativeAnalytics({ token }: { token: string }) {
                 </Card>
               ) : (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg">No page data yet</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
                   </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
                 </Card>
               )}
 
@@ -658,9 +661,12 @@ function NativeAnalytics({ token }: { token: string }) {
                 </Card>
               ) : (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg">No referrer data yet</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
                   </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
                 </Card>
               )}
 
@@ -690,9 +696,12 @@ function NativeAnalytics({ token }: { token: string }) {
                 </Card>
               ) : (
                 <Card>
-                  <CardHeader>
-                    <CardTitle className="text-base sm:text-lg">No geographic data yet</CardTitle>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
                   </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
                 </Card>
               )}
             </div>
@@ -774,9 +783,12 @@ function NativeAnalytics({ token }: { token: string }) {
               </div>
             ) : (
               <Card>
-                <CardHeader>
-                  <CardTitle className="text-base sm:text-lg">No technical data yet</CardTitle>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">Browsers / OS / Devices</CardTitle>
                 </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground">No data available.</p>
+                </CardContent>
               </Card>
             )}
         </div>
