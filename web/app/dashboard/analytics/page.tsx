@@ -485,15 +485,15 @@ function NativeAnalytics({ token }: { token: string }) {
 
             {timeseries && (timeseries.pageviews.length > 0 || timeseries.visitors.length > 0) && (
               <Card>
-                <CardHeader className="pb-2">
+                <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
                   <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
                   <CardDescription className="text-xs sm:text-sm">Pageviews and visitors over time.</CardDescription>
                 </CardHeader>
-                <CardContent className="h-48 sm:h-64 lg:h-80 pt-0">
+                <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart
                       data={trafficSeries}
-                      margin={{ top: 12, right: 12, left: 0, bottom: 8 }}
+                      margin={{ top: 12, right: 8, left: 0, bottom: 8 }}
                     >
                       <defs>
                         <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
