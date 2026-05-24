@@ -69,7 +69,6 @@ import {
   SiX,
   SiInstagram,
   SiFacebook,
-
   SiYoutube,
   SiReddit,
   SiDiscord,
@@ -297,20 +296,6 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-function formatChartLabel(value: string, unit?: string): string {
-  const normalized = value.replace("T", " ");
-
-  if (unit === "hour") {
-    return normalized.slice(0, 16);
-  }
-
-  if (unit === "month") {
-    return normalized.slice(0, 7);
-  }
-
-  return normalized.slice(0, 10);
-}
-
 function KpiCard({
   title,
   value,
@@ -423,20 +408,18 @@ function NativeAnalytics({ token }: { token: string }) {
         }))
     : [];
 
-  const trafficLabelFormatter = (value: string | number) =>
-    formatChartLabel(String(value), timeseries?.unit);
-  const trafficTooltipLabelFormatter = (label: unknown) =>
-    formatChartLabel(String(label ?? ""), timeseries?.unit);
-
   return (
     <div className="space-y-6 sm:space-y-8">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
+          <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight">Analytics</h1>
+          <p className="mt-1 text-xs sm:text-sm text-muted-foreground">
+            Full visitor analytics for your blog.
+          </p>
         </div>
-        <div className="w-auto shrink-0">
+        <div className="w-full sm:w-auto sm:max-w-xs">
           <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
-            <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Analytics time range">
+            <SelectTrigger className="touch-manipulation h-11 sm:h-auto" aria-label="Analytics time range">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -508,16 +491,9 @@ function NativeAnalytics({ token }: { token: string }) {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
-                      <XAxis
-                        dataKey="x"
-                        tick={{ fontSize: 10 }}
-                        tickFormatter={trafficLabelFormatter}
-                        tickLine={false}
-                        axisLine={false}
-                      />
+                      <XAxis dataKey="x" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} />
                       <Tooltip
-                        labelFormatter={trafficTooltipLabelFormatter}
                         contentStyle={{
                           fontSize: 12,
                           borderRadius: "10px",
@@ -561,6 +537,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
+                    <CardDescription>Views</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -592,6 +569,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
+                    <CardDescription>Visitors</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -626,6 +604,7 @@ function NativeAnalytics({ token }: { token: string }) {
                 <Card>
                   <CardHeader className="pb-2">
                     <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
+                    <CardDescription>Visitors</CardDescription>
                   </CardHeader>
                   <CardContent className="pt-0">
                     <div className="space-y-1 sm:space-y-2">
@@ -660,6 +639,7 @@ function NativeAnalytics({ token }: { token: string }) {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
+                      <CardDescription>Sessions</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
@@ -683,6 +663,7 @@ function NativeAnalytics({ token }: { token: string }) {
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg">OS</CardTitle>
+                      <CardDescription>Sessions</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
@@ -705,7 +686,11 @@ function NativeAnalytics({ token }: { token: string }) {
                 {tech.devices.length > 0 && (
                   <Card>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
+                      <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                        <Smartphone className="h-4 w-4" />
+                        Devices
+                      </CardTitle>
+                      <CardDescription>Sessions</CardDescription>
                     </CardHeader>
                     <CardContent className="pt-0">
                       <div className="space-y-1 sm:space-y-2">
