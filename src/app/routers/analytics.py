@@ -109,7 +109,7 @@ def get_umami_overview(
     _pro=Depends(require_pro),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
+    from ..umami.service import get_umami_period_timestamps
 
     if not current_user.umami_website_id:
         raise HTTPException(
@@ -262,7 +262,7 @@ def get_umami_sources(
     _pro=Depends(require_pro),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
+    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
 
     if not current_user.umami_website_id:
         raise HTTPException(
