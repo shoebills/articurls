@@ -387,7 +387,9 @@ def get_umami_sources(
                 start_at=start_at,
                 end_at=end_at,
             )
-            total_visitors = (stats.get("visitors") or {}).get("value", 0)
+            total_visitors = stats.get("visitors") or 0
+            if isinstance(total_visitors, dict):
+                total_visitors = total_visitors.get("value", 0)
             referred_visitors = sum(int(row.get("y", 0)) for row in referrers)
             direct_count = total_visitors - referred_visitors
             if direct_count > 0:
