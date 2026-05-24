@@ -62,7 +62,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
           <div className="space-y-1">
             <p className="text-sm font-medium">Collect subscribers</p>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              Show the subscribe button in your public navigation and below blog posts.
+              Show the subscribe button in your blog menu and below blog posts.
             </p>
           </div>
           <Switch
