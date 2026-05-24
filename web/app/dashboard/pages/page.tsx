@@ -129,10 +129,6 @@ export default function PagesDashboardPage() {
         </Button>
       </div>
 
-      <p className="text-sm text-muted-foreground">
-        {pages.length} page{pages.length === 1 ? "" : "s"}
-      </p>
-
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : pages.length === 0 ? (

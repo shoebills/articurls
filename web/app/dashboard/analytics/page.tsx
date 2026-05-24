@@ -297,6 +297,20 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
+function formatChartLabel(value: string, unit?: string): string {
+  const normalized = value.replace("T", " ");
+
+  if (unit === "hour") {
+    return normalized.slice(0, 16);
+  }
+
+  if (unit === "month") {
+    return normalized.slice(0, 7);
+  }
+
+  return normalized.slice(0, 10);
+}
+
 function KpiCard({
   title,
   value,
@@ -409,6 +423,11 @@ function NativeAnalytics({ token }: { token: string }) {
         }))
     : [];
 
+  const trafficLabelFormatter = (value: string | number) =>
+    formatChartLabel(String(value), timeseries?.unit);
+  const trafficTooltipLabelFormatter = (label: unknown) =>
+    formatChartLabel(String(label ?? ""), timeseries?.unit);
+
   return (
     <div className="space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3">
@@ -489,9 +508,16 @@ function NativeAnalytics({ token }: { token: string }) {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
-                      <XAxis dataKey="x" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                      <XAxis
+                        dataKey="x"
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={trafficLabelFormatter}
+                        tickLine={false}
+                        axisLine={false}
+                      />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} />
                       <Tooltip
+                        labelFormatter={trafficTooltipLabelFormatter}
                         contentStyle={{
                           fontSize: 12,
                           borderRadius: "10px",
