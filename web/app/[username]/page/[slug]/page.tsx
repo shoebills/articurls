@@ -15,6 +15,7 @@ import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { excerptFromHtml } from "@/lib/text";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { SanitizedHtml } from "@/components/sanitized-html";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -184,7 +185,7 @@ export default async function PublicCustomPage({ params }: Props) {
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
         </header>
         <article className="mt-4">
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+          <SanitizedHtml html={page.content} className="prose-blog" />
         </article>
         <PublicSiteFooter user={user} pages={pages} />
       </main>

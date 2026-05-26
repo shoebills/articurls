@@ -20,6 +20,7 @@ import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { SanitizedHtml } from "@/components/sanitized-html";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -395,7 +396,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </div>
           </header>
           <div className="mt-12">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blog.content }} />
+            <SanitizedHtml html={blog.content} className="prose-blog" />
           </div>
           {showSubscriberCollection ? (
             <div className="mt-14 border-t border-border/80 pt-6">
@@ -479,7 +480,7 @@ export default async function CustomDomainPage({ params }: Props) {
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
           </header>
           <article className="mt-4">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+            <SanitizedHtml html={page.content} className="prose-blog" />
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>

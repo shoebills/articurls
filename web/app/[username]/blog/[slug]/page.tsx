@@ -17,6 +17,7 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { SanitizedHtml } from "@/components/sanitized-html";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -213,7 +214,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </div>
         </header>
         <div className="mt-12">
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blog.content }} />
+          <SanitizedHtml html={blog.content} className="prose-blog" />
         </div>
         {showSubscriberCollection ? (
           <div className="mt-14 border-t border-border/80 pt-6">
