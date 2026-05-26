@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from ..database import get_db
 from .. import models, utils
+from ..utils.html_sanitizer import sanitize_html
 from ..schemas import blog
 from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
@@ -60,7 +61,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     new_blog = models.Blog(
         title=request.title,
-        content=request.content,
+        content=sanitize_html(request.content),
         user_id=current_user.user_id,
         slug=candidate_slug,
         meta_title=candidate_meta_title,
@@ -255,6 +256,10 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
             )
             # Use the resolved unique slug
             db_blog.slug = resolved
+
+    # Sanitize content if present in update
+    if "content" in update_data:
+        update_data["content"] = sanitize_html(update_data["content"])
 
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.

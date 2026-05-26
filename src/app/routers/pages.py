@@ -6,6 +6,7 @@ from datetime import datetime, timezone
 import secrets
 from .. import models
 from ..database import get_db
+from ..utils.html_sanitizer import sanitize_html
 from ..schemas import page as page_schema
 from ..security import oauth2
 from ..storage.service import delete_media, save_media
@@ -190,7 +191,7 @@ def create_page(
     current_user=Depends(oauth2.get_current_user),
 ):
     title = (request.title or "").strip()
-    content = request.content or ""
+    content = sanitize_html(request.content or "")
     base_slug = slugify(title) if title else f"draft-{secrets.token_hex(6)}"
 
     new_page = models.UserPage(
@@ -260,7 +261,7 @@ def update_page(
         db_page.title = (update_data["title"] or "").strip()
 
     if "content" in update_data:
-        db_page.content = update_data["content"] or ""
+        db_page.content = sanitize_html(update_data["content"] or "")
 
     if "slug" in update_data:
         new_slug = (update_data["slug"] or "").strip()
