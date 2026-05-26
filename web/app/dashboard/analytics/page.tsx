@@ -299,7 +299,9 @@ function formatChartLabel(value: string, unit?: string): string {
   const normalized = value.replace("T", " ");
 
   if (unit === "hour") {
-    return normalized.slice(0, 16);
+    // Umami returns "2025-05-26T14:00:00Z" — show only "14:00" for hourly view
+    const timePart = normalized.slice(11, 16);
+    return timePart || normalized.slice(0, 16);
   }
 
   if (unit === "month") {
