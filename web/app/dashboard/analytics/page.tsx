@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   getSubscription,
@@ -451,20 +451,50 @@ function NativeAnalytics({ token }: { token: string }) {
     return () => { cancelled = true; };
   }, [token, period]);
 
-  const trafficSeries = timeseries
-    ? Array.from(
-        new Set([
-          ...timeseries.pageviews.map((point) => point.x),
-          ...timeseries.visitors.map((point) => point.x),
-        ]),
-      )
-        .sort()
-        .map((x) => ({
-          x,
-          pageviews: timeseries.pageviews.find((point) => point.x === x)?.y ?? 0,
-          visitors: timeseries.visitors.find((point) => point.x === x)?.y ?? 0,
-        }))
-    : [];
+  const trafficSeries = useMemo(() => {
+    if (!timeseries) return [];
+
+    const pvMap = new Map(timeseries.pageviews.map((p) => [p.x, p.y]));
+    const viMap = new Map(timeseries.visitors.map((p) => [p.x, p.y]));
+
+    if (timeseries.unit === "hour") {
+      // Umami only returns hours that have data — fill all 24 slots so the
+      // chart shows a complete picture with zeros for quiet hours.
+      const allTimestamps = [
+        ...timeseries.pageviews.map((p) => p.x),
+        ...timeseries.visitors.map((p) => p.x),
+      ];
+      if (allTimestamps.length === 0) return [];
+
+      // Find the earliest timestamp and generate 24 consecutive hourly slots
+      const earliest = new Date(
+        Math.min(...allTimestamps.map((x) => new Date(x).getTime())),
+      );
+      // Snap to the start of that hour
+      earliest.setMinutes(0, 0, 0);
+
+      const slots: string[] = [];
+      for (let i = 0; i < 24; i++) {
+        const slot = new Date(earliest.getTime() + i * 60 * 60 * 1000);
+        // Produce an ISO string that matches Umami's format (seconds precision, Z suffix)
+        slots.push(slot.toISOString().replace(".000Z", "Z").slice(0, 19) + "Z");
+      }
+
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    // For day / month units keep the original behaviour (Umami fills these fully)
+    const keys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()])).sort();
+    return keys.map((x) => ({
+      x,
+      pageviews: pvMap.get(x) ?? 0,
+      visitors: viMap.get(x) ?? 0,
+    }));
+  }, [timeseries]);
   const trafficLabelFormatter = (value: string | number) =>
     formatChartLabel(String(value), timeseries?.unit, userTz);
   const trafficTooltipLabelFormatter = (label: unknown) =>
