@@ -295,13 +295,25 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-function formatChartLabel(value: string, unit?: string): string {
+function formatChartLabel(value: string, unit?: string, tz?: string): string {
   const normalized = value.replace("T", " ");
 
   if (unit === "hour") {
-    // Umami returns "2025-05-26T14:00:00Z" — show only "14:00" for hourly view
-    const timePart = normalized.slice(11, 16);
-    return timePart || normalized.slice(0, 16);
+    // Umami returns ISO timestamps bucketed in the requested timezone.
+    // Parse and re-format to show just "HH:MM" in the user's local timezone.
+    try {
+      const date = new Date(value);
+      return date.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: tz,
+      });
+    } catch {
+      // Fallback: slice the time portion from the normalized string
+      const timePart = normalized.slice(11, 16);
+      return timePart || normalized.slice(0, 16);
+    }
   }
 
   if (unit === "month") {
@@ -403,6 +415,9 @@ function NativeAnalytics({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
+  // Detect browser timezone once — used to request timezone-aware timeseries from Umami
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -411,7 +426,7 @@ function NativeAnalytics({ token }: { token: string }) {
       try {
         const [o, t, p, s, g, te] = await Promise.all([
           getUmamiOverview(token, period),
-          getUmamiTimeseries(token, period),
+          getUmamiTimeseries(token, period, userTz),
           getUmamiPages(token, period),
           getUmamiSources(token, period),
           getUmamiGeo(token, period),
@@ -451,9 +466,9 @@ function NativeAnalytics({ token }: { token: string }) {
         }))
     : [];
   const trafficLabelFormatter = (value: string | number) =>
-    formatChartLabel(String(value), timeseries?.unit);
+    formatChartLabel(String(value), timeseries?.unit, userTz);
   const trafficTooltipLabelFormatter = (label: unknown) =>
-    formatChartLabel(String(label ?? ""), timeseries?.unit);
+    formatChartLabel(String(label ?? ""), timeseries?.unit, userTz);
 
   return (
     <div className="space-y-6 sm:space-y-8">

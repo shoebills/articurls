@@ -794,8 +794,10 @@ export async function getUmamiOverview(
 export async function getUmamiTimeseries(
   token: string,
   period: AnalyticsPeriod = "7d",
+  tz?: string,
 ): Promise<UmamiTimeseriesResponse> {
   const q = new URLSearchParams({ period });
+  if (tz) q.set("tz", tz);
   return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token, disableCache: true });
 }
 
