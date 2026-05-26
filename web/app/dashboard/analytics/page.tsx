@@ -415,7 +415,7 @@ function NativeAnalytics({ token }: { token: string }) {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
-  // Detect browser timezone once — used to request timezone-aware timeseries from Umami
+  // Detect browser timezone once — used to display chart labels in local time
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
@@ -426,7 +426,7 @@ function NativeAnalytics({ token }: { token: string }) {
       try {
         const [o, t, p, s, g, te] = await Promise.all([
           getUmamiOverview(token, period),
-          getUmamiTimeseries(token, period, userTz),
+          getUmamiTimeseries(token, period),
           getUmamiPages(token, period),
           getUmamiSources(token, period),
           getUmamiGeo(token, period),

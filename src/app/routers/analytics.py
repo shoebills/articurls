@@ -160,7 +160,6 @@ def get_umami_overview(
 @router.get("/umami/timeseries", status_code=status.HTTP_200_OK)
 def get_umami_timeseries(
     period: str = "7d",
-    tz: Optional[str] = None,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     _pro=Depends(require_pro),
@@ -190,7 +189,6 @@ def get_umami_timeseries(
             start_at=start_at,
             end_at=end_at,
             unit=unit,
-            timezone=tz or "UTC",
         )
 
         # Umami's pageviews endpoint returns `sessions` for the secondary series
