@@ -458,18 +458,26 @@ function NativeAnalytics({ token }: { token: string }) {
     const viMap = new Map(timeseries.visitors.map((p) => [p.x, p.y]));
 
     if (timeseries.unit === "hour") {
-      // Always generate all 24 hourly slots anchored to now-24h → now,
-      // so the window is correct regardless of when the first visit occurred.
-      // Umami only returns hours that have data, so we fill the rest with zeros.
-      const now = new Date();
-      // Snap to the start of the current hour
-      now.setMinutes(0, 0, 0);
+      // Always generate all 24 hourly slots anchored to now-24h → now in UTC.
+      // Umami buckets by UTC hour (format: "YYYY-MM-DDTHH:00:00Z") and only
+      // returns hours that have data — we fill the rest with zeros.
+      //
+      // IMPORTANT: snap to UTC hour boundaries, not local time, so the keys
+      // match exactly what Umami returns.
+      const nowMs = Date.now();
+      // Round down to the current UTC hour
+      const currentHourMs = nowMs - (nowMs % (60 * 60 * 1000));
 
       const slots: string[] = [];
       for (let i = 23; i >= 0; i--) {
-        const slot = new Date(now.getTime() - i * 60 * 60 * 1000);
-        // Produce an ISO string that matches Umami's format (no ms, Z suffix)
-        slots.push(slot.toISOString().slice(0, 19) + "Z");
+        const slotMs = currentHourMs - i * 60 * 60 * 1000;
+        // Produce "YYYY-MM-DDTHH:00:00Z" — exactly what Umami returns
+        const d = new Date(slotMs);
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
+        const hh = String(d.getUTCHours()).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}-${dd}T${hh}:00:00Z`);
       }
 
       return slots.map((x) => ({
