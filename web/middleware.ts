@@ -6,6 +6,26 @@ import {
   withTenantHostHeader,
 } from "@/lib/request-host";
 
+/** Add security headers to responses serving HTML content */
+function withSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' https: data: blob:; " +
+      "font-src 'self'; " +
+      "connect-src 'self'; " +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self';"
+  );
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  return response;
+}
+
 const APP_ALLOWED_PREFIXES = [
   "/dashboard",
   "/login",
@@ -81,9 +101,9 @@ export function middleware(request: NextRequest) {
     rewriteUrl.pathname =
       segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
 
-    return NextResponse.rewrite(rewriteUrl, {
+    return withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {
       request: { headers: tenantHeaders },
-    });
+    }));
   }
 
   // Marketing domain — /[username], /[username]/blog/[slug], etc.
@@ -94,7 +114,7 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (host !== appHost) return NextResponse.next();
+  if (host !== appHost) return withSecurityHeaders(NextResponse.next());
 
   // App domain — dashboard/auth only; redirect public paths to marketing.
   if (isExemptPath(pathname)) return NextResponse.next();
@@ -103,7 +123,7 @@ export function middleware(request: NextRequest) {
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
-  if (allowedOnAppHost) return NextResponse.next();
+  if (allowedOnAppHost) return withSecurityHeaders(NextResponse.next());
 
   return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
 }
