@@ -458,26 +458,18 @@ function NativeAnalytics({ token }: { token: string }) {
     const viMap = new Map(timeseries.visitors.map((p) => [p.x, p.y]));
 
     if (timeseries.unit === "hour") {
-      // Umami only returns hours that have data — fill all 24 slots so the
-      // chart shows a complete picture with zeros for quiet hours.
-      const allTimestamps = [
-        ...timeseries.pageviews.map((p) => p.x),
-        ...timeseries.visitors.map((p) => p.x),
-      ];
-      if (allTimestamps.length === 0) return [];
-
-      // Find the earliest timestamp and generate 24 consecutive hourly slots
-      const earliest = new Date(
-        Math.min(...allTimestamps.map((x) => new Date(x).getTime())),
-      );
-      // Snap to the start of that hour
-      earliest.setMinutes(0, 0, 0);
+      // Always generate all 24 hourly slots anchored to now-24h → now,
+      // so the window is correct regardless of when the first visit occurred.
+      // Umami only returns hours that have data, so we fill the rest with zeros.
+      const now = new Date();
+      // Snap to the start of the current hour
+      now.setMinutes(0, 0, 0);
 
       const slots: string[] = [];
-      for (let i = 0; i < 24; i++) {
-        const slot = new Date(earliest.getTime() + i * 60 * 60 * 1000);
-        // Produce an ISO string that matches Umami's format (seconds precision, Z suffix)
-        slots.push(slot.toISOString().replace(".000Z", "Z").slice(0, 19) + "Z");
+      for (let i = 23; i >= 0; i--) {
+        const slot = new Date(now.getTime() - i * 60 * 60 * 1000);
+        // Produce an ISO string that matches Umami's format (no ms, Z suffix)
+        slots.push(slot.toISOString().slice(0, 19) + "Z");
       }
 
       return slots.map((x) => ({
