@@ -58,7 +58,7 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
-        cache: "no-store",
+        next: { revalidate: 60 },
         headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET || "" },
       }
     );
@@ -71,7 +71,7 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { next: { revalidate: 60 } });
   if (!res.ok) return null;
   return res.json();
 }
@@ -99,7 +99,7 @@ async function loadPages(username: string): Promise<UserPage[]> {
 }
 
 async function loadCategories(username: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { next: { revalidate: 60 } });
   if (!res.ok) return [];
   return res.json();
 }
