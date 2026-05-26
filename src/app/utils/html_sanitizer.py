@@ -50,8 +50,9 @@ ALLOWED_TAGS = {
 }
 
 # Allowed attributes per tag
+# Note: 'rel' is NOT included for 'a' tags because link_rel parameter handles it
 ALLOWED_ATTRIBUTES = {
-    "a": {"href", "title", "rel", "target"},
+    "a": {"href", "title", "target"},
     "img": {"src", "alt", "title", "width", "height"},
     "*": {"class"},
 }
