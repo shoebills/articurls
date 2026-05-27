@@ -57,9 +57,28 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
     return dirty;
   }
 
-  return DOMPurify.sanitize(dirty, {
+  const sanitized = DOMPurify.sanitize(dirty, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
     ALLOW_DATA_ATTR: false,
   });
+
+  // Add native lazy loading and async decoding for performance
+  return sanitized.replace(
+    /<img\b([^>]*)>/gi,
+    (match, attrs) => {
+      // Only add if not already present
+      const hasLoading = /\sloading\s*=/.test(attrs);
+      const hasDecoding = /\sdecoding\s*=/.test(attrs);
+
+      let result = match;
+      if (!hasLoading) {
+        result = result.replace(/>$/, ' loading="lazy">');
+      }
+      if (!hasDecoding) {
+        result = result.replace(/>$/, ' decoding="async">');
+      }
+      return result;
+    }
+  );
 }
