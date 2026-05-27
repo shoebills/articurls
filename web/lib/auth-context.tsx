@@ -38,11 +38,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
       setUser(me);
       setSubscription(sub);
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      setToken(null);
-      setUser(null);
-      setSubscription(null);
+    } catch (err: any) {
+      // Only clear token on auth errors (401), not network/server errors
+      if (err?.status === 401 || err?.response?.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+        setUser(null);
+        setSubscription(null);
+      }
+      // For other errors, keep token and let user retry
     }
   }, []);
 
