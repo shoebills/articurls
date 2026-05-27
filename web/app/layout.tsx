@@ -36,6 +36,11 @@ export const metadata: Metadata = {
     template: "%s · Articurls",
   },
   description: "A modern blogging platform with analytics, subscribers, and scheduling.",
+  icons: {
+    icon: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({
