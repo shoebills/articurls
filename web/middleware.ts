@@ -15,7 +15,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' https: data: blob:; " +
       "font-src 'self'; " +
-      "connect-src 'self'; " +
+      "connect-src 'self' https://api.articurls.com; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
       "form-action 'self';"
