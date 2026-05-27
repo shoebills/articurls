@@ -85,7 +85,8 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
         result = result.replace(/>$/, ' loading="lazy">');
       }
 
-      if (!hasDecoding) {
+      // Don't async-decode first image either (LCP should decode sync)
+      if (!hasDecoding && !isFirstImage) {
         result = result.replace(/>$/, ' decoding="async">');
       }
 
