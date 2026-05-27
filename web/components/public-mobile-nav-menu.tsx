@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Menu } from "lucide-react";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -54,16 +54,20 @@ export function PublicMobileNavMenu({
     });
   }, [open]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!open) {
       setTrayLayout(null);
       return;
     }
-    updateTrayLayout();
+    // Defer measurement to avoid forced reflow
+    const timer = requestAnimationFrame(() => {
+      updateTrayLayout();
+    });
     const scrollOpts: AddEventListenerOptions = { capture: true };
     window.addEventListener("resize", updateTrayLayout);
     window.addEventListener("scroll", updateTrayLayout, scrollOpts);
     return () => {
+      cancelAnimationFrame(timer);
       window.removeEventListener("resize", updateTrayLayout);
       window.removeEventListener("scroll", updateTrayLayout, scrollOpts);
     };

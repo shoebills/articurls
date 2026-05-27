@@ -77,6 +77,7 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
       const hasDecoding = /\sdecoding\s*=/.test(attrs);
       const hasWidth = /\swidth\s*=/.test(attrs);
       const hasHeight = /\sheight\s*=/.test(attrs);
+      const hasFetchpriority = /\sfetchpriority\s*=/.test(attrs);
 
       let result = match;
 
@@ -88,6 +89,11 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
       // Don't async-decode first image either (LCP should decode sync)
       if (!hasDecoding && !isFirstImage) {
         result = result.replace(/>$/, ' decoding="async">');
+      }
+
+      // Add fetchpriority=high to first image (LCP) for faster loading
+      if (!hasFetchpriority && isFirstImage) {
+        result = result.replace(/>$/, ' fetchpriority="high">');
       }
 
       return result;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import {
@@ -91,13 +91,20 @@ export function PublicDesktopNav({
     setInlineCount(best);
   }, [links]);
 
-  useLayoutEffect(() => {
-    recompute();
+  useEffect(() => {
+    // Defer measurement to avoid forced reflow during initial render
+    const timer = requestAnimationFrame(() => {
+      recompute();
+    });
+
     const slot = navSlotRef.current;
     if (!slot) return;
     const ro = new ResizeObserver(() => recompute());
     ro.observe(slot);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(timer);
+      ro.disconnect();
+    };
   }, [recompute]);
 
   const inlineLinks = links.slice(0, inlineCount);
