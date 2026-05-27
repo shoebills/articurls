@@ -96,6 +96,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: { index: shouldIndex, follow: true },
     alternates,
     icons: faviconIcons(author),
+    metadataBase: new URL(MARKETING_ORIGIN),
     openGraph: {
       title,
       description,
@@ -112,6 +113,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
+
+// Preconnect to R2 for faster mobile image loading
+export const viewport = {
+  themeColor: "#f4f5f8",
+  other: {
+    preconnect: ["https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev"],
+    "dns-prefetch": "https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev",
+  },
+};
 
 export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;

@@ -268,6 +268,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
+// Preconnect to R2 for faster mobile image loading
+export const viewport = {
+  themeColor: "#f4f5f8",
+  other: {
+    preconnect: ["https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev"],
+    "dns-prefetch": "https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev",
+  },
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function CustomDomainPage({ params }: Props) {
