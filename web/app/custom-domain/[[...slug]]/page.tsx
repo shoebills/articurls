@@ -167,13 +167,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "article",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
       },
     };
   }
@@ -196,13 +196,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
       },
     };
   }
@@ -228,13 +228,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
       },
     };
   }
@@ -257,13 +257,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: canonical,
       type: "website",
       siteName,
-      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image`, width: 1200, height: 630 }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ogImage ? [ogImage] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
     },
   };
 }
