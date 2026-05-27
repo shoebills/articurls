@@ -217,7 +217,22 @@ export function BlogEditor({
           ? await uploadBlogMedia(token, blogId, file)
           : await uploadPageMedia(token, pageId!, file);
         const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
-        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
+        const imageUrl = assetUrl(media.url);
+
+        // Load image to get natural dimensions (prevents CLS)
+        const img = new window.Image();
+        img.src = imageUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        editor.chain().focus().setImage({
+          src: imageUrl,
+          alt: alt.trim(),
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        }).run();
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";
         window.alert(detail);

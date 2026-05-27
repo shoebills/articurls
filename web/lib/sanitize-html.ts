@@ -64,21 +64,31 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
       });
 
   // Add native lazy loading and async decoding for performance
-  // This runs on BOTH server and client
+  // Skip first image (likely LCP) to avoid delaying hero image
+  let imgCount = 0;
   return html.replace(
     /<img\b([^>]*)>/gi,
     (match, attrs) => {
+      imgCount++;
+      const isFirstImage = imgCount === 1;
+
       // Only add if not already present
       const hasLoading = /\sloading\s*=/.test(attrs);
       const hasDecoding = /\sdecoding\s*=/.test(attrs);
+      const hasWidth = /\swidth\s*=/.test(attrs);
+      const hasHeight = /\sheight\s*=/.test(attrs);
 
       let result = match;
-      if (!hasLoading) {
+
+      // Don't lazy load first image (LCP candidate)
+      if (!hasLoading && !isFirstImage) {
         result = result.replace(/>$/, ' loading="lazy">');
       }
+
       if (!hasDecoding) {
         result = result.replace(/>$/, ' decoding="async">');
       }
+
       return result;
     }
   );
