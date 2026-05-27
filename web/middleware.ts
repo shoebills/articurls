@@ -11,7 +11,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' https: data: blob:; " +
       "font-src 'self'; " +
@@ -38,7 +38,7 @@ const APP_ALLOWED_PREFIXES = [
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/script.js"];
+const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/script.js", "/manifest.json"];
 
 function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
