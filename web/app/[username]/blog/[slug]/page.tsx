@@ -10,6 +10,7 @@ import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { transformImageUrl } from "@/lib/image-transform";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
@@ -229,7 +230,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </div>
         </header>
         <div className="mt-12">
-          <SanitizedHtml html={blog.content} className="prose-blog" />
+          <SanitizedHtml html={sanitizeHtml(blog.content)} className="prose-blog" skipSanitize />
         </div>
         {showSubscriberCollection ? (
           <div className="mt-14 border-t border-border/80 pt-6">
