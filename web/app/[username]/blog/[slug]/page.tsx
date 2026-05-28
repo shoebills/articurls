@@ -9,6 +9,7 @@ import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { transformImageUrl } from "@/lib/image-transform";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
@@ -114,12 +115,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Preconnect to R2 for faster mobile image loading
+// Preconnect to image CDN for faster mobile image loading
 export const viewport = {
   themeColor: "#f4f5f8",
   other: {
-    preconnect: ["https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev"],
-    "dns-prefetch": "https://pub-a4b05c5733f243dc9ce57280c93e65bf.r2.dev",
+    preconnect: ["https://images.articurls.com"],
+    "dns-prefetch": "https://images.articurls.com",
   },
 };
 
@@ -201,9 +202,13 @@ export default async function PublicBlogPage({ params }: Props) {
               {author.profile_image_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={assetUrl(author.profile_image_url)}
+                  src={transformImageUrl(assetUrl(author.profile_image_url), { width: 100 })}
                   alt=""
+                  width={36}
+                  height={36}
                   className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70"
+                  loading="lazy"
+                  decoding="async"
                 />
               ) : (
                 <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
