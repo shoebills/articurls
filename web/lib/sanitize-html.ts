@@ -1,4 +1,4 @@
-import DOMPurify from "isomorphic-dompurify";
+import DOMPurify from "dompurify";
 import { transformImageUrl, generateSrcSet, generateSizes } from "./image-transform";
 
 // Match backend nh3 sanitizer configuration
@@ -59,12 +59,15 @@ const ALLOWED_ATTR = [
 export function sanitizeHtml(dirty: string | null | undefined): string {
   if (!dirty || typeof dirty !== "string") return "";
 
-  // Sanitize using isomorphic-dompurify (works on both client and server)
-  const html = DOMPurify.sanitize(dirty, {
-    ALLOWED_TAGS,
-    ALLOWED_ATTR,
-    ALLOW_DATA_ATTR: false,
-  });
+  // Sanitize on client only (DOMPurify needs DOM)
+  // On server, trust the backend already sanitized with nh3
+  const html = typeof window === "undefined"
+    ? dirty
+    : DOMPurify.sanitize(dirty, {
+        ALLOWED_TAGS,
+        ALLOWED_ATTR,
+        ALLOW_DATA_ATTR: false,
+      });
 
   // Transform R2 image URLs to use Cloudflare Image Transformations
   // and add lazy loading attributes
