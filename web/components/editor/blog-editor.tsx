@@ -42,6 +42,7 @@ import {
 } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
+import { transformImageUrl, generateSrcSet, generateSizes } from "@/lib/image-transform";
 
 const lowlight = createLowlight(common);
 
@@ -217,21 +218,31 @@ export function BlogEditor({
           ? await uploadBlogMedia(token, blogId, file)
           : await uploadPageMedia(token, pageId!, file);
         const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
-        const imageUrl = assetUrl(media.url);
+        const originalUrl = assetUrl(media.url);
 
-        // Load image to get natural dimensions (prevents CLS)
+        // Transform URL to use Cloudflare Image Transformations
+        // This converts the URL to: images.articurls.com/cdn-cgi/image/format=auto,width=800/...
+        const imageUrl = transformImageUrl(originalUrl, { width: 800 });
+
+        // Load original image to get natural dimensions (prevents CLS)
         const img = new window.Image();
-        img.src = imageUrl;
+        img.src = originalUrl;
         await new Promise((resolve, reject) => {
           img.onload = resolve;
           img.onerror = reject;
         });
 
-        editor.chain().focus().setImage({
-          src: imageUrl,
-          alt: alt.trim(),
-          width: img.naturalWidth,
-          height: img.naturalHeight,
+        // Generate srcset for responsive loading
+        const srcset = generateSrcSet(originalUrl);
+        const sizes = generateSizes();
+
+        // Use insertContent with HTML to support srcset attribute
+        // TipTap's setImage doesn't support srcset natively
+        editor.chain().focus().insertContent({
+          type: "html",
+          attrs: {
+            value: `<img src="${imageUrl}" alt="${alt.trim()}" width="${img.naturalWidth}" height="${img.naturalHeight}" srcset="${srcset}" sizes="${sizes}" loading="lazy" decoding="async">`,
+          },
         }).run();
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";

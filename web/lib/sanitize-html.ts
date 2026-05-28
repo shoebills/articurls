@@ -1,4 +1,5 @@
 import DOMPurify from "dompurify";
+import { transformImageUrl, generateSrcSet, generateSizes } from "./image-transform";
 
 // Match backend nh3 sanitizer configuration
 const ALLOWED_TAGS = [
@@ -48,6 +49,11 @@ const ALLOWED_ATTR = [
   "width",
   "height",
   "class",
+  "srcset",
+  "sizes",
+  "loading",
+  "decoding",
+  "fetchpriority",
 ];
 
 export function sanitizeHtml(dirty: string | null | undefined): string {
@@ -63,8 +69,8 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
         ALLOW_DATA_ATTR: false,
       });
 
-  // Add native lazy loading and async decoding for performance
-  // Skip first image (likely LCP) to avoid delaying hero image
+  // Transform R2 image URLs to use Cloudflare Image Transformations
+  // and add lazy loading attributes
   let imgCount = 0;
   return html.replace(
     /<img\b([^>]*)>/gi,
@@ -72,14 +78,37 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
       imgCount++;
       const isFirstImage = imgCount === 1;
 
-      // Only add if not already present
+      // Extract src URL
+      const srcMatch = attrs.match(/\bsrc=["']([^"']+)["']/);
+      const originalSrc = srcMatch ? srcMatch[1] : "";
+
+      // Transform src if it's an R2 image
+      let result = match;
+      if (originalSrc) {
+        const transformedSrc = transformImageUrl(originalSrc, { width: 800 });
+        if (transformedSrc !== originalSrc) {
+          result = result.replace(originalSrc, transformedSrc);
+        }
+      }
+
+      // Check for existing attributes
       const hasLoading = /\sloading\s*=/.test(attrs);
       const hasDecoding = /\sdecoding\s*=/.test(attrs);
-      const hasWidth = /\swidth\s*=/.test(attrs);
-      const hasHeight = /\sheight\s*=/.test(attrs);
       const hasFetchpriority = /\sfetchpriority\s*=/.test(attrs);
+      const hasSrcset = /\ssrcset\s*=/.test(attrs);
 
-      let result = match;
+      // Extract data-srcset and data-sizes if present
+      const dataSrcsetMatch = attrs.match(/\bdata-srcset=["']([^"']+)["']/);
+      const dataSizesMatch = attrs.match(/\bdata-sizes=["']([^"']+)["']/);
+
+      // Add srcset/sizes from data attributes or generate new ones
+      if (!hasSrcset && originalSrc) {
+        const srcset = dataSrcsetMatch
+          ? dataSrcsetMatch[1]
+          : generateSrcSet(originalSrc);
+        const sizes = dataSizesMatch ? dataSizesMatch[1] : generateSizes();
+        result = result.replace(/>$/, ` srcset="${srcset}" sizes="${sizes}">`);
+      }
 
       // Don't lazy load first image (LCP candidate)
       if (!hasLoading && !isFirstImage) {

@@ -1,4 +1,5 @@
 import { assetUrl } from "@/lib/env";
+import { transformImageUrl } from "./image-transform";
 import type { BlogListItem, PublicBlog } from "@/lib/types";
 
 function firstImageFromHtml(html: string | null | undefined): string | null {
@@ -11,8 +12,8 @@ type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<Publ
 
 export function resolveBlogPreviewImage(blog: BlogLike): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
-  if (explicit) return explicit;
+  if (explicit) return transformImageUrl(explicit, { width: 800 });
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
-  if (fromContent) return fromContent;
+  if (fromContent) return transformImageUrl(fromContent, { width: 800 });
   return "";
 }
