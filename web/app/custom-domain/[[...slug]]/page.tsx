@@ -17,11 +17,11 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { transformHtmlImages } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
-import { SanitizedHtml } from "@/components/sanitized-html";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -407,7 +407,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </div>
           </header>
           <div className="mt-12">
-            <SanitizedHtml html={sanitizeHtml(blog.content)} className="prose-blog" skipSanitize />
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
           </div>
           {showSubscriberCollection ? (
             <div className="mt-14 border-t border-border/80 pt-6">
@@ -491,7 +491,7 @@ export default async function CustomDomainPage({ params }: Props) {
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
           </header>
           <article className="mt-4">
-            <SanitizedHtml html={sanitizeHtml(page.content)} className="prose-blog" skipSanitize />
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
