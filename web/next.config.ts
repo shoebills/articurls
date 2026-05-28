@@ -27,10 +27,6 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns,
   },
-  experimental: {
-    // Inline CSS to eliminate render-blocking CSS requests (Next.js 15+)
-    inlineCss: true,
-  },
   compiler: {
     // Remove console.log in production to reduce bundle size
     removeConsole: {

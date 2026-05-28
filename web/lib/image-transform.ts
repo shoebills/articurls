@@ -12,7 +12,7 @@ interface TransformOptions {
 }
 
 const DEFAULT_OPTIONS: TransformOptions = {
-  width: 800,
+  width: 600,
   quality: 85,
   format: "auto",
   fit: "contain",
@@ -108,7 +108,7 @@ export function generateSrcSet(
  */
 export function generateSizes(
   mobileWidth: string = "100vw",
-  desktopWidth: string = "800px"
+  desktopWidth: string = "600px"
 ): string {
   return `(max-width: 768px) ${mobileWidth}, ${desktopWidth}`;
 }

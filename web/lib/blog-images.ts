@@ -12,8 +12,8 @@ type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<Publ
 
 export function resolveBlogPreviewImage(blog: BlogLike): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
-  if (explicit) return transformImageUrl(explicit, { width: 800 });
+  if (explicit) return transformImageUrl(explicit, { width: 600 });
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
-  if (fromContent) return transformImageUrl(fromContent, { width: 800 });
+  if (fromContent) return transformImageUrl(fromContent, { width: 600 });
   return "";
 }

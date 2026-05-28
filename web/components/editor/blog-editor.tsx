@@ -221,8 +221,8 @@ export function BlogEditor({
         const originalUrl = assetUrl(media.url);
 
         // Transform URL to use Cloudflare Image Transformations
-        // This converts the URL to: images.articurls.com/cdn-cgi/image/format=auto,width=800/...
-        const imageUrl = transformImageUrl(originalUrl, { width: 800 });
+        // This converts the URL to: images.articurls.com/cdn-cgi/image/format=auto,width=600/...
+        const imageUrl = transformImageUrl(originalUrl, { width: 600 });
 
         // Load original image to get natural dimensions (prevents CLS)
         const img = new window.Image();
