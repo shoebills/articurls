@@ -26,6 +26,58 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
+/** Add cache headers with granular Cache-Tags for multi-tenant purging */
+function withCacheHeaders(
+  response: NextResponse,
+  host: string,
+  pathname: string
+): NextResponse {
+  // Only cache public content (not auth/dashboard/internal)
+  const isPublicContent =
+    !pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/signup") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/internal");
+
+  if (!isPublicContent) return response;
+
+  // Generate cache tags
+  const tenantTag = `tenant-${host}`;
+  const tags: string[] = [tenantTag];
+
+  // Extract content-specific tags based on path pattern
+  const blogMatch = pathname.match(/\/blog\/([^\/]+)/);
+  const pageMatch = pathname.match(/\/page\/([^\/]+)/);
+  const categoryMatch = pathname.match(/\/category\/([^\/]+)/);
+
+  if (blogMatch) {
+    // Individual blog post
+    tags.push(`post-${blogMatch[1]}`);
+  } else if (pageMatch) {
+    // Custom page
+    tags.push(`page-${pageMatch[1]}`);
+  } else if (categoryMatch) {
+    // Category listing page - add posts-list for cascade purging
+    tags.push(`category-${categoryMatch[1]}`);
+    tags.push("posts-list");
+  } else if (pathname === "/" || pathname === "") {
+    // Home/profile page - also a listing page
+    tags.push("home");
+    tags.push("posts-list");
+  }
+
+  // Set cache headers (4 hour edge TTL, 1 day stale-while-revalidate)
+  response.headers.set("Cache-Tag", tags.join(","));
+  response.headers.set(
+    "Cache-Control",
+    "public, s-maxage=14400, stale-while-revalidate=86400"
+  );
+
+  return response;
+}
+
 const APP_ALLOWED_PREFIXES = [
   "/dashboard",
   "/login",
@@ -101,9 +153,13 @@ export function middleware(request: NextRequest) {
     rewriteUrl.pathname =
       segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
 
-    return withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {
-      request: { headers: tenantHeaders },
-    }));
+    return withCacheHeaders(
+      withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {
+        request: { headers: tenantHeaders },
+      })),
+      host,
+      pathname
+    );
   }
 
   // Marketing domain — /[username], /[username]/blog/[slug], etc.
@@ -114,7 +170,13 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (host !== appHost) return withSecurityHeaders(NextResponse.next());
+  if (host !== appHost) {
+    return withCacheHeaders(
+      withSecurityHeaders(NextResponse.next()),
+      host,
+      pathname
+    );
+  }
 
   // App domain — dashboard/auth only; redirect public paths to marketing.
   if (isExemptPath(pathname)) return NextResponse.next();
@@ -124,8 +186,12 @@ export function middleware(request: NextRequest) {
   );
 
   if (allowedOnAppHost) return withSecurityHeaders(NextResponse.next());
-
-  return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
+  // Public paths on app host (marketing domain blog/user pages) get cached
+  return withCacheHeaders(
+    withSecurityHeaders(NextResponse.next()),
+    host,
+    pathname
+  );
 }
 
 export const config = {

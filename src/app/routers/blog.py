@@ -9,6 +9,8 @@ from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
+from ..cache.service import purge_blog_post
+from ..config import settings
 from typing import List
 import secrets
 from slugify import slugify
@@ -277,6 +279,23 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     db.commit()
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
+
+    # Purge cache for this blog post and all listing pages (home + categories)
+    # Use fire-and-forget pattern (don't await, don't block response)
+    if settings.CLOUDFLARE_ZONE_ID:
+        try:
+            import asyncio
+            # Purge from custom domain if set
+            if current_user.custom_domain:
+                asyncio.create_task(purge_blog_post(
+                    settings.CLOUDFLARE_ZONE_ID, current_user.custom_domain, db_blog.slug
+                ))
+            # Also purge from articurls.com/username path
+            asyncio.create_task(purge_blog_post(
+                settings.CLOUDFLARE_ZONE_ID, f"articurls.com/{current_user.user_name}", db_blog.slug
+            ))
+        except Exception:
+            pass  # Fail silently, cache will expire naturally
 
     return db_blog
 
