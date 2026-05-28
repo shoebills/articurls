@@ -82,7 +82,7 @@ export function sanitizeHtml(dirty: string | null | undefined): string {
       const srcMatch = attrs.match(/\bsrc=["']([^"']+)["']/);
       const originalSrc = srcMatch ? srcMatch[1] : "";
 
-      // Transform src if it's an R2 image (use 600px for mobile optimization)
+      // Transform src if it's an R2 image - use 600px for mobile LCP optimization
       let result = match;
       if (originalSrc) {
         const transformedSrc = transformImageUrl(originalSrc, { width: 600 });
