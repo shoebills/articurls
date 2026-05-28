@@ -9,7 +9,7 @@ import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
-import { transformImageUrl } from "@/lib/image-transform";
+import { transformImageUrl, transformHtmlImages } from "@/lib/image-transform";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
@@ -155,6 +155,10 @@ export default async function PublicBlogPage({ params }: Props) {
     (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
 
+  // Server-side sanitization + image transform for LCP optimization
+  const sanitizedContent = sanitizeHtml(blog.content);
+  const transformedContent = transformHtmlImages(sanitizedContent);
+
   return (
     <article className="min-h-screen bg-white">
       <div className={containerSpacing}>
@@ -230,7 +234,7 @@ export default async function PublicBlogPage({ params }: Props) {
           </div>
         </header>
         <div className="mt-12">
-          <SanitizedHtml html={sanitizeHtml(blog.content)} className="prose-blog" skipSanitize />
+          <SanitizedHtml html={transformedContent} className="prose-blog" skipSanitize />
         </div>
         {showSubscriberCollection ? (
           <div className="mt-14 border-t border-border/80 pt-6">
