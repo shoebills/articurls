@@ -44,7 +44,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [open, close]);
 
   return (
-    <div className="flex min-h-dvh w-full bg-[#f8fafc] md:h-dvh md:max-h-dvh md:overflow-hidden">
+    <div className="flex min-h-dvh w-full bg-white md:h-dvh md:max-h-dvh md:overflow-hidden">
       <AppSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
         <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background/95 px-8 md:flex">
@@ -133,7 +133,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="flex-1 touch-pan-y bg-[#f8fafc] px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:py-6 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:p-8 md:pb-10">
+        <main className="flex-1 touch-pan-y bg-white px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:py-6 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:p-8 md:pb-10">
           {children}
         </main>
       </div>
