@@ -487,9 +487,101 @@ function NativeAnalytics({ token }: { token: string }) {
       }));
     }
 
-    // For day / month units keep the original behaviour (Umami fills these fully)
-    const keys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()])).sort();
-    return keys.map((x) => ({
+    // Period → slot count mapping
+    const periodSlots: Record<string, number> = {
+      "7d": 7,
+      "28d": 28,
+      "3m": 3,
+      "6m": 6,
+      "1y": 12,
+    };
+
+    const slotCount = periodSlots[timeseries.period];
+
+    if (timeseries.unit === "day" && slotCount) {
+      // Generate all expected day slots anchored to today in UTC,
+      // so days with zero data are filled (matching the hour-bucket behaviour).
+      const now = new Date();
+      const slots: string[] = [];
+      for (let i = slotCount - 1; i >= 0; i--) {
+        const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}-${dd}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.unit === "month" && slotCount) {
+      // Generate all expected month slots anchored to this month in UTC.
+      const now = new Date();
+      const slots: string[] = [];
+      for (let i = slotCount - 1; i >= 0; i--) {
+        const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    // Fallback for “all” (or any future period) — use data-driven keys,
+    // but still fill gaps between the min and max observed dates.
+    const allKeys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()]));
+    if (allKeys.length === 0) return [];
+    allKeys.sort();
+    const minKey = allKeys[0];
+    const maxKey = allKeys[allKeys.length - 1];
+
+    if (timeseries.unit === "month") {
+      // Expand all months between min and max
+      const [minY, minM] = minKey.split("-").map(Number);
+      const [maxY, maxM] = maxKey.split("-").map(Number);
+      const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
+      const slots: string[] = [];
+      for (let i = 0; i < totalMonths; i++) {
+        const d = new Date(Date.UTC(minY, minM - 1 + i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    // Day unit or unknown — expand all days between min and max
+    const minMs = Date.UTC(
+      Number(minKey.slice(0, 4)),
+      Number(minKey.slice(5, 7)) - 1,
+      Number(minKey.slice(8, 10)),
+    );
+    const maxMs = Date.UTC(
+      Number(maxKey.slice(0, 4)),
+      Number(maxKey.slice(5, 7)) - 1,
+      Number(maxKey.slice(8, 10)),
+    );
+    const dayCount = Math.round((maxMs - minMs) / (24 * 60 * 60 * 1000)) + 1;
+    const slots: string[] = [];
+    for (let i = 0; i < dayCount; i++) {
+      const d = new Date(minMs + i * 24 * 60 * 60 * 1000);
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      slots.push(`${yyyy}-${mm}-${dd}`);
+    }
+    return slots.map((x) => ({
       x,
       pageviews: pvMap.get(x) ?? 0,
       visitors: viMap.get(x) ?? 0,
