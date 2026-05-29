@@ -499,16 +499,21 @@ function NativeAnalytics({ token }: { token: string }) {
     const slotCount = periodSlots[timeseries.period];
 
     if (timeseries.unit === "day" && slotCount) {
-      // Generate all expected day slots anchored to today in the user's local
-      // timezone (matching the Umami site timezone), so days with zero data
-      // are filled and keys match exactly.
+      // Generate all expected day slots anchored to today in UTC,
+      // because the backend queries Umami without a timezone parameter
+      // so Umami buckets by UTC days. Days with zero data are filled
+      // so keys match exactly what Umami returns.
       const now = new Date();
       const slots: string[] = [];
       for (let i = slotCount - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
-        const dd = String(d.getDate()).padStart(2, "0");
+        const d = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() - i,
+        ));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
         slots.push(`${yyyy}-${mm}-${dd}`);
       }
       return slots.map((x) => ({
@@ -519,14 +524,19 @@ function NativeAnalytics({ token }: { token: string }) {
     }
 
     if (timeseries.unit === "month" && slotCount) {
-      // Generate all expected month slots anchored to this month in the
-      // user's local timezone.
+      // Generate all expected month slots anchored to this month in UTC,
+      // because the backend queries Umami without a timezone parameter
+      // so Umami buckets by UTC months.
       const now = new Date();
       const slots: string[] = [];
       for (let i = slotCount - 1; i >= 0; i--) {
-        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        const yyyy = d.getFullYear();
-        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const d = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth() - i,
+          1,
+        ));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
         slots.push(`${yyyy}-${mm}`);
       }
       return slots.map((x) => ({
@@ -565,21 +575,21 @@ function NativeAnalytics({ token }: { token: string }) {
     }
 
     // Day unit or unknown — expand all days between min and max.
-    // Use local date arithmetic (not UTC ms) so DST boundary days are
-    // generated with the same YYYY-MM-DD keys Umami returns.
+    // Use UTC date arithmetic so keys match Umami's UTC-bucketed output
+    // (the backend queries Umami without a timezone parameter).
     const [minY2, minM2, minD2] = minKey.split("-").map(Number);
     const [maxY2, maxM2, maxD2] = maxKey.split("-").map(Number);
-    // Count days using local dates to handle DST
-    const startDate = new Date(minY2, minM2 - 1, minD2);
-    const endDate = new Date(maxY2, maxM2 - 1, maxD2);
+    // Count days using UTC dates to avoid DST-related off-by-one
+    const startDate = new Date(Date.UTC(minY2, minM2 - 1, minD2));
+    const endDate = new Date(Date.UTC(maxY2, maxM2 - 1, maxD2));
     const dayCount =
       Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
     const slots: string[] = [];
     for (let i = 0; i < dayCount; i++) {
-      const d = new Date(minY2, minM2 - 1, minD2 + i);
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, "0");
-      const dd = String(d.getDate()).padStart(2, "0");
+      const d = new Date(Date.UTC(minY2, minM2 - 1, minD2 + i));
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
       slots.push(`${yyyy}-${mm}-${dd}`);
     }
     return slots.map((x) => ({
