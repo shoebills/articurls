@@ -47,7 +47,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-dvh w-full bg-white md:h-dvh md:max-h-dvh md:overflow-hidden">
       <AppSidebar />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
-        <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background/95 px-8 md:flex">
+        <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
             {publicBlogHref ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
@@ -66,7 +66,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-white pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
         >
           <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">

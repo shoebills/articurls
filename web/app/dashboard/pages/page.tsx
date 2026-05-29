@@ -132,7 +132,7 @@ export default function PagesDashboardPage() {
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading…</p>
       ) : pages.length === 0 ? (
-        <div className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-border bg-muted/25 px-6 py-10 text-center">
+        <div className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-border bg-white px-6 py-10 text-center">
           <p className="text-base font-medium">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
             Create your first page and add it to your menu from Design.

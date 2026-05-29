@@ -223,7 +223,7 @@ export default function DashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
+            className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
 
@@ -379,7 +379,7 @@ export default function DashboardPage() {
             );
           })}
             </ul>
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Page {currentPage} of {totalPages}
               </p>
@@ -399,7 +399,7 @@ export default function DashboardPage() {
             </div>
           </>
         ) : (
-          <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
             No posts match your search.
           </div>
         )
@@ -409,7 +409,7 @@ export default function DashboardPage() {
           role="status"
           aria-label="No posts yet"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
             <PenLine className="h-5 w-5" aria-hidden />
           </div>
           <div className="space-y-1.5">
