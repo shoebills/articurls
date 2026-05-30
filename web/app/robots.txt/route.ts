@@ -112,7 +112,7 @@ async function customDomainRobots(host: string): Promise<Response> {
   }
 
   const siteOrigin = `https://${host}`;
-  let body = `User-agent: *
+  const body = `User-agent: *
 Allow: /
 
 User-agent: AhrefsBot
@@ -129,11 +129,6 @@ Disallow: /
 
 Sitemap: ${siteOrigin}/sitemap.xml
 `;
-
-  if (user.rss_enabled !== false) {
-    body += `Feed: ${siteOrigin}/rss.xml
-`;
-  }
 
   return new Response(body, {
     headers: {
