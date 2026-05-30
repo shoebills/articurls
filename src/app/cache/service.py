@@ -5,12 +5,14 @@ Provides granular cache invalidation for multi-tenant blog platform using
 Cache-Tags with automatic cascade purging.
 """
 
+import logging
 from typing import List, Optional
 
 import requests
 
 from ..config import settings
-from ..utils.logger import logger
+
+logger = logging.getLogger(__name__)
 
 # Configuration
 CLOUDFLARE_API_TOKEN = settings.cloudflare_api_token
