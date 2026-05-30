@@ -160,7 +160,7 @@ export default async function PublicBlogPage({ params }: Props) {
 
   return (
     <article className="min-h-screen bg-white">
-      <div className={containerSpacing}>
+      <main className={containerSpacing}>
         {author.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className="hidden w-full sm:block">
@@ -240,7 +240,7 @@ export default async function PublicBlogPage({ params }: Props) {
         ) : null}
         <PublicProfileFooter user={author} />
         <PublicSiteFooter user={author} pages={pages} />
-      </div>
+      </main>
       {author.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
