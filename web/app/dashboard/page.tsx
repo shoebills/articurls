@@ -43,7 +43,7 @@ export default function DashboardPage() {
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
 
@@ -239,6 +239,7 @@ export default function DashboardPage() {
             <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("scheduled")}>Scheduled</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -313,6 +314,20 @@ export default function DashboardPage() {
                       ·
                     </span>
                     <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                    {b.status === "scheduled" && b.scheduled_at ? (
+                      <>
+                        <span className="hidden text-slate-300 select-none sm:inline" aria-hidden>
+                          ·
+                        </span>
+                        <time
+                          dateTime={b.scheduled_at}
+                          className="order-last inline-flex w-full items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 shadow-sm sm:order-0 sm:w-auto sm:px-2.5 sm:py-1"
+                        >
+                          <span className="sm:hidden">Scheduled {format(new Date(b.scheduled_at), "MMM d, h:mm a")}</span>
+                          <span className="hidden sm:inline">Scheduled for {format(new Date(b.scheduled_at), "MMM d, yyyy h:mm a")}</span>
+                        </time>
+                      </>
+                    ) : null}
                     <div className="ml-auto" data-card-action="true">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>

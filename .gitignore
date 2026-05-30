@@ -5,6 +5,8 @@ __pycache__/
 .env.docker
 .env.production
 .vscode/
+.clinerules/
+.cursor/
 test.py
 uploads/
 .codex
