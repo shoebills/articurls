@@ -7,6 +7,7 @@ __pycache__/
 .vscode/
 .clinerules/
 .cursor/
+.windsurf/
 test.py
 uploads/
 .codex

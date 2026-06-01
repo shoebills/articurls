@@ -210,6 +210,8 @@ function BlogListItemRow({
               <img
                 src={previewImage}
                 alt=""
+                width={96}
+                height={64}
                 className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
               />
             ) : null}

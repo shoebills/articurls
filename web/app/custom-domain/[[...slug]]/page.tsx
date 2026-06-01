@@ -391,7 +391,7 @@ export default async function CustomDomainPage({ params }: Props) {
               >
                 {author.profile_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={assetUrl(author.profile_image_url)} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70" />
+                  <img src={assetUrl(author.profile_image_url)} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70" />
                 ) : (
                   <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
                 )}

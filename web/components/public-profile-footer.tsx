@@ -10,7 +10,7 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
       <div className="flex items-center gap-3">
         {user.profile_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={assetUrl(user.profile_image_url)} alt="" className="h-10 w-10 rounded-full object-cover ring-1 ring-border/70" />
+          <img src={assetUrl(user.profile_image_url)} alt="" width={40} height={40} className="h-10 w-10 rounded-full object-cover ring-1 ring-border/70" />
         ) : (
           <div className="h-10 w-10 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
         )}
