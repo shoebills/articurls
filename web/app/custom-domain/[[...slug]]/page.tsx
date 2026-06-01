@@ -157,8 +157,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const title = blog.meta_title || blog.title;
     const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
     const siteName = resolveUserSiteName(author);
-    const ogImage =
-      resolveBlogOgImage(blog) || resolveUserOgImage(author);
+    const ogImage = resolveBlogOgImage(blog);
     return {
       title,
       description,

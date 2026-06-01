@@ -30,12 +30,6 @@ function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
 
-function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
-  const profileImage = assetUrl(user?.profile_image_url);
-  if (profileImage) return profileImage;
-  return undefined;
-}
-
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`, {
     next: { revalidate: REVALIDATE },
@@ -80,8 +74,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `${MARKETING_ORIGIN}${marketingPath}`;
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
-  const ogImage =
-    resolveBlogOgImage(blog) || resolveUserOgImage(author);
+  const ogImage = resolveBlogOgImage(blog);
   const siteName = resolveUserSiteName(author);
   const shouldIndex = !!author && !!seoEligibility && shouldIndexOnMarketingHost({
     is_pro: seoEligibility.is_pro,
