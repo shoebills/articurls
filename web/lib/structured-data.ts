@@ -36,6 +36,7 @@ export interface BlogPosting {
     name: string;
   };
   publisher?: Person;
+  breadcrumb?: BreadcrumbList;
 }
 
 export interface WebSite {
@@ -76,6 +77,7 @@ export interface WebPage {
     name: string;
   };
   dateModified?: string;
+  breadcrumb?: BreadcrumbList;
 }
 
 export interface BreadcrumbList {
@@ -179,6 +181,10 @@ export function generateBlogPostingSchema(
       name: author.nav_blog_name || "My Blog",
     },
     publisher: authorPerson,
+    breadcrumb: generateBreadcrumbList([
+      { name: author.nav_blog_name || "Home", url: canonicalUrl.split('/blog')[0] },
+      { name: title, url: canonicalUrl },
+    ]),
   };
 }
 
@@ -203,7 +209,7 @@ export function generateCollectionPageSchema(
       name: author.nav_blog_name || "My Blog",
     },
     breadcrumb: generateBreadcrumbList([
-      { name: "Home", url: siteUrl },
+      { name: author.nav_blog_name || "Home", url: siteUrl },
       { name: category.name, url: canonicalUrl },
     ]),
   };
@@ -230,6 +236,10 @@ export function generateWebPageSchema(
       name: author.nav_blog_name || "My Blog",
     },
     dateModified: page.updated_at || undefined,
+    breadcrumb: generateBreadcrumbList([
+      { name: author.nav_blog_name || "Home", url: canonicalUrl.split('/page')[0] },
+      { name: page.title || "Untitled Page", url: canonicalUrl },
+    ]),
   };
 }
 
