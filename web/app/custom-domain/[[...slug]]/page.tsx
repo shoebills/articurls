@@ -17,7 +17,7 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
-import { transformHtmlImages } from "@/lib/image-transform";
+import { transformImageUrl, transformHtmlImages } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
@@ -391,7 +391,7 @@ export default async function CustomDomainPage({ params }: Props) {
               >
                 {author.profile_image_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={assetUrl(author.profile_image_url)} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70" />
+                  <img src={transformImageUrl(assetUrl(author.profile_image_url), { width: 80 })} alt="" width={36} height={36} className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70" />
                 ) : (
                   <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
                 )}
