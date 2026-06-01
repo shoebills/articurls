@@ -15,7 +15,7 @@ import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformImageUrl, transformHtmlImages } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
@@ -158,7 +158,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
     const siteName = resolveUserSiteName(author);
     const ogImage =
-      resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
+      resolveBlogOgImage(blog) || resolveUserOgImage(author);
     return {
       title,
       description,
@@ -218,7 +218,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = `Browse all ${categoryName} posts by ${user.name}.`;
     const siteName = resolveUserSiteName(user);
     const ogImage =
-      (data.blogs[0] ? resolveBlogPreviewImage(data.blogs[0]) : "") ||
+      (data.blogs[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
       resolveUserOgImage(user);
     return {
       title,

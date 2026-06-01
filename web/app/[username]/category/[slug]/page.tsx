@@ -12,7 +12,7 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { faviconIcons } from "@/lib/favicon";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogOgImage } from "@/lib/blog-images";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
@@ -79,7 +79,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = `Browse all ${catName} posts by ${user.name} on Articurls.`;
   const siteName = resolveUserSiteName(user);
   const ogImage =
-    (data?.blogs?.[0] ? resolveBlogPreviewImage(data.blogs[0]) : "") ||
+    (data?.blogs?.[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
     resolveUserOgImage(user);
   const shouldIndex = !!seoEligibility && shouldIndexOnMarketingHost({
     is_pro: seoEligibility.is_pro,

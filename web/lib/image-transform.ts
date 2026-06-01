@@ -6,6 +6,7 @@
 
 interface TransformOptions {
   width?: number;
+  height?: number;
   quality?: number;
   format?: "auto" | "webp" | "avif" | "jpeg" | "png";
   fit?: "contain" | "cover" | "scale-down" | "fill";
@@ -52,6 +53,7 @@ export function transformImageUrl(
       const transforms = [
         `format=${mergedOptions.format}`,
         `width=${mergedOptions.width}`,
+        ...(mergedOptions.height ? [`height=${mergedOptions.height}`] : []),
         `quality=${mergedOptions.quality}`,
         `fit=${mergedOptions.fit}`,
       ].join(",");
@@ -64,6 +66,7 @@ export function transformImageUrl(
       const transforms = [
         `format=${mergedOptions.format}`,
         `width=${mergedOptions.width}`,
+        ...(mergedOptions.height ? [`height=${mergedOptions.height}`] : []),
         `quality=${mergedOptions.quality}`,
         `fit=${mergedOptions.fit}`,
       ].join(",");

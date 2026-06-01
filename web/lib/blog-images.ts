@@ -17,3 +17,11 @@ export function resolveBlogPreviewImage(blog: BlogLike): string {
   if (fromContent) return transformImageUrl(fromContent, { width: 600 }); // Optimized for mobile
   return "";
 }
+
+export function resolveBlogOgImage(blog: BlogLike): string {
+  const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
+  if (explicit) return transformImageUrl(explicit, { width: 1200, height: 630, fit: "cover" });
+  const fromContent = assetUrl(firstImageFromHtml(blog.content));
+  if (fromContent) return transformImageUrl(fromContent, { width: 1200, height: 630, fit: "cover" });
+  return "";
+}

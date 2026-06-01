@@ -8,7 +8,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogOgImage } from "@/lib/blog-images";
 import { transformImageUrl, transformHtmlImages } from "@/lib/image-transform";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { PublicSiteFooter } from "@/components/public-site-footer";
@@ -81,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
   const ogImage =
-    resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
+    resolveBlogOgImage(blog) || resolveUserOgImage(author);
   const siteName = resolveUserSiteName(author);
   const shouldIndex = !!author && !!seoEligibility && shouldIndexOnMarketingHost({
     is_pro: seoEligibility.is_pro,
