@@ -13,6 +13,8 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebSiteSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string }> };
 
@@ -128,6 +130,10 @@ export default async function PublicProfilePage({ params }: Props) {
   const hasMobileNav =
     (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+  
+  // Define canonical URL for structured data
+  const marketingPath = `/${encodeURIComponent(user.user_name)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
 
   return (
     <div className="min-h-screen bg-white">
@@ -159,6 +165,7 @@ export default async function PublicProfilePage({ params }: Props) {
             </div>
           </header>
         ) : null}
+        <StructuredData data={generateWebSiteSchema(user, canonical)} />
         <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={MARKETING_ORIGIN} />
         <PublicSiteFooter user={user} pages={pages} />
       </main>

@@ -19,6 +19,8 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { StructuredData } from "@/components/structured-data";
+import { generateBlogPostingSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -157,9 +159,17 @@ export default async function PublicBlogPage({ params }: Props) {
   // Server-side sanitization + image transform for LCP optimization
   const sanitizedContent = sanitizeHtml(blog.content);
   const transformedContent = transformHtmlImages(sanitizedContent);
+  
+  // Define canonical URL for structured data
+  const canonicalUserName = author?.user_name || username;
+  const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
+  const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath);
+
 
   return (
-    <article className="min-h-screen bg-white">
+      <article className="min-h-screen bg-white">
+      <StructuredData data={generateBlogPostingSchema(blog, author, canonical)} />
       <main className={containerSpacing}>
         {author.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>

@@ -7,6 +7,8 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { StructuredData } from "@/components/structured-data";
+import { generateSubscriptionConfirmationSchema } from "@/lib/structured-data";
 
 type State = "loading" | "success" | "already" | "error";
 
@@ -14,6 +16,9 @@ function ConfirmInner() {
   const searchParams = useSearchParams();
   const [state, setState] = useState<State>("loading");
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  
+  // Get current URL for structured data
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -35,6 +40,7 @@ function ConfirmInner() {
 
   return (
     <AuthPageShell>
+      <StructuredData data={generateSubscriptionConfirmationSchema(currentUrl)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-3">
           {state === "loading" && (

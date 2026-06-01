@@ -17,6 +17,8 @@ import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages } from "@/lib/image-transform";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebPageSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -143,6 +145,10 @@ export default async function PublicCustomPage({ params }: Props) {
   const hasMobileNav =
     (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+  
+  // Define canonical URL for structured data
+  const marketingPath = `/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, `/page/${slug}`);
 
   return (
     <div className="min-h-screen bg-white">
@@ -175,6 +181,7 @@ export default async function PublicCustomPage({ params }: Props) {
           </header>
         ) : null}
 
+        <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
         <Link
           href={getPublicProfileUrl(username)}
           className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"

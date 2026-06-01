@@ -16,6 +16,8 @@ import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { StructuredData } from "@/components/structured-data";
+import { generateCollectionPageSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -153,6 +155,10 @@ export default async function PublicCategoryPage({ params }: Props) {
   const hasMobileNav =
     (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+  
+  // Define canonical URL for structured data
+  const marketingPath = `/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, `/category/${slug}`);
 
   return (
     <div className="min-h-screen bg-white">
@@ -185,6 +191,7 @@ export default async function PublicCategoryPage({ params }: Props) {
           </header>
         ) : null}
 
+        <StructuredData data={data?.category && user ? generateCollectionPageSchema(data.category, user, canonical) : null} />
         <div className="mb-6 flex items-center gap-3">
           <Link
             href={getPublicProfileUrl(username)}

@@ -22,6 +22,8 @@ import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -281,6 +283,7 @@ export const viewport = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function CustomDomainPage({ params }: Props) {
+  // Current URL for structured data
   const h = await headers();
   const runtimeHosts = buildRuntimeHostsFromEnv();
   const host = resolveTenantHostFromHeaders(h, runtimeHosts);
@@ -347,8 +350,11 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
+    const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
+
     return (
       <article className="min-h-screen bg-white">
+        <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
           {author.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
@@ -449,9 +455,12 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
+    const currentUrl = `https://${host}/page/${encodeURIComponent(pageSlug)}`;
+
     return (
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
+          <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className="hidden w-full sm:block">
@@ -535,8 +544,11 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
+    const currentUrl = `https://${host}/category/${encodeURIComponent(categorySlug)}`;
+
     return (
       <div className="min-h-screen bg-white">
+        <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
@@ -629,8 +641,11 @@ export default async function CustomDomainPage({ params }: Props) {
   // Rewrite blog hrefs to be relative for custom domain
   const blogsWithRelativeHrefs = blogs;
 
+  const currentUrl = `https://${host}`;
+
   return (
     <div className="min-h-screen bg-white">
+        <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
