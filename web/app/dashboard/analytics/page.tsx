@@ -454,8 +454,15 @@ function NativeAnalytics({ token }: { token: string }) {
   const trafficSeries = useMemo(() => {
     if (!timeseries) return [];
 
-    const pvMap = new Map(timeseries.pageviews.map((p) => [p.x, p.y]));
-    const viMap = new Map(timeseries.visitors.map((p) => [p.x, p.y]));
+    // Umami returns full ISO datetimes for all units (e.g. "2025-06-01T00:00:00Z"
+    // for day/month). Normalize keys so they match the slot format we generate.
+    const normX = (x: string) => {
+      if (timeseries.unit === "day") return x.slice(0, 10);
+      if (timeseries.unit === "month") return x.slice(0, 7);
+      return x;
+    };
+    const pvMap = new Map(timeseries.pageviews.map((p) => [normX(p.x), p.y]));
+    const viMap = new Map(timeseries.visitors.map((p) => [normX(p.x), p.y]));
 
     if (timeseries.unit === "hour") {
       // Always generate all 24 hourly slots anchored to now-24h → now in UTC.
