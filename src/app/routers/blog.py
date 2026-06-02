@@ -282,17 +282,17 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
 
     # Purge cache for this blog post and all listing pages (home + categories)
     # Use fire-and-forget pattern (don't await, don't block response)
-    if settings.CLOUDFLARE_ZONE_ID:
+    if settings.cloudflare_zone_id:
         try:
             import asyncio
             # Purge from custom domain if set
             if current_user.custom_domain:
                 asyncio.create_task(purge_blog_post(
-                    settings.CLOUDFLARE_ZONE_ID, current_user.custom_domain, db_blog.slug
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
                 ))
             # Also purge from articurls.com/username path
             asyncio.create_task(purge_blog_post(
-                settings.CLOUDFLARE_ZONE_ID, f"articurls.com/{current_user.user_name}", db_blog.slug
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
             ))
         except Exception:
             pass  # Fail silently, cache will expire naturally
