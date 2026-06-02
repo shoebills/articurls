@@ -68,12 +68,9 @@ function withCacheHeaders(
     tags.push("posts-list");
   }
 
-  // Set cache headers (4 hour edge TTL, 1 day stale-while-revalidate)
+  // Set cache tags for targeted purging via backend.
+  // Do NOT override Cache-Control — let Next.js dynamic pages send no-store.
   response.headers.set("Cache-Tag", tags.join(","));
-  response.headers.set(
-    "Cache-Control",
-    "public, s-maxage=14400, stale-while-revalidate=86400"
-  );
 
   return response;
 }
