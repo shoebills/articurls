@@ -567,13 +567,25 @@ def assign_blog_categories(
                 detail=f"Invalid category ids: {list(invalid)}",
             )
 
-    # Remove existing assignments
-    db.query(models.BlogCategory).filter(
-        models.BlogCategory.blog_id == db_blog.blog_id
-    ).delete(synchronize_session=False)
+    # Compute diff to avoid mass-delete races that cause unique-constraint violations
+    existing_rows = (
+        db.query(models.BlogCategory)
+        .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+        .all()
+    )
+    existing_ids = {row.category_id for row in existing_rows}
+    desired_ids = set(request.category_ids)
 
-    # Add new assignments
-    for cat_id in request.category_ids:
+    to_remove = existing_ids - desired_ids
+    to_add = desired_ids - existing_ids
+
+    if to_remove:
+        db.query(models.BlogCategory).filter(
+            models.BlogCategory.blog_id == db_blog.blog_id,
+            models.BlogCategory.category_id.in_(to_remove),
+        ).delete(synchronize_session=False)
+
+    for cat_id in to_add:
         db.add(models.BlogCategory(blog_id=db_blog.blog_id, category_id=cat_id))
 
     db.commit()
