@@ -62,9 +62,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
         setUser(me);
         setSubscription(sub);
-      } catch {
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
+      } catch (err: any) {
+        if (err?.status === 401 || err?.response?.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken(null);
+        }
       } finally {
         setLoading(false);
       }

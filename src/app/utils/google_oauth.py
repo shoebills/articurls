@@ -48,23 +48,17 @@ def store_state_token(state: str, ttl: int = 1800) -> None:
 
 def validate_state_token(state: str) -> bool:
     """
-    Validate and consume state token from Redis.
-    
+    Validate state token from Redis.
+
     Args:
         state: The state token to validate
-        
+
     Returns:
         bool: True if valid, False otherwise
     """
     key = f"oauth_state:{state}"
     try:
-        is_valid = redis_client.get(key) is not None
-        
-        if is_valid:
-            # Consume the token (delete it)
-            redis_client.delete(key)
-        
-        return is_valid
+        return redis_client.get(key) is not None
     except Exception as e:
         print(f"[OAuth] Redis error during state validation: {e}")
         import traceback
@@ -94,7 +88,7 @@ def get_authorization_url(redirect_uri: str) -> tuple[str, str]:
         f"scope=openid%20email%20profile&"
         f"state={state}&"
         f"access_type=offline&"
-        f"prompt=select_account"
+        f"prompt=consent"
     )
     
     return authorization_url, state

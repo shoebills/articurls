@@ -133,7 +133,7 @@ export async function apiFetch<T>(
           const newToken = await refreshPromise;
           return apiFetch<T>(path, { ...init, token: newToken }, true);
       } catch (err) {
-          throw new ApiError(await parseError(res), res.status);
+          throw err;
       }
   }
   
