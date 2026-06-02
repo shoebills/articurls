@@ -29,12 +29,6 @@ type Props = { params: Promise<{ slug?: string[] }> };
 
 // ── Data loaders ─────────────────────────────────────────────────────────────
 
-// Revalidation window (seconds). Balances freshness with backend load.
-// Domain lookups, user profiles, blog lists, etc. rarely change more than
-// once every few minutes — 300 s (5 min) is a safe default. On a cache miss
-// Next.js serves the stale page instantly and revalidates in the background.
-const REVALIDATE = 300;
-
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
@@ -75,13 +69,13 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "force-cache", next: { revalidate: 60 } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
 }
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -89,7 +83,7 @@ async function loadBlogs(username: string): Promise<PublicBlog[]> {
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -97,13 +91,13 @@ async function loadBlog(username: string, slug: string): Promise<PublicBlog | nu
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadCategories(username: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "force-cache", next: { revalidate: 60 } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -111,7 +105,7 @@ async function loadCategories(username: string): Promise<Category[]> {
 async function loadPage(username: string, slug: string): Promise<UserPage | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;

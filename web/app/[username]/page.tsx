@@ -18,8 +18,6 @@ import { generateWebSiteSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string }> };
 
-const REVALIDATE = 300;
-
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
@@ -38,13 +36,13 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }

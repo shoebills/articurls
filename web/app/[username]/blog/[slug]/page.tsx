@@ -24,15 +24,13 @@ import { generateBlogPostingSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
-const REVALIDATE = 300;
-
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
 
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`, {
-    next: { revalidate: REVALIDATE },
+    cache: "no-store",
   });
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -46,7 +44,7 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
