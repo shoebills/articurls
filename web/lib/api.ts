@@ -605,19 +605,6 @@ export async function deleteCategory(token: string, id: number): Promise<void> {
   await apiFetch(`/categories/${id}`, { method: "DELETE", token });
 }
 
-export async function getCategoryBlogs(token: string, id: number): Promise<BlogListItem[]> {
-  return apiFetch(`/categories/${id}/blogs`, { token });
-}
-
-export async function setCategoryBlogs(token: string, categoryId: number, blog_ids: number[]): Promise<Category> {
-  return apiFetch(`/categories/${categoryId}/blogs`, {
-    method: "PUT",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ blog_ids }),
-  });
-}
-
 export async function assignBlogCategories(token: string, blogId: number, category_ids: number[]): Promise<BlogDetail> {
   return apiFetch(`/blog/${blogId}/categories`, {
     method: "PATCH",

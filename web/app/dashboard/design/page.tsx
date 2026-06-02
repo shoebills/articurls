@@ -8,6 +8,9 @@ import {
   listPages,
   listBlogs,
   listCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory,
   patchDesignSettings,
   patchMe,
   updateFooterPages,
@@ -22,8 +25,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Menu, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Menu, Pencil, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
   SiFacebook,
@@ -117,6 +121,11 @@ export default function DesignDashboardPage() {
   const [blogToAdd, setBlogToAdd] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [catModalOpen, setCatModalOpen] = useState(false);
+  const [catCreateName, setCatCreateName] = useState("");
+  const [catEditingId, setCatEditingId] = useState<number | null>(null);
+  const [catEditingName, setCatEditingName] = useState("");
+  const [catDeletingId, setCatDeletingId] = useState<number | null>(null);
 
   // Bio and social links state (saved via patchMe, displayed in about section)
   const [bio, setBio] = useState("");
@@ -238,6 +247,60 @@ export default function DesignDashboardPage() {
       setFooterSelection(nextSelection);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save footer links");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onCreateCategory() {
+    if (!token || !catCreateName.trim()) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await createCategory(token, { name: catCreateName.trim() });
+      setCatCreateName("");
+      const rows = await listCategories(token);
+      setCategories(rows);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to create category");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onSaveRename() {
+    if (!token || catEditingId == null || !catEditingName.trim()) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await updateCategory(token, catEditingId, { name: catEditingName.trim() });
+      setCatEditingId(null);
+      setCatEditingName("");
+      const rows = await listCategories(token);
+      setCategories(rows);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to rename category");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onDeleteCategory(id: number) {
+    if (!token) return;
+    setBusy(true);
+    setErr(null);
+    try {
+      await deleteCategory(token, id);
+      if (menuCatSelection.includes(id)) {
+        const next = menuCatSelection.filter((x) => x !== id);
+        await updateMenuCategories(token, next);
+        setMenuCatSelection(next);
+      }
+      const rows = await listCategories(token);
+      setCategories(rows);
+      setCatDeletingId(null);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to delete category");
     } finally {
       setBusy(false);
     }
@@ -381,7 +444,12 @@ export default function DesignDashboardPage() {
             {design.nav_menu_enabled ? (
               <div className="space-y-3 rounded-lg border p-3">
                 {categories.length === 0 ? (
-                  <p className="text-sm text-muted-foreground">Create categories first from the Categories section.</p>
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">No categories yet.</p>
+                    <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
+                      Manage categories
+                    </Button>
+                  </div>
                 ) : (
                   <>
                     {menuCatSelection.length === 0 ? (
@@ -459,6 +527,11 @@ export default function DesignDashboardPage() {
                         </Button>
                       </div>
                     ) : null}
+                    <div className="border-t border-border/60 pt-2">
+                      <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
+                        Manage categories
+                      </Button>
+                    </div>
                   </>
                 )}
               </div>
@@ -885,6 +958,142 @@ export default function DesignDashboardPage() {
           </div>
         ) : null}
       </SectionPanel>
+
+      <Dialog open={catModalOpen} onOpenChange={setCatModalOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-md rounded-2xl sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Manage categories</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {categories.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No categories yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {categories.map((cat) => {
+                  const inMenu = menuCatSelection.includes(cat.category_id);
+                  const isEditing = catEditingId === cat.category_id;
+                  const isDeleting = catDeletingId === cat.category_id;
+                  return (
+                    <div
+                      key={cat.category_id}
+                      className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        {isEditing ? (
+                          <Input
+                            value={catEditingName}
+                            onChange={(e) => setCatEditingName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") onSaveRename();
+                              if (e.key === "Escape") {
+                                setCatEditingId(null);
+                                setCatEditingName("");
+                              }
+                            }}
+                            autoFocus
+                            disabled={busy}
+                          />
+                        ) : (
+                          <div className="flex items-center gap-2">
+                            <span className="truncate text-sm font-medium">{cat.name}</span>
+                            {inMenu ? (
+                              <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                                In menu
+                              </span>
+                            ) : null}
+                          </div>
+                        )}
+                        <p className="text-xs text-muted-foreground">
+                          {cat.blog_count ?? 0} {cat.blog_count === 1 ? "post" : "posts"}
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 flex-wrap items-center gap-1">
+                        {isEditing ? (
+                          <>
+                            <Button
+                              size="sm"
+                              className="h-8"
+                              onClick={onSaveRename}
+                              disabled={busy || !catEditingName.trim()}
+                            >
+                              Save
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-8"
+                              onClick={() => {
+                                setCatEditingId(null);
+                                setCatEditingName("");
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </>
+                        ) : isDeleting ? (
+                          <>
+                            <Button size="sm" variant="ghost" className="h-8" onClick={() => setCatDeletingId(null)}>
+                              Cancel
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              className="h-8"
+                              onClick={() => onDeleteCategory(cat.category_id)}
+                              disabled={busy}
+                            >
+                              Delete
+                            </Button>
+                          </>
+                        ) : (
+                          <>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => {
+                                setCatEditingId(cat.category_id);
+                                setCatEditingName(cat.name);
+                              }}
+                              disabled={busy}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                              onClick={() => setCatDeletingId(cat.category_id)}
+                              disabled={busy}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <div className="flex items-center gap-2 border-t border-border/60 pt-4">
+              <Input
+                value={catCreateName}
+                onChange={(e) => setCatCreateName(e.target.value)}
+                placeholder="New category name"
+                disabled={busy}
+                className="min-w-0 flex-1"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") onCreateCategory();
+                }}
+              />
+              <Button onClick={onCreateCategory} disabled={busy || !catCreateName.trim()}>
+                Create
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>

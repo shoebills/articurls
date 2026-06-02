@@ -13,6 +13,7 @@ import {
   uploadBlogMedia,
   deleteBlogMediaByUrl,
   listCategories,
+  createCategory,
   assignBlogCategories,
   ApiError,
 } from "@/lib/api";
@@ -72,6 +73,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [pendingCatIds, setPendingCatIds] = useState<number[]>([]);
   const [catBusy, setCatBusy] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -278,6 +280,23 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
       setUploadingFeatured(false);
+    }
+  }
+
+  async function createCategoryInline() {
+    if (!token || !newCatName.trim()) return;
+    setCatBusy(true);
+    setErr(null);
+    try {
+      const created = await createCategory(token, { name: newCatName.trim() });
+      setNewCatName("");
+      const updatedCats = await listCategories(token);
+      setAllCategories(updatedCats);
+      setPendingCatIds((prev) => [...prev, created.category_id]);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to create category");
+    } finally {
+      setCatBusy(false);
     }
   }
 
@@ -620,7 +639,23 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 {catDropdownOpen && (
                   <div className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
-                      <p className="px-3 py-3 text-sm text-muted-foreground">No categories created yet.</p>
+                      <div className="space-y-2 px-3 py-3">
+                        <p className="text-sm text-muted-foreground">No categories yet.</p>
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={newCatName}
+                            onChange={(e) => setNewCatName(e.target.value)}
+                            placeholder="New category"
+                            className="h-8 min-w-0 flex-1 text-sm"
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") createCategoryInline();
+                            }}
+                          />
+                          <Button size="sm" onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
+                            Add
+                          </Button>
+                        </div>
+                      </div>
                     ) : (
                       <div className="max-h-56 min-w-[14rem] overflow-y-auto p-1">
                         {allCategories.map((cat) => {
