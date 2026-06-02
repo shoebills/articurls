@@ -85,6 +85,19 @@ def create_category(
     db.add(new_cat)
     db.commit()
     db.refresh(new_cat)
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_entire_tenant(
+                    settings.cloudflare_zone_id, current_user.custom_domain
+                ))
+            asyncio.create_task(purge_entire_tenant(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+            ))
+        except Exception:
+            pass
     return _category_out(db, new_cat)
 
 
@@ -176,6 +189,8 @@ def update_category(
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
+    old_slug = db_cat.slug
+
     if request.name is not None:
         name = request.name.strip()
         if not name:
@@ -195,8 +210,14 @@ def update_category(
             import asyncio
             if current_user.custom_domain:
                 asyncio.create_task(purge_category(
+                    settings.cloudflare_zone_id, current_user.custom_domain, old_slug
+                ))
+                asyncio.create_task(purge_category(
                     settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
                 ))
+            asyncio.create_task(purge_category(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", old_slug
+            ))
             asyncio.create_task(purge_category(
                 settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
             ))
