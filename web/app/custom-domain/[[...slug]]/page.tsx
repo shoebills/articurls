@@ -27,6 +27,8 @@ import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPag
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
+export const dynamic = "force-dynamic";
+
 // ── Data loaders ─────────────────────────────────────────────────────────────
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {

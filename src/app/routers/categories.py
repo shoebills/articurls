@@ -8,6 +8,8 @@ from ..schemas import category as cat_schema
 from ..schemas import blog as blog_schema
 from ..security import oauth2
 from ..utils import make_excerpt
+from ..cache.service import purge_category, purge_entire_tenant
+from ..config import settings
 
 router = APIRouter(
     tags=["Categories"],
@@ -133,6 +135,20 @@ def update_menu_categories(
         cats_by_id[cat_id].menu_order = idx
 
     db.commit()
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_entire_tenant(
+                    settings.cloudflare_zone_id, current_user.custom_domain
+                ))
+            asyncio.create_task(purge_entire_tenant(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+            ))
+        except Exception:
+            pass
+
     cats = (
         db.query(models.Category)
         .filter(models.Category.user_id == current_user.user_id)
@@ -173,6 +189,20 @@ def update_category(
 
     db.commit()
     db.refresh(db_cat)
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_category(
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+                ))
+            asyncio.create_task(purge_category(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+            ))
+        except Exception:
+            pass
+
     return _category_out(db, db_cat)
 
 
@@ -194,6 +224,26 @@ def delete_category(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     db.delete(db_cat)
     db.commit()
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_category(
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+                ))
+                asyncio.create_task(purge_entire_tenant(
+                    settings.cloudflare_zone_id, current_user.custom_domain
+                ))
+            asyncio.create_task(purge_category(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+            ))
+            asyncio.create_task(purge_entire_tenant(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+            ))
+        except Exception:
+            pass
+
     return {"message": "Category deleted"}
 
 
@@ -287,4 +337,18 @@ def set_category_blogs(
 
     db.commit()
     db.refresh(db_cat)
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_category(
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+                ))
+            asyncio.create_task(purge_category(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+            ))
+        except Exception:
+            pass
+
     return _category_out(db, db_cat)

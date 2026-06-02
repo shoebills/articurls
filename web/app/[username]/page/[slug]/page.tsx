@@ -22,6 +22,8 @@ import { generateWebPageSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
+export const dynamic = "force-dynamic";
+
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
