@@ -148,6 +148,7 @@ export function PublicMobileNavMenu({
             <div className="space-y-1.5 p-1.5">
               {links.map((item) => (
                 <Link
+                  prefetch={false}
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}

@@ -132,6 +132,7 @@ export function PublicDesktopNav({
       </div>
 
       <Link
+        prefetch={false}
         href={titleHref}
         className={cn(
           publicNavDesktopBlogTitleClassName(size),
@@ -143,7 +144,7 @@ export function PublicDesktopNav({
 
       <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-6 overflow-hidden">
         {inlineLinks.map((l) => (
-          <Link key={l.href} href={l.href} className={linkClass(l.active)}>
+          <Link prefetch={false} key={l.href} href={l.href} className={linkClass(l.active)}>
             {l.label}
           </Link>
         ))}
@@ -161,7 +162,7 @@ export function PublicDesktopNav({
             <DropdownMenuContent align="end" className="min-w-[10rem] bg-white">
               {overflowLinks.map((l) => (
                 <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
-                  <Link href={l.href}>{l.label}</Link>
+                  <Link prefetch={false} href={l.href}>{l.label}</Link>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
