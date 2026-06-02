@@ -76,7 +76,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
         <div
           role="tablist"
           aria-label="Audience sections"
-          className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:inline-flex sm:h-9 sm:w-auto"
+          className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:inline-flex sm:h-10 sm:w-auto"
         >
           {audienceTabs.map((tab) => {
             const active = tab.match(pathname);
