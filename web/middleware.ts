@@ -69,8 +69,11 @@ function withCacheHeaders(
   }
 
   // Set cache tags for targeted purging via backend.
-  // Do NOT override Cache-Control — let Next.js dynamic pages send no-store.
   response.headers.set("Cache-Tag", tags.join(","));
+
+  // Hard-disable edge caching of HTML. Even if upstream headers get lost,
+  // this keeps category/home/blog pages from serving stale content.
+  response.headers.set("Cache-Control", "no-store, must-revalidate");
 
   return response;
 }
