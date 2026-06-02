@@ -121,7 +121,7 @@ async function loadPage(username: string, slug: string): Promise<UserPage | null
 async function loadCategoryBlogs(username: string, slug: string): Promise<PublicCategoryBlogsResponse | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/category/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;

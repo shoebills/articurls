@@ -1,6 +1,7 @@
 from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert
 from ..database import get_db
 from .. import models, utils
 from ..utils.html_sanitizer import sanitize_html
@@ -386,6 +387,19 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_blog_post(
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+                ))
+            asyncio.create_task(purge_blog_post(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
+            ))
+        except Exception:
+            pass
+
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
@@ -393,7 +407,7 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     if first_publish and db_blog.notify_subscribers:
         tasks.send_post_emails.delay(db_blog.blog_id)
-    
+
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
@@ -585,10 +599,34 @@ def assign_blog_categories(
             models.BlogCategory.category_id.in_(to_remove),
         ).delete(synchronize_session=False)
 
-    for cat_id in to_add:
-        db.add(models.BlogCategory(blog_id=db_blog.blog_id, category_id=cat_id))
+    if to_add:
+        stmt = (
+            insert(models.BlogCategory)
+            .values([
+                {"blog_id": db_blog.blog_id, "category_id": cat_id}
+                for cat_id in to_add
+            ])
+            .on_conflict_do_nothing(
+                index_elements=["blog_id", "category_id"]
+            )
+        )
+        db.execute(stmt)
 
     db.commit()
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
+
+    if settings.cloudflare_zone_id:
+        try:
+            import asyncio
+            if current_user.custom_domain:
+                asyncio.create_task(purge_blog_post(
+                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+                ))
+            asyncio.create_task(purge_blog_post(
+                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
+            ))
+        except Exception:
+            pass
+
     return db_blog
