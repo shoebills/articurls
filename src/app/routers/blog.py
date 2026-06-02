@@ -330,6 +330,7 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
             pass
 
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
+    db.query(models.BlogCategory).filter(models.BlogCategory.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
     db.commit()
 
