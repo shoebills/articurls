@@ -146,6 +146,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
     const nextMetaDesc = metaDesc.trim() || null;
     const nextFeatured = featuredImageUrl.trim() || null;
+    const catDirty =
+      selectedCatIds.length !== pendingCatIds.length ||
+      selectedCatIds.some((id) => !pendingCatIds.includes(id));
     return (
       blog.title !== title ||
       blog.content !== content ||
@@ -153,9 +156,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (slugEditable && blog.slug !== nextSlug) ||
       (blog.meta_title || null) !== nextMetaTitle ||
       (blog.meta_description || null) !== nextMetaDesc ||
-      (blog.featured_image_url || null) !== nextFeatured
+      (blog.featured_image_url || null) !== nextFeatured ||
+      catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDesc, featuredImageUrl]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDesc, featuredImageUrl, selectedCatIds, pendingCatIds]);
 
   async function save(silent = false) {
     if (!token || !blog) return;
@@ -168,6 +172,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
     const nextFeaturedImageUrl = featuredImageUrl;
+    const nextPendingCatIds = pendingCatIds;
+    const catDirty =
+      selectedCatIds.length !== nextPendingCatIds.length ||
+      selectedCatIds.some((id) => !nextPendingCatIds.includes(id));
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -197,23 +205,32 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       body.featured_image_url = nextFeaturedImageUrl.trim() || null;
 
       const updated = await updateBlog(token, blog.blog_id, body);
-      setBlog(updated);
-      if (titleRef.current === nextTitle) setTitle(updated.title);
-      if (contentRef.current === nextContent) setContent(updated.content);
-      if (notifyRef.current === nextNotify) setNotify(updated.notify_subscribers);
+      let finalBlog = updated;
+      if (catDirty) {
+        finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
+      }
+      setBlog(finalBlog);
+      if (titleRef.current === nextTitle) setTitle(finalBlog.title);
+      if (contentRef.current === nextContent) setContent(finalBlog.content);
+      if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
       if (slugEditable && slugCustomRef.current === nextSlugCustom) {
-        const derived = slugify(updated.title, { lower: true, strict: true });
-        const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(updated.slug);
-        const slugMatchesTitle = derived !== "" && updated.slug === derived;
-        setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : updated.slug);
+        const derived = slugify(finalBlog.title, { lower: true, strict: true });
+        const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(finalBlog.slug);
+        const slugMatchesTitle = derived !== "" && finalBlog.slug === derived;
+        setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : finalBlog.slug);
       }
       if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        setMetaTitle(updated.meta_title || "");
-        const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
+        setMetaTitle(finalBlog.meta_title || "");
+        const metaSynced = !finalBlog.meta_title || finalBlog.meta_title === finalBlog.title;
         setMetaTitleDirty(!metaSynced);
       }
-      if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
-      if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(updated.featured_image_url || "");
+      if (metaDescRef.current === nextMetaDesc) setMetaDesc(finalBlog.meta_description || "");
+      if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(finalBlog.featured_image_url || "");
+      if (catDirty) {
+        const finalCatIds = (finalBlog as unknown as { category_ids?: number[] }).category_ids || [];
+        setSelectedCatIds(finalCatIds);
+        setPendingCatIds(finalCatIds);
+      }
       await refreshUser();
       clearManualDraft();
       setSaveStatus("saved");
