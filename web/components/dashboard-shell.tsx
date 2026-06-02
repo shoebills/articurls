@@ -86,9 +86,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Button>
                   <Link
                     href="/dashboard"
-                    className="min-w-0 truncate text-[1.6875rem] font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
+                    className="flex min-w-0 items-center gap-2 truncate text-[1.6875rem] font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
                     onClick={() => setOpen(false)}
                   >
+                    <img src="/articurls-logo.svg" alt="" className="h-7 w-7 shrink-0" aria-hidden />
                     Articurls
                   </Link>
                 </div>

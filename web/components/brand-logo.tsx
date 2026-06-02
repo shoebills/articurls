@@ -20,15 +20,12 @@ export function BrandLogo({ href = "/", className, size = "default", onClick }: 
         className
       )}
     >
-      <span
-        className={cn(
-          "flex shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-[oklch(0.38_0.12_264)] font-bold tracking-tight text-primary-foreground shadow-md shadow-primary/20 ring-1 ring-white/10",
-          sm ? "h-8 w-8 text-xs" : "h-9 w-9 text-[0.8125rem]"
-        )}
+      <img
+        src="/articurls-logo.svg"
+        alt="Articurls"
+        className={cn("shrink-0", sm ? "h-8 w-8" : "h-9 w-9")}
         aria-hidden
-      >
-        A
-      </span>
+      />
       <span className={cn("font-bold tracking-tight", sm ? "text-base" : "text-lg sm:text-xl")}>Articurls</span>
     </Link>
   );
