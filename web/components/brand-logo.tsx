@@ -26,7 +26,7 @@ export function BrandLogo({ href = "/", className, size = "default", onClick }: 
         className={cn("shrink-0", sm ? "h-8 w-8" : "h-9 w-9")}
         aria-hidden
       />
-      <span className={cn("font-bold tracking-tight", sm ? "text-base" : "text-lg sm:text-xl")}>Articurls</span>
+      <span className={cn("font-bold tracking-tight", sm ? "text-xl" : "text-2xl sm:text-3xl")}>Articurls</span>
     </Link>
   );
 }
