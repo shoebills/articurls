@@ -26,6 +26,7 @@ import {
   List,
   ListOrdered,
   Minus,
+  Play,
   Redo2,
   ScanText,
   Underline as UnderlineIcon,
@@ -620,7 +621,7 @@ export function BlogEditor({
     {
       value: "youtube",
       label: "YouTube",
-      icon: <Video className="h-4 w-4" />,
+      icon: <Play className="h-4 w-4" />,
       action: addYoutube,
       isActive: () => false,
       canExecute: () => true,
@@ -632,7 +633,7 @@ export function BlogEditor({
       <span className="hidden" aria-hidden>
         {selectionTick}
       </span>
-      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 [scrollbar-width:thin]">
+      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:thin]">
         {/* History */}
         <ToolbarSection editor={editor} actions={historyActions} mainActionCount={2} />
         <Separator orientation="vertical" className="mx-2 h-6" />
