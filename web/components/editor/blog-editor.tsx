@@ -303,6 +303,11 @@ export function BlogEditor({
     ((editor.state.selection as { node?: { type?: { name?: string } } }).node?.type?.name === "image" ||
       editor.isActive("image"));
 
+  // Mobile swipe vs tap detection for heading dropdown
+  const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
+  const headingPointerMoved = useRef(false);
+  const headingSuppressNextClick = useRef(false);
+
   // Track if editor is focused to prevent overwriting during active editing
   const isEditorFocusedRef = useRef(false);
 
@@ -646,34 +651,31 @@ export function BlogEditor({
           <DropdownMenuTrigger
             asChild
             onPointerDown={(e) => {
-              (e.currentTarget as HTMLElement).dataset.pointerStart = JSON.stringify({ x: e.clientX, y: e.clientY });
-              (e.currentTarget as HTMLElement).dataset.pointerMoved = "false";
+              headingPointerStart.current = { x: e.clientX, y: e.clientY };
+              headingPointerMoved.current = false;
             }}
             onPointerMove={(e) => {
-              const start = (e.currentTarget as HTMLElement).dataset.pointerStart;
-              if (!start || (e.currentTarget as HTMLElement).dataset.pointerMoved === "true") return;
-              const { x, y } = JSON.parse(start);
-              const dx = Math.abs(e.clientX - x);
-              const dy = Math.abs(e.clientY - y);
+              if (!headingPointerStart.current || headingPointerMoved.current) return;
+              const dx = Math.abs(e.clientX - headingPointerStart.current.x);
+              const dy = Math.abs(e.clientY - headingPointerStart.current.y);
               if (dx > 10 || dy > 10) {
-                (e.currentTarget as HTMLElement).dataset.pointerMoved = "true";
+                headingPointerMoved.current = true;
               }
             }}
             onPointerUp={(e) => {
-              const moved = (e.currentTarget as HTMLElement).dataset.pointerMoved === "true";
-              if (moved) {
+              if (headingPointerMoved.current) {
                 e.preventDefault();
                 e.stopPropagation();
-                suppressNextClick.current = true;
+                headingSuppressNextClick.current = true;
               }
-              delete (e.currentTarget as HTMLElement).dataset.pointerStart;
-              delete (e.currentTarget as HTMLElement).dataset.pointerMoved;
+              headingPointerStart.current = null;
+              headingPointerMoved.current = false;
             }}
             onClick={(e) => {
-              if (suppressNextClick.current) {
+              if (headingSuppressNextClick.current) {
                 e.preventDefault();
                 e.stopPropagation();
-                suppressNextClick.current = false;
+                headingSuppressNextClick.current = false;
               }
             }}
           >
