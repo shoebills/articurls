@@ -11,12 +11,23 @@ from fastapi.responses import StreamingResponse
 from urllib.parse import urlparse
 import io
 import csv
+import httpx
 
 
 router = APIRouter(
     tags=["Analytics"],
     prefix="/analytics"
 )
+
+
+def _umami_error_detail(exc_body: str) -> str:
+    """Return a clean error detail, stripping raw HTML from upstream errors."""
+    body = (exc_body or "").strip()
+    if body.startswith("<") or "<!DOCTYPE" in body or "<html" in body:
+        return "Analytics service temporarily unavailable. Please try again later."
+    if len(body) > 200:
+        body = body[:200] + "…"
+    return f"Failed to retrieve analytics: {body}"
 
 PERIOD_MAP = {
     "24h": timedelta(hours=24),
@@ -153,7 +164,12 @@ def get_umami_overview(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -207,7 +223,12 @@ def get_umami_timeseries(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -338,7 +359,12 @@ def get_umami_pages(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -403,7 +429,12 @@ def get_umami_sources(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -445,7 +476,12 @@ def get_umami_geo(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -507,7 +543,12 @@ def get_umami_tech(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
 
 
@@ -545,5 +586,10 @@ def get_umami_realtime(
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=f"Failed to retrieve analytics: {exc.body}",
+            detail=_umami_error_detail(exc.body),
+        )
+    except httpx.HTTPError:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Analytics service temporarily unavailable. Please try again later.",
         )
