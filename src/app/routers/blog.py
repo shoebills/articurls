@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from sqlalchemy.dialects.postgresql import insert
@@ -222,7 +222,7 @@ def delete_blog_media_by_url(
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -282,21 +282,19 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     _attach_category_ids(db, db_blog)
 
     # Purge cache for this blog post and all listing pages (home + categories)
-    # Use fire-and-forget pattern (don't await, don't block response)
+    # Use FastAPI BackgroundTasks for reliable async execution in sync routes
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            # Purge from custom domain if set
-            if current_user.custom_domain:
-                asyncio.create_task(purge_blog_post(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-                ))
-            # Also purge from articurls.com/username path
-            asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-            ))
-        except Exception:
-            pass  # Fail silently, cache will expire naturally
+        # Purge from custom domain if set
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        # Also purge from articurls.com/username path
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
 
     return db_blog
 
@@ -338,7 +336,7 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
     return {"message": "Blog deleted"}
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -388,17 +386,15 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     _attach_category_ids(db, db_blog)
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_blog_post(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-                ))
-            asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -554,6 +550,7 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
 def assign_blog_categories(
     id: int,
     request: cat_schema.BlogCategoryAssign,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
@@ -617,16 +614,14 @@ def assign_blog_categories(
     _attach_category_ids(db, db_blog)
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_blog_post(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-                ))
-            asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
 
     return db_blog

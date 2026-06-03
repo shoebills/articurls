@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -10,6 +10,8 @@ from ..utils.html_sanitizer import sanitize_html
 from ..schemas import page as page_schema
 from ..security import oauth2
 from ..storage.service import delete_media, save_media
+from ..cache.service import purge_custom_page, purge_entire_tenant
+from ..config import settings
 
 router = APIRouter(
     tags=["Pages"],
@@ -244,6 +246,7 @@ def delete_page(
 def update_page(
     page_id: int,
     request: page_schema.UserPageUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -298,12 +301,26 @@ def update_page(
 
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache for this custom page when updated
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.post("/{page_id:int}/publish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def publish_page(
     page_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -329,12 +346,26 @@ def publish_page(
 
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache when page is published (becomes publicly visible)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.post("/{page_id:int}/archive", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def archive_page(
     page_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -354,12 +385,26 @@ def archive_page(
     db_page.status = models.PageStatus.ARCHIVED
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache when page is archived (removed from public)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.post("/{page_id:int}/draft", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def move_page_to_draft(
     page_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -375,11 +420,25 @@ def move_page_to_draft(
     db_page.status = models.PageStatus.DRAFT
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache when page is moved to draft (removed from public)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.patch("/footer", response_model=list[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
 def update_footer_pages(
+    background_tasks: BackgroundTasks,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
@@ -425,6 +484,19 @@ def update_footer_pages(
         pages_by_id[page_id].footer_order = idx
 
     db.commit()
+
+    # Purge entire tenant cache when footer changes (footer appears on all pages)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+
     return (
         db.query(models.UserPage)
         .filter(models.UserPage.user_id == current_user.user_id)

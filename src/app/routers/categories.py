@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -67,6 +67,7 @@ def list_categories(
 @router.post("/", response_model=cat_schema.CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(
     request: cat_schema.CategoryCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -87,22 +88,21 @@ def create_category(
     db.refresh(new_cat)
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_entire_tenant(
-                    settings.cloudflare_zone_id, current_user.custom_domain
-                ))
-            asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, "articurls.com"
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
     return _category_out(db, new_cat)
 
 
 @router.patch("/menu", response_model=list[cat_schema.CategoryOut], status_code=status.HTTP_200_OK)
 def update_menu_categories(
+    background_tasks: BackgroundTasks,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
@@ -150,17 +150,15 @@ def update_menu_categories(
     db.commit()
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_entire_tenant(
-                    settings.cloudflare_zone_id, current_user.custom_domain
-                ))
-            asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, "articurls.com"
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
 
     cats = (
         db.query(models.Category)
@@ -175,6 +173,7 @@ def update_menu_categories(
 def update_category(
     category_id: int,
     request: cat_schema.CategoryUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -206,23 +205,23 @@ def update_category(
     db.refresh(db_cat)
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_category(
-                    settings.cloudflare_zone_id, current_user.custom_domain, old_slug
-                ))
-                asyncio.create_task(purge_category(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-                ))
-            asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, "articurls.com", old_slug
-            ))
-            asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, old_slug
+            )
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", old_slug
+        )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
 
     return _category_out(db, db_cat)
 
@@ -230,6 +229,7 @@ def update_category(
 @router.delete("/{category_id}", status_code=status.HTTP_200_OK)
 def delete_category(
     category_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -247,23 +247,23 @@ def delete_category(
     db.commit()
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_category(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-                ))
-                asyncio.create_task(purge_entire_tenant(
-                    settings.cloudflare_zone_id, current_user.custom_domain
-                ))
-            asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-            ))
-            asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, "articurls.com"
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
 
     return {"message": "Category deleted"}
 
@@ -360,16 +360,14 @@ def set_category_blogs(
     db.refresh(db_cat)
 
     if settings.cloudflare_zone_id:
-        try:
-            import asyncio
-            if current_user.custom_domain:
-                asyncio.create_task(purge_category(
-                    settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-                ))
-            asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-            ))
-        except Exception:
-            pass
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
 
     return _category_out(db, db_cat)
