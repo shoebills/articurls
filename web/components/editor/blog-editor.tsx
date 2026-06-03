@@ -633,7 +633,7 @@ export function BlogEditor({
       <span className="hidden" aria-hidden>
         {selectionTick}
       </span>
-      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:thin]">
+      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {/* History */}
         <ToolbarSection editor={editor} actions={historyActions} mainActionCount={2} />
         <Separator orientation="vertical" className="mx-2 h-6" />
