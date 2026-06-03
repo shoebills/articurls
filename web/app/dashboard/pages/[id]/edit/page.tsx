@@ -28,6 +28,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [slugCustom, setSlugCustom] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
+  const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -322,11 +323,16 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       </div>
 
       <Textarea
-        className="mb-4 h-auto resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+        ref={titleTextareaRef}
+        className="mb-4 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onInput={(e) => {
+          const el = e.currentTarget;
+          el.style.height = "auto";
+          el.style.height = el.scrollHeight + "px";
+        }}
         placeholder="Title"
-        rows={1}
       />
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving"

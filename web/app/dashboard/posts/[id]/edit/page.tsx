@@ -56,6 +56,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
+  const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const manualDraftHydratedRef = useRef(false);
@@ -489,11 +490,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <Textarea
-        className="mb-4 h-auto resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+        ref={titleTextareaRef}
+        className="mb-4 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onInput={(e) => {
+          const el = e.currentTarget;
+          el.style.height = "auto";
+          el.style.height = el.scrollHeight + "px";
+        }}
         placeholder="Title"
-        rows={1}
       />
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving"
