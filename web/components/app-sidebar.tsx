@@ -10,11 +10,11 @@ import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palett
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
-  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-  { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/design", label: "Design", icon: Palette },
   { href: "/dashboard/seo", label: "SEO", icon: Search },
+  { href: "/dashboard/audience", label: "Audience", icon: Users },
+  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
