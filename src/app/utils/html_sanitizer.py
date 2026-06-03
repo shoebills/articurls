@@ -39,6 +39,7 @@ ALLOWED_TAGS = {
     "hr",
     "div",
     "span",
+    "mark",
     "sub",
     "sup",
     "table",
