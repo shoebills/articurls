@@ -733,7 +733,7 @@ export function BlogEditor({
         <ToolbarSection
           editor={editor}
           actions={insertActions}
-          mainActionCount={2}
+          mainActionCount={3}
           dropdownIcon={<MoreHorizontal className="h-4 w-4" />}
           dropdownTooltip="Insert"
         />
