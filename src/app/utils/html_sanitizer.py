@@ -47,6 +47,7 @@ ALLOWED_TAGS = {
     "tr",
     "th",
     "td",
+    "iframe",
 }
 
 # Allowed attributes per tag
@@ -54,6 +55,8 @@ ALLOWED_TAGS = {
 ALLOWED_ATTRIBUTES = {
     "a": {"href", "title", "target"},
     "img": {"src", "alt", "title", "width", "height"},
+    "iframe": {"src", "frameborder", "allowfullscreen", "allow", "title", "width", "height", "referrerpolicy"},
+    "div": {"data-youtube-video", "style"},
     "*": {"class"},
 }
 
