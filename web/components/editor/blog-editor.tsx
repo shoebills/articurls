@@ -114,9 +114,9 @@ function ToolbarSection({
   }, [actions, mainActionCount]);
 
   const isDropdownActive = dropdown.some((a) => a.isActive(editor));
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const pointerMoved = useRef(false);
-  const suppressNextClick = useRef(false);
 
   return (
     <>
@@ -124,7 +124,15 @@ function ToolbarSection({
         <ToolbarButton key={action.value} editor={editor} action={action} />
       ))}
       {dropdown.length > 0 && (
-        <DropdownMenu modal={false}>
+        <DropdownMenu
+          modal={false}
+          open={dropdownOpen}
+          onOpenChange={(open) => {
+            if (!open || !pointerMoved.current) {
+              setDropdownOpen(open);
+            }
+          }}
+        >
           <DropdownMenuTrigger
             asChild
             onPointerDown={(e) => {
@@ -143,17 +151,10 @@ function ToolbarSection({
               if (pointerMoved.current) {
                 e.preventDefault();
                 e.stopPropagation();
-                suppressNextClick.current = true;
+                setDropdownOpen(false);
               }
               pointerStart.current = null;
               pointerMoved.current = false;
-            }}
-            onClick={(e) => {
-              if (suppressNextClick.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                suppressNextClick.current = false;
-              }
             }}
           >
             <Button
@@ -304,9 +305,9 @@ export function BlogEditor({
       editor.isActive("image"));
 
   // Mobile swipe vs tap detection for heading dropdown
+  const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
   const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
   const headingPointerMoved = useRef(false);
-  const headingSuppressNextClick = useRef(false);
 
   // Track if editor is focused to prevent overwriting during active editing
   const isEditorFocusedRef = useRef(false);
@@ -647,7 +648,15 @@ export function BlogEditor({
         <Separator orientation="vertical" className="mx-2 h-6" />
 
         {/* Headings in dropdown */}
-        <DropdownMenu modal={false}>
+        <DropdownMenu
+          modal={false}
+          open={headingDropdownOpen}
+          onOpenChange={(open) => {
+            if (!open || !headingPointerMoved.current) {
+              setHeadingDropdownOpen(open);
+            }
+          }}
+        >
           <DropdownMenuTrigger
             asChild
             onPointerDown={(e) => {
@@ -666,17 +675,10 @@ export function BlogEditor({
               if (headingPointerMoved.current) {
                 e.preventDefault();
                 e.stopPropagation();
-                headingSuppressNextClick.current = true;
+                setHeadingDropdownOpen(false);
               }
               headingPointerStart.current = null;
               headingPointerMoved.current = false;
-            }}
-            onClick={(e) => {
-              if (headingSuppressNextClick.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                headingSuppressNextClick.current = false;
-              }
             }}
           >
             <Button
