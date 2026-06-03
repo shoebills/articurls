@@ -55,23 +55,29 @@ export function BlogStatusBadge({
   if (compact) {
     return (
       <span
-        className={cn("relative flex h-2.5 w-2.5", className)}
+        className={cn(
+          "inline-flex items-center justify-center rounded-full border px-2 py-1.5 shadow-sm",
+          c.pill,
+          className
+        )}
         title={c.label}
       >
-        <span
-          className={cn(
-            "absolute inline-flex h-full w-full rounded-full opacity-75",
-            c.dot,
-            c.animate
-          )}
-        />
-        <span
-          className={cn(
-            "relative inline-flex h-2.5 w-2.5 rounded-full ring-2",
-            c.dot,
-            c.ring
-          )}
-        />
+        <span className="relative flex h-2 w-2">
+          <span
+            className={cn(
+              "absolute inline-flex h-full w-full rounded-full opacity-60",
+              c.dot,
+              c.animate
+            )}
+          />
+          <span
+            className={cn(
+              "relative inline-flex h-2 w-2 rounded-full ring-2",
+              c.dot,
+              c.ring
+            )}
+          />
+        </span>
       </span>
     );
   }
