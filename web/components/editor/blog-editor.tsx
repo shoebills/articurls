@@ -32,7 +32,6 @@ import {
   Underline as UnderlineIcon,
   Undo2,
   X,
-  Video,
   ChevronDown,
   MoreHorizontal,
   Strikethrough,
@@ -46,6 +45,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { PromptDialog } from "@/components/prompt-dialog";
 import {
   ApiError,
   deleteBlogMediaByUrl,
@@ -310,6 +310,44 @@ export function BlogEditor({
   const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
   const headingPointerMoved = useRef(false);
 
+  // Dialog states
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [altDialogOpen, setAltDialogOpen] = useState(false);
+  const [altValue, setAltValue] = useState("");
+  const [altDialogMode, setAltDialogMode] = useState<"new" | "edit">("new");
+
+  // Editor toast for errors
+  const [editorToast, setEditorToast] = useState<string | null>(null);
+  const editorToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Pending image upload result (stored between upload and alt dialog)
+  const pendingImageUploadRef = useRef<{
+    imageUrl: string;
+    originalUrl: string;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Auto-dismiss editor toast
+  useEffect(() => {
+    if (editorToast) {
+      if (editorToastTimerRef.current) clearTimeout(editorToastTimerRef.current);
+      editorToastTimerRef.current = setTimeout(() => {
+        setEditorToast(null);
+        editorToastTimerRef.current = null;
+      }, 3000);
+    }
+    return () => {
+      if (editorToastTimerRef.current) {
+        clearTimeout(editorToastTimerRef.current);
+        editorToastTimerRef.current = null;
+      }
+    };
+  }, [editorToast]);
+
   // Track if editor is focused to prevent overwriting during active editing
   const isEditorFocusedRef = useRef(false);
 
@@ -350,8 +388,12 @@ export function BlogEditor({
   const setLink = useCallback(() => {
     if (!editor) return;
     const prev = editor.getAttributes("link").href;
-    const url = window.prompt("URL", prev || "https://");
-    if (url === null) return;
+    setLinkUrl(prev || "https://");
+    setLinkDialogOpen(true);
+  }, [editor]);
+
+  const handleLinkConfirm = useCallback((url: string) => {
+    if (!editor) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
@@ -361,11 +403,11 @@ export function BlogEditor({
 
   const addImage = useCallback(async () => {
     if (!editor || !token) {
-      window.alert("Please log in to upload images.");
+      setEditorToast("Please log in to upload images.");
       return;
     }
     if (!blogId && !pageId) {
-      window.alert("Save first to upload images.");
+      setEditorToast("Save first to upload images.");
       return;
     }
 
@@ -379,7 +421,6 @@ export function BlogEditor({
         const media = blogId
           ? await uploadBlogMedia(token, blogId, file)
           : await uploadPageMedia(token, pageId!, file);
-        const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
         const originalUrl = assetUrl(media.url);
 
         // Transform URL to use Cloudflare Image Transformations
@@ -394,49 +435,78 @@ export function BlogEditor({
           img.onerror = reject;
         });
 
-        // Generate srcset for responsive loading
-        const srcset = generateSrcSet(originalUrl);
-        const sizes = generateSizes();
-
-        const imageAttrs: SetImageAttrs & {
-          srcset?: string;
-          sizes?: string;
-          loading?: "lazy";
-          decoding?: "async";
-        } = {
-          src: imageUrl,
-          alt: alt.trim(),
+        // Store upload result and open alt dialog
+        pendingImageUploadRef.current = {
+          imageUrl,
+          originalUrl,
           width: img.naturalWidth,
           height: img.naturalHeight,
-          srcset,
-          sizes,
-          loading: "lazy",
-          decoding: "async",
         };
-
-        editor.chain().focus().setImage(imageAttrs).run();
+        setAltValue("");
+        setAltDialogMode("new");
+        setAltDialogOpen(true);
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";
-        window.alert(detail);
+        setEditorToast(detail);
       }
     };
     input.click();
   }, [blogId, pageId, editor, token]);
 
+  const handleAltConfirm = useCallback(
+    (alt: string) => {
+      if (!editor || !pendingImageUploadRef.current) return;
+      const { imageUrl, width, height } = pendingImageUploadRef.current;
+      const srcset = generateSrcSet(pendingImageUploadRef.current.originalUrl);
+      const sizes = generateSizes();
+
+      const imageAttrs: SetImageAttrs & {
+        srcset?: string;
+        sizes?: string;
+        loading?: "lazy";
+        decoding?: "async";
+      } = {
+        src: imageUrl,
+        alt: alt.trim(),
+        width,
+        height,
+        srcset,
+        sizes,
+        loading: "lazy",
+        decoding: "async",
+      };
+
+      if (altDialogMode === "new") {
+        editor.chain().focus().setImage(imageAttrs).run();
+      } else {
+        editor.chain().focus().updateAttributes("image", { alt: alt.trim() }).run();
+      }
+      pendingImageUploadRef.current = null;
+    },
+    [editor, altDialogMode]
+  );
+
   const editSelectedImageAlt = useCallback(() => {
     if (!editor || !isImageSelected) return;
     const attrs = editor.getAttributes("image");
-    const nextAlt = window.prompt("Image alt text", attrs.alt || "");
-    if (nextAlt === null) return;
-    editor.chain().focus().updateAttributes("image", { alt: nextAlt.trim() }).run();
+    setAltValue(attrs.alt || "");
+    setAltDialogMode("edit");
+    setAltDialogOpen(true);
   }, [editor, isImageSelected]);
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
-    const url = window.prompt("YouTube URL");
-    if (!url) return;
-    editor.commands.setYoutubeVideo({ src: url });
+    setYoutubeUrl("");
+    setYoutubeDialogOpen(true);
   }, [editor]);
+
+  const handleYoutubeConfirm = useCallback(
+    (url: string) => {
+      if (!editor || !url) return;
+      editor.commands.setYoutubeVideo({ src: url });
+    },
+    [editor]
+  );
 
   const removeSelectedImage = useCallback(async () => {
     if (!editor || !isImageSelected) return;
@@ -791,6 +861,53 @@ export function BlogEditor({
           </BubbleMenu>
         )}
       </div>
+
+      {/* Link Dialog */}
+      <PromptDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        title="Add Link"
+        description="Enter the URL for this link."
+        placeholder="https://"
+        defaultValue={linkUrl}
+        onConfirm={handleLinkConfirm}
+        submitLabel="Add Link"
+      />
+
+      {/* YouTube Dialog */}
+      <PromptDialog
+        open={youtubeDialogOpen}
+        onOpenChange={setYoutubeDialogOpen}
+        title="Add YouTube Video"
+        description="Paste a YouTube video URL."
+        placeholder="https://youtube.com/watch?v=..."
+        defaultValue={youtubeUrl}
+        onConfirm={handleYoutubeConfirm}
+        submitLabel="Add Video"
+      />
+
+      {/* Alt Text Dialog */}
+      <PromptDialog
+        open={altDialogOpen}
+        onOpenChange={setAltDialogOpen}
+        title={altDialogMode === "new" ? "Image Alt Text" : "Edit Alt Text"}
+        description="Describe the image for accessibility (optional)."
+        placeholder="Describe the image"
+        defaultValue={altValue}
+        onConfirm={handleAltConfirm}
+        submitLabel={altDialogMode === "new" ? "Insert Image" : "Save"}
+      />
+
+      {/* Editor Toast */}
+      {editorToast && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] w-fit max-w-[min(calc(100vw-1.5rem),36rem)] -translate-x-1/2 rounded-xl border border-destructive/35 bg-background/95 px-4 py-3 text-center text-sm leading-relaxed text-destructive shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/85 break-words"
+        >
+          {editorToast}
+        </div>
+      )}
     </div>
   );
 }

@@ -29,6 +29,7 @@ import { format } from "date-fns";
 import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
+import { PromptDialog } from "@/components/prompt-dialog";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 
@@ -46,6 +47,10 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
+
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   // Handle access token from OAuth callback (for existing user login)
   useEffect(() => {
@@ -135,7 +140,8 @@ export default function DashboardPage() {
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      window.prompt("Copy link:", url);
+      setShareUrl(url);
+      setShareDialogOpen(true);
     }
   }
 
@@ -456,6 +462,17 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+
+      {/* Share Link Dialog */}
+      <PromptDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        title="Share Link"
+        description="Copy this link to share your post."
+        defaultValue={shareUrl}
+        onConfirm={() => {}}
+        readOnly
+      />
     </div>
   );
 }

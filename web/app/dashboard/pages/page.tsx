@@ -17,6 +17,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { PromptDialog } from "@/components/prompt-dialog";
 import { format } from "date-fns";
 import { Archive, ArchiveRestore, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 
@@ -28,6 +29,8 @@ export default function PagesDashboardPage() {
   const [busy, setBusy] = useState(false);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
 
   async function load() {
     if (!token) return;
@@ -99,7 +102,8 @@ export default function PagesDashboardPage() {
     try {
       await navigator.clipboard.writeText(url);
     } catch {
-      window.prompt("Copy link:", url);
+      setShareUrl(url);
+      setShareDialogOpen(true);
     }
   }
 
@@ -250,6 +254,17 @@ export default function PagesDashboardPage() {
       )}
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+
+      {/* Share Link Dialog */}
+      <PromptDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        title="Share Link"
+        description="Copy this link to share your page."
+        defaultValue={shareUrl}
+        onConfirm={() => {}}
+        readOnly
+      />
     </div>
   );
 }
