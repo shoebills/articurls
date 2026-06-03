@@ -675,7 +675,10 @@ export function BlogEditor({
             shouldShow={({ editor: ed }) =>
               ed.isActive("image") && ed.isEditable
             }
-            options={{ placement: "top" }}
+            options={{
+              placement: "top",
+              strategy: "absolute",
+            }}
           >
             <div className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md">
               <Button
