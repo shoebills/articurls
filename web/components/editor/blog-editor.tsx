@@ -613,19 +613,20 @@ export function BlogEditor({
             <Button
               type="button"
               variant={editor.isActive("heading") ? "secondary" : "ghost"}
-              size="icon"
+              size="sm"
+              className="h-8 w-12 px-1"
               title="Headings"
             >
               {editor.isActive("heading", { level: 1 }) ? (
-                <Heading1 className="h-4 w-4" />
+                <Heading1 className="h-4 w-4 shrink-0" />
               ) : editor.isActive("heading", { level: 2 }) ? (
-                <Heading2 className="h-4 w-4" />
+                <Heading2 className="h-4 w-4 shrink-0" />
               ) : editor.isActive("heading", { level: 3 }) ? (
-                <Heading3 className="h-4 w-4" />
+                <Heading3 className="h-4 w-4 shrink-0" />
               ) : (
-                <Type className="h-4 w-4" />
+                <Type className="h-4 w-4 shrink-0" />
               )}
-              <ChevronDown className="ml-0.5 h-3 w-3" />
+              <ChevronDown className="ml-0.5 h-3 w-3 shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
