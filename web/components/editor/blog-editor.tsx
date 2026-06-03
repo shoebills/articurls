@@ -682,15 +682,20 @@ export function BlogEditor({
               resizeDelay: 0,
               hide: true,
             } as any}
-            appendTo={() => editor.view.dom}
           >
-            <div className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md">
+            <div
+              className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md"
+              onMouseDown={(e) => e.preventDefault()}
+            >
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-1.5 px-2 text-xs"
-                onClick={editSelectedImageAlt}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  editSelectedImageAlt();
+                }}
               >
                 <ScanText className="h-3.5 w-3.5" />
                 Alt text
@@ -701,7 +706,10 @@ export function BlogEditor({
                 variant="ghost"
                 size="sm"
                 className="h-8 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
-                onClick={removeSelectedImage}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeSelectedImage();
+                }}
               >
                 <X className="h-3.5 w-3.5" />
                 Remove
