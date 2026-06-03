@@ -44,11 +44,37 @@ const config: Record<
 export function BlogStatusBadge({
   status,
   className,
+  compact,
 }: {
   status: BlogStatus;
   className?: string;
+  compact?: boolean;
 }) {
   const c = config[status];
+
+  if (compact) {
+    return (
+      <span
+        className={cn("relative flex h-2.5 w-2.5", className)}
+        title={c.label}
+      >
+        <span
+          className={cn(
+            "absolute inline-flex h-full w-full rounded-full opacity-75",
+            c.dot,
+            c.animate
+          )}
+        />
+        <span
+          className={cn(
+            "relative inline-flex h-2.5 w-2.5 rounded-full ring-2",
+            c.dot,
+            c.ring
+          )}
+        />
+      </span>
+    );
+  }
 
   return (
     <span

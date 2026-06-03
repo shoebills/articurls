@@ -313,7 +313,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          <BlogStatusBadge status={page.status} />
+          <BlogStatusBadge status={page.status} className="hidden sm:inline-flex" />
+          <BlogStatusBadge status={page.status} compact className="sm:hidden" />
           {liveUrl && (
             <Button variant="outline" size="sm" asChild>
               <a href={liveUrl} target="_blank" rel="noopener">

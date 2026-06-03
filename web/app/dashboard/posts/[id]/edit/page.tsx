@@ -491,7 +491,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
-          <BlogStatusBadge status={blog.status} />
+          <BlogStatusBadge status={blog.status} className="hidden sm:inline-flex" />
+          <BlogStatusBadge status={blog.status} compact className="sm:hidden" />
           {liveUrl && (
             <Button variant="outline" size="sm" asChild>
               <a href={liveUrl} target="_blank" rel="noopener">
