@@ -433,6 +433,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             Archive
           </Button>
         )}
+        {page.status === "archived" && (
+          <Button variant="outline" onClick={() => void updateStatus("published")} disabled={saving}>
+            Unarchive
+          </Button>
+        )}
       </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

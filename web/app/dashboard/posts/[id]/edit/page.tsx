@@ -267,6 +267,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }
 
+  async function unarchive() {
+    if (!token || !blog) return;
+    try {
+      const b = await publishBlog(token, blog.blog_id);
+      clearManualDraft();
+      applyBlogToForm(b);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Unarchive failed");
+    }
+  }
+
   async function doSchedule(iso: string) {
     if (!token || !blog) return;
     try {
@@ -805,6 +816,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {blog.status === "published" && (
           <Button variant="outline" onClick={archive}>
             Archive
+          </Button>
+        )}
+        {blog.status === "archived" && (
+          <Button variant="outline" onClick={unarchive}>
+            Unarchive
           </Button>
         )}
       </div>
