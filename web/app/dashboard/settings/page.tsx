@@ -28,6 +28,7 @@ import { Camera, Check, Globe, Loader2, Pencil, UserRound, X } from "lucide-reac
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import CustomDomainSettings from "@/components/custom-domain-settings";
 
 const USERNAME_CHANGE_LIMIT = 5;
 
@@ -526,6 +527,15 @@ export default function SettingsPage() {
               Save Pro settings
             </Button>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Custom Domain</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <CustomDomainSettings />
         </CardContent>
       </Card>
 

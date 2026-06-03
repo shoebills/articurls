@@ -20,7 +20,7 @@ import type { CustomDomain, DNSRecord } from "@/lib/types";
 
 const FALLBACK_ORIGIN = "fallback.articurls.com";
 
-export default function DomainSettingsPage() {
+export default function CustomDomainSettings() {
   const router = useRouter();
   const { token } = useAuth();
 
@@ -183,7 +183,7 @@ export default function DomainSettingsPage() {
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isPro === null || domain === undefined) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[200px] items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -192,31 +192,26 @@ export default function DomainSettingsPage() {
   // ── Upgrade prompt ─────────────────────────────────────────────────────────
   if (!isPro) {
     return (
-      <div className="mx-auto max-w-[1100px] space-y-6">
-        <PageHeader />
-        <Card className="p-8 text-center">
-          <div className="mx-auto max-w-sm space-y-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <Globe className="h-7 w-7 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold">Pro plan required</h2>
-            <p className="text-sm text-muted-foreground">
-              Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
-            </p>
-            <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
-              Upgrade to Pro
-            </Button>
+      <Card className="p-8 text-center">
+        <div className="mx-auto max-w-sm space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <Globe className="h-7 w-7 text-primary" />
           </div>
-        </Card>
-      </div>
+          <h2 className="text-xl font-semibold">Pro plan required</h2>
+          <p className="text-sm text-muted-foreground">
+            Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
+          </p>
+          <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
+            Upgrade to Pro
+          </Button>
+        </div>
+      </Card>
     );
   }
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6">
-      <PageHeader />
-
+    <div className="space-y-4">
       {error && (
         <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
@@ -542,17 +537,6 @@ export default function DomainSettingsPage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
-
-function PageHeader() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Custom Domain</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Connect your own domain to your blog
-      </p>
-    </div>
-  );
-}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
