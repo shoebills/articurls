@@ -67,12 +67,12 @@ export function PromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="p-4 sm:p-6 sm:max-w-md">
-        <DialogHeader className="space-y-1 sm:space-y-1.5">
-          <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
-          {description && <DialogDescription className="text-xs sm:text-sm">{description}</DialogDescription>}
+      <DialogContent className="!w-[90vw] !max-w-[22rem] rounded-lg p-4 sm:!w-[min(calc(100vw-1.5rem),32rem)] sm:!max-w-[32rem] sm:p-6">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="text-base">{title}</DialogTitle>
+          {description && <DialogDescription className="text-xs">{description}</DialogDescription>}
         </DialogHeader>
-        <div className="grid gap-3 py-3 sm:gap-4 sm:py-4">
+        <div className="grid gap-3 py-3">
           <div className="relative">
             <Input
               value={value}
@@ -104,7 +104,7 @@ export function PromptDialog({
             <p className="text-xs text-muted-foreground">Copied!</p>
           )}
         </div>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="flex flex-row justify-end gap-2">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
