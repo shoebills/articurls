@@ -22,6 +22,7 @@ import type { BlogDetail, Category } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
@@ -487,11 +488,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
-      <Input
-        className="mb-4 min-h-0 border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+      <Textarea
+        className="mb-4 h-auto resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         placeholder="Title"
+        rows={1}
       />
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving"
