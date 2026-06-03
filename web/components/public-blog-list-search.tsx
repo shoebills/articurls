@@ -12,6 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { resolveBlogPreviewImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
+import { PromptDialog } from "@/components/prompt-dialog";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -46,6 +47,8 @@ function BlogPostShareMenu({
   const encodedUrl = encodeURIComponent(url);
   const encodedText = encodeURIComponent(title || "Read this post");
   const [open, setOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
   useEffect(() => {
@@ -66,7 +69,8 @@ function BlogPostShareMenu({
       await navigator.clipboard.writeText(url);
     } catch {
       // Fallback for non-secure contexts
-      window.prompt("Copy link:", url);
+      setShareUrl(url);
+      setDialogOpen(true);
     }
   }
 
