@@ -9,8 +9,7 @@ import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import Placeholder from "@tiptap/extension-placeholder";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { common, createLowlight } from "lowlight";
+// CodeBlock comes from StarterKit (no syntax highlighting needed)
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -55,8 +54,6 @@ import {
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { transformImageUrl, generateSrcSet, generateSizes } from "@/lib/image-transform";
-
-const lowlight = createLowlight(common);
 
 // Toolbar action types (minimal-tiptap pattern)
 type ToolbarAction = {
@@ -192,9 +189,7 @@ export function BlogEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        codeBlock: false,
       }),
-      CodeBlockLowlight.configure({ lowlight }),
       Underline,
       Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, autolink: true }),
