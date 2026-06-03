@@ -67,19 +67,19 @@ export function PromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {description && <DialogDescription>{description}</DialogDescription>}
+      <DialogContent className="p-4 sm:p-6 sm:max-w-md">
+        <DialogHeader className="space-y-1 sm:space-y-1.5">
+          <DialogTitle className="text-base sm:text-lg">{title}</DialogTitle>
+          {description && <DialogDescription className="text-xs sm:text-sm">{description}</DialogDescription>}
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="grid gap-3 py-3 sm:gap-4 sm:py-4">
           <div className="relative">
             <Input
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder={placeholder}
               readOnly={readOnly}
-              className={readOnly ? "pr-10" : undefined}
+              className={`text-sm ${readOnly ? "pr-10" : ""}`}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !readOnly) {
                   e.preventDefault();
@@ -105,10 +105,10 @@ export function PromptDialog({
           )}
         </div>
         <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button onClick={handleConfirm} disabled={readOnly}>
+          <Button size="sm" onClick={handleConfirm} disabled={readOnly}>
             {submitLabel}
           </Button>
         </DialogFooter>
