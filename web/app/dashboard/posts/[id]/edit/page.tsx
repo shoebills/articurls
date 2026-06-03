@@ -29,7 +29,7 @@ import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -474,7 +474,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard">← Posts</Link>
+          <Link href="/dashboard">
+            <ArrowLeft className="h-4 w-4" />
+            Posts
+          </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           <BlogStatusBadge status={blog.status} />

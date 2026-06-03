@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
@@ -307,7 +307,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/pages">← Pages</Link>
+          <Link href="/dashboard/pages">
+            <ArrowLeft className="h-4 w-4" />
+            Pages
+          </Link>
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           <BlogStatusBadge status={page.status} />
