@@ -66,6 +66,8 @@ type ToolbarAction = {
   canExecute: (editor: Editor) => boolean;
 };
 
+type SetImageAttrs = Parameters<NonNullable<Editor["commands"]["setImage"]>>[0];
+
 function ToolbarButton({
   editor,
   action,
@@ -113,6 +115,7 @@ function ToolbarSection({
 
   const isDropdownActive = dropdown.some((a) => a.isActive(editor));
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
+  const pointerMoved = useRef(false);
 
   return (
     <>
@@ -121,19 +124,27 @@ function ToolbarSection({
       ))}
       {dropdown.length > 0 && (
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild
+          <DropdownMenuTrigger
+            asChild
             onPointerDown={(e) => {
               pointerStart.current = { x: e.clientX, y: e.clientY };
+              pointerMoved.current = false;
             }}
-            onPointerUp={(e) => {
-              if (!pointerStart.current) return;
+            onPointerMove={(e) => {
+              if (!pointerStart.current || pointerMoved.current) return;
               const dx = Math.abs(e.clientX - pointerStart.current.x);
               const dy = Math.abs(e.clientY - pointerStart.current.y);
-              // If moved more than 10px, it was a swipe - prevent click
               if (dx > 10 || dy > 10) {
+                pointerMoved.current = true;
+              }
+            }}
+            onPointerUp={(e) => {
+              if (pointerMoved.current) {
                 e.preventDefault();
+                e.stopPropagation();
               }
               pointerStart.current = null;
+              pointerMoved.current = false;
             }}
           >
             <Button
@@ -371,7 +382,12 @@ export function BlogEditor({
         const srcset = generateSrcSet(originalUrl);
         const sizes = generateSizes();
 
-        editor.chain().focus().setImage({
+        const imageAttrs: SetImageAttrs & {
+          srcset?: string;
+          sizes?: string;
+          loading?: "lazy";
+          decoding?: "async";
+        } = {
           src: imageUrl,
           alt: alt.trim(),
           width: img.naturalWidth,
@@ -380,7 +396,9 @@ export function BlogEditor({
           sizes,
           loading: "lazy",
           decoding: "async",
-        } as any).run();
+        };
+
+        editor.chain().focus().setImage(imageAttrs).run();
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";
         window.alert(detail);
@@ -616,20 +634,30 @@ export function BlogEditor({
 
         {/* Headings in dropdown */}
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild
+          <DropdownMenuTrigger
+            asChild
             onPointerDown={(e) => {
               (e.currentTarget as HTMLElement).dataset.pointerStart = JSON.stringify({ x: e.clientX, y: e.clientY });
+              (e.currentTarget as HTMLElement).dataset.pointerMoved = "false";
             }}
-            onPointerUp={(e) => {
+            onPointerMove={(e) => {
               const start = (e.currentTarget as HTMLElement).dataset.pointerStart;
-              if (!start) return;
+              if (!start || (e.currentTarget as HTMLElement).dataset.pointerMoved === "true") return;
               const { x, y } = JSON.parse(start);
               const dx = Math.abs(e.clientX - x);
               const dy = Math.abs(e.clientY - y);
               if (dx > 10 || dy > 10) {
+                (e.currentTarget as HTMLElement).dataset.pointerMoved = "true";
+              }
+            }}
+            onPointerUp={(e) => {
+              const moved = (e.currentTarget as HTMLElement).dataset.pointerMoved === "true";
+              if (moved) {
                 e.preventDefault();
+                e.stopPropagation();
               }
               delete (e.currentTarget as HTMLElement).dataset.pointerStart;
+              delete (e.currentTarget as HTMLElement).dataset.pointerMoved;
             }}
           >
             <Button
@@ -698,13 +726,13 @@ export function BlogEditor({
             shouldShow={({ editor: ed }) =>
               ed.isActive("image") && ed.isEditable
             }
+            updateDelay={0}
+            resizeDelay={0}
             options={{
               placement: "top",
               strategy: "absolute",
-              updateDelay: 0,
-              resizeDelay: 0,
               hide: true,
-            } as any}
+            }}
           >
             <div
               className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md"
