@@ -132,7 +132,7 @@ function ToolbarSection({
               {dropdownIcon || <MoreHorizontal className="h-4 w-4" />}
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
+          <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
             {dropdown.map((action) => (
               <DropdownMenuItem
                 key={action.value}
@@ -633,7 +633,7 @@ export function BlogEditor({
               <ChevronDown className="ml-0.5 h-3 w-3" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
+          <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
             {headingActions.map((action) => (
               <DropdownMenuItem
                 key={action.value}
