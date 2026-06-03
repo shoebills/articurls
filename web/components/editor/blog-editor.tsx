@@ -193,7 +193,23 @@ export function BlogEditor({
       Underline,
       Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Image.configure({ inline: false }),
+      Image.configure({
+        inline: false,
+        HTMLAttributes: {
+          loading: "lazy",
+          decoding: "async",
+        },
+      }).extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            srcset: { default: null },
+            sizes: { default: null },
+            loading: { default: "lazy" },
+            decoding: { default: "async" },
+          };
+        },
+      }),
       Youtube.configure({ width: 640, height: 360, nocookie: true }),
       Placeholder.configure({ placeholder }),
     ],
@@ -339,14 +355,16 @@ export function BlogEditor({
         const srcset = generateSrcSet(originalUrl);
         const sizes = generateSizes();
 
-        // Use insertContent with HTML to support srcset attribute
-        // TipTap's setImage doesn't support srcset natively
-        editor.chain().focus().insertContent({
-          type: "html",
-          attrs: {
-            value: `<img src="${imageUrl}" alt="${alt.trim()}" width="${img.naturalWidth}" height="${img.naturalHeight}" srcset="${srcset}" sizes="${sizes}" loading="lazy" decoding="async">`,
-          },
-        }).run();
+        editor.chain().focus().setImage({
+          src: imageUrl,
+          alt: alt.trim(),
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+          srcset,
+          sizes,
+          loading: "lazy",
+          decoding: "async",
+        } as any).run();
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";
         window.alert(detail);
