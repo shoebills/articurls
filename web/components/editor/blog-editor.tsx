@@ -500,14 +500,6 @@ export function BlogEditor({
       canExecute: (e) => e.can().chain().focus().toggleStrike().run() && !e.isActive("codeBlock"),
     },
     {
-      value: "code",
-      label: "Inline Code",
-      icon: <Code className="h-4 w-4" />,
-      action: (e) => e.chain().focus().toggleCode().run(),
-      isActive: (e) => e.isActive("code"),
-      canExecute: (e) => e.can().chain().focus().toggleCode().run() && !e.isActive("codeBlock"),
-    },
-    {
       value: "highlight",
       label: "Highlight",
       icon: <Highlighter className="h-4 w-4" />,
