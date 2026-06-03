@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
@@ -586,25 +587,6 @@ export function BlogEditor({
     },
   ];
 
-  const imageToolActions: ToolbarAction[] = [
-    {
-      value: "editAlt",
-      label: "Alt Text",
-      icon: <ScanText className="h-4 w-4" />,
-      action: editSelectedImageAlt,
-      isActive: () => isImageSelected,
-      canExecute: () => isImageSelected,
-    },
-    {
-      value: "removeImage",
-      label: "Remove Image",
-      icon: <X className="h-4 w-4" />,
-      action: removeSelectedImage,
-      isActive: () => false,
-      canExecute: () => isImageSelected,
-    },
-  ];
-
   return (
     <div className={cn("tiptap-editor rounded-lg border border-input bg-background", className)}>
       <span className="hidden" aria-hidden>
@@ -684,20 +666,42 @@ export function BlogEditor({
           dropdownTooltip="Insert"
         />
 
-        {/* Image tools (only when image selected) */}
-        {isImageSelected && (
-          <>
-            <Separator orientation="vertical" className="mx-2 h-6" />
-            <ToolbarSection
-              editor={editor}
-              actions={imageToolActions}
-              mainActionCount={2}
-            />
-          </>
-        )}
       </div>
       <div className="p-3 sm:p-4 md:p-6">
         <EditorContent editor={editor} />
+        {editor && (
+          <BubbleMenu
+            editor={editor}
+            shouldShow={({ editor: ed }) =>
+              ed.isActive("image") && ed.isEditable
+            }
+            options={{ placement: "top" }}
+          >
+            <div className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-2 text-xs"
+                onClick={editSelectedImageAlt}
+              >
+                <ScanText className="h-3.5 w-3.5" />
+                Alt text
+              </Button>
+              <Separator orientation="vertical" className="h-5" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
+                onClick={removeSelectedImage}
+              >
+                <X className="h-3.5 w-3.5" />
+                Remove
+              </Button>
+            </div>
+          </BubbleMenu>
+        )}
       </div>
     </div>
   );
