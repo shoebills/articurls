@@ -16,6 +16,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
       "img-src 'self' https: data: blob:; " +
       "font-src 'self'; " +
       "connect-src 'self' https://api.articurls.com; " +
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
       "form-action 'self';"

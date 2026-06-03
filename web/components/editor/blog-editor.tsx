@@ -455,33 +455,35 @@ export function BlogEditor({
 
   const handleAltConfirm = useCallback(
     (alt: string) => {
-      if (!editor || !pendingImageUploadRef.current) return;
-      const { imageUrl, width, height } = pendingImageUploadRef.current;
-      const srcset = generateSrcSet(pendingImageUploadRef.current.originalUrl);
-      const sizes = generateSizes();
-
-      const imageAttrs: SetImageAttrs & {
-        srcset?: string;
-        sizes?: string;
-        loading?: "lazy";
-        decoding?: "async";
-      } = {
-        src: imageUrl,
-        alt: alt.trim(),
-        width,
-        height,
-        srcset,
-        sizes,
-        loading: "lazy",
-        decoding: "async",
-      };
+      if (!editor) return;
 
       if (altDialogMode === "new") {
+        if (!pendingImageUploadRef.current) return;
+        const { imageUrl, width, height } = pendingImageUploadRef.current;
+        const srcset = generateSrcSet(pendingImageUploadRef.current.originalUrl);
+        const sizes = generateSizes();
+
+        const imageAttrs: SetImageAttrs & {
+          srcset?: string;
+          sizes?: string;
+          loading?: "lazy";
+          decoding?: "async";
+        } = {
+          src: imageUrl,
+          alt: alt.trim(),
+          width,
+          height,
+          srcset,
+          sizes,
+          loading: "lazy",
+          decoding: "async",
+        };
+
         editor.chain().focus().setImage(imageAttrs).run();
+        pendingImageUploadRef.current = null;
       } else {
         editor.chain().focus().updateAttributes("image", { alt: alt.trim() }).run();
       }
-      pendingImageUploadRef.current = null;
     },
     [editor, altDialogMode]
   );
