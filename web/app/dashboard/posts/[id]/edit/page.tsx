@@ -527,7 +527,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
           onClick={() => setAdvancedOpen(!advancedOpen)}
         >
-          Advanced — slug, meta, email to subscribers
+          Advanced settings
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
