@@ -1,7 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
@@ -32,7 +32,19 @@ import {
   Undo2,
   X,
   Video,
+  ChevronDown,
+  MoreHorizontal,
+  Strikethrough,
+  Type,
+  Quote,
+  WrapText,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ApiError,
   deleteBlogMediaByUrl,
@@ -45,6 +57,102 @@ import { cn } from "@/lib/utils";
 import { transformImageUrl, generateSrcSet, generateSizes } from "@/lib/image-transform";
 
 const lowlight = createLowlight(common);
+
+// Toolbar action types (minimal-tiptap pattern)
+type ToolbarAction = {
+  value: string;
+  label: string;
+  icon: React.ReactNode;
+  action: (editor: Editor) => void;
+  isActive: (editor: Editor) => boolean;
+  canExecute: (editor: Editor) => boolean;
+};
+
+function ToolbarButton({
+  editor,
+  action,
+  variant = "ghost",
+}: {
+  editor: Editor;
+  action: ToolbarAction;
+  variant?: "ghost" | "secondary";
+}) {
+  const active = action.isActive(editor);
+  const disabled = !action.canExecute(editor);
+  return (
+    <Button
+      type="button"
+      variant={active ? "secondary" : variant}
+      size="icon"
+      onClick={() => action.action(editor)}
+      disabled={disabled}
+      title={action.label}
+    >
+      {action.icon}
+    </Button>
+  );
+}
+
+function ToolbarSection({
+  editor,
+  actions,
+  mainActionCount = 2,
+  dropdownIcon,
+  dropdownTooltip,
+}: {
+  editor: Editor;
+  actions: ToolbarAction[];
+  mainActionCount?: number;
+  dropdownIcon?: React.ReactNode;
+  dropdownTooltip?: string;
+}) {
+  const { main, dropdown } = useMemo(() => {
+    return {
+      main: actions.slice(0, mainActionCount),
+      dropdown: actions.slice(mainActionCount),
+    };
+  }, [actions, mainActionCount]);
+
+  const isDropdownActive = dropdown.some((a) => a.isActive(editor));
+
+  return (
+    <>
+      {main.map((action) => (
+        <ToolbarButton key={action.value} editor={editor} action={action} />
+      ))}
+      {dropdown.length > 0 && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant={isDropdownActive ? "secondary" : "ghost"}
+              size="icon"
+              title={dropdownTooltip || "More options"}
+            >
+              {dropdownIcon || <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {dropdown.map((action) => (
+              <DropdownMenuItem
+                key={action.value}
+                onClick={() => action.action(editor)}
+                disabled={!action.canExecute(editor)}
+                className={cn(
+                  "flex items-center gap-2",
+                  action.isActive(editor) && "bg-accent"
+                )}
+              >
+                {action.icon}
+                <span>{action.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </>
+  );
+}
 
 function extractImageSrcsFromHtml(html: string): Set<string> {
   const urls = new Set<string>();
@@ -289,134 +397,291 @@ export function BlogEditor({
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;
   }
 
+  // Toolbar action definitions (minimal-tiptap pattern)
+  const historyActions: ToolbarAction[] = [
+    {
+      value: "undo",
+      label: "Undo",
+      icon: <Undo2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().undo().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().undo().run(),
+    },
+    {
+      value: "redo",
+      label: "Redo",
+      icon: <Redo2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().redo().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().redo().run(),
+    },
+  ];
+
+  const headingActions: ToolbarAction[] = [
+    {
+      value: "heading1",
+      label: "Heading 1",
+      icon: <Heading1 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 1 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 1 }).run(),
+    },
+    {
+      value: "heading2",
+      label: "Heading 2",
+      icon: <Heading2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 2 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 2 }).run(),
+    },
+    {
+      value: "heading3",
+      label: "Heading 3",
+      icon: <Heading3 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 3 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 3 }).run(),
+    },
+    {
+      value: "paragraph",
+      label: "Paragraph",
+      icon: <Type className="h-4 w-4" />,
+      action: (e) => e.chain().focus().setParagraph().run(),
+      isActive: (e) => e.isActive("paragraph"),
+      canExecute: (e) => e.can().chain().focus().setParagraph().run(),
+    },
+  ];
+
+  const formatActions: ToolbarAction[] = [
+    {
+      value: "bold",
+      label: "Bold",
+      icon: <Bold className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBold().run(),
+      isActive: (e) => e.isActive("bold"),
+      canExecute: (e) => e.can().chain().focus().toggleBold().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "italic",
+      label: "Italic",
+      icon: <Italic className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleItalic().run(),
+      isActive: (e) => e.isActive("italic"),
+      canExecute: (e) => e.can().chain().focus().toggleItalic().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "underline",
+      label: "Underline",
+      icon: <UnderlineIcon className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleUnderline().run(),
+      isActive: (e) => e.isActive("underline"),
+      canExecute: (e) => e.can().chain().focus().toggleUnderline().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "strikethrough",
+      label: "Strikethrough",
+      icon: <Strikethrough className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleStrike().run(),
+      isActive: (e) => e.isActive("strike"),
+      canExecute: (e) => e.can().chain().focus().toggleStrike().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "code",
+      label: "Inline Code",
+      icon: <Code className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleCode().run(),
+      isActive: (e) => e.isActive("code"),
+      canExecute: (e) => e.can().chain().focus().toggleCode().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "highlight",
+      label: "Highlight",
+      icon: <Highlighter className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHighlight().run(),
+      isActive: (e) => e.isActive("highlight"),
+      canExecute: (e) => e.can().chain().focus().toggleHighlight().run() && !e.isActive("codeBlock"),
+    },
+  ];
+
+  const listActions: ToolbarAction[] = [
+    {
+      value: "bulletList",
+      label: "Bullet List",
+      icon: <List className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBulletList().run(),
+      isActive: (e) => e.isActive("bulletList"),
+      canExecute: (e) => e.can().chain().focus().toggleBulletList().run(),
+    },
+    {
+      value: "orderedList",
+      label: "Ordered List",
+      icon: <ListOrdered className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleOrderedList().run(),
+      isActive: (e) => e.isActive("orderedList"),
+      canExecute: (e) => e.can().chain().focus().toggleOrderedList().run(),
+    },
+    {
+      value: "blockquote",
+      label: "Quote",
+      icon: <Quote className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBlockquote().run(),
+      isActive: (e) => e.isActive("blockquote"),
+      canExecute: (e) => e.can().chain().focus().toggleBlockquote().run(),
+    },
+    {
+      value: "codeBlock",
+      label: "Code Block",
+      icon: <Code className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleCodeBlock().run(),
+      isActive: (e) => e.isActive("codeBlock"),
+      canExecute: (e) => e.can().chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      value: "horizontalRule",
+      label: "Divider",
+      icon: <Minus className="h-4 w-4" />,
+      action: (e) => e.chain().focus().setHorizontalRule().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().setHorizontalRule().run(),
+    },
+  ];
+
+  const insertActions: ToolbarAction[] = [
+    {
+      value: "link",
+      label: "Link",
+      icon: <Link2 className="h-4 w-4" />,
+      action: setLink,
+      isActive: (e) => e.isActive("link"),
+      canExecute: () => true,
+    },
+    {
+      value: "image",
+      label: "Image",
+      icon: <ImageIcon className="h-4 w-4" />,
+      action: addImage,
+      isActive: () => false,
+      canExecute: () => !!token && !!(blogId || pageId),
+    },
+    {
+      value: "youtube",
+      label: "YouTube",
+      icon: <Video className="h-4 w-4" />,
+      action: addYoutube,
+      isActive: () => false,
+      canExecute: () => true,
+    },
+  ];
+
+  const imageToolActions: ToolbarAction[] = [
+    {
+      value: "editAlt",
+      label: "Alt Text",
+      icon: <ScanText className="h-4 w-4" />,
+      action: editSelectedImageAlt,
+      isActive: () => isImageSelected,
+      canExecute: () => isImageSelected,
+    },
+    {
+      value: "removeImage",
+      label: "Remove Image",
+      icon: <X className="h-4 w-4" />,
+      action: removeSelectedImage,
+      isActive: () => false,
+      canExecute: () => isImageSelected,
+    },
+  ];
+
   return (
     <div className={cn("tiptap-editor rounded-lg border border-input bg-background", className)}>
       <span className="hidden" aria-hidden>
         {selectionTick}
       </span>
-      <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border p-2 [scrollbar-width:thin] sm:flex-wrap">
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
-          <Undo2 className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().redo().run()}>
-          <Redo2 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 1 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 3 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        >
-          <Heading3 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("bold") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("italic") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("underline") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("highlight") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-        >
-          <Highlighter className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={setLink}>
-          <Link2 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("bulletList") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("orderedList") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-          <Minus className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("codeBlock") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        >
-          <Code className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button type="button" variant="ghost" size="icon" onClick={addImage} title="Image">
-          <ImageIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={isImageSelected ? "secondary" : "ghost"}
-          size="icon"
-          onClick={editSelectedImageAlt}
-          title="Edit image alt text"
-          disabled={!isImageSelected}
-        >
-          <ScanText className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={isImageSelected ? "secondary" : "ghost"}
-          size="icon"
-          onClick={removeSelectedImage}
-          title="Remove selected image"
-          disabled={!isImageSelected}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={addYoutube} title="YouTube">
-          <Video className="h-4 w-4" />
-        </Button>
+      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 [scrollbar-width:thin]">
+        {/* History */}
+        <ToolbarSection editor={editor} actions={historyActions} mainActionCount={2} />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Formatting: Bold/Italic main, rest in dropdown */}
+        <ToolbarSection
+          editor={editor}
+          actions={formatActions}
+          mainActionCount={3}
+          dropdownIcon={<MoreHorizontal className="h-4 w-4" />}
+          dropdownTooltip="More formatting"
+        />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Headings in dropdown */}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant={editor.isActive("heading") ? "secondary" : "ghost"}
+              size="icon"
+              title="Headings"
+            >
+              {editor.isActive("heading", { level: 1 }) ? (
+                <Heading1 className="h-4 w-4" />
+              ) : editor.isActive("heading", { level: 2 }) ? (
+                <Heading2 className="h-4 w-4" />
+              ) : editor.isActive("heading", { level: 3 }) ? (
+                <Heading3 className="h-4 w-4" />
+              ) : (
+                <Type className="h-4 w-4" />
+              )}
+              <ChevronDown className="ml-0.5 h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            {headingActions.map((action) => (
+              <DropdownMenuItem
+                key={action.value}
+                onClick={() => action.action(editor)}
+                disabled={!action.canExecute(editor)}
+                className={cn(
+                  "flex items-center gap-2",
+                  action.isActive(editor) && "bg-accent"
+                )}
+              >
+                {action.icon}
+                <span>{action.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Lists & Blocks */}
+        <ToolbarSection
+          editor={editor}
+          actions={listActions}
+          mainActionCount={2}
+          dropdownIcon={<WrapText className="h-4 w-4" />}
+          dropdownTooltip="More blocks"
+        />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Insert */}
+        <ToolbarSection
+          editor={editor}
+          actions={insertActions}
+          mainActionCount={2}
+          dropdownIcon={<MoreHorizontal className="h-4 w-4" />}
+          dropdownTooltip="Insert"
+        />
+
+        {/* Image tools (only when image selected) */}
+        {isImageSelected && (
+          <>
+            <Separator orientation="vertical" className="mx-2 h-6" />
+            <ToolbarSection
+              editor={editor}
+              actions={imageToolActions}
+              mainActionCount={2}
+            />
+          </>
+        )}
       </div>
       <div className="p-3 sm:p-4 md:p-6">
         <EditorContent editor={editor} />
