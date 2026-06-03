@@ -94,7 +94,7 @@ def create_category(
                     settings.cloudflare_zone_id, current_user.custom_domain
                 ))
             asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+                settings.cloudflare_zone_id, "articurls.com"
             ))
         except Exception:
             pass
@@ -157,7 +157,7 @@ def update_menu_categories(
                     settings.cloudflare_zone_id, current_user.custom_domain
                 ))
             asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+                settings.cloudflare_zone_id, "articurls.com"
             ))
         except Exception:
             pass
@@ -216,10 +216,10 @@ def update_category(
                     settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
                 ))
             asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", old_slug
+                settings.cloudflare_zone_id, "articurls.com", old_slug
             ))
             asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
             ))
         except Exception:
             pass
@@ -257,10 +257,10 @@ def delete_category(
                     settings.cloudflare_zone_id, current_user.custom_domain
                 ))
             asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
             ))
             asyncio.create_task(purge_entire_tenant(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}"
+                settings.cloudflare_zone_id, "articurls.com"
             ))
         except Exception:
             pass
@@ -367,7 +367,7 @@ def set_category_blogs(
                     settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
                 ))
             asyncio.create_task(purge_category(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_cat.slug
+                settings.cloudflare_zone_id, "articurls.com", db_cat.slug
             ))
         except Exception:
             pass

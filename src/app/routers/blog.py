@@ -293,7 +293,7 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
                 ))
             # Also purge from articurls.com/username path
             asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
+                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
             ))
         except Exception:
             pass  # Fail silently, cache will expire naturally
@@ -395,7 +395,7 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
                     settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
                 ))
             asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
+                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
             ))
         except Exception:
             pass
@@ -624,7 +624,7 @@ def assign_blog_categories(
                     settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
                 ))
             asyncio.create_task(purge_blog_post(
-                settings.cloudflare_zone_id, f"articurls.com/{current_user.user_name}", db_blog.slug
+                settings.cloudflare_zone_id, "articurls.com", db_blog.slug
             ))
         except Exception:
             pass
