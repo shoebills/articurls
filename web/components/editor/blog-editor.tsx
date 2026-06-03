@@ -678,7 +678,8 @@ export function BlogEditor({
             options={{
               placement: "top",
               strategy: "absolute",
-            }}
+              updateDelay: 0,
+            } as any}
           >
             <div className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md">
               <Button
