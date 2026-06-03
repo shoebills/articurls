@@ -27,6 +27,13 @@
   --sidebar-border: oklch(0.91 0.014 260);
 }
 
+/* Highlight / mark tag fallback styling for Tiptap content */
+mark {
+  background-color: #fef08a;
+  border-radius: 0.125rem;
+  padding: 0 0.125rem;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

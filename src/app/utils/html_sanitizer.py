@@ -58,6 +58,7 @@ ALLOWED_ATTRIBUTES = {
     "img": {"src", "alt", "title", "width", "height"},
     "iframe": {"src", "frameborder", "allowfullscreen", "allow", "title", "width", "height", "referrerpolicy"},
     "div": {"data-youtube-video", "style"},
+    "mark": {"style"},
     "*": {"class"},
 }
 
