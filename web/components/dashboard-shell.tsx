@@ -76,7 +76,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground"
+                    className="h-9 w-9 shrink-0 border-border/70 bg-white text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-white hover:text-foreground"
                     aria-label="Open menu"
                     aria-expanded={open}
                     aria-controls={mobileMenuId}
@@ -111,7 +111,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 )}
                 aria-hidden={!open}
               >
-                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar">
+                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-white">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
