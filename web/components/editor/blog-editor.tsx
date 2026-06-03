@@ -116,6 +116,7 @@ function ToolbarSection({
   const isDropdownActive = dropdown.some((a) => a.isActive(editor));
   const pointerStart = useRef<{ x: number; y: number } | null>(null);
   const pointerMoved = useRef(false);
+  const suppressNextClick = useRef(false);
 
   return (
     <>
@@ -142,9 +143,17 @@ function ToolbarSection({
               if (pointerMoved.current) {
                 e.preventDefault();
                 e.stopPropagation();
+                suppressNextClick.current = true;
               }
               pointerStart.current = null;
               pointerMoved.current = false;
+            }}
+            onClick={(e) => {
+              if (suppressNextClick.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                suppressNextClick.current = false;
+              }
             }}
           >
             <Button
@@ -655,9 +664,17 @@ export function BlogEditor({
               if (moved) {
                 e.preventDefault();
                 e.stopPropagation();
+                suppressNextClick.current = true;
               }
               delete (e.currentTarget as HTMLElement).dataset.pointerStart;
               delete (e.currentTarget as HTMLElement).dataset.pointerMoved;
+            }}
+            onClick={(e) => {
+              if (suppressNextClick.current) {
+                e.preventDefault();
+                e.stopPropagation();
+                suppressNextClick.current = false;
+              }
             }}
           >
             <Button
