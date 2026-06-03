@@ -119,8 +119,8 @@ function ToolbarSection({
         <ToolbarButton key={action.value} editor={editor} action={action} />
       ))}
       {dropdown.length > 0 && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild onPointerDown={(e) => e.preventDefault()}>
             <Button
               type="button"
               variant={isDropdownActive ? "secondary" : "ghost"}
@@ -600,8 +600,8 @@ export function BlogEditor({
         <Separator orientation="vertical" className="mx-2 h-6" />
 
         {/* Headings in dropdown */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild onPointerDown={(e) => e.preventDefault()}>
             <Button
               type="button"
               variant={editor.isActive("heading") ? "secondary" : "ghost"}
