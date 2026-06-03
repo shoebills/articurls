@@ -344,9 +344,12 @@ export default function CustomDomainSettings() {
                   Verified {new Date(domain.verified_at).toLocaleDateString()}
                 </p>
               )}
-              <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                Your domain is active on our end. It can take a few minutes for SSL certificates and DNS to finish propagating before the site loads in your browser.
-              </p>
+              {domain.verified_at &&
+                Date.now() - new Date(domain.verified_at).getTime() < 2 * 60 * 60 * 1000 && (
+                  <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                    Your domain is active on our end. It can take a few minutes for SSL certificates and DNS to finish propagating before the site loads in your browser.
+                  </p>
+                )}
             </div>
           )}
 
