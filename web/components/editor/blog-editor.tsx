@@ -112,6 +112,7 @@ function ToolbarSection({
   }, [actions, mainActionCount]);
 
   const isDropdownActive = dropdown.some((a) => a.isActive(editor));
+  const pointerStart = useRef<{ x: number; y: number } | null>(null);
 
   return (
     <>
@@ -120,7 +121,21 @@ function ToolbarSection({
       ))}
       {dropdown.length > 0 && (
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild onPointerDown={(e) => e.preventDefault()}>
+          <DropdownMenuTrigger asChild
+            onPointerDown={(e) => {
+              pointerStart.current = { x: e.clientX, y: e.clientY };
+            }}
+            onPointerUp={(e) => {
+              if (!pointerStart.current) return;
+              const dx = Math.abs(e.clientX - pointerStart.current.x);
+              const dy = Math.abs(e.clientY - pointerStart.current.y);
+              // If moved more than 10px, it was a swipe - prevent click
+              if (dx > 10 || dy > 10) {
+                e.preventDefault();
+              }
+              pointerStart.current = null;
+            }}
+          >
             <Button
               type="button"
               variant={isDropdownActive ? "secondary" : "ghost"}
@@ -601,7 +616,22 @@ export function BlogEditor({
 
         {/* Headings in dropdown */}
         <DropdownMenu modal={false}>
-          <DropdownMenuTrigger asChild onPointerDown={(e) => e.preventDefault()}>
+          <DropdownMenuTrigger asChild
+            onPointerDown={(e) => {
+              (e.currentTarget as HTMLElement).dataset.pointerStart = JSON.stringify({ x: e.clientX, y: e.clientY });
+            }}
+            onPointerUp={(e) => {
+              const start = (e.currentTarget as HTMLElement).dataset.pointerStart;
+              if (!start) return;
+              const { x, y } = JSON.parse(start);
+              const dx = Math.abs(e.clientX - x);
+              const dy = Math.abs(e.clientY - y);
+              if (dx > 10 || dy > 10) {
+                e.preventDefault();
+              }
+              delete (e.currentTarget as HTMLElement).dataset.pointerStart;
+            }}
+          >
             <Button
               type="button"
               variant={editor.isActive("heading") ? "secondary" : "ghost"}
