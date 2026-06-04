@@ -56,7 +56,7 @@ export function BlogStatusBadge({
     return (
       <span
         className={cn(
-          "inline-flex items-center justify-center rounded-full border px-2 py-1.5 shadow-sm",
+          "inline-flex items-center justify-center rounded-full border px-1.5 py-1 shadow-sm",
           c.pill,
           className
         )}
@@ -85,12 +85,12 @@ export function BlogStatusBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-2.5 rounded-full border px-3 py-1 text-sm font-semibold tracking-tight shadow-sm",
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-semibold tracking-tight shadow-sm",
         c.pill,
         className
       )}
     >
-      <span className="relative flex h-2.5 w-2.5">
+      <span className="relative flex h-2 w-2">
         <span
           className={cn(
             "absolute inline-flex h-full w-full rounded-full opacity-75",
@@ -100,7 +100,7 @@ export function BlogStatusBadge({
         />
         <span
           className={cn(
-            "relative inline-flex h-2.5 w-2.5 rounded-full ring-2",
+            "relative inline-flex h-2 w-2 rounded-full ring-2",
             c.dot,
             c.ring
           )}
