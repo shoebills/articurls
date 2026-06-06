@@ -20,7 +20,7 @@ import { MARKETING_ORIGIN } from "@/lib/env";
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
 function normalizeEditableSlugCustom(page: UserPage): string {
-  if (page.published_at != null) return page.slug || "";
+  if (page.status !== "draft") return page.slug || "";
   const derived = slugify(page.title || "", { lower: true, strict: true });
   const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(page.slug || "");
   const slugMatchesTitle = derived !== "" && page.slug === derived;
@@ -66,7 +66,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setMetaDesc(p.meta_description || "");
   }, []);
 
-  const canEditSlug = page?.published_at == null;
+  const canEditSlug = page?.status === "draft";
 
   const load = useCallback(async () => {
     if (!token || Number.isNaN(pageId)) return;

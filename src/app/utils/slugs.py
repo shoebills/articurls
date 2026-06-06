@@ -48,7 +48,7 @@ def unique_page_slug(
 ) -> str:
     base = slugify(base_slug) or "page"
     candidate = base
-    idx = 2
+    counter = 1
 
     while True:
         q = db.query(models.UserPage).filter(
@@ -59,8 +59,8 @@ def unique_page_slug(
         if q.first() is None:
             return candidate
 
-        candidate = f"{base}-{idx}"
-        idx += 1
+        candidate = f"{base}-{counter}"
+        counter += 1
 
 
 def maybe_replace_placeholder_page_slug_on_publish(db: Session, page: models.UserPage) -> None:

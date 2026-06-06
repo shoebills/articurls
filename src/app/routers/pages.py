@@ -252,32 +252,22 @@ def update_page(
     if "content" in update_data:
         db_page.content = sanitize_html(update_data["content"] or "")
 
-    if "slug" in update_data:
-        new_slug = (update_data["slug"] or "").strip()
-        if new_slug and new_slug != db_page.slug:
-            if db_page.published_at is not None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot change the URL slug after the page is published.",
-                )
-            # Validate slug format
-            from slugify import slugify as _slugify
-            normalized = _slugify(new_slug) or ""
-            if not normalized:
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid slug")
-            # Check uniqueness
-            conflict = (
-                db.query(models.UserPage)
-                .filter(
-                    models.UserPage.user_id == current_user.user_id,
-                    models.UserPage.slug == normalized,
-                    models.UserPage.page_id != page_id,
-                )
-                .first()
+    slug_in = update_data.pop("slug", None)
+    if slug_in is not None:
+        new_slug = slugify(slug_in.strip()) if slug_in.strip() else None
+        slug_locked = db_page.status in (models.PageStatus.PUBLISHED, models.PageStatus.ARCHIVED)
+        wants_different_slug = new_slug is not None and new_slug != db_page.slug
+
+        if slug_locked and wants_different_slug:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change the URL slug after the page is published.",
             )
-            if conflict:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already in use by another page")
-            db_page.slug = normalized
+
+        if not slug_locked and wants_different_slug:
+            db_page.slug = unique_page_slug(
+                db, current_user.user_id, new_slug, exclude_page_id=page_id
+            )
 
     if "meta_title" in update_data:
         db_page.meta_title = (update_data["meta_title"] or "").strip() or None
