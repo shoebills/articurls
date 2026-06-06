@@ -269,12 +269,6 @@ def update_page(
 
     update_data = request.model_dump(exclude_unset=True)
 
-    if "title" in update_data:
-        db_page.title = (update_data["title"] or "").strip()
-
-    if "content" in update_data:
-        db_page.content = sanitize_html(update_data["content"] or "")
-
     slug_in = update_data.pop("slug", None)
     if slug_in is not None:
         new_slug = slugify(slug_in.strip()) if slug_in.strip() else None
@@ -292,11 +286,26 @@ def update_page(
                 db, current_user.user_id, new_slug, exclude_page_id=page_id
             )
 
+    if "content" in update_data:
+        update_data["content"] = sanitize_html(update_data["content"] or "")
+
+    if "title" in update_data:
+        update_data["title"] = (update_data["title"] or "").strip()
+
     if "meta_title" in update_data:
-        db_page.meta_title = (update_data["meta_title"] or "").strip() or None
+        update_data["meta_title"] = (update_data["meta_title"] or "").strip() or None
 
     if "meta_description" in update_data:
-        db_page.meta_description = (update_data["meta_description"] or "").strip() or None
+        update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
+
+    MEANINGFUL_FIELDS = {"title", "content", "meta_title", "meta_description"}
+    has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
+
+    for key, value in update_data.items():
+        setattr(db_page, key, value)
+
+    if has_meaningful_change:
+        db_page.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_page)
@@ -382,46 +391,13 @@ def archive_page(
             detail="Only published pages can be archived",
         )
 
+    old_updated = db_page.updated_at
     db_page.status = models.PageStatus.ARCHIVED
+    db_page.updated_at = old_updated
     db.commit()
     db.refresh(db_page)
 
     # Purge cache when page is archived (removed from public)
-    if settings.cloudflare_zone_id:
-        background_tasks.add_task(
-            purge_custom_page,
-            settings.cloudflare_zone_id, "articurls.com", db_page.slug
-        )
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_custom_page,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
-            )
-
-    return db_page
-
-
-@router.post("/{page_id:int}/draft", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
-def move_page_to_draft(
-    page_id: int,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    db_page = (
-        db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
-        .first()
-    )
-    if not db_page:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
-    if db_page.status == models.PageStatus.DRAFT:
-        return db_page
-    db_page.status = models.PageStatus.DRAFT
-    db.commit()
-    db.refresh(db_page)
-
-    # Purge cache when page is moved to draft (removed from public)
     if settings.cloudflare_zone_id:
         background_tasks.add_task(
             purge_custom_page,

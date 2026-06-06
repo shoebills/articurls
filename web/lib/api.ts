@@ -414,10 +414,6 @@ export async function archivePage(token: string, pageId: number): Promise<UserPa
   return apiFetch(`/pages/${pageId}/archive`, { method: "POST", token });
 }
 
-export async function movePageToDraft(token: string, pageId: number): Promise<UserPage> {
-  return apiFetch(`/pages/${pageId}/draft`, { method: "POST", token });
-}
-
 export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
   return apiFetch("/pages/footer", {
     method: "PATCH",

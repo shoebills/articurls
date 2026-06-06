@@ -407,7 +407,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -437,6 +437,17 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.commit()
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
 
     return db_blog
 
