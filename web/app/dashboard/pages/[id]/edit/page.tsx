@@ -295,11 +295,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     );
   }
 
-  const liveUrl = user
-    ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-      ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
-      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
-    : null;
+  const liveUrl =
+    page.status === "published" && user
+      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+        ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
+        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
+      : null;
 
   const slugPlaceholder = slugify(title, { lower: true, strict: true });
 
