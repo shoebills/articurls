@@ -479,8 +479,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
       : null;
 
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
-
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
@@ -554,7 +552,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 value={slugCustom}
                 disabled={!slugEditable}
                 onChange={(e) => setSlugCustom(e.target.value)}
-                placeholder={slugPlaceholder || "(from title)"}
+                placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
                 {slugEditable
@@ -570,7 +568,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   setMetaTitleDirty(true);
                   setMetaTitle(e.target.value);
                 }}
-                placeholder="Same as post title"
+                placeholder="Same as title by default"
               />
             </div>
             <div className="space-y-2">

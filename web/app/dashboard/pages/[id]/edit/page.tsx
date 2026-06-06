@@ -66,8 +66,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setMetaDesc(p.meta_description || "");
   }, []);
 
-  const canEditSlug = page?.status === "draft";
-
   const load = useCallback(async () => {
     if (!token || Number.isNaN(pageId)) return;
     setErr(null);
@@ -102,7 +100,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const isDirty = useCallback(() => {
     if (!page) return false;
     const nextTitle = title.trim();
-    const nextSlug = canEditSlug
+    const slugEditable = page.status === "draft";
+    const nextSlug = slugEditable
       ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
@@ -115,11 +114,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.meta_title || null) !== nextMetaTitle ||
       (page.meta_description || null) !== nextMetaDesc
     );
-  }, [page, canEditSlug, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
+  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
 
   async function save(silent = false) {
     if (!token || !page) return;
     if (!isDirty()) return;
+    const slugEditable = page.status === "draft";
     const nextTitle = title.trim();
     const nextContent = content;
     const nextSlugCustom = slugCustom;
@@ -133,7 +133,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const body = {
         title: nextTitle,
         content: nextContent,
-        ...(canEditSlug
+        ...(slugEditable
           ? { slug: nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug }
           : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
@@ -143,7 +143,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setPage(updated);
       if (titleRef.current.trim() === nextTitle) setTitle(updated.title || "");
       if (contentRef.current === nextContent) setContent(updated.content || "<p></p>");
-      if (canEditSlug && slugCustomRef.current === nextSlugCustom) {
+      if (slugEditable && slugCustomRef.current === nextSlugCustom) {
         setSlugCustom(normalizeEditableSlugCustom(updated));
       }
       if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
@@ -308,7 +308,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
       : null;
 
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
+  const slugEditable = page.status === "draft";
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
@@ -366,7 +366,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
           onClick={() => setAdvancedOpen(!advancedOpen)}
         >
-          Advanced — slug & meta
+          Advanced settings
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
@@ -375,14 +375,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <Label>URL slug</Label>
               <Input
                 value={slugCustom}
+                disabled={!slugEditable}
                 onChange={(e) => setSlugCustom(e.target.value)}
-                placeholder={slugPlaceholder || "(from title)"}
-                disabled={!canEditSlug}
+                placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
-                {canEditSlug
+                {slugEditable
                   ? "Updates from the title until you edit this field. Must be unique before you publish."
-                  : "Slug is permanently locked after first publish."}
+                  : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
             <div className="space-y-2">
@@ -393,7 +393,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                   setMetaTitleDirty(true);
                   setMetaTitle(e.target.value);
                 }}
-                placeholder="Same as page title"
+                placeholder="Same as title by default"
               />
             </div>
             <div className="space-y-2">
