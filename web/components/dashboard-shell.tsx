@@ -44,10 +44,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [open, close]);
 
   return (
-    <div className="flex min-h-dvh w-full bg-white md:h-dvh md:max-h-dvh md:justify-center md:overflow-hidden">
+    <div className="flex min-h-dvh w-full bg-white md:justify-center">
       <div className="flex w-full max-w-[1200px]">
         <AppSidebar />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
             {publicBlogHref ? (
@@ -134,7 +134,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="flex-1 touch-pan-y bg-white px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:py-6 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:[scrollbar-gutter:stable] md:p-8 md:pb-10">
+        <main className="flex-1 touch-pan-y bg-white px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:py-6 md:p-8 md:pb-10">
           {children}
         </main>
       </div>
