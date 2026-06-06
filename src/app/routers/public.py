@@ -104,7 +104,6 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
         .filter(
             models.UserPage.user_id == db_user.user_id,
             models.UserPage.slug == slug,
-            models.UserPage.show_in_footer.is_(True),  # Only return pages visible in footer
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
         .first()
