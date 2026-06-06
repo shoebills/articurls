@@ -235,7 +235,7 @@ export default function CustomDomainSettings() {
 
       {/* No domain configured */}
       {!domain?.hostname && (
-        <Card className="p-6">
+        <div className="space-y-4">
           <h2 className="text-base font-semibold">Add Custom Domain</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Subdomains only — e.g. <span className="font-mono">www.example.com</span> or{" "}
@@ -274,14 +274,14 @@ export default function CustomDomainSettings() {
               Add Domain
             </Button>
           </form>
-        </Card>
+        </div>
       )}
 
       {/* Domain configured */}
       {domain?.hostname && (
-        <Card className="divide-y divide-border/70">
+        <div className="space-y-6">
           {/* Header row */}
-          <div className="flex items-center justify-between p-5">
+          <div className="flex items-center justify-between">
             <div className="space-y-1.5">
               <p className="text-base font-semibold tracking-tight">{domain.hostname}</p>
               <StatusBadge status={domain.domain_status} />
@@ -327,7 +327,7 @@ export default function CustomDomainSettings() {
 
           {/* Active state */}
           {domain.domain_status === "active" && (
-            <div className="space-y-3 p-5">
+            <div className="space-y-3">
               <p className="text-sm text-muted-foreground">
                 Your blog is live at{" "}
                 <a
@@ -339,11 +339,6 @@ export default function CustomDomainSettings() {
                   https://{domain.hostname}
                 </a>
               </p>
-              {domain.verified_at && (
-                <p className="text-xs text-muted-foreground">
-                  Verified {new Date(domain.verified_at).toLocaleDateString()}
-                </p>
-              )}
               {domain.verified_at &&
                 Date.now() - new Date(domain.verified_at).getTime() < 2 * 60 * 60 * 1000 && (
                   <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
@@ -355,7 +350,7 @@ export default function CustomDomainSettings() {
 
           {/* Pending state — DNS instructions */}
           {domain.domain_status === "pending" && dnsInstructions.length > 0 && (
-            <div className="space-y-5 p-5">
+            <div className="space-y-5">
               <div>
                 <p className="text-sm font-medium">Configure DNS records</p>
                 <p className="mt-0.5 text-sm text-muted-foreground">
@@ -442,7 +437,7 @@ export default function CustomDomainSettings() {
 
           {/* Pending but no DNS instructions yet (just added, page refreshed) */}
           {domain.domain_status === "pending" && dnsInstructions.length === 0 && (
-            <div className="space-y-4 p-5">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 DNS records are required to verify this domain. Click below to load them.
               </p>
@@ -455,7 +450,7 @@ export default function CustomDomainSettings() {
 
           {/* Grace period */}
           {domain.domain_status === "grace" && (
-            <div className="p-5">
+            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 Your Pro subscription has lapsed. Your custom domain is still active during the grace period.{" "}
                 <button
@@ -477,7 +472,7 @@ export default function CustomDomainSettings() {
 
           {/* Expired */}
           {domain.domain_status === "expired" && (
-            <div className="p-5">
+            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 This domain has expired and is no longer serving your blog.{" "}
                 <button
@@ -491,7 +486,7 @@ export default function CustomDomainSettings() {
               </p>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {/* SEO warning dialog for verified domains */}
