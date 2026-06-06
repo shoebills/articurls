@@ -12,6 +12,7 @@ from ..security import oauth2
 from ..storage.service import delete_media, save_media
 from ..cache.service import purge_custom_page, purge_entire_tenant
 from ..config import settings
+from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
 
 router = APIRouter(
     tags=["Pages"],
@@ -140,21 +141,6 @@ def delete_page_media_by_url(
     return {"message": "Media deleted"}
 
 
-def _unique_page_slug(db: Session, user_id: int, title: str) -> str:
-    base = slugify(title) or "page"
-    candidate = base
-    idx = 2
-    while (
-        db.query(models.UserPage)
-        .filter(models.UserPage.user_id == user_id, models.UserPage.slug == candidate)
-        .first()
-        is not None
-    ):
-        candidate = f"{base}-{idx}"
-        idx += 1
-    return candidate
-
-
 def _validate_publishable_page(db_page: models.UserPage) -> None:
     title = (db_page.title or "").strip()
     if not title:
@@ -200,7 +186,7 @@ def create_page(
         user_id=current_user.user_id,
         title=title,
         content=content,
-        slug=_unique_page_slug(db, current_user.user_id, base_slug),
+        slug=unique_page_slug(db, current_user.user_id, base_slug),
         status=models.PageStatus.DRAFT,
     )
     db.add(new_page)
@@ -341,6 +327,7 @@ def publish_page(
     first_publish = db_page.published_at is None
     db_page.status = models.PageStatus.PUBLISHED
     if first_publish:
+        maybe_replace_placeholder_page_slug_on_publish(db, db_page)
         db_page.published_at = now
     db_page.updated_at = now
 

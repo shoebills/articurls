@@ -17,6 +17,16 @@ import { ChevronDown, ChevronUp, ExternalLink, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
+const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
+
+function normalizeEditableSlugCustom(page: UserPage): string {
+  if (page.published_at != null) return page.slug || "";
+  const derived = slugify(page.title || "", { lower: true, strict: true });
+  const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(page.slug || "");
+  const slugMatchesTitle = derived !== "" && page.slug === derived;
+  return isPlaceholderDraftSlug || slugMatchesTitle ? "" : page.slug || "";
+}
+
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pageId = Number(id);
@@ -49,7 +59,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setPage(p);
     setTitle(p.title || "");
     setContent(p.content || "<p></p>");
-    setSlugCustom(p.slug || "");
+    setSlugCustom(normalizeEditableSlugCustom(p));
     setMetaTitle(p.meta_title || "");
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
@@ -142,7 +152,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setPage(updated);
       if (titleRef.current.trim() === nextTitle) setTitle(updated.title || "");
       if (contentRef.current === nextContent) setContent(updated.content || "<p></p>");
-      if (slugCustomRef.current === nextSlugCustom) setSlugCustom(updated.slug || "");
+      if (canEditSlug && slugCustomRef.current === nextSlugCustom) {
+        setSlugCustom(normalizeEditableSlugCustom(updated));
+      }
       if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
         setMetaTitle(updated.meta_title || "");
         const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
@@ -163,6 +175,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     if (!token || !page) return;
     setErr(null);
     try {
+      if (next === "published") {
+        await save(true);
+      }
       const updated =
         next === "published"
           ? await publishPage(token, page.page_id)
@@ -375,7 +390,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               />
               <p className="text-xs text-muted-foreground">
                 {canEditSlug
-                  ? "Editable while draft. Lock happens after first publish."
+                  ? "Updates from the title until you edit this field. Must be unique before you publish."
                   : "Slug is permanently locked after first publish."}
               </p>
             </div>

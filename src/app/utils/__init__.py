@@ -1,7 +1,13 @@
 from .entitlements import assert_pro, is_pro_entitled, require_pro
 from .admin import assert_admin_email, is_admin_email
 from .serialization import public_user_out
-from .slugs import DRAFT_SLUG_RE, maybe_replace_placeholder_slug_on_publish, unique_blog_slug
+from .slugs import (
+    DRAFT_SLUG_RE,
+    maybe_replace_placeholder_page_slug_on_publish,
+    maybe_replace_placeholder_slug_on_publish,
+    unique_blog_slug,
+    unique_page_slug,
+)
 from .text import (
     html_to_plain_text,
     make_excerpt,
@@ -31,6 +37,7 @@ __all__ = [
     "is_pro_entitled",
     "make_excerpt",
     "make_meta_description",
+    "maybe_replace_placeholder_page_slug_on_publish",
     "maybe_replace_placeholder_slug_on_publish",
     "normalize_email",
     "normalize_username",
@@ -45,6 +52,7 @@ __all__ = [
     "require_pro",
     "resolve_username_to_current",
     "unique_blog_slug",
+    "unique_page_slug",
     "validate_username_or_raise",
     "user_by_email",
     "user_by_username",

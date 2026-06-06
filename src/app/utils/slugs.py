@@ -41,3 +41,38 @@ def maybe_replace_placeholder_slug_on_publish(db: Session, blog: models.Blog) ->
         base = "post"
 
     blog.slug = unique_blog_slug(db, blog.user_id, base, exclude_blog_id=blog.blog_id)
+
+
+def unique_page_slug(
+    db: Session, user_id: int, base_slug: str, exclude_page_id: int | None = None
+) -> str:
+    base = slugify(base_slug) or "page"
+    candidate = base
+    idx = 2
+
+    while True:
+        q = db.query(models.UserPage).filter(
+            models.UserPage.user_id == user_id, models.UserPage.slug == candidate
+        )
+        if exclude_page_id is not None:
+            q = q.filter(models.UserPage.page_id != exclude_page_id)
+        if q.first() is None:
+            return candidate
+
+        candidate = f"{base}-{idx}"
+        idx += 1
+
+
+def maybe_replace_placeholder_page_slug_on_publish(db: Session, page: models.UserPage) -> None:
+    if not DRAFT_SLUG_RE.match(page.slug):
+        return
+
+    if page.title and page.title.strip():
+        base = slugify(page.title.strip())
+    else:
+        base = ""
+
+    if base == "":
+        base = "page"
+
+    page.slug = unique_page_slug(db, page.user_id, base, exclude_page_id=page.page_id)
