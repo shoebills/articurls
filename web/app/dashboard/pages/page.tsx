@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiError, archivePage, deletePage, listPages, publishPage } from "@/lib/api";
@@ -16,6 +16,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { format } from "date-fns";
@@ -26,15 +34,15 @@ export default function PagesDashboardPage() {
   const router = useRouter();
   const [pages, setPages] = useState<UserPage[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [deleteId, setDeleteId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
 
-  async function load() {
+  const load = useCallback(async () => {
     if (!token) return;
-    setLoading(true);
+    setErr(null);
     try {
       const rows = await listPages(token);
       setPages(rows);
@@ -43,24 +51,20 @@ export default function PagesDashboardPage() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [token]);
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [token]);
+  }, [load]);
 
-  async function onDelete(pageId: number) {
-    if (!token) return;
-    setBusy(true);
-    setErr(null);
+  async function confirmDelete() {
+    if (!token || deleteId == null) return;
     try {
-      await deletePage(token, pageId);
+      await deletePage(token, deleteId);
+      setDeleteId(null);
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to delete page");
-    } finally {
-      setBusy(false);
     }
   }
 
@@ -117,7 +121,6 @@ export default function PagesDashboardPage() {
             size="icon"
             className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
             aria-label="Create new page"
-            disabled={busy}
           >
             <Link href="/dashboard/pages/new">
               <span className="text-xl leading-none">+</span>
@@ -127,7 +130,6 @@ export default function PagesDashboardPage() {
         <Button
           asChild
           className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
-          disabled={busy}
         >
           <Link href="/dashboard/pages/new">+ New Page</Link>
         </Button>
@@ -141,7 +143,7 @@ export default function PagesDashboardPage() {
           <p className="max-w-md text-sm text-muted-foreground">
             Create your first page and add it to your menu from Design.
           </p>
-          <Button onClick={() => router.push("/dashboard/pages/new")} disabled={busy}>
+          <Button onClick={() => router.push("/dashboard/pages/new")}>
             Add new page
           </Button>
         </div>
@@ -183,7 +185,7 @@ export default function PagesDashboardPage() {
                             size="icon"
                             className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
                             aria-label={`Actions for ${p.title || "Untitled"}`}
-                            disabled={busy || rowBusyId === p.page_id}
+                            disabled={rowBusyId === p.page_id}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
@@ -199,7 +201,7 @@ export default function PagesDashboardPage() {
                             <DropdownMenuItem
                               data-card-action="true"
                               onClick={() => void onShare(p)}
-                              disabled={busy || rowBusyId === p.page_id}
+                              disabled={rowBusyId === p.page_id}
                             >
                               <Share2 className="h-4 w-4" />
                               Copy link
@@ -209,7 +211,7 @@ export default function PagesDashboardPage() {
                             <DropdownMenuItem
                               data-card-action="true"
                               onClick={() => void onArchive(p.page_id)}
-                              disabled={busy || rowBusyId === p.page_id}
+                              disabled={rowBusyId === p.page_id}
                             >
                               <Archive className="h-4 w-4" />
                               Archive
@@ -219,7 +221,7 @@ export default function PagesDashboardPage() {
                             <DropdownMenuItem
                               data-card-action="true"
                               onClick={() => void onUnarchive(p.page_id)}
-                              disabled={busy || rowBusyId === p.page_id}
+                              disabled={rowBusyId === p.page_id}
                             >
                               <ArchiveRestore className="h-4 w-4" />
                               Unarchive
@@ -228,8 +230,8 @@ export default function PagesDashboardPage() {
                           <DropdownMenuItem
                             data-card-action="true"
                             className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => void onDelete(p.page_id)}
-                            disabled={busy || rowBusyId === p.page_id}
+                            onClick={() => setDeleteId(p.page_id)}
+                            disabled={rowBusyId === p.page_id}
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
@@ -252,6 +254,23 @@ export default function PagesDashboardPage() {
           ))}
         </ul>
       )}
+
+      <Dialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete page?</DialogTitle>
+            <DialogDescription>This cannot be undone.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={() => void confirmDelete()}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
 
