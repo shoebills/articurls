@@ -44,9 +44,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [open, close]);
 
   return (
-    <div className="flex min-h-dvh w-full bg-white md:h-dvh md:max-h-dvh md:overflow-hidden">
-      <AppSidebar />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
+    <div className="flex min-h-dvh w-full bg-white md:h-dvh md:max-h-dvh md:justify-center md:overflow-hidden">
+      <div className="flex w-full max-w-[1200px]">
+        <AppSidebar />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
         <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
             {publicBlogHref ? (
@@ -138,5 +139,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
+  </div>
   );
 }
