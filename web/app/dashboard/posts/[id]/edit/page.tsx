@@ -222,9 +222,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : finalBlog.slug);
       }
       if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        setMetaTitle(finalBlog.meta_title || "");
         const metaSynced = !finalBlog.meta_title || finalBlog.meta_title === finalBlog.title;
         setMetaTitleDirty(!metaSynced);
+        if (metaSynced) {
+          setMetaTitle(titleRef.current.trim() || finalBlog.title || "");
+        } else {
+          setMetaTitle(finalBlog.meta_title || "");
+        }
       }
       if (metaDescRef.current === nextMetaDesc) setMetaDesc(finalBlog.meta_description || "");
       if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(finalBlog.featured_image_url || "");

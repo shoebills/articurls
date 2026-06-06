@@ -147,9 +147,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         setSlugCustom(normalizeEditableSlugCustom(updated));
       }
       if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        setMetaTitle(updated.meta_title || "");
         const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
         setMetaTitleDirty(!metaSynced);
+        if (metaSynced) {
+          setMetaTitle(titleRef.current.trim() || updated.title || "");
+        } else {
+          setMetaTitle(updated.meta_title || "");
+        }
       }
       if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
       clearManualDraft();
