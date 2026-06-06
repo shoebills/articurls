@@ -172,6 +172,22 @@ def list_pages(
     )
 
 
+@router.get("/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def get_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    return db_page
+
+
 @router.post("/", response_model=page_schema.UserPageOut, status_code=status.HTTP_201_CREATED)
 def create_page(
     request: page_schema.UserPageCreate,
@@ -180,7 +196,14 @@ def create_page(
 ):
     title = (request.title or "").strip()
     content = sanitize_html(request.content or "")
-    base_slug = slugify(title) if title else f"draft-{secrets.token_hex(6)}"
+
+    if request.slug:
+        base_slug = slugify(request.slug) or None
+    else:
+        base_slug = slugify(title) if title else None
+
+    if not base_slug:
+        base_slug = f"draft-{secrets.token_hex(6)}"
 
     new_page = models.UserPage(
         user_id=current_user.user_id,

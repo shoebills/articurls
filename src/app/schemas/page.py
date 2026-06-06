@@ -10,7 +10,7 @@ class UserPageBase(BaseModel):
 
 
 class UserPageCreate(UserPageBase):
-    pass
+    slug: Optional[str] = None
 
 
 class UserPageUpdate(BaseModel):

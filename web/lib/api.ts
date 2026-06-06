@@ -373,7 +373,14 @@ export async function listPages(token: string): Promise<UserPage[]> {
   return apiFetch("/pages/", { token });
 }
 
-export async function createPage(token: string, body: { title: string; content: string }): Promise<UserPage> {
+export async function getPage(token: string, pageId: number): Promise<UserPage> {
+  return apiFetch(`/pages/${pageId}`, { token });
+}
+
+export async function createPage(
+  token: string,
+  body: { title: string; content: string; slug?: string }
+): Promise<UserPage> {
   return apiFetch("/pages/", {
     method: "POST",
     token,

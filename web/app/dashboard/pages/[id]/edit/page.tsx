@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, listPages, publishPage, updatePage } from "@/lib/api";
+import { ApiError, archivePage, getPage, publishPage, updatePage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { BlogEditor } from "@/components/editor/blog-editor";
@@ -73,12 +73,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setErr(null);
     setLoading(true);
     try {
-      const [pages] = await Promise.all([listPages(token), refreshUser()]);
-      const found = pages.find((p) => p.page_id === pageId);
-      if (!found) {
-        setErr("Page not found");
-        return;
-      }
+      const [found] = await Promise.all([getPage(token, pageId), refreshUser()]);
       applyPageToForm(found);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -124,10 +119,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   async function save(silent = false) {
     if (!token || !page) return;
-    if (!title.trim()) {
-      setErr("Page title is required");
-      return;
-    }
     if (!isDirty()) return;
     const nextTitle = title.trim();
     const nextContent = content;
