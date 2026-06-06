@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Check, Globe, Loader2, Pencil, UserRound, X } from "lucide-react";
+import { Camera, Check, Globe, ImagePlus, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -317,27 +317,33 @@ export default function SettingsPage() {
                 </span>
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-10 w-fit shrink-0"
+                size="icon"
+                className="h-9 w-9 shrink-0"
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
+                title={hasCustomProfileImage ? "Change photo" : "Upload photo"}
               >
-                {hasCustomProfileImage ? "Change photo" : "Upload photo"}
+                {hasCustomProfileImage ? (
+                  <Pencil className="h-4 w-4" />
+                ) : (
+                  <ImagePlus className="h-4 w-4" />
+                )}
               </Button>
               {hasCustomProfileImage ? (
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-10 w-fit shrink-0 border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   disabled={busy}
                   onClick={removePfp}
+                  title="Remove photo"
                 >
-                  Remove photo
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               ) : null}
             </div>
