@@ -179,7 +179,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       selectedCatIds.some((id) => !pendingCatIds.includes(id));
     return (
       blog.title !== title ||
-      blog.content !== content ||
+      (blog.content || "") !== (content === "<p></p>" ? "" : content) ||
       blog.notify_subscribers !== notify ||
       (slugEditable && blog.slug !== nextSlug) ||
       (blog.meta_title || null) !== nextMetaTitle ||

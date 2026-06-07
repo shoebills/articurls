@@ -140,7 +140,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.meta_title || null) !== nextMetaTitle ||
       (page.meta_description || null) !== nextMetaDesc
     );
-  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
+  }, [page, title, content, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
     if (!token || !page) return;
