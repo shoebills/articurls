@@ -237,27 +237,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (catDirty) {
         finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
       }
-      setBlog(finalBlog);
-      if (titleRef.current === nextTitle) setTitle(finalBlog.title);
-      if (contentRef.current === nextContent) setContent(finalBlog.content);
+      applyBlogToForm(finalBlog);
       if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
-      if (slugEditable && slugCustomRef.current === nextSlugCustom) {
-        const derived = slugify(finalBlog.title, { lower: true, strict: true });
-        const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(finalBlog.slug);
-        const slugMatchesTitle = derived !== "" && finalBlog.slug === derived;
-        setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : finalBlog.slug);
-      }
-      if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        const metaSynced = !finalBlog.meta_title || finalBlog.meta_title === finalBlog.title;
-        setMetaTitleDirty(!metaSynced);
-        if (metaSynced) {
-          setMetaTitle(titleRef.current.trim() || finalBlog.title || "");
-        } else {
-          setMetaTitle(finalBlog.meta_title || "");
-        }
-      }
-      if (metaDescRef.current === nextMetaDesc) setMetaDesc(finalBlog.meta_description || "");
-      if (featuredImageUrlRef.current === nextFeaturedImageUrl) setFeaturedImageUrl(finalBlog.featured_image_url || "");
       if (catDirty) {
         const finalCatIds = (finalBlog as unknown as { category_ids?: number[] }).category_ids || [];
         setSelectedCatIds(finalCatIds);

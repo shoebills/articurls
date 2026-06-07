@@ -166,22 +166,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         meta_description: nextMetaDesc.trim() || null,
       };
       const updated = await updatePage(token, page.page_id, body);
-      setPage(updated);
-      if (titleRef.current.trim() === nextTitle) setTitle(updated.title || "");
-      if (contentRef.current === nextContent) setContent(updated.content || "<p></p>");
-      if (slugEditable && slugCustomRef.current === nextSlugCustom) {
-        setSlugCustom(normalizeEditableSlugCustom(updated));
-      }
-      if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
-        setMetaTitleDirty(!metaSynced);
-        if (metaSynced) {
-          setMetaTitle(titleRef.current.trim() || updated.title || "");
-        } else {
-          setMetaTitle(updated.meta_title || "");
-        }
-      }
-      if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
+      applyPageToForm(updated);
       clearManualDraft();
       setSaveStatus("saved");
     } catch (e) {
