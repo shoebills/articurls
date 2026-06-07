@@ -34,6 +34,19 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
+function extractTextFromHtml(html: string): string {
+  if (typeof document === "undefined") return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+function getContentExcerpt(html: string, maxLen = 160): string {
+  const text = extractTextFromHtml(html).trim();
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen - 3) + "...";
+}
+
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = Number(id);
@@ -96,7 +109,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const metaSynced = !b.meta_title || b.meta_title === b.title;
     setMetaTitleDirty(!metaSynced);
     setMetaDesc(b.meta_description || "");
-    const descSynced = !b.meta_description || b.meta_description === b.title;
+    const contentExcerpt = getContentExcerpt(b.content || "");
+    const descSynced = !b.meta_description || b.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
     setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
@@ -136,9 +150,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (!metaDescDirty) {
-      setMetaDesc(title);
+      setMetaDesc(getContentExcerpt(content));
     }
-  }, [title, metaDescDirty]);
+  }, [content, metaDescDirty]);
 
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
@@ -157,7 +171,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextSlug = slugCustom.trim() || slugify(title.trim(), { lower: true, strict: true }) || blog.slug;
     const nextMetaTitle =
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
-    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === title.trim() ? null : metaDesc.trim() || null;
+    const contentExcerpt = getContentExcerpt(content);
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
     const nextFeatured = featuredImageUrl.trim() || null;
     const catDirty =
       selectedCatIds.length !== pendingCatIds.length ||
@@ -172,7 +187,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, featuredImageUrl, selectedCatIds, pendingCatIds]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
     if (!token || !blog) return;

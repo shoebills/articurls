@@ -19,6 +19,19 @@ import { MARKETING_ORIGIN } from "@/lib/env";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
+function extractTextFromHtml(html: string): string {
+  if (typeof document === "undefined") return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
+
+function getContentExcerpt(html: string, maxLen = 160): string {
+  const text = extractTextFromHtml(html).trim();
+  if (text.length <= maxLen) return text;
+  return text.slice(0, maxLen - 3) + "...";
+}
+
 function normalizeEditableSlugCustom(page: UserPage): string {
   if (page.status !== "draft") return page.slug || "";
   const derived = slugify(page.title || "", { lower: true, strict: true });
@@ -66,7 +79,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
     setMetaDesc(p.meta_description || "");
-    const descSynced = !p.meta_description || p.meta_description === p.title;
+    const contentExcerpt = getContentExcerpt(p.content || "");
+    const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
   }, []);
 
@@ -96,9 +110,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     if (!metaDescDirty) {
-      setMetaDesc(title);
+      setMetaDesc(getContentExcerpt(content));
     }
-  }, [title, metaDescDirty]);
+  }, [content, metaDescDirty]);
 
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
@@ -116,7 +130,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
-    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === nextTitle ? null : metaDesc.trim() || null;
+    const contentExcerpt = getContentExcerpt(content);
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
 
     return (
       page.title !== nextTitle ||
@@ -125,7 +140,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.meta_title || null) !== nextMetaTitle ||
       (page.meta_description || null) !== nextMetaDesc
     );
-  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, content]);
+  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
     if (!token || !page) return;
