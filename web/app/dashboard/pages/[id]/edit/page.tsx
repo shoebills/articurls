@@ -163,7 +163,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           ? { slug: nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug }
           : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
-        meta_description: nextMetaDesc.trim() || null,
+        meta_description:
+          !metaDescDirtyRef.current || nextMetaDesc.trim() === getContentExcerpt(nextContent)
+            ? null
+            : nextMetaDesc.trim() || null,
       };
       const updated = await updatePage(token, page.page_id, body);
       applyPageToForm(updated);
@@ -415,7 +418,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <Label>Meta description</Label>
               <Input
                 value={metaDesc}
-                onChange={(e) => setMetaDesc(e.target.value)}
+                onChange={(e) => {
+                  setMetaDescDirty(true);
+                  setMetaDesc(e.target.value);
+                }}
                 placeholder="Defaults from content"
               />
             </div>

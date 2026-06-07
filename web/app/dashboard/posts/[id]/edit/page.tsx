@@ -228,8 +228,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         body.meta_title = null;
       }
 
-      if (nextMetaDesc.trim()) body.meta_description = nextMetaDesc.trim();
-      else body.meta_description = null;
+      if (!metaDescDirtyRef.current || nextMetaDesc.trim() === getContentExcerpt(nextContent)) {
+        body.meta_description = null;
+      } else if (nextMetaDesc.trim()) {
+        body.meta_description = nextMetaDesc.trim();
+      } else {
+        body.meta_description = null;
+      }
       body.featured_image_url = nextFeaturedImageUrl.trim() || null;
 
       const updated = await updateBlog(token, blog.blog_id, body);
@@ -584,7 +589,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             </div>
             <div className="space-y-2">
               <Label>Meta description</Label>
-              <Input value={metaDesc} onChange={(e) => setMetaDesc(e.target.value)} placeholder="Defaults from content" />
+              <Input
+                value={metaDesc}
+                onChange={(e) => {
+                  setMetaDescDirty(true);
+                  setMetaDesc(e.target.value);
+                }}
+                placeholder="Defaults from content"
+              />
             </div>
             <div className="space-y-2">
               <Label>Featured image</Label>
