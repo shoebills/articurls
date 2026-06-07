@@ -45,6 +45,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [slugCustom, setSlugCustom] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
+  const [metaDescDirty, setMetaDescDirty] = useState(false);
   const [metaDesc, setMetaDesc] = useState("");
   const [notify, setNotify] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
@@ -65,6 +66,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const slugCustomRef = useRef(slugCustom);
   const metaTitleRef = useRef(metaTitle);
   const metaTitleDirtyRef = useRef(metaTitleDirty);
+  const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
   const notifyRef = useRef(notify);
   const featuredImageUrlRef = useRef(featuredImageUrl);
@@ -94,6 +96,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const metaSynced = !b.meta_title || b.meta_title === b.title;
     setMetaTitleDirty(!metaSynced);
     setMetaDesc(b.meta_description || "");
+    const descSynced = !b.meta_description || b.meta_description === b.title;
+    setMetaDescDirty(!descSynced);
     setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
     const blogCatIds = (b as unknown as { category_ids?: number[] }).category_ids || [];
@@ -130,11 +134,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }, [title, metaTitleDirty]);
 
+  useEffect(() => {
+    if (!metaDescDirty) {
+      setMetaDesc(title);
+    }
+  }, [title, metaDescDirty]);
+
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
   useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
+  useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
   useEffect(() => { notifyRef.current = notify; }, [notify]);
   useEffect(() => { featuredImageUrlRef.current = featuredImageUrl; }, [featuredImageUrl]);
@@ -146,7 +157,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextSlug = slugCustom.trim() || slugify(title.trim(), { lower: true, strict: true }) || blog.slug;
     const nextMetaTitle =
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
-    const nextMetaDesc = metaDesc.trim() || null;
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === title.trim() ? null : metaDesc.trim() || null;
     const nextFeatured = featuredImageUrl.trim() || null;
     const catDirty =
       selectedCatIds.length !== pendingCatIds.length ||
@@ -161,7 +172,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDesc, featuredImageUrl, selectedCatIds, pendingCatIds]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, featuredImageUrl, selectedCatIds, pendingCatIds]);
 
   async function save(silent = false) {
     if (!token || !blog) return;

@@ -38,6 +38,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [slugCustom, setSlugCustom] = useState("");
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
+  const [metaDescDirty, setMetaDescDirty] = useState(false);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -53,6 +54,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const slugCustomRef = useRef(slugCustom);
   const metaTitleRef = useRef(metaTitle);
   const metaTitleDirtyRef = useRef(metaTitleDirty);
+  const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
 
   const applyPageToForm = useCallback((p: UserPage) => {
@@ -64,6 +66,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
     setMetaDesc(p.meta_description || "");
+    const descSynced = !p.meta_description || p.meta_description === p.title;
+    setMetaDescDirty(!descSynced);
   }, []);
 
   const load = useCallback(async () => {
@@ -90,11 +94,18 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }, [title, metaTitleDirty]);
 
+  useEffect(() => {
+    if (!metaDescDirty) {
+      setMetaDesc(title);
+    }
+  }, [title, metaDescDirty]);
+
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
   useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
+  useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
 
   const isDirty = useCallback(() => {
@@ -105,7 +116,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
-    const nextMetaDesc = metaDesc.trim() || null;
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === nextTitle ? null : metaDesc.trim() || null;
 
     return (
       page.title !== nextTitle ||
@@ -114,7 +125,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.meta_title || null) !== nextMetaTitle ||
       (page.meta_description || null) !== nextMetaDesc
     );
-  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
+  }, [page, title, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, content]);
 
   async function save(silent = false) {
     if (!token || !page) return;
