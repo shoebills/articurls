@@ -556,17 +556,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={setContent}
       />
 
-      <div className="mt-6">
+      <div className="mt-6 rounded-lg border border-border bg-muted/30">
         <button
           type="button"
-          className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
           onClick={() => setAdvancedOpen(!advancedOpen)}
         >
           Advanced settings
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="mt-4 space-y-4 rounded-lg border border-border p-4">
+          <div className="space-y-4 border-t border-border px-4 py-4">
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
