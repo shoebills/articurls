@@ -386,7 +386,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="space-y-4 border-t border-border px-4 py-4">
+          <div className="space-y-6 border-t border-border px-4 py-4">
+            {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
@@ -398,30 +399,39 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <p className="text-xs text-muted-foreground">
                 {slugEditable
                   ? "Updates from the title until you edit this field. Must be unique before you publish."
-                  : "The public URL cannot be changed after the page is published."}
+                  : "The public URL cannot be changed after the post is published."}
               </p>
             </div>
-            <div className="space-y-2">
-              <Label>Meta title</Label>
-              <Input
-                value={metaTitle}
-                onChange={(e) => {
-                  setMetaTitleDirty(true);
-                  setMetaTitle(e.target.value);
-                }}
-                placeholder="Same as title by default"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Meta description</Label>
-              <Input
-                value={metaDesc}
-                onChange={(e) => {
-                  setMetaDescDirty(true);
-                  setMetaDesc(e.target.value);
-                }}
-                placeholder="Defaults from content"
-              />
+
+            <Separator />
+
+            {/* Search Engine Optimization */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Search Engine Optimization</h3>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Meta title</Label>
+                  <Input
+                    value={metaTitle}
+                    onChange={(e) => {
+                      setMetaTitleDirty(true);
+                      setMetaTitle(e.target.value);
+                    }}
+                    placeholder="Same as title by default"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Meta description</Label>
+                  <Input
+                    value={metaDesc}
+                    onChange={(e) => {
+                      setMetaDescDirty(true);
+                      setMetaDesc(e.target.value);
+                    }}
+                    placeholder="Defaults from content"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

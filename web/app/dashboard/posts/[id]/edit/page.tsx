@@ -566,7 +566,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="space-y-4 border-t border-border px-4 py-4">
+          <div className="space-y-6 border-t border-border px-4 py-4">
+            {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
@@ -581,28 +582,41 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   : "The public URL cannot be changed after the post is published."}
               </p>
             </div>
-            <div className="space-y-2">
-              <Label>Meta title</Label>
-              <Input
-                value={metaTitle}
-                onChange={(e) => {
-                  setMetaTitleDirty(true);
-                  setMetaTitle(e.target.value);
-                }}
-                placeholder="Same as title by default"
-              />
+
+            <Separator />
+
+            {/* Search Engine Optimization */}
+            <div className="space-y-4">
+              <h3 className="text-sm font-semibold">Search Engine Optimization</h3>
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Meta title</Label>
+                  <Input
+                    value={metaTitle}
+                    onChange={(e) => {
+                      setMetaTitleDirty(true);
+                      setMetaTitle(e.target.value);
+                    }}
+                    placeholder="Same as title by default"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Meta description</Label>
+                  <Input
+                    value={metaDesc}
+                    onChange={(e) => {
+                      setMetaDescDirty(true);
+                      setMetaDesc(e.target.value);
+                    }}
+                    placeholder="Defaults from content"
+                  />
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Meta description</Label>
-              <Input
-                value={metaDesc}
-                onChange={(e) => {
-                  setMetaDescDirty(true);
-                  setMetaDesc(e.target.value);
-                }}
-                placeholder="Defaults from content"
-              />
-            </div>
+
+            <Separator />
+
+            {/* Featured Image */}
             <div className="space-y-2">
               <Label>Featured image</Label>
               <p className="text-xs text-muted-foreground">Used for home preview and share cards. 3:2 recommended.</p>
@@ -662,25 +676,34 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 />
               ) : null}
             </div>
-            <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-              <div className="min-w-0">
-                <p className="text-sm font-medium">Email subscribers when published</p>
-                <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
+
+            <Separator />
+
+            {/* Email Subscribers */}
+            <div className="space-y-2">
+              <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">Email subscribers when published</p>
+                  <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
+                </div>
+                <Switch
+                  className="shrink-0 self-start sm:self-center"
+                  checked={notify}
+                  disabled={!isPro}
+                  onCheckedChange={(v) => {
+                    if (!isPro) return;
+                    setNotify(v);
+                  }}
+                />
               </div>
-              <Switch
-                className="shrink-0 self-start sm:self-center"
-                checked={notify}
-                disabled={!isPro}
-                onCheckedChange={(v) => {
-                  if (!isPro) return;
-                  setNotify(v);
-                }}
-              />
+              {!isPro && notify === false && (
+                <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
+              )}
             </div>
-            {!isPro && notify === false && (
-              <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
-            )}
-            <Separator className="my-2" />
+
+            <Separator />
+
+            {/* Categories */}
             <div className="space-y-2">
               <div className="flex items-center justify-between gap-4">
                 <Label>Assign category</Label>
