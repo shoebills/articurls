@@ -275,6 +275,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!page) return;
     if (!requiresManualUpdate) {
       if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
       window.localStorage.removeItem(manualDraftKey);
@@ -303,7 +304,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       );
       setSaveStatus("saved");
     }, 350);
-  }, [requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
 
   useEffect(() => {
     return () => {

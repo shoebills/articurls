@@ -430,6 +430,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!blog) return;
     if (!requiresManualUpdate) {
       if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
       window.localStorage.removeItem(manualDraftKey);
@@ -461,6 +462,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setSaveStatus("saved");
     }, 350);
   }, [
+    blog,
     requiresManualUpdate,
     dirty,
     manualDraftKey,
