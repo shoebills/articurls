@@ -143,8 +143,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }, [page, title, content, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
-    if (!token || !page) return;
-    if (!isDirty()) return;
+    if (!token || !page) return false;
+    if (!isDirty()) return true;
     const slugEditable = page.status === "draft";
     const nextTitle = title.trim();
     const nextContent = content;
@@ -173,9 +173,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       applyPageToForm(updated);
       clearManualDraft();
       setSaveStatus("saved");
+      return true;
     } catch (e) {
       setSaveStatus("idle");
       setErr(e instanceof ApiError ? e.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -184,10 +186,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   async function updateStatus(next: "published" | "archived") {
     if (!token || !page) return;
     setErr(null);
+    if (!(await save(true))) return;
     try {
-      if (next === "published") {
-        await save(true);
-      }
       const updated =
         next === "published"
           ? await publishPage(token, page.page_id)

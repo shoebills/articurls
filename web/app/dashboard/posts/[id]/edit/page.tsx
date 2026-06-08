@@ -190,8 +190,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
-    if (!token || !blog) return;
-    if (!isDirty()) return;
+    if (!token || !blog) return false;
+    if (!isDirty()) return true;
     const nextTitle = title;
     const nextContent = content;
     const nextNotify = notify;
@@ -253,9 +253,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       await refreshUser();
       clearManualDraft();
       setSaveStatus("saved");
+      return true;
     } catch (e) {
       setSaveStatus("idle");
       setErr(e instanceof ApiError ? e.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -263,7 +265,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function publish() {
     if (!token || !blog) return;
-    await save(true);
+    if (!(await save(true))) return;
     try {
       const b = await publishBlog(token, blog.blog_id);
       clearManualDraft();
@@ -275,6 +277,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function archive() {
     if (!token || !blog) return;
+    if (!(await save(true))) return;
     try {
       const b = await archiveBlog(token, blog.blog_id);
       clearManualDraft();
@@ -286,6 +289,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function unarchive() {
     if (!token || !blog) return;
+    if (!(await save(true))) return;
     try {
       const b = await publishBlog(token, blog.blog_id);
       clearManualDraft();
@@ -297,6 +301,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function doSchedule(iso: string) {
     if (!token || !blog) return;
+    if (!(await save(true))) return;
     try {
       const b = await scheduleBlog(token, blog.blog_id, iso);
       applyBlogToForm(b);
@@ -308,6 +313,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function doUnschedule() {
     if (!token || !blog) return;
+    if (!(await save(true))) return;
     try {
       await unscheduleBlog(token, blog.blog_id);
       await load();
