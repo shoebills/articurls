@@ -632,7 +632,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {advancedOpen && (
           <div className="space-y-6 px-4 py-4">
             {/* URL Slug */}
-            <div className="space-y-4">
+            <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
                 value={slugCustom}
