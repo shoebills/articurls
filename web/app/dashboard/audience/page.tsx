@@ -200,7 +200,7 @@ export default function AudienceEmailsPage() {
               <div className="space-y-2">
                 <Label htmlFor="welcome-delay">Send delay</Label>
                 <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
-                  <SelectTrigger id="welcome-delay" className="max-w-sm">
+                  <SelectTrigger id="welcome-delay" className="mt-2 max-w-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -231,6 +231,7 @@ export default function AudienceEmailsPage() {
               <div className="space-y-2">
                 <Label>Body</Label>
                 <WelcomeEmailEditor
+                className="mt-2"
                 content={bodyHtml}
                 onChange={(html) => {
                   setBodyHtml(html);

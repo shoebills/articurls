@@ -355,7 +355,7 @@ export default function SettingsPage() {
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
-              <div className="flex items-center gap-2">
+              <div className="mt-2 flex items-center gap-2">
                 <Input id="user_name" className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
                 <Button
                   type="button"

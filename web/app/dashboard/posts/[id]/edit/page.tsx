@@ -685,8 +685,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
             {/* Featured Image */}
             <div className="space-y-2">
-              <Label>Featured image (Recommended 1200×630px)</Label>
-              <p className="text-xs text-muted-foreground">Used for home preview and share cards.</p>
+              <Label>Featured image</Label>
+              <p className="text-xs text-muted-foreground">Used for home preview and share cards. Recommended 1200×630px.</p>
               <input
                 ref={featuredInputRef}
                 type="file"
