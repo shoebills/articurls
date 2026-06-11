@@ -49,9 +49,14 @@ function extractTextFromHtml(html: string): string {
 }
 
 function getContentExcerpt(html: string, maxLen = 160): string {
-  const text = extractTextFromHtml(html).trim();
+  const text = extractTextFromHtml(html).replace(/\s+/g, " ").trim();
   if (text.length <= maxLen) return text;
-  return text.slice(0, maxLen - 3) + "...";
+  const cut = text.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  if (lastSpace > 0) {
+    return cut.slice(0, lastSpace).trimEnd() + "...";
+  }
+  return cut.trimEnd() + "...";
 }
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {

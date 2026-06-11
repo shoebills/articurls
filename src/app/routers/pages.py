@@ -12,6 +12,7 @@ from ..security import oauth2
 from ..storage.service import delete_media, save_media
 from ..cache.service import purge_custom_page, purge_entire_tenant
 from ..config import settings
+from .. import utils
 from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
 
 router = APIRouter(
@@ -292,10 +293,16 @@ def update_page(
     if "title" in update_data:
         update_data["title"] = (update_data["title"] or "").strip()
 
-    if "meta_title" in update_data:
+    if "meta_title" in update_data and update_data["meta_title"] is None:
+        title = update_data.get("title", db_page.title)
+        update_data["meta_title"] = (title or "").strip() or None
+    elif "meta_title" in update_data:
         update_data["meta_title"] = (update_data["meta_title"] or "").strip() or None
 
-    if "meta_description" in update_data:
+    if "meta_description" in update_data and update_data["meta_description"] is None:
+        content = update_data.get("content", db_page.content)
+        update_data["meta_description"] = utils.make_meta_description(content or "") or None
+    elif "meta_description" in update_data:
         update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
 
     MEANINGFUL_FIELDS = {"title", "content", "meta_title", "meta_description"}
@@ -351,6 +358,12 @@ def publish_page(
     if first_publish:
         maybe_replace_placeholder_page_slug_on_publish(db, db_page)
         db_page.published_at = now
+    db_page.meta_title, db_page.meta_description = utils.materialize_content_meta_defaults(
+        title=db_page.title,
+        content=db_page.content,
+        meta_title=db_page.meta_title,
+        meta_description=db_page.meta_description,
+    )
     db_page.updated_at = now
 
     db.commit()

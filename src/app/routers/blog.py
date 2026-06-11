@@ -264,6 +264,18 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
     if "content" in update_data:
         update_data["content"] = sanitize_html(update_data["content"])
 
+    if "meta_title" in update_data and update_data["meta_title"] is None:
+        title = update_data.get("title", db_blog.title)
+        update_data["meta_title"] = (title or "").strip() or None
+    elif "meta_title" in update_data:
+        update_data["meta_title"] = (update_data["meta_title"] or "").strip() or None
+
+    if "meta_description" in update_data and update_data["meta_description"] is None:
+        content = update_data.get("content", db_blog.content)
+        update_data["meta_description"] = utils.make_meta_description(content or "") or None
+    elif "meta_description" in update_data:
+        update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
+
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
     MEANINGFUL_FIELDS = {
@@ -376,6 +388,13 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     if first_publish:
         utils.maybe_replace_placeholder_slug_on_publish(db, db_blog)
         db_blog.published_at = now
+
+    db_blog.meta_title, db_blog.meta_description = utils.materialize_content_meta_defaults(
+        title=db_blog.title,
+        content=db_blog.content,
+        meta_title=db_blog.meta_title,
+        meta_description=db_blog.meta_description,
+    )
 
     # Publishing is a meaningful lifecycle event — bump updated_at so
     # sitemap lastmod reflects when the post became publicly visible.
@@ -513,6 +532,12 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
     old_updated = db_blog.updated_at
     db_blog.status = models.BlogStatus.SCHEDULED
     db_blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
+    db_blog.meta_title, db_blog.meta_description = utils.materialize_content_meta_defaults(
+        title=db_blog.title,
+        content=db_blog.content,
+        meta_title=db_blog.meta_title,
+        meta_description=db_blog.meta_description,
+    )
     # Scheduling is not a meaningful content change — preserve updated_at
     db_blog.updated_at = old_updated
 
