@@ -635,6 +635,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
+                className="mt-4"
                 value={slugCustom}
                 disabled={!slugEditable}
                 onChange={(e) => setSlugCustom(e.target.value)}
