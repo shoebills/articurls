@@ -513,6 +513,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       : null;
 
   function getConfirmLine(): string {
+    if (!blog) return "";
     if (pendingAction === "undo") return "Discard unsaved changes?";
     if (blog.status === "published") return "This will update your live post.";
     if (blog.status === "scheduled") return "This will update your scheduled post.";
@@ -520,6 +521,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   function confirmPendingAction() {
+    if (!blog) return;
     if (pendingAction === "undo") {
       applyBlogToForm(blog);
       clearManualDraft();
