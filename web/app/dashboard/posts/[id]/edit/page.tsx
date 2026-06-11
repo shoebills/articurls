@@ -77,7 +77,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | "undo" | "update">(null);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -186,6 +186,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
     const contentExcerpt = getContentExcerpt(content);
     const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
+    const blogContentExcerpt = getContentExcerpt(blog.content || "");
+    const currentMetaTitle =
+      !blog.meta_title || blog.meta_title === blog.title ? null : blog.meta_title;
+    const currentMetaDesc =
+      !blog.meta_description || blog.meta_description === blogContentExcerpt ? null : blog.meta_description;
     const nextFeatured = featuredImageUrl.trim() || null;
     const catDirty =
       selectedCatIds.length !== pendingCatIds.length ||
@@ -195,12 +200,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (blog.content || "") !== (content || "") ||
       blog.notify_subscribers !== notify ||
       (slugEditable && blog.slug !== nextSlug) ||
-      (blog.meta_title || null) !== nextMetaTitle ||
-      (blog.meta_description || null) !== nextMetaDesc ||
+      currentMetaTitle !== nextMetaTitle ||
+      currentMetaDesc !== nextMetaDesc ||
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -520,6 +525,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   function getConfirmLine(): string {
     if (!blog) return "";
     if (pendingAction === "undo") return "Discard unsaved changes?";
+    if (pendingAction === "unschedule") return "Move this post back to draft? It will no longer be scheduled.";
     if (blog.status === "published") return "This will update your live post.";
     if (blog.status === "scheduled") return "This will update your scheduled post.";
     return "Save changes to this archived post?";
@@ -534,6 +540,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setSaveStatus("saved");
     } else if (pendingAction === "update") {
       void save(false);
+    } else if (pendingAction === "unschedule") {
+      void doUnschedule();
     }
     setPendingAction(null);
   }
@@ -892,7 +900,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
         {blog.status === "scheduled" && (
           <>
-            <Button variant="outline" onClick={doUnschedule}>
+            <Button variant="outline" onClick={() => setPendingAction("unschedule")} disabled={saving}>
               Unschedule
             </Button>
           </>
@@ -919,7 +927,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               Cancel
             </Button>
             <Button size="sm" onClick={confirmPendingAction}>
-              {pendingAction === "undo" ? "Undo" : "Update blog"}
+              {pendingAction === "undo"
+                ? "Undo"
+                : pendingAction === "unschedule"
+                  ? "Unschedule"
+                  : "Update blog"}
             </Button>
           </DialogFooter>
         </DialogContent>

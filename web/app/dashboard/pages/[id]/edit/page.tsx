@@ -145,13 +145,18 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
     const contentExcerpt = getContentExcerpt(content);
     const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
+    const pageContentExcerpt = getContentExcerpt(page.content || "");
+    const currentMetaTitle =
+      !page.meta_title || page.meta_title === page.title ? null : page.meta_title;
+    const currentMetaDesc =
+      !page.meta_description || page.meta_description === pageContentExcerpt ? null : page.meta_description;
 
     return (
       page.title !== nextTitle ||
       (page.content || "") !== content ||
       page.slug !== nextSlug ||
-      (page.meta_title || null) !== nextMetaTitle ||
-      (page.meta_description || null) !== nextMetaDesc
+      currentMetaTitle !== nextMetaTitle ||
+      currentMetaDesc !== nextMetaDesc
     );
   }, [page, title, content, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
