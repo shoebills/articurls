@@ -34,6 +34,10 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
+const WARNING_OUTLINE_BTN =
+  "border-amber-500/30 bg-amber-500/10 text-amber-900 hover:bg-amber-500/15 hover:text-amber-950";
+const WARNING_PRIMARY_BTN = "bg-amber-600 text-white shadow-sm hover:bg-amber-600/90";
+
 function extractTextFromHtml(html: string): string {
   if (typeof document === "undefined") return "";
   const tmp = document.createElement("div");
@@ -830,6 +834,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           <>
             <Button
               variant="outline"
+              className={WARNING_OUTLINE_BTN}
               onClick={() => {
                 applyBlogToForm(blog);
                 clearManualDraft();
@@ -838,10 +843,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               }}
               disabled={saving || !dirty}
             >
-              Cancel
+              Undo
             </Button>
-            <Button onClick={() => void save(false)} disabled={saving || !dirty}>
-              {saving ? "Updating…" : "Update"}
+            <Button
+              className={WARNING_PRIMARY_BTN}
+              onClick={() => void save(false)}
+              disabled={saving || !dirty}
+            >
+              {saving ? "Updating…" : "Update blog"}
             </Button>
           </>
         ) : (

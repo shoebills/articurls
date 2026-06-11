@@ -19,6 +19,10 @@ import { MARKETING_ORIGIN } from "@/lib/env";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
+const WARNING_OUTLINE_BTN =
+  "border-amber-500/30 bg-amber-500/10 text-amber-900 hover:bg-amber-500/15 hover:text-amber-950";
+const WARNING_PRIMARY_BTN = "bg-amber-600 text-white shadow-sm hover:bg-amber-600/90";
+
 function extractTextFromHtml(html: string): string {
   if (typeof document === "undefined") return "";
   const tmp = document.createElement("div");
@@ -444,6 +448,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           <>
             <Button
               variant="outline"
+              className={WARNING_OUTLINE_BTN}
               onClick={() => {
                 applyPageToForm(page);
                 clearManualDraft();
@@ -452,16 +457,20 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               }}
               disabled={saving || !dirty}
             >
-              Cancel
+              Undo
             </Button>
-            <Button onClick={() => void save(false)} disabled={saving || !dirty}>
-              {saving ? "Updating…" : "Update"}
+            <Button
+              className={WARNING_PRIMARY_BTN}
+              onClick={() => void save(false)}
+              disabled={saving || !dirty}
+            >
+              {saving ? "Updating…" : "Update page"}
             </Button>
           </>
         ) : (
           <></>
         )}
-        {page.status !== "published" && (
+        {page.status === "draft" && (
           <Button variant="default" onClick={() => void updateStatus("published")} disabled={saving}>
             Publish
           </Button>
