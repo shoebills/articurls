@@ -424,7 +424,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="space-y-6 border-t border-border px-4 py-4">
+          <div className="space-y-6 px-4 py-4">
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>

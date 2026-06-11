@@ -598,6 +598,28 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={setContent}
       />
 
+      {/* Email Subscribers */}
+      <div className="mt-6 space-y-2">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-sm font-medium">Email subscribers when published</p>
+            <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
+          </div>
+          <Switch
+            className="shrink-0 self-start sm:self-center"
+            checked={notify}
+            disabled={!isPro}
+            onCheckedChange={(v) => {
+              if (!isPro) return;
+              setNotify(v);
+            }}
+          />
+        </div>
+        {!isPro && notify === false && (
+          <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
+        )}
+      </div>
+
       <div className="mt-6 rounded-lg border border-border bg-muted/30">
         <button
           type="button"
@@ -608,7 +630,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="space-y-6 border-t border-border px-4 py-4">
+          <div className="space-y-6 px-4 py-4">
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
@@ -717,30 +739,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
-            </div>
-
-            <Separator />
-
-            {/* Email Subscribers */}
-            <div className="space-y-2">
-              <div className="flex flex-col gap-3 rounded-md border border-border p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-                <div className="min-w-0">
-                  <p className="text-sm font-medium">Email subscribers when published</p>
-                  <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
-                </div>
-                <Switch
-                  className="shrink-0 self-start sm:self-center"
-                  checked={notify}
-                  disabled={!isPro}
-                  onCheckedChange={(v) => {
-                    if (!isPro) return;
-                    setNotify(v);
-                  }}
-                />
-              </div>
-              {!isPro && notify === false && (
-                <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
-              )}
             </div>
 
             <Separator />
