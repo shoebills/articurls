@@ -632,14 +632,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {advancedOpen && (
           <div className="space-y-6 px-4 py-4">
             {/* URL Slug */}
-            <div className="space-y-4">
-              <Label>URL slug</Label>
-              <Input
-                value={slugCustom}
-                disabled={!slugEditable}
-                onChange={(e) => setSlugCustom(e.target.value)}
-                placeholder="Same as title by default"
-              />
+            <div className="space-y-2">
+              <div className="space-y-4">
+                <Label>URL slug</Label>
+                <Input
+                  value={slugCustom}
+                  disabled={!slugEditable}
+                  onChange={(e) => setSlugCustom(e.target.value)}
+                  placeholder="Same as title by default"
+                />
+              </div>
               <p className="text-xs text-muted-foreground">
                 {slugEditable
                   ? "Updates from the title until you edit this field. Must be unique before you publish."
