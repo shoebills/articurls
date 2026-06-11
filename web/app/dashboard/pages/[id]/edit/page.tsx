@@ -13,15 +13,18 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
-
-const WARNING_OUTLINE_BTN =
-  "border-amber-500/30 bg-amber-500/10 text-amber-900 hover:bg-amber-500/15 hover:text-amber-950";
-const WARNING_PRIMARY_BTN = "bg-amber-600 text-white shadow-sm hover:bg-amber-600/90";
 
 function extractTextFromHtml(html: string): string {
   if (typeof document === "undefined") return "";
@@ -59,6 +62,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -334,6 +338,26 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   const slugEditable = page.status === "draft";
 
+  function getConfirmLine(): string {
+    if (!page) return "";
+    if (pendingAction === "undo") return "Discard unsaved changes?";
+    if (page.status === "published") return "This will update your live page.";
+    return "Save changes to this archived page?";
+  }
+
+  function confirmPendingAction() {
+    if (!page) return;
+    if (pendingAction === "undo") {
+      applyPageToForm(page);
+      clearManualDraft();
+      setErr(null);
+      setSaveStatus("saved");
+    } else if (pendingAction === "update") {
+      void save(false);
+    }
+    setPendingAction(null);
+  }
+
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
@@ -448,20 +472,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           <>
             <Button
               variant="outline"
-              className={WARNING_OUTLINE_BTN}
-              onClick={() => {
-                applyPageToForm(page);
-                clearManualDraft();
-                setErr(null);
-                setSaveStatus("saved");
-              }}
+              onClick={() => setPendingAction("undo")}
               disabled={saving || !dirty}
             >
               Undo
             </Button>
             <Button
-              className={WARNING_PRIMARY_BTN}
-              onClick={() => void save(false)}
+              variant="default"
+              onClick={() => setPendingAction("update")}
               disabled={saving || !dirty}
             >
               {saving ? "Updating…" : "Update page"}
@@ -486,6 +504,22 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           </Button>
         )}
       </div>
+
+      <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
+        <DialogContent className="!w-[90vw] !max-w-[22rem] rounded-lg p-4 sm:!w-[min(calc(100vw-1.5rem),32rem)] sm:!max-w-[32rem] sm:p-6">
+          <DialogHeader className="space-y-1">
+            <DialogTitle className="text-base font-medium leading-snug">{getConfirmLine()}</DialogTitle>
+          </DialogHeader>
+          <DialogFooter className="flex flex-row justify-end gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPendingAction(null)}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={confirmPendingAction}>
+              {pendingAction === "undo" ? "Undo" : "Update page"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
