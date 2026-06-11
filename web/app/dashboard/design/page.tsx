@@ -390,6 +390,7 @@ export default function DesignDashboardPage() {
                 <Label htmlFor="blogName">Blog name</Label>
                 <Input
                   id="blogName"
+                  className="mt-2"
                   value={design.nav_blog_name || ""}
                   onChange={(e) => setDesign((prev) => ({ ...prev, nav_blog_name: e.target.value }))}
                   onBlur={() =>
@@ -750,6 +751,7 @@ export default function DesignDashboardPage() {
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
+                className="mt-2"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 maxLength={1400}

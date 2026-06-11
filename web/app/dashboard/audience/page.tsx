@@ -217,6 +217,7 @@ export default function AudienceEmailsPage() {
                 <Label htmlFor="welcome-subject">Subject</Label>
                 <Input
                   id="welcome-subject"
+                  className="mt-2"
                   value={subject}
                   onChange={(e) => {
                     setSubject(e.target.value);

@@ -124,6 +124,7 @@ export default function SeoDashboardPage() {
             <Label htmlFor="meta_title">Meta title</Label>
             <Input
               id="meta_title"
+              className="mt-2"
               value={metaTitle}
               onChange={(e) => setMetaTitle(e.target.value)}
               placeholder="Your site title on search engines"
@@ -133,6 +134,7 @@ export default function SeoDashboardPage() {
             <Label htmlFor="meta_description">Meta description</Label>
             <Textarea
               id="meta_description"
+              className="mt-2"
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value)}
               placeholder="Short summary for search previews"

@@ -351,12 +351,12 @@ export default function SettingsPage() {
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2.5">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" className="mt-2" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
               <div className="flex items-center gap-2">
-                <Input id="user_name" value={user_name} readOnly className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" />
+                <Input id="user_name" className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
                 <Button
                   type="button"
                   variant="outline"
@@ -376,7 +376,7 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="border-t border-border/60 pt-6">
             <Button size="lg" onClick={saveBase} disabled={busy}>
@@ -567,6 +567,7 @@ export default function SettingsPage() {
               <Label htmlFor="username-dialog">Username</Label>
               <Input
                 id="username-dialog"
+                className="mt-2"
                 value={pendingUsername}
                 onChange={(e) => setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
                 placeholder="yourusername"
