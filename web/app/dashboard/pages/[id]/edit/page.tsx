@@ -429,6 +429,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
+                className="mt-2"
                 value={slugCustom}
                 disabled={!slugEditable}
                 onChange={(e) => setSlugCustom(e.target.value)}
@@ -450,6 +451,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 <div className="space-y-2">
                   <Label>Meta title</Label>
                   <Input
+                    className="mt-2"
                     value={metaTitle}
                     onChange={(e) => {
                       setMetaTitleDirty(true);
@@ -461,6 +463,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 <div className="space-y-2">
                   <Label>Meta description</Label>
                   <Input
+                    className="mt-2"
                     value={metaDesc}
                     onChange={(e) => {
                       setMetaDescDirty(true);

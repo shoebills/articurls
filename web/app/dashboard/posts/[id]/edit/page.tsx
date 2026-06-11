@@ -657,6 +657,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <div className="space-y-2">
                   <Label>Meta title</Label>
                   <Input
+                    className="mt-2"
                     value={metaTitle}
                     onChange={(e) => {
                       setMetaTitleDirty(true);
@@ -668,6 +669,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <div className="space-y-2">
                   <Label>Meta description</Label>
                   <Input
+                    className="mt-2"
                     value={metaDesc}
                     onChange={(e) => {
                       setMetaDescDirty(true);
