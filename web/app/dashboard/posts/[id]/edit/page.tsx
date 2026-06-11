@@ -602,8 +602,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       <div className="mt-6 space-y-2">
         <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0">
-            <p className="text-sm font-medium">Email subscribers when published</p>
-            <p className="text-xs text-muted-foreground">Pro only. Sent once on first publish.</p>
+            <p className="text-sm font-medium">Email subscribers</p>
+                  <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
           </div>
           <Switch
             className="shrink-0 self-start sm:self-center"
@@ -682,8 +682,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
             {/* Featured Image */}
             <div className="space-y-2">
-              <Label>Featured image</Label>
-              <p className="text-xs text-muted-foreground">Used for home preview and share cards. 3:2 recommended.</p>
+              <Label>Featured image (Recommended 1200×630px)</Label>
+              <p className="text-xs text-muted-foreground">Used for home preview and share cards.</p>
               <input
                 ref={featuredInputRef}
                 type="file"
@@ -745,9 +745,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
             {/* Categories */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
                 <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground">Choose one or more categories for this post.</p>
+                <p className="text-xs text-muted-foreground">Choose one or more categories</p>
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
                 <button
