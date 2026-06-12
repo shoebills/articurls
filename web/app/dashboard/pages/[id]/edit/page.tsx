@@ -456,7 +456,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <p className="text-xs text-muted-foreground">
                 {slugEditable
                   ? "Updates from the title until you edit this field. Must be unique before you publish."
-                  : "The public URL cannot be changed after the post is published."}
+                  : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
 
