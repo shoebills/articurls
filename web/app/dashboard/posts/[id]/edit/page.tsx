@@ -239,24 +239,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       }
       body.featured_image_url = nextFeaturedImageUrl.trim() || null;
 
-      // Create a new blog object that matches what we saved, using the captured next values
-      const updatedBlog: BlogDetail = {
-        ...blog,
-        title: nextTitle,
-        content: nextContent,
-        notify_subscribers: nextNotify,
-        slug: body.slug || blog.slug,
-        meta_title: body.meta_title,
-        meta_description: body.meta_description,
-        featured_image_url: body.featured_image_url,
-      };
-      let finalBlog = updatedBlog;
+      const responseBlog = await updateBlog(token, blog.blog_id, body);
+      let finalBlog = responseBlog;
       if (catDirty) {
         finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
-        // Update the category ids in our local finalBlog
-        (finalBlog as unknown as { category_ids?: number[] }).category_ids = nextPendingCatIds;
       }
-      // Update the blog state to mark it as no longer dirty
       setBlog(finalBlog);
       if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
       if (catDirty) {
