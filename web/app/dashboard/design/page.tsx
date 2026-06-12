@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { cn } from "@/lib/utils";
 import {
   ApiError,
   getDesignSettings,
@@ -124,6 +125,9 @@ export default function DesignDashboardPage() {
   const [catEditingId, setCatEditingId] = useState<number | null>(null);
   const [catEditingName, setCatEditingName] = useState("");
   const [catDeletingId, setCatDeletingId] = useState<number | null>(null);
+  const [navMenuModalOpen, setNavMenuModalOpen] = useState(false);
+  const [featuredPostsModalOpen, setFeaturedPostsModalOpen] = useState(false);
+  const [footerPagesModalOpen, setFooterPagesModalOpen] = useState(false);
 
   // Bio and social links state (saved via patchMe, displayed in about section)
   const [bio, setBio] = useState("");
@@ -440,97 +444,33 @@ export default function DesignDashboardPage() {
             </div>
             {design.nav_menu_enabled ? (
               <div className="space-y-3 rounded-lg border p-3">
-                {categories.length === 0 ? (
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">No categories yet.</p>
-                    <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
-                      Manage categories
-                    </Button>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Menu Items</p>
+                    <p className="text-sm text-muted-foreground">
+                      {menuCatSelection.length === 0
+                        ? "No categories in menu yet"
+                        : `${menuCatSelection.length} ${menuCatSelection.length === 1 ? "category" : "categories"} in menu`}
+                    </p>
                   </div>
-                ) : (
-                  <>
-                    {menuCatSelection.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">Add categories to display.</p>
-                    ) : (
-                      <ul className="space-y-2">
-                        {menuCatSelection.map((id, idx) => (
-                          <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                            <span>{catsById.get(id)?.name || "Untitled"}</span>
-                            <div className="flex items-center gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={busy || idx === 0}
-                                onClick={() => {
-                                  const next = [...menuCatSelection];
-                                  [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                                  saveMenu(next);
-                                }}
-                              >
-                                <ChevronUp className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={busy || idx === menuCatSelection.length - 1}
-                                onClick={() => {
-                                  const next = [...menuCatSelection];
-                                  [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                                  saveMenu(next);
-                                }}
-                              >
-                                <ChevronDown className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                disabled={busy}
-                                onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                    {availableCats.length > 0 ? (
-                      <div className="flex flex-col gap-2 sm:flex-row">
-                        <Select value={catToAdd} onValueChange={setCatToAdd}>
-                          <SelectTrigger className="sm:max-w-xs">
-                            <SelectValue placeholder="Add category to menu" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCats.map((c) => (
-                              <SelectItem key={c.category_id} value={String(c.category_id)}>
-                                {c.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          variant="outline"
-                          disabled={busy || !catToAdd}
-                          onClick={() => {
-                            const id = Number(catToAdd);
-                            if (!Number.isFinite(id)) return;
-                            const next = [...menuCatSelection, id];
-                            saveMenu(next);
-                            const nextAvailable = availableCats.find((c) => c.category_id !== id);
-                            setCatToAdd(nextAvailable ? String(nextAvailable.category_id) : "");
-                          }}
-                        >
-                          Add category
-                        </Button>
-                      </div>
-                    ) : null}
-                    <div className="border-t border-border/60 pt-2">
-                      <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
-                        Manage categories
-                      </Button>
-                    </div>
-                  </>
-                )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setNavMenuModalOpen(true)}
+                    disabled={busy}
+                  >
+                    Manage Menu
+                  </Button>
+                </div>
+                {menuCatSelection.length > 0 ? (
+                  <div className="flex flex-wrap gap-2">
+                    {menuCatSelection.map((id) => (
+                      <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm">
+                        {catsById.get(id)?.name || "Untitled"}
+                      </span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </>
@@ -563,86 +503,35 @@ export default function DesignDashboardPage() {
         </div>
         {design.featured_blogs_enabled ? (
           <div className="space-y-3 rounded-lg border p-3">
-            {design.featured_blog_ids.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Add blogs to display.</p>
-            ) : (
-              <ul className="space-y-2">
-                {design.featured_blog_ids.map((id, idx) => {
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="font-medium">Featured Posts</p>
+                <p className="text-sm text-muted-foreground">
+                  {design.featured_blog_ids.length === 0
+                    ? "No posts featured yet"
+                    : `${design.featured_blog_ids.length} of 10 posts featured`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setFeaturedPostsModalOpen(true)}
+                disabled={busy}
+              >
+                Manage Featured Posts
+              </Button>
+            </div>
+            {design.featured_blog_ids.length > 0 ? (
+              <div className="flex flex-wrap gap-2">
+                {design.featured_blog_ids.map((id) => {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
-                    <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                      <span className="truncate">{b?.title || "Unknown blog"}</span>
-                      <div className="flex items-center gap-1 shrink-0 ml-4">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy || idx === 0}
-                          onClick={() => {
-                            const next = [...design.featured_blog_ids];
-                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                            saveDesign({ ...design, featured_blog_ids: next });
-                          }}
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy || idx === design.featured_blog_ids.length - 1}
-                          onClick={() => {
-                            const next = [...design.featured_blog_ids];
-                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                            saveDesign({ ...design, featured_blog_ids: next });
-                          }}
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy}
-                          onClick={() => saveDesign({ ...design, featured_blog_ids: design.featured_blog_ids.filter((x) => x !== id) })}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </li>
+                    <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm truncate max-w-xs">
+                      {b?.title || "Unknown blog"}
+                    </span>
                   );
                 })}
-              </ul>
-            )}
-            {blogs.filter((b) => !design.featured_blog_ids.includes(b.blog_id)).length > 0 && design.featured_blog_ids.length < 10 ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Select value={blogToAdd} onValueChange={setBlogToAdd}>
-                  <SelectTrigger className="sm:max-w-xs">
-                    <SelectValue placeholder="Add blog to featured" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {blogs
-                      .filter((b) => !design.featured_blog_ids.includes(b.blog_id))
-                      .map((b) => (
-                        <SelectItem key={b.blog_id} value={String(b.blog_id)}>
-                          {b.title}
-                        </SelectItem>
-                      ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  disabled={busy || !blogToAdd}
-                  onClick={() => {
-                    const id = Number(blogToAdd);
-                    if (!Number.isFinite(id)) return;
-                    const next = [...design.featured_blog_ids, id];
-                    saveDesign({ ...design, featured_blog_ids: next });
-                    setBlogToAdd("");
-                  }}
-                >
-                  Add blog
-                </Button>
               </div>
-            ) : design.featured_blog_ids.length >= 10 ? (
-              <p className="text-sm text-muted-foreground mt-2">Maximum 10 blogs allowed.</p>
             ) : null}
           </div>
         ) : null}
@@ -708,81 +597,32 @@ export default function DesignDashboardPage() {
 
         {design.site_footer_enabled ? (
           <div className="space-y-3 rounded-lg border p-3">
-            <div className="space-y-2">
-              <Label>Footer pages</Label>
-              {selectedFooterPages.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Add pages to display in footer.</p>
-              ) : (
-                <ul className="space-y-2">
-                  {footerSelection.map((id, idx) => (
-                    <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                      <span>{pagesById.get(id)?.title || "Untitled"}</span>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy || idx === 0}
-                          onClick={() => {
-                            const next = [...footerSelection];
-                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                            saveFooter(next);
-                          }}
-                        >
-                          <ChevronUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy || idx === footerSelection.length - 1}
-                          onClick={() => {
-                            const next = [...footerSelection];
-                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                            saveFooter(next);
-                          }}
-                        >
-                          <ChevronDown className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={busy}
-                          onClick={() => saveFooter(footerSelection.filter((x) => x !== id))}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </li>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Footer Pages</p>
+                  <p className="text-sm text-muted-foreground">
+                    {selectedFooterPages.length === 0
+                      ? "No pages in footer yet"
+                      : `${selectedFooterPages.length} ${selectedFooterPages.length === 1 ? "page" : "pages"} in footer`}
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFooterPagesModalOpen(true)}
+                  disabled={busy}
+                >
+                  Manage Footer Pages
+                </Button>
+              </div>
+              {selectedFooterPages.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {footerSelection.map((id) => (
+                    <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm">
+                      {pagesById.get(id)?.title || "Untitled"}
+                    </span>
                   ))}
-                </ul>
-              )}
-              {footerAvailable.length > 0 ? (
-                <div className="flex flex-col gap-2 sm:flex-row">
-                  <Select value={footerPageToAdd} onValueChange={setFooterPageToAdd}>
-                    <SelectTrigger className="sm:max-w-xs">
-                      <SelectValue placeholder="Add page to footer" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {footerAvailable.map((p) => (
-                        <SelectItem key={p.page_id} value={String(p.page_id)}>
-                          {p.title}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    disabled={busy || !footerPageToAdd}
-                    onClick={() => {
-                      const id = Number(footerPageToAdd);
-                      if (!Number.isFinite(id)) return;
-                      const next = [...footerSelection, id];
-                      saveFooter(next);
-                      const nextAvailable = footerAvailable.find((p) => p.page_id !== id);
-                      setFooterPageToAdd(nextAvailable ? String(nextAvailable.page_id) : "");
-                    }}
-                  >
-                    Add page
-                  </Button>
                 </div>
               ) : null}
             </div>
@@ -884,6 +724,286 @@ export default function DesignDashboardPage() {
           </div>
         ) : null}
       </SectionPanel>
+
+      {/* Navigation Menu Modal */}
+      <Dialog open={navMenuModalOpen} onOpenChange={setNavMenuModalOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Manage Navigation Menu</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {categories.length === 0 ? (
+              <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">No categories yet.</p>
+                <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
+                  Manage categories
+                </Button>
+              </div>
+            ) : (
+              <>
+                {menuCatSelection.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Add categories to display in the menu.</p>
+                ) : (
+                  <ul className="space-y-2">
+                    {menuCatSelection.map((id, idx) => (
+                      <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                        <span>{catsById.get(id)?.name || "Untitled"}</span>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === 0}
+                            onClick={() => {
+                              const next = [...menuCatSelection];
+                              [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                              saveMenu(next);
+                            }}
+                          >
+                            <ChevronUp className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy || idx === menuCatSelection.length - 1}
+                            onClick={() => {
+                              const next = [...menuCatSelection];
+                              [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                              saveMenu(next);
+                            }}
+                          >
+                            <ChevronDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={busy}
+                            onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {availableCats.length > 0 ? (
+                  <div className="flex flex-col gap-2 sm:flex-row">
+                    <Select value={catToAdd} onValueChange={setCatToAdd}>
+                      <SelectTrigger className="sm:max-w-xs">
+                        <SelectValue placeholder="Add category to menu" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableCats.map((c) => (
+                          <SelectItem key={c.category_id} value={String(c.category_id)}>
+                            {c.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Button
+                      variant="outline"
+                      disabled={busy || !catToAdd}
+                      onClick={() => {
+                        const id = Number(catToAdd);
+                        if (!Number.isFinite(id)) return;
+                        const next = [...menuCatSelection, id];
+                        saveMenu(next);
+                        const nextAvailable = availableCats.find((c) => c.category_id !== id);
+                        setCatToAdd(nextAvailable ? String(nextAvailable.category_id) : "");
+                      }}
+                    >
+                      Add category
+                    </Button>
+                  </div>
+                ) : null}
+                <div className="border-t border-border/60 pt-4">
+                  <Button variant="outline" size="sm" onClick={() => setCatModalOpen(true)} disabled={busy}>
+                    Manage categories
+                  </Button>
+                </div>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Featured Posts Modal */}
+      <Dialog open={featuredPostsModalOpen} onOpenChange={setFeaturedPostsModalOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Manage Featured Posts</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {design.featured_blog_ids.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Add posts to feature.</p>
+            ) : (
+              <ul className="space-y-2">
+                {design.featured_blog_ids.map((id, idx) => {
+                  const b = blogs.find((x) => x.blog_id === id);
+                  return (
+                    <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                      <span className="truncate">{b?.title || "Unknown blog"}</span>
+                      <div className="flex items-center gap-1 shrink-0 ml-4">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={busy || idx === 0}
+                          onClick={() => {
+                            const next = [...design.featured_blog_ids];
+                            [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                            saveDesign({ ...design, featured_blog_ids: next });
+                          }}
+                        >
+                          <ChevronUp className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={busy || idx === design.featured_blog_ids.length - 1}
+                          onClick={() => {
+                            const next = [...design.featured_blog_ids];
+                            [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                            saveDesign({ ...design, featured_blog_ids: next });
+                          }}
+                        >
+                          <ChevronDown className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          disabled={busy}
+                          onClick={() => saveDesign({ ...design, featured_blog_ids: design.featured_blog_ids.filter((x) => x !== id) })}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+            {blogs.filter((b) => !design.featured_blog_ids.includes(b.blog_id)).length > 0 && design.featured_blog_ids.length < 10 ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Select value={blogToAdd} onValueChange={setBlogToAdd}>
+                  <SelectTrigger className="sm:max-w-xs">
+                    <SelectValue placeholder="Add post to featured" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {blogs
+                      .filter((b) => !design.featured_blog_ids.includes(b.blog_id))
+                      .map((b) => (
+                        <SelectItem key={b.blog_id} value={String(b.blog_id)}>
+                          {b.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  disabled={busy || !blogToAdd}
+                  onClick={() => {
+                    const id = Number(blogToAdd);
+                    if (!Number.isFinite(id)) return;
+                    const next = [...design.featured_blog_ids, id];
+                    saveDesign({ ...design, featured_blog_ids: next });
+                    setBlogToAdd("");
+                  }}
+                >
+                  Add post
+                </Button>
+              </div>
+            ) : design.featured_blog_ids.length >= 10 ? (
+              <p className="text-sm text-muted-foreground mt-2">Maximum 10 posts allowed.</p>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Footer Pages Modal */}
+      <Dialog open={footerPagesModalOpen} onOpenChange={setFooterPagesModalOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Manage Footer Pages</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            {selectedFooterPages.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Add pages to display in the footer.</p>
+            ) : (
+              <ul className="space-y-2">
+                {footerSelection.map((id, idx) => (
+                  <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <span>{pagesById.get(id)?.title || "Untitled"}</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy || idx === 0}
+                        onClick={() => {
+                          const next = [...footerSelection];
+                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                          saveFooter(next);
+                        }}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy || idx === footerSelection.length - 1}
+                        onClick={() => {
+                          const next = [...footerSelection];
+                          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                          saveFooter(next);
+                        }}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy}
+                        onClick={() => saveFooter(footerSelection.filter((x) => x !== id))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {footerAvailable.length > 0 ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Select value={footerPageToAdd} onValueChange={setFooterPageToAdd}>
+                  <SelectTrigger className="sm:max-w-xs">
+                    <SelectValue placeholder="Add page to footer" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {footerAvailable.map((p) => (
+                      <SelectItem key={p.page_id} value={String(p.page_id)}>
+                        {p.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  disabled={busy || !footerPageToAdd}
+                  onClick={() => {
+                    const id = Number(footerPageToAdd);
+                    if (!Number.isFinite(id)) return;
+                    const next = [...footerSelection, id];
+                    saveFooter(next);
+                    const nextAvailable = footerAvailable.find((p) => p.page_id !== id);
+                    setFooterPageToAdd(nextAvailable ? String(nextAvailable.page_id) : "");
+                  }}
+                >
+                  Add page
+                </Button>
+              </div>
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={catModalOpen} onOpenChange={setCatModalOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-md rounded-2xl sm:rounded-xl">
