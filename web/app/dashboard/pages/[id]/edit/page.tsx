@@ -67,7 +67,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | "undo" | "update">(null);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -351,6 +351,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   function getConfirmLine(): string {
     if (!page) return "";
     if (pendingAction === "undo") return "Discard unsaved changes?";
+    if (pendingAction === "publish") return "Publish this page now?";
+    if (pendingAction === "archive") return "Archive this page?";
+    if (pendingAction === "unarchive") return "Unarchive this page?";
     if (page.status === "published") return "This will update your live page.";
     return "Save changes to this archived page?";
   }
@@ -364,6 +367,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setSaveStatus("saved");
     } else if (pendingAction === "update") {
       void save(false);
+    } else if (pendingAction === "publish") {
+      void updateStatus("published");
+    } else if (pendingAction === "archive") {
+      void updateStatus("archived");
+    } else if (pendingAction === "unarchive") {
+      void updateStatus("published");
     }
     setPendingAction(null);
   }
@@ -502,17 +511,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           <></>
         )}
         {page.status === "draft" && (
-          <Button variant="default" onClick={() => void updateStatus("published")} disabled={saving}>
+          <Button variant="default" onClick={() => setPendingAction("publish")} disabled={saving}>
             Publish
           </Button>
         )}
         {page.status === "published" && (
-          <Button variant="outline" onClick={() => void updateStatus("archived")} disabled={saving}>
+          <Button variant="outline" onClick={() => setPendingAction("archive")} disabled={saving}>
             Archive
           </Button>
         )}
         {page.status === "archived" && (
-          <Button variant="outline" onClick={() => void updateStatus("published")} disabled={saving}>
+          <Button variant="outline" onClick={() => setPendingAction("unarchive")} disabled={saving}>
             Unarchive
           </Button>
         )}
@@ -528,7 +537,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               Cancel
             </Button>
             <Button size="sm" onClick={confirmPendingAction}>
-              {pendingAction === "undo" ? "Undo" : "Update page"}
+              {pendingAction === "undo"
+                ? "Undo"
+                : pendingAction === "publish"
+                  ? "Publish"
+                  : pendingAction === "archive"
+                    ? "Archive"
+                    : pendingAction === "unarchive"
+                      ? "Unarchive"
+                      : "Update page"}
             </Button>
           </DialogFooter>
         </DialogContent>

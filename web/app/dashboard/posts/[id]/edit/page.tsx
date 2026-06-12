@@ -77,7 +77,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule">(null);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -526,6 +526,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (!blog) return "";
     if (pendingAction === "undo") return "Discard unsaved changes?";
     if (pendingAction === "unschedule") return "Move this post back to draft? It will no longer be scheduled.";
+    if (pendingAction === "publish") return "Publish this post now?";
+    if (pendingAction === "archive") return "Archive this post?";
+    if (pendingAction === "unarchive") return "Unarchive this post?";
     if (blog.status === "published") return "This will update your live post.";
     if (blog.status === "scheduled") return "This will update your scheduled post.";
     return "Save changes to this archived post?";
@@ -542,6 +545,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       void save(false);
     } else if (pendingAction === "unschedule") {
       void doUnschedule();
+    } else if (pendingAction === "publish") {
+      void publish();
+    } else if (pendingAction === "archive") {
+      void archive();
+    } else if (pendingAction === "unarchive") {
+      void unarchive();
     }
     setPendingAction(null);
   }
@@ -891,7 +900,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
         {blog.status === "draft" && (
           <>
-            <Button variant="default" onClick={publish}>
+            <Button variant="default" onClick={() => setPendingAction("publish")}>
               Publish
             </Button>
             <Button variant="outline" onClick={() => setScheduleOpen(true)}>
@@ -907,12 +916,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </>
         )}
         {blog.status === "published" && (
-          <Button variant="outline" onClick={archive}>
+          <Button variant="outline" onClick={() => setPendingAction("archive")}>
             Archive
           </Button>
         )}
         {blog.status === "archived" && (
-          <Button variant="outline" onClick={unarchive}>
+          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
             Unarchive
           </Button>
         )}
@@ -932,7 +941,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 ? "Undo"
                 : pendingAction === "unschedule"
                   ? "Unschedule"
-                  : "Update blog"}
+                  : pendingAction === "publish"
+                    ? "Publish"
+                    : pendingAction === "archive"
+                      ? "Archive"
+                      : pendingAction === "unarchive"
+                        ? "Unarchive"
+                        : "Update blog"}
             </Button>
           </DialogFooter>
         </DialogContent>
