@@ -187,10 +187,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             ? null
             : nextMetaDesc.trim() || null,
       };
-      const updated = await updatePage(token, page.page_id, body);
-      // Only update the page state, not the form fields
-      // This prevents overwriting content the user is still typing
-      setPage(updated);
+      // Create a new page object that matches what we saved, using the captured next values
+      const updatedPage: UserPage = {
+        ...page,
+        title: nextTitle,
+        content: nextContent,
+        slug: body.slug || page.slug,
+        meta_title: body.meta_title,
+        meta_description: body.meta_description,
+      };
+      // Update the page state to mark it as no longer dirty
+      setPage(updatedPage);
       clearManualDraft();
       setSaveStatus("saved");
       return true;
