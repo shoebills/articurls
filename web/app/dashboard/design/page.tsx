@@ -18,7 +18,6 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category } from "@/lib/types";
-import { navBlogNameClassName, normalizeNavBlogNameSize, publicNavDesktopBlogTitleClassName } from "@/lib/nav-blog-name";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,8 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Menu, Pencil, Plus, Trash2, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -352,8 +350,6 @@ export default function DesignDashboardPage() {
   const selectedFooterPages = footerSelection
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
-  const previewBlogName = (design.nav_blog_name || "").trim() || "My Blog";
-  const previewBlogNameClass = navBlogNameClassName(normalizeNavBlogNameSize(design.nav_blog_name_size));
   const blogNameSizeOptions: NavBlogNameSize[] = ["small", "medium", "large"];
 
   function toggle(section: "navbar" | "featured" | "footer") {
@@ -364,16 +360,16 @@ export default function DesignDashboardPage() {
     <div className="mx-auto max-w-[1100px] space-y-6">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Design</h1>
 
-      {/* Navigation bar */}
+      {/* Header */}
       <SectionPanel
-        title="Navigation bar"
-        description="Control public navigation for your profile/blog."
+        title="Header"
+        description="Control the header shown on your public profile/blog."
         open={openSection === "navbar"}
         onToggle={() => toggle("navbar")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <p className="font-medium">Enable navbar</p>
+            <p className="font-medium">Enable header</p>
             <p className="text-sm text-muted-foreground">If disabled, public view shows only blogs.</p>
           </div>
           <Switch
@@ -433,8 +429,8 @@ export default function DesignDashboardPage() {
             </div>
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
-                <p className="font-medium">Enable menu</p>
-                <p className="text-sm text-muted-foreground">Show categories in navbar.</p>
+                <p className="font-medium">Show category menu</p>
+                <p className="text-sm text-muted-foreground">Show categories in the header.</p>
               </div>
               <Switch
                 checked={design.nav_menu_enabled}
@@ -540,88 +536,16 @@ export default function DesignDashboardPage() {
           </>
         ) : null}
 
-        <div className="space-y-3 border-t border-border/70 pt-4">
-          <p className="text-sm font-medium">Live preview of navbar</p>
-          <div className="rounded-xl border bg-muted/20 p-3 sm:hidden">
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Mobile preview</p>
-            {design.navbar_enabled ? (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between rounded-md border bg-background px-3 py-2">
-                  <span className={cn("min-w-0 truncate", previewBlogNameClass)}>{previewBlogName}</span>
-                  <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md border">
-                    <Menu className="h-4 w-4" />
-                  </span>
-                </div>
-                <div className="rounded-md border bg-background p-2">
-                  {design.nav_menu_enabled ? (
-                    selectedMenuCats.length > 0 ? (
-                      <div className="space-y-1">
-                        {selectedMenuCats.map((c) => (
-                          <p key={c.category_id} className="rounded px-2 py-1 text-sm hover:bg-muted">
-                            {c.name}
-                          </p>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="px-2 py-1 text-sm text-muted-foreground">Add categories to display.</p>
-                    )
-                  ) : null}
-                  <div className="mt-2 border-t pt-2">
-                    <Button size="sm" className="w-full">
-                      Subscribe
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
-            )}
-          </div>
-
-          <div className="hidden rounded-xl border bg-muted/20 p-4 sm:block">
-            <p className="mb-3 text-xs font-medium uppercase tracking-wide text-muted-foreground">Desktop preview</p>
-            {design.navbar_enabled ? (
-              <div className="rounded-md border bg-background px-4 py-3">
-                <div className="flex w-full items-center justify-between gap-x-6">
-                  <span className={publicNavDesktopBlogTitleClassName(normalizeNavBlogNameSize(design.nav_blog_name_size))}>
-                    {previewBlogName}
-                  </span>
-                  <div className="flex min-w-0 shrink-0 flex-wrap items-center justify-end gap-4">
-                    {design.nav_menu_enabled ? (
-                      selectedMenuCats.length > 0 ? (
-                        selectedMenuCats.length <= 5 ? (
-                          <div className="flex max-w-full flex-wrap items-center justify-end gap-x-3 gap-y-1">
-                            {selectedMenuCats.map((c) => (
-                              <span key={c.category_id} className="whitespace-nowrap text-sm text-muted-foreground">
-                                {c.name}
-                              </span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="inline-flex h-8 w-8 items-center justify-center rounded-md border">
-                            <Menu className="h-4 w-4" />
-                          </span>
-                        )
-                      ) : (
-                        <span className="text-sm text-muted-foreground">Add categories to display.</span>
-                      )
-                    ) : null}
-                    <div className="shrink-0">
-                      <Button size="sm">Subscribe</Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">Blogs only (navbar disabled).</p>
-            )}
-          </div>
+        <div className="border-t border-border/70 pt-4">
+          <p className="text-sm text-muted-foreground">
+            Header changes are saved to your public site as you update them.
+          </p>
         </div>
       </SectionPanel>
 
       {/* Featured blogs */}
       <SectionPanel
-        title="Body"
+        title="Featured blogs"
         description="Pin up to 10 published blogs to the top of your public profile."
         open={openSection === "featured"}
         onToggle={() => toggle("featured")}
@@ -724,10 +648,10 @@ export default function DesignDashboardPage() {
         ) : null}
       </SectionPanel>
 
-      {/* Footer */}
+      {/* About & footer */}
       <SectionPanel
-        title="Footer"
-        description="Control About section under blogs and site footer content."
+        title="About & footer"
+        description="Control the about section under blogs and your site footer content."
         open={openSection === "footer"}
         onToggle={() => toggle("footer")}
       >
