@@ -35,6 +35,8 @@ export default function PagesDashboardPage() {
   const [pages, setPages] = useState<UserPage[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [archiveId, setArchiveId] = useState<number | null>(null);
+  const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
@@ -68,12 +70,13 @@ export default function PagesDashboardPage() {
     }
   }
 
-  async function onArchive(pageId: number) {
-    if (!token) return;
-    setRowBusyId(pageId);
+  async function confirmArchive() {
+    if (!token || archiveId == null) return;
+    setRowBusyId(archiveId);
     setErr(null);
     try {
-      await archivePage(token, pageId);
+      await archivePage(token, archiveId);
+      setArchiveId(null);
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to archive page");
@@ -82,18 +85,27 @@ export default function PagesDashboardPage() {
     }
   }
 
-  async function onUnarchive(pageId: number) {
-    if (!token) return;
-    setRowBusyId(pageId);
+  async function confirmUnarchive() {
+    if (!token || unarchiveId == null) return;
+    setRowBusyId(unarchiveId);
     setErr(null);
     try {
-      await publishPage(token, pageId);
+      await publishPage(token, unarchiveId);
+      setUnarchiveId(null);
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to unarchive page");
     } finally {
       setRowBusyId(null);
     }
+  }
+
+  function onArchive(pageId: number) {
+    setArchiveId(pageId);
+  }
+
+  function onUnarchive(pageId: number) {
+    setUnarchiveId(pageId);
   }
 
   async function onShare(page: UserPage) {
@@ -267,6 +279,36 @@ export default function PagesDashboardPage() {
             </Button>
             <Button variant="destructive" onClick={() => void confirmDelete()}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={archiveId != null} onOpenChange={(o) => !o && setArchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive this page?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmArchive}>
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unarchiveId != null} onOpenChange={(o) => !o && setUnarchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unarchive this page?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnarchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmUnarchive}>
+              Unarchive
             </Button>
           </DialogFooter>
         </DialogContent>

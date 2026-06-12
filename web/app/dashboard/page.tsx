@@ -42,6 +42,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [archiveId, setArchiveId] = useState<number | null>(null);
+  const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
@@ -98,12 +100,13 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleArchive(id: number) {
-    if (!token) return;
-    setRowBusyId(id);
+  async function confirmArchive() {
+    if (!token || archiveId == null) return;
+    setRowBusyId(archiveId);
     setErr(null);
     try {
-      await archiveBlog(token, id);
+      await archiveBlog(token, archiveId);
+      setArchiveId(null);
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Archive failed");
@@ -112,18 +115,27 @@ export default function DashboardPage() {
     }
   }
 
-  async function handlePublishAgain(id: number) {
-    if (!token) return;
-    setRowBusyId(id);
+  async function confirmUnarchive() {
+    if (!token || unarchiveId == null) return;
+    setRowBusyId(unarchiveId);
     setErr(null);
     try {
-      await publishBlog(token, id);
+      await publishBlog(token, unarchiveId);
+      setUnarchiveId(null);
       await load();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not publish post");
+      setErr(e instanceof ApiError ? e.message : "Could not unarchive post");
     } finally {
       setRowBusyId(null);
     }
+  }
+
+  function handleArchive(id: number) {
+    setArchiveId(id);
+  }
+
+  function handlePublishAgain(id: number) {
+    setUnarchiveId(id);
   }
 
   function openEditor(blogId: number) {
@@ -457,6 +469,36 @@ export default function DashboardPage() {
             </Button>
             <Button variant="destructive" onClick={confirmDelete}>
               Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={archiveId != null} onOpenChange={(o) => !o && setArchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive this post?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmArchive}>
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unarchiveId != null} onOpenChange={(o) => !o && setUnarchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unarchive this post?</DialogTitle>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnarchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmUnarchive}>
+              Unarchive
             </Button>
           </DialogFooter>
         </DialogContent>
