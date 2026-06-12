@@ -188,7 +188,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             : nextMetaDesc.trim() || null,
       };
       const updated = await updatePage(token, page.page_id, body);
-      applyPageToForm(updated);
+      // Only update the page state, not the form fields
+      // This prevents overwriting content the user is still typing
+      setPage(updated);
       clearManualDraft();
       setSaveStatus("saved");
       return true;

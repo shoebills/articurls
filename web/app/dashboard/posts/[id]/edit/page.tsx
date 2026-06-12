@@ -261,7 +261,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (catDirty) {
         finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
       }
-      applyBlogToForm(finalBlog);
+      // Only update the blog state, not the form fields
+      // This prevents overwriting content the user is still typing
+      setBlog(finalBlog);
       if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
       if (catDirty) {
         const finalCatIds = (finalBlog as unknown as { category_ids?: number[] }).category_ids || [];
