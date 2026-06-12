@@ -23,26 +23,9 @@ import {
 import { ChevronDown, ChevronUp, ExternalLink, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { MARKETING_ORIGIN } from "@/lib/env";
+import { getContentExcerpt } from "@/lib/utils";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
-
-function extractTextFromHtml(html: string): string {
-  if (typeof document === "undefined") return "";
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
-}
-
-function getContentExcerpt(html: string, maxLen = 160): string {
-  const text = extractTextFromHtml(html).replace(/\s+/g, " ").trim();
-  if (text.length <= maxLen) return text;
-  const cut = text.slice(0, maxLen);
-  const lastSpace = cut.lastIndexOf(" ");
-  if (lastSpace > 0) {
-    return cut.slice(0, lastSpace).trimEnd() + "...";
-  }
-  return cut.trimEnd() + "...";
-}
 
 function normalizeEditableSlugCustom(page: UserPage): string {
   if (page.status !== "draft") return page.slug || "";

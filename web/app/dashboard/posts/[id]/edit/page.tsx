@@ -36,28 +36,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
-
-function extractTextFromHtml(html: string): string {
-  if (typeof document === "undefined") return "";
-  const tmp = document.createElement("div");
-  tmp.innerHTML = html;
-  return tmp.textContent || tmp.innerText || "";
-}
-
-function getContentExcerpt(html: string, maxLen = 160): string {
-  const text = extractTextFromHtml(html).replace(/\s+/g, " ").trim();
-  if (text.length <= maxLen) return text;
-  const cut = text.slice(0, maxLen);
-  const lastSpace = cut.lastIndexOf(" ");
-  if (lastSpace > 0) {
-    return cut.slice(0, lastSpace).trimEnd() + "...";
-  }
-  return cut.trimEnd() + "...";
-}
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);

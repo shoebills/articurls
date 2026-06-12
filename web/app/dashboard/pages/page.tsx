@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
+import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
 import { Archive, ArchiveRestore, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
 
@@ -183,9 +184,12 @@ export default function PagesDashboardPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1 text-left">
+                    <div className="min-w-0 flex-1 text-left space-y-1">
                       <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
                         {p.title || "Untitled"}
+                      </p>
+                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
+                        {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
                     <div className="shrink-0" data-card-action="true">
