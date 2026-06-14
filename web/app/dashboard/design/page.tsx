@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -452,7 +452,7 @@ export default function DesignDashboardPage() {
               </div>
               <div className="shrink-0 space-y-2 sm:min-w-[220px]">
                 <Label id="blog-name-size-label" className="text-muted-foreground">
-                  Size
+                  Font size
                 </Label>
                 <div
                   role="group"
@@ -774,86 +774,6 @@ export default function DesignDashboardPage() {
             <DialogTitle>Manage Navigation Menu</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Menu order</p>
-              <p className="text-sm text-muted-foreground">
-                Choose which categories appear in your blog menu.
-              </p>
-            </div>
-            {menuCatSelection.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {categories.length === 0 ? "Create a category to start building your menu." : "Add categories to display in the menu."}
-              </p>
-            ) : (
-              <ul className="space-y-2">
-                {menuCatSelection.map((id, idx) => (
-                  <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                    <span>{catsById.get(id)?.name || "Untitled"}</span>
-                    <div className="flex items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy || idx === 0}
-                        onClick={() => {
-                          const next = [...menuCatSelection];
-                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                          saveMenu(next);
-                        }}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy || idx === menuCatSelection.length - 1}
-                        onClick={() => {
-                          const next = [...menuCatSelection];
-                          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                          saveMenu(next);
-                        }}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy}
-                        onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {availableCats.length > 0 ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Select value={catToAdd} onValueChange={setCatToAdd}>
-                  <SelectTrigger className="sm:max-w-xs">
-                    <SelectValue placeholder="Add category to menu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCats.map((c) => (
-                      <SelectItem key={c.category_id} value={String(c.category_id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  disabled={busy || !catToAdd}
-                  onClick={() => {
-                    const id = Number(catToAdd);
-                    if (!Number.isFinite(id)) return;
-                    saveMenu([...menuCatSelection, id]);
-                  }}
-                >
-                  Add category
-                </Button>
-              </div>
-            ) : null}
             <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium">All categories</p>
@@ -987,6 +907,86 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
             </div>
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Menu order</p>
+              <p className="text-sm text-muted-foreground">
+                Choose which categories appear in your blog menu.
+              </p>
+            </div>
+            {menuCatSelection.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                {categories.length === 0 ? "Create a category to start building your menu." : "Add categories to display in the menu."}
+              </p>
+            ) : (
+              <ul className="space-y-2">
+                {menuCatSelection.map((id, idx) => (
+                  <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                    <span>{catsById.get(id)?.name || "Untitled"}</span>
+                    <div className="flex items-center gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy || idx === 0}
+                        onClick={() => {
+                          const next = [...menuCatSelection];
+                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                          saveMenu(next);
+                        }}
+                      >
+                        <ChevronUp className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy || idx === menuCatSelection.length - 1}
+                        onClick={() => {
+                          const next = [...menuCatSelection];
+                          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
+                          saveMenu(next);
+                        }}
+                      >
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        disabled={busy}
+                        onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {availableCats.length > 0 ? (
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Select value={catToAdd} onValueChange={setCatToAdd}>
+                  <SelectTrigger className="sm:max-w-xs">
+                    <SelectValue placeholder="Add category to menu" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableCats.map((c) => (
+                      <SelectItem key={c.category_id} value={String(c.category_id)}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  disabled={busy || !catToAdd}
+                  onClick={() => {
+                    const id = Number(catToAdd);
+                    if (!Number.isFinite(id)) return;
+                    saveMenu([...menuCatSelection, id]);
+                  }}
+                >
+                  Add category
+                </Button>
+              </div>
+            ) : null}
           </div>
         </DialogContent>
       </Dialog>
