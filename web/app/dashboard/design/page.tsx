@@ -526,7 +526,7 @@ export default function DesignDashboardPage() {
               </Button>
             </div>
             {design.featured_blog_ids.length > 0 ? (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {design.featured_blog_ids.map((id) => {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
@@ -620,7 +620,7 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
               {selectedFooterPages.length > 0 ? (
-                <ul className="space-y-2">
+                <ul className="space-y-3">
                   {footerSelection.map((id) => (
                     <li key={id} className="rounded-md border px-3 py-2 text-sm">
                       <span className="block truncate">{pagesById.get(id)?.title || "Untitled"}</span>
@@ -630,7 +630,7 @@ export default function DesignDashboardPage() {
               ) : null}
             </div>
             <div className="space-y-4 border-t border-border/60 pt-4">
-              <Label>Social links</Label>
+              <Label className="mb-3">Social links</Label>
               {enabledSocials.length > 0 ? (
                 <div className="space-y-3">
                   {enabledSocials.map((platformKey) => {
