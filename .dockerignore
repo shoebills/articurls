@@ -18,6 +18,7 @@ tests/
 .clinerules/
 .cursor/
 .windsurf/
+.junie/
 .aiassistant/
 test.py
 README.md
