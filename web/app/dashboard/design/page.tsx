@@ -372,7 +372,7 @@ export default function DesignDashboardPage() {
       {/* Header */}
       <SectionPanel
         title="Header"
-        description="Control the header shown on your public profile/blog."
+        description="Control the header shown on your blog."
         open={openSection === "navbar"}
         onToggle={() => toggle("navbar")}
       >
@@ -486,7 +486,7 @@ export default function DesignDashboardPage() {
       {/* Featured blogs */}
       <SectionPanel
         title="Featured blogs"
-        description="Pin up to 10 published blogs to the top of your public profile."
+        description="Pin blogs to the top of blog homepage."
         open={openSection === "featured"}
         onToggle={() => toggle("featured")}
       >
@@ -540,15 +540,15 @@ export default function DesignDashboardPage() {
       {/* About & footer */}
       <SectionPanel
         title="About & footer"
-        description="Control the about section under blogs and your site footer content."
+        description="Control the site footer content."
         open={openSection === "footer"}
         onToggle={() => toggle("footer")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <p className="font-medium">Enable about section under blogs</p>
-            <p className="text-sm text-muted-foreground">
-              Displays profile image, name, and bio below blog pages.
+            <p className="font-medium">Enable about section</p>
+              <p className="text-sm text-muted-foreground">
+              Displays profile image, name, and bio below blogs.
             </p>
           </div>
           <Switch
@@ -583,9 +583,9 @@ export default function DesignDashboardPage() {
 
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
-            <p className="font-medium">Enable footer pages</p>
+            <p className="font-medium">Enable footer</p>
             <p className="text-sm text-muted-foreground">
-              Shows selected pages at the bottom of public pages, with social links beneath them.
+              Shows pages and social links in the footer.
             </p>
           </div>
           <Switch
@@ -627,7 +627,7 @@ export default function DesignDashboardPage() {
               ) : null}
             </div>
             <div className="space-y-3 border-t border-border/60 pt-3">
-              <Label>Social links (shown below footer pages)</Label>
+              <Label>Social links</Label>
               {enabledSocials.length > 0 ? (
                 <div className="space-y-3">
                   {enabledSocials.map((platformKey) => {
@@ -735,7 +735,7 @@ export default function DesignDashboardPage() {
             <div className="space-y-1">
               <p className="text-sm font-medium">Menu order</p>
               <p className="text-sm text-muted-foreground">
-                Choose which categories appear in your public navigation and adjust their order.
+                Choose which categories appear in your blog.
               </p>
             </div>
             {menuCatSelection.length === 0 ? (
@@ -816,7 +816,7 @@ export default function DesignDashboardPage() {
               <div className="space-y-1">
                 <p className="text-sm font-medium">All categories</p>
                 <p className="text-sm text-muted-foreground">
-                  Create categories and see which ones are currently included in the navigation menu.
+                  Create and manage categories.
                 </p>
               </div>
               {categories.length === 0 ? (
