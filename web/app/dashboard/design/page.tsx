@@ -629,7 +629,7 @@ export default function DesignDashboardPage() {
                 </ul>
               ) : null}
             </div>
-            <div className="space-y-3 border-t border-border/60 pt-3">
+            <div className="space-y-4 border-t border-border/60 pt-4">
               <Label>Social links</Label>
               {enabledSocials.length > 0 ? (
                 <div className="space-y-3">
