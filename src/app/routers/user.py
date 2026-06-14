@@ -1,5 +1,5 @@
 import jwt
-from fastapi import Depends, APIRouter, HTTPException, Request, status
+from fastapi import Depends, APIRouter, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from ..database import get_db
@@ -38,6 +38,7 @@ from ..utils import (
     validate_username_or_raise,
     public_blog_home_url,
 )
+from ..cache.service import purge_homepage
 
 router = APIRouter(
     tags=["User"],
@@ -199,6 +200,7 @@ def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oa
 @router.patch("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_design_settings(
     request: page_schema.DesignSettings,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -231,6 +233,23 @@ def update_design_settings(
         
     db.commit()
     db.refresh(db_user)
+
+    # Design settings affect public homepage chrome/content (header, featured
+    # posts, about/footer), so purge the same homepage/listing cache tags used
+    # by public blog updates instead of requiring a manual Cloudflare purge.
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_homepage,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_homepage,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return db_user
 
 
