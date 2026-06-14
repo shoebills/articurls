@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -39,6 +39,8 @@ import {
 import { MdOutlineEmail } from "react-icons/md";
 import { FaLinkedinIn } from "react-icons/fa6";
 
+type DesignSectionId = "header" | "featured" | "footer";
+
 type SocialPlatform =
   | "contact_email"
   | "instagram_link"
@@ -68,33 +70,44 @@ const SOCIAL_OPTIONS: Array<{
 function SectionPanel({
   title,
   description,
-  open,
-  onToggle,
+  sectionId,
+  headingId,
+  panelRef,
+  selected,
+  onFocusCapture,
   children,
 }: {
   title: string;
   description: string;
-  open: boolean;
-  onToggle: () => void;
+  sectionId: string;
+  headingId: string;
+  panelRef: React.RefObject<HTMLElement | null>;
+  selected: boolean;
+  onFocusCapture: () => void;
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border bg-card text-card-foreground shadow-sm">
-      <button
-        type="button"
-        onClick={onToggle}
-        className="flex w-full items-center justify-between px-6 py-4 text-left"
-      >
+    <section
+      ref={panelRef}
+      id={sectionId}
+      aria-labelledby={headingId}
+      tabIndex={-1}
+      onFocusCapture={onFocusCapture}
+      className={cn(
+        "scroll-mt-28 rounded-xl border bg-card text-card-foreground shadow-sm transition-colors duration-200",
+        selected && "border-foreground/15 ring-2 ring-foreground/10"
+      )}
+    >
+      <div className="px-6 py-4">
         <div>
-          <p className="text-base font-semibold leading-none tracking-tight">{title}</p>
+          <h2 id={headingId} className="text-base font-semibold leading-none tracking-tight">
+            {title}
+          </h2>
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
-        <ChevronDown
-          className={cn("ml-4 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200", open && "rotate-180")}
-        />
-      </button>
-      {open && <div className="border-t px-6 py-5 space-y-5">{children}</div>}
-    </div>
+      </div>
+      <div className="border-t px-6 py-5 space-y-5">{children}</div>
+    </section>
   );
 }
 
@@ -144,12 +157,13 @@ export default function DesignDashboardPage() {
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
-
-  // All sections closed by default
-  const [openSection, setOpenSection] = useState<"navbar" | "featured" | "footer" | null>(null);
+  const [selectedSection, setSelectedSection] = useState<DesignSectionId>("header");
 
   const pagesById = useMemo(() => new Map(pages.map((p) => [p.page_id, p])), [pages]);
   const catsById = useMemo(() => new Map(categories.map((c) => [c.category_id, c])), [categories]);
+  const headerRef = useRef<HTMLElement | null>(null);
+  const featuredRef = useRef<HTMLElement | null>(null);
+  const footerRef = useRef<HTMLElement | null>(null);
 
   function getNextCatToAdd(rows: Category[], selection: number[]) {
     const nextAvailable = rows.find((cat) => !selection.includes(cat.category_id));
@@ -362,6 +376,11 @@ export default function DesignDashboardPage() {
   }
 
   const hiddenSocialOptions = SOCIAL_OPTIONS.filter((s) => !enabledSocials.includes(s.key));
+  const sectionTabs: Array<{ id: DesignSectionId; label: string }> = [
+    { id: "header", label: "Header" },
+    { id: "featured", label: "Featured blogs" },
+    { id: "footer", label: "Footer" },
+  ];
 
   const availableCats = categories.filter((c) => !menuCatSelection.includes(c.category_id));
   const footerAvailable = pages.filter((p) => !footerSelection.includes(p.page_id));
@@ -370,20 +389,59 @@ export default function DesignDashboardPage() {
     .filter((p): p is UserPage => Boolean(p));
   const blogNameSizeOptions: NavBlogNameSize[] = ["small", "medium", "large"];
 
-  function toggle(section: "navbar" | "featured" | "footer") {
-    setOpenSection((prev) => (prev === section ? null : section));
+  function getSectionRef(section: DesignSectionId) {
+    switch (section) {
+      case "header":
+        return headerRef;
+      case "featured":
+        return featuredRef;
+      case "footer":
+        return footerRef;
+    }
+  }
+
+  function goToSection(section: DesignSectionId) {
+    setSelectedSection(section);
+    const node = getSectionRef(section).current;
+    if (!node) return;
+    node.scrollIntoView({ behavior: "smooth", block: "start" });
+    node.focus({ preventScroll: true });
   }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Design</h1>
+      <nav
+        aria-label="Design sections"
+        className="overflow-x-auto pb-1"
+      >
+        <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+          {sectionTabs.map((section) => (
+            <Button
+              key={section.id}
+              type="button"
+              variant={selectedSection === section.id ? "default" : "ghost"}
+              size="sm"
+              className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm"
+              aria-current={selectedSection === section.id ? "page" : undefined}
+              aria-controls={`design-${section.id}`}
+              onClick={() => goToSection(section.id)}
+            >
+              {section.label}
+            </Button>
+          ))}
+        </div>
+      </nav>
 
       {/* Header */}
       <SectionPanel
         title="Header"
         description="Control the header shown on your blog."
-        open={openSection === "navbar"}
-        onToggle={() => toggle("navbar")}
+        sectionId="design-header"
+        headingId="design-header-heading"
+        panelRef={headerRef}
+        selected={selectedSection === "header"}
+        onFocusCapture={() => setSelectedSection("header")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
@@ -491,8 +549,11 @@ export default function DesignDashboardPage() {
       <SectionPanel
         title="Featured blogs"
         description="Pin blogs to the top of blog homepage."
-        open={openSection === "featured"}
-        onToggle={() => toggle("featured")}
+        sectionId="design-featured"
+        headingId="design-featured-heading"
+        panelRef={featuredRef}
+        selected={selectedSection === "featured"}
+        onFocusCapture={() => setSelectedSection("featured")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
@@ -545,8 +606,11 @@ export default function DesignDashboardPage() {
       <SectionPanel
         title="Footer"
         description="Control the blog footer content."
-        open={openSection === "footer"}
-        onToggle={() => toggle("footer")}
+        sectionId="design-footer"
+        headingId="design-footer-heading"
+        panelRef={footerRef}
+        selected={selectedSection === "footer"}
+        onFocusCapture={() => setSelectedSection("footer")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
