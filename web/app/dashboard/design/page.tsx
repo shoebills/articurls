@@ -542,7 +542,7 @@ export default function DesignDashboardPage() {
           />
         </div>
         {design.featured_blogs_enabled ? (
-          <div className="space-y-3 rounded-lg border p-3">
+          <>
             <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Featured Posts</p>
@@ -573,7 +573,7 @@ export default function DesignDashboardPage() {
                 })}
               </ul>
             ) : null}
-          </div>
+          </>
         ) : null}
       </SectionPanel>
       ) : null}
@@ -602,7 +602,7 @@ export default function DesignDashboardPage() {
         </div>
 
         {design.footer_enabled ? (
-          <div className="space-y-4 rounded-lg border p-4">
+          <>
             <div className="space-y-2.5">
               <Label htmlFor="bio">Bio</Label>
               <Textarea
@@ -620,7 +620,7 @@ export default function DesignDashboardPage() {
                 Save bio
               </Button>
             </div>
-          </div>
+          </>
         ) : null}
 
         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -638,7 +638,7 @@ export default function DesignDashboardPage() {
         </div>
 
         {design.site_footer_enabled ? (
-          <div className="space-y-3 rounded-lg border p-3">
+          <>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <div>
@@ -762,7 +762,7 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
             </div>
-          </div>
+          </>
         ) : null}
       </SectionPanel>
       ) : null}
