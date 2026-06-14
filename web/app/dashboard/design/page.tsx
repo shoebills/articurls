@@ -402,11 +402,14 @@ export default function DesignDashboardPage() {
 
   function goToSection(section: DesignSectionId) {
     setSelectedSection(section);
-    const node = getSectionRef(section).current;
+  }
+
+  useEffect(() => {
+    const node = getSectionRef(selectedSection).current;
     if (!node) return;
     node.scrollIntoView({ behavior: "smooth", block: "start" });
     node.focus({ preventScroll: true });
-  }
+  }, [selectedSection]);
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
@@ -423,7 +426,8 @@ export default function DesignDashboardPage() {
               variant={selectedSection === section.id ? "default" : "ghost"}
               size="sm"
               className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm"
-              aria-current={selectedSection === section.id ? "page" : undefined}
+              role="tab"
+              aria-selected={selectedSection === section.id}
               aria-controls={`design-${section.id}`}
               onClick={() => goToSection(section.id)}
             >
@@ -434,13 +438,14 @@ export default function DesignDashboardPage() {
       </nav>
 
       {/* Header */}
+      {selectedSection === "header" ? (
       <SectionPanel
         title="Header"
         description="Control the header shown on your blog."
         sectionId="design-header"
         headingId="design-header-heading"
         panelRef={headerRef}
-        selected={selectedSection === "header"}
+        selected
         onFocusCapture={() => setSelectedSection("header")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -544,15 +549,17 @@ export default function DesignDashboardPage() {
         ) : null}
 
       </SectionPanel>
+      ) : null}
 
       {/* Featured blogs */}
+      {selectedSection === "featured" ? (
       <SectionPanel
         title="Featured blogs"
         description="Pin blogs to the top of blog homepage."
         sectionId="design-featured"
         headingId="design-featured-heading"
         panelRef={featuredRef}
-        selected={selectedSection === "featured"}
+        selected
         onFocusCapture={() => setSelectedSection("featured")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -601,15 +608,17 @@ export default function DesignDashboardPage() {
           </div>
         ) : null}
       </SectionPanel>
+      ) : null}
 
       {/* About & footer */}
+      {selectedSection === "footer" ? (
       <SectionPanel
         title="Footer"
         description="Control the blog footer content."
         sectionId="design-footer"
         headingId="design-footer-heading"
         panelRef={footerRef}
-        selected={selectedSection === "footer"}
+        selected
         onFocusCapture={() => setSelectedSection("footer")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
@@ -790,6 +799,7 @@ export default function DesignDashboardPage() {
           </div>
         ) : null}
       </SectionPanel>
+      ) : null}
 
       {/* Navigation Menu Modal */}
       <Dialog open={navMenuModalOpen} onOpenChange={setNavMenuModalOpen}>
