@@ -526,16 +526,16 @@ export default function DesignDashboardPage() {
               </Button>
             </div>
             {design.featured_blog_ids.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
+              <ol className="list-decimal space-y-1 pl-5 text-sm">
                 {design.featured_blog_ids.map((id) => {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
-                    <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm truncate max-w-xs">
+                    <li key={id} className="truncate">
                       {b?.title || "Unknown blog"}
-                    </span>
+                    </li>
                   );
                 })}
-              </div>
+              </ol>
             ) : null}
           </div>
         ) : null}
@@ -620,13 +620,13 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
               {selectedFooterPages.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
+                <ol className="list-decimal space-y-1 pl-5 text-sm">
                   {footerSelection.map((id) => (
-                    <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm">
+                    <li key={id} className="truncate">
                       {pagesById.get(id)?.title || "Untitled"}
-                    </span>
+                    </li>
                   ))}
-                </div>
+                </ol>
               ) : null}
             </div>
             <div className="space-y-3 border-t border-border/60 pt-3">
