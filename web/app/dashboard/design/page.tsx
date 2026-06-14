@@ -620,13 +620,13 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
               {selectedFooterPages.length > 0 ? (
-                <ol className="list-decimal space-y-1 pl-5 text-sm">
+                <ul className="space-y-2">
                   {footerSelection.map((id) => (
-                    <li key={id} className="truncate">
-                      {pagesById.get(id)?.title || "Untitled"}
+                    <li key={id} className="rounded-md border px-3 py-2 text-sm">
+                      <span className="block truncate">{pagesById.get(id)?.title || "Untitled"}</span>
                     </li>
                   ))}
-                </ol>
+                </ul>
               ) : null}
             </div>
             <div className="space-y-3 border-t border-border/60 pt-3">
