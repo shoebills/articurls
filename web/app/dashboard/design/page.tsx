@@ -72,27 +72,20 @@ function SectionPanel({
   description,
   sectionId,
   headingId,
-  panelRef,
   selected,
-  onFocusCapture,
   children,
 }: {
   title: string;
   description: string;
   sectionId: string;
   headingId: string;
-  panelRef: React.RefObject<HTMLElement | null>;
   selected: boolean;
-  onFocusCapture: () => void;
   children: React.ReactNode;
 }) {
   return (
     <section
-      ref={panelRef}
       id={sectionId}
       aria-labelledby={headingId}
-      tabIndex={-1}
-      onFocusCapture={onFocusCapture}
       className={cn(
         "scroll-mt-28 rounded-xl border bg-card text-card-foreground shadow-sm transition-colors duration-200",
         selected && "border-foreground/15 ring-2 ring-foreground/10"
@@ -161,9 +154,6 @@ export default function DesignDashboardPage() {
 
   const pagesById = useMemo(() => new Map(pages.map((p) => [p.page_id, p])), [pages]);
   const catsById = useMemo(() => new Map(categories.map((c) => [c.category_id, c])), [categories]);
-  const headerRef = useRef<HTMLElement | null>(null);
-  const featuredRef = useRef<HTMLElement | null>(null);
-  const footerRef = useRef<HTMLElement | null>(null);
 
   function getNextCatToAdd(rows: Category[], selection: number[]) {
     const nextAvailable = rows.find((cat) => !selection.includes(cat.category_id));
@@ -389,27 +379,9 @@ export default function DesignDashboardPage() {
     .filter((p): p is UserPage => Boolean(p));
   const blogNameSizeOptions: NavBlogNameSize[] = ["small", "medium", "large"];
 
-  function getSectionRef(section: DesignSectionId) {
-    switch (section) {
-      case "header":
-        return headerRef;
-      case "featured":
-        return featuredRef;
-      case "footer":
-        return footerRef;
-    }
-  }
-
   function goToSection(section: DesignSectionId) {
     setSelectedSection(section);
   }
-
-  useEffect(() => {
-    const node = getSectionRef(selectedSection).current;
-    if (!node) return;
-    node.scrollIntoView({ behavior: "smooth", block: "start" });
-    node.focus({ preventScroll: true });
-  }, [selectedSection]);
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
@@ -444,9 +416,7 @@ export default function DesignDashboardPage() {
         description="Control the header shown on your blog."
         sectionId="design-header"
         headingId="design-header-heading"
-        panelRef={headerRef}
         selected
-        onFocusCapture={() => setSelectedSection("header")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
@@ -558,9 +528,7 @@ export default function DesignDashboardPage() {
         description="Pin blogs to the top of blog homepage."
         sectionId="design-featured"
         headingId="design-featured-heading"
-        panelRef={featuredRef}
         selected
-        onFocusCapture={() => setSelectedSection("featured")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
@@ -617,9 +585,7 @@ export default function DesignDashboardPage() {
         description="Control the blog footer content."
         sectionId="design-footer"
         headingId="design-footer-heading"
-        panelRef={footerRef}
         selected
-        onFocusCapture={() => setSelectedSection("footer")}
       >
         <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
