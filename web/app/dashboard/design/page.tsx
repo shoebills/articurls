@@ -526,16 +526,16 @@ export default function DesignDashboardPage() {
               </Button>
             </div>
             {design.featured_blog_ids.length > 0 ? (
-              <ol className="list-decimal space-y-1 pl-5 text-sm">
+              <ul className="space-y-2">
                 {design.featured_blog_ids.map((id) => {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
-                    <li key={id} className="truncate">
-                      {b?.title || "Unknown blog"}
+                    <li key={id} className="rounded-md border px-3 py-2 text-sm">
+                      <span className="block truncate">{b?.title || "Unknown blog"}</span>
                     </li>
                   );
                 })}
-              </ol>
+              </ul>
             ) : null}
           </div>
         ) : null}
@@ -544,7 +544,7 @@ export default function DesignDashboardPage() {
       {/* About & footer */}
       <SectionPanel
         title="Footer"
-        description="Control the site footer content."
+        description="Control the blog footer content."
         open={openSection === "footer"}
         onToggle={() => toggle("footer")}
       >
