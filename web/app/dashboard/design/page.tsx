@@ -120,6 +120,7 @@ export default function DesignDashboardPage() {
   const [blogToAdd, setBlogToAdd] = useState<string>("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [catCreateName, setCatCreateName] = useState("");
   const [catEditingId, setCatEditingId] = useState<number | null>(null);
   const [catEditingName, setCatEditingName] = useState("");
@@ -143,7 +144,6 @@ export default function DesignDashboardPage() {
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
-  const [bioSaved, setBioSaved] = useState(false);
 
   // All sections closed by default
   const [openSection, setOpenSection] = useState<"navbar" | "featured" | "footer" | null>(null);
@@ -154,6 +154,10 @@ export default function DesignDashboardPage() {
   function getNextCatToAdd(rows: Category[], selection: number[]) {
     const nextAvailable = rows.find((cat) => !selection.includes(cat.category_id));
     return nextAvailable ? String(nextAvailable.category_id) : "";
+  }
+
+  function showSavedToast() {
+    setSavedMsg("Saved");
   }
 
   async function load() {
@@ -220,6 +224,7 @@ export default function DesignDashboardPage() {
     try {
       const d = await patchDesignSettings(token, next);
       setDesign(d);
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save design");
     } finally {
@@ -236,6 +241,7 @@ export default function DesignDashboardPage() {
       setCategories(rows);
       setMenuCatSelection(nextSelection);
       setCatToAdd(getNextCatToAdd(rows, nextSelection));
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save menu");
     } finally {
@@ -251,6 +257,7 @@ export default function DesignDashboardPage() {
       const rows = await updateFooterPages(token, nextSelection);
       setPages(rows);
       setFooterSelection(nextSelection);
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save footer links");
     } finally {
@@ -268,6 +275,7 @@ export default function DesignDashboardPage() {
       const rows = await listCategories(token);
       setCategories(rows);
       setCatToAdd(getNextCatToAdd(rows, menuCatSelection));
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to create category");
     } finally {
@@ -286,6 +294,7 @@ export default function DesignDashboardPage() {
       const rows = await listCategories(token);
       setCategories(rows);
       setCatToAdd(getNextCatToAdd(rows, menuCatSelection));
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to rename category");
     } finally {
@@ -309,6 +318,7 @@ export default function DesignDashboardPage() {
       setCategories(rows);
       setCatToAdd(getNextCatToAdd(rows, nextSelection));
       setCatDeletingId(null);
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to delete category");
     } finally {
@@ -324,7 +334,6 @@ export default function DesignDashboardPage() {
     }
     setBusy(true);
     setErr(null);
-    setBioSaved(false);
     try {
       await patchMe(token, {
         bio,
@@ -337,7 +346,7 @@ export default function DesignDashboardPage() {
         github_link: socialLinks.github_link || null,
         youtube_link: socialLinks.youtube_link || null,
       });
-      setBioSaved(true);
+      showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save");
     } finally {
@@ -459,7 +468,7 @@ export default function DesignDashboardPage() {
                     onClick={() => setNavMenuModalOpen(true)}
                     disabled={busy}
                   >
-                    Manage Menu
+                    Manage
                   </Button>
                 </div>
                 {menuCatSelection.length > 0 ? (
@@ -571,7 +580,6 @@ export default function DesignDashboardPage() {
               <Button size="sm" onClick={saveBioSocials} disabled={busy}>
                 Save bio
               </Button>
-              {bioSaved && <p className="text-sm text-emerald-600">Saved.</p>}
             </div>
           </div>
         ) : null}
@@ -713,7 +721,6 @@ export default function DesignDashboardPage() {
                 <Button size="sm" onClick={saveBioSocials} disabled={busy}>
                   Save social links
                 </Button>
-                {bioSaved && <p className="text-sm text-emerald-600">Saved.</p>}
               </div>
             </div>
           </div>
@@ -947,7 +954,7 @@ export default function DesignDashboardPage() {
       {/* Featured Posts Modal */}
       <Dialog open={featuredPostsModalOpen} onOpenChange={setFeaturedPostsModalOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle>Manage Featured Posts</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1039,7 +1046,7 @@ export default function DesignDashboardPage() {
       {/* Footer Pages Modal */}
       <Dialog open={footerPagesModalOpen} onOpenChange={setFooterPagesModalOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle>Manage Footer Pages</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
@@ -1122,6 +1129,12 @@ export default function DesignDashboardPage() {
         </DialogContent>
       </Dialog>
 
+      <FloatingErrorToast
+        message={savedMsg}
+        onDismiss={() => setSavedMsg(null)}
+        autoDismissMs={3000}
+        variant="success"
+      />
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );

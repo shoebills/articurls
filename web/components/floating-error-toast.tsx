@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_MS = 5000;
 
@@ -9,34 +10,50 @@ export type FloatingErrorToastProps = {
   /** Called when the toast auto-hides. Omit to keep parent state (e.g. verify page still shows actions). */
   onDismiss?: () => void;
   autoDismissMs?: number;
+  variant?: "error" | "success";
 };
 
 /**
  * Fixed bottom error toast. Auto-hides after `autoDismissMs` (default 5s).
  * Uses z-[100] so it appears above dialogs (z-50).
  */
-export function FloatingErrorToast({ message, onDismiss, autoDismissMs = DEFAULT_MS }: FloatingErrorToastProps) {
+export function FloatingErrorToast({
+  message,
+  onDismiss,
+  autoDismissMs = DEFAULT_MS,
+  variant = "error",
+}: FloatingErrorToastProps) {
   const onDismissRef = useRef(onDismiss);
-  onDismissRef.current = onDismiss;
-  const [visible, setVisible] = useState(false);
+  const toastRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     if (!message) {
-      setVisible(false);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      timerRef.current = null;
       return;
     }
-    setVisible(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (toastRef.current) {
+      toastRef.current.hidden = false;
+      toastRef.current.removeAttribute("aria-hidden");
+      toastRef.current.style.opacity = "1";
+      toastRef.current.style.transform = "translateX(-50%) translateY(0)";
+    }
     if (autoDismissMs <= 0) return;
     timerRef.current = setTimeout(() => {
-      setVisible(false);
       timerRef.current = null;
-      onDismissRef.current?.();
+      if (onDismissRef.current) {
+        onDismissRef.current();
+        return;
+      }
+      if (!toastRef.current) return;
+      toastRef.current.setAttribute("aria-hidden", "true");
+      toastRef.current.style.opacity = "0";
+      toastRef.current.style.transform = "translateX(-50%) translateY(8px)";
     }, autoDismissMs);
     return () => {
       if (timerRef.current) {
@@ -46,13 +63,19 @@ export function FloatingErrorToast({ message, onDismiss, autoDismissMs = DEFAULT
     };
   }, [message, autoDismissMs]);
 
-  if (!message || !visible) return null;
+  if (!message) return null;
 
   return (
     <div
+      ref={toastRef}
       role="alert"
-      aria-live="assertive"
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] w-fit max-w-[min(calc(100vw-1.5rem),36rem)] -translate-x-1/2 rounded-xl border border-destructive/35 bg-background/95 px-4 py-3 text-center text-sm leading-relaxed text-destructive shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/85 break-words"
+      aria-live={variant === "success" ? "polite" : "assertive"}
+      className={cn(
+        "fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] w-fit max-w-[min(calc(100vw-1.5rem),36rem)] -translate-x-1/2 border bg-background/95 text-center shadow-lg transition-all duration-200 backdrop-blur-md supports-[backdrop-filter]:bg-background/85 break-words",
+        variant === "success"
+          ? "rounded-lg border-emerald-500/35 px-3 py-2 text-xs font-medium leading-none text-emerald-600"
+          : "rounded-xl border-destructive/35 px-4 py-3 text-sm leading-relaxed text-destructive"
+      )}
     >
       {message}
     </div>
