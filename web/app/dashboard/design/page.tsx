@@ -490,7 +490,7 @@ export default function DesignDashboardPage() {
               />
             </div>
             {design.nav_menu_enabled ? (
-              <div className="space-y-3 rounded-lg border p-3">
+              <>
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Menu Items</p>
@@ -513,7 +513,7 @@ export default function DesignDashboardPage() {
                     ))}
                   </div>
                 ) : null}
-              </div>
+              </>
             ) : null}
           </>
         ) : null}
@@ -892,7 +892,7 @@ export default function DesignDashboardPage() {
                   })}
                 </div>
               )}
-              <div className="flex items-center gap-2 border-t border-border/60 pt-4">
+              <div className="flex items-center gap-2 pt-4">
                 <Input
                   placeholder="New category name"
                   value={catCreateName}
@@ -907,6 +907,7 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
             </div>
+            <div className="border-t border-border/60 pt-4" />
             <div className="space-y-1">
               <p className="text-sm font-medium">Menu order</p>
               <p className="text-sm text-muted-foreground">
