@@ -7,9 +7,11 @@ __pycache__/
 .vscode/
 .clinerules/
 .cursor/
+.aiassistant/
 .windsurf/
 test.py
 uploads/
 .codex
 .zed
 .envrc
+.idea/

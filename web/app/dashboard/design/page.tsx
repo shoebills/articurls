@@ -476,11 +476,6 @@ export default function DesignDashboardPage() {
           </>
         ) : null}
 
-        <div className="border-t border-border/70 pt-4">
-          <p className="text-sm text-muted-foreground">
-            Header changes are saved to your public site as you update them.
-          </p>
-        </div>
       </SectionPanel>
 
       {/* Featured blogs */}
