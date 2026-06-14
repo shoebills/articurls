@@ -478,7 +478,8 @@ export default function DesignDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="border-t border-border/60 pt-4" />
+            <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="font-medium">Show category menu</p>
                 <p className="text-sm text-muted-foreground">Show categories in the header.</p>
@@ -545,12 +546,7 @@ export default function DesignDashboardPage() {
           <>
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-medium">Featured Posts</p>
-                <p className="text-sm text-muted-foreground">
-                  {design.featured_blog_ids.length === 0
-                    ? "No posts featured yet"
-                    : `${design.featured_blog_ids.length} of 10 posts featured`}
-                </p>
+                <p className="font-medium">Featured Posts ({design.featured_blog_ids.length}/10)</p>
               </div>
               <Button
                 variant="outline"
@@ -615,11 +611,14 @@ export default function DesignDashboardPage() {
               />
               <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
             </div>
-            <div className="border-t border-border/60 pt-3 flex items-center gap-3">
+            <div className="pt-3 flex items-center gap-3">
               <Button size="sm" onClick={saveBioSocials} disabled={busy}>
                 Save bio
               </Button>
             </div>
+
+              <div className="border-t border-border/60 mt-6 pt-6" />
+
           </>
         ) : null}
 
@@ -641,14 +640,7 @@ export default function DesignDashboardPage() {
           <>
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">Footer Pages</p>
-                  <p className="text-sm text-muted-foreground">
-                    {selectedFooterPages.length === 0
-                      ? "No pages in footer yet"
-                      : `${selectedFooterPages.length} ${selectedFooterPages.length === 1 ? "page" : "pages"} in footer`}
-                  </p>
-                </div>
+                <p className="font-medium">Footer Pages</p>
                 <Button
                   variant="outline"
                   size="sm"
