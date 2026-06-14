@@ -415,7 +415,7 @@ export default function DesignDashboardPage() {
                 <div
                   role="group"
                   aria-labelledby="blog-name-size-label"
-                  className="flex rounded-lg border border-border bg-muted/20 p-0.5"
+                  className="mt-2 flex rounded-lg border border-border bg-muted/20 p-0.5"
                 >
                   {blogNameSizeOptions.map((size) => (
                     <Button
@@ -452,11 +452,6 @@ export default function DesignDashboardPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="font-medium">Menu Items</p>
-                    <p className="text-sm text-muted-foreground">
-                      {menuCatSelection.length === 0
-                        ? "No categories in menu yet"
-                        : `${menuCatSelection.length} ${menuCatSelection.length === 1 ? "category" : "categories"} in menu`}
-                    </p>
                   </div>
                   <Button
                     variant="outline"
@@ -518,7 +513,7 @@ export default function DesignDashboardPage() {
                 onClick={() => setFeaturedPostsModalOpen(true)}
                 disabled={busy}
               >
-                Manage Featured Posts
+                Manage
               </Button>
             </div>
             {design.featured_blog_ids.length > 0 ? (
@@ -539,7 +534,7 @@ export default function DesignDashboardPage() {
 
       {/* About & footer */}
       <SectionPanel
-        title="About & footer"
+        title="Footer"
         description="Control the site footer content."
         open={openSection === "footer"}
         onToggle={() => toggle("footer")}
@@ -613,7 +608,7 @@ export default function DesignDashboardPage() {
                   onClick={() => setFooterPagesModalOpen(true)}
                   disabled={busy}
                 >
-                  Manage Footer Pages
+                  Manage
                 </Button>
               </div>
               {selectedFooterPages.length > 0 ? (
@@ -728,14 +723,14 @@ export default function DesignDashboardPage() {
       {/* Navigation Menu Modal */}
       <Dialog open={navMenuModalOpen} onOpenChange={setNavMenuModalOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
           </DialogHeader>
           <div className="space-y-5">
             <div className="space-y-1">
               <p className="text-sm font-medium">Menu order</p>
               <p className="text-sm text-muted-foreground">
-                Choose which categories appear in your blog.
+                Choose which categories appear in your blog menu.
               </p>
             </div>
             {menuCatSelection.length === 0 ? (
