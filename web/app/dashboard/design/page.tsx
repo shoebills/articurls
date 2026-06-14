@@ -478,7 +478,9 @@ export default function DesignDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="border-t border-border/60 pt-4" />
+            <div className="my-4">
+              <div className="border-t border-border/60" />
+            </div>
             <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="font-medium">Show category menu</p>
@@ -617,7 +619,9 @@ export default function DesignDashboardPage() {
               </Button>
             </div>
 
-              <div className="border-t border-border/60 mt-6 pt-6" />
+              <div className="my-6">
+                <div className="border-t border-border/60" />
+              </div>
 
           </>
         ) : null}
@@ -668,13 +672,14 @@ export default function DesignDashboardPage() {
                     const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
                     if (!option) return null;
                     return (
-                      <div key={platformKey} className="flex items-center gap-2.5">
+                      <div key={platformKey} className="flex items-center gap-2.5 text-sm">
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
                           {option.icon}
                         </div>
                         <Input
                           type={platformKey === "contact_email" ? "email" : "url"}
                           value={socialLinks[platformKey]}
+                          className="min-w-0"
                           onChange={(e) =>
                             setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
                           }
