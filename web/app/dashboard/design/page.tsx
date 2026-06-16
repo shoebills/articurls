@@ -513,7 +513,9 @@ export default function DesignDashboardPage() {
                       </span>
                     ))}
                   </div>
-                ) : null}
+                ) : (
+                  <p className="text-sm text-muted-foreground">No categories added.</p>
+                )}
               </>
             ) : null}
           </>
