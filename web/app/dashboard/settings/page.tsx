@@ -382,7 +382,7 @@ export default function SettingsPage() {
             <Label htmlFor="email">Email</Label>
             <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div className="border-t border-border/60 pt-6">
+          <div className="pt-2">
             <Button size="lg" onClick={saveBase} disabled={busy}>
               Save profile
             </Button>
@@ -426,7 +426,7 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle className="text-xl">Pro options</CardTitle>
+          <CardTitle className="text-xl">Pro features</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isPro && (
@@ -438,7 +438,7 @@ export default function SettingsPage() {
             <div className="space-y-1.5">
               <Label>Blog favicon</Label>
               <p className="text-sm text-muted-foreground">
-                Custom favicon shown in browser tabs for your blog. Recommended: 512×512 PNG, max 256KB.
+                Recommended: 512×512 PNG, max 256KB.
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -555,7 +555,7 @@ export default function SettingsPage() {
           </div>
           <div className="pt-2">
             <Button size="lg" onClick={savePro} disabled={!isPro || busy}>
-              Save Pro settings
+              Save
             </Button>
           </div>
         </CardContent>
