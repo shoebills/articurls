@@ -41,6 +41,7 @@ export default function SettingsPage() {
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
   const [removeBranding, setRemoveBranding] = useState(true);
+  const [collectSubscribers, setCollectSubscribers] = useState(true);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [usernameChangeCount, setUsernameChangeCount] = useState(0);
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
@@ -72,6 +73,7 @@ export default function SettingsPage() {
       setUserName(u.user_name);
       setEmail(u.email);
       setRemoveBranding(u.remove_branding ?? true);
+      setCollectSubscribers(u.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(u.username_change_count || 0);
       setStorageUsage(usage);
     } catch (e) {
@@ -89,6 +91,7 @@ export default function SettingsPage() {
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
       setRemoveBranding(ctxUser.remove_branding ?? true);
+      setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? true);
       setUsernameChangeCount(ctxUser.username_change_count || 0);
     }
   }, [ctxUser]);
@@ -119,6 +122,7 @@ export default function SettingsPage() {
     try {
       await patchProMe(token, {
         remove_branding: removeBranding,
+        subscriber_collection_enabled: collectSubscribers,
       });
       await refreshUser();
       setSaved(true);
@@ -522,6 +526,19 @@ export default function SettingsPage() {
                 ) : null}
               </div>
             </div>
+          </div>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1">
+              <p className="text-sm font-medium">Collect subscribers</p>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Show the subscribe button in your blog menu and below blog posts.
+              </p>
+            </div>
+            <Switch
+              checked={isPro ? collectSubscribers : false}
+              onCheckedChange={setCollectSubscribers}
+              disabled={!isPro || busy}
+            />
           </div>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
