@@ -86,7 +86,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
                   role="tab"
                   aria-selected={active}
                   className={cn(
-                    "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm inline-flex items-center justify-center font-medium transition-colors",
+                    "h-10 rounded-lg px-4 text-sm inline-flex items-center justify-center font-medium transition-colors",
                     active
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground hover:text-foreground"

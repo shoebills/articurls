@@ -79,6 +79,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const metaDescRef = useRef(metaDesc);
   const notifyRef = useRef(notify);
   const featuredImageUrlRef = useRef(featuredImageUrl);
+  const savedCatIdsRef = useRef<number[]>([]);
 
   // Category assignment state
   const [allCategories, setAllCategories] = useState<Category[]>([]);
@@ -113,6 +114,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const blogCatIds = (b as unknown as { category_ids?: number[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
+    savedCatIdsRef.current = [...blogCatIds];
   }, []);
 
   const load = useCallback(async () => {
@@ -176,8 +178,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       !blog.meta_description || blog.meta_description === blogContentExcerpt ? null : blog.meta_description;
     const nextFeatured = featuredImageUrl.trim() || null;
     const catDirty =
-      selectedCatIds.length !== pendingCatIds.length ||
-      selectedCatIds.some((id) => !pendingCatIds.includes(id));
+      savedCatIdsRef.current.length !== selectedCatIds.length ||
+      savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
     return (
       blog.title !== title ||
       (blog.content || "") !== (content || "") ||
@@ -204,8 +206,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextFeaturedImageUrl = featuredImageUrl;
     const nextPendingCatIds = pendingCatIds;
     const catDirty =
-      selectedCatIds.length !== nextPendingCatIds.length ||
-      selectedCatIds.some((id) => !nextPendingCatIds.includes(id));
+      savedCatIdsRef.current.length !== nextPendingCatIds.length ||
+      savedCatIdsRef.current.some((id) => !nextPendingCatIds.includes(id));
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -247,6 +249,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setBlog(finalBlog);
       if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
       if (catDirty) {
+        savedCatIdsRef.current = [...nextPendingCatIds];
         setSelectedCatIds(nextPendingCatIds);
         setPendingCatIds(nextPendingCatIds);
       }
@@ -813,25 +816,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     <div className="border-t border-border/70 p-2">
                       <Button
                         size="sm"
+                        variant="outline"
                         className="w-full"
-                        disabled={catBusy}
-                        onClick={async () => {
-                          if (!token || !blog) return;
-                          setCatBusy(true);
-                          try {
-                            const updated = await assignBlogCategories(token, blog.blog_id, pendingCatIds);
-                            setSelectedCatIds(pendingCatIds);
-                            applyBlogToForm(updated);
-                          } catch (e) {
-                            setErr(e instanceof ApiError ? e.message : "Failed to assign categories");
-                          } finally {
-                            setCatBusy(false);
-                            setCatDropdownOpen(false);
-                          }
+                        onClick={() => {
+                          setSelectedCatIds([...pendingCatIds]);
+                          setCatDropdownOpen(false);
                         }}
                       >
-                        {catBusy ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : null}
-                        Apply
+                        Close
                       </Button>
                     </div>
                   </div>
