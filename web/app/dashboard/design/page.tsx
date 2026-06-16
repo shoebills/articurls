@@ -451,7 +451,7 @@ export default function DesignDashboardPage() {
                 />
               </div>
               <div className="shrink-0 space-y-2 sm:min-w-[220px]">
-                <Label id="blog-name-size-label" className="text-muted-foreground">
+                <Label id="blog-name-size-label">
                   Font size
                 </Label>
                 <div
@@ -478,10 +478,8 @@ export default function DesignDashboardPage() {
                 </div>
               </div>
             </div>
-            <div className="my-4">
-              <div className="border-t border-border/60" />
-            </div>
-            <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
+            <div className="border-t border-border/60" />
+            <div className="flex items-center justify-between rounded-lg border p-3">
               <div>
                 <p className="font-medium">Show category menu</p>
                 <p className="text-sm text-muted-foreground">Show categories in the header.</p>
