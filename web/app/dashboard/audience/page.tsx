@@ -87,25 +87,26 @@ export default function AudienceEmailsPage() {
     if (!token || !isPro) return;
     try {
       const settings = await getWelcomeEmailSettings(token);
-      setEnabled(settings.welcome_email_enabled);
       const storedSubject = settings.welcome_email_subject;
-      if (isStoredWelcomeSubjectDefault(storedSubject, blogName)) {
-        setSubject(welcomeEmailSubjectDisplay(blogName));
-        setSubjectUsesDefault(true);
-      } else {
-        setSubject(storedSubject!.trim());
-        setSubjectUsesDefault(false);
-      }
+      const isDefault = isStoredWelcomeSubjectDefault(storedSubject, blogName);
+      const initialSubject = isDefault
+        ? welcomeEmailSubjectDisplay(blogName)
+        : (storedSubject || "").trim();
       const storedBody = settings.welcome_email_body_html?.trim();
-      setBodyHtml(storedBody || WELCOME_EMAIL_STARTER_HTML);
+      const initialBody = storedBody || WELCOME_EMAIL_STARTER_HTML;
       const delay = String(settings.welcome_email_delay_minutes ?? 0);
       const finalDelay = DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0";
+
+      setEnabled(settings.welcome_email_enabled);
+      setSubject(initialSubject);
+      setSubjectUsesDefault(isDefault);
+      setBodyHtml(initialBody);
       setDelayMinutes(finalDelay);
       setInitial({
         enabled: settings.welcome_email_enabled,
-        subject: subjectUsesDefault ? welcomeEmailSubjectDisplay(blogName) : (storedSubject || "").trim(),
-        subjectUsesDefault: subjectUsesDefault,
-        bodyHtml: storedBody || WELCOME_EMAIL_STARTER_HTML,
+        subject: initialSubject,
+        subjectUsesDefault: isDefault,
+        bodyHtml: initialBody,
         delayMinutes: finalDelay,
       });
     } catch (e) {
