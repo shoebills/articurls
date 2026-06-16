@@ -619,9 +619,6 @@ export default function DesignDashboardPage() {
               </Button>
             </div>
 
-              <div className="my-6">
-                <div className="border-t border-border/60" />
-              </div>
 
           </>
         ) : null}
