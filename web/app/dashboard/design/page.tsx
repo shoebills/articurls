@@ -618,12 +618,12 @@ export default function DesignDashboardPage() {
                 Save
               </Button>
             </div>
-
-
           </>
         ) : null}
 
-        <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
+        <div className="border-t border-border/60" />
+
+        <div className="flex items-center justify-between rounded-lg border p-3">
           <div>
             <p className="font-medium">Enable footer</p>
             <p className="text-sm text-muted-foreground">
@@ -662,7 +662,7 @@ export default function DesignDashboardPage() {
               ) : null}
             </div>
             <div className="space-y-4 border-t border-border/60 pt-5">
-              <Label className="mb-3">Social links</Label>
+              <p className="font-medium mb-4">Social links</p>
               {enabledSocials.length > 0 ? (
                 <div className="space-y-3">
                   {enabledSocials.map((platformKey) => {
