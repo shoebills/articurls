@@ -170,7 +170,7 @@ export default function SeoDashboardPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  disabled={!rssResourceUrl}
+                  disabled={!rssResourceEnabled}
                   onClick={() => {
                     if (rssResourceUrl) {
                       window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
