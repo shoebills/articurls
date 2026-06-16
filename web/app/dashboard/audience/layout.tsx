@@ -24,6 +24,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
   const [subscriberCollectionEnabled, setSubscriberCollectionEnabled] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   useEffect(() => {
     if (ctxUser) {
@@ -40,6 +41,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
     try {
       await patchProMe(token, { subscriber_collection_enabled: nextValue });
       await refreshUser();
+      setSavedMsg("Saved");
     } catch (e) {
       setSubscriberCollectionEnabled(previous);
       setErr(e instanceof ApiError ? e.message : "Failed to update subscriber collection");
@@ -102,6 +104,12 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
         {children}
       </div>
 
+      <FloatingErrorToast
+        message={savedMsg}
+        onDismiss={() => setSavedMsg(null)}
+        autoDismissMs={3000}
+        variant="success"
+      />
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </>
   );
