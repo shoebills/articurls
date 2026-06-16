@@ -118,6 +118,9 @@ export default function SeoDashboardPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
 
       <Card>
+        <CardHeader>
+          <CardTitle>Meta</CardTitle>
+        </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
             <Label htmlFor="meta_title">Meta title</Label>
@@ -157,6 +160,12 @@ export default function SeoDashboardPage() {
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
+                <Switch
+                  checked={rssEnabled}
+                  onCheckedChange={onToggleRss}
+                  disabled={busy}
+                  aria-label="Enable RSS feed"
+                />
                 <Button
                   type="button"
                   variant="outline"
@@ -170,12 +179,6 @@ export default function SeoDashboardPage() {
                 >
                   View
                 </Button>
-                <Switch
-                  checked={rssEnabled}
-                  onCheckedChange={onToggleRss}
-                  disabled={busy}
-                  aria-label="Enable RSS feed"
-                />
               </div>
             </div>
             <SeoResourceRow
