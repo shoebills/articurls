@@ -384,7 +384,7 @@ export default function SettingsPage() {
           </div>
           <div className="pt-2">
             <Button size="lg" onClick={saveBase} disabled={busy}>
-              Save profile
+              Save
             </Button>
           </div>
         </CardContent>

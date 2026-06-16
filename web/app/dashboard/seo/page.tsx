@@ -152,7 +152,7 @@ export default function SeoDashboardPage() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-background px-4 py-3">
+            <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">RSS feed</p>
                 <p className="text-xs text-muted-foreground">
@@ -226,7 +226,7 @@ function SeoResourceRow({
   displayText?: string;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">

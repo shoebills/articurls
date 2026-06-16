@@ -744,7 +744,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <div className="space-y-1">
                 <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground">Manage categories and their visibility via design section</p>
+                <p className="text-xs text-muted-foreground">Manage categories and their visibility via{" "}
+                  <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">design section</Link>
+                </p>
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
                 <button

@@ -39,14 +39,24 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Bold,
   Heading2,
   Heading3,
   Italic,
   Link2,
   List,
+  ListOrdered,
+  Minus,
+  MoreHorizontal,
   MousePointerClick,
   Redo2,
+  Strikethrough,
   Underline as UnderlineIcon,
   Undo2,
 } from "lucide-react";
@@ -325,6 +335,9 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkHref, setLinkHref] = useState("https://");
   const [linkIsActive, setLinkIsActive] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const morePointerStart = useRef<{ x: number; y: number } | null>(null);
+  const morePointerMoved = useRef(false);
 
   const emailButtonExtension = useMemo(() => createEmailButtonExtension(), []);
 
@@ -343,7 +356,6 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         blockquote: false,
         code: false,
         codeBlock: false,
-        horizontalRule: false,
       }),
       Underline,
       WelcomeEmailLink.configure({ openOnClick: false, autolink: true }),
@@ -473,14 +485,14 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         <span className="hidden" aria-hidden>
           {selectionTick}
         </span>
-        <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border bg-background p-2 [scrollbar-width:thin] sm:flex-wrap">
+        <div className="-mx-px flex h-12 shrink-0 flex-nowrap items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
             <Undo2 className="h-4 w-4" />
           </Button>
           <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().redo().run()}>
             <Redo2 className="h-4 w-4" />
           </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
+          <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
             variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
@@ -497,7 +509,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           >
             <Heading3 className="h-4 w-4" />
           </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
+          <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
             variant={editor.isActive("bold") ? "secondary" : "ghost"}
@@ -539,7 +551,76 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           >
             <List className="h-4 w-4" />
           </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
+          <DropdownMenu
+            modal={false}
+            open={moreDropdownOpen}
+            onOpenChange={(open) => {
+              if (!open || !morePointerMoved.current) {
+                setMoreDropdownOpen(open);
+              }
+            }}
+          >
+            <DropdownMenuTrigger
+              asChild
+              onPointerDown={(e) => {
+                morePointerStart.current = { x: e.clientX, y: e.clientY };
+                morePointerMoved.current = false;
+              }}
+              onPointerMove={(e) => {
+                if (!morePointerStart.current || morePointerMoved.current) return;
+                const dx = Math.abs(e.clientX - morePointerStart.current.x);
+                const dy = Math.abs(e.clientY - morePointerStart.current.y);
+                if (dx > 10 || dy > 10) {
+                  morePointerMoved.current = true;
+                }
+              }}
+              onPointerUp={(e) => {
+                if (morePointerMoved.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setMoreDropdownOpen(false);
+                }
+                morePointerStart.current = null;
+                morePointerMoved.current = false;
+              }}
+            >
+              <Button
+                type="button"
+                variant={
+                  editor.isActive("orderedList") || editor.isActive("strike")
+                    ? "secondary"
+                    : "ghost"
+                }
+                size="icon"
+                title="More options"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                className={editor.isActive("orderedList") ? "bg-accent" : ""}
+              >
+                <ListOrdered className="h-4 w-4" />
+                <span>Ordered list</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={editor.isActive("strike") ? "bg-accent" : ""}
+              >
+                <Strikethrough className="h-4 w-4" />
+                <span>Strikethrough</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              >
+                <Minus className="h-4 w-4" />
+                <span>Divider</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
             variant="ghost"
