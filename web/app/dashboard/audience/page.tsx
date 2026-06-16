@@ -137,6 +137,13 @@ export default function AudienceEmailsPage() {
         welcome_email_body_html: isEmptyBody(bodyHtml) ? null : bodyHtml,
         welcome_email_delay_minutes: Number(delayMinutes),
       });
+      setInitial({
+        enabled,
+        subject,
+        subjectUsesDefault,
+        bodyHtml,
+        delayMinutes,
+      });
       setSavedMsg("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save welcome email settings");
@@ -153,6 +160,7 @@ export default function AudienceEmailsPage() {
     setErr(null);
     try {
       await patchWelcomeEmailSettings(token, { welcome_email_enabled: nextValue });
+      setInitial((prev) => prev ? { ...prev, enabled: nextValue } : null);
       setSavedMsg("Saved");
     } catch (e) {
       setEnabled(previous);
