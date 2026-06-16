@@ -118,7 +118,7 @@ export default function SeoDashboardPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
 
       <Card>
-        <CardContent className="space-y-4 pt-6">
+        <CardContent className="space-y-4" style={{ paddingTop: 0 }}>
           <div className="space-y-2.5">
             <Label htmlFor="meta_title">Meta title</Label>
             <Input
