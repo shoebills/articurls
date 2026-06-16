@@ -613,9 +613,9 @@ export default function DesignDashboardPage() {
               />
               <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
             </div>
-            <div className="pt-3 flex items-center gap-3">
+            <div className="pt-1.5 flex items-center gap-3">
               <Button size="sm" onClick={saveBioSocials} disabled={busy}>
-                Save bio
+                Save
               </Button>
             </div>
 
@@ -623,7 +623,7 @@ export default function DesignDashboardPage() {
           </>
         ) : null}
 
-        <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="mt-4 flex items-center justify-between rounded-lg border p-3">
           <div>
             <p className="font-medium">Enable footer</p>
             <p className="text-sm text-muted-foreground">
@@ -639,7 +639,7 @@ export default function DesignDashboardPage() {
 
         {design.site_footer_enabled ? (
           <>
-            <div className="space-y-3">
+            <div className="mt-4 space-y-3">
               <div className="flex items-center justify-between">
                 <p className="font-medium">Footer Pages</p>
                 <Button
@@ -661,7 +661,7 @@ export default function DesignDashboardPage() {
                 </ul>
               ) : null}
             </div>
-            <div className="space-y-4 border-t border-border/60 pt-4">
+            <div className="space-y-4 border-t border-border/60 pt-5">
               <Label className="mb-3">Social links</Label>
               {enabledSocials.length > 0 ? (
                 <div className="space-y-3">
@@ -750,9 +750,9 @@ export default function DesignDashboardPage() {
                   </Button>
                 )
               ) : null}
-              <div className="flex items-center gap-3 border-t border-border/60 pt-3">
+              <div className="flex items-center gap-3">
                 <Button size="sm" onClick={saveBioSocials} disabled={busy}>
-                  Save social links
+                  Save
                 </Button>
               </div>
             </div>
