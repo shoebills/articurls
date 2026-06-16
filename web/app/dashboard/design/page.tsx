@@ -418,7 +418,7 @@ export default function DesignDashboardPage() {
         headingId="design-header-heading"
         selected
       >
-        <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center justify-between rounded-xl border p-3">
           <div>
             <p className="font-medium">Enable header</p>
             <p className="text-sm text-muted-foreground">If disabled, public view shows only blogs.</p>
@@ -479,7 +479,7 @@ export default function DesignDashboardPage() {
               </div>
             </div>
             <div className="border-t border-border/60" />
-            <div className="flex items-center justify-between rounded-lg border p-3">
+            <div className="flex items-center justify-between rounded-xl border p-3">
               <div>
                 <p className="font-medium">Show category menu</p>
                 <p className="text-sm text-muted-foreground">Show categories in the header.</p>
@@ -531,7 +531,7 @@ export default function DesignDashboardPage() {
         headingId="design-featured-heading"
         selected
       >
-        <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center justify-between rounded-xl border p-3">
           <div>
             <p className="font-medium">Enable featured blogs</p>
             <p className="text-sm text-muted-foreground">Show a featured section below the search bar.</p>
@@ -583,7 +583,7 @@ export default function DesignDashboardPage() {
         headingId="design-footer-heading"
         selected
       >
-        <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center justify-between rounded-xl border p-3">
           <div>
             <p className="font-medium">Enable about section</p>
               <p className="text-sm text-muted-foreground">
@@ -621,7 +621,7 @@ export default function DesignDashboardPage() {
 
         <div className="border-t border-border/60" />
 
-        <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="flex items-center justify-between rounded-xl border p-3">
           <div>
             <p className="font-medium">Enable footer</p>
             <p className="text-sm text-muted-foreground">
