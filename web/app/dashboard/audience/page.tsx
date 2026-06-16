@@ -52,8 +52,8 @@ export default function AudienceEmailsPage() {
   const [delayMinutes, setDelayMinutes] = useState("0");
   const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
   useEffect(() => {
     setExpanded(readWelcomeEmailExpanded());
@@ -104,7 +104,6 @@ export default function AudienceEmailsPage() {
   async function onSave() {
     if (!token || !isPro) return;
     setBusy(true);
-    setSaved(false);
     setErr(null);
     try {
       await patchWelcomeEmailSettings(token, {
@@ -114,7 +113,7 @@ export default function AudienceEmailsPage() {
         welcome_email_body_html: isEmptyBody(bodyHtml) ? null : bodyHtml,
         welcome_email_delay_minutes: Number(delayMinutes),
       });
-      setSaved(true);
+      setSavedMsg("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save welcome email settings");
     } finally {
@@ -127,11 +126,10 @@ export default function AudienceEmailsPage() {
     const previous = enabled;
     setEnabled(nextValue);
     setBusy(true);
-    setSaved(false);
     setErr(null);
     try {
       await patchWelcomeEmailSettings(token, { welcome_email_enabled: nextValue });
-      setSaved(true);
+      setSavedMsg("Saved");
     } catch (e) {
       setEnabled(previous);
       setErr(e instanceof ApiError ? e.message : "Failed to update welcome email");
@@ -183,19 +181,16 @@ export default function AudienceEmailsPage() {
             </CardHeader>
             {expanded ? (
             <CardContent className="space-y-5">
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-2">
-                  <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
-                    Enable
-                  </Label>
-                  <Switch
-                    id="welcome-enable"
-                    checked={enabled}
-                    onCheckedChange={onToggleWelcome}
-                    disabled={busy}
-                  />
-                </div>
-                {saved ? <p className="text-sm font-medium text-emerald-600">Saved.</p> : null}
+              <div className="flex items-center gap-2">
+                <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
+                  Enable
+                </Label>
+                <Switch
+                  id="welcome-enable"
+                  checked={enabled}
+                  onCheckedChange={onToggleWelcome}
+                  disabled={busy}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="welcome-delay">Send delay</Label>
@@ -222,7 +217,6 @@ export default function AudienceEmailsPage() {
                   onChange={(e) => {
                     setSubject(e.target.value);
                     setSubjectUsesDefault(false);
-                    setSaved(false);
                   }}
                   disabled={!enabled || busy}
                 />
@@ -235,7 +229,6 @@ export default function AudienceEmailsPage() {
                 content={bodyHtml}
                 onChange={(html) => {
                   setBodyHtml(html);
-                  setSaved(false);
                 }}
                 disabled={!enabled || busy}
                 />
@@ -250,6 +243,12 @@ export default function AudienceEmailsPage() {
         )}
       </div>
 
+      <FloatingErrorToast
+        message={savedMsg}
+        onDismiss={() => setSavedMsg(null)}
+        autoDismissMs={3000}
+        variant="success"
+      />
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </>
   );
