@@ -89,7 +89,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
                 className={cn(
                   "inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors sm:min-h-8",
                   active
-                    ? "bg-background text-foreground shadow-sm"
+                    ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
                 )}
               >
