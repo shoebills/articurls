@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ApiError, patchProMe } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { cn } from "@/lib/utils";
 
 const audienceTabs = [
   { href: "/dashboard/audience", label: "Emails", match: (path: string) => path === "/dashboard/audience" },
@@ -80,20 +80,21 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
             {audienceTabs.map((tab) => {
               const active = tab.match(pathname);
               return (
-                <Link
+                <Button
                   key={tab.href}
-                  href={tab.href}
-                  role="tab"
-                  aria-selected={active}
-                  className={cn(
-                    "h-10 rounded-lg px-4 text-sm inline-flex items-center justify-center font-medium transition-colors",
-                    active
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
+                  variant={active ? "default" : "ghost"}
+                  size="sm"
+                  className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm"
+                  asChild
                 >
-                  {tab.label}
-                </Link>
+                  <Link
+                    href={tab.href}
+                    role="tab"
+                    aria-selected={active}
+                  >
+                    {tab.label}
+                  </Link>
+                </Button>
               );
             })}
           </div>
