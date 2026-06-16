@@ -27,7 +27,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Plus, Tag, Trash2, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -774,7 +774,15 @@ export default function DesignDashboardPage() {
                 </p>
               </div>
               {categories.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No categories yet.</p>
+                <div
+                  className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-8 text-center"
+                  role="status"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+                    <Tag className="h-4 w-4" aria-hidden />
+                  </div>
+                  <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
+                </div>
               ) : (
                 <div className="space-y-2">
                   {categories.map((cat) => {
@@ -907,9 +915,17 @@ export default function DesignDashboardPage() {
               </p>
             </div>
             {menuCatSelection.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
-              </p>
+              <div
+                className="flex min-h-[120px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-8 text-center"
+                role="status"
+              >
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+                  <Tag className="h-4 w-4" aria-hidden />
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">
+                  {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
+                </p>
+              </div>
             ) : (
               <ul className="space-y-2">
                 {menuCatSelection.map((id, idx) => (

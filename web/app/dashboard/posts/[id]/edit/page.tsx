@@ -766,7 +766,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 {catDropdownOpen && (
                   <div className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
-                      <p className="px-3 pt-3 text-sm text-muted-foreground">No categories yet.</p>
+                      <p className="px-3 pt-3 pb-3 text-sm text-muted-foreground">No categories yet.</p>
                     ) : (
                       <div className="max-h-56 min-w-[14rem] overflow-y-auto p-1">
                         {allCategories.map((cat) => {
