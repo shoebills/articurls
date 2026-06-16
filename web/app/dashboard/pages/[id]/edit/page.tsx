@@ -406,7 +406,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
-      <div className="mt-6 rounded-lg border border-border bg-muted/30">
+      <div className="mt-6 rounded-lg border border-border bg-background">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"

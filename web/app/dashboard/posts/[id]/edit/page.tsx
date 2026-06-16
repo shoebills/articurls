@@ -591,7 +591,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Email Subscribers */}
       <div className="mt-6 space-y-2">
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
           <div className="min-w-0">
             <p className="text-sm font-medium">Email subscribers</p>
                   <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
@@ -611,7 +611,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-muted/30">
+      <div className="mt-6 rounded-lg border border-border bg-background">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"

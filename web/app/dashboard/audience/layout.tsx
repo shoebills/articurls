@@ -60,7 +60,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
             Upgrade under Billing to collect subscribers.
           </p>
         ) : null}
-        <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+        <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
           <div className="space-y-1">
             <p className="text-sm font-medium">Collect subscribers</p>
             <p className="text-sm leading-relaxed text-muted-foreground">
@@ -75,31 +75,29 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
           />
         </div>
 
-        <div
-          role="tablist"
-          aria-label="Audience sections"
-          className="grid h-auto w-full grid-cols-2 gap-1 rounded-lg bg-muted p-1 sm:inline-flex sm:h-10 sm:w-auto"
-        >
-          {audienceTabs.map((tab) => {
-            const active = tab.match(pathname);
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                role="tab"
-                aria-selected={active}
-                className={cn(
-                  "inline-flex min-h-11 items-center justify-center rounded-md px-4 text-sm font-medium transition-colors sm:min-h-8",
-                  active
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {tab.label}
-              </Link>
-            );
-          })}
-        </div>
+        <nav aria-label="Audience sections" className="overflow-x-auto pb-1">
+          <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+            {audienceTabs.map((tab) => {
+              const active = tab.match(pathname);
+              return (
+                <Link
+                  key={tab.href}
+                  href={tab.href}
+                  role="tab"
+                  aria-selected={active}
+                  className={cn(
+                    "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm inline-flex items-center justify-center font-medium transition-colors",
+                    active
+                      ? "bg-primary text-primary-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {tab.label}
+                </Link>
+              );
+            })}
+          </div>
+        </nav>
 
         {children}
       </div>
