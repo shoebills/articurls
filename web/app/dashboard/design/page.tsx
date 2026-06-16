@@ -774,7 +774,7 @@ export default function DesignDashboardPage() {
                 </p>
               </div>
               {categories.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No categories yet. Create your first category here.</p>
+                <p className="text-sm text-muted-foreground">No categories yet.</p>
               ) : (
                 <div className="space-y-2">
                   {categories.map((cat) => {
@@ -908,7 +908,7 @@ export default function DesignDashboardPage() {
             </div>
             {menuCatSelection.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {categories.length === 0 ? "Create a category to start building your menu." : "Add categories to display in the menu."}
+                {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
               </p>
             ) : (
               <ul className="space-y-2">

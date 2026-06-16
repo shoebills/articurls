@@ -744,7 +744,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <div className="space-y-1">
                 <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground">Choose one or more categories</p>
+                <p className="text-xs text-muted-foreground">Manage categories and their visibility via design section</p>
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
                 <button
@@ -766,23 +766,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 {catDropdownOpen && (
                   <div className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
-                      <div className="space-y-2 px-3 py-3">
-                        <p className="text-sm text-muted-foreground">No categories yet.</p>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={newCatName}
-                            onChange={(e) => setNewCatName(e.target.value)}
-                            placeholder="New category"
-                            className="h-8 min-w-0 flex-1 text-sm"
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") createCategoryInline();
-                            }}
-                          />
-                          <Button size="sm" onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
-                            Add
-                          </Button>
-                        </div>
-                      </div>
+                      <p className="px-3 pt-3 text-sm text-muted-foreground">No categories yet.</p>
                     ) : (
                       <div className="max-h-56 min-w-[14rem] overflow-y-auto p-1">
                         {allCategories.map((cat) => {
@@ -813,7 +797,21 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         })}
                       </div>
                     )}
-                    <div className="border-t border-border/70 p-2">
+                    <div className="border-t border-border/70 p-2 space-y-2">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          value={newCatName}
+                          onChange={(e) => setNewCatName(e.target.value)}
+                          placeholder="New category"
+                          className="h-8 min-w-0 flex-1 text-sm"
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") createCategoryInline();
+                          }}
+                        />
+                        <Button size="sm" onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
+                          Add
+                        </Button>
+                      </div>
                       <Button
                         size="sm"
                         className="w-full"
@@ -822,7 +820,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           setCatDropdownOpen(false);
                         }}
                       >
-                        Close
+                        Done
                       </Button>
                     </div>
                   </div>
