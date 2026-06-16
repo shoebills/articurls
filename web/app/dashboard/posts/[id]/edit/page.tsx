@@ -816,7 +816,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     <div className="border-t border-border/70 p-2">
                       <Button
                         size="sm"
-                        variant="outline"
                         className="w-full"
                         onClick={() => {
                           setSelectedCatIds([...pendingCatIds]);
