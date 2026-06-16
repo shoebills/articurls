@@ -87,7 +87,7 @@ function SectionPanel({
       id={sectionId}
       aria-labelledby={headingId}
       className={cn(
-        "scroll-mt-28 rounded-xl border bg-card text-card-foreground shadow-sm transition-colors duration-200",
+        "scroll-mt-28 rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm transition-[box-shadow,border-color] duration-200 ease-out hover:border-border hover:shadow-md motion-reduce:transition-none",
         selected && "border-foreground/15 ring-2 ring-foreground/10"
       )}
     >

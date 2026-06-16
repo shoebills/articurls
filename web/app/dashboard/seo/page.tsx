@@ -119,7 +119,7 @@ export default function SeoDashboardPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Meta</CardTitle>
+          <CardTitle>Search result appearance</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
