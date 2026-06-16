@@ -46,6 +46,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import {
   Bold,
+  ChevronDown,
   Heading2,
   Heading3,
   Italic,
@@ -57,6 +58,7 @@ import {
   MousePointerClick,
   Redo2,
   Strikethrough,
+  Type,
   Underline as UnderlineIcon,
   Undo2,
 } from "lucide-react";
@@ -338,6 +340,9 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
   const morePointerStart = useRef<{ x: number; y: number } | null>(null);
   const morePointerMoved = useRef(false);
+  const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
+  const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
+  const headingPointerMoved = useRef(false);
 
   const emailButtonExtension = useMemo(() => createEmailButtonExtension(), []);
 
@@ -493,22 +498,80 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
             <Redo2 className="h-4 w-4" />
           </Button>
           <Separator orientation="vertical" className="mx-2 h-6" />
-          <Button
-            type="button"
-            variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          <DropdownMenu
+            modal={false}
+            open={headingDropdownOpen}
+            onOpenChange={(open) => {
+              if (!open || !headingPointerMoved.current) {
+                setHeadingDropdownOpen(open);
+              }
+            }}
           >
-            <Heading2 className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("heading", { level: 3 }) ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          >
-            <Heading3 className="h-4 w-4" />
-          </Button>
+            <DropdownMenuTrigger
+              asChild
+              onPointerDown={(e) => {
+                headingPointerStart.current = { x: e.clientX, y: e.clientY };
+                headingPointerMoved.current = false;
+              }}
+              onPointerMove={(e) => {
+                if (!headingPointerStart.current || headingPointerMoved.current) return;
+                const dx = Math.abs(e.clientX - headingPointerStart.current.x);
+                const dy = Math.abs(e.clientY - headingPointerStart.current.y);
+                if (dx > 10 || dy > 10) {
+                  headingPointerMoved.current = true;
+                }
+              }}
+              onPointerUp={(e) => {
+                if (headingPointerMoved.current) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setHeadingDropdownOpen(false);
+                }
+                headingPointerStart.current = null;
+                headingPointerMoved.current = false;
+              }}
+            >
+              <Button
+                type="button"
+                variant={editor.isActive("heading") ? "secondary" : "ghost"}
+                size="sm"
+                className="h-8 w-12 px-1"
+                title="Headings"
+              >
+                {editor.isActive("heading", { level: 2 }) ? (
+                  <Heading2 className="h-4 w-4 shrink-0" />
+                ) : editor.isActive("heading", { level: 3 }) ? (
+                  <Heading3 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Type className="h-4 w-4 shrink-0" />
+                )}
+                <ChevronDown className="ml-0.5 h-3 w-3 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={editor.isActive("heading", { level: 2 }) ? "bg-accent" : ""}
+              >
+                <Heading2 className="h-4 w-4" />
+                <span>Heading 2</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                className={editor.isActive("heading", { level: 3 }) ? "bg-accent" : ""}
+              >
+                <Heading3 className="h-4 w-4" />
+                <span>Heading 3</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().setParagraph().run()}
+                className={editor.isActive("paragraph") ? "bg-accent" : ""}
+              >
+                <Type className="h-4 w-4" />
+                <span>Paragraph</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
