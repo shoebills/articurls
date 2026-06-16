@@ -118,7 +118,7 @@ export default function SeoDashboardPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
 
       <Card>
-        <CardContent className="space-y-4" style={{ paddingTop: 0 }}>
+        <CardContent className="space-y-4">
           <div className="space-y-2.5">
             <Label htmlFor="meta_title">Meta title</Label>
             <Input
@@ -151,9 +151,9 @@ export default function SeoDashboardPage() {
           <div className="border-t pt-5 mt-2 space-y-3">
             <div className="flex items-start justify-between gap-4 rounded-lg border bg-muted/20 px-4 py-3">
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Enable RSS feed</p>
+                <p className="text-sm font-medium">RSS feed</p>
                 <p className="text-xs text-muted-foreground">
-                  When enabled, your RSS feed appears as an icon in the public footer.
+                  When enabled, your RSS icon appears in the footer.
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -179,7 +179,7 @@ export default function SeoDashboardPage() {
               </div>
             </div>
             <SeoResourceRow
-              label="sitemap.xml"
+              label="Sitemap"
               url={sitemapResourceUrl}
               displayText="sitemap.xml"
               enabled={sitemapResourceEnabled}
@@ -190,7 +190,7 @@ export default function SeoDashboardPage() {
               }
             />
             <SeoResourceRow
-              label="robots.txt"
+              label="Robots control"
               url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
               displayText="robots.txt"
               enabled={seoResourcesEnabled}
