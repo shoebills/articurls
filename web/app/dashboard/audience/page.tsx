@@ -55,6 +55,14 @@ export default function AudienceEmailsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
+  const [initial, setInitial] = useState<{
+    enabled: boolean;
+    subject: string;
+    subjectUsesDefault: boolean;
+    bodyHtml: string;
+    delayMinutes: string;
+  } | null>(null);
+
   useEffect(() => {
     setExpanded(readWelcomeEmailExpanded());
   }, []);
@@ -91,11 +99,26 @@ export default function AudienceEmailsPage() {
       const storedBody = settings.welcome_email_body_html?.trim();
       setBodyHtml(storedBody || WELCOME_EMAIL_STARTER_HTML);
       const delay = String(settings.welcome_email_delay_minutes ?? 0);
-      setDelayMinutes(DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0");
+      const finalDelay = DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0";
+      setDelayMinutes(finalDelay);
+      setInitial({
+        enabled: settings.welcome_email_enabled,
+        subject: subjectUsesDefault ? welcomeEmailSubjectDisplay(blogName) : (storedSubject || "").trim(),
+        subjectUsesDefault: subjectUsesDefault,
+        bodyHtml: storedBody || WELCOME_EMAIL_STARTER_HTML,
+        delayMinutes: finalDelay,
+      });
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load welcome email settings");
     }
   }, [token, isPro, blogName]);
+
+  const dirty =
+    initial !== null &&
+    (enabled !== initial.enabled ||
+      subject !== initial.subject ||
+      bodyHtml !== initial.bodyHtml ||
+      delayMinutes !== initial.delayMinutes);
 
   useEffect(() => {
     load();
@@ -234,8 +257,8 @@ export default function AudienceEmailsPage() {
                 />
               </div>
 
-              <Button onClick={onSave} disabled={busy}>
-                {busy ? "Saving…" : "Save welcome email"}
+              <Button onClick={onSave} disabled={busy || !dirty}>
+                {busy ? "Saving…" : "Save"}
               </Button>
             </CardContent>
             ) : null}
