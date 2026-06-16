@@ -160,12 +160,27 @@ export default function SeoDashboardPage() {
                   When enabled, your RSS feed appears as an icon in the public footer.
                 </p>
               </div>
-              <Switch
-                checked={rssEnabled}
-                onCheckedChange={onToggleRss}
-                disabled={busy}
-                aria-label="Enable RSS feed"
-              />
+              <div className="flex items-center gap-2 shrink-0">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  disabled={!rssResourceUrl}
+                  onClick={() => {
+                    if (rssResourceUrl) {
+                      window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
+                    }
+                  }}
+                >
+                  View
+                </Button>
+                <Switch
+                  checked={rssEnabled}
+                  onCheckedChange={onToggleRss}
+                  disabled={busy}
+                  aria-label="Enable RSS feed"
+                />
+              </div>
             </div>
             <SeoResourceRow
               label="sitemap.xml"
@@ -181,18 +196,6 @@ export default function SeoDashboardPage() {
               label="robots.txt"
               url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
               enabled={seoResourcesEnabled}
-            />
-            <SeoResourceRow
-              label="rss.xml"
-              url={rssResourceUrl}
-              enabled={rssResourceEnabled}
-              unavailableText={
-                !isPro
-                  ? "RSS feed is available on Pro."
-                  : !rssEnabled
-                    ? "Enable RSS feed to publish your feed URL."
-                    : "RSS URL unavailable."
-              }
             />
           </div>
         </CardContent>
