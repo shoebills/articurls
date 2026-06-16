@@ -118,11 +118,7 @@ export default function SeoDashboardPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Search appearance</CardTitle>
-          <CardDescription>Edit your meta title and description.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="space-y-2.5">
             <Label htmlFor="meta_title">Meta title</Label>
             <Input
@@ -185,6 +181,7 @@ export default function SeoDashboardPage() {
             <SeoResourceRow
               label="sitemap.xml"
               url={sitemapResourceUrl}
+              displayText="sitemap.xml"
               enabled={sitemapResourceEnabled}
               unavailableText={
                 !isPro
@@ -195,6 +192,7 @@ export default function SeoDashboardPage() {
             <SeoResourceRow
               label="robots.txt"
               url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
+              displayText="robots.txt"
               enabled={seoResourcesEnabled}
             />
           </div>
@@ -216,18 +214,20 @@ function SeoResourceRow({
   url,
   enabled,
   unavailableText = "Unavailable until custom domain is active or in grace period.",
+  displayText,
 }: {
   label: string;
   url?: string;
   enabled: boolean;
   unavailableText?: string;
+  displayText?: string;
 }) {
   return (
     <div className="flex items-center justify-between rounded-lg border bg-muted/20 px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">
-          {enabled && url ? url : unavailableText}
+          {enabled && url ? (displayText || url) : unavailableText}
         </p>
       </div>
       <Button
