@@ -71,9 +71,9 @@ html {
   scrollbar-gutter: stable;
 }
 
-/* Neutralize Radix scroll-lock padding — scrollbar-gutter: stable already reserves space */
-body[data-scroll-locked] {
-  padding-right: 0 !important;
+/* Neutralize Radix/remove-scroll margin compensation — scrollbar-gutter: stable already reserves space */
+html body[data-scroll-locked] {
+  margin-right: 0 !important;
 }
 
 @media (prefers-reduced-motion: reduce) {
