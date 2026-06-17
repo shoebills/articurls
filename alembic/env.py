@@ -1,4 +1,5 @@
 from logging.config import fileConfig
+from urllib.parse import quote_plus
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -11,7 +12,12 @@ from alembic import context
 # access to the values within the .ini file in use.
 config = context.config
 config.set_main_option(
-    "sqlalchemy.url", f"postgresql+psycopg://{settings.database_username}:"f"{settings.database_password}@"f"{settings.database_hostname}:"f"{settings.database_port}/"f"{settings.database_name}"
+    "sqlalchemy.url",
+    f"postgresql+psycopg://{quote_plus(settings.database_username)}:"
+    f"{quote_plus(settings.database_password)}@"
+    f"{settings.database_hostname}:{settings.database_port}/"
+    f"{settings.database_name}"
+    f"{'?sslmode=' + settings.database_sslmode if settings.database_sslmode else ''}",
 )
 
 # Interpret the config file for Python logging.

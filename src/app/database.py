@@ -9,7 +9,7 @@ def _resolve_sslmode() -> str | None:
 
     host = settings.database_hostname.lower()
     # Managed providers generally require TLS.
-    if host.endswith(".ondigitalocean.com") or "neon.tech" in host:
+    if host.endswith(".ondigitalocean.com") or "neon.tech" in host or "supabase" in host:
         return "require"
     return None
 
