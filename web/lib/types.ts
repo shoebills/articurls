@@ -233,11 +233,18 @@ export interface TokenResponse {
   message?: string;
 }
 
+export interface SubscribersAnalyticsSeriesPoint {
+  timestamp: string;
+  subscribed: number;
+  unsubscribed: number;
+}
+
 export interface SubscribersAnalytics {
   period: string;
   current_subscribers: number;
   subscribed: number;
   unsubscribed: number;
+  series: SubscribersAnalyticsSeriesPoint[];
 }
 
 export interface Category {

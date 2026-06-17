@@ -6,7 +6,7 @@ from .. import models
 from ..security.oauth2 import get_current_user
 from ..utils.entitlements import require_pro
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import Optional, Literal
 from fastapi.responses import StreamingResponse
 from urllib.parse import urlparse
 import io
@@ -58,6 +58,97 @@ def normalize_referrer_host(value: str) -> str:
     return host.lower().strip()
 
 
+def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
+    if period == "24h":
+        return "hour"
+    if period in ("7d", "28d"):
+        return "day"
+    return "month"
+
+
+def _generate_series_slots(since: datetime, unit: str, now: datetime) -> list[datetime]:
+    slots: list[datetime] = []
+    if unit == "hour":
+        current = since.replace(minute=0, second=0, microsecond=0)
+        end = now.replace(minute=59, second=59, microsecond=999999)
+        while current <= end:
+            slots.append(current)
+            current += timedelta(hours=1)
+    elif unit == "day":
+        current = since.replace(hour=0, minute=0, second=0, microsecond=0)
+        end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+        while current <= end:
+            slots.append(current)
+            current += timedelta(days=1)
+    else:
+        current = since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        end = now.replace(day=28, hour=23, minute=59, second=59, microsecond=999999) + timedelta(days=4)
+        end = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        while current < end:
+            slots.append(current)
+            if current.month == 12:
+                current = current.replace(year=current.year + 1, month=1)
+            else:
+                current = current.replace(month=current.month + 1)
+        slots.append(current)
+    return slots
+
+
+def _build_series(
+    db: Session,
+    user_id: int,
+    unit: str,
+    slots: list[datetime],
+    since: datetime,
+) -> list[dict]:
+    sub_query = db.query(models.Subscriber).filter(
+        models.Subscriber.user_id == user_id,
+        models.Subscriber.is_confirmed == True,
+    )
+
+    trunc_unit = {"hour": "hour", "day": "day", "month": "month"}[unit]
+
+    sub_rows = (
+        sub_query
+        .filter(models.Subscriber.subscribed_at >= since)
+        .with_entities(
+            func.date_trunc(trunc_unit, models.Subscriber.subscribed_at).label("ts"),
+            func.count(models.Subscriber.subscriber_id).label("cnt"),
+        )
+        .group_by("ts")
+        .all()
+    )
+    unsub_rows = (
+        sub_query
+        .filter(models.Subscriber.unsubscribed_at >= since)
+        .with_entities(
+            func.date_trunc(trunc_unit, models.Subscriber.unsubscribed_at).label("ts"),
+            func.count(models.Subscriber.subscriber_id).label("cnt"),
+        )
+        .group_by("ts")
+        .all()
+    )
+
+    sub_map = {}
+    for row in sub_rows:
+        ts = row.ts.replace(tzinfo=timezone.utc) if row.ts.tzinfo is None else row.ts
+        sub_map[ts] = row.cnt
+    unsub_map = {}
+    for row in unsub_rows:
+        ts = row.ts.replace(tzinfo=timezone.utc) if row.ts.tzinfo is None else row.ts
+        unsub_map[ts] = row.cnt
+
+    series = []
+    for slot in slots:
+        slot_aware = slot.replace(tzinfo=timezone.utc)
+        series.append({
+            "timestamp": slot_aware.isoformat(),
+            "subscribed": sub_map.get(slot_aware, 0),
+            "unsubscribed": unsub_map.get(slot_aware, 0),
+        })
+    return series
+
+
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
@@ -74,11 +165,32 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
         unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at.isnot(None)).scalar()
 
+    unit = _time_unit(period)
+    now = datetime.now(timezone.utc)
+
+    if since is None:
+        earliest = (
+            db.query(func.min(models.Subscriber.subscribed_at))
+            .filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
+            .scalar()
+        )
+        if earliest:
+            earliest = earliest.replace(tzinfo=timezone.utc)
+            since = earliest if unit == "month" else earliest - timedelta(days=1)
+        else:
+            since = now - timedelta(days=365)
+    else:
+        since = since.replace(tzinfo=timezone.utc)
+
+    slots = _generate_series_slots(since, unit, now)
+    series = _build_series(db, current_user.user_id, unit, slots, since)
+
     return {
         "period": period,
         "current_subscribers": current_subscribers,
         "subscribed": subscribed,
-        "unsubscribed": unsubscribed
+        "unsubscribed": unsubscribed,
+        "series": series,
     }
 
 

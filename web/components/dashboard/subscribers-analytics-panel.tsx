@@ -22,30 +22,10 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
-
-const CHART_PERIOD_ORDER = ["24h", "7d", "28d", "3m", "6m", "1y"] as const;
-
-function periodLabel(key: string): string {
-  const map: Record<string, string> = {
-    "24h": "24 hours",
-    "7d": "7 days",
-    "28d": "28 days",
-    "3m": "3 months",
-    "6m": "6 months",
-    "1y": "1 year",
-  };
-  return map[key] ?? key;
-}
-
-function chartPeriodsForSelection(selected: (typeof PERIODS)[number]): (typeof CHART_PERIOD_ORDER)[number][] {
-  if (selected === "all") return [...CHART_PERIOD_ORDER];
-  const idx = CHART_PERIOD_ORDER.indexOf(selected as (typeof CHART_PERIOD_ORDER)[number]);
-  if (idx === -1) return [...CHART_PERIOD_ORDER];
-  return CHART_PERIOD_ORDER.slice(0, idx + 1) as (typeof CHART_PERIOD_ORDER)[number][];
-}
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
@@ -57,17 +37,30 @@ const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
+function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], tz?: string): string {
+  try {
+    const date = new Date(value);
+    if (period === "24h") {
+      return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
+    }
+    if (period === "7d" || period === "28d") {
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
+    return date.toLocaleDateString(undefined, { month: "short", year: period === "all" ? "numeric" : "2-digit" });
+  } catch {
+    if (period === "24h") return value.slice(11, 16);
+    return value.slice(0, 10);
+  }
+}
+
 export function SubscribersAnalyticsPanel() {
   const { token } = useAuth();
   const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("28d");
-  const [subs, setSubs] = useState<{
-    period: string;
-    current_subscribers: number;
-    subscribed: number;
-    unsubscribed: number;
-  } | null>(null);
-  const [chartSubs, setChartSubs] = useState<{ name: string; gained: number; lost: number }[]>([]);
+  const [subs, setSubs] = useState<SubscribersAnalytics | null>(null);
+  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>([]);
   const [err, setErr] = useState<string | null>(null);
+
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     if (!token) return;
@@ -75,18 +68,14 @@ export function SubscribersAnalyticsPanel() {
     (async () => {
       setErr(null);
       try {
-        const sPeriods = chartPeriodsForSelection(sPeriod);
-        const [s, subRows] = await Promise.all([
-          subscribersAnalytics(token, sPeriod),
-          Promise.all(sPeriods.map((p) => subscribersAnalytics(token, p))),
-        ]);
+        const data = await subscribersAnalytics(token, sPeriod);
         if (cancelled) return;
-        setSubs(s);
+        setSubs(data);
         setChartSubs(
-          subRows.map((d, i) => ({
-            name: sPeriods[i],
-            gained: d.subscribed,
-            lost: d.unsubscribed,
+          data.series.map((p) => ({
+            timestamp: p.timestamp,
+            gained: p.subscribed,
+            lost: p.unsubscribed,
           }))
         );
       } catch (e) {
@@ -160,8 +149,9 @@ export function SubscribersAnalyticsPanel() {
           </Card>
         </div>
         <Card>
-          <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
+          <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
             <CardTitle className="text-base sm:text-lg">Subscribers trend</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">New subscribers and unsubscribes over time.</CardDescription>
           </CardHeader>
           <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
@@ -183,9 +173,9 @@ export function SubscribersAnalyticsPanel() {
                   opacity={0.4}
                 />
                 <XAxis
-                  dataKey="name"
+                  dataKey="timestamp"
                   tick={{ fontSize: 10 }}
-                  tickFormatter={periodLabel}
+                  tickFormatter={(v) => seriesLabelFormatter(v, sPeriod, userTz)}
                   tickLine={false}
                   axisLine={false}
                 />
@@ -197,6 +187,7 @@ export function SubscribersAnalyticsPanel() {
                   width={32}
                 />
                 <Tooltip
+                  labelFormatter={(label) => seriesLabelFormatter(String(label), sPeriod, userTz)}
                   contentStyle={{
                     fontSize: 12,
                     borderRadius: "10px",
