@@ -88,6 +88,7 @@ const APP_ALLOWED_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/confirm-subscription",
+  "/unsubscribe",
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
@@ -128,6 +129,7 @@ export function middleware(request: NextRequest) {
       !pathname.startsWith("/forgot-password") &&
       !pathname.startsWith("/reset-password") &&
       !pathname.startsWith("/confirm-subscription") &&
+      !pathname.startsWith("/unsubscribe") &&
       !pathname.startsWith("/internal") &&
       !pathname.startsWith("/api") &&
       !pathname.startsWith("/_next");

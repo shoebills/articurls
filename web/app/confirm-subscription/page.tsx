@@ -4,8 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { confirmSubscription, ApiError } from "@/lib/api";
 import { AuthPageShell } from "@/components/auth-page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { StructuredData } from "@/components/structured-data";
 import { generateSubscriptionConfirmationSchema } from "@/lib/structured-data";
@@ -71,13 +70,6 @@ function ConfirmInner() {
             {state === "error" && (errMsg ?? "The link may be invalid or expired.")}
           </CardDescription>
         </CardHeader>
-        {state === "error" && (
-          <CardContent>
-            <Button className="w-full" variant="outline" onClick={() => window.history.back()}>
-              Go back
-            </Button>
-          </CardContent>
-        )}
       </Card>
     </AuthPageShell>
   );
