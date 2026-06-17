@@ -699,7 +699,7 @@ function NativeAnalytics({ token }: { token: string }) {
               />
             </div>
 
-            {timeseries && (timeseries.pageviews.length > 0 || timeseries.visitors.length > 0) && (
+            {timeseries && (
               <Card>
                 <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
                   <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
