@@ -195,18 +195,13 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
     now = datetime.now(timezone.utc)
 
     if since is None:
-        earliest = (
-            db.query(func.min(models.Subscriber.subscribed_at))
-            .filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
-            .scalar()
-        )
-        if earliest:
-            earliest = earliest.replace(tzinfo=timezone.utc)
-            since = earliest if unit == "month" else earliest - timedelta(days=1)
+        account_since = current_user.created_at.replace(tzinfo=timezone.utc) if current_user.created_at else datetime(2026, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
+        if unit == "month":
+            since = account_since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        elif unit == "day":
+            since = account_since.replace(hour=0, minute=0, second=0, microsecond=0)
         else:
-            since = now - timedelta(days=365)
-    else:
-        since = since.replace(tzinfo=timezone.utc)
+            since = account_since.replace(minute=0, second=0, microsecond=0)
 
     slots = _generate_series_slots(since, unit, now, period)
     series = _build_series(db, current_user.user_id, unit, slots, since)
@@ -335,7 +330,10 @@ def get_umami_timeseries(
         )
 
     try:
-        start_at, end_at = get_umami_period_timestamps(period)
+        account_ts = None
+        if period == "all" and current_user.created_at is not None:
+            account_ts = current_user.created_at.replace(tzinfo=timezone.utc).timestamp() * 1000
+        start_at, end_at = get_umami_period_timestamps(period, account_created_at=account_ts)
         unit = get_umami_period_unit(period)
 
         pageviews_data = client.get_website_pageviews_sync(

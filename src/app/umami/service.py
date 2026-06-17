@@ -112,7 +112,7 @@ def enqueue_umami_domain_sync(user_id: int) -> None:
     sync_umami_website_domain.delay(user_id)
 
 
-def get_umami_period_timestamps(period: str) -> tuple[int, int]:
+def get_umami_period_timestamps(period: str, account_created_at: float | None = None) -> tuple[int, int]:
     """Map period string like '24h', '7d' to startAt/endAt ms timestamps."""
     from datetime import datetime, timedelta, timezone
 
@@ -132,7 +132,10 @@ def get_umami_period_timestamps(period: str) -> tuple[int, int]:
     elif period == "1y":
         start_at = int((now - timedelta(days=365)).timestamp() * 1000)
     elif period == "all":
-        start_at = 0
+        if account_created_at is not None:
+            start_at = int(account_created_at)
+        else:
+            start_at = 0
     else:
         start_at = int((now - timedelta(days=7)).timestamp() * 1000)
 
