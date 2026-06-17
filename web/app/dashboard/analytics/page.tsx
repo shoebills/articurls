@@ -502,7 +502,6 @@ function NativeAnalytics({ token }: { token: string }) {
     // Period → slot count mapping
     const periodSlots: Record<string, number> = {
       "7d": 7,
-      "1y": 12,
     };
 
     const slotCount = periodSlots[timeseries.period];

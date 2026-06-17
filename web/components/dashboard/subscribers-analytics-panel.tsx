@@ -107,9 +107,9 @@ export function SubscribersAnalyticsPanel() {
     <>
       <div className="space-y-6">
         <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
-          <div className="w-full sm:max-w-xs">
+          <div className="w-auto shrink-0">
             <Select value={sPeriod} onValueChange={(v) => setSPeriod(v as (typeof PERIODS)[number])}>
-              <SelectTrigger className="touch-manipulation" aria-label="Subscribers time range">
+              <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Subscribers time range">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

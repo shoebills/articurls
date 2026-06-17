@@ -140,9 +140,10 @@ def get_umami_period_timestamps(period: str, account_created_at: float | None = 
         start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         start_at = int(start.timestamp() * 1000)
     elif period == "1y":
-        year = now.year - 1 if now.month == 1 else now.year
-        start = now.replace(year=year, month=now.month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        start = now.replace(year=now.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
         start_at = int(start.timestamp() * 1000)
+        end = now.replace(year=now.year - 1, month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+        end_at = int(end.timestamp() * 1000)
     elif period == "all":
         if account_created_at is not None:
             start_at = int(account_created_at)

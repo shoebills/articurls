@@ -50,9 +50,7 @@ def get_since(period: Optional[str], now: datetime | None = None):
     if period == "this_year":
         return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     if period == "1y":
-        year = now.year - 1 if now.month == 1 else now.year
-        month = now.month
-        return now.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return now.replace(year=now.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
     return None
 
 
@@ -74,7 +72,7 @@ def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
     return "month"
 
 
-MONTH_SLOT_COUNTS: dict[str, int] = {"1y": 12}
+MONTH_SLOT_COUNTS: dict[str, int] = {}
 DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7}
 HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 24}
 
@@ -219,6 +217,8 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         slot_end = since.replace(day=28) + timedelta(days=4)
         slot_end = slot_end.replace(day=1) - timedelta(days=1)
         slot_end = slot_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+    if period == "1y":
+        slot_end = since.replace(month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
 
     slots = _generate_series_slots(since, unit, slot_end, period)
     series = _build_series(db, current_user.user_id, unit, slots, since)
