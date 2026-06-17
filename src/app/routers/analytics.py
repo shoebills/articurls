@@ -66,7 +66,10 @@ def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
     return "month"
 
 
-def _generate_series_slots(since: datetime, unit: str, now: datetime) -> list[datetime]:
+MONTH_SLOT_COUNTS: dict[str, int] = {"3m": 3, "6m": 6, "1y": 12}
+
+
+def _generate_series_slots(since: datetime, unit: str, now: datetime, period: Optional[str] = None) -> list[datetime]:
     slots: list[datetime] = []
     if unit == "hour":
         current = since.replace(minute=0, second=0, microsecond=0)
@@ -81,14 +84,25 @@ def _generate_series_slots(since: datetime, unit: str, now: datetime) -> list[da
             slots.append(current)
             current += timedelta(days=1)
     else:
-        current = since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        while current <= end:
-            slots.append(current)
-            if current.month == 12:
-                current = current.replace(year=current.year + 1, month=1)
-            else:
-                current = current.replace(month=current.month + 1)
+        slot_count = MONTH_SLOT_COUNTS.get(period or "", 0)
+        if slot_count and slot_count > 0:
+            start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            for i in range(slot_count - 1, -1, -1):
+                year = start.year
+                month = start.month - i
+                while month < 1:
+                    month += 12
+                    year -= 1
+                slots.append(start.replace(year=year, month=month))
+        else:
+            current = since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            while current <= end:
+                slots.append(current)
+                if current.month == 12:
+                    current = current.replace(year=current.year + 1, month=1)
+                else:
+                    current = current.replace(month=current.month + 1)
     return slots
 
 
@@ -180,7 +194,7 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
     else:
         since = since.replace(tzinfo=timezone.utc)
 
-    slots = _generate_series_slots(since, unit, now)
+    slots = _generate_series_slots(since, unit, now, period)
     series = _build_series(db, current_user.user_id, unit, slots, since)
 
     return {

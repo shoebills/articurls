@@ -296,11 +296,7 @@ function formatDuration(seconds: number): string {
 }
 
 function formatChartLabel(value: string, unit?: string, tz?: string): string {
-  const normalized = value.replace("T", " ");
-
   if (unit === "hour") {
-    // Umami returns ISO timestamps bucketed in the requested timezone.
-    // Parse and re-format to show just "HH:MM" in the user's local timezone.
     try {
       const date = new Date(value);
       return date.toLocaleTimeString(undefined, {
@@ -310,17 +306,26 @@ function formatChartLabel(value: string, unit?: string, tz?: string): string {
         timeZone: tz,
       });
     } catch {
-      // Fallback: slice the time portion from the normalized string
-      const timePart = normalized.slice(11, 16);
-      return timePart || normalized.slice(0, 16);
+      const timePart = value.replace("T", " ").slice(11, 16);
+      return timePart || value.slice(0, 16);
     }
   }
 
   if (unit === "month") {
-    return normalized.slice(0, 7);
+    try {
+      const date = new Date(value);
+      return date.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+    } catch {
+      return value.slice(0, 7);
+    }
   }
 
-  return normalized.slice(0, 10);
+  try {
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return value.slice(0, 10);
+  }
 }
 
 function KpiCard({
