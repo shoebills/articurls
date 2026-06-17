@@ -67,22 +67,36 @@ def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
 
 
 MONTH_SLOT_COUNTS: dict[str, int] = {"3m": 3, "6m": 6, "1y": 12}
+DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7, "28d": 28}
+HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 24}
 
 
 def _generate_series_slots(since: datetime, unit: str, now: datetime, period: Optional[str] = None) -> list[datetime]:
     slots: list[datetime] = []
     if unit == "hour":
-        current = since.replace(minute=0, second=0, microsecond=0)
-        end = now.replace(minute=59, second=59, microsecond=999999)
-        while current <= end:
-            slots.append(current)
-            current += timedelta(hours=1)
+        slot_count = HOUR_SLOT_COUNTS.get(period or "", 0)
+        if slot_count and slot_count > 0:
+            current = now.replace(minute=0, second=0, microsecond=0)
+            for i in range(slot_count - 1, -1, -1):
+                slots.append(current - timedelta(hours=i))
+        else:
+            current = since.replace(minute=0, second=0, microsecond=0)
+            end = now.replace(minute=59, second=59, microsecond=999999)
+            while current <= end:
+                slots.append(current)
+                current += timedelta(hours=1)
     elif unit == "day":
-        current = since.replace(hour=0, minute=0, second=0, microsecond=0)
-        end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-        while current <= end:
-            slots.append(current)
-            current += timedelta(days=1)
+        slot_count = DAY_SLOT_COUNTS.get(period or "", 0)
+        if slot_count and slot_count > 0:
+            current = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            for i in range(slot_count - 1, -1, -1):
+                slots.append(current - timedelta(days=i))
+        else:
+            current = since.replace(hour=0, minute=0, second=0, microsecond=0)
+            end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
+            while current <= end:
+                slots.append(current)
+                current += timedelta(days=1)
     else:
         slot_count = MONTH_SLOT_COUNTS.get(period or "", 0)
         if slot_count and slot_count > 0:
