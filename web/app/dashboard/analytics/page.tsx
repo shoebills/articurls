@@ -611,7 +611,7 @@ function NativeAnalytics({ token }: { token: string }) {
     formatChartLabel(String(label ?? ""), timeseries?.unit, userTz);
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
