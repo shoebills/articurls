@@ -101,7 +101,10 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
     # resubscribe
     if db_subscriber and db_subscriber.unsubscribed_at:
         db_subscriber.unsubscribed_at = None
+        db_subscriber.welcome_sent_at = None
         db.commit()
+        db.refresh(db_subscriber)
+        schedule_welcome_email_after_confirm(db, db_subscriber)
         return {"message": "Subscribed again"}
     
     new_subscriber = models.Subscriber(email=email, 
