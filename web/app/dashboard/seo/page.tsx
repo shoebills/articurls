@@ -156,7 +156,7 @@ export default function SeoDashboardPage() {
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">RSS feed</p>
                 <p className="text-xs text-muted-foreground">
-                  When enabled, your RSS icon appears in the footer.
+                  When enabled, RSS icon appears in the footer.
                 </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
@@ -184,7 +184,7 @@ export default function SeoDashboardPage() {
             <SeoResourceRow
               label="Sitemap"
               url={sitemapResourceUrl}
-              displayText="sitemap.xml"
+              displayText="/sitemap.xml"
               enabled={sitemapResourceEnabled}
               unavailableText={
                 !isPro
@@ -195,7 +195,7 @@ export default function SeoDashboardPage() {
             <SeoResourceRow
               label="Robots control"
               url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
-              displayText="robots.txt"
+              displayText="/robots.txt"
               enabled={seoResourcesEnabled}
             />
           </div>

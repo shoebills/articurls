@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timezone
 from sqlalchemy import func
 from .celery_app import celery
@@ -7,6 +8,8 @@ from ..email.service import send_new_post_email, send_welcome_email as deliver_w
 from ..email.welcome import render_welcome_email
 from ..security.oauth2 import create_unsubscribe_token
 from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_blog_home_url, public_post_url
+
+logger = logging.getLogger(__name__)
 
 
 @celery.task
@@ -123,7 +126,7 @@ def send_welcome_email(subscriber_id: int):
         db_subscriber.welcome_sent_at = func.now()
         db.commit()
     except Exception:
-        pass
+        logger.exception("Failed to send welcome email for subscriber %s", subscriber_id)
     finally:
         db.close()
 

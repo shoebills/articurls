@@ -79,7 +79,7 @@ def normalize_body_fragment(html: str) -> str:
             for p in paragraphs
         )
 
-    return _strip_disallowed_tags(text)
+    return sanitize_html(text)
 
 
 def inline_fragment_styles(fragment: str) -> str:
