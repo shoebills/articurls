@@ -897,7 +897,7 @@ function NativeAnalytics({ token }: { token: string }) {
 
             {tech ? (
               <div className="grid gap-4 lg:grid-cols-3">
-                {tech.browsers.length > 0 && (
+                {tech.browsers.length > 0 ? (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
@@ -920,8 +920,17 @@ function NativeAnalytics({ token }: { token: string }) {
                       </div>
                     </CardContent>
                   </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
+                    </CardContent>
+                  </Card>
                 )}
-                {tech.os.length > 0 && (
+                {tech.os.length > 0 ? (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg">OS</CardTitle>
@@ -944,8 +953,17 @@ function NativeAnalytics({ token }: { token: string }) {
                       </div>
                     </CardContent>
                   </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
+                    </CardContent>
+                  </Card>
                 )}
-                {tech.devices.length > 0 && (
+                {tech.devices.length > 0 ? (
                   <Card>
                     <CardHeader className="pb-2">
                       <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
@@ -966,6 +984,15 @@ function NativeAnalytics({ token }: { token: string }) {
                           );
                         })}
                       </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
                     </CardContent>
                   </Card>
                 )}
