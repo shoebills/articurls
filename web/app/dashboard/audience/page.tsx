@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { WelcomeEmailEditor } from "@/components/editor/welcome-email-editor";
@@ -53,6 +53,8 @@ export default function AudienceEmailsPage() {
     delayMinutes: string;
   } | null>(null);
 
+  const justLoadedRef = useRef(false);
+
   useEffect(() => {
     if (subjectUsesDefault) {
       setSubject(defaultSubject);
@@ -85,6 +87,7 @@ export default function AudienceEmailsPage() {
         bodyHtml: initialBody,
         delayMinutes: finalDelay,
       });
+      justLoadedRef.current = true;
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load welcome email settings");
     }
@@ -209,6 +212,10 @@ export default function AudienceEmailsPage() {
                 className="mt-2"
                 content={bodyHtml}
                 onChange={(html) => {
+                  if (justLoadedRef.current) {
+                    justLoadedRef.current = false;
+                    setInitial((prev) => prev ? { ...prev, bodyHtml: html } : null);
+                  }
                   setBodyHtml(html);
                 }}
                 disabled={!enabled || busy}
