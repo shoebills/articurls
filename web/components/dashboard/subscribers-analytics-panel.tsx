@@ -136,23 +136,6 @@ export function SubscribersAnalyticsPanel() {
               <div className="flex items-start justify-between gap-2 sm:gap-3">
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                    Current subscribers
-                  </p>
-                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
-                    {subs?.current_subscribers ?? "—"}
-                  </p>
-                </div>
-                <div className="shrink-0 mt-0.5">
-                  <Users2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-5">
-              <div className="flex items-start justify-between gap-2 sm:gap-3">
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
                     New subscribers
                   </p>
                   <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
@@ -178,6 +161,23 @@ export function SubscribersAnalyticsPanel() {
                 </div>
                 <div className="shrink-0 mt-0.5">
                   <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+                    Current subscribers
+                  </p>
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                    {subs?.current_subscribers ?? "—"}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  <Users2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
                 </div>
               </div>
             </CardContent>

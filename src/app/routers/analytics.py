@@ -193,8 +193,18 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
     sub_query = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
 
     if since:
-        subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since).scalar()
-        unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at >= since).scalar()
+        until = None
+        if period == "1y":
+            until = since.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
+        elif period == "last_month":
+            until = since.replace(day=28) + timedelta(days=4)
+            until = until.replace(day=1) - timedelta(microseconds=1)
+        if until:
+            subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since, models.Subscriber.subscribed_at <= until).scalar()
+            unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at >= since, models.Subscriber.unsubscribed_at <= until).scalar()
+        else:
+            subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since).scalar()
+            unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at >= since).scalar()
     else:
         subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
         unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at.isnot(None)).scalar()
