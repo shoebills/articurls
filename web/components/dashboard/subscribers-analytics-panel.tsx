@@ -28,6 +28,18 @@ const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
 
 const CHART_PERIOD_ORDER = ["24h", "7d", "28d", "3m", "6m", "1y"] as const;
 
+function periodLabel(key: string): string {
+  const map: Record<string, string> = {
+    "24h": "24 hours",
+    "7d": "7 days",
+    "28d": "28 days",
+    "3m": "3 months",
+    "6m": "6 months",
+    "1y": "1 year",
+  };
+  return map[key] ?? key;
+}
+
 function chartPeriodsForSelection(selected: (typeof PERIODS)[number]): (typeof CHART_PERIOD_ORDER)[number][] {
   if (selected === "all") return [...CHART_PERIOD_ORDER];
   const idx = CHART_PERIOD_ORDER.indexOf(selected as (typeof CHART_PERIOD_ORDER)[number]);
@@ -173,6 +185,7 @@ export function SubscribersAnalyticsPanel() {
                 <XAxis
                   dataKey="name"
                   tick={{ fontSize: 10 }}
+                  tickFormatter={periodLabel}
                   tickLine={false}
                   axisLine={false}
                 />
