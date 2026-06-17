@@ -110,7 +110,7 @@ def send_welcome_email(subscriber_id: int):
             return
 
         unsubscribe_token = create_unsubscribe_token(db_subscriber.subscriber_id, db_user.user_id)
-        unsubscribe_url = f"{settings.public_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}"
+        unsubscribe_url = f"{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}"
         blog_url = public_blog_home_url(db_user)
         blog_name = db_user.name
 

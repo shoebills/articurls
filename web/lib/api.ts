@@ -580,6 +580,11 @@ export async function confirmSubscription(token: string): Promise<{ message: str
   return apiFetch(`/confirm-subscription?token=${encodeURIComponent(token)}`);
 }
 
+/** Public: unsubscribe via token from email link. */
+export async function unsubscribeViaEmail(token: string): Promise<{ message: string }> {
+  return apiFetch(`/unsubscribe?token=${encodeURIComponent(token)}`);
+}
+
 // ── Categories ────────────────────────────────────────────────────────
 
 export async function listCategories(token: string): Promise<Category[]> {
