@@ -977,7 +977,7 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] px-4 sm:px-0">
+    <div className="mx-auto max-w-[1100px] sm:px-0">
       {isPro ? (
         <NativeAnalytics token={token} />
       ) : (
