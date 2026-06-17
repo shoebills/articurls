@@ -532,9 +532,6 @@ function NativeAnalytics({ token }: { token: string }) {
     }
 
     if (timeseries.unit === "month" && slotCount) {
-      // Generate all expected month slots anchored to this month in UTC,
-      // because the backend queries Umami without a timezone parameter
-      // so Umami buckets by UTC months.
       const now = new Date();
       const slots: string[] = [];
       for (let i = slotCount - 1; i >= 0; i--) {
@@ -543,6 +540,40 @@ function NativeAnalytics({ token }: { token: string }) {
           now.getUTCMonth() - i,
           1,
         ));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.period === "this_year") {
+      const now = new Date();
+      const slots: string[] = [];
+      const currentMonth = now.getUTCMonth();
+      for (let i = 0; i <= currentMonth; i++) {
+        const d = new Date(Date.UTC(now.getUTCFullYear(), i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.period === "1y") {
+      const now = new Date();
+      const slots: string[] = [];
+      const prevYear = now.getUTCFullYear() - 1;
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(Date.UTC(prevYear, i, 1));
         const yyyy = d.getUTCFullYear();
         const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
         slots.push(`${yyyy}-${mm}`);
