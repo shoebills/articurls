@@ -16,8 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 const DELAY_OPTIONS = [
   { value: "0", label: "Immediately after confirm" },
@@ -27,13 +25,6 @@ const DELAY_OPTIONS = [
   { value: "720", label: "12 hours" },
   { value: "1440", label: "1 day" },
 ] as const;
-
-const WELCOME_EMAIL_EXPANDED_KEY = "articurls:welcome-email-expanded";
-
-function readWelcomeEmailExpanded(): boolean {
-  if (typeof window === "undefined") return false;
-  return localStorage.getItem(WELCOME_EMAIL_EXPANDED_KEY) === "true";
-}
 
 function isEmptyBody(html: string): boolean {
   const t = html.trim();
@@ -50,7 +41,6 @@ export default function AudienceEmailsPage() {
   const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
   const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
-  const [expanded, setExpanded] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -62,20 +52,6 @@ export default function AudienceEmailsPage() {
     bodyHtml: string;
     delayMinutes: string;
   } | null>(null);
-
-  useEffect(() => {
-    setExpanded(readWelcomeEmailExpanded());
-  }, []);
-
-  const toggleExpanded = useCallback(() => {
-    setExpanded((open) => {
-      const next = !open;
-      if (typeof window !== "undefined") {
-        localStorage.setItem(WELCOME_EMAIL_EXPANDED_KEY, String(next));
-      }
-      return next;
-    });
-  }, []);
 
   useEffect(() => {
     if (subjectUsesDefault) {
@@ -173,7 +149,6 @@ export default function AudienceEmailsPage() {
   return (
     <>
       <div className="space-y-6">
-        <h2 className="text-xl font-semibold tracking-tight">Email Automation</h2>
 
         {!isPro ? (
           <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
@@ -181,49 +156,23 @@ export default function AudienceEmailsPage() {
           </p>
         ) : (
           <Card>
-            <CardHeader
-              className="cursor-pointer"
-              role="button"
-              tabIndex={0}
-              aria-expanded={expanded}
-              aria-label={expanded ? "Collapse welcome email settings" : "Expand welcome email settings"}
-              onClick={toggleExpanded}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" || e.key === " ") {
-                  e.preventDefault();
-                  toggleExpanded();
-                }
-              }}
-            >
+            <CardHeader>
               <div className="flex w-full items-center justify-between gap-4">
                 <div className="min-w-0 flex-1 space-y-1">
-                  <CardTitle>Welcome email</CardTitle>
+                  <CardTitle>Welcome email automation</CardTitle>
                   <CardDescription>
                     Send a welcome email to new subscribers.
                   </CardDescription>
                 </div>
-                <ChevronDown
-                  className={cn(
-                    "ml-4 h-5 w-5 shrink-0 text-muted-foreground transition-transform duration-200",
-                    expanded && "rotate-180"
-                  )}
-                  aria-hidden
-                />
-              </div>
-            </CardHeader>
-            {expanded ? (
-            <CardContent className="space-y-5">
-              <div className="flex items-center gap-2">
-                <Label htmlFor="welcome-enable" className="cursor-pointer text-sm font-medium">
-                  Enable
-                </Label>
                 <Switch
-                  id="welcome-enable"
                   checked={enabled}
                   onCheckedChange={onToggleWelcome}
                   disabled={busy}
+                  aria-label="Enable welcome email"
                 />
               </div>
+            </CardHeader>
+            <CardContent className="space-y-5">
               <div className="space-y-2">
                 <Label htmlFor="welcome-delay">Send delay</Label>
                 <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
@@ -270,7 +219,6 @@ export default function AudienceEmailsPage() {
                 {busy ? "Saving…" : "Save"}
               </Button>
             </CardContent>
-            ) : null}
           </Card>
         )}
       </div>
