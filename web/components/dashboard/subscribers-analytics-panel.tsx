@@ -136,13 +136,13 @@ export function SubscribersAnalyticsPanel() {
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>New (period)</CardDescription>
+              <CardDescription>New subscribers</CardDescription>
               <CardTitle className="text-3xl">{subs?.subscribed ?? "—"}</CardTitle>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
-              <CardDescription>Unsubscribes (period)</CardDescription>
+              <CardDescription>Unsubscribes</CardDescription>
               <CardTitle className="text-3xl">{subs?.unsubscribed ?? "—"}</CardTitle>
             </CardHeader>
           </Card>

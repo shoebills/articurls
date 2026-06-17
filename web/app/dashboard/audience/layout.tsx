@@ -29,7 +29,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
           </p>
         ) : (
           <p className="text-sm text-muted-foreground">
-            Subscriber collection is managed in{" "}
+            Manage subscriber collection in{" "}
             <Link href="/dashboard/settings" className="underline underline-offset-2 hover:text-foreground transition-colors">
               Settings
             </Link>.
