@@ -6,6 +6,7 @@ Uses login/password auth. Sync methods are for Celery workers.
 from __future__ import annotations
 
 import logging
+import threading
 from typing import Any, Dict, Optional
 
 import httpx
@@ -23,8 +24,8 @@ class UmamiError(Exception):
 
 
 class UmamiClient:
-    def __init__(self) -> None:
-        self._token: Optional[str] = None
+    _token: Optional[str] = None
+    _login_lock = threading.Lock()
 
     @property
     def configured(self) -> bool:
@@ -38,8 +39,9 @@ class UmamiClient:
     def base_url(self) -> str:
         return settings.umami_api_url.rstrip("/")
 
-    def _login_sync(self) -> str:
-        url = f"{self.base_url}/api/auth/login"
+    @classmethod
+    def _login_sync(cls) -> str:
+        url = f"{settings.umami_api_url.rstrip('/')}/api/auth/login"
         payload = {
             "username": settings.umami_api_username,
             "password": settings.umami_api_password,
@@ -52,14 +54,17 @@ class UmamiClient:
             token = data.get("token")
             if not token:
                 raise UmamiError(response.status_code, "Missing token in login response")
-            self._token = token
+            cls._token = token
             return token
 
-    def _auth_headers_sync(self, force_login: bool = False) -> Dict[str, str]:
-        if force_login or not self._token:
-            self._login_sync()
+    @classmethod
+    def _auth_headers_sync(cls, force_login: bool = False) -> Dict[str, str]:
+        if force_login or not cls._token:
+            with cls._login_lock:
+                if force_login or not cls._token:
+                    cls._login_sync()
         return {
-            "Authorization": f"Bearer {self._token}",
+            "Authorization": f"Bearer {cls._token}",
             "Content-Type": "application/json",
             "Accept": "application/json",
         }
@@ -85,7 +90,7 @@ class UmamiClient:
             response = client.request(
                 method,
                 url,
-                headers=self._auth_headers_sync(),
+                headers=self.__class__._auth_headers_sync(),
                 **kwargs,
             )
             if response.status_code == 401:
@@ -99,7 +104,7 @@ class UmamiClient:
                 response = client.request(
                     method,
                     url,
-                    headers=self._auth_headers_sync(force_login=True),
+                    headers=self.__class__._auth_headers_sync(force_login=True),
                     **kwargs_retry,
                 )
             if response.status_code >= 400:
