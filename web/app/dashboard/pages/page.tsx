@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiError, archivePage, deletePage, listPages, publishPage } from "@/lib/api";
@@ -28,7 +28,9 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, MoreVertical, Pencil, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { scoreByTitleAndContent } from "@/lib/search";
 
 export default function PagesDashboardPage() {
   const { token, user } = useAuth();
@@ -42,6 +44,12 @@ export default function PagesDashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [query, setQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
+  const [page, setPage] = useState(1);
+
+  const PAGES_PER_PAGE = 10;
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -59,6 +67,49 @@ export default function PagesDashboardPage() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const filteredPages = useMemo(() => {
+    const compareBySort = (a: UserPage, b: UserPage) => {
+      if (sortBy === "oldest") {
+        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+      }
+      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+    };
+
+    const byStatus =
+      statusFilter === "all"
+        ? pages
+        : pages.filter((p) => p.status === statusFilter);
+
+    const trimmed = query.trim();
+    if (!trimmed) {
+      const rows = [...byStatus];
+      rows.sort(compareBySort);
+      return rows;
+    }
+    return byStatus
+      .map((p) => ({
+        page: p,
+        score: scoreByTitleAndContent(p.title || "", p.content || "", trimmed),
+      }))
+      .filter((row) => row.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return compareBySort(a.page, b.page);
+      })
+      .map((row) => row.page);
+  }, [pages, query, sortBy, statusFilter]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [query, statusFilter, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredPages.length / PAGES_PER_PAGE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedPages = useMemo(() => {
+    const start = (currentPage - 1) * PAGES_PER_PAGE;
+    return filteredPages.slice(start, start + PAGES_PER_PAGE);
+  }, [filteredPages, currentPage]);
 
   async function confirmDelete() {
     if (!token || deleteId == null) return;
@@ -149,10 +200,17 @@ export default function PagesDashboardPage() {
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading…</p>
+        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+          <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
+          <p className="text-sm">Loading pages&hellip;</p>
+        </div>
       ) : pages.length === 0 ? (
-        <div className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-border bg-white px-6 py-10 text-center">
-          <p className="text-base font-medium">No pages yet</p>
+        <div
+          className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200"
+          role="status"
+          aria-label="No pages yet"
+        >
+          <p className="text-base font-medium text-foreground">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
             Create your first page and add it to your menu from Design.
           </p>
@@ -161,114 +219,189 @@ export default function PagesDashboardPage() {
           </Button>
         </div>
       ) : (
-        <ul className="space-y-4">
-          {pages.map((p) => (
-            <li key={p.page_id}>
-              <Card
-                role="link"
-                tabIndex={0}
-                onClick={(e) => {
-                  const target = e.target as HTMLElement;
-                  if (target.closest("[data-card-action='true']")) return;
-                  router.push(`/dashboard/pages/${p.page_id}/edit`);
-                }}
-                onKeyDown={(e) => {
-                  const target = e.target as HTMLElement;
-                  if (target.closest("[data-card-action='true']")) return;
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    router.push(`/dashboard/pages/${p.page_id}/edit`);
-                  }
-                }}
-                className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-              >
-                <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-start gap-3">
-                    <div className="min-w-0 flex-1 text-left space-y-1">
-                      <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
-                        {p.title || "Untitled"}
-                      </p>
-                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                        {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
-                      </p>
-                    </div>
-                    <div className="shrink-0" data-card-action="true">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            data-card-action="true"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
-                            aria-label={`Actions for ${p.title || "Untitled"}`}
-                            disabled={rowBusyId === p.page_id}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent data-card-action="true" align="end" className="w-44">
-                          <DropdownMenuItem data-card-action="true" asChild>
-                            <Link href={`/dashboard/pages/${p.page_id}/edit`}>
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          {(p.status === "published" || p.status === "archived") && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => void onShare(p)}
-                              disabled={rowBusyId === p.page_id}
-                            >
-                              <Share2 className="h-4 w-4" />
-                              Copy link
-                            </DropdownMenuItem>
-                          )}
-                          {p.status === "published" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => void onArchive(p.page_id)}
-                              disabled={rowBusyId === p.page_id}
-                            >
-                              <Archive className="h-4 w-4" />
-                              Archive
-                            </DropdownMenuItem>
-                          )}
-                          {p.status === "archived" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => void onUnarchive(p.page_id)}
-                              disabled={rowBusyId === p.page_id}
-                            >
-                              <ArchiveRestore className="h-4 w-4" />
-                              Unarchive
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => setDeleteId(p.page_id)}
-                            disabled={rowBusyId === p.page_id}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                  </div>
+        <>
+          <div className="mb-4 flex items-center gap-2 sm:gap-3">
+            <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
+              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search"
+                aria-label="Search pages"
+                className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
+              />
+            </div>
 
-                  <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">
-                    <BlogStatusBadge status={p.status} className="shrink-0" />
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </li>
-          ))}
-        </ul>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+                  <Filter className="h-4 w-4" />
+                  <span className="hidden sm:inline">Filter</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+                  <ArrowUpDown className="h-4 w-4" />
+                  <span className="hidden sm:inline">Sort</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setSortBy("latest")}>
+                  <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
+                  Latest
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+                  <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
+                  Oldest
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {filteredPages.length > 0 ? (
+            <>
+              <ul className="space-y-4">
+                {pagedPages.map((p) => (
+                  <li key={p.page_id}>
+                    <Card
+                      role="link"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest("[data-card-action='true']")) return;
+                        router.push(`/dashboard/pages/${p.page_id}/edit`);
+                      }}
+                      onKeyDown={(e) => {
+                        const target = e.target as HTMLElement;
+                        if (target.closest("[data-card-action='true']")) return;
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          router.push(`/dashboard/pages/${p.page_id}/edit`);
+                        }
+                      }}
+                      className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                    >
+                      <CardContent className="space-y-4 p-5 sm:p-6">
+                        <div className="flex items-start gap-3">
+                          <div className="min-w-0 flex-1 text-left space-y-1">
+                            <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                              {p.title || "Untitled"}
+                            </p>
+                            <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
+                              {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
+                            </p>
+                          </div>
+                          <div className="shrink-0" data-card-action="true">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  data-card-action="true"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                                  aria-label={`Actions for ${p.title || "Untitled"}`}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent data-card-action="true" align="end" className="w-44">
+                                <DropdownMenuItem data-card-action="true" asChild>
+                                  <Link href={`/dashboard/pages/${p.page_id}/edit`}>
+                                    <Pencil className="h-4 w-4" />
+                                    Edit
+                                  </Link>
+                                </DropdownMenuItem>
+                                {(p.status === "published" || p.status === "archived") && (
+                                  <DropdownMenuItem
+                                    data-card-action="true"
+                                    onClick={() => void onShare(p)}
+                                    disabled={rowBusyId === p.page_id}
+                                  >
+                                    <Share2 className="h-4 w-4" />
+                                    Copy link
+                                  </DropdownMenuItem>
+                                )}
+                                {p.status === "published" && (
+                                  <DropdownMenuItem
+                                    data-card-action="true"
+                                    onClick={() => void onArchive(p.page_id)}
+                                    disabled={rowBusyId === p.page_id}
+                                  >
+                                    <Archive className="h-4 w-4" />
+                                    Archive
+                                  </DropdownMenuItem>
+                                )}
+                                {p.status === "archived" && (
+                                  <DropdownMenuItem
+                                    data-card-action="true"
+                                    onClick={() => void onUnarchive(p.page_id)}
+                                    disabled={rowBusyId === p.page_id}
+                                  >
+                                    <ArchiveRestore className="h-4 w-4" />
+                                    Unarchive
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem
+                                  data-card-action="true"
+                                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                  onClick={() => setDeleteId(p.page_id)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">
+                          <BlogStatusBadge status={p.status} className="shrink-0" />
+                          <span className="text-slate-300 select-none" aria-hidden>
+                            ·
+                          </span>
+                          <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </li>
+                ))}
+              </ul>
+              <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Page {currentPage} of {totalPages}
+                </p>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                    Prev
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    disabled={currentPage >= totalPages}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <div className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
+              No pages match your search.
+            </div>
+          )}
+        </>
       )}
 
       <Dialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
