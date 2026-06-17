@@ -123,14 +123,26 @@ def get_umami_period_timestamps(period: str, account_created_at: float | None = 
         start_at = int((now - timedelta(hours=24)).timestamp() * 1000)
     elif period == "7d":
         start_at = int((now - timedelta(days=7)).timestamp() * 1000)
-    elif period == "28d":
-        start_at = int((now - timedelta(days=28)).timestamp() * 1000)
-    elif period == "3m":
-        start_at = int((now - timedelta(days=90)).timestamp() * 1000)
-    elif period == "6m":
-        start_at = int((now - timedelta(days=180)).timestamp() * 1000)
+    elif period == "this_month":
+        start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_at = int(start.timestamp() * 1000)
+    elif period == "last_month":
+        if now.month == 1:
+            start = now.replace(year=now.year - 1, month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
+        else:
+            start = now.replace(month=now.month - 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_at = int(start.timestamp() * 1000)
+        end = start.replace(day=28) + timedelta(days=4)
+        end = end.replace(day=1) - timedelta(days=1)
+        end = end.replace(hour=23, minute=59, second=59, microsecond=999999)
+        end_at = int(end.timestamp() * 1000)
+    elif period == "this_year":
+        start = now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_at = int(start.timestamp() * 1000)
     elif period == "1y":
-        start_at = int((now - timedelta(days=365)).timestamp() * 1000)
+        year = now.year - 1 if now.month == 1 else now.year
+        start = now.replace(year=year, month=now.month, day=1, hour=0, minute=0, second=0, microsecond=0)
+        start_at = int(start.timestamp() * 1000)
     elif period == "all":
         if account_created_at is not None:
             start_at = int(account_created_at)
@@ -146,7 +158,7 @@ def get_umami_period_unit(period: str) -> str:
     """Get appropriate time unit for timeseries for a given period."""
     if period == "24h":
         return "hour"
-    elif period in ("7d", "28d"):
+    elif period in ("7d", "this_month", "last_month"):
         return "day"
     else:
         return "month"

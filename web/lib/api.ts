@@ -776,7 +776,7 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
   });
 }
 
-export type AnalyticsPeriod = "24h" | "7d" | "28d" | "3m" | "6m" | "1y" | "all";
+export type AnalyticsPeriod = "24h" | "7d" | "this_month" | "last_month" | "this_year" | "1y" | "all";
 
 export async function getUmamiOverview(
   token: string,

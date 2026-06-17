@@ -32,20 +32,28 @@ def _umami_error_detail(exc_body: str) -> str:
 PERIOD_MAP = {
     "24h": timedelta(hours=24),
     "7d": timedelta(days=7),
-    "28d": timedelta(days=28),
-    "3m": timedelta(days=90),
-    "6m": timedelta(days=180),
-    "1y": timedelta(days=365),
 }
 
 
-def get_since(period: Optional[str]):
+def get_since(period: Optional[str], now: datetime | None = None):
     if period is None:
         return None
-    delta = PERIOD_MAP.get(period)
-    if delta is None:
-        return None
-    return datetime.now(timezone.utc) - delta
+    now = now or datetime.now(timezone.utc)
+    if period in PERIOD_MAP:
+        return now - PERIOD_MAP[period]
+    if period == "this_month":
+        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+    if period == "last_month":
+        if now.month == 1:
+            return now.replace(year=now.year - 1, month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
+        return now.replace(month=now.month - 1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    if period == "this_year":
+        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
+    if period == "1y":
+        year = now.year - 1 if now.month == 1 else now.year
+        month = now.month
+        return now.replace(year=year, month=month, day=1, hour=0, minute=0, second=0, microsecond=0)
+    return None
 
 
 def normalize_referrer_host(value: str) -> str:
@@ -61,57 +69,57 @@ def normalize_referrer_host(value: str) -> str:
 def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
     if period == "24h":
         return "hour"
-    if period in ("7d", "28d"):
+    if period in ("7d", "this_month", "last_month"):
         return "day"
     return "month"
 
 
-MONTH_SLOT_COUNTS: dict[str, int] = {"3m": 3, "6m": 6, "1y": 12}
-DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7, "28d": 28}
+MONTH_SLOT_COUNTS: dict[str, int] = {"1y": 12}
+DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7}
 HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 24}
 
 
-def _generate_series_slots(since: datetime, unit: str, now: datetime, period: Optional[str] = None) -> list[datetime]:
+def _generate_series_slots(start: datetime, unit: str, end: datetime, period: Optional[str] = None) -> list[datetime]:
     slots: list[datetime] = []
     if unit == "hour":
         slot_count = HOUR_SLOT_COUNTS.get(period or "", 0)
         if slot_count and slot_count > 0:
-            current = now.replace(minute=0, second=0, microsecond=0)
+            anchor = end.replace(minute=0, second=0, microsecond=0)
             for i in range(slot_count - 1, -1, -1):
-                slots.append(current - timedelta(hours=i))
+                slots.append(anchor - timedelta(hours=i))
         else:
-            current = since.replace(minute=0, second=0, microsecond=0)
-            end = now.replace(minute=59, second=59, microsecond=999999)
-            while current <= end:
+            current = start.replace(minute=0, second=0, microsecond=0)
+            stop = end.replace(minute=59, second=59, microsecond=999999)
+            while current <= stop:
                 slots.append(current)
                 current += timedelta(hours=1)
     elif unit == "day":
         slot_count = DAY_SLOT_COUNTS.get(period or "", 0)
         if slot_count and slot_count > 0:
-            current = now.replace(hour=0, minute=0, second=0, microsecond=0)
+            anchor = end.replace(hour=0, minute=0, second=0, microsecond=0)
             for i in range(slot_count - 1, -1, -1):
-                slots.append(current - timedelta(days=i))
+                slots.append(anchor - timedelta(days=i))
         else:
-            current = since.replace(hour=0, minute=0, second=0, microsecond=0)
-            end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
-            while current <= end:
+            current = start.replace(hour=0, minute=0, second=0, microsecond=0)
+            stop = end.replace(hour=23, minute=59, second=59, microsecond=999999)
+            while current <= stop:
                 slots.append(current)
                 current += timedelta(days=1)
     else:
         slot_count = MONTH_SLOT_COUNTS.get(period or "", 0)
         if slot_count and slot_count > 0:
-            start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            anchor = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
             for i in range(slot_count - 1, -1, -1):
-                year = start.year
-                month = start.month - i
+                year = anchor.year
+                month = anchor.month - i
                 while month < 1:
                     month += 12
                     year -= 1
-                slots.append(start.replace(year=year, month=month))
+                slots.append(anchor.replace(year=year, month=month))
         else:
-            current = since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            while current <= end:
+            current = start.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            stop = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+            while current <= stop:
                 slots.append(current)
                 if current.month == 12:
                     current = current.replace(year=current.year + 1, month=1)
@@ -180,7 +188,9 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 
     current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).scalar()
 
-    since = get_since(period)
+    unit = _time_unit(period)
+    now = datetime.now(timezone.utc)
+    since = get_since(period, now)
 
     sub_query = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
 
@@ -191,11 +201,12 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
         unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at.isnot(None)).scalar()
 
-    unit = _time_unit(period)
-    now = datetime.now(timezone.utc)
-
     if since is None:
-        account_since = current_user.created_at.replace(tzinfo=timezone.utc) if current_user.created_at else datetime(2026, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
+        account_since = current_user.created_at
+        if account_since and account_since.tzinfo is None:
+            account_since = account_since.replace(tzinfo=timezone.utc)
+        if not account_since:
+            account_since = datetime(2026, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
         if unit == "month":
             since = account_since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
         elif unit == "day":
@@ -203,7 +214,13 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         else:
             since = account_since.replace(minute=0, second=0, microsecond=0)
 
-    slots = _generate_series_slots(since, unit, now, period)
+    slot_end = now
+    if period == "last_month":
+        slot_end = since.replace(day=28) + timedelta(days=4)
+        slot_end = slot_end.replace(day=1) - timedelta(days=1)
+        slot_end = slot_end.replace(hour=23, minute=59, second=59, microsecond=999999)
+
+    slots = _generate_series_slots(since, unit, slot_end, period)
     series = _build_series(db, current_user.user_id, unit, slots, since)
 
     return {
@@ -332,7 +349,10 @@ def get_umami_timeseries(
     try:
         account_ts = None
         if period == "all" and current_user.created_at is not None:
-            account_ts = current_user.created_at.replace(tzinfo=timezone.utc).timestamp() * 1000
+            created = current_user.created_at
+            if created.tzinfo is None:
+                created = created.replace(tzinfo=timezone.utc)
+            account_ts = created.timestamp() * 1000
         start_at, end_at = get_umami_period_timestamps(period, account_created_at=account_ts)
         unit = get_umami_period_unit(period)
 

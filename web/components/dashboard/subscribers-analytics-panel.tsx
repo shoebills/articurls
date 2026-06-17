@@ -25,14 +25,14 @@ import {
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
-const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
+const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
-  { value: "28d", label: "Last 28 days" },
-  { value: "3m", label: "Last 3 months" },
-  { value: "6m", label: "Last 6 months" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "this_year", label: "This year" },
   { value: "1y", label: "Last year" },
   { value: "all", label: "All time" },
 ];
@@ -43,13 +43,14 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
     if (period === "24h") {
       return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
     }
-    if (period === "7d" || period === "28d") {
+    if (period === "7d" || period === "this_month" || period === "last_month") {
       return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
     return date.toLocaleDateString(undefined, { month: "short", year: period === "all" ? "numeric" : "2-digit" });
   } catch {
     if (period === "24h") return value.slice(11, 16);
-    return value.slice(0, 10);
+    if (period === "7d" || period === "this_month" || period === "last_month") return value.slice(0, 10);
+    return value.slice(0, 7);
   }
 }
 

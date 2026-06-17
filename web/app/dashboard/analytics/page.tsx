@@ -118,11 +118,11 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
-  { value: "24h", label: "Last 24h" },
+  { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
-  { value: "28d", label: "Last 28 days" },
-  { value: "3m", label: "Last 3 months" },
-  { value: "6m", label: "Last 6 months" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "this_year", label: "This year" },
   { value: "1y", label: "Last year" },
   { value: "all", label: "All time" },
 ];
@@ -502,9 +502,6 @@ function NativeAnalytics({ token }: { token: string }) {
     // Period → slot count mapping
     const periodSlots: Record<string, number> = {
       "7d": 7,
-      "28d": 28,
-      "3m": 3,
-      "6m": 6,
       "1y": 12,
     };
 
