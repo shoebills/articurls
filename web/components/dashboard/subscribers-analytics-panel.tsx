@@ -55,7 +55,7 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
 
 export function SubscribersAnalyticsPanel() {
   const { token } = useAuth();
-  const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("28d");
+  const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(null);
   const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>([]);
   const [err, setErr] = useState<string | null>(null);

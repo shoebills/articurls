@@ -82,15 +82,13 @@ def _generate_series_slots(since: datetime, unit: str, now: datetime) -> list[da
             current += timedelta(days=1)
     else:
         current = since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        end = now.replace(day=28, hour=23, minute=59, second=59, microsecond=999999) + timedelta(days=4)
-        end = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        while current < end:
+        end = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        while current <= end:
             slots.append(current)
             if current.month == 12:
                 current = current.replace(year=current.year + 1, month=1)
             else:
                 current = current.replace(month=current.month + 1)
-        slots.append(current)
     return slots
 
 
