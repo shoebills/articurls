@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -148,40 +148,75 @@ export function SubscribersAnalyticsPanel() {
           </Card>
         </div>
         <Card>
-          <CardHeader>
-            <CardTitle>Subscribers by window</CardTitle>
-            <CardDescription>
-              New subscriptions and unsubscribes counted within each rolling window, for every window length up to your
-              selected range.
-            </CardDescription>
+          <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
+            <CardTitle className="text-base sm:text-lg">Subscribers trend</CardTitle>
           </CardHeader>
-          <CardContent className="h-56 sm:h-72">
+          <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartSubs} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line
-                  type="linear"
+              <AreaChart data={chartSubs} margin={{ top: 12, right: 8, left: 0, bottom: 8 }}>
+                <defs>
+                  <linearGradient id="colorSubscribed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="colorUnsubscribed" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="oklch(0.55 0.2 25)" stopOpacity={0.35} />
+                    <stop offset="100%" stopColor="oklch(0.55 0.2 25)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  className="stroke-border"
+                  vertical={false}
+                  opacity={0.4}
+                />
+                <XAxis
+                  dataKey="name"
+                  tick={{ fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={false}
+                />
+                <YAxis
+                  tick={{ fontSize: 10 }}
+                  allowDecimals={false}
+                  tickLine={false}
+                  axisLine={false}
+                  width={32}
+                />
+                <Tooltip
+                  contentStyle={{
+                    fontSize: 12,
+                    borderRadius: "10px",
+                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "hsl(var(--background))",
+                    boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
+                  }}
+                />
+                <Legend
+                  wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
+                  iconType="circle"
+                />
+                <Area
+                  type="monotone"
                   dataKey="gained"
                   name="Subscribed"
-                  stroke="oklch(0.5 0.16 145)"
-                  strokeWidth={2}
-                  dot={{ r: 4, strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
+                  stroke="oklch(0.6 0.15 145)"
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorSubscribed)"
+                  activeDot={{ r: 5 }}
                 />
-                <Line
-                  type="linear"
+                <Area
+                  type="monotone"
                   dataKey="lost"
                   name="Unsubscribed"
                   stroke="oklch(0.55 0.2 25)"
-                  strokeWidth={2}
-                  dot={{ r: 4, strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
+                  strokeWidth={3}
+                  fillOpacity={1}
+                  fill="url(#colorUnsubscribed)"
+                  activeDot={{ r: 5 }}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
