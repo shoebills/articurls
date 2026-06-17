@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { TrendingDown, TrendingUp, Users2 } from "lucide-react";
 
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
@@ -129,24 +130,57 @@ export function SubscribersAnalyticsPanel() {
             Export CSV
           </Button>
         </div>
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <Card>
-            <CardHeader>
-              <CardDescription>Current subscribers</CardDescription>
-              <CardTitle className="text-3xl">{subs?.current_subscribers ?? "—"}</CardTitle>
-            </CardHeader>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+                    Current subscribers
+                  </p>
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                    {subs?.current_subscribers ?? "—"}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  <Users2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                </div>
+              </div>
+            </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <CardDescription>New subscribers</CardDescription>
-              <CardTitle className="text-3xl">{subs?.subscribed ?? "—"}</CardTitle>
-            </CardHeader>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+                    New subscribers
+                  </p>
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                    {subs?.subscribed ?? "—"}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                </div>
+              </div>
+            </CardContent>
           </Card>
           <Card>
-            <CardHeader>
-              <CardDescription>Unsubscribes</CardDescription>
-              <CardTitle className="text-3xl">{subs?.unsubscribed ?? "—"}</CardTitle>
-            </CardHeader>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+                    Unsubscribes
+                  </p>
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                    {subs?.unsubscribed ?? "—"}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </div>
         <Card>
