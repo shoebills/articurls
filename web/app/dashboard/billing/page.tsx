@@ -75,13 +75,13 @@ export default function BillingPage() {
               ) : (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-sm font-medium text-emerald-800">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" aria-hidden />
-                  Pro
+                  Pro plan
                 </div>
               )
             ) : (
               <div className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm font-medium text-muted-foreground">
                 <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50 ring-2 ring-muted-foreground/20" aria-hidden />
-                Free
+                Free plan
               </div>
             )}
           </div>
@@ -89,7 +89,7 @@ export default function BillingPage() {
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
               <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               <span>
-                <span className="text-muted-foreground">Period ends </span>
+                <span className="text-muted-foreground">Plan ends </span>
                 <span className="font-medium tabular-nums text-foreground">
                   {format(new Date(sub.current_period_end), "MMMM d, yyyy")}
                 </span>
