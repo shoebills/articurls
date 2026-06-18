@@ -456,11 +456,14 @@ export default function DesignDashboardPage() {
           className="overflow-x-auto pb-1"
         >
           <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
-            {sectionTabs.map((section) => (
+            {sectionTabs.map((section, i) => (
               <button
                 key={section.id}
                 type="button"
-                className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-background text-foreground shadow-sm"
+                className={i === 0
+                  ? "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-primary text-primary-foreground shadow-sm"
+                  : "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium text-foreground"
+                }
                 disabled
               >
                 {section.label}
