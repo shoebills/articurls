@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category } from "@/lib/types";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -124,6 +125,7 @@ export default function DesignDashboardPage() {
   const [footerSelection, setFooterSelection] = useState<number[]>([]);
   const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -213,6 +215,8 @@ export default function DesignDashboardPage() {
       );
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load design settings");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -381,6 +385,46 @@ export default function DesignDashboardPage() {
 
   function goToSection(section: DesignSectionId) {
     setSelectedSection(section);
+  }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-6">
+        <Skeleton className="h-9 w-28" />
+        <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+          <Skeleton className="h-10 flex-1 rounded-lg" />
+        </div>
+        <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5">
+          <div className="flex items-center justify-between rounded-xl border p-3">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-64" />
+            </div>
+            <Skeleton className="h-6 w-10 rounded-full" />
+          </div>
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="shrink-0 space-y-2 sm:min-w-[220px]">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          </div>
+          <Skeleton className="h-px w-full" />
+          <div className="flex items-center justify-between rounded-xl border p-3">
+            <div className="space-y-2">
+              <Skeleton className="h-5 w-40" />
+              <Skeleton className="h-4 w-56" />
+            </div>
+            <Skeleton className="h-6 w-10 rounded-full" />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -24,6 +24,7 @@ import {
 } from "recharts";
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingDown, TrendingUp, Users2 } from "lucide-react";
 
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
@@ -61,6 +62,7 @@ export function SubscribersAnalyticsPanel() {
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(null);
   const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>([]);
   const [err, setErr] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
@@ -68,6 +70,7 @@ export function SubscribersAnalyticsPanel() {
     if (!token) return;
     let cancelled = false;
     (async () => {
+      setLoading(true);
       setErr(null);
       try {
         const data = await subscribersAnalytics(token, sPeriod);
@@ -82,6 +85,8 @@ export function SubscribersAnalyticsPanel() {
         );
       } catch (e) {
         if (!cancelled) setErr(e instanceof ApiError ? e.message : "Failed to load analytics");
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
     return () => {
@@ -102,6 +107,61 @@ export function SubscribersAnalyticsPanel() {
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Export failed");
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+          <Skeleton className="h-10 w-[120px]" />
+          <Skeleton className="h-11 w-full sm:h-9 sm:w-[120px]" />
+        </div>
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Card>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <Skeleton className="h-3 w-24 sm:h-3.5 sm:w-28 mb-2" />
+                  <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
+                </div>
+                <Skeleton className="h-5 w-5 rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <Skeleton className="h-3 w-20 sm:h-3.5 sm:w-24 mb-2" />
+                  <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
+                </div>
+                <Skeleton className="h-5 w-5 rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <Skeleton className="h-3 w-28 sm:h-3.5 sm:w-32 mb-2" />
+                  <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
+                </div>
+                <Skeleton className="h-5 w-5 rounded-md" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Card>
+          <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
+            <Skeleton className="h-5 w-40 sm:h-6 sm:w-48" />
+            <Skeleton className="h-3 w-64 sm:h-4 sm:w-72 mt-2" />
+          </CardHeader>
+          <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
+            <Skeleton className="h-full w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

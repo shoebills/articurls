@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import type { CustomDomain } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
@@ -28,6 +29,7 @@ export default function SeoDashboardPage() {
   const [originalMetaTitle, setOriginalMetaTitle] = useState("");
   const [originalMetaDescription, setOriginalMetaDescription] = useState("");
   const [rssEnabled, setRssEnabled] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -70,6 +72,8 @@ export default function SeoDashboardPage() {
         setIsPro(isProSubscription(subscription));
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
+      } finally {
+        setLoading(false);
       }
     })();
   }, [token]);
@@ -109,8 +113,55 @@ export default function SeoDashboardPage() {
       setRssEnabled(previous);
       setErr(e instanceof ApiError ? e.message : "Failed to update RSS setting");
     } finally {
-      setBusy(false);
+        setBusy(false);
+      }
     }
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-6">
+        <Skeleton className="h-9 w-80" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+            <Skeleton className="h-10 w-20" />
+            <div className="border-t pt-5 mt-2 space-y-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-10 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-9 w-16" />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-9 w-16" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

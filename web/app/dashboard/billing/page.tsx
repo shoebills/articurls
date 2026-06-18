@@ -6,6 +6,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { CalendarDays } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -16,6 +17,7 @@ export default function BillingPage() {
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -32,6 +34,8 @@ export default function BillingPage() {
       setSub(s);
     } catch (e) {
       setErr("Failed to load billing info");
+    } finally {
+      setLoading(false);
     }
   }, [token]);
 
@@ -55,6 +59,34 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
   const displayTier = pro ? "Pro" : "Free";
   const subStatus = sub?.status?.toLowerCase() ?? "";
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-8">
+        <Skeleton className="h-9 w-24" />
+        <Card className="overflow-hidden border-border/70">
+          <CardHeader className="space-y-1 pb-2">
+            <Skeleton className="h-7 w-32" />
+          </CardHeader>
+          <CardContent className="space-y-5 pt-2">
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-8 w-24 rounded-lg" />
+            </div>
+            <Skeleton className="h-8 w-56 rounded-lg" />
+            <Skeleton className="h-11 w-full sm:w-56" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-24" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-32 w-full rounded-lg" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">

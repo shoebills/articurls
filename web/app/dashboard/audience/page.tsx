@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -42,6 +43,7 @@ export default function AudienceEmailsPage() {
   const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
   const [delayMinutes, setDelayMinutes] = useState("0");
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 
@@ -62,7 +64,10 @@ export default function AudienceEmailsPage() {
   }, [defaultSubject, subjectUsesDefault]);
 
   const load = useCallback(async () => {
-    if (!token || !isPro) return;
+    if (!token || !isPro) {
+      setLoading(false);
+      return;
+    }
     try {
       const settings = await getWelcomeEmailSettings(token);
       const storedSubject = settings.welcome_email_subject;
@@ -90,6 +95,8 @@ export default function AudienceEmailsPage() {
       justLoadedRef.current = true;
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load welcome email settings");
+    } finally {
+      setLoading(false);
     }
   }, [token, isPro, blogName]);
 
@@ -147,6 +154,39 @@ export default function AudienceEmailsPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <Card>
+          <CardHeader>
+            <div className="flex w-full items-center justify-between gap-4">
+              <div className="min-w-0 flex-1 space-y-1">
+                <Skeleton className="h-6 w-56" />
+                <Skeleton className="h-4 w-72" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-10 w-full max-w-sm" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-14" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+              <Skeleton className="h-4 w-10" />
+              <Skeleton className="h-[320px] w-full rounded-md" />
+            </div>
+            <Skeleton className="h-10 w-20" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

@@ -21,6 +21,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -40,6 +41,7 @@ export default function SettingsPage() {
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [removeBranding, setRemoveBranding] = useState(true);
   const [collectSubscribers, setCollectSubscribers] = useState(true);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
@@ -80,6 +82,8 @@ export default function SettingsPage() {
       setStorageUsage(usage);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
   }, [token]);
 
@@ -292,6 +296,93 @@ export default function SettingsPage() {
     } finally {
       setRequestBusy(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
+        <Skeleton className="h-9 w-28" />
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-7 w-20" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+              <Skeleton className="h-[4.875rem] w-[4.875rem] rounded-full" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-9 w-9" />
+              </div>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2.5">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-10" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-11 w-24" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-7 w-20" />
+            <Skeleton className="h-4 w-64" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-2.5 w-full rounded-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-7 w-24" />
+            <Skeleton className="h-4 w-72" />
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <Skeleton className="h-14 w-14 rounded-lg" />
+            </div>
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-56" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-4 sm:pb-4">
+            <Skeleton className="h-7 w-32" />
+            <Skeleton className="h-4 w-48" />
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-40 w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
