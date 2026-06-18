@@ -436,9 +436,9 @@ export default function SettingsPage() {
               Upgrade under Billing to edit these.
             </p>
           )}
-          <div className="space-y-4">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
-              <Label>Blog favicon</Label>
+              <p className="text-sm font-medium">Blog favicon</p>
               <p className="text-sm text-muted-foreground">
                 Ideal 512×512px, max 256KB.
               </p>
