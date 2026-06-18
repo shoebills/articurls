@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, Check, AlertCircle, Loader2, Globe } from "lucide-react";
 import {
   addCustomDomain,
@@ -159,8 +160,11 @@ export default function CustomDomainSettings() {
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isPro === null || domain === undefined) {
     return (
-      <div className="flex min-h-[200px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        <form className="flex gap-3">
+          <Skeleton className="h-10 flex-1 rounded-md" />
+          <Skeleton className="h-10 w-28 shrink-0 rounded-md" />
+        </form>
       </div>
     );
   }
