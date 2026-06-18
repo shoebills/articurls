@@ -445,6 +445,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Pro features</CardTitle>
+          <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           {!isPro && (
