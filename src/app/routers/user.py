@@ -562,6 +562,7 @@ FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon"
 @router.post("/me/favicon", status_code=status.HTTP_200_OK)
 async def upload_favicon(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
     is_pro=Depends(require_pro),
@@ -600,6 +601,19 @@ async def upload_favicon(
     db.commit()
     db.refresh(db_user)
 
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return {"favicon_url": db_user.favicon_url}
 
 
@@ -623,6 +637,7 @@ def get_storage_usage(
 
 @router.delete("/me/favicon", status_code=status.HTTP_200_OK)
 async def delete_favicon(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -633,5 +648,18 @@ async def delete_favicon(
     db_user.favicon_url = None
     db.commit()
     db.refresh(db_user)
+
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
 
     return {"favicon_url": None}
