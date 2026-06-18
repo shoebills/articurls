@@ -24,7 +24,7 @@ import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Check, Globe, ImagePlus, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
+import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -56,6 +56,8 @@ export default function SettingsPage() {
   const pfpInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
+  const [pfpDeleteOpen, setPfpDeleteOpen] = useState(false);
+  const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
 
   function formatBytes(bytes: number): string {
     if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -166,10 +168,26 @@ export default function SettingsPage() {
       await patchMe(token, { profile_image_url: null });
       await refreshUser();
       setSaved("Saved");
+      setPfpDeleteOpen(false);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Could not remove photo");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function removeFavicon() {
+    if (!token) return;
+    setFaviconBusy(true);
+    setErr(null);
+    try {
+      await deleteFavicon(token);
+      await refreshUser();
+      setFaviconDeleteOpen(false);
+    } catch (ex) {
+      setErr(ex instanceof ApiError ? ex.message : "Could not remove favicon");
+    } finally {
+      setFaviconBusy(false);
     }
   }
 
@@ -337,11 +355,7 @@ export default function SettingsPage() {
                 onClick={() => pfpInputRef.current?.click()}
                 title={hasCustomProfileImage ? "Change photo" : "Upload photo"}
               >
-                {hasCustomProfileImage ? (
-                  <Pencil className="h-4 w-4" />
-                ) : (
-                  <ImagePlus className="h-4 w-4" />
-                )}
+                <Pencil className="h-4 w-4" />
               </Button>
               {hasCustomProfileImage ? (
                 <Button
@@ -350,7 +364,7 @@ export default function SettingsPage() {
                   size="icon"
                   className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   disabled={busy}
-                  onClick={removePfp}
+                  onClick={() => setPfpDeleteOpen(true)}
                   title="Remove photo"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -495,10 +509,8 @@ export default function SettingsPage() {
                 >
                   {faviconBusy ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : ctxUser?.favicon_url ? (
-                    <Pencil className="h-4 w-4" />
                   ) : (
-                    <ImagePlus className="h-4 w-4" />
+                    <Pencil className="h-4 w-4" />
                   )}
                 </Button>
                 {ctxUser?.favicon_url ? (
@@ -508,19 +520,7 @@ export default function SettingsPage() {
                     size="icon"
                     className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                     disabled={!isPro || faviconBusy}
-                    onClick={async () => {
-                      if (!token) return;
-                      setFaviconBusy(true);
-                      setErr(null);
-                      try {
-                        await deleteFavicon(token);
-                        await refreshUser();
-                      } catch (ex) {
-                        setErr(ex instanceof ApiError ? ex.message : "Could not remove favicon");
-                      } finally {
-                        setFaviconBusy(false);
-                      }
-                    }}
+                    onClick={() => setFaviconDeleteOpen(true)}
                     title="Remove favicon"
                   >
                     <Trash2 className="h-4 w-4" />
@@ -576,6 +576,33 @@ export default function SettingsPage() {
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
+
+      <Dialog open={pfpDeleteOpen} onOpenChange={setPfpDeleteOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Remove profile photo?</DialogTitle>
+            <DialogDescription>Your photo will be replaced with the default avatar.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPfpDeleteOpen(false)} disabled={busy}>Cancel</Button>
+            <Button variant="destructive" onClick={removePfp} disabled={busy}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={faviconDeleteOpen} onOpenChange={setFaviconDeleteOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Remove favicon?</DialogTitle>
+            <DialogDescription>Your favicon will be removed and the default icon will be shown instead.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFaviconDeleteOpen(false)} disabled={faviconBusy}>Cancel</Button>
+            <Button variant="destructive" onClick={removeFavicon} disabled={faviconBusy}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
