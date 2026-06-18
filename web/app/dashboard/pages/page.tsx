@@ -206,26 +206,33 @@ export default function PagesDashboardPage() {
       </div>
 
       {loading ? (
-        <ul className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i}>
-              <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                <div className="flex items-start gap-3">
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
+        <>
+          <div className="mb-4 flex items-center gap-2 sm:gap-3">
+            <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
+            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+          </div>
+          <ul className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i}>
+                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
                   </div>
-                  <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                  </div>
                 </div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-4 w-24" />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+        </>
       ) : pages.length === 0 ? (
         <div
           className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200"
