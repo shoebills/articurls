@@ -50,9 +50,7 @@ export default function SeoDashboardPage() {
     if (!token) return true;
     return !(
       apiCacheHas("/user/meta", token) &&
-      apiCacheHas("/settings/domain", token) &&
-      apiCacheHas("/user/me", token) &&
-      apiCacheHas("/billing/subscription", token)
+      apiCacheHas("/user/me", token)
     );
   });
   const [busy, setBusy] = useState(false);

@@ -23,10 +23,7 @@ export default function BillingPage() {
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(() => {
     if (!token) return true;
-    return !(
-      apiCacheHas("/billing/transactions", token) &&
-      apiCacheHas("/billing/subscription", token)
-    );
+    return !apiCacheHas("/billing/transactions", token);
   });
 
   const load = useCallback(async () => {
