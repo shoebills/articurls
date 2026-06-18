@@ -289,6 +289,7 @@ def update_meta_settings(
 def update_user(
     request: user.UpdateUser,
     req: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -305,6 +306,10 @@ def update_user(
 
     if "contact_email" in update_data and update_data["contact_email"] is not None:
         update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
+
+    name_changed = "name" in update_data and update_data["name"] != db_user.name
+    username_changed = "user_name" in update_data and update_data["user_name"] is not None
+    pfp_changed = "profile_image_url" in update_data
 
     if "user_name" in update_data and update_data["user_name"] is not None:
         apply_username_change_or_raise(
@@ -341,6 +346,20 @@ def update_user(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     db.refresh(db_user)
+
+    if name_changed or username_changed or pfp_changed:
+        if settings.cloudflare_zone_id:
+            if db_user.custom_domain:
+                background_tasks.add_task(
+                    purge_entire_tenant,
+                    settings.cloudflare_zone_id,
+                    db_user.custom_domain,
+                )
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                "articurls.com",
+            )
 
     return db_user
 
@@ -540,7 +559,7 @@ def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTas
     return db_user
 
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -551,6 +570,19 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     db_user.profile_image_url = image_url
     db.commit()
     db.refresh(db_user)
+
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
 
     return {"profile_image_url": db_user.profile_image_url}
 
