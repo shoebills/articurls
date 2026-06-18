@@ -268,7 +268,7 @@ export default function CustomDomainSettings() {
           {domain.domain_status === "active" && (
             <div className="space-y-3">
               {domain.verified_at &&
-                Date.now() - new Date(domain.verified_at).getTime() < 2 * 60 * 60 * 1000 && (
+                Date.now() - new Date(domain.verified_at).getTime() < 10 * 60 * 1000 && (
                   <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
                     Your domain is active on our end. It can take a few minutes for SSL certificates and DNS to finish propagating before the site loads in your browser.
                   </p>
@@ -337,12 +337,7 @@ export default function CustomDomainSettings() {
                     </p>
                   );
                 }
-                return (
-                  <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                    Point your subdomain routing CNAME to <span className="font-mono">{FALLBACK_ORIGIN}</span>.
-                    Add all ownership and SSL records at your registrar or DNS provider.
-                  </p>
-                );
+                return null;
               })()}
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
