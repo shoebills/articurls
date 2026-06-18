@@ -62,12 +62,10 @@ export default function BillingPage() {
 
       <Card className="overflow-hidden border-border/70 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-1 pb-2">
-          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Subscription</p>
           <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
         </CardHeader>
         <CardContent className="space-y-5 pt-2">
           <div className="flex flex-wrap items-center gap-3">
-            <p className="text-3xl font-bold tracking-tight">{displayTier}</p>
             {pro && sub ? (
               subStatus === "past_due" ? (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.1] px-3 py-2 text-sm font-medium text-amber-900">
@@ -77,10 +75,15 @@ export default function BillingPage() {
               ) : (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-sm font-medium text-emerald-800">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" aria-hidden />
-                  Active
+                  Pro
                 </div>
               )
-            ) : null}
+            ) : (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm font-medium text-muted-foreground">
+                <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50 ring-2 ring-muted-foreground/20" aria-hidden />
+                Free
+              </div>
+            )}
           </div>
           {sub?.current_period_end ? (
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
