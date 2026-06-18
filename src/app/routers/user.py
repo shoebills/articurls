@@ -264,6 +264,7 @@ def get_meta_settings(db: Session = Depends(get_db), current_user=Depends(oauth2
 @router.patch("/meta", response_model=user.MetaSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_meta_settings(
     request: user.MetaSettingsUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -277,11 +278,26 @@ def update_meta_settings(
         db_user.meta_title = (update_data["meta_title"] or "").strip() or None
     if "meta_description" in update_data:
         db_user.meta_description = (update_data["meta_description"] or "").strip() or None
-    if "rss_enabled" in update_data:
+    rss_changed = "rss_enabled" in update_data
+    if rss_changed:
         db_user.rss_enabled = bool(update_data["rss_enabled"])
 
     db.commit()
     db.refresh(db_user)
+
+    if rss_changed and settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return db_user
 
 
