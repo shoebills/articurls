@@ -98,6 +98,8 @@ export default function SettingsPage() {
     }
   }, [ctxUser]);
 
+  const profileDirty = name.trim() !== (ctxUser?.name ?? "") || email.trim() !== (ctxUser?.email ?? "");
+
   async function saveBase() {
     if (!token) return;
     setBusy(true);
@@ -403,7 +405,7 @@ export default function SettingsPage() {
             <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="pt-2">
-            <Button size="lg" onClick={saveBase} disabled={busy}>
+            <Button size="lg" onClick={saveBase} disabled={busy || !profileDirty}>
               Save
             </Button>
           </div>
