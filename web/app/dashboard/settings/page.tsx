@@ -294,7 +294,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
-                className="group relative h-[6.5rem] w-[6.5rem] shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow,transform,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="group relative h-[4.875rem] w-[4.875rem] shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow,transform,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                 aria-label={hasCustomProfileImage ? "Change profile photo" : "Upload profile photo"}
               >
                 {ctxUser?.profile_image_url ? (
@@ -395,7 +395,7 @@ export default function SettingsPage() {
           <CardTitle className="text-xl">Storage</CardTitle>
           <CardDescription>
             {isUnlimitedStorage
-              ? "Unlimited media storage on Pro."
+              ? "Unlimited media storage on Pro plan."
               : "Free plan includes up to 1 GB total media storage."}
           </CardDescription>
         </CardHeader>
@@ -407,19 +407,15 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
-            {isUnlimitedStorage ? (
-              <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600" />
-            ) : (
+            {!isUnlimitedStorage && (
               <div
                 className="h-full rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600"
                 style={{ width: `${storagePct}%` }}
               />
             )}
           </div>
-          {!isUnlimitedStorage ? (
+          {!isUnlimitedStorage && (
             <p className="text-xs text-muted-foreground">{storagePct}% of free quota used</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">Unlimited plan active</p>
           )}
         </CardContent>
       </Card>

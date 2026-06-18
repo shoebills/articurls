@@ -247,6 +247,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
       }
       setBlog(finalBlog);
+      setTitle(finalBlog.title);
+      setContent(finalBlog.content || "");
+      setMetaTitle(finalBlog.meta_title || "");
+      const finalContentExcerpt = getContentExcerpt(finalBlog.content || "");
+      setMetaTitleDirty(!!finalBlog.meta_title && finalBlog.meta_title !== finalBlog.title);
+      setMetaDesc(finalBlog.meta_description || "");
+      setMetaDescDirty(!!finalBlog.meta_description && finalBlog.meta_description !== finalContentExcerpt);
+      setFeaturedImageUrl(finalBlog.featured_image_url || "");
+      if (slugEditable) setSlugCustom(finalBlog.slug);
       if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
       if (catDirty) {
         savedCatIdsRef.current = [...nextPendingCatIds];

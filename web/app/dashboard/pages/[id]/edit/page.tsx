@@ -172,6 +172,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       };
       const responsePage = await updatePage(token, page.page_id, body);
       setPage(responsePage);
+      setTitle(responsePage.title);
+      setContent(responsePage.content || "");
+      setMetaTitle(responsePage.meta_title || "");
+      const finalContentExcerpt = getContentExcerpt(responsePage.content || "");
+      setMetaTitleDirty(!!responsePage.meta_title && responsePage.meta_title !== responsePage.title);
+      setMetaDesc(responsePage.meta_description || "");
+      setMetaDescDirty(!!responsePage.meta_description && responsePage.meta_description !== finalContentExcerpt);
+      if (slugEditable) setSlugCustom(responsePage.slug);
       clearManualDraft();
       setSaveStatus("saved");
       return true;
