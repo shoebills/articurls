@@ -283,7 +283,7 @@ export default function CustomDomainSettings() {
           {/* Header row */}
           <div className="flex items-center justify-between">
             <div className="space-y-1.5">
-              <p className="text-base font-semibold tracking-tight">{domain.hostname}</p>
+              <p className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
               <StatusBadge status={domain.domain_status} />
             </div>
             {confirmDelete ? (
@@ -328,17 +328,6 @@ export default function CustomDomainSettings() {
           {/* Active state */}
           {domain.domain_status === "active" && (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">
-                Your blog is live at{" "}
-                <a
-                  href={`https://${domain.hostname}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-foreground underline underline-offset-4"
-                >
-                  https://{domain.hostname}
-                </a>
-              </p>
               {domain.verified_at &&
                 Date.now() - new Date(domain.verified_at).getTime() < 2 * 60 * 60 * 1000 && (
                   <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">

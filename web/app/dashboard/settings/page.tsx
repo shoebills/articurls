@@ -38,7 +38,7 @@ export default function SettingsPage() {
   const [user_name, setUserName] = useState("");
   const [email, setEmail] = useState("");
   const [err, setErr] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [removeBranding, setRemoveBranding] = useState(true);
   const [collectSubscribers, setCollectSubscribers] = useState(true);
@@ -100,14 +100,14 @@ export default function SettingsPage() {
     if (!token) return;
     setBusy(true);
     setErr(null);
-    setSaved(false);
+    setSaved(null);
     try {
       await patchMe(token, {
         name,
         email,
       });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
@@ -121,7 +121,7 @@ export default function SettingsPage() {
     const nextBranding = branding ?? removeBranding;
     setBusy(true);
     setErr(null);
-    setSaved(false);
+    setSaved(null);
     const prevCollect = collectSubscribers;
     const prevBranding = removeBranding;
     try {
@@ -130,7 +130,7 @@ export default function SettingsPage() {
         subscriber_collection_enabled: nextCollect,
       });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setCollectSubscribers(prevCollect);
       setRemoveBranding(prevBranding);
@@ -161,11 +161,11 @@ export default function SettingsPage() {
     if (!token) return;
     setBusy(true);
     setErr(null);
-    setSaved(false);
+    setSaved(null);
     try {
       await patchMe(token, { profile_image_url: null });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Could not remove photo");
     } finally {
@@ -242,7 +242,7 @@ export default function SettingsPage() {
       await refreshUser();
       setUserName(pendingUsername.trim().toLowerCase());
       setUsernameDialogOpen(false);
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not update username");
     } finally {
@@ -266,7 +266,7 @@ export default function SettingsPage() {
       const rows = await listMyUsernameChangeRequests(token);
       setUsernameRequests(rows);
       setUsernameRequestReason("");
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not submit request");
     } finally {
@@ -277,7 +277,6 @@ export default function SettingsPage() {
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
-      {saved && <p className="text-sm font-medium text-emerald-600">Saved.</p>}
 
       <Card>
         <CardHeader>
@@ -546,7 +545,7 @@ export default function SettingsPage() {
               disabled={!isPro || busy}
             />
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
               <p className="text-sm font-medium">Remove Articurls branding</p>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -576,6 +575,7 @@ export default function SettingsPage() {
       </Card>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
       <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
