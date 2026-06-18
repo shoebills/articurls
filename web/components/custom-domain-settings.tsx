@@ -285,7 +285,7 @@ export default function CustomDomainSettings() {
             <div className="flex items-center gap-3">
               <p className="min-w-0 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
               {confirmDelete ? (
-                <div className="flex shrink-0 items-center gap-2">
+                <div className="ml-auto flex shrink-0 items-center gap-2">
                   <span className="text-sm text-muted-foreground">Remove domain?</span>
                   <Button
                     variant="destructive"
@@ -308,7 +308,7 @@ export default function CustomDomainSettings() {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                  className="ml-auto shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
                   onClick={() => {
                     if (domain.domain_status === "active" || domain.domain_status === "grace") {
                       setShowSeoWarning(true);

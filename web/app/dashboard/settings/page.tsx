@@ -436,15 +436,15 @@ export default function SettingsPage() {
               Upgrade under Billing to edit these.
             </p>
           )}
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
               <p className="text-sm text-muted-foreground">
                 Ideal 512×512px, max 256KB.
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/30">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
                 {ctxUser?.favicon_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -547,9 +547,9 @@ export default function SettingsPage() {
           </div>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
-              <p className="text-sm font-medium">Remove Articurls branding</p>
+              <p className="text-sm font-medium">Remove branding</p>
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Hide the "Made with Articurls" text on your public pages.
+                Hide the "Made with Articurls" badge from your blog.
               </p>
             </div>
             <Switch
