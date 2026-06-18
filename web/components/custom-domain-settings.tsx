@@ -110,36 +110,11 @@ export default function CustomDomainSettings() {
         setDnsInstructions([]);
         setSuccess("Domain verified! Your custom domain is now active.");
       } else {
-        const updatedInstructions = result.dns_instructions ?? dnsInstructions;
-        setDnsInstructions(updatedInstructions);
-
+        if (result.dns_instructions) {
+          setDnsInstructions(result.dns_instructions);
+        }
         if (result.message) {
           setInfo(result.message);
-        } else {
-          setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
-        }
-
-        const allVerified = updatedInstructions.length > 0 && updatedInstructions.every((r) => r.verified);
-        if (allVerified) {
-          setTimeout(async () => {
-            try {
-              const retry = await verifyCustomDomain(token);
-              if (retry.verification_status === "verified" || retry.verification_status === "already_verified") {
-                await loadDomain(token);
-                setDnsInstructions([]);
-                setInfo("");
-                setSuccess("Domain verified! Your custom domain is now active.");
-              } else if (retry.dns_instructions) {
-                setDnsInstructions(retry.dns_instructions);
-                if (retry.message) setInfo(retry.message);
-              }
-            } catch {
-              // user can click Verify again
-            } finally {
-              setVerifying(false);
-            }
-          }, 3000);
-          return;
         }
       }
     } catch (err) {

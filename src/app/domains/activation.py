@@ -55,14 +55,6 @@ def build_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
     return append_vercel_dns_instructions(base, hostname)
 
 
-def pending_dns_for_display(instructions: List[DNSRecord]) -> List[DNSRecord]:
-    pending = [r for r in instructions if r.purpose == "vercel" or not r.verified]
-    if pending:
-        return pending
-    vercel_rows = [r for r in instructions if r.purpose == "vercel"]
-    return vercel_rows or instructions
-
-
 def mark_domain_active(db_user: models.User, hostname: str) -> None:
     from datetime import datetime, timezone
 
@@ -93,14 +85,13 @@ def apply_domain_verification(
         fresh = extract_dns_instructions(cf_result, hostname)
         merged = merge_dns_instructions(fresh, cached_instructions)
         instructions = append_vercel_dns_instructions(merged, hostname)
-        display = pending_dns_for_display(instructions)
         db_user.domain_status = models.DomainStatus.PENDING
         db_user.is_domain_verified = False
-        db_user.domain_dns_instructions = [r.model_dump() for r in display]
+        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
         return DomainVerifyOut(
             verification_status="pending",
             domain_status=db_user.domain_status,
-            dns_instructions=display,
+            dns_instructions=instructions,
             message=None,
         )
 
@@ -108,19 +99,18 @@ def apply_domain_verification(
         try_vercel_verify(hostname)
         if not is_vercel_verified(hostname):
             instructions = build_dns_instructions(cf_result, hostname)
-            display = pending_dns_for_display(instructions)
-            if not any(r.purpose == "vercel" for r in display):
+            if not any(r.purpose == "vercel" for r in instructions):
                 logger.warning(
                     "Vercel domain %s unverified but no TXT challenge returned by API",
                     hostname,
                 )
             db_user.domain_status = models.DomainStatus.PENDING
             db_user.is_domain_verified = False
-            db_user.domain_dns_instructions = [r.model_dump() for r in display]
+            db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
             return DomainVerifyOut(
                 verification_status="pending",
                 domain_status=db_user.domain_status,
-                dns_instructions=display,
+                dns_instructions=instructions,
                 message=VERCEL_PENDING_MESSAGE,
             )
 

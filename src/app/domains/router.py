@@ -19,7 +19,6 @@ from .activation import (
     apply_domain_verification,
     build_dns_instructions,
     is_vercel_verified,
-    pending_dns_for_display,
     vercel_sync_required,
 )
 from ..vercel.client import VercelClient, VercelError
@@ -88,10 +87,9 @@ async def _load_dns_instructions(db_user: models.User) -> List[DNSRecord] | None
         return _cached_dns(db_user)
 
     instructions = build_dns_instructions(cf_result, db_user.custom_domain)
-    display = pending_dns_for_display(instructions)
-    if display:
-        db_user.domain_dns_instructions = [r.model_dump() for r in display]
-    return display or None
+    if instructions:
+        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
+    return instructions or None
 
 
 @router.post("/settings/domain", response_model=DomainAddResponse, status_code=status.HTTP_200_OK)
