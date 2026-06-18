@@ -115,18 +115,25 @@ export default function SettingsPage() {
     }
   }
 
-  async function savePro() {
+  async function savePro(collect?: boolean, branding?: boolean) {
     if (!token || !isPro) return;
+    const nextCollect = collect ?? collectSubscribers;
+    const nextBranding = branding ?? removeBranding;
     setBusy(true);
     setErr(null);
+    setSaved(false);
+    const prevCollect = collectSubscribers;
+    const prevBranding = removeBranding;
     try {
       await patchProMe(token, {
-        remove_branding: removeBranding,
-        subscriber_collection_enabled: collectSubscribers,
+        remove_branding: nextBranding,
+        subscriber_collection_enabled: nextCollect,
       });
       await refreshUser();
       setSaved(true);
     } catch (e) {
+      setCollectSubscribers(prevCollect);
+      setRemoveBranding(prevBranding);
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
       setBusy(false);
@@ -434,7 +441,7 @@ export default function SettingsPage() {
             <div className="space-y-1.5">
               <Label>Blog favicon</Label>
               <p className="text-sm text-muted-foreground">
-                Recommended: 512×512 PNG, max 256KB.
+                Recommended: 512×512px, max 256KB.
               </p>
             </div>
             <div className="flex items-center gap-4">
@@ -532,7 +539,10 @@ export default function SettingsPage() {
             </div>
             <Switch
               checked={isPro ? collectSubscribers : false}
-              onCheckedChange={setCollectSubscribers}
+              onCheckedChange={(v) => {
+                setCollectSubscribers(v);
+                void savePro(v, removeBranding);
+              }}
               disabled={!isPro || busy}
             />
           </div>
@@ -545,14 +555,12 @@ export default function SettingsPage() {
             </div>
             <Switch
               checked={isPro ? removeBranding : false}
-              onCheckedChange={setRemoveBranding}
+              onCheckedChange={(v) => {
+                setRemoveBranding(v);
+                void savePro(collectSubscribers, v);
+              }}
               disabled={!isPro || busy}
             />
-          </div>
-          <div className="pt-2">
-            <Button size="lg" onClick={savePro} disabled={!isPro || busy}>
-              Save
-            </Button>
           </div>
         </CardContent>
       </Card>
@@ -560,6 +568,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Custom Domain</CardTitle>
+          <CardDescription>Use your own domain for your blog.</CardDescription>
         </CardHeader>
         <CardContent>
           <CustomDomainSettings />
