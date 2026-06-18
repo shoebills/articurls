@@ -87,7 +87,7 @@ export default function CustomDomainSettings() {
       setHostname("");
       // Reload from server to get canonical state
       await loadDomain(token);
-      setSuccess("Domain added. Configure your DNS records below, then click Verify.");
+      setSuccess("Domain added. Configure and verify it.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add domain");
     } finally {
@@ -252,7 +252,6 @@ export default function CustomDomainSettings() {
               <p className="min-w-0 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
               {confirmDelete ? (
                 <div className="ml-auto flex shrink-0 items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Remove domain?</span>
                   <Button
                     variant="destructive"
                     size="sm"
@@ -348,7 +347,7 @@ export default function CustomDomainSettings() {
                 if (sslCnameRecords.length > 0) {
                   return (
                     <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                      The SSL record uses delegated validation — add this single CNAME once and it covers all future certificate renewals automatically.
+                      The SSL record uses delegated validation. Add this single CNAME once and it covers all future certificate renewals automatically.
                     </p>
                   );
                 }
