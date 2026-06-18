@@ -418,6 +418,14 @@ export default async function CustomDomainPage({ params }: Props) {
           <PublicProfileFooter user={author} />
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
         </main>
+        {author.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with Articurls
+          </a>
+        ) : null}
       </article>
     );
   }
@@ -499,6 +507,14 @@ export default async function CustomDomainPage({ params }: Props) {
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
+        {user.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with Articurls
+          </a>
+        ) : null}
       </div>
     );
   }
@@ -600,6 +616,14 @@ export default async function CustomDomainPage({ params }: Props) {
           )}
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
+        {user.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with Articurls
+          </a>
+        ) : null}
       </div>
     );
   }
@@ -676,8 +700,16 @@ export default async function CustomDomainPage({ params }: Props) {
           useCustomDomain
           siteOrigin={siteOrigin}
         />
-        <PublicSiteFooter user={user} pages={pages} useCustomDomain />
-      </main>
-    </div>
+          <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+        </main>
+        {user.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with Articurls
+          </a>
+        ) : null}
+      </div>
   );
 }

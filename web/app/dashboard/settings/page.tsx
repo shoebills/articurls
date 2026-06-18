@@ -529,7 +529,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
               <p className="text-sm font-medium">Collect subscribers</p>
               <p className="text-sm leading-relaxed text-muted-foreground">
@@ -545,7 +545,7 @@ export default function SettingsPage() {
               disabled={!isPro || busy}
             />
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1">
               <p className="text-sm font-medium">Remove Articurls branding</p>
               <p className="text-sm leading-relaxed text-muted-foreground">

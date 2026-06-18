@@ -281,48 +281,47 @@ export default function CustomDomainSettings() {
       {domain?.hostname && (
         <div className="space-y-6">
           {/* Header row */}
-          <div className="flex items-center justify-between">
-            <div className="space-y-1.5">
-              <p className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
-              <StatusBadge status={domain.domain_status} />
-            </div>
-            {confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Remove domain?</span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteDomain}
-                  disabled={deleting}
-                >
-                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, remove"}
-                </Button>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <p className="min-w-0 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
+              {confirmDelete ? (
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Remove domain?</span>
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteDomain}
+                    disabled={deleting}
+                  >
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, remove"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setConfirmDelete(false)}
-                  disabled={deleting}
+                  className="shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                  onClick={() => {
+                    if (domain.domain_status === "active" || domain.domain_status === "grace") {
+                      setShowSeoWarning(true);
+                    } else {
+                      setConfirmDelete(true);
+                    }
+                  }}
                 >
-                  Cancel
+                  Remove
                 </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Verified domains (active/grace) get an SEO impact warning
-                  if (domain.domain_status === "active" || domain.domain_status === "grace") {
-                    setShowSeoWarning(true);
-                  } else {
-                    setConfirmDelete(true);
-                  }
-                }}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
-              >
-                Remove
-              </Button>
-            )}
+              )}
+            </div>
+            <StatusBadge status={domain.domain_status} />
           </div>
 
           {/* Active state */}
