@@ -3,10 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
-  getSubscription,
-  isProSubscription,
   ApiError,
-  getCachedApiData,
   AnalyticsPeriod,
   getUmamiOverview,
   getUmamiTimeseries,
@@ -22,7 +19,6 @@ import {
   UmamiTechResponse,
   UmamiMetricsRow,
 } from "@/lib/api";
-import type { SubscriptionOut } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1018,24 +1014,9 @@ function NativeAnalytics({ token }: { token: string }) {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { token } = useAuth();
-  const [isPro, setIsPro] = useState<boolean | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return null;
-    const cachedSub = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
-    if (cachedSub) return isProSubscription(cachedSub);
-    return null;
-  });
+  const { token, isPro } = useAuth();
 
-  useEffect(() => {
-    if (!token) return;
-    getSubscription(token)
-      .then((sub) => setIsPro(isProSubscription(sub)))
-      .catch(() => setIsPro(false));
-  }, [token]);
-
-  if (isPro === null || !token) {
+  if (!token) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between gap-3">
