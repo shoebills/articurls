@@ -38,7 +38,7 @@ from ..utils import (
     validate_username_or_raise,
     public_blog_home_url,
 )
-from ..cache.service import purge_homepage
+from ..cache.service import purge_entire_tenant, purge_homepage
 
 router = APIRouter(
     tags=["User"],
@@ -509,7 +509,7 @@ def preview_welcome_email(
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
+def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
     
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -523,6 +523,19 @@ def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), 
 
     db.commit()
     db.refresh(db_user)
+
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
 
     return db_user
 

@@ -324,29 +324,7 @@ export default function DashboardPage() {
                         {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
-                  </div>
-
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
-                    <BlogStatusBadge status={b.status} className="shrink-0" />
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
-                    {b.status === "scheduled" && b.scheduled_at ? (
-                      <>
-                        <span className="hidden text-slate-300 select-none sm:inline" aria-hidden>
-                          ·
-                        </span>
-                        <time
-                          dateTime={b.scheduled_at}
-                          className="order-last inline-flex w-full items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 shadow-sm sm:order-0 sm:w-auto sm:px-2.5 sm:py-1"
-                        >
-                          <span className="sm:hidden">Scheduled {format(new Date(b.scheduled_at), "MMM d, h:mm a")}</span>
-                          <span className="hidden sm:inline">Scheduled for {format(new Date(b.scheduled_at), "MMM d, yyyy h:mm a")}</span>
-                        </time>
-                      </>
-                    ) : null}
-                    <div className="ml-auto" data-card-action="true">
+                    <div className="shrink-0" data-card-action="true">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -405,6 +383,28 @@ export default function DashboardPage() {
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
+                    <BlogStatusBadge status={b.status} className="shrink-0" />
+                    <span className="text-slate-300 select-none" aria-hidden>
+                      ·
+                    </span>
+                    <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                    {b.status === "scheduled" && b.scheduled_at ? (
+                      <>
+                        <span className="hidden text-slate-300 select-none sm:inline" aria-hidden>
+                          ·
+                        </span>
+                        <time
+                          dateTime={b.scheduled_at}
+                          className="order-last inline-flex w-full items-center rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-800 shadow-sm sm:order-0 sm:w-auto sm:px-2.5 sm:py-1"
+                        >
+                          <span className="sm:hidden">Scheduled {format(new Date(b.scheduled_at), "MMM d, h:mm a")}</span>
+                          <span className="hidden sm:inline">Scheduled for {format(new Date(b.scheduled_at), "MMM d, yyyy h:mm a")}</span>
+                        </time>
+                      </>
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>
