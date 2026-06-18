@@ -462,8 +462,7 @@ export default function DesignDashboardPage() {
                 type="button"
                 variant={i === 0 ? "default" : "ghost"}
                 size="sm"
-                className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm"
-                disabled
+                className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm pointer-events-none"
               >
                 {section.label}
               </Button>
