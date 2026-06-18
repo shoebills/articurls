@@ -440,7 +440,7 @@ export default function SettingsPage() {
             <div className="space-y-1.5">
               <Label>Blog favicon</Label>
               <p className="text-sm text-muted-foreground">
-                Recommended 512×512px, max 256KB.
+                Ideal 512×512px, max 256KB.
               </p>
             </div>
             <div className="flex items-center gap-4">
