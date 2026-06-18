@@ -60,10 +60,15 @@ export function SubscribersAnalyticsPanel() {
   const { token } = useAuth();
   const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
-    return getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", token);
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t) : null;
   });
   const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>(() => {
-    const cached = getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", token);
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return [];
+    const cached = getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t);
     return cached?.series.map((p) => ({
       timestamp: p.timestamp,
       gained: p.subscribed,
@@ -72,8 +77,10 @@ export function SubscribersAnalyticsPanel() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
-    return !apiCacheHas("/analytics/subscribers?period=7d", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !apiCacheHas("/analytics/subscribers?period=7d", t);
   });
 
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;

@@ -39,17 +39,26 @@ export default function AudienceEmailsPage() {
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
   const [enabled, setEnabled] = useState(() => {
-    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    if (typeof window === "undefined") return false;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return false;
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", t);
     return cached?.welcome_email_enabled ?? false;
   });
   const [subject, setSubject] = useState(defaultSubject);
   const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
   const [bodyHtml, setBodyHtml] = useState(() => {
-    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    if (typeof window === "undefined") return WELCOME_EMAIL_STARTER_HTML;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return WELCOME_EMAIL_STARTER_HTML;
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", t);
     return cached?.welcome_email_body_html?.trim() || WELCOME_EMAIL_STARTER_HTML;
   });
   const [delayMinutes, setDelayMinutes] = useState(() => {
-    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    if (typeof window === "undefined") return "0";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "0";
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", t);
     const delay = String(cached?.welcome_email_delay_minutes ?? 0);
     return DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0";
   });

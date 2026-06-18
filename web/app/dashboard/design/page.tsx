@@ -110,27 +110,35 @@ function SectionPanel({
 export default function DesignDashboardPage() {
   const { token } = useAuth();
   const [design, setDesign] = useState<DesignSettings>(() => {
-    const cached = getCachedApiData<DesignSettings>("/user/design", token);
+    if (typeof window === "undefined") return {
+      navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
+      nav_menu_enabled: false, footer_enabled: false, site_footer_enabled: false,
+      featured_blogs_enabled: false, featured_blog_ids: [],
+    };
+    const t = localStorage.getItem("articurls_token");
+    const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
-      navbar_enabled: false,
-      nav_blog_name: null,
-      nav_blog_name_size: "medium",
-      nav_menu_enabled: false,
-      footer_enabled: false,
-      site_footer_enabled: false,
-      featured_blogs_enabled: false,
-      featured_blog_ids: [],
+      navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
+      nav_menu_enabled: false, footer_enabled: false, site_footer_enabled: false,
+      featured_blogs_enabled: false, featured_blog_ids: [],
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {
-    return getCachedApiData<UserPage[]>("/pages/", token) ?? [];
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    return t ? (getCachedApiData<UserPage[]>("/pages/", t) ?? []) : [];
   });
   const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
-    const cached = getCachedApiData<BlogListItem[]>("/blog/", token);
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return [];
+    const cached = getCachedApiData<BlogListItem[]>("/blog/", t);
     return cached ? cached.filter((x) => x.status === "published") : [];
   });
   const [categories, setCategories] = useState<Category[]>(() => {
-    return getCachedApiData<Category[]>("/categories/", token) ?? [];
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    return t ? (getCachedApiData<Category[]>("/categories/", t) ?? []) : [];
   });
   const [menuCatSelection, setMenuCatSelection] = useState<number[]>([]);
   const [catToAdd, setCatToAdd] = useState<string>("");
@@ -138,13 +146,15 @@ export default function DesignDashboardPage() {
   const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
     return !(
-      apiCacheHas("/user/design", token) &&
-      apiCacheHas("/pages/", token) &&
-      apiCacheHas("/blog/", token) &&
-      apiCacheHas("/categories/", token) &&
-      apiCacheHas("/user/me", token)
+      apiCacheHas("/user/design", t) &&
+      apiCacheHas("/pages/", t) &&
+      apiCacheHas("/blog/", t) &&
+      apiCacheHas("/categories/", t) &&
+      apiCacheHas("/user/me", t)
     );
   });
   const [busy, setBusy] = useState(false);
@@ -160,11 +170,17 @@ export default function DesignDashboardPage() {
 
   // Bio and social links state (saved via patchMe, displayed in about section)
   const [bio, setBio] = useState(() => {
-    const me = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const me = getCachedApiData<UserSettings>("/user/me", t);
     return me?.bio || "";
   });
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
-    const me = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
+    const me = getCachedApiData<UserSettings>("/user/me", t);
     return {
       contact_email: me?.contact_email || "",
       instagram_link: me?.instagram_link || "",
@@ -177,7 +193,10 @@ export default function DesignDashboardPage() {
     };
   });
   const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>(() => {
-    const me = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return [];
+    const me = getCachedApiData<UserSettings>("/user/me", t);
     if (!me) return [];
     const links: Record<string, string> = {
       contact_email: me.contact_email || "",

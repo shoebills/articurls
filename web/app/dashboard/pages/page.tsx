@@ -37,11 +37,15 @@ export default function PagesDashboardPage() {
   const { token, user } = useAuth();
   const router = useRouter();
   const [pages, setPages] = useState<UserPage[]>(() => {
-    return getCachedApiData<UserPage[]>("/pages/", token) ?? [];
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    return t ? (getCachedApiData<UserPage[]>("/pages/", t) ?? []) : [];
   });
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
-    return !apiCacheHas("/pages/", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !apiCacheHas("/pages/", t);
   });
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);

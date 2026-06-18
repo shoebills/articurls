@@ -38,40 +38,62 @@ const USERNAME_CHANGE_LIMIT = 5;
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
   const [name, setName] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.name ?? "";
   });
   const [user_name, setUserName] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.user_name ?? "";
   });
   const [email, setEmail] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.email ?? "";
   });
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
     return !(
-      apiCacheHas("/user/me", token) &&
-      apiCacheHas("/user/storage", token)
+      apiCacheHas("/user/me", t) &&
+      apiCacheHas("/user/storage", t)
     );
   });
   const [removeBranding, setRemoveBranding] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.remove_branding ?? true;
   });
   const [collectSubscribers, setCollectSubscribers] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.subscriber_collection_enabled ?? true;
   });
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
-    return getCachedApiData<StorageUsage>("/user/storage", token);
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
   });
   const [usernameChangeCount, setUsernameChangeCount] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return 0;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return 0;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.username_change_count || 0;
   });
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);

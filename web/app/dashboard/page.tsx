@@ -41,15 +41,20 @@ export default function DashboardPage() {
   const router = useRouter();
   const { token, user } = useAuth();
   const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
-    const cached = getCachedApiData<BlogListItem[]>("/blog/", token);
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return [];
+    const cached = getCachedApiData<BlogListItem[]>("/blog/", t);
     if (cached) {
       return [...cached].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
     }
     return [];
   });
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
-    return !apiCacheHas("/blog/", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !apiCacheHas("/blog/", t);
   });
   const [err, setErr] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);

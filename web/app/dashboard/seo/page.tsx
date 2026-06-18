@@ -27,44 +27,69 @@ import { MARKETING_ORIGIN } from "@/lib/env";
 export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
   const [metaTitle, setMetaTitle] = useState(() => {
-    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached?.meta_title || "";
   });
   const [metaDescription, setMetaDescription] = useState(() => {
-    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached?.meta_description || "";
   });
   const [originalMetaTitle, setOriginalMetaTitle] = useState(() => {
-    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached?.meta_title || "";
   });
   const [originalMetaDescription, setOriginalMetaDescription] = useState(() => {
-    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached?.meta_description || "";
   });
   const [rssEnabled, setRssEnabled] = useState(() => {
-    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached ? cached.rss_enabled !== false : true;
   });
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
     return !(
-      apiCacheHas("/user/meta", token) &&
-      apiCacheHas("/user/me", token)
+      apiCacheHas("/user/meta", t) &&
+      apiCacheHas("/user/me", t)
     );
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const [domain, setDomain] = useState<CustomDomain | null>(() => {
-    return getCachedApiData<CustomDomain>("/settings/domain", token);
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<CustomDomain>("/settings/domain", t) : null;
   });
   const [isPro, setIsPro] = useState(() => {
-    const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+    if (typeof window === "undefined") return false;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return false;
+    const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
     return cached ? isProSubscription(cached) : false;
   });
   const [username, setUsername] = useState(() => {
-    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.user_name || "";
   });
   const seoResourcesEnabled =

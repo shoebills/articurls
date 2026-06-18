@@ -1020,8 +1020,10 @@ export default function AnalyticsPage() {
   const router = useRouter();
   const { token } = useAuth();
   const [isPro, setIsPro] = useState<boolean | null>(() => {
-    if (!token) return null;
-    const cachedSub = getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return null;
+    const cachedSub = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
     if (cachedSub) return isProSubscription(cachedSub);
     return null;
   });

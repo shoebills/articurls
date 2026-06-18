@@ -14,16 +14,22 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 export default function BillingPage() {
   const { token } = useAuth();
   const [sub, setSub] = useState<SubscriptionOut | null>(() => {
-    return getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<SubscriptionOut>("/billing/subscription", t) : null;
   });
   const [tx, setTx] = useState<TransactionOut[]>(() => {
-    return getCachedApiData<TransactionOut[]>("/billing/transactions", token) ?? [];
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    return t ? (getCachedApiData<TransactionOut[]>("/billing/transactions", t) ?? []) : [];
   });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(() => {
-    if (!token) return true;
-    return !apiCacheHas("/billing/transactions", token);
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !apiCacheHas("/billing/transactions", t);
   });
 
   const load = useCallback(async () => {
