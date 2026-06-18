@@ -570,7 +570,7 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Custom Domain</CardTitle>
-          <CardDescription>Use your own domain for your blog.</CardDescription>
+          <CardDescription>Use your own domain for your blog, e.g. www.example.com.</CardDescription>
         </CardHeader>
         <CardContent>
           <CustomDomainSettings />

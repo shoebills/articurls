@@ -17,6 +17,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const FALLBACK_ORIGIN = "fallback.articurls.com";
 
@@ -212,13 +213,6 @@ export default function CustomDomainSettings() {
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      {error && (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{error}</p>
-        </div>
-      )}
-
       {info && (
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
@@ -226,40 +220,12 @@ export default function CustomDomainSettings() {
         </div>
       )}
 
-      {success && (
-        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
-          <Check className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{success}</p>
-        </div>
-      )}
+      <FloatingErrorToast message={error} onDismiss={() => setError("")} />
+      <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
       {/* No domain configured */}
       {!domain?.hostname && (
         <div className="space-y-4">
-          <h2 className="text-base font-semibold">Add Custom Domain</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Subdomains only — e.g. <span className="font-mono">www.example.com</span> or{" "}
-            <span className="font-mono">blog.example.com</span>. Root domains are not supported directly.
-          </p>
-          {hostname.trim().toLowerCase().startsWith("www.") && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-sm text-yellow-900">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
-              <p>
-                Make sure to add all DNS records shown after adding — including ownership, SSL, and routing records.
-                If your domain is on Cloudflare, set the routing CNAME to <strong>DNS-only</strong> (grey cloud).
-              </p>
-            </div>
-          )}
-          <div className="mt-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm text-blue-900">
-            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
-            <p>
-              After adding, you will get DNS records including a routing CNAME to{" "}
-              <span className="font-mono">{FALLBACK_ORIGIN}</span>. Cloudflare handles SSL for your domain.
-              A Vercel domain verification TXT record may also be required before the domain goes live.
-              Optional: at your registrar, redirect <span className="font-mono">example.com</span> →{" "}
-              <span className="font-mono">www.example.com</span> so the bare domain works too.
-            </p>
-          </div>
           <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
             <Input
               type="text"
@@ -489,7 +455,6 @@ export default function CustomDomainSettings() {
                 <h3 className="text-base font-semibold">Remove custom domain?</h3>
                 <p className="text-sm text-muted-foreground">
                   Removing a verified domain may negatively affect your Google search rankings.
-                  You may lose accumulated SEO authority.
                 </p>
               </div>
             </div>
