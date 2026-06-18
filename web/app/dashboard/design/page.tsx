@@ -461,8 +461,8 @@ export default function DesignDashboardPage() {
                 key={section.id}
                 type="button"
                 className={i === 0
-                  ? "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-primary text-primary-foreground shadow-sm"
-                  : "h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium text-foreground"
+                  ? "h-10 flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-primary text-primary-foreground shadow-sm"
+                  : "h-10 flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 text-sm font-medium text-foreground"
                 }
                 disabled
               >
@@ -471,7 +471,13 @@ export default function DesignDashboardPage() {
             ))}
           </div>
         </nav>
-        <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5">
+        <SectionPanel
+          title="Header"
+          description="Control the header shown on your blog."
+          sectionId="design-header-loading"
+          headingId="design-header-loading-heading"
+          selected
+        >
           <div className="flex items-center justify-between rounded-xl border p-3">
             <div className="space-y-2">
               <Skeleton className="h-5 w-32" />
@@ -497,7 +503,7 @@ export default function DesignDashboardPage() {
             </div>
             <Skeleton className="h-6 w-10 rounded-full" />
           </div>
-        </div>
+        </SectionPanel>
       </div>
     );
   }
