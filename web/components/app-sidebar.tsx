@@ -64,30 +64,40 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
       )}
     >
       <div className="mb-2 flex flex-col gap-1.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          asChild
-          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-        >
-          <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`} title="bugs@articurls.com">
-            <Bug className="h-4 w-4" />
-            Report a bug
-          </a>
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          asChild
-          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-        >
-          <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`} title="support@articurls.com">
-            <CircleHelp className="h-4 w-4" />
-            Support
-          </a>
-        </Button>
+        <div className="group relative">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            asChild
+            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+          >
+            <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
+              <Bug className="h-4 w-4" />
+              Report a bug
+            </a>
+          </Button>
+          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            bugs@articurls.com
+          </span>
+        </div>
+        <div className="group relative">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            asChild
+            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+          >
+            <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
+              <CircleHelp className="h-4 w-4" />
+              Support
+            </a>
+          </Button>
+          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            support@articurls.com
+          </span>
+        </div>
       </div>
       <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
       <Button
