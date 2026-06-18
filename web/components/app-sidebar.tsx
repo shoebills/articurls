@@ -68,19 +68,25 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
           type="button"
           variant="ghost"
           size="sm"
+          asChild
           className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
         >
-          <Bug className="h-4 w-4" />
-          Report a bug
+          <a href={`mailto:hello@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
+            <Bug className="h-4 w-4" />
+            Report a bug
+          </a>
         </Button>
         <Button
           type="button"
           variant="ghost"
           size="sm"
+          asChild
           className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
         >
-          <CircleHelp className="h-4 w-4" />
-          Support
+          <a href={`mailto:hello@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
+            <CircleHelp className="h-4 w-4" />
+            Support
+          </a>
         </Button>
       </div>
       <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
