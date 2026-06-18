@@ -568,7 +568,7 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader className="pb-4 sm:pb-2">
+        <CardHeader className="pb-4 sm:pb-4">
           <CardTitle className="text-xl">Custom Domain</CardTitle>
           <CardDescription>Use your own domain for your blog.</CardDescription>
         </CardHeader>
