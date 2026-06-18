@@ -3,8 +3,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError, archivePage, deletePage, listPages, publishPage } from "@/lib/api";
+import { ApiError, archivePage, deletePage, listPages, publishPage, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { UserPage } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
@@ -28,15 +29,20 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, Pencil, Search, Share2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 
 export default function PagesDashboardPage() {
   const { token, user } = useAuth();
   const router = useRouter();
-  const [pages, setPages] = useState<UserPage[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [pages, setPages] = useState<UserPage[]>(() => {
+    return getCachedApiData<UserPage[]>("/pages/", token) ?? [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !apiCacheHas("/pages/", token);
+  });
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
   const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
@@ -200,10 +206,26 @@ export default function PagesDashboardPage() {
       </div>
 
       {loading ? (
-        <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-          <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-          <p className="text-sm">Loading pages&hellip;</p>
-        </div>
+        <ul className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i}>
+              <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       ) : pages.length === 0 ? (
         <div
           className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200"

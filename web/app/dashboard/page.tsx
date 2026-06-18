@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiCacheHas, getCachedApiData } from "@/lib/api";
 import type { BlogListItem } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
@@ -26,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { PromptDialog } from "@/components/prompt-dialog";
@@ -38,8 +40,17 @@ const POSTS_PER_PAGE = 10;
 export default function DashboardPage() {
   const router = useRouter();
   const { token, user } = useAuth();
-  const [blogs, setBlogs] = useState<BlogListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
+    const cached = getCachedApiData<BlogListItem[]>("/blog/", token);
+    if (cached) {
+      return [...cached].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !apiCacheHas("/blog/", token);
+  });
   const [err, setErr] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [archiveId, setArchiveId] = useState<number | null>(null);
@@ -205,9 +216,38 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-        <p className="text-sm">Loading posts…</p>
+      <div className="mx-auto max-w-[1100px]">
+        <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-11 w-32" />
+        </div>
+        <div className="mb-4 flex items-center gap-2 sm:gap-3">
+          <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
+          <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+          <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+        </div>
+        <ul className="space-y-4">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i}>
+              <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                <div className="flex items-start gap-4">
+                  <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                  <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                </div>
+                <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                  <Skeleton className="h-5 w-16 rounded-full" />
+                  <Skeleton className="h-4 w-24" />
+                  <Skeleton className="h-5 w-20 rounded-full" />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
       </div>
     );
   }
