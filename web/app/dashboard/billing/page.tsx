@@ -76,10 +76,10 @@ export default function BillingPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-8">
-        <Skeleton className="h-9 w-24" />
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
         <Card className="overflow-hidden border-border/70">
           <CardHeader className="space-y-1 pb-2">
-            <Skeleton className="h-7 w-32" />
+            <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
           </CardHeader>
           <CardContent className="space-y-5 pt-2">
             <div className="flex flex-wrap items-center gap-3">
@@ -91,7 +91,7 @@ export default function BillingPage() {
         </Card>
         <Card>
           <CardHeader>
-            <Skeleton className="h-6 w-24" />
+            <CardTitle>Transactions</CardTitle>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-32 w-full rounded-lg" />

@@ -176,7 +176,7 @@ export default function SeoDashboardPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6">
-        <Skeleton className="h-9 w-80" />
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-48" />

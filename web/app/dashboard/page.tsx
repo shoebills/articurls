@@ -223,8 +223,8 @@ export default function DashboardPage() {
     return (
       <div className="mx-auto max-w-[1100px]">
         <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-          <Skeleton className="h-9 w-36" />
-          <Skeleton className="h-11 w-32" />
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
+          <button className="hidden h-11 shrink-0 rounded-xl bg-slate-900 text-white sm:inline-flex items-center px-4 text-sm font-medium" disabled>+ New Post</button>
         </div>
         <div className="mb-4 flex items-center gap-2 sm:gap-3">
           <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />

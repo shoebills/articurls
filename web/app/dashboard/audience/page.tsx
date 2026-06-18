@@ -186,8 +186,10 @@ export default function AudienceEmailsPage() {
           <CardHeader>
             <div className="flex w-full items-center justify-between gap-4">
               <div className="min-w-0 flex-1 space-y-1">
-                <Skeleton className="h-6 w-56" />
-                <Skeleton className="h-4 w-72" />
+                <CardTitle>Welcome email automation</CardTitle>
+                <CardDescription>
+                  Send a welcome email to new subscribers.
+                </CardDescription>
               </div>
               <Skeleton className="h-6 w-10 rounded-full" />
             </div>

@@ -450,12 +450,22 @@ export default function DesignDashboardPage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6">
-        <Skeleton className="h-9 w-28" />
-        <nav className="overflow-x-auto pb-1">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Design</h1>
+        <nav
+          aria-label="Design sections"
+          className="overflow-x-auto pb-1"
+        >
           <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
-            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
-            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
-            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
+            {sectionTabs.map((section) => (
+              <button
+                key={section.id}
+                type="button"
+                className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-background text-foreground shadow-sm"
+                disabled
+              >
+                {section.label}
+              </button>
+            ))}
           </div>
         </nav>
         <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5">

@@ -351,10 +351,10 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
-        <Skeleton className="h-9 w-28" />
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
         <Card>
           <CardHeader>
-            <Skeleton className="h-7 w-20" />
+            <CardTitle className="text-xl">Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
@@ -382,8 +382,10 @@ export default function SettingsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <Skeleton className="h-7 w-20" />
-            <Skeleton className="h-4 w-64" />
+            <CardTitle className="text-xl">Storage</CardTitle>
+            <CardDescription>
+              Free plan includes up to 1 GB total media storage.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
@@ -395,8 +397,8 @@ export default function SettingsPage() {
         </Card>
         <Card>
           <CardHeader>
-            <Skeleton className="h-7 w-24" />
-            <Skeleton className="h-4 w-72" />
+            <CardTitle className="text-xl">Pro features</CardTitle>
+            <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -424,8 +426,8 @@ export default function SettingsPage() {
         </Card>
         <Card>
           <CardHeader className="pb-4 sm:pb-4">
-            <Skeleton className="h-7 w-32" />
-            <Skeleton className="h-4 w-48" />
+            <CardTitle className="text-xl">Custom Domain</CardTitle>
+            <CardDescription>Use your own domain for your blog.</CardDescription>
           </CardHeader>
           <CardContent>
             <Skeleton className="h-40 w-full rounded-md" />

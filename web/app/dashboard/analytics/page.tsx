@@ -1039,7 +1039,7 @@ export default function AnalyticsPage() {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between gap-3">
-          <Skeleton className="h-9 w-36" />
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
           <Skeleton className="h-10 w-[120px]" />
         </div>
         <div className="space-y-6">
