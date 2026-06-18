@@ -71,7 +71,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
           asChild
           className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
         >
-          <a href={`mailto:hello@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
+          <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
             <Bug className="h-4 w-4" />
             Report a bug
           </a>
@@ -83,7 +83,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
           asChild
           className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
         >
-          <a href={`mailto:hello@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
+          <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
             <CircleHelp className="h-4 w-4" />
             Support
           </a>
