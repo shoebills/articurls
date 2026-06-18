@@ -457,17 +457,16 @@ export default function DesignDashboardPage() {
         >
           <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
             {sectionTabs.map((section, i) => (
-              <button
+              <Button
                 key={section.id}
                 type="button"
-                className={i === 0
-                  ? "h-10 flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 text-sm font-medium bg-primary text-primary-foreground shadow-sm"
-                  : "h-10 flex-1 inline-flex items-center justify-center whitespace-nowrap rounded-lg px-4 text-sm font-medium text-foreground"
-                }
+                variant={i === 0 ? "default" : "ghost"}
+                size="sm"
+                className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm"
                 disabled
               >
                 {section.label}
-              </button>
+              </Button>
             ))}
           </div>
         </nav>
