@@ -226,7 +226,7 @@ export default function CustomDomainSettings() {
       {/* No domain configured */}
       {!domain?.hostname && (
         <div className="space-y-4">
-          <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
+          <form onSubmit={handleAddDomain} className="mt-3 flex gap-3">
             <Input
               type="text"
               placeholder="www.example.com"

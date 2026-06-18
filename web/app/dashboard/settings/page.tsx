@@ -568,11 +568,11 @@ export default function SettingsPage() {
       </Card>
 
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4">
           <CardTitle className="text-xl">Custom Domain</CardTitle>
           <CardDescription>Use your own domain for your blog.</CardDescription>
         </CardHeader>
-        <CardContent className="pt-0">
+        <CardContent>
           <CustomDomainSettings />
         </CardContent>
       </Card>
