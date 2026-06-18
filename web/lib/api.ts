@@ -91,6 +91,23 @@ export async function refreshAccessToken(): Promise<string> {
 
 const apiCache = new Map<string, { data: unknown; timestamp: number }>();
 
+export function apiCacheHas(path: string, token?: string | null): boolean {
+  if (typeof window === "undefined") return false;
+  const key = `GET:${path}:${token || ""}`;
+  const cached = apiCache.get(key);
+  return !!(cached && Date.now() - cached.timestamp < 30000);
+}
+
+export function getCachedApiData<T>(path: string, token?: string | null): T | null {
+  if (typeof window === "undefined") return null;
+  const key = `GET:${path}:${token || ""}`;
+  const cached = apiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < 30000) {
+    return cached.data as T;
+  }
+  return null;
+}
+
 export async function apiFetch<T>(
   path: string,
   init: RequestInit & { token?: string | null; disableCache?: boolean } = {},

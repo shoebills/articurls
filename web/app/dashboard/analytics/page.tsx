@@ -6,6 +6,7 @@ import {
   getSubscription,
   isProSubscription,
   ApiError,
+  getCachedApiData,
   AnalyticsPeriod,
   getUmamiOverview,
   getUmamiTimeseries,
@@ -21,6 +22,7 @@ import {
   UmamiTechResponse,
   UmamiMetricsRow,
 } from "@/lib/api";
+import type { SubscriptionOut } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -36,7 +38,6 @@ import {
   BarChart2,
   Users,
   Eye,
-  Loader2,
   TrendingDown,
   Clock,
   Smartphone,
@@ -1018,7 +1019,12 @@ function NativeAnalytics({ token }: { token: string }) {
 export default function AnalyticsPage() {
   const router = useRouter();
   const { token } = useAuth();
-  const [isPro, setIsPro] = useState<boolean | null>(null);
+  const [isPro, setIsPro] = useState<boolean | null>(() => {
+    if (!token) return null;
+    const cachedSub = getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+    if (cachedSub) return isProSubscription(cachedSub);
+    return null;
+  });
 
   useEffect(() => {
     if (!token) return;
@@ -1029,8 +1035,20 @@ export default function AnalyticsPage() {
 
   if (isPro === null || !token) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between gap-3">
+          <Skeleton className="h-9 w-36" />
+          <Skeleton className="h-10 w-[120px]" />
+        </div>
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+          </div>
+          <Skeleton className="h-56 sm:h-72 w-full rounded-lg border" />
+        </div>
       </div>
     );
   }

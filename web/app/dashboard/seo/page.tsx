@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import {
   ApiError,
+  apiCacheHas,
+  getCachedApiData,
   getCustomDomain,
   getMe,
   getMetaSettings,
@@ -19,23 +21,54 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import type { CustomDomain } from "@/lib/types";
+import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
 export default function SeoDashboardPage() {
   const { token, refreshUser } = useAuth();
-  const [metaTitle, setMetaTitle] = useState("");
-  const [metaDescription, setMetaDescription] = useState("");
-  const [originalMetaTitle, setOriginalMetaTitle] = useState("");
-  const [originalMetaDescription, setOriginalMetaDescription] = useState("");
-  const [rssEnabled, setRssEnabled] = useState(true);
-  const [loading, setLoading] = useState(true);
+  const [metaTitle, setMetaTitle] = useState(() => {
+    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    return cached?.meta_title || "";
+  });
+  const [metaDescription, setMetaDescription] = useState(() => {
+    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    return cached?.meta_description || "";
+  });
+  const [originalMetaTitle, setOriginalMetaTitle] = useState(() => {
+    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    return cached?.meta_title || "";
+  });
+  const [originalMetaDescription, setOriginalMetaDescription] = useState(() => {
+    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    return cached?.meta_description || "";
+  });
+  const [rssEnabled, setRssEnabled] = useState(() => {
+    const cached = getCachedApiData<MetaSettings>("/user/meta", token);
+    return cached ? cached.rss_enabled !== false : true;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !(
+      apiCacheHas("/user/meta", token) &&
+      apiCacheHas("/settings/domain", token) &&
+      apiCacheHas("/user/me", token) &&
+      apiCacheHas("/billing/subscription", token)
+    );
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
-  const [domain, setDomain] = useState<CustomDomain | null>(null);
-  const [isPro, setIsPro] = useState(false);
-  const [username, setUsername] = useState("");
+  const [domain, setDomain] = useState<CustomDomain | null>(() => {
+    return getCachedApiData<CustomDomain>("/settings/domain", token);
+  });
+  const [isPro, setIsPro] = useState(() => {
+    const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+    return cached ? isProSubscription(cached) : false;
+  });
+  const [username, setUsername] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.user_name || "";
+  });
   const seoResourcesEnabled =
     !!domain?.hostname &&
     (domain.domain_status === "active" || domain.domain_status === "grace");

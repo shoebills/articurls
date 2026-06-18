@@ -13,8 +13,10 @@ import {
   createUsernameChangeRequest,
   listMyUsernameChangeRequests,
   ApiError,
+  apiCacheHas,
+  getCachedApiData,
 } from "@/lib/api";
-import type { StorageUsage, UsernameChangeRequestOut } from "@/lib/types";
+import type { StorageUsage, UsernameChangeRequestOut, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,17 +37,43 @@ const USERNAME_CHANGE_LIMIT = 5;
 
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
-  const [name, setName] = useState("");
-  const [user_name, setUserName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.name ?? "";
+  });
+  const [user_name, setUserName] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.user_name ?? "";
+  });
+  const [email, setEmail] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.email ?? "";
+  });
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [removeBranding, setRemoveBranding] = useState(true);
-  const [collectSubscribers, setCollectSubscribers] = useState(true);
-  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
-  const [usernameChangeCount, setUsernameChangeCount] = useState(0);
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !(
+      apiCacheHas("/user/me", token) &&
+      apiCacheHas("/user/storage", token)
+    );
+  });
+  const [removeBranding, setRemoveBranding] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.remove_branding ?? true;
+  });
+  const [collectSubscribers, setCollectSubscribers] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.subscriber_collection_enabled ?? true;
+  });
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
+    return getCachedApiData<StorageUsage>("/user/storage", token);
+  });
+  const [usernameChangeCount, setUsernameChangeCount] = useState(() => {
+    const cached = getCachedApiData<UserSettings>("/user/me", token);
+    return cached?.username_change_count || 0;
+  });
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
   const [usernameAvailability, setUsernameAvailability] = useState<{

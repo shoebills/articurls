@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { subscribersAnalytics, exportSubscribersCsv, ApiError } from "@/lib/api";
+import { subscribersAnalytics, exportSubscribersCsv, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -59,10 +59,22 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
 export function SubscribersAnalyticsPanel() {
   const { token } = useAuth();
   const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
-  const [subs, setSubs] = useState<SubscribersAnalytics | null>(null);
-  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>([]);
+  const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
+    return getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", token);
+  });
+  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>(() => {
+    const cached = getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", token);
+    return cached?.series.map((p) => ({
+      timestamp: p.timestamp,
+      gained: p.subscribed,
+      lost: p.unsubscribed,
+    })) ?? [];
+  });
   const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !apiCacheHas("/analytics/subscribers?period=7d", token);
+  });
 
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 

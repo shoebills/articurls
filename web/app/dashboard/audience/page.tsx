@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { ApiError, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/lib/api";
+import { ApiError, apiCacheHas, getCachedApiData, getWelcomeEmailSettings, patchWelcomeEmailSettings } from "@/lib/api";
+import type { WelcomeEmailSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { WelcomeEmailEditor } from "@/components/editor/welcome-email-editor";
 import {
@@ -37,13 +38,26 @@ export default function AudienceEmailsPage() {
   const blogName = (user?.name || "").trim() || "My Blog";
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
-  const [enabled, setEnabled] = useState(false);
+  const [enabled, setEnabled] = useState(() => {
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    return cached?.welcome_email_enabled ?? false;
+  });
   const [subject, setSubject] = useState(defaultSubject);
   const [subjectUsesDefault, setSubjectUsesDefault] = useState(true);
-  const [bodyHtml, setBodyHtml] = useState(WELCOME_EMAIL_STARTER_HTML);
-  const [delayMinutes, setDelayMinutes] = useState("0");
+  const [bodyHtml, setBodyHtml] = useState(() => {
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    return cached?.welcome_email_body_html?.trim() || WELCOME_EMAIL_STARTER_HTML;
+  });
+  const [delayMinutes, setDelayMinutes] = useState(() => {
+    const cached = getCachedApiData<WelcomeEmailSettings>("/user/welcome-email", token);
+    const delay = String(cached?.welcome_email_delay_minutes ?? 0);
+    return DELAY_OPTIONS.some((o) => o.value === delay) ? delay : "0";
+  });
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (!token || !isPro) return false;
+    return !apiCacheHas("/user/welcome-email", token);
+  });
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
 

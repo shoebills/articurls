@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createCheckout, getSubscription, getTransactions, ApiError, isProSubscription } from "@/lib/api";
+import { createCheckout, getSubscription, getTransactions, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,11 +13,21 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
   const { token } = useAuth();
-  const [sub, setSub] = useState<SubscriptionOut | null>(null);
-  const [tx, setTx] = useState<TransactionOut[]>([]);
+  const [sub, setSub] = useState<SubscriptionOut | null>(() => {
+    return getCachedApiData<SubscriptionOut>("/billing/subscription", token);
+  });
+  const [tx, setTx] = useState<TransactionOut[]>(() => {
+    return getCachedApiData<TransactionOut[]>("/billing/transactions", token) ?? [];
+  });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !(
+      apiCacheHas("/billing/transactions", token) &&
+      apiCacheHas("/billing/subscription", token)
+    );
+  });
 
   const load = useCallback(async () => {
     if (!token) return;

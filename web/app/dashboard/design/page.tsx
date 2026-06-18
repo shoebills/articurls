@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
+  apiCacheHas,
+  getCachedApiData,
   getDesignSettings,
   getMe,
   listPages,
@@ -18,7 +20,7 @@ import {
   updateMenuCategories,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category } from "@/lib/types";
+import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category, UserSettings } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -107,25 +109,44 @@ function SectionPanel({
 
 export default function DesignDashboardPage() {
   const { token } = useAuth();
-  const [design, setDesign] = useState<DesignSettings>({
-    navbar_enabled: false,
-    nav_blog_name: null,
-    nav_blog_name_size: "medium",
-    nav_menu_enabled: false,
-    footer_enabled: false,
-    site_footer_enabled: false,
-    featured_blogs_enabled: false,
-    featured_blog_ids: [],
+  const [design, setDesign] = useState<DesignSettings>(() => {
+    const cached = getCachedApiData<DesignSettings>("/user/design", token);
+    return cached ?? {
+      navbar_enabled: false,
+      nav_blog_name: null,
+      nav_blog_name_size: "medium",
+      nav_menu_enabled: false,
+      footer_enabled: false,
+      site_footer_enabled: false,
+      featured_blogs_enabled: false,
+      featured_blog_ids: [],
+    };
   });
-  const [pages, setPages] = useState<UserPage[]>([]);
-  const [blogs, setBlogs] = useState<BlogListItem[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [pages, setPages] = useState<UserPage[]>(() => {
+    return getCachedApiData<UserPage[]>("/pages/", token) ?? [];
+  });
+  const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
+    const cached = getCachedApiData<BlogListItem[]>("/blog/", token);
+    return cached ? cached.filter((x) => x.status === "published") : [];
+  });
+  const [categories, setCategories] = useState<Category[]>(() => {
+    return getCachedApiData<Category[]>("/categories/", token) ?? [];
+  });
   const [menuCatSelection, setMenuCatSelection] = useState<number[]>([]);
   const [catToAdd, setCatToAdd] = useState<string>("");
   const [footerSelection, setFooterSelection] = useState<number[]>([]);
   const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    if (!token) return true;
+    return !(
+      apiCacheHas("/user/design", token) &&
+      apiCacheHas("/pages/", token) &&
+      apiCacheHas("/blog/", token) &&
+      apiCacheHas("/categories/", token) &&
+      apiCacheHas("/user/me", token)
+    );
+  });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
@@ -138,18 +159,38 @@ export default function DesignDashboardPage() {
   const [footerPagesModalOpen, setFooterPagesModalOpen] = useState(false);
 
   // Bio and social links state (saved via patchMe, displayed in about section)
-  const [bio, setBio] = useState("");
-  const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>({
-    contact_email: "",
-    instagram_link: "",
-    x_link: "",
-    pinterest_link: "",
-    facebook_link: "",
-    linkedin_link: "",
-    github_link: "",
-    youtube_link: "",
+  const [bio, setBio] = useState(() => {
+    const me = getCachedApiData<UserSettings>("/user/me", token);
+    return me?.bio || "";
   });
-  const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>([]);
+  const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
+    const me = getCachedApiData<UserSettings>("/user/me", token);
+    return {
+      contact_email: me?.contact_email || "",
+      instagram_link: me?.instagram_link || "",
+      x_link: me?.x_link || "",
+      pinterest_link: me?.pinterest_link || "",
+      facebook_link: me?.facebook_link || "",
+      linkedin_link: me?.linkedin_link || "",
+      github_link: me?.github_link || "",
+      youtube_link: me?.youtube_link || "",
+    };
+  });
+  const [enabledSocials, setEnabledSocials] = useState<SocialPlatform[]>(() => {
+    const me = getCachedApiData<UserSettings>("/user/me", token);
+    if (!me) return [];
+    const links: Record<string, string> = {
+      contact_email: me.contact_email || "",
+      instagram_link: me.instagram_link || "",
+      x_link: me.x_link || "",
+      pinterest_link: me.pinterest_link || "",
+      facebook_link: me.facebook_link || "",
+      linkedin_link: me.linkedin_link || "",
+      github_link: me.github_link || "",
+      youtube_link: me.youtube_link || "",
+    };
+    return SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (links[key] || "").trim() !== "");
+  });
   const [addingSocial, setAddingSocial] = useState(false);
   const [socialToAdd, setSocialToAdd] = useState<SocialPlatform | "">("");
   const [selectedSection, setSelectedSection] = useState<DesignSectionId>("header");
@@ -391,11 +432,13 @@ export default function DesignDashboardPage() {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6">
         <Skeleton className="h-9 w-28" />
-        <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
-          <Skeleton className="h-10 flex-1 rounded-lg" />
-          <Skeleton className="h-10 flex-1 rounded-lg" />
-          <Skeleton className="h-10 flex-1 rounded-lg" />
-        </div>
+        <nav className="overflow-x-auto pb-1">
+          <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
+            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
+            <div className="h-10 flex-1 rounded-lg bg-primary/10 animate-pulse" />
+          </div>
+        </nav>
         <div className="rounded-xl border border-border/80 bg-card p-6 space-y-5">
           <div className="flex items-center justify-between rounded-xl border p-3">
             <div className="space-y-2">
