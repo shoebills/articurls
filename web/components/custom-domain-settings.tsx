@@ -345,11 +345,7 @@ export default function CustomDomainSettings() {
                 const sslCnameRecords = dnsInstructions.filter((r) => r.purpose === "ssl" && r.type === "CNAME");
                 const hasVercel = dnsInstructions.some((r) => r.purpose === "vercel");
                 if (sslCnameRecords.length > 0) {
-                  return (
-                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                      The SSL record uses delegated validation. Add this single CNAME once and it covers all future certificate renewals automatically.
-                    </p>
-                  );
+                  return null;
                 }
                 if (sslTxtRecords.length > 1) {
                   return (
