@@ -585,7 +585,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
+      <Card id="pro-features">
         <CardHeader>
           <CardTitle className="text-xl">Pro features</CardTitle>
           <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
