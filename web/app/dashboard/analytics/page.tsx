@@ -4,6 +4,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   ApiError,
+  apiCacheHas,
+  getCachedApiData,
   AnalyticsPeriod,
   getUmamiOverview,
   getUmamiTimeseries,
@@ -408,13 +410,49 @@ function PathStatusDot({ status }: { status?: "live" | "deleted" | "archived" })
 
 function NativeAnalytics({ token }: { token: string }) {
   const [period, setPeriod] = useState<AnalyticsPeriod>("7d");
-  const [overview, setOverview] = useState<UmamiOverviewResponse | null>(null);
-  const [timeseries, setTimeseries] = useState<UmamiTimeseriesResponse | null>(null);
-  const [pages, setPages] = useState<UmamiPagesResponse | null>(null);
-  const [sources, setSources] = useState<UmamiSourcesResponse | null>(null);
-  const [geo, setGeo] = useState<UmamiGeoResponse | null>(null);
-  const [tech, setTech] = useState<UmamiTechResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [overview, setOverview] = useState<UmamiOverviewResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiOverviewResponse>("/analytics/umami/overview?period=7d", t) : null;
+  });
+  const [timeseries, setTimeseries] = useState<UmamiTimeseriesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiTimeseriesResponse>("/analytics/umami/timeseries?period=7d", t) : null;
+  });
+  const [pages, setPages] = useState<UmamiPagesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiPagesResponse>("/analytics/umami/pages?period=7d&limit=20", t) : null;
+  });
+  const [sources, setSources] = useState<UmamiSourcesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiSourcesResponse>("/analytics/umami/sources?period=7d&limit=20", t) : null;
+  });
+  const [geo, setGeo] = useState<UmamiGeoResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiGeoResponse>("/analytics/umami/geo?period=7d&limit=20", t) : null;
+  });
+  const [tech, setTech] = useState<UmamiTechResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiTechResponse>("/analytics/umami/tech?period=7d&limit=20", t) : null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !(
+      apiCacheHas("/analytics/umami/overview?period=7d", t) &&
+      apiCacheHas("/analytics/umami/timeseries?period=7d", t) &&
+      apiCacheHas("/analytics/umami/pages?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/sources?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/geo?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/tech?period=7d&limit=20", t)
+    );
+  });
   const [err, setErr] = useState<string | null>(null);
 
   // Detect browser timezone once — used to display chart labels in local time

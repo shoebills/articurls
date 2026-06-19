@@ -800,7 +800,7 @@ export async function getUmamiOverview(
   period: AnalyticsPeriod = "7d",
 ): Promise<UmamiOverviewResponse> {
   const q = new URLSearchParams({ period });
-  return apiFetch(`/analytics/umami/overview?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/overview?${q.toString()}`, { token });
 }
 
 export async function getUmamiTimeseries(
@@ -808,7 +808,7 @@ export async function getUmamiTimeseries(
   period: AnalyticsPeriod = "7d",
 ): Promise<UmamiTimeseriesResponse> {
   const q = new URLSearchParams({ period });
-  return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token });
 }
 
 export async function getUmamiPages(
@@ -817,7 +817,7 @@ export async function getUmamiPages(
   limit = 20,
 ): Promise<UmamiPagesResponse> {
   const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token });
 }
 
 export async function getUmamiSources(
@@ -826,7 +826,7 @@ export async function getUmamiSources(
   limit = 20,
 ): Promise<UmamiSourcesResponse> {
   const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/sources?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/sources?${q.toString()}`, { token });
 }
 
 export async function getUmamiGeo(
@@ -835,7 +835,7 @@ export async function getUmamiGeo(
   limit = 20,
 ): Promise<UmamiGeoResponse> {
   const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/geo?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/geo?${q.toString()}`, { token });
 }
 
 export async function getUmamiTech(
@@ -844,11 +844,11 @@ export async function getUmamiTech(
   limit = 20,
 ): Promise<UmamiTechResponse> {
   const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/tech?${q.toString()}`, { token, disableCache: true });
+  return apiFetch(`/analytics/umami/tech?${q.toString()}`, { token });
 }
 
 export async function getUmamiRealtime(
   token: string,
 ): Promise<UmamiRealtimeResponse> {
-  return apiFetch("/analytics/umami/realtime", { token, disableCache: true });
+  return apiFetch("/analytics/umami/realtime", { token });
 }
