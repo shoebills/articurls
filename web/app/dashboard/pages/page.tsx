@@ -334,7 +334,6 @@ export default function PagesDashboardPage() {
                               {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
                             </p>
                           </div>
-                          <div className="shrink-0" data-card-action="true">
                             <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
                               <DropdownMenuTrigger asChild>
                                 <Button
@@ -398,7 +397,6 @@ export default function PagesDashboardPage() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
-                          </div>
                         </div>
 
                         <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">

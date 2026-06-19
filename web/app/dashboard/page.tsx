@@ -364,7 +364,6 @@ export default function DashboardPage() {
                         {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
-                    <div className="shrink-0" data-card-action="true">
                       <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
                         <DropdownMenuTrigger asChild>
                           <Button
@@ -424,7 +423,6 @@ export default function DashboardPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
