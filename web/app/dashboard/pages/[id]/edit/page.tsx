@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, ExternalLink, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { getContentExcerpt } from "@/lib/utils";
 
@@ -338,7 +339,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   if (loading || !page) {
     return (
       <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <EditorSkeleton />
         <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       </>
     );

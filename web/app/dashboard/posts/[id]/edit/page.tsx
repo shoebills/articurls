@@ -40,6 +40,7 @@ import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ArrowLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
@@ -521,7 +522,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   if (loading || !blog) {
     return (
       <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <EditorSkeleton />
         <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       </>
     );

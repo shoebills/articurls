@@ -6,6 +6,7 @@ import { ApiError, createPage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
 let newPageDraftPromise: Promise<UserPage> | null = null;
 
@@ -58,9 +59,5 @@ export default function NewPageRoute() {
     );
   }
 
-  return (
-    <div className="mx-auto max-w-[1100px]">
-      <p className="text-muted-foreground">Opening editor…</p>
-    </div>
-  );
+  return <EditorSkeleton />;
 }
