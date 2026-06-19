@@ -173,14 +173,27 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       };
       const responsePage = await updatePage(token, page.page_id, body);
       setPage(responsePage);
-      setTitle(responsePage.title);
-      setContent(responsePage.content || "");
-      setMetaTitle(responsePage.meta_title || "");
-      const finalContentExcerpt = getContentExcerpt(responsePage.content || "");
-      setMetaTitleDirty(!!responsePage.meta_title && responsePage.meta_title !== responsePage.title);
-      setMetaDesc(responsePage.meta_description || "");
-      setMetaDescDirty(!!responsePage.meta_description && responsePage.meta_description !== finalContentExcerpt);
-      if (slugEditable) setSlugCustom(responsePage.slug);
+
+      // Only overwrite fields the user hasn't changed during the API call.
+      const titleChanged = nextTitle !== titleRef.current;
+      const contentChanged = nextContent !== contentRef.current;
+      const metaTitleChanged = nextMetaTitle !== metaTitleRef.current;
+      const metaDescChanged = nextMetaDesc !== metaDescRef.current;
+      const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
+
+      if (!titleChanged) setTitle(responsePage.title);
+      if (!contentChanged) setContent(responsePage.content || "");
+      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || "");
+      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || "");
+      if (slugEditable && !slugCustomChanged) setSlugCustom(responsePage.slug);
+
+      // Re-derive dirty flags from effective (current) state
+      const effectiveTitle = titleChanged ? titleRef.current : responsePage.title;
+      const effectiveMetaTitle = metaTitleChanged ? metaTitleRef.current : (responsePage.meta_title || "");
+      const effectiveContent = contentChanged ? contentRef.current : (responsePage.content || "");
+      const effectiveMetaDesc = metaDescChanged ? metaDescRef.current : (responsePage.meta_description || "");
+      setMetaTitleDirty(!!effectiveMetaTitle && effectiveMetaTitle !== effectiveTitle);
+      setMetaDescDirty(!!effectiveMetaDesc && effectiveMetaDesc !== getContentExcerpt(effectiveContent));
       clearManualDraft();
       setSaveStatus("saved");
       return true;

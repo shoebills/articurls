@@ -199,8 +199,6 @@ export function BlogEditor({
   const prevImageSrcsRef = useRef<Set<string>>(extractImageSrcsFromHtml(content || ""));
   const deletingSrcsRef = useRef<Set<string>>(new Set());
   const lastUserUpdatedContentRef = useRef(content || "");
-  const isUserTypingRef = useRef(false);
-  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   
   const editor = useEditor({
     extensions: [
@@ -239,15 +237,6 @@ export function BlogEditor({
     onUpdate: ({ editor: ed }) => {
       const nextHtml = ed.getHTML();
       lastUserUpdatedContentRef.current = nextHtml;
-      
-      // Mark user as typing
-      isUserTypingRef.current = true;
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-      typingTimeoutRef.current = setTimeout(() => {
-        isUserTypingRef.current = false;
-      }, 1000);
       
       onChange(nextHtml);
 
@@ -332,9 +321,6 @@ export function BlogEditor({
       if (editorToastTimerRef.current) {
         clearTimeout(editorToastTimerRef.current);
       }
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
     };
   }, [editorToast]);
 
@@ -373,11 +359,9 @@ export function BlogEditor({
     const current = editor.getHTML();
     prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
     
-    // Only update editor content if:
-    // 1. Content is different from current editor state, AND
-    // 2. Editor is not currently focused OR user is not actively typing
-    // This prevents autosave from overwriting content during active editing
-    if (content !== current && (!isEditorFocusedRef.current || !isUserTypingRef.current)) {
+    // Only update editor content when the user is not focused in the editor.
+    // If the editor is focused, the user's version is authoritative.
+    if (content !== current && !isEditorFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
     }
   }, [content, editor]);

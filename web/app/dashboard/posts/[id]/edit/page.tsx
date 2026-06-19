@@ -248,16 +248,33 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         finalBlog = await assignBlogCategories(token, blog.blog_id, nextPendingCatIds);
       }
       setBlog(finalBlog);
-      setTitle(finalBlog.title);
-      setContent(finalBlog.content || "");
-      setMetaTitle(finalBlog.meta_title || "");
-      const finalContentExcerpt = getContentExcerpt(finalBlog.content || "");
-      setMetaTitleDirty(!!finalBlog.meta_title && finalBlog.meta_title !== finalBlog.title);
-      setMetaDesc(finalBlog.meta_description || "");
-      setMetaDescDirty(!!finalBlog.meta_description && finalBlog.meta_description !== finalContentExcerpt);
-      setFeaturedImageUrl(finalBlog.featured_image_url || "");
-      if (slugEditable) setSlugCustom(finalBlog.slug);
-      if (notifyRef.current === nextNotify) setNotify(finalBlog.notify_subscribers);
+
+      // Only overwrite fields the user hasn't changed during the API call.
+      // This prevents autosave from destroying in-flight edits.
+      const titleChanged = nextTitle !== titleRef.current;
+      const contentChanged = nextContent !== contentRef.current;
+      const metaTitleChanged = nextMetaTitle !== metaTitleRef.current;
+      const metaDescChanged = nextMetaDesc !== metaDescRef.current;
+      const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
+      const featuredChanged = nextFeaturedImageUrl !== featuredImageUrlRef.current;
+      const notifyChanged = nextNotify !== notifyRef.current;
+
+      if (!titleChanged) setTitle(finalBlog.title);
+      if (!contentChanged) setContent(finalBlog.content || "");
+      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || "");
+      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || "");
+      if (slugEditable && !slugCustomChanged) setSlugCustom(finalBlog.slug);
+      if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
+      if (!notifyChanged) setNotify(finalBlog.notify_subscribers);
+
+      // Re-derive dirty flags from effective (current) state
+      const effectiveTitle = titleChanged ? titleRef.current : finalBlog.title;
+      const effectiveMetaTitle = metaTitleChanged ? metaTitleRef.current : (finalBlog.meta_title || "");
+      const effectiveContent = contentChanged ? contentRef.current : (finalBlog.content || "");
+      const effectiveMetaDesc = metaDescChanged ? metaDescRef.current : (finalBlog.meta_description || "");
+      setMetaTitleDirty(!!effectiveMetaTitle && effectiveMetaTitle !== effectiveTitle);
+      setMetaDescDirty(!!effectiveMetaDesc && effectiveMetaDesc !== getContentExcerpt(effectiveContent));
+
       if (catDirty) {
         savedCatIdsRef.current = [...nextPendingCatIds];
         setSelectedCatIds(nextPendingCatIds);
