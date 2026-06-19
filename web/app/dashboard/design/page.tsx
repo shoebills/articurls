@@ -426,8 +426,6 @@ export default function DesignDashboardPage() {
     }
   }
 
-  }
-
   function addSocial() {
     if (!socialToAdd) return;
     setEnabledSocials((prev) => (prev.includes(socialToAdd) ? prev : [...prev, socialToAdd]));
