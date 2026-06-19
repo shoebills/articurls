@@ -51,6 +51,7 @@ export default function PagesDashboardPage() {
   const [archiveId, setArchiveId] = useState<number | null>(null);
   const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
+  const [menuOpenPageId, setMenuOpenPageId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
@@ -334,7 +335,7 @@ export default function PagesDashboardPage() {
                             </p>
                           </div>
                           <div className="shrink-0" data-card-action="true">
-                            <DropdownMenu>
+                            <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
                               <DropdownMenuTrigger asChild>
                                 <Button
                                   data-card-action="true"
@@ -343,6 +344,8 @@ export default function PagesDashboardPage() {
                                   className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
                                   aria-label={`Actions for ${p.title || "Untitled"}`}
                                   disabled={rowBusyId === p.page_id}
+                                  onPointerDown={(e) => e.preventDefault()}
+                                  onClick={() => setMenuOpenPageId(p.page_id)}
                                 >
                                   <MoreVertical className="h-4 w-4" />
                                 </Button>

@@ -61,6 +61,7 @@ export default function DashboardPage() {
   const [archiveId, setArchiveId] = useState<number | null>(null);
   const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
+  const [menuOpenBlogId, setMenuOpenBlogId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
@@ -364,7 +365,7 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <div className="shrink-0" data-card-action="true">
-                      <DropdownMenu>
+                      <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
                         <DropdownMenuTrigger asChild>
                           <Button
                             data-card-action="true"
@@ -373,6 +374,8 @@ export default function DashboardPage() {
                             className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
                             aria-label={`Actions for ${b.title || "Untitled"}`}
                             disabled={rowBusyId === b.blog_id}
+                            onPointerDown={(e) => e.preventDefault()}
+                            onClick={() => setMenuOpenBlogId(b.blog_id)}
                           >
                             <MoreVertical className="h-4 w-4" />
                           </Button>
