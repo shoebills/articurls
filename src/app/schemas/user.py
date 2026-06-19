@@ -36,6 +36,7 @@ class UserSettings(BaseModel):
     footer_enabled: bool
     site_footer_enabled: bool = False
     username_change_count: int
+    last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = False

@@ -416,52 +416,6 @@ def admin_change_username(
     return db_user
 
 
-@router.post("/username-change-requests", response_model=user.UsernameChangeRequestOut, status_code=status.HTTP_201_CREATED)
-def create_username_change_request(
-    request: user.UsernameChangeRequestCreate,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    desired = validate_username_or_raise(request.desired_username)
-    claim = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == desired).first()
-    if claim and claim.user_id != current_user.user_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username is taken.")
-    if desired == current_user.user_name:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New username must be different.")
-    existing_pending = (
-        db.query(models.UsernameChangeRequest)
-        .filter(
-            models.UsernameChangeRequest.user_id == current_user.user_id,
-            models.UsernameChangeRequest.status == "pending",
-        )
-        .first()
-    )
-    if existing_pending:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a pending request.")
-    row = models.UsernameChangeRequest(
-        user_id=current_user.user_id,
-        desired_username=desired,
-        reason=(request.reason or "").strip() or None,
-        status="pending",
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-@router.get("/username-change-requests", response_model=list[user.UsernameChangeRequestOut], status_code=status.HTTP_200_OK)
-def list_my_username_change_requests(
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    return (
-        db.query(models.UsernameChangeRequest)
-        .filter(models.UsernameChangeRequest.user_id == current_user.user_id)
-        .order_by(models.UsernameChangeRequest.created_at.desc())
-        .all()
-    )
-
 @router.get("/welcome-email", response_model=user.WelcomeEmailSettings, status_code=status.HTTP_200_OK)
 def get_welcome_email_settings(
     db: Session = Depends(get_db),

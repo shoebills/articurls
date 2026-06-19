@@ -111,6 +111,7 @@ export interface UserSettings {
   footer_enabled: boolean;
   site_footer_enabled: boolean;
   username_change_count: number;
+  last_username_change_at: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;

@@ -260,22 +260,6 @@ export async function checkUsernameAvailability(
   return apiFetch(`/user/username-availability?${q.toString()}`, { token });
 }
 
-export async function createUsernameChangeRequest(
-  token: string,
-  body: { desired_username: string; reason?: string }
-): Promise<UsernameChangeRequestOut> {
-  return apiFetch("/user/username-change-requests", {
-    method: "POST",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export async function listMyUsernameChangeRequests(token: string): Promise<UsernameChangeRequestOut[]> {
-  return apiFetch("/user/username-change-requests", { token });
-}
-
 export async function patchMe(
   token: string,
   body: Partial<

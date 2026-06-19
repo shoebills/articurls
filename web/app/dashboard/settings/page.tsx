@@ -10,18 +10,15 @@ import {
   uploadFavicon,
   deleteFavicon,
   checkUsernameAvailability,
-  createUsernameChangeRequest,
-  listMyUsernameChangeRequests,
   ApiError,
   apiCacheHas,
   getCachedApiData,
 } from "@/lib/api";
-import type { StorageUsage, UsernameChangeRequestOut, UserSettings } from "@/lib/types";
+import type { StorageUsage, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -33,7 +30,7 @@ import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 
-const USERNAME_CHANGE_LIMIT = 5;
+const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
@@ -89,22 +86,19 @@ export default function SettingsPage() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
   });
-  const [usernameChangeCount, setUsernameChangeCount] = useState(() => {
-    if (typeof window === "undefined") return 0;
+  const [lastUsernameChangeAt, setLastUsernameChangeAt] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
     const t = localStorage.getItem("articurls_token");
-    if (!t) return 0;
+    if (!t) return null;
     const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.username_change_count || 0;
+    return cached?.last_username_change_at || null;
   });
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
   const [usernameAvailability, setUsernameAvailability] = useState<{
     state: "idle" | "checking" | "available" | "taken" | "invalid";
     message: string;
-  }>({ state: "idle", message: "" });
-  const [usernameRequestReason, setUsernameRequestReason] = useState("");
-  const [usernameRequests, setUsernameRequests] = useState<UsernameChangeRequestOut[]>([]);
-  const [requestBusy, setRequestBusy] = useState(false);
+  }  >({ state: "idle", message: "" });
   const pfpInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
@@ -128,7 +122,7 @@ export default function SettingsPage() {
       setEmail(u.email);
       setRemoveBranding(u.remove_branding ?? true);
       setCollectSubscribers(u.subscriber_collection_enabled ?? true);
-      setUsernameChangeCount(u.username_change_count || 0);
+      setLastUsernameChangeAt(u.last_username_change_at || null);
       setStorageUsage(usage);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -148,7 +142,7 @@ export default function SettingsPage() {
       setEmail(ctxUser.email);
       setRemoveBranding(ctxUser.remove_branding ?? true);
       setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? true);
-      setUsernameChangeCount(ctxUser.username_change_count || 0);
+      setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
     }
   }, [ctxUser]);
 
@@ -254,7 +248,12 @@ export default function SettingsPage() {
     profileImageUrl.includes("/uploads/defaults/");
   const hasCustomProfileImage = Boolean(profileImageUrl) && !isDefaultProfileImage;
 
-  const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
+  const cooldownEnd = lastUsernameChangeAt
+    ? new Date(lastUsernameChangeAt).getTime() + USERNAME_CHANGE_COOLDOWN_DAYS * 86400000
+    : 0;
+  const cooldownRemainingMs = Math.max(0, cooldownEnd - Date.now());
+  const cooldownRemainingDays = Math.ceil(cooldownRemainingMs / 86400000);
+  const canChange = cooldownRemainingMs <= 0;
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
@@ -287,24 +286,9 @@ export default function SettingsPage() {
     return () => clearTimeout(timer);
   }, [pendingUsername, token, usernameDialogOpen]);
 
-  useEffect(() => {
-    if (!usernameDialogOpen || !token) return;
-    (async () => {
-      try {
-        const rows = await listMyUsernameChangeRequests(token);
-        setUsernameRequests(rows);
-      } catch {
-        // Non-blocking for dialog UX.
-      }
-    })();
-  }, [token, usernameDialogOpen]);
-
   async function saveUsername() {
     if (!token) return;
-    if (usernameChangesRemaining <= 0) {
-      setUsernameAvailability({ state: "invalid", message: "No username changes remaining" });
-      return;
-    }
+    if (!canChange) return;
     if (!pendingUsername.trim()) {
       setUsernameAvailability({ state: "invalid", message: "Username is required" });
       return;
@@ -321,30 +305,6 @@ export default function SettingsPage() {
       setErr(e instanceof ApiError ? e.message : "Could not update username");
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function submitUsernameChangeRequest() {
-    if (!token) return;
-    if (!pendingUsername.trim()) {
-      setUsernameAvailability({ state: "invalid", message: "Username is required" });
-      return;
-    }
-    setRequestBusy(true);
-    setErr(null);
-    try {
-      await createUsernameChangeRequest(token, {
-        desired_username: pendingUsername.trim().toLowerCase(),
-        reason: usernameRequestReason.trim() || undefined,
-      });
-      const rows = await listMyUsernameChangeRequests(token);
-      setUsernameRequests(rows);
-      setUsernameRequestReason("");
-      setSaved("Saved");
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not submit request");
-    } finally {
-      setRequestBusy(false);
     }
   }
 
@@ -754,7 +714,9 @@ export default function SettingsPage() {
           <DialogHeader>
             <DialogTitle>Change username</DialogTitle>
             <DialogDescription>
-              You can change your username up to {USERNAME_CHANGE_LIMIT} times. Remaining: {usernameChangesRemaining}.
+              {canChange
+                ? "You can change your username once every 7 days."
+                : `Please wait ${cooldownRemainingDays} day${cooldownRemainingDays === 1 ? "" : "s"} before changing again.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -786,28 +748,14 @@ export default function SettingsPage() {
                 <span className="text-destructive">{usernameAvailability.message}</span>
               ) : null}
             </div>
-            {usernameChangesRemaining <= 0 ? (
-              <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
-                <p className="text-xs text-muted-foreground">
-                  You have reached the self-service limit. Submit an admin review request for legal, safety, or trademark cases.
-                </p>
-                <Textarea
-                  value={usernameRequestReason}
-                  onChange={(e) => setUsernameRequestReason(e.target.value)}
-                  placeholder="Reason for admin review (optional)"
-                  className="min-h-20"
-                />
-                <Button type="button" variant="outline" onClick={submitUsernameChangeRequest} disabled={requestBusy}>
-                  {requestBusy ? "Submitting..." : "Request admin change"}
-                </Button>
-                {usernameRequests.length > 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Latest request: {usernameRequests[0].status}
-                    {usernameRequests[0].admin_note ? ` - ${usernameRequests[0].admin_note}` : ""}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            {!canChange && (
+              <p className="text-xs text-muted-foreground">
+                Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Previous usernames keep working — your readers will be redirected.
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
@@ -818,13 +766,15 @@ export default function SettingsPage() {
               onClick={saveUsername}
               disabled={
                 busy ||
-                usernameChangesRemaining <= 0 ||
+                !canChange ||
                 usernameAvailability.state === "checking" ||
                 usernameAvailability.state === "taken" ||
                 usernameAvailability.state === "invalid"
               }
             >
-              {usernameChangesRemaining <= 0 ? "Save disabled" : "Save username"}
+              {!canChange
+                ? `Available in ${cooldownRemainingDays}d`
+                : "Save username"}
             </Button>
           </DialogFooter>
         </DialogContent>
