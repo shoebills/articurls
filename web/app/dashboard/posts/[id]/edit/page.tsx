@@ -570,9 +570,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
       </div>
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
         {blog.status === "scheduled" && blog.scheduled_at ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold tracking-tight text-amber-700 shadow-sm">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
             <span className="relative flex h-2 w-2">
               <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-pulse" />
               <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-500/40" />
@@ -581,6 +581,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </span>
         ) : (
           <BlogStatusBadge status={blog.status} />
+        )}
+        {blog.status !== "scheduled" && (
+          <>
+            <span className="text-slate-300 select-none" aria-hidden>
+              ·
+            </span>
+            {blog.status === "published" && blog.published_at ? (
+              <span className="whitespace-nowrap">Published {format(new Date(blog.published_at), "MMM d, yyyy")}</span>
+            ) : (
+              <span className="whitespace-nowrap">Updated {format(new Date(blog.updated_at), "MMM d, yyyy")}</span>
+            )}
+          </>
         )}
       </div>
 

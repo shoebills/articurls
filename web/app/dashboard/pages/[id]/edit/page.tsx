@@ -6,6 +6,7 @@ import slugify from "slugify";
 import { ApiError, archivePage, getPage, publishPage, updatePage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
+import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
@@ -388,8 +389,16 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           )}
         </div>
       </div>
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
         <BlogStatusBadge status={page.status} />
+        <span className="text-slate-300 select-none" aria-hidden>
+          ·
+        </span>
+        {page.status === "published" && page.published_at ? (
+          <span className="whitespace-nowrap">Published {format(new Date(page.published_at), "MMM d, yyyy")}</span>
+        ) : (
+          <span className="whitespace-nowrap">Updated {format(new Date(page.updated_at), "MMM d, yyyy")}</span>
+        )}
       </div>
 
       <Textarea

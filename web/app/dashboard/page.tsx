@@ -438,10 +438,18 @@ export default function DashboardPage() {
                     ) : (
                       <BlogStatusBadge status={b.status} className="shrink-0" />
                     )}
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                    {b.status !== "scheduled" && (
+                      <>
+                        <span className="text-slate-300 select-none" aria-hidden>
+                          ·
+                        </span>
+                        {b.status === "published" && b.published_at ? (
+                          <span className="whitespace-nowrap">Published {format(new Date(b.published_at), "MMM d, yyyy")}</span>
+                        ) : (
+                          <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                        )}
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>

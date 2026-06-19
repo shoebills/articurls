@@ -403,7 +403,11 @@ export default function PagesDashboardPage() {
                           <span className="text-slate-300 select-none" aria-hidden>
                             ·
                           </span>
-                          <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
+                          {p.status === "published" && p.published_at ? (
+                            <span className="whitespace-nowrap">Published {format(new Date(p.published_at), "MMM d, yyyy")}</span>
+                          ) : (
+                            <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
