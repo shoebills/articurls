@@ -1,7 +1,7 @@
 """add last_username_change_at to users
 
 Revision ID: s6t7u8v9w0x1
-Revises: m7n8o9p0q1r2
+Revises: b2c3d4e5f6a8
 Create Date: 2026-06-19
 
 """
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 revision: str = "s6t7u8v9w0x1"
-down_revision: Union[str, Sequence[str], None] = "m7n8o9p0q1r2"
+down_revision: Union[str, Sequence[str], None] = "b2c3d4e5f6a8"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
