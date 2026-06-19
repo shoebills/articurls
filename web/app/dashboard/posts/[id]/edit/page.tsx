@@ -932,7 +932,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
         {blog.status === "scheduled" && (
           <>
-            <Button variant="outline" onClick={() => setPendingAction("unschedule")} disabled={saving}>
+            <Button variant="outline" onClick={() => setPendingAction("unschedule")}>
               Unschedule
             </Button>
           </>

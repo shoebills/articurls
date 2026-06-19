@@ -524,17 +524,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           <></>
         )}
         {page.status === "draft" && (
-          <Button variant="default" onClick={() => setPendingAction("publish")} disabled={saving}>
+          <Button variant="default" onClick={() => setPendingAction("publish")}>
             Publish
           </Button>
         )}
         {page.status === "published" && (
-          <Button variant="outline" onClick={() => setPendingAction("archive")} disabled={saving}>
+          <Button variant="outline" onClick={() => setPendingAction("archive")}>
             Archive
           </Button>
         )}
         {page.status === "archived" && (
-          <Button variant="outline" onClick={() => setPendingAction("unarchive")} disabled={saving}>
+          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
             Unarchive
           </Button>
         )}
