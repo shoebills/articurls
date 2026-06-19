@@ -160,7 +160,8 @@ export default function DesignDashboardPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
-  const loadedRef = useRef(false);
+  const initialBioRef = useRef<string | null>(null);
+  const initialSocialLinksRef = useRef<Record<SocialPlatform, string> | null>(null);
   const [catCreateName, setCatCreateName] = useState("");
   const [catEditingId, setCatEditingId] = useState<number | null>(null);
   const [catEditingName, setCatEditingName] = useState("");
@@ -271,6 +272,8 @@ export default function DesignDashboardPage() {
       };
       setBio(me.bio || "");
       setSocialLinks(nextLinks);
+      initialBioRef.current = me.bio || "";
+      initialSocialLinksRef.current = { ...nextLinks };
       setEnabledSocials(
         SOCIAL_OPTIONS.map((s) => s.key).filter((key) => (nextLinks[key] || "").trim() !== "")
       );
@@ -285,12 +288,6 @@ export default function DesignDashboardPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
-
-  useEffect(() => {
-    if (!loading && !loadedRef.current) {
-      loadedRef.current = true;
-    }
-  }, [loading]);
 
   async function saveDesign(next: DesignSettings) {
     if (!token) return;
@@ -429,12 +426,7 @@ export default function DesignDashboardPage() {
     }
   }
 
-  useEffect(() => {
-    if (!loadedRef.current || !token) return;
-    const timer = setTimeout(() => saveBioSocials(), 600);
-    return () => clearTimeout(timer);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bio, socialLinks, token]);
+  }
 
   function addSocial() {
     if (!socialToAdd) return;
@@ -745,6 +737,7 @@ export default function DesignDashboardPage() {
                 className="mt-2"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
+                onBlur={saveBioSocials}
                 maxLength={1400}
                 placeholder="Optional short bio (max 200 words)"
               />
@@ -805,15 +798,16 @@ export default function DesignDashboardPage() {
                         <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted/40 text-muted-foreground">
                           {option.icon}
                         </div>
-                        <Input
-                          type={platformKey === "contact_email" ? "email" : "url"}
-                          value={socialLinks[platformKey]}
-                          className="min-w-0"
-                          onChange={(e) =>
-                            setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
-                          }
-                          placeholder={option.placeholder}
-                        />
+                          <Input
+                            type={platformKey === "contact_email" ? "email" : "url"}
+                            value={socialLinks[platformKey]}
+                            className="min-w-0"
+                            onChange={(e) =>
+                              setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
+                            }
+                            onBlur={saveBioSocials}
+                            placeholder={option.placeholder}
+                          />
                         <Button
                           type="button"
                           variant="ghost"
