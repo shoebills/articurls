@@ -20,7 +20,7 @@ from .text import (
 )
 from .urls import public_blog_home_url, public_post_url
 from .usernames import (
-    USERNAME_CHANGE_LIMIT,
+    USERNAME_CHANGE_COOLDOWN_DAYS,
     RequestContext,
     apply_username_change_or_raise,
     claim_username_or_raise,
@@ -47,7 +47,7 @@ __all__ = [
     "public_post_url",
     "public_user_out",
     "RequestContext",
-    "USERNAME_CHANGE_LIMIT",
+    "USERNAME_CHANGE_COOLDOWN_DAYS",
     "apply_username_change_or_raise",
     "claim_username_or_raise",
     "permanent_username_redirect",
