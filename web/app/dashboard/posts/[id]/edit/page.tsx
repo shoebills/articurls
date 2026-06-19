@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogDetail, Category } from "@/lib/types";
+import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -570,7 +571,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
       <div className="mb-4">
-        <BlogStatusBadge status={blog.status} />
+        {blog.status === "scheduled" && blog.scheduled_at ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold tracking-tight text-amber-700 shadow-sm">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-pulse" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-500/40" />
+            </span>
+            Scheduled {format(new Date(blog.scheduled_at), "MMM d, yyyy h:mm a")}
+          </span>
+        ) : (
+          <BlogStatusBadge status={blog.status} />
+        )}
       </div>
 
       <Textarea

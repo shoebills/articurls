@@ -61,8 +61,7 @@ export function SchedulePublishDialog({ open, onOpenChange, onConfirm }: Schedul
         <DialogHeader>
           <DialogTitle>Schedule publish</DialogTitle>
           <DialogDescription>
-            Pick a date and time. This uses your device&apos;s local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}
-            ).
+            Pick a date and time.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 py-2">
