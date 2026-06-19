@@ -210,14 +210,55 @@ export default function PagesDashboardPage() {
         </Button>
       </div>
 
+      <div className="mb-4 flex items-center gap-2 sm:gap-3">
+        <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search"
+            aria-label="Search pages"
+            className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+              <Filter className="h-4 w-4" />
+              <span className="hidden sm:inline">Filter</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+              <ArrowUpDown className="h-4 w-4" />
+              <span className="hidden sm:inline">Sort</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => setSortBy("latest")}>
+              <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
+              Latest
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+              <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
+              Oldest
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {loading ? (
-        <>
-          <div className="mb-4 flex items-center gap-2 sm:gap-3">
-            <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
-            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-          </div>
-          <ul className="space-y-4">
+        <ul className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
                 <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
@@ -237,7 +278,6 @@ export default function PagesDashboardPage() {
               </li>
             ))}
           </ul>
-        </>
       ) : pages.length === 0 ? (
         <div
           className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200"
@@ -254,54 +294,7 @@ export default function PagesDashboardPage() {
         </div>
       ) : (
         <>
-          <div className="mb-4 flex items-center gap-2 sm:gap-3">
-            <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
-              <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-              <Input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search"
-                aria-label="Search pages"
-                className="h-12 min-h-12 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
-              />
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
-                  <Filter className="h-4 w-4" />
-                  <span className="hidden sm:inline">Filter</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => setStatusFilter("all")}>All</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
-                  <ArrowUpDown className="h-4 w-4" />
-                  <span className="hidden sm:inline">Sort</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => setSortBy("latest")}>
-                  <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
-                  Latest
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setSortBy("oldest")}>
-                  <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
-                  Oldest
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {filteredPages.length > 0 ? (
+        {filteredPages.length > 0 ? (
             <>
               <ul className="space-y-4">
                 {pagedPages.map((p) => (
@@ -334,18 +327,21 @@ export default function PagesDashboardPage() {
                               {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
                             </p>
                           </div>
+                          <div className="shrink-0" data-card-action="true">
                             <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
                               <DropdownMenuTrigger asChild>
-                                <button
+                                <Button
                                   data-card-action="true"
-                                  className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors mt-0.5"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
                                   aria-label={`Actions for ${p.title || "Untitled"}`}
                                   disabled={rowBusyId === p.page_id}
                                   onPointerDown={(e) => e.preventDefault()}
                                   onClick={() => setMenuOpenPageId(p.page_id)}
                                 >
                                   <MoreVertical className="h-4 w-4" />
-                                </button>
+                                </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent data-card-action="true" align="end" className="w-44">
                                 <DropdownMenuItem data-card-action="true" asChild>
@@ -395,6 +391,7 @@ export default function PagesDashboardPage() {
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
+                          </div>
                         </div>
 
                         <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">

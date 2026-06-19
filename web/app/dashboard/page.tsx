@@ -241,39 +241,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      {loading ? (
-        <>
-          <div className="mb-4 flex items-center gap-2 sm:gap-3">
-            <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
-            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-          </div>
-          <ul className="space-y-4">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <li key={i}>
-                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
-                  </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-                    <Skeleton className="h-5 w-16 rounded-full" />
-                    <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-5 w-20 rounded-full" />
-                  </div>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </>
-      ) : (
-        <>
-          <div className="mb-4 flex items-center gap-2 sm:gap-3">
+      <div className="mb-4 flex items-center gap-2 sm:gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
@@ -321,7 +289,32 @@ export default function DashboardPage() {
         </DropdownMenu>
       </div>
 
-      {blogs.length > 0 ? (
+      {loading ? (
+        <ul className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i}>
+                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+      ) : (
+        <>
+        {blogs.length > 0 ? (
         filteredBlogs.length > 0 ? (
           <>
             <ul className="space-y-4">
@@ -364,18 +357,21 @@ export default function DashboardPage() {
                         {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
+                    <div className="shrink-0" data-card-action="true">
                       <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
                         <DropdownMenuTrigger asChild>
-                          <button
+                          <Button
                             data-card-action="true"
-                            className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors mt-0.5"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
                             aria-label={`Actions for ${b.title || "Untitled"}`}
                             disabled={rowBusyId === b.blog_id}
                             onPointerDown={(e) => e.preventDefault()}
                             onClick={() => setMenuOpenBlogId(b.blog_id)}
                           >
                             <MoreVertical className="h-4 w-4" />
-                          </button>
+                          </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent data-card-action="true" align="end" className="w-48">
                           <DropdownMenuItem data-card-action="true" asChild>
@@ -421,6 +417,7 @@ export default function DashboardPage() {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
+                    </div>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
