@@ -932,6 +932,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
         {blog.status === "scheduled" && (
           <>
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              Reschedule
+            </Button>
             <Button variant="outline" onClick={() => setPendingAction("unschedule")}>
               Unschedule
             </Button>
@@ -975,7 +978,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         </DialogContent>
       </Dialog>
 
-      <SchedulePublishDialog open={scheduleOpen} onOpenChange={setScheduleOpen} onConfirm={doSchedule} />
+      <SchedulePublishDialog open={scheduleOpen} onOpenChange={setScheduleOpen} onConfirm={doSchedule} defaultDate={blog?.scheduled_at ? new Date(blog.scheduled_at) : null} />
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );

@@ -514,12 +514,6 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived blogs cannot be scheduled"
     )
-
-    if db_blog.status == models.BlogStatus.SCHEDULED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot reschedule a scheduled blog"
-    )
     
     now = datetime.now(timezone.utc)
 

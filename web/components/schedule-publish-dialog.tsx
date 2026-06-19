@@ -30,17 +30,18 @@ export type SchedulePublishDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (isoUtc: string) => void | Promise<void>;
+  defaultDate?: Date | null;
 };
 
-export function SchedulePublishDialog({ open, onOpenChange, onConfirm }: SchedulePublishDialogProps) {
+export function SchedulePublishDialog({ open, onOpenChange, onConfirm, defaultDate }: SchedulePublishDialogProps) {
   const [scheduleAt, setScheduleAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setScheduleAt(defaultOpenValue());
+      setScheduleAt(defaultDate ? toDatetimeLocalValue(defaultDate) : defaultOpenValue());
     }
-  }, [open]);
+  }, [open, defaultDate]);
 
   const parsed = scheduleAt ? new Date(scheduleAt) : null;
   const isValidFuture = parsed != null && !Number.isNaN(parsed.getTime()) && isAfter(parsed, addMinutes(new Date(), 1));
