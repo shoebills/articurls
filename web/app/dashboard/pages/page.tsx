@@ -221,7 +221,7 @@ export default function PagesDashboardPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
                 <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-6 w-3/4" />
                       <Skeleton className="h-4 w-full" />
@@ -325,7 +325,7 @@ export default function PagesDashboardPage() {
                       className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <CardContent className="space-y-4 p-5 sm:p-6">
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-start gap-3">
                           <div className="min-w-0 flex-1 text-left space-y-1">
                             <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
                               {p.title || "Untitled"}

@@ -252,7 +252,7 @@ export default function DashboardPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
                 <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-start gap-4">
                     <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
                     <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-6 w-3/4" />
@@ -347,7 +347,7 @@ export default function DashboardPage() {
                 className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-start gap-4">
                     {resolveBlogPreviewImage(b) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
