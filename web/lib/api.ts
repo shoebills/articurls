@@ -21,7 +21,6 @@ import type {
   StorageUsage,
   AdminUserListItem,
   AdminPaymentListItem,
-  AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
   UmamiMetricsRow,
@@ -34,7 +33,6 @@ import type {
   UmamiTechResponse,
   UmamiRealtimeResponse,
   UserSettings,
-  UsernameChangeRequestOut,
 } from "./types";
 
 export type {
@@ -689,38 +687,6 @@ export async function adminListUsers(
   if (typeof params.limit === "number") query.set("limit", String(params.limit));
   if (typeof params.offset === "number") query.set("offset", String(params.offset));
   return apiFetch(`/admin/users?${query.toString()}`, { token });
-}
-
-export async function adminListUsernameChangeRequests(
-  token: string,
-  params: {
-    status?: "pending" | "approved" | "rejected";
-    q?: string;
-    sort?: "latest" | "oldest";
-    limit?: number;
-    offset?: number;
-  } = {}
-): Promise<AdminUsernameRequestListItem[]> {
-  const query = new URLSearchParams();
-  if (params.status) query.set("status", params.status);
-  if (params.q) query.set("q", params.q);
-  if (params.sort) query.set("sort", params.sort);
-  if (typeof params.limit === "number") query.set("limit", String(params.limit));
-  if (typeof params.offset === "number") query.set("offset", String(params.offset));
-  return apiFetch(`/admin/username-change-requests?${query.toString()}`, { token });
-}
-
-export async function adminReviewUsernameChangeRequest(
-  token: string,
-  requestId: number,
-  body: { status: "approved" | "rejected"; admin_note?: string }
-): Promise<UsernameChangeRequestOut> {
-  return apiFetch(`/admin/username-change-requests/${requestId}`, {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
 }
 
 export async function adminListPayments(

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from datetime import datetime, timezone
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
 
@@ -107,90 +106,6 @@ def admin_override_username(
     db.refresh(db_user)
     setattr(db_user, "is_admin", True)
     return db_user
-
-
-@router.get("/username-change-requests", status_code=status.HTTP_200_OK)
-def admin_list_username_change_requests(
-    status_filter: str = Query("pending", alias="status"),
-    q: str = Query(""),
-    sort: str = Query("latest", description="latest|oldest"),
-    limit: int = Query(50, ge=1, le=200),
-    offset: int = Query(0, ge=0),
-    db: Session = Depends(get_db),
-    current_user=Depends(_require_admin),
-):
-    query = db.query(models.UsernameChangeRequest, models.User).join(
-        models.User, models.User.user_id == models.UsernameChangeRequest.user_id
-    )
-    needle = q.strip().lower()
-    if needle:
-        query = query.filter(
-            or_(
-                func.lower(models.User.user_name).contains(needle),
-                func.lower(models.User.email).contains(needle),
-                func.lower(models.UsernameChangeRequest.desired_username).contains(needle),
-            )
-        )
-    if status_filter in {"pending", "approved", "rejected"}:
-        query = query.filter(models.UsernameChangeRequest.status == status_filter)
-    if sort == "oldest":
-        query = query.order_by(models.UsernameChangeRequest.created_at.asc())
-    else:
-        query = query.order_by(models.UsernameChangeRequest.created_at.desc())
-    rows = query.offset(offset).limit(limit).all()
-    return [
-        {
-            "request_id": req.request_id,
-            "user_id": req.user_id,
-            "user_name": usr.user_name,
-            "email": usr.email,
-            "desired_username": req.desired_username,
-            "reason": req.reason,
-            "status": req.status,
-            "admin_note": req.admin_note,
-            "reviewed_by_user_id": req.reviewed_by_user_id,
-            "created_at": req.created_at,
-        }
-        for req, usr in rows
-    ]
-
-
-@router.patch("/username-change-requests/{request_id}", response_model=user_schema.UsernameChangeRequestOut, status_code=status.HTTP_200_OK)
-def admin_review_username_change_request(
-    request_id: int,
-    payload: user_schema.UsernameChangeRequestReview,
-    db: Session = Depends(get_db),
-    current_user=Depends(_require_admin),
-):
-    row = db.query(models.UsernameChangeRequest).filter(models.UsernameChangeRequest.request_id == request_id).first()
-    if not row:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
-    if row.status != "pending":
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Request already reviewed")
-
-    row.status = payload.status
-    row.admin_note = (payload.admin_note or "").strip() or None
-    row.reviewed_by_user_id = current_user.user_id
-    row.reviewed_at = datetime.now(timezone.utc)
-
-    if payload.status == "approved":
-        target_user = db.query(models.User).filter(models.User.user_id == row.user_id).first()
-        if not target_user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-        apply_username_change_or_raise(
-            db,
-            db_user=target_user,
-            new_username_raw=row.desired_username,
-            actor_user_id=current_user.user_id,
-            actor_email=current_user.email,
-            request_context=RequestContext(ip=None, user_agent="admin_request_review"),
-            is_admin_override=True,
-            reason=f"request:{row.request_id}",
-        )
-
-    db.commit()
-    db.refresh(row)
-    return row
 
 
 @router.get("/payments", status_code=status.HTTP_200_OK)

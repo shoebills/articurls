@@ -110,7 +110,6 @@ export interface UserSettings {
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   site_footer_enabled: boolean;
-  username_change_count: number;
   last_username_change_at: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
@@ -127,17 +126,6 @@ export interface StorageUsage {
   used_bytes: number;
   limit_bytes: number | null;
   is_unlimited: boolean;
-}
-
-export interface UsernameChangeRequestOut {
-  request_id: number;
-  user_id: number;
-  desired_username: string;
-  reason: string | null;
-  status: "pending" | "approved" | "rejected";
-  admin_note: string | null;
-  reviewed_by_user_id: number | null;
-  created_at: string | null;
 }
 
 export interface AdminUserListItem {
@@ -159,11 +147,6 @@ export interface AdminPaymentListItem {
   status: string;
   dodo_payment_id: string | null;
   created_at: string | null;
-}
-
-export interface AdminUsernameRequestListItem extends UsernameChangeRequestOut {
-  user_name: string;
-  email: string;
 }
 
 export interface UserPage {
