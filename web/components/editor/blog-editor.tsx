@@ -698,7 +698,7 @@ export function BlogEditor({
   ];
 
   return (
-    <div className={cn("tiptap-editor rounded-lg border border-input bg-[#f4f4f4]", className)}>
+    <div className={cn("tiptap-editor rounded-lg border border-input bg-white", className)}>
       <span className="hidden" aria-hidden>
         {selectionTick}
       </span>

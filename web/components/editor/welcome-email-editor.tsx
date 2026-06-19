@@ -478,7 +478,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     <>
       <div
         className={cn(
-          "overflow-hidden rounded-lg border border-input bg-[#f4f4f4] shadow-sm",
+          "overflow-hidden rounded-lg border border-input bg-white shadow-sm",
           disabled && "pointer-events-none opacity-60",
           className
         )}
