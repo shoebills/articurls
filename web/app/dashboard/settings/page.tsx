@@ -395,7 +395,7 @@ export default function SettingsPage() {
             <Skeleton className="h-2.5 w-full rounded-full" />
           </CardContent>
         </Card>
-        <Card>
+        <Card id="pro-features">
           <CardHeader>
             <CardTitle className="text-xl">Pro features</CardTitle>
             <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
