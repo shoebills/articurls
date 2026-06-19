@@ -187,8 +187,8 @@ export default function PagesDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-[1100px]">
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center justify-between gap-3 sm:block">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your pages</h1>
           <Button
