@@ -336,18 +336,16 @@ export default function PagesDashboardPage() {
                           </div>
                             <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
                               <DropdownMenuTrigger asChild>
-                                <Button
+                                <button
                                   data-card-action="true"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                                  className="shrink-0 text-slate-400 hover:text-slate-600 transition-colors mt-0.5"
                                   aria-label={`Actions for ${p.title || "Untitled"}`}
                                   disabled={rowBusyId === p.page_id}
                                   onPointerDown={(e) => e.preventDefault()}
                                   onClick={() => setMenuOpenPageId(p.page_id)}
                                 >
                                   <MoreVertical className="h-4 w-4" />
-                                </Button>
+                                </button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent data-card-action="true" align="end" className="w-44">
                                 <DropdownMenuItem data-card-action="true" asChild>
