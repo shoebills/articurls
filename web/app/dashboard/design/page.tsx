@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -160,6 +160,7 @@ export default function DesignDashboardPage() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
+  const loadedRef = useRef(false);
   const [catCreateName, setCatCreateName] = useState("");
   const [catEditingId, setCatEditingId] = useState<number | null>(null);
   const [catEditingName, setCatEditingName] = useState("");
@@ -284,6 +285,12 @@ export default function DesignDashboardPage() {
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  useEffect(() => {
+    if (!loading && !loadedRef.current) {
+      loadedRef.current = true;
+    }
+  }, [loading]);
 
   async function saveDesign(next: DesignSettings) {
     if (!token) return;
@@ -421,6 +428,13 @@ export default function DesignDashboardPage() {
       setBusy(false);
     }
   }
+
+  useEffect(() => {
+    if (!loadedRef.current || !token) return;
+    const timer = setTimeout(() => saveBioSocials(), 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bio, socialLinks, token]);
 
   function addSocial() {
     if (!socialToAdd) return;
@@ -736,11 +750,6 @@ export default function DesignDashboardPage() {
               />
               <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
             </div>
-            <div className="pt-1.5 flex items-center gap-3">
-              <Button size="sm" onClick={saveBioSocials} disabled={busy}>
-                Save
-              </Button>
-            </div>
           </>
         ) : null}
 
@@ -873,11 +882,6 @@ export default function DesignDashboardPage() {
                   </Button>
                 )
               ) : null}
-              <div className="flex items-center gap-3">
-                <Button size="sm" onClick={saveBioSocials} disabled={busy}>
-                  Save
-                </Button>
-              </div>
             </div>
           </>
         ) : null}

@@ -219,44 +219,6 @@ export default function DashboardPage() {
     return filteredBlogs.slice(start, start + POSTS_PER_PAGE);
   }, [filteredBlogs, currentPage]);
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-[1100px]">
-        <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
-          <button className="hidden h-11 shrink-0 rounded-xl bg-slate-900 text-white sm:inline-flex items-center px-4 text-sm font-medium" disabled>+ New Post</button>
-        </div>
-        <div className="mb-4 flex items-center gap-2 sm:gap-3">
-          <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
-          <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-          <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
-        </div>
-        <ul className="space-y-4">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <li key={i}>
-              <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                <div className="flex items-start gap-4">
-                  <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
-                  <div className="min-w-0 flex-1 space-y-2">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </div>
-                  <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
-                </div>
-                <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-5 w-20 rounded-full" />
-                </div>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-[1100px]">
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -278,7 +240,39 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div className="mb-4 flex items-center gap-2 sm:gap-3">
+      {loading ? (
+        <>
+          <div className="mb-4 flex items-center gap-2 sm:gap-3">
+            <Skeleton className="h-12 flex-1 rounded-xl sm:h-11 sm:max-w-[42rem]" />
+            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+            <Skeleton className="h-12 w-20 rounded-xl sm:h-11" />
+          </div>
+          <ul className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i}>
+                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : (
+        <>
+          <div className="mb-4 flex items-center gap-2 sm:gap-3">
         <div className="relative min-w-0 flex-1 sm:max-w-[42rem]">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
           <Input
@@ -500,6 +494,8 @@ export default function DashboardPage() {
             <Link href="/dashboard/posts/new">+ New post</Link>
           </Button>
         </div>
+      )}
+        </>
       )}
 
       <Dialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
