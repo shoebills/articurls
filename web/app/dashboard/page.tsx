@@ -46,7 +46,7 @@ export default function DashboardPage() {
     if (!t) return [];
     const cached = getCachedApiData<BlogListItem[]>("/blog/", t);
     if (cached) {
-      return [...cached].sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      return [...cached].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     }
     return [];
   });
@@ -92,7 +92,7 @@ export default function DashboardPage() {
     setErr(null);
     try {
       const data = await listBlogs(token);
-      data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setBlogs(data);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load posts");
@@ -176,9 +176,9 @@ export default function DashboardPage() {
   const filteredBlogs = useMemo(() => {
     const compareBySort = (a: BlogListItem, b: BlogListItem) => {
       if (sortBy === "oldest") {
-        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     };
 
     const byStatus =

@@ -81,9 +81,9 @@ export default function PagesDashboardPage() {
   const filteredPages = useMemo(() => {
     const compareBySort = (a: UserPage, b: UserPage) => {
       if (sortBy === "oldest") {
-        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     };
 
     const byStatus =
