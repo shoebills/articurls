@@ -116,8 +116,6 @@ function ToolbarSection({
 
   const isDropdownActive = dropdown.some((a) => a.isActive(editor));
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const pointerStart = useRef<{ x: number; y: number } | null>(null);
-  const pointerMoved = useRef(false);
 
   return (
     <>
@@ -128,41 +126,18 @@ function ToolbarSection({
         <DropdownMenu
           modal={false}
           open={dropdownOpen}
-          onOpenChange={(open) => {
-            if (!open || !pointerMoved.current) {
-              setDropdownOpen(open);
-            }
-          }}
+          onOpenChange={setDropdownOpen}
         >
           <DropdownMenuTrigger
             asChild
-            onPointerDown={(e) => {
-              pointerStart.current = { x: e.clientX, y: e.clientY };
-              pointerMoved.current = false;
-            }}
-            onPointerMove={(e) => {
-              if (!pointerStart.current || pointerMoved.current) return;
-              const dx = Math.abs(e.clientX - pointerStart.current.x);
-              const dy = Math.abs(e.clientY - pointerStart.current.y);
-              if (dx > 10 || dy > 10) {
-                pointerMoved.current = true;
-              }
-            }}
-            onPointerUp={(e) => {
-              if (pointerMoved.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                setDropdownOpen(false);
-              }
-              pointerStart.current = null;
-              pointerMoved.current = false;
-            }}
+            onPointerDown={(e) => e.preventDefault()}
           >
             <Button
               type="button"
               variant={isDropdownActive ? "secondary" : "ghost"}
               size="icon"
               title={dropdownTooltip || "More options"}
+              onClick={() => setDropdownOpen((o) => !o)}
             >
               {dropdownIcon || <MoreHorizontal className="h-4 w-4" />}
             </Button>
@@ -322,8 +297,6 @@ export function BlogEditor({
 
   // Mobile swipe vs tap detection for heading dropdown
   const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
-  const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
-  const headingPointerMoved = useRef(false);
 
   // Dialog states
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
@@ -748,35 +721,11 @@ export function BlogEditor({
         <DropdownMenu
           modal={false}
           open={headingDropdownOpen}
-          onOpenChange={(open) => {
-            if (!open || !headingPointerMoved.current) {
-              setHeadingDropdownOpen(open);
-            }
-          }}
+          onOpenChange={setHeadingDropdownOpen}
         >
           <DropdownMenuTrigger
             asChild
-            onPointerDown={(e) => {
-              headingPointerStart.current = { x: e.clientX, y: e.clientY };
-              headingPointerMoved.current = false;
-            }}
-            onPointerMove={(e) => {
-              if (!headingPointerStart.current || headingPointerMoved.current) return;
-              const dx = Math.abs(e.clientX - headingPointerStart.current.x);
-              const dy = Math.abs(e.clientY - headingPointerStart.current.y);
-              if (dx > 10 || dy > 10) {
-                headingPointerMoved.current = true;
-              }
-            }}
-            onPointerUp={(e) => {
-              if (headingPointerMoved.current) {
-                e.preventDefault();
-                e.stopPropagation();
-                setHeadingDropdownOpen(false);
-              }
-              headingPointerStart.current = null;
-              headingPointerMoved.current = false;
-            }}
+            onPointerDown={(e) => e.preventDefault()}
           >
             <Button
               type="button"
@@ -784,6 +733,7 @@ export function BlogEditor({
               size="sm"
               className="h-8 w-12 px-1"
               title="Headings"
+              onClick={() => setHeadingDropdownOpen((o) => !o)}
             >
               {editor.isActive("heading", { level: 1 }) ? (
                 <Heading1 className="h-4 w-4 shrink-0" />

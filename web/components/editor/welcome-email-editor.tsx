@@ -338,11 +338,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const [linkHref, setLinkHref] = useState("https://");
   const [linkIsActive, setLinkIsActive] = useState(false);
   const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
-  const morePointerStart = useRef<{ x: number; y: number } | null>(null);
-  const morePointerMoved = useRef(false);
   const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
-  const headingPointerStart = useRef<{ x: number; y: number } | null>(null);
-  const headingPointerMoved = useRef(false);
 
   const emailButtonExtension = useMemo(() => createEmailButtonExtension(), []);
 
@@ -501,35 +497,11 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           <DropdownMenu
             modal={false}
             open={headingDropdownOpen}
-            onOpenChange={(open) => {
-              if (!open || !headingPointerMoved.current) {
-                setHeadingDropdownOpen(open);
-              }
-            }}
+            onOpenChange={setHeadingDropdownOpen}
           >
             <DropdownMenuTrigger
               asChild
-              onPointerDown={(e) => {
-                headingPointerStart.current = { x: e.clientX, y: e.clientY };
-                headingPointerMoved.current = false;
-              }}
-              onPointerMove={(e) => {
-                if (!headingPointerStart.current || headingPointerMoved.current) return;
-                const dx = Math.abs(e.clientX - headingPointerStart.current.x);
-                const dy = Math.abs(e.clientY - headingPointerStart.current.y);
-                if (dx > 10 || dy > 10) {
-                  headingPointerMoved.current = true;
-                }
-              }}
-              onPointerUp={(e) => {
-                if (headingPointerMoved.current) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setHeadingDropdownOpen(false);
-                }
-                headingPointerStart.current = null;
-                headingPointerMoved.current = false;
-              }}
+              onPointerDown={(e) => e.preventDefault()}
             >
               <Button
                 type="button"
@@ -537,6 +509,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
                 size="sm"
                 className="h-8 w-12 px-1"
                 title="Headings"
+                onClick={() => setHeadingDropdownOpen((o) => !o)}
               >
                 {editor.isActive("heading", { level: 2 }) ? (
                   <Heading2 className="h-4 w-4 shrink-0" />
@@ -617,35 +590,11 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           <DropdownMenu
             modal={false}
             open={moreDropdownOpen}
-            onOpenChange={(open) => {
-              if (!open || !morePointerMoved.current) {
-                setMoreDropdownOpen(open);
-              }
-            }}
+            onOpenChange={setMoreDropdownOpen}
           >
             <DropdownMenuTrigger
               asChild
-              onPointerDown={(e) => {
-                morePointerStart.current = { x: e.clientX, y: e.clientY };
-                morePointerMoved.current = false;
-              }}
-              onPointerMove={(e) => {
-                if (!morePointerStart.current || morePointerMoved.current) return;
-                const dx = Math.abs(e.clientX - morePointerStart.current.x);
-                const dy = Math.abs(e.clientY - morePointerStart.current.y);
-                if (dx > 10 || dy > 10) {
-                  morePointerMoved.current = true;
-                }
-              }}
-              onPointerUp={(e) => {
-                if (morePointerMoved.current) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  setMoreDropdownOpen(false);
-                }
-                morePointerStart.current = null;
-                morePointerMoved.current = false;
-              }}
+              onPointerDown={(e) => e.preventDefault()}
             >
               <Button
                 type="button"
@@ -656,6 +605,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
                 }
                 size="icon"
                 title="More options"
+                onClick={() => setMoreDropdownOpen((o) => !o)}
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
