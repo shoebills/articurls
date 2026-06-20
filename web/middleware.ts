@@ -6,8 +6,21 @@ import {
   withTenantHostHeader,
 } from "@/lib/request-host";
 
+function getApiHost(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return "";
+  try {
+    return new URL(apiUrl).hostname;
+  } catch {
+    return "";
+  }
+}
+
 /** Add security headers to responses serving HTML content */
 function withSecurityHeaders(response: NextResponse): NextResponse {
+  const apiHost = getApiHost();
+  const connectSrc = apiHost ? `'self' https://${apiHost}` : "'self'";
+
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +
@@ -15,7 +28,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' https: data: blob:; " +
       "font-src 'self'; " +
-      "connect-src 'self' https://api.articurls.com; " +
+      `connect-src ${connectSrc}; ` +
       "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
@@ -24,6 +37,10 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set(
     "Strict-Transport-Security",
     "max-age=31536000; includeSubDomains"
+  );
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()"
   );
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("X-Content-Type-Options", "nosniff");

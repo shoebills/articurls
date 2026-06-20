@@ -95,7 +95,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   return new Response(xml, {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600, stale-if-error=86400",
       "Vary": "Host, x-original-host, x-forwarded-host",
     },
   });

@@ -5,7 +5,6 @@ from ..config import settings
 celery = Celery(
     "articurls",
     broker=settings.redis_url,
-    backend=settings.redis_url
 )
 
 celery.conf.task_ignore_result = True

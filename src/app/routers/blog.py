@@ -12,10 +12,18 @@ from ..workers import tasks
 from ..storage.service import save_media, delete_media
 from ..cache.service import purge_blog_post
 from ..config import settings
+from ..utils.rate_limit import check_rate_limit_user
 from typing import List
 import secrets
 from slugify import slugify
 from datetime import datetime, timezone
+
+_BLOG_CREATE_LIMIT = 50
+_BLOG_UPLOAD_LIMIT = 120
+_BLOG_UPDATE_LIMIT = 50
+_BLOG_PUBLISH_LIMIT = 30
+_BLOG_DELETE_LIMIT = 20
+_BLOG_RATE_WINDOW = 60
 
 
 def _attach_category_ids(db: Session, db_blog):
@@ -36,6 +44,7 @@ router = APIRouter(
 
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-create", current_user.user_id, _BLOG_CREATE_LIMIT, _BLOG_RATE_WINDOW)
 
     # Meta
     if request.meta_title is not None:
@@ -109,6 +118,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
 async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
@@ -152,6 +162,7 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
 
 @router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
 def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
@@ -184,10 +195,12 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
 @router.delete("/{id}/media", status_code=status.HTTP_200_OK)
 def delete_blog_media_by_url(
     id: int,
-    url: str = Query(...),
+    url: str = Query(..., description="URL of the media to delete"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
+
     db_blog = (
         db.query(models.Blog)
         .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
@@ -223,6 +236,7 @@ def delete_blog_media_by_url(
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -312,6 +326,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
 def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -349,6 +364,7 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -427,6 +443,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -472,6 +489,7 @@ def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -584,6 +602,8 @@ def assign_blog_categories(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+
     db_blog = db.query(models.Blog).filter(
         models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id
     ).first()

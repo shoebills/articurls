@@ -76,7 +76,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
   return new Response(xml, {
     headers: {
       "Content-Type": "application/rss+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600, stale-if-error=86400",
     },
   });
 }

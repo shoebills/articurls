@@ -87,20 +87,22 @@ export async function refreshAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+const API_CACHE_TTL_MS = 60_000;
+
 const apiCache = new Map<string, { data: unknown; timestamp: number }>();
 
 export function apiCacheHas(path: string, token?: string | null): boolean {
   if (typeof window === "undefined") return false;
   const key = `GET:${path}:${token || ""}`;
   const cached = apiCache.get(key);
-  return !!(cached && Date.now() - cached.timestamp < 60000);
+  return !!(cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS);
 }
 
 export function getCachedApiData<T>(path: string, token?: string | null): T | null {
   if (typeof window === "undefined") return null;
   const key = `GET:${path}:${token || ""}`;
   const cached = apiCache.get(key);
-  if (cached && Date.now() - cached.timestamp < 60000) {
+  if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
     return cached.data as T;
   }
   return null;
@@ -118,7 +120,7 @@ export async function apiFetch<T>(
 
   if (!disableCache && method === "GET" && typeof window !== "undefined") {
     const cached = apiCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 60000) {
+    if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
       return cached.data as T;
     }
   }

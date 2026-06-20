@@ -85,7 +85,7 @@ async function customDomainRobots(host: string): Promise<Response> {
     return new Response(DISALLOW_ALL, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=300",
+        "Cache-Control": "public, max-age=300, stale-if-error=86400",
         "Vary": "x-original-host",
       },
     });
@@ -174,7 +174,7 @@ Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800, stale-if-error=86400",
       "Vary": "Host",
     },
   });
@@ -194,7 +194,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     return new Response(DISALLOW_ALL, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "public, max-age=86400",
+        "Cache-Control": "public, max-age=86400, stale-if-error=86400",
         "Vary": "Host",
       },
     });

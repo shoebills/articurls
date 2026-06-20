@@ -79,6 +79,7 @@ def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), re
         httponly=True,
         secure=True, # assumes HTTPS
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
@@ -118,6 +119,7 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
         httponly=True,
         secure=True,
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
@@ -132,7 +134,7 @@ def logout(request: Request, response: Response):
     if refresh_token:
         oauth2.revoke_refresh_token(refresh_token)
         
-    response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="lax")
+    response.delete_cookie(key="refresh_token", httponly=True, secure=True, samesite="lax", path="/")
     return {"message": "Logged out successfully"}
 
 @router.post("/request-password-reset")

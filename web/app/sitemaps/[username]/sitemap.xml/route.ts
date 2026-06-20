@@ -118,7 +118,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
   return new Response(buildXml(entries), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600, stale-if-error=86400",
     },
   });
 }

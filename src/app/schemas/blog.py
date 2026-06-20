@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 from ..models import BlogStatus
@@ -14,8 +14,8 @@ class BlogMediaOut(BaseModel):
 
 
 class CreateBlog(BaseModel):
-    title: str
-    content: str
+    title: str = Field(..., max_length=300)
+    content: str = Field(..., max_length=500_000)
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -71,8 +71,8 @@ class PublicBlogs(PublicBlog):
 
 
 class UpdateBlog(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
+    title: Optional[str] = Field(None, max_length=300)
+    content: Optional[str] = Field(None, max_length=500_000)
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

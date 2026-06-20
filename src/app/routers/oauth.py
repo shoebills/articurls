@@ -369,6 +369,7 @@ async def complete_google_signup(
         httponly=True,
         secure=True,
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
@@ -417,6 +418,7 @@ async def _login_existing_user(
         httponly=True,
         secure=True,
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     

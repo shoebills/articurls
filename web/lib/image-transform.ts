@@ -12,6 +12,8 @@ interface TransformOptions {
   fit?: "contain" | "cover" | "scale-down" | "fill";
 }
 
+const IMAGE_CDN_HOST = "images.articurls.com";
+
 const DEFAULT_OPTIONS: TransformOptions = {
   width: 600,
   quality: 85,
@@ -49,7 +51,7 @@ export function transformImageUrl(
     const url = new URL(originalUrl);
 
     // If it's already the new custom domain, transform it
-    if (url.hostname === "images.articurls.com") {
+    if (url.hostname === IMAGE_CDN_HOST) {
       const transforms = [
         `format=${mergedOptions.format}`,
         `width=${mergedOptions.width}`,
@@ -58,7 +60,7 @@ export function transformImageUrl(
         `fit=${mergedOptions.fit}`,
       ].join(",");
 
-      return `https://images.articurls.com/cdn-cgi/image/${transforms}${url.pathname}`;
+      return `https://${IMAGE_CDN_HOST}/cdn-cgi/image/${transforms}${url.pathname}`;
     }
 
     // If it's the old pub-xxx.r2.dev, we need to convert to new domain
@@ -72,7 +74,7 @@ export function transformImageUrl(
       ].join(",");
 
       // Map old URL to new custom domain
-      return `https://images.articurls.com/cdn-cgi/image/${transforms}${url.pathname}`;
+      return `https://${IMAGE_CDN_HOST}/cdn-cgi/image/${transforms}${url.pathname}`;
     }
 
     return originalUrl;
@@ -94,7 +96,7 @@ export function generateSrcSet(
 
   const isR2Url =
     originalUrl.includes("r2.dev") ||
-    originalUrl.includes("images.articurls.com");
+    originalUrl.includes(IMAGE_CDN_HOST);
 
   if (!isR2Url) {
     return originalUrl;
@@ -128,7 +130,10 @@ export function transformHtmlImages(
 
   // Match img tags with src attributes containing R2 URLs
   return html.replace(
-    /<img([^>]*)\ssrc=["'](https:\/\/[^"']*(?:r2\.dev|images\.articurls\.com)[^"']*)["']([^>]*)>/gi,
+    new RegExp(
+      `<img([^>]*)\\ssrc=["'](https:\\/\\/[^"']*(?:r2\\.dev|${IMAGE_CDN_HOST.replace(/\./g, "\\.")})[^"']*)["']([^>]*)>`,
+      "gi",
+    ),
     (match, beforeSrc, imageUrl, afterSrc) => {
       const transformedUrl = transformImageUrl(imageUrl, options);
 
