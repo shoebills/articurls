@@ -11,21 +11,29 @@ from ..redis_client import redis_client
 class DynamicCORSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         origin = request.headers.get("origin")
+
+        if request.method == "OPTIONS" and origin:
+            return self._preflight_response(origin)
+
         response: Response = await call_next(request)
 
-        if not origin:
-            return response
-
-        allowed = _is_origin_allowed(origin)
-
-        if allowed:
+        if origin and _is_origin_allowed(origin):
             response.headers["Access-Control-Allow-Origin"] = origin
             response.headers["Access-Control-Allow-Credentials"] = "true"
-            if request.method == "OPTIONS":
-                response.headers["Access-Control-Allow-Methods"] = "*"
-                response.headers["Access-Control-Allow-Headers"] = "*"
 
         return response
+
+    def _preflight_response(self, origin: str) -> Response:
+        if not _is_origin_allowed(origin):
+            return Response(status_code=200)
+
+        headers = {
+            "Access-Control-Allow-Origin": origin,
+            "Access-Control-Allow-Credentials": "true",
+            "Access-Control-Allow-Methods": "*",
+            "Access-Control-Allow-Headers": "*",
+        }
+        return Response(status_code=200, headers=headers)
 
 
 def _is_origin_allowed(origin: str) -> bool:
