@@ -60,7 +60,7 @@ export async function GET(_req: NextRequest): Promise<Response> {
   return new Response(buildXml(entries), {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=900, stale-while-revalidate=3600, stale-if-error=86400",
+      "Cache-Control": "public, max-age=900, stale-while-revalidate=3600",
     },
   });
 }

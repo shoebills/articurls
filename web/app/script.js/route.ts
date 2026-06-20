@@ -29,7 +29,7 @@ export async function GET() {
     } else {
       headers.set("Content-Type", "application/javascript; charset=utf-8");
     }
-    headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800, stale-if-error=86400");
+    headers.set("Cache-Control", "public, max-age=86400, stale-while-revalidate=604800");
 
     return new Response(body, { status: 200, headers });
   } catch {
