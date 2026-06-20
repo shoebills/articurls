@@ -19,6 +19,7 @@ from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import (
     FREE_STORAGE_LIMIT_BYTES,
+    _verify_magic_bytes,
     ensure_user_storage_quota,
     get_user_storage_usage_bytes,
     save_image_local,
@@ -600,7 +601,7 @@ async def upload_favicon(
     ensure_user_storage_quota(db, current_user.user_id, len(data))
 
     from uuid import uuid4
-    from ..storage.service import _get_storage_provider, _ext_from_content_type, _verify_magic_bytes, StoredMedia
+    from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
 
     ext_map = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico"}
     ext = ext_map.get(content_type, _ext_from_content_type(content_type))
