@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 class Login(BaseModel):
     username: str
@@ -18,4 +18,4 @@ class ResendVerificationEmail(BaseModel):
 
 class ResetPassword(BaseModel):
     token: str
-    new_password: str
+    new_password: str = Field(..., min_length=8)

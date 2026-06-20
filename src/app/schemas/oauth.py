@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 
 class GoogleUserInfo(BaseModel):
@@ -25,5 +25,5 @@ class CompleteGoogleSignup(BaseModel):
     """Request body for completing Google OAuth signup."""
     session_id: str
     user_name: str
-    password: str
+    password: str = Field(..., min_length=8)
     name: str  # Allow user to edit the name from Google

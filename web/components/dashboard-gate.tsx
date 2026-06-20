@@ -7,20 +7,20 @@ import { useAuth } from "@/lib/auth-context";
 export function DashboardGate({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
   const router = useRouter();
-  const [hasAccessToken, setHasAccessToken] = useState(false);
+  const [hasOAuthCode, setHasOAuthCode] = useState(false);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      setHasAccessToken(!!params.get("access_token"));
+      setHasOAuthCode(!!params.get("code"));
     }
   }, []);
 
   useEffect(() => {
     if (loading) return;
-    if (hasAccessToken) return;
+    if (hasOAuthCode) return;
     if (!token) router.replace("/login");
-  }, [token, loading, router, hasAccessToken]);
+  }, [token, loading, router, hasOAuthCode]);
 
   return <>{children}</>;
 }

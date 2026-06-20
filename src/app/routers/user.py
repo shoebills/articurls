@@ -39,14 +39,20 @@ from ..utils import (
     public_blog_home_url,
 )
 from ..cache.service import purge_entire_tenant, purge_homepage
+from ..utils.rate_limit import check_rate_limit_ip
 
 router = APIRouter(
     tags=["User"],
     prefix="/user"
 )
 
+_SIGNUP_IP_LIMIT = 5
+_SIGNUP_IP_WINDOW = 3600  # 1 hour
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, req: Request, db: Session = Depends(get_db)):
+
+    check_rate_limit_ip(req, "signup", _SIGNUP_IP_LIMIT, _SIGNUP_IP_WINDOW)
 
     email = normalize_email(str(request.email))
     user_name = validate_username_or_raise(request.user_name)

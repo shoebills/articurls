@@ -9,25 +9,46 @@ from ..security import hashing, oauth2
 from ..config import settings
 from ..email.service import send_password_reset, send_verify_new_user
 from ..utils import normalize_email
+from ..utils.rate_limit import check_rate_limit_ip_and_email
 from fastapi.responses import RedirectResponse
 
 router = APIRouter(
     tags=["Authentication"]
 )
 
-@router.post("/login", response_model=token.Token)
-def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+_LOGIN_IP_LIMIT = 20
+_LOGIN_IP_WINDOW = 900        # 15 minutes
+_LOGIN_EMAIL_LIMIT = 10
+_LOGIN_EMAIL_WINDOW = 900     # 15 minutes
 
-    db_user = user_by_email(db, request.username)
+_PW_RESET_IP_LIMIT = 5
+_PW_RESET_IP_WINDOW = 600     # 10 minutes
+_PW_RESET_EMAIL_LIMIT = 3
+_PW_RESET_EMAIL_WINDOW = 3600 # 1 hour
+
+
+@router.post("/login", response_model=token.Token)
+def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), req: Request = None, db: Session = Depends(get_db)):
+
+    email = normalize_email(request.username)
+
+    if req:
+        check_rate_limit_ip_and_email(
+            req, "login", email,
+            _LOGIN_IP_LIMIT, _LOGIN_IP_WINDOW,
+            _LOGIN_EMAIL_LIMIT, _LOGIN_EMAIL_WINDOW,
+        )
+
+    db_user = user_by_email(db, email)
     
     if not db_user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect")
     
     if not hashing.verify_password(request.password, db_user.password):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect")
     
     if not db_user.email_verified:
@@ -99,9 +120,18 @@ def logout(request: Request, response: Response):
     return {"message": "Logged out successfully"}
 
 @router.post("/request-password-reset")
-def request_password_reset(request: authentication.RequestPasswordReset, db: Session = Depends(get_db),):
+def request_password_reset(request: authentication.RequestPasswordReset, req: Request, db: Session = Depends(get_db)):
 
-    db_user = user_by_email(db, request.email)
+    email = normalize_email(str(request.email))
+
+    if req:
+        check_rate_limit_ip_and_email(
+            req, "pwreset", email,
+            _PW_RESET_IP_LIMIT, _PW_RESET_IP_WINDOW,
+            _PW_RESET_EMAIL_LIMIT, _PW_RESET_EMAIL_WINDOW,
+        )
+
+    db_user = user_by_email(db, email)
 
     if db_user:
         reset_token = oauth2.create_reset_password_token(db_user.email)

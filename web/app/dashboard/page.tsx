@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
+import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, exchangeOAuthCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiCacheHas, getCachedApiData } from "@/lib/api";
@@ -71,20 +71,19 @@ export default function DashboardPage() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
 
-  // Handle access token from OAuth callback (for existing user login)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("access_token");
+    const oauthCode = params.get("code");
     
-    if (accessToken) {
-      // Store token
-      localStorage.setItem("articurls_token", accessToken);
-      // Remove token from URL
+    if (oauthCode) {
       const url = new URL(window.location.href);
-      url.searchParams.delete("access_token");
+      url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
-      // Reload page to let auth context pick up the token
-      window.location.reload();
+      exchangeOAuthCode(oauthCode).then(() => {
+        window.location.reload();
+      }).catch(() => {
+        router.replace("/login?error=oauth_failed");
+      });
     }
   }, []);
 

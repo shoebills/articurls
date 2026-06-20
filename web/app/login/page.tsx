@@ -10,7 +10,7 @@ import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiError, resendVerificationEmail } from "@/lib/api";
+import { ApiError, resendVerificationEmail, exchangeOAuthCode } from "@/lib/api";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 import { API_URL } from "@/lib/env";
@@ -47,18 +47,17 @@ function LoginForm() {
     }
   }, [searchParams]);
 
-  // Handle access token from OAuth callback
   useEffect(() => {
-    const accessToken = searchParams.get("access_token");
-    if (accessToken) {
-      // Store token using the same key as password login
-      localStorage.setItem("articurls_token", accessToken);
-      // Remove token from URL
+    const oauthCode = searchParams.get("code");
+    if (oauthCode) {
       const url = new URL(window.location.href);
-      url.searchParams.delete("access_token");
+      url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
-      // Redirect to dashboard - auth context will pick up the token
-      router.replace("/dashboard");
+      exchangeOAuthCode(oauthCode).then(() => {
+        router.replace("/dashboard");
+      }).catch(() => {
+        router.replace("/login?error=oauth_failed");
+      });
     }
   }, [searchParams, router]);
 

@@ -224,6 +224,22 @@ export async function signup(data: {
   });
 }
 
+export async function exchangeOAuthCode(code: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/exchange-token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) {
+    throw new ApiError(await parseError(res), res.status);
+  }
+  const data = await res.json() as TokenResponse;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("articurls_token", data.access_token);
+  }
+  return data.access_token;
+}
+
 export async function completeGoogleSignup(data: {
   session_id: string;
   user_name: string;
