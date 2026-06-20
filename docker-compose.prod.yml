@@ -13,7 +13,7 @@ services:
 
   redis:
     image: redis:7
-    command: ["redis-server", "--appendonly", "yes"]
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory-policy", "allkeys-lru", "--maxmemory", "512mb"]
     restart: unless-stopped
     volumes:
       - redis_data:/data

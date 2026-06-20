@@ -109,14 +109,13 @@ async def google_callback(
         error_url = f"{settings.app_base_url}/login?error=invalid_request"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
-    # Validate state token (CSRF protection)
-    if not validate_state_token(state):
+    state_valid, code_verifier = validate_state_token(state)
+    if not state_valid:
         error_url = f"{settings.app_base_url}/login?error=invalid_state"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
     try:
-        # Exchange code for access token
-        token_response = await exchange_code_for_token(code, settings.google_redirect_uri)
+        token_response = await exchange_code_for_token(code, settings.google_redirect_uri, code_verifier)
         access_token = token_response.get("access_token")
         
         if not access_token:
@@ -358,7 +357,7 @@ async def complete_google_signup(
 
     # Issue tokens
     access_token = oauth2.create_access_token(
-        data={"sub": new_user.email},
+        data={"sub": new_user.email, "ver": new_user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
@@ -396,7 +395,7 @@ async def _login_existing_user(
         RedirectResponse: Redirect to dashboard with tokens
     """
     access_token = oauth2.create_access_token(
-        data={"sub": user.email},
+        data={"sub": user.email, "ver": user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     

@@ -12,6 +12,20 @@ ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
 FREE_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024  # 1GB
 
+_MAGIC_BYTES: dict[str, tuple[bytes, ...]] = {
+    "image/jpeg": (b"\xff\xd8\xff",),
+    "image/png": (b"\x89PNG\r\n\x1a\n",),
+    "image/webp": (b"RIFF",),
+    "image/x-icon": (b"\x00\x00\x01\x00",),
+}
+
+
+def _verify_magic_bytes(data: bytes, content_type: str) -> bool:
+    sigs = _MAGIC_BYTES.get(content_type)
+    if sigs is None:
+        return False
+    return any(data.startswith(sig) for sig in sigs)
+
 
 @dataclass
 class StoredMedia:
@@ -98,6 +112,11 @@ def _validate_image_upload(file: UploadFile, data: bytes) -> None:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Image too large (max 2MB)",
+        )
+    if not _verify_magic_bytes(data, content_type):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content does not match the claimed image type",
         )
 
 

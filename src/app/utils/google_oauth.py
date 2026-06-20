@@ -1,3 +1,6 @@
+import base64
+import hashlib
+import json
 import secrets
 from typing import Dict, Any
 from authlib.integrations.starlette_client import OAuth
@@ -29,16 +32,18 @@ def generate_state_token() -> str:
     return secrets.token_urlsafe(32)
 
 
-def store_state_token(state: str, ttl: int = 1800) -> None:
+def store_state_token(state: str, ttl: int = 1800, code_verifier: str | None = None) -> None:
     """
     Store state token in Redis with TTL for validation.
-    
+
     Args:
         state: The state token to store
         ttl: Time to live in seconds (default: 30 minutes)
+        code_verifier: Optional PKCE code verifier to store alongside the state
     """
+    value = json.dumps({"valid": True, "code_verifier": code_verifier})
     try:
-        redis_client.set(f"oauth_state:{state}", "valid", ex=ttl)
+        redis_client.set(f"oauth_state:{state}", value, ex=ttl)
     except Exception as e:
         print(f"[OAuth] Redis error during state storage: {e}")
         import traceback
@@ -46,80 +51,102 @@ def store_state_token(state: str, ttl: int = 1800) -> None:
         raise
 
 
-def validate_state_token(state: str) -> bool:
+def validate_state_token(state: str) -> tuple[bool, str | None]:
     """
-    Validate state token from Redis.
+    Validate state token from Redis and return the stored code verifier.
 
     Args:
         state: The state token to validate
 
     Returns:
-        bool: True if valid, False otherwise
+        tuple: (is_valid, code_verifier_or_none)
     """
     key = f"oauth_state:{state}"
     try:
-        return redis_client.get(key) is not None
+        raw = redis_client.get(key)
+        if raw is None:
+            return False, None
+        data = json.loads(raw)
+        return True, data.get("code_verifier")
     except Exception as e:
         print(f"[OAuth] Redis error during state validation: {e}")
         import traceback
         print(f"[OAuth] Traceback: {traceback.format_exc()}")
-        return False
+        return False, None
+
+
+def generate_code_verifier() -> str:
+    return base64.urlsafe_b64encode(secrets.token_bytes(32)).rstrip(b"=").decode()
+
+
+def compute_code_challenge(verifier: str) -> str:
+    digest = hashlib.sha256(verifier.encode()).digest()
+    return base64.urlsafe_b64encode(digest).rstrip(b"=").decode()
 
 
 def get_authorization_url(redirect_uri: str) -> tuple[str, str]:
     """
-    Generate Google OAuth authorization URL with state token.
-    
+    Generate Google OAuth authorization URL with state token and PKCE.
+
     Args:
         redirect_uri: The callback URL for OAuth redirect
-        
+
     Returns:
         tuple: (authorization_url, state_token)
     """
     state = generate_state_token()
-    store_state_token(state)
-    
-    # Build authorization URL
+    code_verifier = generate_code_verifier()
+    code_challenge = compute_code_challenge(code_verifier)
+    store_state_token(state, code_verifier=code_verifier)
+
+    from urllib.parse import quote
+
     authorization_url = (
         f"https://accounts.google.com/o/oauth2/v2/auth?"
         f"client_id={settings.google_client_id}&"
-        f"redirect_uri={redirect_uri}&"
+        f"redirect_uri={quote(redirect_uri, safe='')}&"
         f"response_type=code&"
         f"scope=openid%20email%20profile&"
         f"state={state}&"
+        f"code_challenge={code_challenge}&"
+        f"code_challenge_method=S256&"
         f"access_type=offline&"
         f"prompt=consent"
     )
-    
+
     return authorization_url, state
 
 
-async def exchange_code_for_token(code: str, redirect_uri: str) -> Dict[str, Any]:
+async def exchange_code_for_token(code: str, redirect_uri: str, code_verifier: str | None = None) -> Dict[str, Any]:
     """
     Exchange authorization code for access token.
-    
+
     Args:
         code: Authorization code from Google
         redirect_uri: The same redirect URI used in authorization
-        
+        code_verifier: Optional PKCE code verifier
+
     Returns:
         dict: Token response from Google
-        
+
     Raises:
         Exception: If token exchange fails
     """
     import httpx
-    
+
     token_url = "https://oauth2.googleapis.com/token"
-    
-    data = {
+
+    data: dict[str, str] = {
         "code": code,
         "client_id": settings.google_client_id,
         "client_secret": settings.google_client_secret,
         "redirect_uri": redirect_uri,
         "grant_type": "authorization_code",
     }
-    
+
+    if code_verifier:
+        data["code_verifier"] = code_verifier
+
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(token_url, data=data)

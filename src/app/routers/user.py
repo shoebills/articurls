@@ -564,7 +564,7 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
 
 
 FAVICON_MAX_BYTES = 256 * 1024  # 256KB
-FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon", "image/svg+xml"}
+FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon"}
 
 
 @router.post("/me/favicon", status_code=status.HTTP_200_OK)
@@ -585,19 +585,24 @@ async def upload_favicon(
     if content_type not in FAVICON_ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only png, jpg, webp, ico, and svg images are allowed for favicons.",
+            detail="Only png, jpg, webp, and ico images are allowed for favicons.",
         )
     if len(data) > FAVICON_MAX_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Favicon too large (max 256KB).",
         )
+    if not _verify_magic_bytes(data, content_type):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content does not match the claimed image type",
+        )
     ensure_user_storage_quota(db, current_user.user_id, len(data))
 
     from uuid import uuid4
-    from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
+    from ..storage.service import _get_storage_provider, _ext_from_content_type, _verify_magic_bytes, StoredMedia
 
-    ext_map = {**dict.fromkeys(["image/png"], ".png"), "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico", "image/svg+xml": ".svg"}
+    ext_map = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico"}
     ext = ext_map.get(content_type, _ext_from_content_type(content_type))
     filename = f"{uuid4().hex}{ext}"
     storage_key = f"favicons/{current_user.user_id}/{filename}"

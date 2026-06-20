@@ -9,7 +9,7 @@ from ..security import hashing, oauth2
 from ..config import settings
 from ..email.service import send_password_reset, send_verify_new_user
 from ..utils import normalize_email
-from ..utils.rate_limit import check_rate_limit_ip_and_email
+from ..utils.rate_limit import check_rate_limit_ip_and_email, check_rate_limit_ip
 from fastapi.responses import RedirectResponse
 
 router = APIRouter(
@@ -25,6 +25,17 @@ _PW_RESET_IP_LIMIT = 5
 _PW_RESET_IP_WINDOW = 600     # 10 minutes
 _PW_RESET_EMAIL_LIMIT = 3
 _PW_RESET_EMAIL_WINDOW = 3600 # 1 hour
+
+_REFRESH_IP_LIMIT = 30
+_REFRESH_IP_WINDOW = 60       # 1 minute
+
+_PW_RESET_VERIFY_IP_LIMIT = 10
+_PW_RESET_VERIFY_IP_WINDOW = 900  # 15 minutes
+
+_RESEND_VERIFY_IP_LIMIT = 5
+_RESEND_VERIFY_IP_WINDOW = 600     # 10 minutes
+_RESEND_VERIFY_EMAIL_LIMIT = 3
+_RESEND_VERIFY_EMAIL_WINDOW = 3600 # 1 hour
 
 
 @router.post("/login", response_model=token.Token)
@@ -55,9 +66,8 @@ def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), re
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email not verified. Check your mailbox for email verification link")
-    
     access_token = oauth2.create_access_token(
-        data={"sub": db_user.email},
+        data={"sub": db_user.email, "ver": db_user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
@@ -77,8 +87,11 @@ def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), re
         "token_type": "bearer"
     }
 
+
 @router.post("/refresh", response_model=token.Token)
-def refresh(request: Request, response: Response):
+def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
+    check_rate_limit_ip(request, "refresh", _REFRESH_IP_LIMIT, _REFRESH_IP_WINDOW)
+
     refresh_token = request.cookies.get("refresh_token")
     if not refresh_token:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Refresh token missing")
@@ -86,11 +99,14 @@ def refresh(request: Request, response: Response):
     payload = oauth2.verify_refresh_token(refresh_token)
     email = payload.get("sub")
     
-    # Revoke old refresh token
+    db_user = user_by_email(db, email)
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
     oauth2.revoke_refresh_token(refresh_token)
     
     new_access_token = oauth2.create_access_token(
-        data={"sub": email},
+        data={"sub": email, "ver": db_user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
@@ -140,8 +156,15 @@ def request_password_reset(request: authentication.RequestPasswordReset, req: Re
     return {"message": "If the email exists, you will receive a reset token shortly."}
 
 @router.post("/resend-verification-email")
-def resend_verification_email(request: authentication.ResendVerificationEmail, db: Session = Depends(get_db)):
+def resend_verification_email(request: authentication.ResendVerificationEmail, req: Request, db: Session = Depends(get_db)):
     email = normalize_email(str(request.email))
+
+    check_rate_limit_ip_and_email(
+        req, "resend-verify", email,
+        _RESEND_VERIFY_IP_LIMIT, _RESEND_VERIFY_IP_WINDOW,
+        _RESEND_VERIFY_EMAIL_LIMIT, _RESEND_VERIFY_EMAIL_WINDOW,
+    )
+
     db_user = user_by_email(db, email)
 
     if db_user and not db_user.email_verified:
@@ -151,7 +174,8 @@ def resend_verification_email(request: authentication.ResendVerificationEmail, d
     return {"message": "If your account exists and is not yet verified, a new verification link has been sent."}
 
 @router.post("/reset-password")
-def reset_password(request: authentication.ResetPassword, db: Session = Depends(get_db)):
+def reset_password(request: authentication.ResetPassword, req: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(req, "pwreset-verify", _PW_RESET_VERIFY_IP_LIMIT, _PW_RESET_VERIFY_IP_WINDOW)
 
     try:
         payload = oauth2.verify_reset_password_token(request.token)
@@ -164,6 +188,7 @@ def reset_password(request: authentication.ResetPassword, db: Session = Depends(
         raise HTTPException(status_code=404, detail="User not found")
 
     db_user.password = hashing.get_password_hash(request.new_password)
+    db_user.token_version += 1
     db.commit()
 
     return {"message": "Password updated successfully"}

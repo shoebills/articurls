@@ -37,6 +37,7 @@ class User(Base):
     profile_image_url = Column(String, nullable=True)
     favicon_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
+    token_version = Column(Integer, nullable=False, default=0)
 
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
