@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
 from datetime import datetime, timezone
+import re
 import secrets
 from .. import models
 from ..database import get_db
@@ -150,8 +151,6 @@ def _validate_publishable_page(db_page: models.UserPage) -> None:
             detail="Title is required to publish",
         )
 
-    import re
-
     content_text = re.sub(r"<[^>]+>", "", db_page.content or "").strip()
     if not content_text:
         raise HTTPException(
@@ -269,6 +268,21 @@ def update_page(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
 
     update_data = request.model_dump(exclude_unset=True)
+
+    is_locked = db_page.status in (models.PageStatus.PUBLISHED, models.PageStatus.ARCHIVED)
+    if is_locked:
+        if "title" in update_data and not (update_data["title"] or "").strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Title cannot be empty.",
+            )
+        if "content" in update_data:
+            content_stripped = re.sub(r"<[^>]+>", "", update_data["content"] or "").strip()
+            if not content_stripped:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Content cannot be empty.",
+                )
 
     slug_in = update_data.pop("slug", None)
     if slug_in is not None:

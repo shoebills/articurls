@@ -17,6 +17,7 @@ from typing import List
 import secrets
 from slugify import slugify
 from datetime import datetime, timezone
+import re
 
 _BLOG_CREATE_LIMIT = 50
 _BLOG_UPLOAD_LIMIT = 120
@@ -251,6 +252,21 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
 
     update_data = request.model_dump(exclude_unset=True)
 
+    is_locked = db_blog.status in (models.BlogStatus.PUBLISHED, models.BlogStatus.SCHEDULED, models.BlogStatus.ARCHIVED)
+    if is_locked:
+        if "title" in update_data and not (update_data["title"] or "").strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Title cannot be empty.",
+            )
+        if "content" in update_data:
+            content_stripped = re.sub(r"<[^>]+>", "", update_data["content"] or "").strip()
+            if not content_stripped:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Content cannot be empty.",
+                )
+
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
 
@@ -385,7 +401,6 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
         )
     
     # Check if content is empty (strip HTML tags and whitespace)
-    import re
     content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
     if not content_text:
         raise HTTPException(
@@ -513,7 +528,6 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
         )
     
     # Check if content is empty (strip HTML tags and whitespace)
-    import re
     content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
     if not content_text:
         raise HTTPException(
