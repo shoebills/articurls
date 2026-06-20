@@ -6,6 +6,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Users } from "lucide-react";
 
 const links = [
@@ -31,7 +32,7 @@ type PanelProps = {
 
 export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, loading } = useAuth();
 
   const linkItems = links.map(({ href, label, icon: Icon }) => {
     const active =
@@ -63,55 +64,66 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
         mobileTrayLayout && "mt-[20px] -mx-2.5"
       )}
     >
-      <div className="mb-2 flex flex-col gap-1.5">
-        <div className="group relative">
+      {loading ? (
+        <div className="flex flex-col gap-2.5">
+          <Skeleton className="h-9 w-full rounded-lg" />
+          <Skeleton className="h-9 w-full rounded-lg" />
+          <Skeleton className="h-3 w-32" />
+          <Skeleton className="mt-1 h-9 w-full rounded-lg" />
+        </div>
+      ) : (
+        <>
+          <div className="mb-2 flex flex-col gap-1.5">
+            <div className="group relative">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                asChild
+                className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+              >
+                <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
+                  <Bug className="h-4 w-4" />
+                  Report a bug
+                </a>
+              </Button>
+              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                bugs@articurls.com
+              </span>
+            </div>
+            <div className="group relative">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                asChild
+                className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+              >
+                <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
+                  <CircleHelp className="h-4 w-4" />
+                  Support
+                </a>
+              </Button>
+              <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                support@articurls.com
+              </span>
+            </div>
+          </div>
+          <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
           <Button
-            type="button"
             variant="ghost"
             size="sm"
-            asChild
-            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+            className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-9"
+            onClick={() => {
+              onNavigate?.();
+              logout();
+            }}
           >
-            <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
-              <Bug className="h-4 w-4" />
-              Report a bug
-            </a>
+            <LogOut className="h-4 w-4" />
+            Log out
           </Button>
-          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-            bugs@articurls.com
-          </span>
-        </div>
-        <div className="group relative">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            asChild
-            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-          >
-            <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
-              <CircleHelp className="h-4 w-4" />
-              Support
-            </a>
-          </Button>
-          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-            support@articurls.com
-          </span>
-        </div>
-      </div>
-      <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="mt-2 h-10 w-full justify-start gap-2 rounded-lg text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-9"
-        onClick={() => {
-          onNavigate?.();
-          logout();
-        }}
-      >
-        <LogOut className="h-4 w-4" />
-        Log out
-      </Button>
+        </>
+      )}
     </div>
   );
 
