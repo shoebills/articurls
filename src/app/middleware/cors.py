@@ -13,7 +13,7 @@ class DynamicCORSMiddleware(BaseHTTPMiddleware):
         origin = request.headers.get("origin")
 
         if request.method == "OPTIONS" and origin:
-            return self._preflight_response(origin)
+            return self._preflight_response(origin, request)
 
         response: Response = await call_next(request)
 
@@ -23,15 +23,18 @@ class DynamicCORSMiddleware(BaseHTTPMiddleware):
 
         return response
 
-    def _preflight_response(self, origin: str) -> Response:
+    def _preflight_response(self, origin: str, request: Request) -> Response:
         if not _is_origin_allowed(origin):
             return Response(status_code=200)
+
+        request_method = request.headers.get("access-control-request-method", "")
+        request_headers = request.headers.get("access-control-request-headers", "")
 
         headers = {
             "Access-Control-Allow-Origin": origin,
             "Access-Control-Allow-Credentials": "true",
-            "Access-Control-Allow-Methods": "*",
-            "Access-Control-Allow-Headers": "*",
+            "Access-Control-Allow-Methods": request_method or "GET, POST, PUT, PATCH, DELETE, OPTIONS",
+            "Access-Control-Allow-Headers": request_headers or "authorization, content-type",
         }
         return Response(status_code=200, headers=headers)
 
