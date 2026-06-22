@@ -678,8 +678,16 @@ export async function getSubscription(token: string): Promise<SubscriptionOut | 
   }
 }
 
-export async function createCheckout(token: string): Promise<{ checkout_url: string }> {
-  return apiFetch("/billing/checkout", { method: "POST", token });
+export async function createCheckout(
+  token: string,
+  plan: "monthly" | "lifetime" = "monthly"
+): Promise<{ checkout_url: string }> {
+  return apiFetch("/billing/checkout", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan }),
+  });
 }
 
 export async function getTransactions(token: string): Promise<TransactionOut[]> {
@@ -688,6 +696,7 @@ export async function getTransactions(token: string): Promise<TransactionOut[]> 
 
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
+  if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;
   if (sub.plan_type !== "pro") return false;
   if (!["active", "past_due"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;

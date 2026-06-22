@@ -1,6 +1,6 @@
 import json
 from datetime import datetime, timezone
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .. import models
@@ -64,23 +64,43 @@ def _should_apply_period_update(db_sub, incoming_sid, incoming_start, incoming_e
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
-def create_checkout(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def create_checkout(
+    plan: str = Body("monthly"),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+
+    if plan == "monthly":
+        existing_lifetime = db.query(models.Subscriptions).filter(
+            models.Subscriptions.user_id == current_user.user_id,
+            models.Subscriptions.plan_type == "lifetime",
+            models.Subscriptions.status.in_(["active", "past_due"]),
+        ).first()
+        if existing_lifetime:
+            raise HTTPException(status_code=400, detail="You already have lifetime access")
+
+    product_id = (
+        settings.dodopayments_lifetime_product_id if plan == "lifetime"
+        else settings.dodopayments_product_id
+    )
 
     session = dodo_client.checkout_sessions.create(
 
         product_cart=[
             {
-            "product_id": settings.dodopayments_product_id, 
+            "product_id": product_id,
             "quantity": 1
             }
         ],
 
         customer={
-            "email": current_user.email, 
+            "email": current_user.email,
             "name": current_user.name
             },
 
         return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success",
+
+        metadata={"plan_type": plan},
     )
 
     return {"checkout_url": session.checkout_url}
@@ -149,53 +169,60 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
-                    incoming_start = getattr(event.data, "previous_billing_date", None)
-                    incoming_end = getattr(event.data, "next_billing_date", None)
-                    apply_period_update = _should_apply_period_update(
-                        db_sub, incoming_dodo_sid, incoming_start, incoming_end
-                    )
-
-                    if db_sub:
-                        if apply_period_update:
-                            db_sub.dodo_subscription_id = incoming_dodo_sid
-                            db_sub.plan_type = "pro"
-                            db_sub.status = "active"
-                            db_sub.current_period_start = incoming_start
-                            db_sub.current_period_end = incoming_end
-
-                    else:
-                        new_sub = models.Subscriptions(
-                            user_id=db_user.user_id,
-                            dodo_subscription_id=event.data.subscription_id,
-                            plan_type="pro",
-                            status="active",
-                            current_period_start=getattr(event.data, "previous_billing_date", None),
-                            current_period_end=getattr(event.data, "next_billing_date", None),
-                        )
-
-                        db.add(new_sub)
-                        db_sub = new_sub
-
-                    # Restore domain from grace/expired back to active on renewal
-                    if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
-                        if db_user.custom_domain and db_user.is_domain_verified:
-                            db_user.domain_status = models.DomainStatus.ACTIVE
-                            db_user.grace_started_at = None
-                            db_user.grace_expires_at = None
+                    if db_sub and db_sub.plan_type == "lifetime":
+                        if incoming_dodo_sid:
                             try:
-                                from ..redis_client import redis_client
-                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                                dodo_client.subscriptions.update(incoming_dodo_sid, {"status": "cancelled"})
                             except Exception:
                                 pass
-
-                    if db_sub and incoming_dodo_sid:
-                        db.query(models.Transactions).filter(
-                            models.Transactions.user_id == db_user.user_id,
-                            models.Transactions.subscription_id.is_(None),
-                        ).update(
-                            {"subscription_id": db_sub.subscription_id},
-                            synchronize_session=False,
+                    else:
+                        incoming_start = getattr(event.data, "previous_billing_date", None)
+                        incoming_end = getattr(event.data, "next_billing_date", None)
+                        apply_period_update = _should_apply_period_update(
+                            db_sub, incoming_dodo_sid, incoming_start, incoming_end
                         )
+
+                        if db_sub:
+                            if apply_period_update:
+                                db_sub.dodo_subscription_id = incoming_dodo_sid
+                                db_sub.plan_type = "pro"
+                                db_sub.status = "active"
+                                db_sub.current_period_start = incoming_start
+                                db_sub.current_period_end = incoming_end
+
+                        else:
+                            new_sub = models.Subscriptions(
+                                user_id=db_user.user_id,
+                                dodo_subscription_id=event.data.subscription_id,
+                                plan_type="pro",
+                                status="active",
+                                current_period_start=getattr(event.data, "previous_billing_date", None),
+                                current_period_end=getattr(event.data, "next_billing_date", None),
+                            )
+
+                            db.add(new_sub)
+                            db_sub = new_sub
+
+                        # Restore domain from grace/expired back to active on renewal
+                        if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+                            if db_user.custom_domain and db_user.is_domain_verified:
+                                db_user.domain_status = models.DomainStatus.ACTIVE
+                                db_user.grace_started_at = None
+                                db_user.grace_expires_at = None
+                                try:
+                                    from ..redis_client import redis_client
+                                    redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                                except Exception:
+                                    pass
+
+                        if db_sub and incoming_dodo_sid:
+                            db.query(models.Transactions).filter(
+                                models.Transactions.user_id == db_user.user_id,
+                                models.Transactions.subscription_id.is_(None),
+                            ).update(
+                                {"subscription_id": db_sub.subscription_id},
+                                synchronize_session=False,
+                            )
 
         elif event_type == "subscription.cancelled":
             customer = getattr(event.data, "customer", None)
@@ -209,7 +236,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                         .filter(models.Subscriptions.user_id == db_user.user_id)
                         .first()
                     )
-                    if db_sub:
+                    if db_sub and db_sub.plan_type != "lifetime":
                         db_sub.status = "cancelled"
 
         elif event_type == "subscription.renewed":
@@ -224,52 +251,59 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
-                    incoming_start = getattr(event.data, "previous_billing_date", None)
-                    incoming_end = getattr(event.data, "next_billing_date", None)
-                    apply_period_update = _should_apply_period_update(
-                        db_sub, incoming_dodo_sid, incoming_start, incoming_end
-                    )
-
-                    if db_sub:
-                        if apply_period_update:
-                            db_sub.dodo_subscription_id = incoming_dodo_sid
-                            db_sub.plan_type = "pro"
-                            db_sub.status = "active"
-                            db_sub.current_period_start = incoming_start
-                            db_sub.current_period_end = incoming_end
-
-                    else:
-                        db_sub = models.Subscriptions(
-                            user_id=db_user.user_id,
-                            dodo_subscription_id=incoming_dodo_sid,
-                            plan_type="pro",
-                            status="active",
-                            current_period_start=getattr(event.data, "previous_billing_date", None),
-                            current_period_end=getattr(event.data, "next_billing_date", None),
-                        )
-
-                        db.add(db_sub)
-
-                    # Restore domain from grace/expired back to active on renewal
-                    if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
-                        if db_user.custom_domain and db_user.is_domain_verified:
-                            db_user.domain_status = models.DomainStatus.ACTIVE
-                            db_user.grace_started_at = None
-                            db_user.grace_expires_at = None
+                    if db_sub and db_sub.plan_type == "lifetime":
+                        if incoming_dodo_sid:
                             try:
-                                from ..redis_client import redis_client
-                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                                dodo_client.subscriptions.update(incoming_dodo_sid, {"status": "cancelled"})
                             except Exception:
                                 pass
-
-                    if db_sub and incoming_dodo_sid:
-                        db.query(models.Transactions).filter(
-                            models.Transactions.user_id == db_user.user_id,
-                            models.Transactions.subscription_id.is_(None),
-                        ).update(
-                            {"subscription_id": db_sub.subscription_id},
-                            synchronize_session=False,
+                    else:
+                        incoming_start = getattr(event.data, "previous_billing_date", None)
+                        incoming_end = getattr(event.data, "next_billing_date", None)
+                        apply_period_update = _should_apply_period_update(
+                            db_sub, incoming_dodo_sid, incoming_start, incoming_end
                         )
+
+                        if db_sub:
+                            if apply_period_update:
+                                db_sub.dodo_subscription_id = incoming_dodo_sid
+                                db_sub.plan_type = "pro"
+                                db_sub.status = "active"
+                                db_sub.current_period_start = incoming_start
+                                db_sub.current_period_end = incoming_end
+
+                        else:
+                            db_sub = models.Subscriptions(
+                                user_id=db_user.user_id,
+                                dodo_subscription_id=incoming_dodo_sid,
+                                plan_type="pro",
+                                status="active",
+                                current_period_start=getattr(event.data, "previous_billing_date", None),
+                                current_period_end=getattr(event.data, "next_billing_date", None),
+                            )
+
+                            db.add(db_sub)
+
+                        # Restore domain from grace/expired back to active on renewal
+                        if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+                            if db_user.custom_domain and db_user.is_domain_verified:
+                                db_user.domain_status = models.DomainStatus.ACTIVE
+                                db_user.grace_started_at = None
+                                db_user.grace_expires_at = None
+                                try:
+                                    from ..redis_client import redis_client
+                                    redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                                except Exception:
+                                    pass
+
+                        if db_sub and incoming_dodo_sid:
+                            db.query(models.Transactions).filter(
+                                models.Transactions.user_id == db_user.user_id,
+                                models.Transactions.subscription_id.is_(None),
+                            ).update(
+                                {"subscription_id": db_sub.subscription_id},
+                                synchronize_session=False,
+                            )
 
         elif event_type == "payment.succeeded":
             customer = getattr(event.data, "customer", None)
@@ -301,6 +335,55 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                         status="succeeded",
                     )
                 db.add(transaction)
+
+                payment_id = getattr(event.data, "payment_id", None)
+                if payment_id:
+                    try:
+                        payment = dodo_client.payments.retrieve(payment_id)
+                        product_cart = getattr(payment, "product_cart", None) or []
+                        is_lifetime = any(
+                            getattr(item, "product_id", None) == settings.dodopayments_lifetime_product_id
+                            for item in product_cart
+                        )
+                    except Exception:
+                        is_lifetime = False
+
+                    if is_lifetime:
+                        if db_sub and db_sub.dodo_subscription_id:
+                            try:
+                                dodo_client.subscriptions.update(
+                                    db_sub.dodo_subscription_id, {"status": "cancelled"}
+                                )
+                            except Exception:
+                                pass
+
+                        if db_user.domain_status in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+                            if db_user.custom_domain and db_user.is_domain_verified:
+                                db_user.domain_status = models.DomainStatus.ACTIVE
+                                db_user.grace_started_at = None
+                                db_user.grace_expires_at = None
+                                try:
+                                    from ..redis_client import redis_client
+                                    redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+                                except Exception:
+                                    pass
+
+                        now = datetime.now(timezone.utc)
+                        if db_sub:
+                            db_sub.plan_type = "lifetime"
+                            db_sub.status = "active"
+                            db_sub.dodo_subscription_id = None
+                            db_sub.current_period_start = now
+                            db_sub.current_period_end = None
+                        else:
+                            db_sub = models.Subscriptions(
+                                user_id=db_user.user_id,
+                                plan_type="lifetime",
+                                status="active",
+                                current_period_start=now,
+                                current_period_end=None,
+                            )
+                            db.add(db_sub)
 
         elif event_type == "payment.failed":
             customer = getattr(event.data, "customer", None)

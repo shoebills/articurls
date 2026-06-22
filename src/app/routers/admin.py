@@ -47,7 +47,7 @@ def list_users(
     if plan == "pro":
         query = query.filter(
             and_(
-                models.Subscriptions.plan_type == "pro",
+                models.Subscriptions.plan_type.in_(["pro", "lifetime"]),
                 models.Subscriptions.status.in_(["active", "past_due"]),
             )
         )
@@ -55,7 +55,7 @@ def list_users(
         query = query.filter(
             or_(
                 models.Subscriptions.subscription_id.is_(None),
-                models.Subscriptions.plan_type != "pro",
+                models.Subscriptions.plan_type.notin_(["pro", "lifetime"]),
                 models.Subscriptions.status.notin_(["active", "past_due"]),
             )
         )
@@ -68,7 +68,7 @@ def list_users(
     rows = query.offset(offset).limit(limit).all()
     output = []
     for db_user, sub in rows:
-        is_pro = bool(sub and sub.plan_type == "pro" and sub.status in {"active", "past_due"})
+        is_pro = bool(sub and sub.plan_type in ("pro", "lifetime") and sub.status in {"active", "past_due"})
         output.append(
             {
                 "user_id": db_user.user_id,

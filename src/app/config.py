@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     dodopayments_webhook_key: str
     dodopayments_environment: str
     dodopayments_product_id: str
+    dodopayments_lifetime_product_id: str
 
     uploads_dir: str = "uploads"
     # Reader/marketing site origin (blog links in emails; env: MARKETING_ORIGIN).

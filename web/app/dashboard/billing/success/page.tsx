@@ -8,7 +8,7 @@ export default function BillingSuccessPage() {
       <Card>
         <CardHeader>
           <CardTitle>Payment received</CardTitle>
-          <CardDescription>Your Pro subscription will activate once webhooks finish processing.</CardDescription>
+          <CardDescription>Your payment is being processed. Access will activate once webhooks finish processing.</CardDescription>
         </CardHeader>
         <CardContent>
           <Button asChild>

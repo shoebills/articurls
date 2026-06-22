@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Flame } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -45,7 +45,7 @@ export default function BillingPage() {
       ]);
       setTx(t);
       setSub(s);
-    } catch (e) {
+    } catch {
       setErr("Failed to load billing info");
     } finally {
       setLoading(false);
@@ -69,8 +69,21 @@ export default function BillingPage() {
     }
   }
 
+  async function upgradeLifetime() {
+    if (!token) return;
+    setBusy(true);
+    try {
+      const { checkout_url } = await createCheckout(token, "lifetime");
+      window.location.href = checkout_url;
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Checkout failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const pro = isProSubscription(sub);
-  const displayTier = pro ? "Pro" : "Free";
+  const isLifetime = sub?.plan_type === "lifetime";
   const subStatus = sub?.status?.toLowerCase() ?? "";
 
   if (loading) {
@@ -111,7 +124,12 @@ export default function BillingPage() {
         </CardHeader>
         <CardContent className="space-y-5 pt-2">
           <div className="flex flex-wrap items-center gap-3">
-            {pro && sub ? (
+            {isLifetime ? (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-2 text-sm font-medium text-amber-800">
+                <Flame className="h-4 w-4 shrink-0" aria-hidden />
+                Lifetime plan
+              </div>
+            ) : pro && sub ? (
               subStatus === "past_due" ? (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/[0.1] px-3 py-2 text-sm font-medium text-amber-900">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 ring-2 ring-amber-500/30" aria-hidden />
@@ -130,7 +148,7 @@ export default function BillingPage() {
               </div>
             )}
           </div>
-          {sub?.current_period_end ? (
+          {sub?.current_period_end && pro && !isLifetime ? (
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
               <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" aria-hidden />
               <span>
@@ -141,10 +159,15 @@ export default function BillingPage() {
               </span>
             </div>
           ) : null}
-          {!pro ? (
-            <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
-              {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
-            </Button>
+          {!pro && !isLifetime ? (
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
+                {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
+              </Button>
+              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busy}>
+                {busy ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
+              </Button>
+            </div>
           ) : null}
         </CardContent>
       </Card>
