@@ -9,10 +9,12 @@ import {
   Check,
   Eye,
   FolderKanban,
+  Flame,
   Mail,
   PenLine,
   Search,
   Star,
+  Zap,
 } from "lucide-react";
 
 export default function MarketingPage() {
@@ -206,7 +208,7 @@ export default function MarketingPage() {
               <p className="mt-3 text-base text-muted-foreground">Start free. Upgrade only when your workflow needs more.</p>
             </div>
 
-            <div className="mt-10 grid gap-6 lg:grid-cols-2">
+            <div className="mt-10 grid gap-6 lg:grid-cols-3">
               <Card className="flex flex-col rounded-2xl border-border/80 bg-card/90">
                 <CardHeader className="space-y-1 p-6">
                   <CardTitle className="text-2xl">Free</CardTitle>
@@ -265,8 +267,43 @@ export default function MarketingPage() {
                   </Button>
                 </CardFooter>
               </Card>
+
+              <Card className="relative flex flex-col rounded-2xl border-amber-500/30 bg-gradient-to-b from-card to-amber-500/[0.06] shadow-xl shadow-amber-500/8 ring-1 ring-amber-500/20">
+                <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+                  <Flame className="h-3.5 w-3.5" />
+                  Only 50 seats
+                </div>
+                <CardHeader className="space-y-1 p-6">
+                  <CardTitle className="text-2xl">Lifetime</CardTitle>
+                  <CardDescription>Buy once, own forever</CardDescription>
+                  <p className="text-4xl font-semibold tracking-tight">$99<span className="text-base font-normal text-muted-foreground"> one-time</span></p>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-3 px-6 text-sm">
+                  {[
+                    "Everything in Pro, forever",
+                    "No recurring charges",
+                    "Lifetime custom domain & SSL",
+                    "Lifetime subscriber emails",
+                    "Future Pro features included",
+                    "Pay once, yours for life",
+                  ].map((x) => (
+                    <div key={x} className="flex items-center gap-2.5">
+                      <Check className="h-4 w-4 text-emerald-700" aria-hidden />
+                      <span className="text-muted-foreground">{x}</span>
+                    </div>
+                  ))}
+                </CardContent>
+                <CardFooter className="p-6 pt-4">
+                  <Button className="h-12 w-full bg-amber-500 text-amber-950 shadow-md shadow-amber-500/25 hover:bg-amber-500/90" asChild>
+                    <a href={signupUrl}>
+                      <Zap className="mr-1.5 h-4 w-4" />
+                      Get Lifetime Access
+                    </a>
+                  </Button>
+                </CardFooter>
+              </Card>
             </div>
-            <p className="mt-4 text-sm text-muted-foreground">No annual contract. Cancel anytime.</p>
+            <p className="mt-4 text-sm text-muted-foreground">No annual contract. Cancel anytime. Lifetime is a one-time payment — no recurring fees.</p>
           </div>
         </section>
 
