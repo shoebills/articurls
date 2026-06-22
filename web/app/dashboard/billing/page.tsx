@@ -25,6 +25,7 @@ export default function BillingPage() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [busyLifetime, setBusyLifetime] = useState(false);
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;
     const t = localStorage.getItem("articurls_token");
@@ -71,14 +72,14 @@ export default function BillingPage() {
 
   async function upgradeLifetime() {
     if (!token) return;
-    setBusy(true);
+    setBusyLifetime(true);
     try {
       const { checkout_url } = await createCheckout(token, "lifetime");
       window.location.href = checkout_url;
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Checkout failed");
     } finally {
-      setBusy(false);
+      setBusyLifetime(false);
     }
   }
 
@@ -164,8 +165,8 @@ export default function BillingPage() {
               <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
                 {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
               </Button>
-              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busy}>
-                {busy ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
+              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busyLifetime}>
+                {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
               </Button>
             </div>
           ) : null}

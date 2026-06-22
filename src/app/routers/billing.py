@@ -65,7 +65,7 @@ def _should_apply_period_update(db_sub, incoming_sid, incoming_start, incoming_e
 
 @router.post("/checkout", response_model=CheckoutResponse)
 def create_checkout(
-    plan: str = Body("monthly"),
+    plan: str = Body("monthly", embed=True),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user),
 ):
