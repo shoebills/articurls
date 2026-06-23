@@ -8,7 +8,7 @@ from ..database import get_db
 from ..utils import user_by_email
 from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
-from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse
+from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CustomerPortalResponse
 from ..payments.client import client as dodo_client
 from ..config import settings
 from typing import List
@@ -62,6 +62,16 @@ def _should_apply_period_update(db_sub, incoming_sid, incoming_start, incoming_e
         return False
 
     return True
+
+
+def _capture_dodo_customer_id(event_data, db_user):
+    if not db_user or db_user.dodo_customer_id:
+        return
+    customer = getattr(event_data, "customer", None)
+    if customer:
+        cid = getattr(customer, "customer_id", None)
+        if cid:
+            db_user.dodo_customer_id = cid
 
 
 @router.post("/checkout", response_model=CheckoutResponse)
@@ -171,6 +181,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 db_user = user_by_email(db, customer_email)
 
                 if db_user:
+                    _capture_dodo_customer_id(event.data, db_user)
+
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
@@ -237,6 +249,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
             if customer_email:
                 db_user = user_by_email(db, customer_email)
                 if db_user:
+                    _capture_dodo_customer_id(event.data, db_user)
+
                     db_sub = (
                         db.query(models.Subscriptions)
                         .filter(models.Subscriptions.user_id == db_user.user_id)
@@ -253,6 +267,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 db_user = user_by_email(db, customer_email)
 
                 if db_user:
+                    _capture_dodo_customer_id(event.data, db_user)
+
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
@@ -333,6 +349,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 db_user = user_by_email(db, customer_email) if customer_email else None
 
             if db_user:
+                _capture_dodo_customer_id(event.data, db_user)
+
                 dodo_sid = getattr(event.data, "subscription_id", None)
 
                 db_sub = None
@@ -438,6 +456,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 db_user = user_by_email(db, customer_email)
 
                 if db_user:
+                    _capture_dodo_customer_id(event.data, db_user)
+
                     db_sub = (
                         db.query(models.Subscriptions)
                         .filter(models.Subscriptions.user_id == db_user.user_id)
@@ -474,3 +494,21 @@ def get_my_transactions(db: Session = Depends(get_db), current_user = Depends(ge
     transactions = db.query(models.Transactions).filter(models.Transactions.user_id == current_user.user_id).order_by(models.Transactions.created_at.desc()).all()
 
     return transactions
+
+
+@router.get("/customer-portal", response_model=CustomerPortalResponse)
+def get_customer_portal(
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
+    if not current_user.dodo_customer_id:
+        raise HTTPException(status_code=404, detail="Customer record not found")
+
+    try:
+        session = dodo_client.customers.customer_portal.create(
+            customer_id=current_user.dodo_customer_id,
+        )
+    except Exception:
+        raise HTTPException(status_code=502, detail="Failed to create customer portal session")
+
+    return {"url": session.link}

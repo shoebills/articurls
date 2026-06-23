@@ -28,3 +28,7 @@ class TransactionOut(BaseModel):
 
 class CheckoutResponse(BaseModel):
     checkout_url: str
+
+
+class CustomerPortalResponse(BaseModel):
+    url: str

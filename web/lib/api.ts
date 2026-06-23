@@ -694,6 +694,10 @@ export async function getTransactions(token: string): Promise<TransactionOut[]> 
   return apiFetch("/billing/transactions", { token });
 }
 
+export async function getCustomerPortalLink(token: string): Promise<{ url: string }> {
+  return apiFetch("/billing/customer-portal", { token });
+}
+
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
   if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { createCheckout, getSubscription, getTransactions, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { createCheckout, getSubscription, getTransactions, getCustomerPortalLink, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +26,7 @@ export default function BillingPage() {
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [busyLifetime, setBusyLifetime] = useState(false);
+  const [busyPortal, setBusyPortal] = useState(false);
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;
     const t = localStorage.getItem("articurls_token");
@@ -102,6 +103,23 @@ export default function BillingPage() {
       setErr(e instanceof ApiError ? e.message : "Checkout failed");
     } finally {
       setBusyLifetime(false);
+    }
+  }
+
+  async function manageSubscription() {
+    if (!token) return;
+    setBusyPortal(true);
+    try {
+      const { url } = await getCustomerPortalLink(token);
+      window.location.href = url;
+    } catch (e) {
+      if (e instanceof ApiError && e.status === 404) {
+        setErr("Customer portal not available yet. Please try again later.");
+      } else {
+        setErr(e instanceof ApiError ? e.message : "Failed to open customer portal");
+      }
+    } finally {
+      setBusyPortal(false);
     }
   }
 
@@ -191,6 +209,11 @@ export default function BillingPage() {
                 {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
               </Button>
             </div>
+          ) : null}
+          {sub && sub.plan_type !== "free" ? (
+            <Button variant="outline" onClick={manageSubscription} disabled={busyPortal}>
+              {busyPortal ? "Redirecting…" : "Manage subscription"}
+            </Button>
           ) : null}
         </CardContent>
       </Card>
