@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createCheckout, getSubscription, getTransactions, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
@@ -33,6 +33,8 @@ export default function BillingPage() {
     return !apiCacheHas("/billing/transactions", t);
   });
 
+  const autoTriggered = useRef(false);
+
   const load = useCallback(async () => {
     if (!token) return;
     setErr(null);
@@ -56,6 +58,26 @@ export default function BillingPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (loading || !token || autoTriggered.current) return;
+
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+
+    if (!plan) return;
+
+    const pro = isProSubscription(sub);
+    const isLifetime = sub?.plan_type === "lifetime";
+
+    if (plan === "pro" && !pro && !isLifetime) {
+      autoTriggered.current = true;
+      upgrade();
+    } else if (plan === "lifetime" && !isLifetime) {
+      autoTriggered.current = true;
+      upgradeLifetime();
+    }
+  }, [loading, token, sub]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function upgrade() {
     if (!token) return;

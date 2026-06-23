@@ -79,6 +79,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(TOKEN_KEY, res.access_token);
       setToken(res.access_token);
       await refreshUser();
+      if (redirectTo === "/dashboard") {
+        const plan = localStorage.getItem("pendingPlan");
+        localStorage.removeItem("pendingPlan");
+        if (plan === "pro" || plan === "lifetime") {
+          router.push(`/dashboard/billing?plan=${plan}`);
+          return;
+        }
+      }
       router.push(redirectTo);
     },
     [refreshUser, router]

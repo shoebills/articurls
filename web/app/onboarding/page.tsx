@@ -65,9 +65,15 @@ function OnboardingForm() {
 
       // Store token using the same key as password login
       localStorage.setItem("articurls_token", access_token);
-      
-      // Redirect to dashboard
-      router.replace("/dashboard");
+
+      const plan = localStorage.getItem("pendingPlan");
+      localStorage.removeItem("pendingPlan");
+
+      if (plan === "pro" || plan === "lifetime") {
+        router.replace(`/dashboard/billing?plan=${plan}`);
+      } else {
+        router.replace("/dashboard");
+      }
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Sign up failed");
     } finally {

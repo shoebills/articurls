@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signup as apiSignup, ApiError, resendVerificationEmail } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -20,6 +21,14 @@ type SignupStep = "email" | "profile";
 
 function SignupForm() {
   const [step, setStep] = useState<SignupStep>("email");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const plan = searchParams.get("plan");
+    if (plan === "pro" || plan === "lifetime") {
+      localStorage.setItem("pendingPlan", plan);
+    }
+  }, [searchParams]);
 
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");

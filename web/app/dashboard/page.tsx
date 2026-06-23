@@ -80,7 +80,13 @@ export default function DashboardPage() {
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
       exchangeOAuthCode(oauthCode).then(() => {
-        window.location.reload();
+        const plan = localStorage.getItem("pendingPlan");
+        localStorage.removeItem("pendingPlan");
+        if (plan === "pro" || plan === "lifetime") {
+          window.location.replace(`/dashboard/billing?plan=${plan}`);
+        } else {
+          window.location.reload();
+        }
       }).catch(() => {
         router.replace("/login?error=oauth_failed");
       });

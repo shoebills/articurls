@@ -263,7 +263,7 @@ export default function MarketingPage() {
                 </CardContent>
                 <CardFooter className="p-6 pt-4">
                   <Button className="h-12 w-full shadow-md shadow-primary/20" asChild>
-                    <a href={signupUrl}>Start Pro</a>
+                    <a href={`${signupUrl}?plan=pro`}>Start Pro</a>
                   </Button>
                 </CardFooter>
               </Card>
@@ -295,7 +295,7 @@ export default function MarketingPage() {
                 </CardContent>
                 <CardFooter className="p-6 pt-4">
                   <Button className="h-12 w-full bg-amber-500 text-amber-950 shadow-md shadow-amber-500/25 hover:bg-amber-500/90" asChild>
-                    <a href={signupUrl}>
+                    <a href={`${signupUrl}?plan=lifetime`}>
                       <Zap className="mr-1.5 h-4 w-4" />
                       Get Lifetime Access
                     </a>
