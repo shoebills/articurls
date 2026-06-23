@@ -120,7 +120,11 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 "webhook-timestamp": request.headers.get("webhook-timestamp", ""),
             },
         )
-    except Exception:
+    except Exception as e:
+        import sys, traceback
+        print(f"[webhook] unwrap failed: {e}", file=sys.stderr)
+        print(f"[webhook] headers: webhook-id={request.headers.get('webhook-id','?')[:20]}... sig={request.headers.get('webhook-signature','?')[:20]}... ts={request.headers.get('webhook-timestamp','?')}", file=sys.stderr)
+        traceback.print_exc(file=sys.stderr)
         raise HTTPException(status_code=401, detail="Invalid webhook signature")
 
     event_id = request.headers.get("webhook-id", "")
