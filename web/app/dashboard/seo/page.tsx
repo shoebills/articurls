@@ -133,7 +133,7 @@ export default function SeoDashboardPage() {
         setDomain(domainData);
         setUsername(me.user_name || "");
         setIsPro(isProSubscription(subscription));
-        setWasPro(subscription.plan_type === "pro" || subscription.plan_type === "lifetime");
+        setWasPro(subscription?.plan_type === "pro" || subscription?.plan_type === "lifetime");
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       } finally {
