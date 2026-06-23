@@ -338,15 +338,25 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
                 payment_id = getattr(event.data, "payment_id", None)
                 if payment_id:
-                    try:
-                        payment = dodo_client.payments.retrieve(payment_id)
-                        product_cart = getattr(payment, "product_cart", None) or []
-                        is_lifetime = any(
-                            getattr(item, "product_id", None) == settings.dodopayments_lifetime_product_id
-                            for item in product_cart
-                        )
-                    except Exception:
-                        is_lifetime = False
+                    product_cart = getattr(event.data, "product_cart", None)
+
+                    if not product_cart:
+                        try:
+                            payment = dodo_client.payments.retrieve(payment_id)
+                            product_cart = getattr(payment, "product_cart", None)
+                        except Exception as retrieve_err:
+                            import traceback, sys
+                            print(f"[lifetime] payments.retrieve failed: {retrieve_err}", file=sys.stderr)
+                            traceback.print_exc()
+                            product_cart = None
+
+                    is_lifetime = False
+                    if product_cart:
+                        for item in product_cart:
+                            pid = item.get("product_id") if isinstance(item, dict) else getattr(item, "product_id", None)
+                            if pid == settings.dodopayments_lifetime_product_id:
+                                is_lifetime = True
+                                break
 
                     if is_lifetime:
                         if db_sub and db_sub.dodo_subscription_id:
