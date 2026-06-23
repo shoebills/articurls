@@ -70,14 +70,13 @@ def create_checkout(
     current_user = Depends(get_current_user),
 ):
 
-    if plan == "monthly":
-        existing_lifetime = db.query(models.Subscriptions).filter(
-            models.Subscriptions.user_id == current_user.user_id,
-            models.Subscriptions.plan_type == "lifetime",
-            models.Subscriptions.status.in_(["active", "past_due"]),
-        ).first()
-        if existing_lifetime:
-            raise HTTPException(status_code=400, detail="You already have lifetime access")
+    existing_lifetime = db.query(models.Subscriptions).filter(
+        models.Subscriptions.user_id == current_user.user_id,
+        models.Subscriptions.plan_type == "lifetime",
+        models.Subscriptions.status.in_(["active", "past_due"]),
+    ).first()
+    if existing_lifetime:
+        raise HTTPException(status_code=409, detail="You already have lifetime access")
 
     product_id = (
         settings.dodopayments_lifetime_product_id if plan == "lifetime"
@@ -100,7 +99,7 @@ def create_checkout(
 
         return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success",
 
-        metadata={"plan_type": plan},
+        metadata={"plan_type": plan, "user_id": str(current_user.user_id)},
     )
 
     return {"checkout_url": session.checkout_url}
@@ -310,14 +309,25 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                             )
 
         elif event_type == "payment.succeeded":
-            customer = getattr(event.data, "customer", None)
-            customer_email = getattr(customer, "email", None) if customer else None
+            event_metadata = getattr(event.data, "metadata", None) or {}
+            db_user = None
 
-            db_user = (
-                user_by_email(db, customer_email)
-                if customer_email
-                else None
-            )
+            metadata_user_id = None
+            if isinstance(event_metadata, dict):
+                metadata_user_id = event_metadata.get("user_id")
+            else:
+                metadata_user_id = getattr(event_metadata, "user_id", None)
+
+            if metadata_user_id:
+                try:
+                    db_user = db.query(models.User).filter(models.User.user_id == int(metadata_user_id)).first()
+                except (ValueError, TypeError):
+                    pass
+
+            if not db_user:
+                customer = getattr(event.data, "customer", None)
+                customer_email = getattr(customer, "email", None) if customer else None
+                db_user = user_by_email(db, customer_email) if customer_email else None
 
             if db_user:
                 dodo_sid = getattr(event.data, "subscription_id", None)
@@ -361,6 +371,14 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                             if pid == settings.dodopayments_lifetime_product_id:
                                 is_lifetime = True
                                 break
+
+                    checkout_plan = None
+                    if event_metadata:
+                        checkout_plan = event_metadata.get("plan_type") if isinstance(event_metadata, dict) else getattr(event_metadata, "plan_type", None)
+
+                    if (checkout_plan == "lifetime" and not is_lifetime) or (checkout_plan != "lifetime" and is_lifetime):
+                        import sys as _sys
+                        print(f"[lifetime] WARNING: mismatch payment={payment_id} user={db_user.user_id} metadata.plan_type={checkout_plan} cart_lifetime={is_lifetime}", file=_sys.stderr)
 
                     if is_lifetime:
                         if db_sub and db_sub.dodo_subscription_id:
@@ -412,7 +430,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                         .filter(models.Subscriptions.user_id == db_user.user_id)
                         .first()
                     )
-                    if db_sub:
+                    if db_sub and db_sub.plan_type != "lifetime":
                         db_sub.status = "past_due"
 
         db_webhook.processed = True
