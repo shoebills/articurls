@@ -160,8 +160,13 @@ export default function BillingPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Billing</h1>
 
       <Card className="overflow-hidden border-border/70 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-1 pb-2">
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
+          {sub && sub.plan_type !== "free" ? (
+            <Button size="sm" className="h-8 rounded-md" onClick={manageSubscription} disabled={busyPortal}>
+              {busyPortal ? "Redirecting…" : "Manage subscription"}
+            </Button>
+          ) : null}
         </CardHeader>
         <CardContent className="space-y-5 pt-2">
           <div className="flex flex-wrap items-center gap-3">
@@ -207,13 +212,6 @@ export default function BillingPage() {
               </Button>
               <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busyLifetime}>
                 {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
-              </Button>
-            </div>
-          ) : null}
-          {sub && sub.plan_type !== "free" ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={manageSubscription} disabled={busyPortal}>
-                {busyPortal ? "Redirecting…" : "Manage subscription"}
               </Button>
             </div>
           ) : null}

@@ -540,7 +540,7 @@ export default function SettingsPage() {
             )}
           </div>
           {!isUnlimitedStorage && (
-            <p className="text-xs text-muted-foreground">{storagePct}% of free quota used</p>
+            <p className="text-xs text-muted-foreground">{storagePct}% used</p>
           )}
         </CardContent>
       </Card>
