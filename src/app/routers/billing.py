@@ -343,17 +343,27 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 if db_sub is None:
                     db_sub = (db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first())
 
+                payment_id = getattr(event.data, "payment_id", None)
+
+                if payment_id:
+                    existing = db.query(models.Transactions).filter(
+                        models.Transactions.dodo_payment_id == payment_id,
+                    ).first()
+                    if existing:
+                        db_webhook.processed = True
+                        db.commit()
+                        return {"detail": "transaction already exists"}
+
                 transaction = models.Transactions(
                         user_id=db_user.user_id,
                         subscription_id=db_sub.subscription_id if db_sub else None,
-                        dodo_payment_id=getattr(event.data, "payment_id", None),
+                        dodo_payment_id=payment_id,
                         amount=getattr(event.data, "total_amount", 0),
                         currency=getattr(event.data, "currency", "USD"),
                         status="succeeded",
                     )
                 db.add(transaction)
 
-                payment_id = getattr(event.data, "payment_id", None)
                 if payment_id:
                     product_cart = getattr(event.data, "product_cart", None)
 
