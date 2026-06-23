@@ -101,7 +101,6 @@ def create_checkout(
             },
 
         return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success",
-        cancel_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing",
 
         metadata={"plan_type": plan, "user_id": str(current_user.user_id)},
     )
