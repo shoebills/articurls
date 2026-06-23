@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from .. import models
 from ..database import get_db
 from ..utils import user_by_email
+from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
 from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse
 from ..payments.client import client as dodo_client
@@ -70,6 +71,8 @@ def create_checkout(
     current_user = Depends(get_current_user),
 ):
 
+    check_rate_limit_user("checkout", current_user.user_id, 5, 60)
+
     existing_lifetime = db.query(models.Subscriptions).filter(
         models.Subscriptions.user_id == current_user.user_id,
         models.Subscriptions.plan_type == "lifetime",
@@ -98,6 +101,7 @@ def create_checkout(
             },
 
         return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success",
+        cancel_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing",
 
         metadata={"plan_type": plan, "user_id": str(current_user.user_id)},
     )
@@ -190,8 +194,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 db_sub.dodo_subscription_id = incoming_dodo_sid
                                 db_sub.plan_type = "pro"
                                 db_sub.status = "active"
-                                db_sub.current_period_start = incoming_start
-                                db_sub.current_period_end = incoming_end
+                                db_sub.current_period_start = _to_aware_dt(incoming_start)
+                                db_sub.current_period_end = _to_aware_dt(incoming_end)
 
                         else:
                             new_sub = models.Subscriptions(
@@ -199,8 +203,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 dodo_subscription_id=event.data.subscription_id,
                                 plan_type="pro",
                                 status="active",
-                                current_period_start=getattr(event.data, "previous_billing_date", None),
-                                current_period_end=getattr(event.data, "next_billing_date", None),
+                                current_period_start=_to_aware_dt(getattr(event.data, "previous_billing_date", None)),
+                                current_period_end=_to_aware_dt(getattr(event.data, "next_billing_date", None)),
                             )
 
                             db.add(new_sub)
@@ -272,8 +276,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 db_sub.dodo_subscription_id = incoming_dodo_sid
                                 db_sub.plan_type = "pro"
                                 db_sub.status = "active"
-                                db_sub.current_period_start = incoming_start
-                                db_sub.current_period_end = incoming_end
+                                db_sub.current_period_start = _to_aware_dt(incoming_start)
+                                db_sub.current_period_end = _to_aware_dt(incoming_end)
 
                         else:
                             db_sub = models.Subscriptions(
@@ -281,8 +285,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 dodo_subscription_id=incoming_dodo_sid,
                                 plan_type="pro",
                                 status="active",
-                                current_period_start=getattr(event.data, "previous_billing_date", None),
-                                current_period_end=getattr(event.data, "next_billing_date", None),
+                                current_period_start=_to_aware_dt(getattr(event.data, "previous_billing_date", None)),
+                                current_period_end=_to_aware_dt(getattr(event.data, "next_billing_date", None)),
                             )
 
                             db.add(db_sub)
@@ -432,6 +436,10 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                     )
                     if db_sub and db_sub.plan_type != "lifetime":
                         db_sub.status = "past_due"
+
+        else:
+            import sys as _log_sys
+            print(f"[webhook] unhandled event type: {event_type} id={event_id}", file=_log_sys.stderr)
 
         db_webhook.processed = True
         db.commit()

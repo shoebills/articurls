@@ -192,7 +192,7 @@ export default function BillingPage() {
                   {tx.map((row) => (
                     <li key={row.transaction_id} className="grid grid-cols-3 gap-2 px-3 py-3 text-sm">
                       <span className="tabular-nums">
-                        {(row.amount / 100).toFixed(2)} {row.currency}
+                        {new Intl.NumberFormat("en-US", { style: "currency", currency: row.currency }).format(row.amount / 100)}
                       </span>
                       <span className="text-muted-foreground">{row.status}</span>
                       <span className="whitespace-nowrap text-muted-foreground">
