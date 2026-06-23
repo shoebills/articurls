@@ -34,7 +34,7 @@ function isEmptyBody(html: string): boolean {
 }
 
 export default function AudienceEmailsPage() {
-  const { token, isPro, user } = useAuth();
+  const { token, isPro, wasPro, user } = useAuth();
   const blogName = (user?.name || "").trim() || "My Blog";
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
@@ -220,7 +220,7 @@ export default function AudienceEmailsPage() {
 
         {!isPro ? (
           <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-            Upgrade under Billing to enable welcome emails.
+            {wasPro ? "Reactivate Pro to restore welcome emails." : "Upgrade under Billing to enable welcome emails."}
           </p>
         ) : (
           <Card>

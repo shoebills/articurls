@@ -47,7 +47,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = Number(id);
-  const { token, isPro, refreshUser, user } = useAuth();
+  const { token, isPro, wasPro, refreshUser, user } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [title, setTitle] = useState("");
@@ -660,7 +660,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           />
         </div>
         {!isPro && notify === false && (
-          <p className="text-xs text-muted-foreground">Upgrade to Pro in Billing to enable per-post subscriber emails.</p>
+          <p className="text-xs text-muted-foreground">{wasPro ? "Reactivate Pro to enable per-post subscriber emails." : "Upgrade to Pro in Billing to enable per-post subscriber emails."}</p>
         )}
       </div>
 

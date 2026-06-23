@@ -39,6 +39,7 @@ export default function CustomDomainSettings() {
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
+  const [wasPro, setWasPro] = useState(false);
 
   const loadDomain = useCallback(async (tok: string) => {
     try {
@@ -62,6 +63,7 @@ export default function CustomDomainSettings() {
       .then((sub) => {
         const pro = isProSubscription(sub);
         setIsPro(pro);
+        setWasPro(sub?.plan_type === "pro" || sub?.plan_type === "lifetime");
         if (pro) loadDomain(token);
         else setDomain(null);
       })
@@ -177,12 +179,14 @@ export default function CustomDomainSettings() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Globe className="h-7 w-7 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold">Pro plan required</h2>
+          <h2 className="text-xl font-semibold">{wasPro ? "Reactivate Pro" : "Pro plan required"}</h2>
           <p className="text-sm text-muted-foreground">
-            Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
+            {wasPro
+              ? "Reactivate your Pro plan to restore your custom domain."
+              : "Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog."}
           </p>
           <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
-            Upgrade to Pro
+            {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
           </Button>
         </div>
       </Card>

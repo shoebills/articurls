@@ -181,6 +181,11 @@ export default function BillingPage() {
                   <span className="h-2 w-2 shrink-0 rounded-full bg-amber-500 ring-2 ring-amber-500/30" aria-hidden />
                   Past due
                 </div>
+              ) : subStatus === "cancelled" ? (
+                <div className="inline-flex items-center gap-2 rounded-lg border border-red-500/25 bg-red-500/[0.06] px-3 py-2 text-sm font-medium text-red-800">
+                  <span className="h-2 w-2 shrink-0 rounded-full bg-red-500 ring-2 ring-red-500/25" aria-hidden />
+                  Cancelled
+                </div>
               ) : (
                 <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-2 text-sm font-medium text-emerald-800">
                   <span className="h-2 w-2 shrink-0 rounded-full bg-emerald-500 ring-2 ring-emerald-500/25" aria-hidden />

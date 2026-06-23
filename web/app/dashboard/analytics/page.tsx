@@ -1052,7 +1052,7 @@ function NativeAnalytics({ token }: { token: string }) {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { token, isPro } = useAuth();
+  const { token, isPro, wasPro } = useAuth();
 
   if (!token) {
     return (
@@ -1085,7 +1085,7 @@ export default function AnalyticsPage() {
               <BarChart2 className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
             </div>
             <div className="flex-1 space-y-1">
-              <h2 className="text-base sm:text-lg font-semibold">Unlock full analytics with Pro</h2>
+              <h2 className="text-base sm:text-lg font-semibold">{wasPro ? "Reactivate Pro to restore analytics" : "Unlock full analytics with Pro"}</h2>
               <p className="text-xs sm:text-sm text-muted-foreground">
                 Pro gives you a real-time dashboard with page views, unique visitors, referrers,
                 countries, devices, and more — powered by Umami.
@@ -1095,7 +1095,7 @@ export default function AnalyticsPage() {
               onClick={() => router.push("/dashboard/billing")}
               className="shrink-0 h-10 sm:h-auto"
             >
-              Upgrade to Pro
+              {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
             </Button>
           </div>
         </Card>

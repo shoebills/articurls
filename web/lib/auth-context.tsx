@@ -12,6 +12,7 @@ type AuthContextValue = {
   user: UserSettings | null;
   subscription: SubscriptionOut | null;
   isPro: boolean;
+  wasPro: boolean;
   loading: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -102,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const isPro = isProSubscription(subscription);
+  const wasPro = subscription?.plan_type === "pro" || subscription?.plan_type === "lifetime";
 
   const value = useMemo(
     () => ({
@@ -109,12 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       subscription,
       isPro,
+      wasPro,
       loading,
       login,
       logout,
       refreshUser,
     }),
-    [token, user, subscription, isPro, loading, login, logout, refreshUser]
+    [token, user, subscription, isPro, wasPro, loading, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

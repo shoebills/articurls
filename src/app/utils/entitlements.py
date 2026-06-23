@@ -18,7 +18,7 @@ def assert_pro(db: Session, user_id: int):
     if (
         not db_subscription
         or db_subscription.plan_type != "pro"
-        or db_subscription.status not in ("active", "past_due")
+        or db_subscription.status not in ("active", "past_due", "cancelled")
         or db_subscription.current_period_end is None
         or db_subscription.current_period_end < now
     ):
@@ -44,7 +44,7 @@ def is_pro_entitled(user: models.User, db: Session) -> bool:
     now = datetime.now(timezone.utc)
     return (
         sub.plan_type == "pro"
-        and sub.status in ("active", "past_due")
+        and sub.status in ("active", "past_due", "cancelled")
         and sub.current_period_end is not None
         and sub.current_period_end >= now
     )

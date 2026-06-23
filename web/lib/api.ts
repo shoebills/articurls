@@ -702,7 +702,7 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
   if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;
   if (sub.plan_type !== "pro") return false;
-  if (!["active", "past_due"].includes(sub.status)) return false;
+  if (!["active", "past_due", "cancelled"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;
   return new Date(sub.current_period_end) >= new Date();
 }
