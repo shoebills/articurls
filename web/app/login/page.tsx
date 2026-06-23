@@ -15,6 +15,8 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 import { API_URL } from "@/lib/env";
 
+const FIELD_GROUP = "flex flex-col gap-2.5";
+
 function LoginForm() {
   const { login, token, loading } = useAuth();
   const router = useRouter();
@@ -163,7 +165,7 @@ function LoginForm() {
           </div>
 
           <form onSubmit={onSubmit} className="space-y-5">
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
@@ -174,7 +176,7 @@ function LoginForm() {
                 required
               />
             </div>
-            <div className="space-y-2.5">
+            <div className={FIELD_GROUP}>
               <Label htmlFor="password">Password</Label>
               <PasswordInput
                 id="password"

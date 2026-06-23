@@ -211,9 +211,11 @@ export default function BillingPage() {
             </div>
           ) : null}
           {sub && sub.plan_type !== "free" ? (
-            <Button variant="outline" onClick={manageSubscription} disabled={busyPortal}>
-              {busyPortal ? "Redirecting…" : "Manage subscription"}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={manageSubscription} disabled={busyPortal}>
+                {busyPortal ? "Redirecting…" : "Manage subscription"}
+              </Button>
+            </div>
           ) : null}
         </CardContent>
       </Card>
