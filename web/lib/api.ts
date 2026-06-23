@@ -227,7 +227,7 @@ export async function signup(data: {
 }
 
 export async function exchangeOAuthCode(code: string): Promise<string> {
-  const res = await fetch(`${API_URL}/auth/exchange-token`, {
+  const res = await fetch(`${API_URL}/auth/google/exchange-token`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ code }),
