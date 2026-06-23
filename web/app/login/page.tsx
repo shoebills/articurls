@@ -54,7 +54,13 @@ function LoginForm() {
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
       exchangeOAuthCode(oauthCode).then(() => {
-        router.replace("/dashboard");
+        const plan = localStorage.getItem("pendingPlan");
+        localStorage.removeItem("pendingPlan");
+        if (plan === "pro" || plan === "lifetime") {
+          router.replace(`/dashboard/billing?plan=${plan}`);
+        } else {
+          router.replace("/dashboard");
+        }
       }).catch(() => {
         router.replace("/login?error=oauth_failed");
       });
