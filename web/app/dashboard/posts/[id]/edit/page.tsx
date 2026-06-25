@@ -37,6 +37,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ChevronLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -781,7 +782,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               {featuredImageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={assetUrl(featuredImageUrl)}
+                  src={transformImageUrl(assetUrl(featuredImageUrl), { width: 600 })}
                   alt=""
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
