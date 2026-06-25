@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
 import { PromptDialog } from "@/components/prompt-dialog";
@@ -197,7 +197,7 @@ function BlogListItemRow({
   useCustomDomain?: boolean;
   siteOrigin?: string;
 }) {
-  const previewImage = resolveBlogPreviewImage(b);
+  const previewImage = resolveBlogCoverImage(b);
   return (
     <li className="py-8 first:pt-0">
       <div className="rounded-xl py-1">

@@ -10,11 +10,17 @@ function firstImageFromHtml(html: string | null | undefined): string | null {
 
 type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<PublicBlog, "featured_image_url" | "content">;
 
-export function resolveBlogPreviewImage(blog: BlogLike): string {
+export function resolveBlogCoverImage(blog: BlogLike): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
-  if (explicit) return transformImageUrl(explicit, { width: 600 }); // Optimized for mobile
+  if (explicit) return transformImageUrl(explicit, { width: 600 });
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
-  if (fromContent) return transformImageUrl(fromContent, { width: 600 }); // Optimized for mobile
+  if (fromContent) return transformImageUrl(fromContent, { width: 600 });
+  return "";
+}
+
+export function resolveBlogContentThumbnail(blog: BlogLike): string {
+  const fromContent = assetUrl(firstImageFromHtml(blog.content));
+  if (fromContent) return transformImageUrl(fromContent, { width: 600 });
   return "";
 }
 

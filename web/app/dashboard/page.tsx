@@ -33,7 +33,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { scoreByTitleAndContent } from "@/lib/search";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogContentThumbnail } from "@/lib/blog-images";
 
 const POSTS_PER_PAGE = 10;
 
@@ -346,10 +346,10 @@ export default function DashboardPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    {resolveBlogPreviewImage(b) ? (
+                    {resolveBlogContentThumbnail(b) ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
-                        src={resolveBlogPreviewImage(b)}
+                        src={resolveBlogContentThumbnail(b)}
                         alt=""
                         className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
                       />
