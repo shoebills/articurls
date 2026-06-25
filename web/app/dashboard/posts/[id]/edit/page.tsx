@@ -38,7 +38,7 @@ import {
 } from "@/components/ui/dialog";
 import { MARKETING_ORIGIN, assetUrl } from "@/lib/env";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ArrowLeft } from "lucide-react";
+import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ChevronLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -573,7 +573,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/dashboard">
-            <ArrowLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4" />
             Posts
           </Link>
         </Button>
