@@ -95,9 +95,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Public blog title (navbar) — loaded via `next/font` on `<html>` as `--font-league-spartan` */
+/* Public blog title (navbar) — use the default Inter UI font */
 .font-nav-blog-name {
-  font-family: var(--font-league-spartan), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Subtle grid for marketing / auth backgrounds */
