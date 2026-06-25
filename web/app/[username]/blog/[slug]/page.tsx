@@ -223,7 +223,7 @@ export default async function PublicBlogPage({ params }: Props) {
         </header>
         <div className="mt-12 prose-blog" dangerouslySetInnerHTML={{ __html: transformedContent }} />
         {showSubscriberCollection ? (
-          <div className="mt-14 border-t border-border/80 pt-6">
+          <div className="mt-14">
             <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
           </div>
         ) : null}

@@ -405,7 +405,7 @@ export default async function CustomDomainPage({ params }: Props) {
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
           </div>
           {showSubscriberCollection ? (
-            <div className="mt-14 border-t border-border/80 pt-6">
+            <div className="mt-14">
               <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
             </div>
           ) : null}
