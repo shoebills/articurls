@@ -209,7 +209,7 @@ function BlogListItemRow({
               </h3>
               {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
             </div>
-            {previewImage ? (
+            {previewImage && !b.hide_preview_in_lists ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewImage}

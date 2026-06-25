@@ -15,6 +15,7 @@ export interface BlogListItem {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  hide_preview_in_lists: boolean;
   notify_subscribers: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
@@ -37,6 +38,7 @@ export interface PublicBlog {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  hide_preview_in_lists: boolean;
   published_at: string | null;
   updated_at: string;
   user_id: number;

@@ -123,6 +123,7 @@ class Blog(Base):
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     featured_image_url = Column(String, nullable=True)
+    hide_preview_in_lists = Column(Boolean, nullable=False, default=False)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)

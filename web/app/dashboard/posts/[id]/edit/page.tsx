@@ -26,6 +26,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
 import { Separator } from "@/components/ui/separator";
@@ -60,6 +67,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [metaDesc, setMetaDesc] = useState("");
   const [notify, setNotify] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [hidePreviewInLists, setHidePreviewInLists] = useState(false);
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
@@ -82,6 +90,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const metaDescRef = useRef(metaDesc);
   const notifyRef = useRef(notify);
   const featuredImageUrlRef = useRef(featuredImageUrl);
+  const hidePreviewInListsRef = useRef(hidePreviewInLists);
   const savedCatIdsRef = useRef<number[]>([]);
 
   // Category assignment state
@@ -113,6 +122,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const descSynced = !b.meta_description || b.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
     setFeaturedImageUrl(b.featured_image_url || "");
+    setHidePreviewInLists(b.hide_preview_in_lists);
     setNotify(b.notify_subscribers);
     const blogCatIds = (b as unknown as { category_ids?: number[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
@@ -164,6 +174,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
   useEffect(() => { notifyRef.current = notify; }, [notify]);
   useEffect(() => { featuredImageUrlRef.current = featuredImageUrl; }, [featuredImageUrl]);
+  useEffect(() => { hidePreviewInListsRef.current = hidePreviewInLists; }, [hidePreviewInLists]);
 
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
 
@@ -180,6 +191,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const currentMetaDesc =
       !blog.meta_description || blog.meta_description === blogContentExcerpt ? null : blog.meta_description;
     const nextFeatured = featuredImageUrl.trim() || null;
+    const nextHidePreview = hidePreviewInLists;
     const catDirty =
       savedCatIdsRef.current.length !== selectedCatIds.length ||
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
@@ -191,9 +203,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc ||
       (blog.featured_image_url || null) !== nextFeatured ||
+      blog.hide_preview_in_lists !== nextHidePreview ||
       catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl, hidePreviewInLists]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -207,6 +220,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextMetaDesc = metaDesc;
     const nextMetaDescDirty = metaDescDirty;
     const nextFeaturedImageUrl = featuredImageUrl;
+    const nextHidePreview = hidePreviewInLists;
     const nextPendingCatIds = pendingCatIds;
     const catDirty =
       savedCatIdsRef.current.length !== nextPendingCatIds.length ||
@@ -243,6 +257,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         body.meta_description = null;
       }
       body.featured_image_url = nextFeaturedImageUrl.trim() || null;
+      body.hide_preview_in_lists = nextHidePreview;
 
       const responseBlog = await updateBlog(token, blog.blog_id, body);
       let finalBlog = responseBlog;
@@ -259,6 +274,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const metaDescChanged = nextMetaDesc !== metaDescRef.current;
       const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
       const featuredChanged = nextFeaturedImageUrl !== featuredImageUrlRef.current;
+      const hidePreviewChanged = nextHidePreview !== hidePreviewInListsRef.current;
       const notifyChanged = nextNotify !== notifyRef.current;
 
       if (!titleChanged) setTitle(finalBlog.title);
@@ -267,6 +283,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || "");
       if (slugEditable && !slugCustomChanged) setSlugCustom(finalBlog.slug);
       if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
+      if (!hidePreviewChanged) setHidePreviewInLists(finalBlog.hide_preview_in_lists);
       if (!notifyChanged) setNotify(finalBlog.notify_subscribers);
 
       // Re-derive dirty flags from effective (current) state
@@ -787,6 +804,26 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
+              <div className="mt-3 space-y-1.5">
+                <Label htmlFor="preview-in-lists">Preview in blog lists</Label>
+                <Select
+                  value={hidePreviewInLists ? "hidden" : "auto"}
+                  onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
+                >
+                  <SelectTrigger id="preview-in-lists" className="h-9 w-full max-w-[15rem]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto</SelectItem>
+                    <SelectItem value="hidden">No preview image</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  When set to Auto, the featured image is shown in list cards. If no featured image is
+                  set, the first image in the blog body is used as a fallback. Choose &quot;No preview
+                  image&quot; to suppress both.
+                </p>
+              </div>
             </div>
 
             <Separator />
