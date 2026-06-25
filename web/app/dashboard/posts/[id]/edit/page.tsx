@@ -100,6 +100,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [pendingCatIds, setPendingCatIds] = useState<number[]>([]);
   const [catBusy, setCatBusy] = useState(false);
   const [newCatName, setNewCatName] = useState("");
+  const catDropdownRef = useRef<HTMLDivElement | null>(null);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -148,6 +149,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (!token) return;
     listCategories(token).then(setAllCategories).catch(() => {});
   }, [token]);
+
+  useEffect(() => {
+    if (!catDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
+        setCatDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [catDropdownOpen]);
 
   useEffect(() => {
     load();
@@ -857,7 +869,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {catDropdownOpen && (
-                  <div className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
+                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
                       <p className="px-3 pt-3 pb-3 text-sm text-muted-foreground">No categories yet.</p>
                     ) : (
@@ -905,16 +917,29 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           Add
                         </Button>
                       </div>
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => {
-                          setSelectedCatIds([...pendingCatIds]);
-                          setCatDropdownOpen(false);
-                        }}
-                      >
-                        Done
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="flex-1"
+                          onClick={() => {
+                            setPendingCatIds([...selectedCatIds]);
+                            setCatDropdownOpen(false);
+                          }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => {
+                            setSelectedCatIds([...pendingCatIds]);
+                            setCatDropdownOpen(false);
+                          }}
+                        >
+                          Done
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 )}
