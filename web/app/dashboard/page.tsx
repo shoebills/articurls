@@ -300,18 +300,17 @@ export default function DashboardPage() {
               <li key={i}>
                 <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
                   <div className="flex items-start gap-4">
-                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
                     <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-6 w-3/4" />
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-2/3" />
                     </div>
-                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
                     <Skeleton className="h-5 w-16 rounded-full" />
                     <Skeleton className="h-4 w-24" />
-                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
                   </div>
                 </div>
               </li>
@@ -346,14 +345,6 @@ export default function DashboardPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    {resolveBlogContentThumbnail(b) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={resolveBlogContentThumbnail(b)}
-                        alt=""
-                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
-                      />
-                    ) : null}
                     <div className="min-w-0 flex-1 space-y-1">
                       <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
                         {b.title || "Untitled"}
@@ -362,69 +353,15 @@ export default function DashboardPage() {
                         {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
-                    <div className="shrink-0" data-card-action="true">
-                      <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            data-card-action="true"
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
-                            aria-label={`Actions for ${b.title || "Untitled"}`}
-                            disabled={rowBusyId === b.blog_id}
-                            onPointerDown={(e) => e.preventDefault()}
-                            onClick={() => setMenuOpenBlogId(b.blog_id)}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent data-card-action="true" align="end" className="w-48">
-                          <DropdownMenuItem data-card-action="true" asChild>
-                            <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Link>
-                          </DropdownMenuItem>
-                          {(b.status === "published" || b.status === "archived") && (
-                            <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
-                              <Share2 className="h-4 w-4" />
-                              Copy link
-                            </DropdownMenuItem>
-                          )}
-                          {b.status === "published" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => handleArchive(b.blog_id)}
-                              disabled={rowBusyId === b.blog_id}
-                            >
-                              <Archive className="h-4 w-4" />
-                              Archive
-                            </DropdownMenuItem>
-                          )}
-                          {b.status === "archived" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => handlePublishAgain(b.blog_id)}
-                              disabled={rowBusyId === b.blog_id}
-                            >
-                              <ArchiveRestore className="h-4 w-4" />
-                              Unarchive
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            data-card-action="true"
-                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => setDeleteId(b.blog_id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
+                    {resolveBlogContentThumbnail(b) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveBlogContentThumbnail(b)}
+                        alt=""
+                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
+                      />
+                    ) : null}
                   </div>
-
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
                     {b.status === "scheduled" && b.scheduled_at ? (
                       <>
@@ -451,6 +388,65 @@ export default function DashboardPage() {
                         )}
                       </>
                     )}
+                    <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          data-card-action="true"
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                          aria-label={`Actions for ${b.title || "Untitled"}`}
+                          disabled={rowBusyId === b.blog_id}
+                          onPointerDown={(e) => e.preventDefault()}
+                          onClick={() => setMenuOpenBlogId(b.blog_id)}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent data-card-action="true" align="end" className="w-48">
+                        <DropdownMenuItem data-card-action="true" asChild>
+                          <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        {(b.status === "published" || b.status === "archived") && (
+                          <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
+                            <Share2 className="h-4 w-4" />
+                            Copy link
+                          </DropdownMenuItem>
+                        )}
+                        {b.status === "published" && (
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            onClick={() => handleArchive(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <Archive className="h-4 w-4" />
+                            Archive
+                          </DropdownMenuItem>
+                        )}
+                        {b.status === "archived" && (
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            onClick={() => handlePublishAgain(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <ArchiveRestore className="h-4 w-4" />
+                            Unarchive
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          data-card-action="true"
+                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                          onClick={() => setDeleteId(b.blog_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardContent>
               </Card>

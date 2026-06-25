@@ -268,11 +268,11 @@ export default function PagesDashboardPage() {
                       <Skeleton className="h-4 w-full" />
                       <Skeleton className="h-4 w-2/3" />
                     </div>
-                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
                     <Skeleton className="h-5 w-16 rounded-full" />
                     <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
                   </div>
                 </div>
               </li>
@@ -327,71 +327,6 @@ export default function PagesDashboardPage() {
                               {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
                             </p>
                           </div>
-                          <div className="shrink-0" data-card-action="true">
-                            <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  data-card-action="true"
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
-                                  aria-label={`Actions for ${p.title || "Untitled"}`}
-                                  disabled={rowBusyId === p.page_id}
-                                  onPointerDown={(e) => e.preventDefault()}
-                                  onClick={() => setMenuOpenPageId(p.page_id)}
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent data-card-action="true" align="end" className="w-44">
-                                <DropdownMenuItem data-card-action="true" asChild>
-                                  <Link href={`/dashboard/pages/${p.page_id}/edit`}>
-                                    <Pencil className="h-4 w-4" />
-                                    Edit
-                                  </Link>
-                                </DropdownMenuItem>
-                                {(p.status === "published" || p.status === "archived") && (
-                                  <DropdownMenuItem
-                                    data-card-action="true"
-                                    onClick={() => void onShare(p)}
-                                    disabled={rowBusyId === p.page_id}
-                                  >
-                                    <Share2 className="h-4 w-4" />
-                                    Copy link
-                                  </DropdownMenuItem>
-                                )}
-                                {p.status === "published" && (
-                                  <DropdownMenuItem
-                                    data-card-action="true"
-                                    onClick={() => void onArchive(p.page_id)}
-                                    disabled={rowBusyId === p.page_id}
-                                  >
-                                    <Archive className="h-4 w-4" />
-                                    Archive
-                                  </DropdownMenuItem>
-                                )}
-                                {p.status === "archived" && (
-                                  <DropdownMenuItem
-                                    data-card-action="true"
-                                    onClick={() => void onUnarchive(p.page_id)}
-                                    disabled={rowBusyId === p.page_id}
-                                  >
-                                    <ArchiveRestore className="h-4 w-4" />
-                                    Unarchive
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem
-                                  data-card-action="true"
-                                  className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                                  onClick={() => setDeleteId(p.page_id)}
-                                  disabled={rowBusyId === p.page_id}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                  Delete
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
                         </div>
 
                         <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">
@@ -404,6 +339,69 @@ export default function PagesDashboardPage() {
                           ) : (
                             <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
                           )}
+                          <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                data-card-action="true"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                                aria-label={`Actions for ${p.title || "Untitled"}`}
+                                disabled={rowBusyId === p.page_id}
+                                onPointerDown={(e) => e.preventDefault()}
+                                onClick={() => setMenuOpenPageId(p.page_id)}
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent data-card-action="true" align="end" className="w-44">
+                              <DropdownMenuItem data-card-action="true" asChild>
+                                <Link href={`/dashboard/pages/${p.page_id}/edit`}>
+                                  <Pencil className="h-4 w-4" />
+                                  Edit
+                                </Link>
+                              </DropdownMenuItem>
+                              {(p.status === "published" || p.status === "archived") && (
+                                <DropdownMenuItem
+                                  data-card-action="true"
+                                  onClick={() => void onShare(p)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <Share2 className="h-4 w-4" />
+                                  Copy link
+                                </DropdownMenuItem>
+                              )}
+                              {p.status === "published" && (
+                                <DropdownMenuItem
+                                  data-card-action="true"
+                                  onClick={() => void onArchive(p.page_id)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <Archive className="h-4 w-4" />
+                                  Archive
+                                </DropdownMenuItem>
+                              )}
+                              {p.status === "archived" && (
+                                <DropdownMenuItem
+                                  data-card-action="true"
+                                  onClick={() => void onUnarchive(p.page_id)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <ArchiveRestore className="h-4 w-4" />
+                                  Unarchive
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem
+                                data-card-action="true"
+                                className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                                onClick={() => setDeleteId(p.page_id)}
+                                disabled={rowBusyId === p.page_id}
+                              >
+                                <Trash2 className="h-4 w-4" />
+                                Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </CardContent>
                     </Card>
