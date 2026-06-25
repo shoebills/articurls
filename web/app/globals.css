@@ -171,6 +171,13 @@ body {
   margin: 1.5rem 0;
   color: var(--muted-foreground);
 }
+.prose-blog hr,
+.prose-email hr,
+.tiptap-editor .ProseMirror hr {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 1.5rem 0;
+}
 .prose-blog mark {
   background: oklch(0.92 0.12 95);
   padding: 0 0.15em;
