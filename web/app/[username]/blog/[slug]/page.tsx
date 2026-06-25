@@ -21,6 +21,7 @@ import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { StructuredData } from "@/components/structured-data";
 import { generateBlogPostingSchema } from "@/lib/structured-data";
+import { ChevronLeft } from "lucide-react";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -193,9 +194,10 @@ export default async function PublicBlogPage({ params }: Props) {
         ) : null}
         <Link
           href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Back
+          <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Back
         </Link>
         <header className="mt-6 sm:mt-8">
           <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">

@@ -17,6 +17,7 @@ import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages } from "@/lib/image-transform";
+import { ChevronLeft } from "lucide-react";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebPageSchema } from "@/lib/structured-data";
 
@@ -184,9 +185,10 @@ export default async function PublicCustomPage({ params }: Props) {
         <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
         <Link
           href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
-          ← Back
+          <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+          Back
         </Link>
 
         <header className="mt-6 sm:mt-8">

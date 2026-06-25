@@ -24,6 +24,7 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
+import { ChevronLeft } from "lucide-react";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -378,8 +379,9 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground">
-            ← Back
+          <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
           </Link>
           <header className="mt-6 sm:mt-8">
             <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
@@ -486,9 +488,10 @@ export default async function CustomDomainPage({ params }: Props) {
 
           <Link
             href={getPublicProfileUrl(username, { customDomain: true })}
-            className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
+            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
           >
-            ← Back
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
           </Link>
 
           <header className="mt-6 sm:mt-8">
