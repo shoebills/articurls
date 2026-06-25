@@ -340,7 +340,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured</h2>
-          <ul className="divide-y divide-border/80 border-t border-border/80 pt-8">
+          <ul className="divide-y divide-border/80">
             {featuredBlogs.map(b => (
                <BlogListItemRow
                  key={`featured-${b.blog_id}`}
@@ -361,12 +361,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
         </div>
       )}
 
-      <ul
-        className={cn(
-          "divide-y divide-border/80",
-          showFeatured && "border-t border-border/80 pt-8"
-        )}
-      >
+      <ul className="divide-y divide-border/80">
         {pagedBlogs.map((b) => (
           <BlogListItemRow
             key={b.blog_id}

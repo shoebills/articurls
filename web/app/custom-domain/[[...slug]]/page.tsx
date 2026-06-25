@@ -401,7 +401,7 @@ export default async function CustomDomainPage({ params }: Props) {
               )}
             </div>
           </header>
-          <div className="mt-6 border-t border-border/70 pt-8">
+          <div className="mt-12">
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
           </div>
           {showSubscriberCollection ? (
