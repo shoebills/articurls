@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -9,7 +9,7 @@ import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogOgImage } from "@/lib/blog-images";
-import { transformImageUrl, transformHtmlImages } from "@/lib/image-transform";
+import { transformHtmlImages } from "@/lib/image-transform";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
@@ -204,25 +204,9 @@ export default async function PublicBlogPage({ params }: Props) {
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Link
               href={getPublicProfileUrl(username)}
-              className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {author.profile_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={transformImageUrl(assetUrl(author.profile_image_url), { width: 100 })}
-                  alt=""
-                  width={36}
-                  height={36}
-                  className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70"
-                  loading="lazy"
-                  decoding="async"
-                />
-              ) : (
-                <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
-              )}
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
-                <span className="truncate">{author.name}</span>
-              </span>
+              <span className="truncate">{author.name}</span>
             </Link>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
