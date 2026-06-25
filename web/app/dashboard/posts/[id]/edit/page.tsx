@@ -165,6 +165,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }, [content, metaDescDirty]);
 
+  useEffect(() => {
+    const el = titleTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [title]);
+
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
@@ -804,7 +811,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
-              {/* <div className="mt-3 flex flex-wrap items-center gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <Label htmlFor="preview-in-lists" className="text-xs w-32 shrink-0">Preview in blog lists</Label>
                 <Select
                   value={hidePreviewInLists ? "hidden" : "auto"}
@@ -818,7 +825,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     <SelectItem value="hidden">No preview image</SelectItem>
                   </SelectContent>
                 </Select>
-              </div> */}
+              </div>
             </div>
 
             <Separator />

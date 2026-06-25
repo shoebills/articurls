@@ -112,6 +112,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }, [content, metaDescDirty]);
 
+  useEffect(() => {
+    const el = titleTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [title]);
+
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
