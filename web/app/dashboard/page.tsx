@@ -388,14 +388,15 @@ export default function DashboardPage() {
                         )}
                       </>
                     )}
-                    <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          data-card-action="true"
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
-                          aria-label={`Actions for ${b.title || "Untitled"}`}
+                    <div className="ml-auto">
+                      <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            data-card-action="true"
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                            aria-label={`Actions for ${b.title || "Untitled"}`}
                           disabled={rowBusyId === b.blog_id}
                           onPointerDown={(e) => e.preventDefault()}
                           onClick={() => setMenuOpenBlogId(b.blog_id)}
@@ -447,6 +448,7 @@ export default function DashboardPage() {
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

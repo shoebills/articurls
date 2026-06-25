@@ -339,14 +339,15 @@ export default function PagesDashboardPage() {
                           ) : (
                             <span className="whitespace-nowrap">Updated {format(new Date(p.updated_at), "MMM d, yyyy")}</span>
                           )}
-                          <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
-                            <DropdownMenuTrigger asChild>
-                              <Button
-                                data-card-action="true"
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
-                                aria-label={`Actions for ${p.title || "Untitled"}`}
+                          <div className="ml-auto">
+                            <DropdownMenu open={menuOpenPageId === p.page_id} onOpenChange={(open) => { if (!open) setMenuOpenPageId(null); }}>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  data-card-action="true"
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                                  aria-label={`Actions for ${p.title || "Untitled"}`}
                                 disabled={rowBusyId === p.page_id}
                                 onPointerDown={(e) => e.preventDefault()}
                                 onClick={() => setMenuOpenPageId(p.page_id)}
@@ -402,6 +403,7 @@ export default function PagesDashboardPage() {
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
