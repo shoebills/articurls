@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, JetBrains_Mono, League_Spartan } from "next/font/google";
+import { Geist, Inter, JetBrains_Mono } from "next/font/google";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -17,9 +17,10 @@ const jetbrainsMono = JetBrains_Mono({
   display: "swap",
 });
 
-const leagueSpartan = League_Spartan({
+/** Geist — heading font for public blog name */
+const geist = Geist({
   subsets: ["latin"],
-  variable: "--font-league-spartan",
+  variable: "--font-geist",
   display: "swap",
 });
 
@@ -55,7 +56,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable} ${leagueSpartan.variable} min-h-dvh antialiased`}
+      className={`${inter.variable} ${jetbrainsMono.variable} ${geist.variable} min-h-dvh antialiased`}
       data-theme="light"
       data-scroll-behavior="smooth"
     >

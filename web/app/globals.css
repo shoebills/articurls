@@ -95,9 +95,9 @@ body {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Public blog title (navbar) — use the default Inter UI font */
+/* Public blog title (navbar) — use Geist for the public blog heading */
 .font-nav-blog-name {
-  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-family: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Subtle grid for marketing / auth backgrounds */
