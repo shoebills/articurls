@@ -811,13 +811,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <Label htmlFor="preview-in-lists" className="text-xs w-32 shrink-0">Preview in blog lists</Label>
+              <div className="mt-3 space-y-1.5">
+                <Label htmlFor="preview-in-lists">Preview image in blog homepage</Label>
+                <p className="text-xs text-muted-foreground">Controls whether a preview image appears in blog list cards.</p>
                 <Select
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
                 >
-                  <SelectTrigger id="preview-in-lists" className="h-8 w-full max-w-[11rem] text-xs">
+                  <SelectTrigger id="preview-in-lists" className="h-9 w-full max-w-[15rem]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
