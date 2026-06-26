@@ -456,7 +456,7 @@ export default function DashboardPage() {
             );
           })}
             </ul>
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
+            <div className="mt-5 flex items-center justify-between">
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Page {currentPage} of {totalPages}
               </p>
