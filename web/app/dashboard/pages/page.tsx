@@ -55,6 +55,7 @@ export default function PagesDashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
@@ -180,6 +181,8 @@ export default function PagesDashboardPage() {
     const url = `${base}/page/${encodeURIComponent(page.slug)}`;
     try {
       await navigator.clipboard.writeText(url);
+      setCopiedMsg("Link copied");
+      setMenuOpenPageId(null);
     } catch {
       setShareUrl(url);
       setShareDialogOpen(true);
@@ -488,6 +491,8 @@ export default function PagesDashboardPage() {
       </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+
+      <FloatingErrorToast message={copiedMsg} onDismiss={() => setCopiedMsg(null)} variant="success" autoDismissMs={1500} />
 
       {/* Share Link Dialog */}
       <PromptDialog

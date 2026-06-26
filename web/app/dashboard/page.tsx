@@ -70,6 +70,7 @@ export default function DashboardPage() {
   // Share dialog state
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -173,6 +174,8 @@ export default function DashboardPage() {
     const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
     try {
       await navigator.clipboard.writeText(url);
+      setCopiedMsg("Link copied");
+      setMenuOpenBlogId(null);
     } catch {
       setShareUrl(url);
       setShareDialogOpen(true);
@@ -553,6 +556,8 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+
+      <FloatingErrorToast message={copiedMsg} onDismiss={() => setCopiedMsg(null)} variant="success" autoDismissMs={1500} />
 
       {/* Share Link Dialog */}
       <PromptDialog
