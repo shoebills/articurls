@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Check, AlertCircle, Loader2, Globe } from "lucide-react";
+import { Copy, Check, Loader2, Globe } from "lucide-react";
 import {
   addCustomDomain,
   getCustomDomain,
@@ -418,20 +418,15 @@ export default function CustomDomainSettings() {
 
       {/* SEO warning dialog for verified domains */}
       {showSeoWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-base font-semibold">Remove custom domain?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Removing a verified domain may negatively affect your Google search rankings.
-                </p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-border bg-background p-4 shadow-lg sm:max-w-md sm:rounded-xl sm:p-6">
+            <div className="space-y-1.5 text-left">
+              <h3 className="text-lg font-semibold leading-none tracking-tight">Remove custom domain?</h3>
+              <p className="text-sm text-muted-foreground">
+                Removing a verified domain may negatively affect your Google search rankings.
+              </p>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-4 flex flex-row flex-wrap items-center justify-start gap-2">
               <Button
                 variant="outline"
                 size="sm"

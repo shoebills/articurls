@@ -732,7 +732,7 @@ export default function SettingsPage() {
                 autoCorrect="off"
               />
             </div>
-            <p className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground break-all">
+            <p className="text-xs text-muted-foreground break-all">
               {liveProfileUrl}
             </p>
             <div className="min-h-5 text-sm">
@@ -754,7 +754,7 @@ export default function SettingsPage() {
               </p>
             )}
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Previous usernames keep working — your readers will be redirected.
+              Links with previous username will be redirected to new links.
             </p>
           </div>
           <DialogFooter>
