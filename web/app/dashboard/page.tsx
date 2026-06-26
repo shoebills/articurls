@@ -529,6 +529,7 @@ export default function DashboardPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Archive this post?</DialogTitle>
+            <DialogDescription>Move this post to your archive. You can restore it later if needed.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setArchiveId(null)}>
@@ -544,6 +545,7 @@ export default function DashboardPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Unarchive this post?</DialogTitle>
+            <DialogDescription>Restore the post so it appears in your published list again.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUnarchiveId(null)}>

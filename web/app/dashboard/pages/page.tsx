@@ -463,6 +463,7 @@ export default function PagesDashboardPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Archive this page?</DialogTitle>
+            <DialogDescription>Move this page into your archive. You can restore it later if you want.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setArchiveId(null)}>
@@ -478,6 +479,7 @@ export default function PagesDashboardPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Unarchive this page?</DialogTitle>
+            <DialogDescription>Restore the page so it is visible again in your site navigation.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUnarchiveId(null)}>
