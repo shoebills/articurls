@@ -156,7 +156,7 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
           ref={triggerRef}
           type="button"
           variant="outline"
-          className="h-12 min-h-12 gap-2 rounded-xl border-border/80 bg-white px-3 shadow-sm hover:bg-white hover:text-foreground sm:h-11 sm:min-h-11 sm:px-3.5"
+          className="h-10 min-h-10 gap-2 rounded-xl border-border/80 bg-white px-3 shadow-sm hover:bg-white hover:text-foreground sm:h-11 sm:min-h-11 sm:px-3.5"
           onPointerDown={(e) => {
             if (e.pointerType === "touch") e.preventDefault();
           }}
@@ -323,7 +323,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             }}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-12 min-h-12 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
+            className="h-10 min-h-10 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
         {!showFeatured && (

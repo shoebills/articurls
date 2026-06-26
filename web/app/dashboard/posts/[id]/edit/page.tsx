@@ -830,7 +830,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
                 >
-                  <SelectTrigger id="preview-in-lists" className="h-9 w-full max-w-[15rem]">
+                  <SelectTrigger id="preview-in-lists" className="h-10 w-full max-w-[15rem]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -908,7 +908,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           value={newCatName}
                           onChange={(e) => setNewCatName(e.target.value)}
                           placeholder="New category"
-                          className="h-8 min-w-0 flex-1 text-sm"
+                          className="h-10 min-w-0 flex-1 text-sm"
                           onKeyDown={(e) => {
                             if (e.key === "Enter") createCategoryInline();
                           }}
