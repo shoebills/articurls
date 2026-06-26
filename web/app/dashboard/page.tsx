@@ -529,7 +529,7 @@ export default function DashboardPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Archive this post?</DialogTitle>
-            <DialogDescription>Move this post to your archive. You can restore it later if needed.</DialogDescription>
+            <DialogDescription>Move this post to your archive.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setArchiveId(null)}>
