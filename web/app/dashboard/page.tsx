@@ -374,7 +374,7 @@ export default function DashboardPage() {
                         </span>
                       </>
                     ) : (
-                      <BlogStatusBadge status={b.status} className="shrink-0" />
+                      <BlogStatusBadge status={b.status} className="shrink-0 !text-[0.625rem] sm:!text-xs" />
                     )}
                     {b.status !== "scheduled" && (
                       <>
