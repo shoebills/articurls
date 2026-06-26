@@ -969,14 +969,14 @@ export default function DesignDashboardPage() {
                             </>
                           ) : isDeleting ? (
                             <>
-                              <Button size="sm" variant="ghost" className="h-8" onClick={() => setCatDeletingId(null)}>
+                              <Button size="sm" variant="ghost" className="h-10" onClick={() => setCatDeletingId(null)}>
                                 Cancel
                               </Button>
                               <Button
                                 size="sm"
                                 variant="destructive"
                                 className="h-10"
-                                onClick={onDeleteCat}
+                                onClick={() => onDeleteCategory(catDeletingId!)}
                                 disabled={busy}
                               >
                                 Delete
