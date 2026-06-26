@@ -329,8 +329,8 @@ export default function PagesDashboardPage() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-x-2 gap-y-2 text-xs text-slate-500">
-                          <BlogStatusBadge status={p.status} className="shrink-0" />
+                        <div className="flex items-center gap-x-2 gap-y-2 text-[0.625rem] text-slate-500">
+                          <BlogStatusBadge status={p.status} className="shrink-0 !text-[0.625rem]" />
                           <span className="text-slate-300 select-none" aria-hidden>
                             ·
                           </span>
