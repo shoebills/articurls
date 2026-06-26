@@ -29,7 +29,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 
@@ -204,9 +204,12 @@ export default function PagesDashboardPage() {
         </div>
         <Button
           asChild
-          className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
+          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
         >
-          <Link href="/dashboard/pages/new">+ New Page</Link>
+          <Link href="/dashboard/pages/new">
+            <Plus className="h-4 w-4" />
+            New Page
+          </Link>
         </Button>
       </div>
 

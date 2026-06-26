@@ -28,7 +28,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { PromptDialog } from "@/components/prompt-dialog";
@@ -241,8 +241,11 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
-        <Button asChild className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
-          <Link href="/dashboard/posts/new">+ New Post</Link>
+        <Button asChild className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
+          <Link href="/dashboard/posts/new">
+            <Plus className="h-4 w-4" />
+            New Post
+          </Link>
         </Button>
       </div>
 
