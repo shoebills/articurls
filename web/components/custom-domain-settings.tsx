@@ -541,7 +541,7 @@ function CopyRow({
           type="button"
           variant="outline"
           size="icon"
-          className="h-8 w-8 shrink-0"
+          className="h-10 w-10 shrink-0"
           onClick={() => onCopy(value, fieldKey)}
           aria-label={`Copy ${label}`}
         >

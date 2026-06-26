@@ -455,7 +455,7 @@ export default function SettingsPage() {
                 type="button"
                 variant="outline"
                 size="icon"
-                className="h-9 w-9 shrink-0"
+                className="h-10 w-10 shrink-0"
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
                 title={hasCustomProfileImage ? "Change photo" : "Upload photo"}
@@ -467,7 +467,7 @@ export default function SettingsPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                  className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   disabled={busy}
                   onClick={() => setPfpDeleteOpen(true)}
                   title="Remove photo"
@@ -485,11 +485,11 @@ export default function SettingsPage() {
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
               <div className="mt-2 flex items-center gap-2">
-                <Input id="user_name" className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
+                <Input id="user_name" className="h-10 min-h-10 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-12 min-h-12 w-12 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
+                  className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
                   onClick={() => {
                     setPendingUsername(user_name);
                     setUsernameAvailability({ state: "idle", message: "" });
@@ -608,7 +608,7 @@ export default function SettingsPage() {
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-9 w-9 shrink-0"
+                  className="h-10 w-10 shrink-0"
                   disabled={!isPro || faviconBusy}
                   onClick={() => faviconInputRef.current?.click()}
                   title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
@@ -624,7 +624,7 @@ export default function SettingsPage() {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                     disabled={!isPro || faviconBusy}
                     onClick={() => setFaviconDeleteOpen(true)}
                     title="Remove favicon"

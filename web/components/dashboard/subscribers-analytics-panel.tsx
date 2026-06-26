@@ -203,7 +203,7 @@ export function SubscribersAnalyticsPanel() {
           </div>
           <Button
             variant="outline"
-            className="h-11 w-full shrink-0 touch-manipulation sm:h-auto sm:w-auto sm:min-h-9"
+            className="h-10 w-full shrink-0 touch-manipulation sm:h-auto sm:w-auto sm:min-h-9"
             onClick={exportCsv}
           >
             Export CSV

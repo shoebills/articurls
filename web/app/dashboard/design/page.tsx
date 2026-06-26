@@ -592,7 +592,7 @@ export default function DesignDashboardPage() {
                       type="button"
                       variant={design.nav_blog_name_size === size ? "default" : "ghost"}
                       size="sm"
-                      className="h-9 flex-1 rounded-md px-2 text-xs capitalize sm:text-sm"
+                      className="h-10 flex-1 rounded-md px-2 text-xs capitalize sm:text-sm"
                       disabled={busy}
                       onClick={() => {
                         if (design.nav_blog_name_size === size) return;
@@ -810,7 +810,7 @@ export default function DesignDashboardPage() {
                           type="button"
                           variant="ghost"
                           size="icon"
-                          className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
+                          className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
                           onClick={() => {
                             setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
                             setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
@@ -949,7 +949,7 @@ export default function DesignDashboardPage() {
                             <>
                               <Button
                                 size="sm"
-                                className="h-8"
+                                className="h-10"
                                 onClick={onSaveRename}
                                 disabled={busy || !catEditingName.trim()}
                               >
@@ -958,7 +958,7 @@ export default function DesignDashboardPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-8"
+                                className="h-10"
                                 onClick={() => {
                                   setCatEditingId(null);
                                   setCatEditingName("");
@@ -975,8 +975,8 @@ export default function DesignDashboardPage() {
                               <Button
                                 size="sm"
                                 variant="destructive"
-                                className="h-8"
-                                onClick={() => onDeleteCategory(cat.category_id)}
+                                className="h-10"
+                                onClick={onDeleteCat}
                                 disabled={busy}
                               >
                                 Delete
@@ -987,7 +987,7 @@ export default function DesignDashboardPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8"
+                                className="h-10 w-10"
                                 onClick={() => {
                                   setCatEditingId(cat.category_id);
                                   setCatEditingName(cat.name);
@@ -999,7 +999,7 @@ export default function DesignDashboardPage() {
                               <Button
                                 variant="ghost"
                                 size="icon"
-                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                className="h-10 w-10 text-muted-foreground hover:text-destructive"
                                 onClick={() => setCatDeletingId(cat.category_id)}
                                 disabled={busy}
                               >

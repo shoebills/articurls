@@ -715,7 +715,7 @@ export function BlogEditor({
               type="button"
               variant={editor.isActive("heading") ? "secondary" : "ghost"}
               size="sm"
-              className="h-8 w-12 px-1"
+              className="h-10 w-12 px-1"
               title="Headings"
               onClick={() => setHeadingDropdownOpen((o) => !o)}
             >
@@ -794,7 +794,7 @@ export function BlogEditor({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 px-2 text-xs"
+                className="h-10 gap-1.5 px-2 text-xs"
                 onClick={(e) => {
                   e.stopPropagation();
                   editSelectedImageAlt();
@@ -808,7 +808,7 @@ export function BlogEditor({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-8 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
+                className="h-10 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
                 onClick={(e) => {
                   e.stopPropagation();
                   removeSelectedImage();

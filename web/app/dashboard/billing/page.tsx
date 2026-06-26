@@ -163,7 +163,7 @@ export default function BillingPage() {
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
           {sub && sub.plan_type !== "free" ? (
-            <Button size="sm" className="h-8 rounded-md" onClick={manageSubscription} disabled={busyPortal}>
+            <Button size="sm" className="h-10 rounded-md" onClick={manageSubscription} disabled={busyPortal}>
               {busyPortal ? "Redirecting…" : "Manage subscription"}
             </Button>
           ) : null}
@@ -212,10 +212,10 @@ export default function BillingPage() {
           ) : null}
           {!pro && !isLifetime ? (
             <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
+              <Button className="h-10 min-h-10 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
                 {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
               </Button>
-              <Button className="h-11 min-h-11 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busyLifetime}>
+              <Button className="h-10 min-h-10 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busyLifetime}>
                 {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
               </Button>
             </div>

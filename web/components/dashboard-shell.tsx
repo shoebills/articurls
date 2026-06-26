@@ -78,7 +78,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 border-border/70 bg-white text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-white hover:text-foreground"
+                    className="h-10 w-10 min-h-10 min-w-10 shrink-0 border-border/70 bg-white text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-white hover:text-foreground"
                     aria-label="Open menu"
                     aria-expanded={open}
                     aria-controls={mobileMenuId}
@@ -95,7 +95,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 {publicBlogHref ? (
-                  <Button asChild variant="outline" size="sm" className="h-9 shrink-0 rounded-md text-slate-700">
+                  <Button asChild variant="outline" size="sm" className="h-10 shrink-0 rounded-md text-slate-700">
                     <Link href={publicBlogHref}>
                       <ExternalLink className="mr-1 h-3.5 w-3.5" />
                       Visit

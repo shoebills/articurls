@@ -507,7 +507,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
                 type="button"
                 variant={editor.isActive("heading") ? "secondary" : "ghost"}
                 size="sm"
-                className="h-8 w-12 px-1"
+                className="h-10 w-12 px-1"
                 title="Headings"
                 onClick={() => setHeadingDropdownOpen((o) => !o)}
               >
@@ -638,7 +638,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
             type="button"
             variant="ghost"
             size="sm"
-            className="h-8 gap-1 px-2"
+            className="h-10 gap-1 px-2"
             onClick={() => openButtonDialog("insert")}
           >
             <MousePointerClick className="h-4 w-4" />

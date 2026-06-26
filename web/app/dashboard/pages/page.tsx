@@ -230,7 +230,7 @@ export default function PagesDashboardPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-10 min-h-10 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">Filter</span>
             </Button>
@@ -245,7 +245,7 @@ export default function PagesDashboardPage() {
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-10 min-h-10 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <ArrowUpDown className="h-4 w-4" />
               <span className="hidden sm:inline">Sort</span>
             </Button>
@@ -352,7 +352,7 @@ export default function PagesDashboardPage() {
                                   data-card-action="true"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                                  className="h-10 w-10 shrink-0 text-slate-500 hover:text-slate-700"
                                   aria-label={`Actions for ${p.title || "Untitled"}`}
                                 disabled={rowBusyId === p.page_id}
                                 onPointerDown={(e) => e.preventDefault()}
