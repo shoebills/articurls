@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Copy, Check, Loader2, Globe } from "lucide-react";
+import { Copy, Check, AlertCircle, Loader2, Globe } from "lucide-react";
 import {
   addCustomDomain,
   getCustomDomain,
