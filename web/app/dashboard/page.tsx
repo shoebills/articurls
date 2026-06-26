@@ -362,19 +362,19 @@ export default function DashboardPage() {
                       />
                     ) : null}
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] text-slate-500">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
                     {b.status === "scheduled" && b.scheduled_at ? (
                       <>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 text-[0.625rem] font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
-                          <span className="relative flex h-1.5 w-1.5">
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[0.625rem] sm:text-xs font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
+                          <span className="relative flex h-2 w-2">
                             <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-pulse" />
-                            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-amber-500 ring-2 ring-amber-500/40" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-500/40" />
                           </span>
                           Scheduled {format(new Date(b.scheduled_at), "MMM d, yyyy h:mm a")}
                         </span>
                       </>
                     ) : (
-                      <BlogStatusBadge status={b.status} className="shrink-0 !text-[0.625rem]" />
+                      <BlogStatusBadge status={b.status} className="shrink-0" />
                     )}
                     {b.status !== "scheduled" && (
                       <>
