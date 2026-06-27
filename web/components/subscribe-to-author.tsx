@@ -91,7 +91,7 @@ export function SubscribeToAuthor({
           <Button
             type="submit"
             disabled={status === "loading"}
-            className="h-11 min-h-11 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:min-w-[7.5rem] sm:shrink-0"
+            className="h-10 min-h-10 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:min-w-[7.5rem] sm:shrink-0"
           >
             {status === "loading" ? (
               <>

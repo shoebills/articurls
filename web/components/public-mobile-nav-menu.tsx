@@ -168,7 +168,7 @@ export function PublicMobileNavMenu({
                 mode="dialog"
                 userName={userName}
                 authorName={authorName}
-                triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
+                triggerClassName="h-10 min-h-10 w-full justify-center rounded-md px-3 text-center text-sm font-medium"
               />
             </div>
           ) : null}
