@@ -83,7 +83,15 @@ export function BlogPostShareMenu({ url, title }: { url: string; title: string }
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <PromptDialog open={dialogOpen} onOpenChange={setDialogOpen} title="Share link" description="Copy the link below to share this post." value={shareUrl} />
+      <PromptDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        title="Share link"
+        description="Copy the link below to share this post."
+        defaultValue={shareUrl}
+        readOnly
+        onConfirm={() => setDialogOpen(false)}
+      />
     </>
   );
 }

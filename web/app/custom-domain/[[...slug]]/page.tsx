@@ -504,7 +504,7 @@ export default async function CustomDomainPage({ params }: Props) {
           <header className="mt-6 sm:mt-8">
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
           </header>
-          <article className="mt-4">
+          <article className="mt-12">
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
