@@ -931,7 +931,7 @@ export default function DesignDashboardPage() {
                               disabled={busy}
                             />
                           ) : (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
                               <span className="truncate text-sm font-medium">{cat.name}</span>
                               {inMenu ? (
                                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
@@ -1141,7 +1141,7 @@ export default function DesignDashboardPage() {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
                     <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                      <span className="truncate">{b?.title || "Unknown blog"}</span>
+                      <span className="truncate min-w-0">{b?.title || "Unknown blog"}</span>
                       <div className="flex items-center gap-1 shrink-0 ml-4">
                         <Button
                           variant="ghost"
@@ -1236,7 +1236,7 @@ export default function DesignDashboardPage() {
               <ul className="space-y-2">
                 {footerSelection.map((id, idx) => (
                   <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                    <span>{pagesById.get(id)?.title || "Untitled"}</span>
+                    <span className="truncate min-w-0">{pagesById.get(id)?.title || "Untitled"}</span>
                     <div className="flex items-center gap-1">
                       <Button
                         variant="ghost"
