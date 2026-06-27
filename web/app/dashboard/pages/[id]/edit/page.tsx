@@ -17,6 +17,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -361,14 +362,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   const slugEditable = page.status === "draft";
 
-  function getConfirmLine(): string {
-    if (!page) return "";
-    if (pendingAction === "undo") return "Discard unsaved changes?";
-    if (pendingAction === "publish") return "Publish this page now?";
-    if (pendingAction === "archive") return "Archive this page?";
-    if (pendingAction === "unarchive") return "Unarchive this page?";
-    if (page.status === "published") return "This will update your live page.";
-    return "Save changes to this archived page?";
+  function getConfirmMeta(): { title: string; description?: string } {
+    if (!page) return { title: "" };
+    if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
+    if (pendingAction === "publish") return { title: "Publish this page now?" };
+    if (pendingAction === "archive") return { title: "Archive this page?" };
+    if (pendingAction === "unarchive") return { title: "Unarchive this page?" };
+    if (page.status === "published") return { title: "Save changes?", description: "This will update your live page." };
+    return { title: "Save changes to this archived page?" };
   }
 
   function confirmPendingAction() {
@@ -550,14 +551,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
         <DialogContent>
-          <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base font-medium leading-snug">{getConfirmLine()}</DialogTitle>
+          <DialogHeader>
+            <DialogTitle>{getConfirmMeta().title}</DialogTitle>
+            {getConfirmMeta().description && (
+              <DialogDescription>{getConfirmMeta().description}</DialogDescription>
+            )}
           </DialogHeader>
-          <DialogFooter className="flex flex-row justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPendingAction(null)}>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingAction(null)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={confirmPendingAction}>
+            <Button onClick={confirmPendingAction}>
               {pendingAction === "undo"
                 ? "Undo"
                 : pendingAction === "publish"

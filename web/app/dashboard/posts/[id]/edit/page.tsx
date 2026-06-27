@@ -39,6 +39,7 @@ import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -572,16 +573,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
       : null;
 
-  function getConfirmLine(): string {
-    if (!blog) return "";
-    if (pendingAction === "undo") return "Discard unsaved changes?";
-    if (pendingAction === "unschedule") return "Move this post back to draft? It will no longer be scheduled.";
-    if (pendingAction === "publish") return "Publish this post now?";
-    if (pendingAction === "archive") return "Archive this post?";
-    if (pendingAction === "unarchive") return "Unarchive this post?";
-    if (blog.status === "published") return "This will update your live post.";
-    if (blog.status === "scheduled") return "This will update your scheduled post.";
-    return "Save changes to this archived post?";
+  function getConfirmMeta(): { title: string; description?: string } {
+    if (!blog) return { title: "" };
+    if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
+    if (pendingAction === "unschedule") return { title: "Move this post back to draft?", description: "It will no longer be scheduled." };
+    if (pendingAction === "publish") return { title: "Publish this post now?" };
+    if (pendingAction === "archive") return { title: "Archive this post?" };
+    if (pendingAction === "unarchive") return { title: "Unarchive this post?" };
+    if (blog.status === "published") return { title: "Save changes?", description: "This will update your live post." };
+    if (blog.status === "scheduled") return { title: "Save changes?", description: "This will update your scheduled post." };
+    return { title: "Save changes to this archived post?" };
   }
 
   function confirmPendingAction() {
@@ -1021,14 +1022,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
         <DialogContent>
-          <DialogHeader className="space-y-1">
-            <DialogTitle className="text-base font-medium leading-snug">{getConfirmLine()}</DialogTitle>
+          <DialogHeader>
+            <DialogTitle>{getConfirmMeta().title}</DialogTitle>
+            {getConfirmMeta().description && (
+              <DialogDescription>{getConfirmMeta().description}</DialogDescription>
+            )}
           </DialogHeader>
-          <DialogFooter className="flex flex-row justify-end gap-2">
-            <Button variant="outline" size="sm" onClick={() => setPendingAction(null)}>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingAction(null)}>
               Cancel
             </Button>
-            <Button size="sm" onClick={confirmPendingAction}>
+            <Button onClick={confirmPendingAction}>
               {pendingAction === "undo"
                 ? "Undo"
                 : pendingAction === "unschedule"
