@@ -281,6 +281,7 @@ export default function SeoDashboardPage() {
                     type="button"
                     variant="outline"
                     size="sm"
+                    className="h-8 min-h-0"
                     disabled={!rssResourceEnabled}
                     onClick={() => {
                       if (rssResourceUrl) {
@@ -354,6 +355,7 @@ function SeoResourceRow({
         type="button"
         variant="outline"
         size="sm"
+        className="h-8 min-h-0"
         disabled={!enabled || !url}
         onClick={() => {
           if (enabled && url) {

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowUpDown, Check, Link2, Search, Share2 } from "lucide-react";
-import { SiInstagram, SiWhatsapp, SiX } from "react-icons/si";
+import { SiWhatsapp, SiX } from "react-icons/si";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
@@ -75,10 +75,6 @@ function BlogPostShareMenu({
     }
   }
 
-  function shareInstagram() {
-    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
-  }
-
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
     if (!nextOpen) triggerRef.current?.blur();
@@ -121,9 +117,6 @@ function BlogPostShareMenu({
           <a href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`} target="_blank" rel="noopener noreferrer">
             <SiWhatsapp className="h-4 w-4" /> Share on WhatsApp
           </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={shareInstagram}>
-          <SiInstagram className="h-4 w-4" /> Share on Instagram
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
