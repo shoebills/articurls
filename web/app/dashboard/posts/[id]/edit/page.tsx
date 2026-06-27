@@ -682,20 +682,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Email Subscribers */}
       <div className="mt-6 space-y-2">
-        <div className="flex flex-col gap-3 rounded-md border border-border bg-background p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
-          <div className="min-w-0">
+        <div className="rounded-md border border-border bg-background p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium">Email subscribers</p>
-                  <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
+            <Switch
+              className="shrink-0"
+              checked={notify}
+              disabled={!isPro}
+              onCheckedChange={(v) => {
+                if (!isPro) return;
+                setNotify(v);
+              }}
+            />
           </div>
-          <Switch
-            className="shrink-0 self-start sm:self-center"
-            checked={notify}
-            disabled={!isPro}
-            onCheckedChange={(v) => {
-              if (!isPro) return;
-              setNotify(v);
-            }}
-          />
+          <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
         </div>
         {!isPro && notify === false && (
           <p className="text-xs text-muted-foreground">{wasPro ? "Reactivate Pro to enable per-post subscriber emails." : "Upgrade to Pro in Billing to enable per-post subscriber emails."}</p>

@@ -635,37 +635,37 @@ export default function SettingsPage() {
               </div>
             </div>
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1">
+          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+            <div className="flex items-center justify-between gap-4 sm:gap-6">
               <p className="text-sm font-medium">Collect subscribers</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Show the subscribe button in your blog menu and below blog posts.
-              </p>
+              <Switch
+                checked={isPro ? collectSubscribers : false}
+                onCheckedChange={(v) => {
+                  setCollectSubscribers(v);
+                  void savePro(v, removeBranding);
+                }}
+                disabled={!isPro || busy}
+              />
             </div>
-            <Switch
-              checked={isPro ? collectSubscribers : false}
-              onCheckedChange={(v) => {
-                setCollectSubscribers(v);
-                void savePro(v, removeBranding);
-              }}
-              disabled={!isPro || busy}
-            />
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Show the subscribe button in your blog menu and below blog posts.
+            </p>
           </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1">
+          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+            <div className="flex items-center justify-between gap-4 sm:gap-6">
               <p className="text-sm font-medium">Remove branding</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Hide the "Made with Articurls" badge from your blog.
-              </p>
+              <Switch
+                checked={isPro ? removeBranding : false}
+                onCheckedChange={(v) => {
+                  setRemoveBranding(v);
+                  void savePro(collectSubscribers, v);
+                }}
+                disabled={!isPro || busy}
+              />
             </div>
-            <Switch
-              checked={isPro ? removeBranding : false}
-              onCheckedChange={(v) => {
-                setRemoveBranding(v);
-                void savePro(collectSubscribers, v);
-              }}
-              disabled={!isPro || busy}
-            />
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Hide the "Made with Articurls" badge from your blog.
+            </p>
           </div>
         </CardContent>
       </Card>

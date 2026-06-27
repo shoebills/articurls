@@ -226,12 +226,7 @@ export default function AudienceEmailsPage() {
           <Card>
             <CardHeader>
               <div className="flex w-full items-center justify-between gap-4">
-                <div className="min-w-0 flex-1 space-y-1">
-                  <CardTitle>Welcome email automation</CardTitle>
-                  <CardDescription>
-                    Send a welcome email to new subscribers.
-                  </CardDescription>
-                </div>
+                <CardTitle>Welcome email automation</CardTitle>
                 <Switch
                   checked={enabled}
                   onCheckedChange={onToggleWelcome}
@@ -239,6 +234,9 @@ export default function AudienceEmailsPage() {
                   aria-label="Enable welcome email"
                 />
               </div>
+              <CardDescription>
+                Send a welcome email to new subscribers.
+              </CardDescription>
             </CardHeader>
             <CardContent className="space-y-5">
               <div className="space-y-2">

@@ -267,34 +267,34 @@ export default function SeoDashboardPage() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
-              <div className="space-y-0.5">
+            <div className="rounded-lg border bg-white px-4 py-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-4">
                 <p className="text-sm font-medium">RSS feed</p>
-                <p className="text-xs text-muted-foreground">
-                  When enabled, RSS icon appears in the footer.
-                </p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Switch
+                    checked={rssEnabled}
+                    onCheckedChange={onToggleRss}
+                    disabled={busy}
+                    aria-label="Enable RSS feed"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    disabled={!rssResourceEnabled}
+                    onClick={() => {
+                      if (rssResourceUrl) {
+                        window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                  >
+                    View
+                  </Button>
+                </div>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <Switch
-                  checked={rssEnabled}
-                  onCheckedChange={onToggleRss}
-                  disabled={busy}
-                  aria-label="Enable RSS feed"
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!rssResourceEnabled}
-                  onClick={() => {
-                    if (rssResourceUrl) {
-                      window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                >
-                  View
-                </Button>
-              </div>
+              <p className="text-xs text-muted-foreground">
+                When enabled, RSS icon appears in the footer.
+              </p>
             </div>
             <SeoResourceRow
               label="Sitemap"
