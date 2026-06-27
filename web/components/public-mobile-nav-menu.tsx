@@ -79,6 +79,7 @@ export function PublicMobileNavMenu({
     function onPointerDown(event: MouseEvent | TouchEvent) {
       const target = event.target as Node | null;
       if (!target) return;
+      if (target instanceof Element && target.closest('[role="dialog"]')) return;
       if (!rootRef.current?.contains(target)) setOpen(false);
     }
 

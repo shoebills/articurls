@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ChevronDown, ChevronUp, Pencil, Plus, Tag, Trash2, X } from "lucide-react";
 import {
@@ -1118,6 +1118,11 @@ export default function DesignDashboardPage() {
               </div>
             ) : null}
           </div>
+          <DialogFooter className="justify-end border-t border-border/60 pt-4">
+            <Button variant="outline" onClick={() => setNavMenuModalOpen(false)}>
+              Done
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1210,6 +1215,11 @@ export default function DesignDashboardPage() {
               <p className="text-sm text-muted-foreground mt-2">Maximum 10 posts allowed.</p>
             ) : null}
           </div>
+          <DialogFooter className="justify-end border-t border-border/60 pt-4">
+            <Button variant="outline" onClick={() => setFeaturedPostsModalOpen(false)}>
+              Done
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
@@ -1296,6 +1306,11 @@ export default function DesignDashboardPage() {
               </div>
             ) : null}
           </div>
+          <DialogFooter className="justify-end border-t border-border/60 pt-4">
+            <Button variant="outline" onClick={() => setFooterPagesModalOpen(false)}>
+              Done
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

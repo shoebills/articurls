@@ -74,7 +74,7 @@ export function SubscribeToAuthor({
           {message}
         </p>
       ) : (
-        <form onSubmit={onSubmit} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <form onSubmit={onSubmit} className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1 space-y-2">
             <Label htmlFor={`subscribe-email-${userName}`} className="sr-only">
               Email address
@@ -144,7 +144,7 @@ export function SubscribeToAuthor({
               {triggerChildren ?? "Subscribe"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm sm:max-w-md">
             <DialogHeader>
               <DialogTitle>Email updates</DialogTitle>
               <DialogDescription>{description}</DialogDescription>
@@ -164,7 +164,7 @@ export function SubscribeToAuthor({
           className ?? "rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5"
         }
       >
-        <p className="text-sm font-medium text-foreground">Email updates</p>
+        <p className="text-sm font-semibold text-foreground">Email updates</p>
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         {formBody}
       </div>
