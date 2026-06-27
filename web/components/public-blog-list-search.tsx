@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Check, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
-import { cn } from "@/lib/utils";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type PublicBlogListSearchProps = {
@@ -28,65 +26,6 @@ const POSTS_PER_PAGE = 10;
 function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
   const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
   return `${siteOrigin || MARKETING_ORIGIN}${path}`;
-}
-
-function SortMenu({ sortBy, onToggle }: { sortBy: "latest" | "oldest" | null; onToggle: (v: "latest" | "oldest") => void }) {
-  const [open, setOpen] = useState(false);
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("scroll", close, { passive: true });
-    window.addEventListener("wheel", close, { passive: true });
-    window.addEventListener("touchmove", close, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", close);
-      window.removeEventListener("wheel", close);
-      window.removeEventListener("touchmove", close);
-    };
-  }, [open]);
-
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    if (!nextOpen) triggerRef.current?.blur();
-  }
-
-  return (
-    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          ref={triggerRef}
-          type="button"
-          variant="outline"
-          className="h-10 min-h-10 gap-2 rounded-xl border-border/80 bg-white px-3 shadow-sm hover:bg-white hover:text-foreground sm:h-11 sm:min-h-11 sm:px-3.5"
-          onPointerDown={(e) => {
-            if (e.pointerType === "touch") e.preventDefault();
-          }}
-          onClick={() => setOpen((prev) => !prev)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen((prev) => !prev);
-            }
-          }}
-        >
-          <ArrowUpDown className="h-4 w-4" />
-          <span>{sortBy === "latest" ? "Latest" : sortBy === "oldest" ? "Oldest" : "Sort"}</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-44 bg-white">
-        <DropdownMenuItem onClick={() => onToggle("latest")}>
-          <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
-          Latest
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onToggle("oldest")}>
-          <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
-          Oldest
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 function BlogListItemRow({
@@ -148,7 +87,6 @@ function BlogListItemRow({
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest" | null>(null);
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -161,24 +99,17 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       .filter((b): b is PublicBlog => Boolean(b));
   }, [user, blogs, hideFeatured]);
   
-  const showFeatured = featuredBlogs.length > 0 && query.trim() === "" && sortBy === null;
+  const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
 
   const sortedBlogs = useMemo(() => {
-    const compareBySort = (a: PublicBlog, b: PublicBlog) => {
-      if (sortBy === "oldest") {
-        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
-        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
-        return aDate - bDate;
-      }
-      const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
-      const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
-      return bDate - aDate;
-    };
-
     const trimmed = query.trim();
     if (!trimmed) {
       const rows = [...blogs];
-      rows.sort(compareBySort);
+      rows.sort((a, b) => {
+        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+        return bDate - aDate;
+      });
       return rows;
     }
 
@@ -190,10 +121,12 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       .filter((row) => row.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
-        return compareBySort(a.blog, b.blog);
+        const aDate = a.blog.published_at ? new Date(a.blog.published_at).getTime() : 0;
+        const bDate = b.blog.published_at ? new Date(b.blog.published_at).getTime() : 0;
+        return bDate - aDate;
       })
       .map((row) => row.blog);
-  }, [blogs, query, sortBy]);
+  }, [blogs, query]);
 
   const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / POSTS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -226,18 +159,11 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             className="h-10 min-h-10 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
-        <SortMenu
-          sortBy={sortBy}
-          onToggle={(v) => {
-            setSortBy(sortBy === v ? null : v);
-            setPage(1);
-          }}
-        />
       </div>
 
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
-          <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured</h2>
+          <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured Posts</h2>
           <ul>
             {featuredBlogs.map(b => (
                <BlogListItemRow
@@ -253,7 +179,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       ) : null}
 
       {showFeatured && (
-        <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">All posts</h2>
+        <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Recent Posts</h2>
       )}
 
       <ul>
