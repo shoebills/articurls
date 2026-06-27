@@ -467,13 +467,12 @@ export default function DashboardPage() {
                 Page {currentPage} of {totalPages}
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-8 min-h-0 px-3 py-1.5" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
                   Prev
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 min-h-0 px-3 py-1.5"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
                 >

@@ -101,7 +101,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                       Visit
                     </Link>
                   </Button>
-                ) : null}
+                ) : (
+                  <Button type="button" variant="outline" size="sm" className="h-10 shrink-0 rounded-md text-slate-600">
+                    <ExternalLink className="mr-1 h-3.5 w-3.5" />
+                    Visit
+                  </Button>
+                )}
               </div>
 
               <div
