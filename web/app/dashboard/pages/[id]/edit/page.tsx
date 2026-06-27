@@ -366,8 +366,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     if (!page) return { title: "" };
     if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
     if (pendingAction === "publish") return { title: "Publish this page now?" };
-    if (pendingAction === "archive") return { title: "Archive this page?" };
-    if (pendingAction === "unarchive") return { title: "Unarchive this page?" };
+    if (pendingAction === "archive") return { title: "Archive this page?", description: "Move this page to your archive." };
+    if (pendingAction === "unarchive") return { title: "Unarchive this page?", description: "Restore the page so it appears in your published list again." };
     if (page.status === "published") return { title: "Save changes?", description: "This will update your live page." };
     return { title: "Save changes to this archived page?" };
   }

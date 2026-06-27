@@ -578,8 +578,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
     if (pendingAction === "unschedule") return { title: "Move this post back to draft?", description: "It will no longer be scheduled." };
     if (pendingAction === "publish") return { title: "Publish this post now?" };
-    if (pendingAction === "archive") return { title: "Archive this post?" };
-    if (pendingAction === "unarchive") return { title: "Unarchive this post?" };
+    if (pendingAction === "archive") return { title: "Archive this post?", description: "Move this post to your archive." };
+    if (pendingAction === "unarchive") return { title: "Unarchive this post?", description: "Restore the post so it appears in your published list again." };
     if (blog.status === "published") return { title: "Save changes?", description: "This will update your live post." };
     if (blog.status === "scheduled") return { title: "Save changes?", description: "This will update your scheduled post." };
     return { title: "Save changes to this archived post?" };
