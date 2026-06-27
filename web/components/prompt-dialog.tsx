@@ -23,6 +23,7 @@ export type PromptDialogProps = {
   onConfirm: (value: string) => void;
   submitLabel?: string;
   readOnly?: boolean;
+  compact?: boolean;
 };
 
 export function PromptDialog({
@@ -35,6 +36,7 @@ export function PromptDialog({
   onConfirm,
   submitLabel = "Confirm",
   readOnly = false,
+  compact = false,
 }: PromptDialogProps) {
   const [value, setValue] = useState(defaultValue);
   const [copied, setCopied] = useState(false);
@@ -67,7 +69,9 @@ export function PromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent
+        className={compact ? "w-auto max-w-sm rounded-md border bg-popover p-3 shadow-md" : undefined}
+      >
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-base">{title}</DialogTitle>
           {description && <DialogDescription className="text-xs">{description}</DialogDescription>}

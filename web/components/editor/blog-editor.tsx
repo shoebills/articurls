@@ -26,7 +26,6 @@ import {
   List,
   ListOrdered,
   Minus,
-  Play,
   Redo2,
   ScanText,
   Underline as UnderlineIcon,
@@ -39,6 +38,7 @@ import {
   Quote,
   WrapText,
 } from "lucide-react";
+import { SiYoutube } from "react-icons/si";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -663,12 +663,13 @@ export function BlogEditor({
     {
       value: "youtube",
       label: "YouTube",
-      icon: <Play className="h-4 w-4" />,
+      icon: <SiYoutube className="h-4 w-4" />,
       action: addYoutube,
       isActive: () => false,
       canExecute: () => true,
     },
   ];
+
 
   return (
     <div className={cn("tiptap-editor rounded-lg border border-input bg-white", className)}>
@@ -821,6 +822,7 @@ export function BlogEditor({
         defaultValue={linkUrl}
         onConfirm={handleLinkConfirm}
         submitLabel="Add Link"
+        compact
       />
 
       {/* YouTube Dialog */}
@@ -833,6 +835,7 @@ export function BlogEditor({
         defaultValue={youtubeUrl}
         onConfirm={handleYoutubeConfirm}
         submitLabel="Add Video"
+        compact
       />
 
       {/* Alt Text Dialog */}
