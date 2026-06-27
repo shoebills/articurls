@@ -886,7 +886,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
           </DialogHeader>
-          <div className="space-y-5 min-w-0 overflow-hidden">
+          <div className="space-y-5 min-w-0">
             <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium">All categories</p>
@@ -1134,7 +1134,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Featured Posts</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 min-w-0 overflow-hidden">
+          <div className="space-y-4 min-w-0">
             {design.featured_blog_ids.length === 0 ? (
               <p className="text-sm text-muted-foreground">Add posts to feature.</p>
             ) : (
@@ -1231,7 +1231,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Footer Pages</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 min-w-0 overflow-hidden">
+          <div className="space-y-4 min-w-0">
             {selectedFooterPages.length === 0 ? (
               <p className="text-sm text-muted-foreground">Add pages to display in the footer.</p>
             ) : (
