@@ -913,23 +913,64 @@ export default function DesignDashboardPage() {
                     return (
                       <div
                         key={cat.category_id}
-                        className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
+                        className="rounded-md border px-3 py-2"
                       >
-                        <div className="min-w-0 flex-1">
+                        <div className="min-w-0">
                           {isEditing ? (
-                            <Input
-                              value={catEditingName}
-                              onChange={(e) => setCatEditingName(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") onSaveRename();
-                                if (e.key === "Escape") {
-                                  setCatEditingId(null);
-                                  setCatEditingName("");
-                                }
-                              }}
-                              autoFocus
-                              disabled={busy}
-                            />
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={catEditingName}
+                                onChange={(e) => setCatEditingName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") onSaveRename();
+                                  if (e.key === "Escape") {
+                                    setCatEditingId(null);
+                                    setCatEditingName("");
+                                  }
+                                }}
+                                autoFocus
+                                disabled={busy}
+                              />
+                              <div className="flex shrink-0 items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  className="h-10"
+                                  onClick={onSaveRename}
+                                  disabled={busy || !catEditingName.trim()}
+                                >
+                                  Save
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-10"
+                                  onClick={() => {
+                                    setCatEditingId(null);
+                                    setCatEditingName("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                              </div>
+                            </div>
+                          ) : isDeleting ? (
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="truncate text-sm font-medium">{cat.name}</span>
+                              <div className="flex shrink-0 items-center gap-1">
+                                <Button size="sm" variant="outline" className="h-10" onClick={() => setCatDeletingId(null)}>
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  className="h-10"
+                                  onClick={() => onDeleteCategory(catDeletingId!)}
+                                  disabled={busy}
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
                           ) : (
                             <div className="flex items-center gap-2 min-w-0">
                               <span className="truncate text-sm font-medium">{cat.name}</span>
@@ -938,75 +979,36 @@ export default function DesignDashboardPage() {
                                   In menu
                                 </span>
                               ) : null}
+                              <div className="flex shrink-0 items-center gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  onClick={() => {
+                                    setCatEditingId(cat.category_id);
+                                    setCatEditingName(cat.name);
+                                  }}
+                                  disabled={busy}
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                  onClick={() => setCatDeletingId(cat.category_id)}
+                                  disabled={busy}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
                             </div>
                           )}
-                          <p className="text-xs text-muted-foreground">
-                            {cat.blog_count ?? 0} {cat.blog_count === 1 ? "post" : "posts"}
-                          </p>
-                        </div>
-                        <div className="flex shrink-0 flex-wrap items-center gap-1">
-                          {isEditing ? (
-                            <>
-                              <Button
-                                size="sm"
-                                className="h-10"
-                                onClick={onSaveRename}
-                                disabled={busy || !catEditingName.trim()}
-                              >
-                                Save
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="h-10"
-                                onClick={() => {
-                                  setCatEditingId(null);
-                                  setCatEditingName("");
-                                }}
-                              >
-                                Cancel
-                              </Button>
-                            </>
-                          ) : isDeleting ? (
-                            <>
-                              <Button size="sm" variant="ghost" className="h-10" onClick={() => setCatDeletingId(null)}>
-                                Cancel
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                className="h-10"
-                                onClick={() => onDeleteCategory(catDeletingId!)}
-                                disabled={busy}
-                              >
-                                Delete
-                              </Button>
-                            </>
-                          ) : (
-                            <>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10"
-                                onClick={() => {
-                                  setCatEditingId(cat.category_id);
-                                  setCatEditingName(cat.name);
-                                }}
-                                disabled={busy}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-10 w-10 text-muted-foreground hover:text-destructive"
-                                onClick={() => setCatDeletingId(cat.category_id)}
-                                disabled={busy}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </>
-                          )}
+                          {!isEditing ? (
+                            <p className="text-xs text-muted-foreground">
+                              {cat.blog_count ?? 0} {cat.blog_count === 1 ? "post" : "posts"}
+                            </p>
+                          ) : null}
                         </div>
                       </div>
                     );
@@ -1105,7 +1107,7 @@ export default function DesignDashboardPage() {
                   </SelectContent>
                 </Select>
                 <Button
-                  variant="outline"
+                  variant="default"
                   disabled={busy || !catToAdd}
                   onClick={() => {
                     const id = Number(catToAdd);
@@ -1119,7 +1121,7 @@ export default function DesignDashboardPage() {
             ) : null}
           </div>
           <DialogFooter className="justify-end border-t border-border/60 pt-4">
-            <Button variant="outline" onClick={() => setNavMenuModalOpen(false)}>
+            <Button variant="default" onClick={() => setNavMenuModalOpen(false)}>
               Done
             </Button>
           </DialogFooter>
@@ -1198,7 +1200,7 @@ export default function DesignDashboardPage() {
                   </SelectContent>
                 </Select>
                 <Button
-                  variant="outline"
+                  variant="default"
                   disabled={busy || !blogToAdd}
                   onClick={() => {
                     const id = Number(blogToAdd);
@@ -1216,7 +1218,7 @@ export default function DesignDashboardPage() {
             ) : null}
           </div>
           <DialogFooter className="justify-end border-t border-border/60 pt-4">
-            <Button variant="outline" onClick={() => setFeaturedPostsModalOpen(false)}>
+            <Button variant="default" onClick={() => setFeaturedPostsModalOpen(false)}>
               Done
             </Button>
           </DialogFooter>
@@ -1290,7 +1292,7 @@ export default function DesignDashboardPage() {
                   </SelectContent>
                 </Select>
                 <Button
-                  variant="outline"
+                  variant="default"
                   disabled={busy || !footerPageToAdd}
                   onClick={() => {
                     const id = Number(footerPageToAdd);
@@ -1307,7 +1309,7 @@ export default function DesignDashboardPage() {
             ) : null}
           </div>
           <DialogFooter className="justify-end border-t border-border/60 pt-4">
-            <Button variant="outline" onClick={() => setFooterPagesModalOpen(false)}>
+            <Button variant="default" onClick={() => setFooterPagesModalOpen(false)}>
               Done
             </Button>
           </DialogFooter>
