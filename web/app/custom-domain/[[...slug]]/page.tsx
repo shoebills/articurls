@@ -25,6 +25,7 @@ import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
 import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -379,10 +380,13 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Back
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu url={currentUrl} title={blog.title} />
+          </div>
           <header className="mt-6 sm:mt-8">
             <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
               {blog.title}
@@ -486,13 +490,16 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
 
-          <Link
-            href={getPublicProfileUrl(username, { customDomain: true })}
-            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Back
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link
+              href={getPublicProfileUrl(username, { customDomain: true })}
+              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu url={currentUrl} title={page.title} />
+          </div>
 
           <header className="mt-6 sm:mt-8">
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>

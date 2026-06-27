@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Check, Link2, Search, Share2 } from "lucide-react";
-import { SiWhatsapp, SiX } from "react-icons/si";
+import { ArrowUpDown, Check, Search } from "lucide-react";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
@@ -13,7 +12,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
-import { PromptDialog } from "@/components/prompt-dialog";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -29,98 +28,6 @@ const POSTS_PER_PAGE = 10;
 function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
   const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
   return `${siteOrigin || MARKETING_ORIGIN}${path}`;
-}
-
-function BlogPostShareMenu({
-  userName,
-  slug,
-  title,
-  useCustomDomain = false,
-  siteOrigin,
-}: {
-  userName: string;
-  slug: string;
-  title: string;
-  useCustomDomain?: boolean;
-  siteOrigin?: string;
-}) {
-  const url = publicBlogPostUrl(userName, slug, useCustomDomain, siteOrigin);
-  const encodedUrl = encodeURIComponent(url);
-  const encodedText = encodeURIComponent(title || "Read this post");
-  const [open, setOpen] = useState(false);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const triggerRef = useRef<HTMLButtonElement | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const close = () => setOpen(false);
-    window.addEventListener("scroll", close, { passive: true });
-    window.addEventListener("wheel", close, { passive: true });
-    window.addEventListener("touchmove", close, { passive: true });
-    return () => {
-      window.removeEventListener("scroll", close);
-      window.removeEventListener("wheel", close);
-      window.removeEventListener("touchmove", close);
-    };
-  }, [open]);
-
-  async function copyLink() {
-    try {
-      await navigator.clipboard.writeText(url);
-    } catch {
-      // Fallback for non-secure contexts
-      setShareUrl(url);
-      setDialogOpen(true);
-    }
-  }
-
-  function handleOpenChange(nextOpen: boolean) {
-    setOpen(nextOpen);
-    if (!nextOpen) triggerRef.current?.blur();
-  }
-
-  return (
-    <DropdownMenu open={open} onOpenChange={handleOpenChange}>
-      <DropdownMenuTrigger asChild>
-        <Button
-          ref={triggerRef}
-          type="button"
-          variant="ghost"
-          size="icon"
-          className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-          aria-label="Share post"
-          onPointerDown={(e) => {
-            if (e.pointerType === "touch") e.preventDefault();
-          }}
-          onClick={() => setOpen((prev) => !prev)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen((prev) => !prev);
-            }
-          }}
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52 bg-white">
-        <DropdownMenuItem onClick={copyLink}>
-          <Link2 className="h-4 w-4" /> Copy link
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`} target="_blank" rel="noopener noreferrer">
-            <SiX className="h-4 w-4" /> Share on X
-          </a>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <a href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`} target="_blank" rel="noopener noreferrer">
-            <SiWhatsapp className="h-4 w-4" /> Share on WhatsApp
-          </a>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
-  );
 }
 
 function SortMenu({ sortBy, onToggle }: { sortBy: "latest" | "oldest" | null; onToggle: (v: "latest" | "oldest") => void }) {
@@ -230,11 +137,8 @@ function BlogListItemRow({
             <span className="text-xs text-muted-foreground" aria-hidden />
           )}
           <BlogPostShareMenu
-            userName={username}
-            slug={b.slug}
+            url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
             title={b.title}
-            useCustomDomain={useCustomDomain}
-            siteOrigin={siteOrigin}
           />
         </div>
       </div>

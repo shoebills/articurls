@@ -22,6 +22,7 @@ import { fetchSeoEligibility } from "@/lib/seo-data";
 import { StructuredData } from "@/components/structured-data";
 import { generateBlogPostingSchema } from "@/lib/structured-data";
 import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
@@ -192,13 +193,19 @@ export default async function PublicBlogPage({ params }: Props) {
             </div>
           </header>
         ) : null}
-        <Link
-          href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Back
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href={getPublicProfileUrl(username)}
+            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
+          </Link>
+          <BlogPostShareMenu
+            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`}
+            title={blog.title}
+          />
+        </div>
         <header className="mt-6 sm:mt-8">
           <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {blog.title}

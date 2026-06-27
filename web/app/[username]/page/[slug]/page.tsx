@@ -18,6 +18,7 @@ import { fetchSeoEligibility } from "@/lib/seo-data";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages } from "@/lib/image-transform";
 import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebPageSchema } from "@/lib/structured-data";
 
@@ -183,13 +184,19 @@ export default async function PublicCustomPage({ params }: Props) {
         ) : null}
 
         <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
-        <Link
-          href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-          Back
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href={getPublicProfileUrl(username)}
+            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
+          </Link>
+          <BlogPostShareMenu
+            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
+            title={page.title}
+          />
+        </div>
 
         <header className="mt-6 sm:mt-8">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
