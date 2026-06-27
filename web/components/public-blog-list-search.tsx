@@ -300,14 +300,14 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   if (blogs.length === 0) {
     return (
-    <section className="mt-5 sm:mt-6">
+      <section className="mt-5 sm:mt-6">
         <p className="text-muted-foreground">No published posts yet.</p>
       </section>
     );
   }
 
   return (
-    <section className="mt-0">
+    <section className="mt-5 sm:mt-6">
       <div className="mb-6 flex items-center gap-2 sm:mb-8 sm:gap-3">
         <div className="relative min-w-0 flex-1">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -322,15 +322,13 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             className="h-10 min-h-10 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
-        {!showFeatured && (
-          <SortMenu
-            sortBy={sortBy}
-            setSortBy={(next) => {
-              setSortBy(next);
-              setPage(1);
-            }}
-          />
-        )}
+        <SortMenu
+          sortBy={sortBy}
+          setSortBy={(next) => {
+            setSortBy(next);
+            setPage(1);
+          }}
+        />
       </div>
 
       {showFeatured ? (
@@ -351,10 +349,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       ) : null}
 
       {showFeatured && (
-        <div className="mb-5 flex items-center justify-between sm:mb-6">
-          <h2 className="text-xl font-bold tracking-tight sm:text-2xl">All posts</h2>
-          <SortMenu sortBy={sortBy} setSortBy={setSortBy} />
-        </div>
+        <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">All posts</h2>
       )}
 
       <ul>

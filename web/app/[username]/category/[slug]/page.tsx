@@ -164,7 +164,7 @@ export default async function PublicCategoryPage({ params }: Props) {
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <header className="mb-4 sm:mb-5" data-public-nav>
+          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
                 title={navBlogName}
