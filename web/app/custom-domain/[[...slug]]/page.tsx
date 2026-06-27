@@ -353,7 +353,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
           {author.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className="mb-4 sm:mb-5" data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -459,7 +459,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <main className={mainSpacing}>
           <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className="mb-4 sm:mb-5" data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -557,7 +557,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className="mb-4 sm:mb-5" data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -662,7 +662,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
         {user.navbar_enabled ? (
-          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+          <header className="mb-4 sm:mb-5" data-public-nav>
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
                 title={navBlogName}
