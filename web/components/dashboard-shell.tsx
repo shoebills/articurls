@@ -95,14 +95,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 {publicBlogHref ? (
-                  <Button asChild variant="outline" size="sm" className="h-10 shrink-0 rounded-md text-slate-700">
+                  <Button asChild variant="outline" size="sm" className="h-8 shrink-0 rounded-md text-slate-700">
                     <Link href={publicBlogHref}>
                       <ExternalLink className="mr-1 h-3.5 w-3.5" />
                       Visit
                     </Link>
                   </Button>
                 ) : (
-                  <Button type="button" variant="outline" size="sm" className="h-10 shrink-0 rounded-md text-slate-600">
+                  <Button type="button" variant="outline" size="sm" className="h-8 shrink-0 rounded-md text-slate-600">
                     <ExternalLink className="mr-1 h-3.5 w-3.5" />
                     Visit
                   </Button>

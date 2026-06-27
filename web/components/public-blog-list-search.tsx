@@ -382,7 +382,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             <Button
               variant="outline"
               size="sm"
-              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground"
+              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
             >
@@ -391,7 +391,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
             <Button
               variant="outline"
               size="sm"
-              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground"
+              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
             >

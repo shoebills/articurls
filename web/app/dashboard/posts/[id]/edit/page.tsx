@@ -617,7 +617,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         </Button>
         <div className="flex flex-wrap items-center gap-2">
           {liveUrl && (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>
               <a href={liveUrl} target="_blank" rel="noopener">
                 <ExternalLink className="mr-1 h-3.5 w-3.5" />
                 View
