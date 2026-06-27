@@ -130,7 +130,7 @@ export function PublicMobileNavMenu({
               mode="dialog"
               userName={userName}
               authorName={authorName}
-              triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground p-0"
+              triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
               triggerChildren={<Bell className="h-4 w-4" />}
             />
           ) : null
