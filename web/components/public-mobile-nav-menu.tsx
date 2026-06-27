@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
@@ -113,16 +113,26 @@ export function PublicMobileNavMenu({
         )}
 
         {showMenuButton ? (
-          <button
-            type="button"
-            aria-label="Open menu"
-            aria-expanded={open}
-            aria-controls={menuId}
-            onClick={() => setOpen((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
+          links.length > 0 ? (
+            <button
+              type="button"
+              aria-label="Open menu"
+              aria-expanded={open}
+              aria-controls={menuId}
+              onClick={() => setOpen((prev) => !prev)}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+            >
+              <Menu className="h-4 w-4" />
+            </button>
+          ) : showSubscribeAction && userName ? (
+            <SubscribeToAuthor
+              mode="dialog"
+              userName={userName}
+              authorName={authorName}
+              triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground p-0"
+              triggerChildren={<Bell className="h-4 w-4" />}
+            />
+          ) : null
         ) : null}
       </div>
 

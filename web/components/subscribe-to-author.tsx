@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { publicSubscribe, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,8 @@ type Props = {
   mode?: "card" | "dialog";
   className?: string;
   triggerClassName?: string;
+  /** Custom content inside the dialog trigger button. Defaults to "Subscribe". */
+  triggerChildren?: ReactNode;
 };
 
 export function SubscribeToAuthor({
@@ -32,6 +34,7 @@ export function SubscribeToAuthor({
   mode = "card",
   className,
   triggerClassName,
+  triggerChildren,
 }: Props) {
   const [open, setOpen] = useState(false);
   const [email, setEmail] = useState("");
@@ -134,11 +137,11 @@ export function SubscribeToAuthor({
               variant="default"
               size="sm"
               className={cn(
-                "h-11 min-h-11 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:shrink-0",
+                "h-10 min-h-10 w-full touch-manipulation sm:h-9 sm:min-h-9 sm:w-auto sm:shrink-0",
                 triggerClassName,
               )}
             >
-              Subscribe
+              {triggerChildren ?? "Subscribe"}
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-md">
