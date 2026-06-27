@@ -830,7 +830,7 @@ export default function DesignDashboardPage() {
                 addingSocial ? (
                   <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center">
                     <Select value={socialToAdd} onValueChange={(v) => setSocialToAdd(v as SocialPlatform)}>
-                      <SelectTrigger className="sm:max-w-xs">
+                      <SelectTrigger className="sm:flex-1">
                         <SelectValue placeholder="Select social platform" />
                       </SelectTrigger>
                       <SelectContent>
@@ -981,7 +981,7 @@ export default function DesignDashboardPage() {
                               ) : null}
                               <div className="flex shrink-0 items-center gap-1">
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
                                   className="h-8 w-8"
                                   onClick={() => {
@@ -993,7 +993,7 @@ export default function DesignDashboardPage() {
                                   <Pencil className="h-3.5 w-3.5" />
                                 </Button>
                                 <Button
-                                  variant="ghost"
+                                  variant="outline"
                                   size="icon"
                                   className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                   onClick={() => setCatDeletingId(cat.category_id)}
@@ -1095,7 +1095,7 @@ export default function DesignDashboardPage() {
             {availableCats.length > 0 ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Select value={catToAdd} onValueChange={setCatToAdd}>
-                  <SelectTrigger className="sm:max-w-xs">
+                  <SelectTrigger className="sm:flex-1">
                     <SelectValue placeholder="Add category to menu" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1186,7 +1186,7 @@ export default function DesignDashboardPage() {
             {blogs.filter((b) => !design.featured_blog_ids.includes(b.blog_id)).length > 0 && design.featured_blog_ids.length < 10 ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Select value={blogToAdd} onValueChange={setBlogToAdd}>
-                  <SelectTrigger className="sm:max-w-xs">
+                  <SelectTrigger className="sm:flex-1">
                     <SelectValue placeholder="Add post to featured" />
                   </SelectTrigger>
                   <SelectContent>
@@ -1280,7 +1280,7 @@ export default function DesignDashboardPage() {
             {footerAvailable.length > 0 ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Select value={footerPageToAdd} onValueChange={setFooterPageToAdd}>
-                  <SelectTrigger className="sm:max-w-xs">
+                  <SelectTrigger className="sm:flex-1">
                     <SelectValue placeholder="Add page to footer" />
                   </SelectTrigger>
                   <SelectContent>
