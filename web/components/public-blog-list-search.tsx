@@ -123,7 +123,7 @@ function BlogPostShareMenu({
   );
 }
 
-function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "latest" | "oldest") => void }) {
+function SortMenu({ sortBy, onToggle }: { sortBy: "latest" | "oldest" | null; onToggle: (v: "latest" | "oldest") => void }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -165,15 +165,15 @@ function SortMenu({ sortBy, setSortBy }: { sortBy: string; setSortBy: (v: "lates
           }}
         >
           <ArrowUpDown className="h-4 w-4" />
-          <span>Sort</span>
+          <span>{sortBy === "latest" ? "Latest" : sortBy === "oldest" ? "Oldest" : "Sort"}</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44 bg-white">
-        <DropdownMenuItem onClick={() => setSortBy("latest")}>
+        <DropdownMenuItem onClick={() => onToggle("latest")}>
           <Check className={`h-4 w-4 ${sortBy === "latest" ? "opacity-100" : "opacity-0"}`} />
           Latest
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setSortBy("oldest")}>
+        <DropdownMenuItem onClick={() => onToggle("oldest")}>
           <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
           Oldest
         </DropdownMenuItem>
@@ -244,7 +244,7 @@ function BlogListItemRow({
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
   const [query, setQuery] = useState("");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest" | null>(null);
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -257,7 +257,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       .filter((b): b is PublicBlog => Boolean(b));
   }, [user, blogs, hideFeatured]);
   
-  const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
+  const showFeatured = featuredBlogs.length > 0 && query.trim() === "" && sortBy === null;
 
   const sortedBlogs = useMemo(() => {
     const compareBySort = (a: PublicBlog, b: PublicBlog) => {
@@ -324,8 +324,8 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
         </div>
         <SortMenu
           sortBy={sortBy}
-          setSortBy={(next) => {
-            setSortBy(next);
+          onToggle={(v) => {
+            setSortBy(sortBy === v ? null : v);
             setPage(1);
           }}
         />
