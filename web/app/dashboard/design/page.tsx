@@ -441,7 +441,7 @@ export default function DesignDashboardPage() {
   ];
 
   const availableCats = categories.filter((c) => !menuCatSelection.includes(c.category_id));
-  const footerAvailable = pages.filter((p) => !footerSelection.includes(p.page_id));
+  const footerAvailable = pages.filter((p) => p.status === "published" && !footerSelection.includes(p.page_id));
   const selectedFooterPages = footerSelection
     .map((id) => pagesById.get(id))
     .filter((p): p is UserPage => Boolean(p));
