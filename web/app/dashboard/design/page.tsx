@@ -917,7 +917,7 @@ export default function DesignDashboardPage() {
                       >
                         <div className="min-w-0">
                           {isEditing ? (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
                               <Input
                                 value={catEditingName}
                                 onChange={(e) => setCatEditingName(e.target.value)}
@@ -954,7 +954,7 @@ export default function DesignDashboardPage() {
                               </div>
                             </div>
                           ) : isDeleting ? (
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
                               <span className="truncate text-sm font-medium">{cat.name}</span>
                               <div className="flex shrink-0 items-center gap-1">
                                 <Button size="sm" variant="outline" className="h-10" onClick={() => setCatDeletingId(null)}>
@@ -972,7 +972,7 @@ export default function DesignDashboardPage() {
                               </div>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center justify-between gap-2 min-w-0">
                               <span className="truncate text-sm font-medium">{cat.name}</span>
                               {inMenu ? (
                                 <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
