@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowUpDown, Check, Link2, MessageCircle, Search, Share2 } from "lucide-react";
+import { ArrowUpDown, Check, Link2, Search, Share2 } from "lucide-react";
+import { SiWhatsapp, SiX } from "react-icons/si";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Input } from "@/components/ui/input";
@@ -110,16 +111,12 @@ function BlogPostShareMenu({
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a href={`https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedText}`} target="_blank" rel="noopener noreferrer">
-            <span className="mr-2 grid w-4 place-items-center text-[13px] font-bold" aria-hidden>
-              X
-            </span>
-            Share on X
+            <SiX className="h-4 w-4" /> Share on X
           </a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a href={`https://wa.me/?text=${encodeURIComponent(`${title}\n${url}`)}`} target="_blank" rel="noopener noreferrer">
-            <MessageCircle className="h-4 w-4" />
-            Share on WhatsApp
+            <SiWhatsapp className="h-4 w-4" /> Share on WhatsApp
           </a>
         </DropdownMenuItem>
       </DropdownMenuContent>
