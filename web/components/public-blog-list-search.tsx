@@ -300,7 +300,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   if (blogs.length === 0) {
     return (
-      <section className="mt-5 sm:mt-6">
+    <section>
         <p className="text-muted-foreground">No published posts yet.</p>
       </section>
     );
