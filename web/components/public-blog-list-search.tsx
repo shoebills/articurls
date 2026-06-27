@@ -195,7 +195,7 @@ function BlogListItemRow({
 }) {
   const previewImage = resolveBlogCoverImage(b);
   return (
-    <li className="py-6 first:pt-0">
+    <li className="py-5 first:pt-0">
       <div className="rounded-xl py-1">
         <Link href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-3">
