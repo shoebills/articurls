@@ -220,7 +220,7 @@ function BlogListItemRow({
         <div className="mt-3 flex items-center justify-between gap-2">
           {b.published_at ? (
             <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
-              {new Date(b.published_at).toLocaleDateString(undefined, {
+              {new Date(b.published_at).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
                 day: "numeric",
