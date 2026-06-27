@@ -886,7 +886,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
           </DialogHeader>
-          <div className="space-y-5">
+          <div className="space-y-5 min-w-0 overflow-hidden">
             <div className="space-y-3 border-t border-border/60 pt-4">
               <div className="space-y-1">
                 <p className="text-sm font-medium">All categories</p>
@@ -1050,9 +1050,9 @@ export default function DesignDashboardPage() {
             ) : (
               <ul className="space-y-2">
                 {menuCatSelection.map((id, idx) => (
-                  <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
-                    <span>{catsById.get(id)?.name || "Untitled"}</span>
-                    <div className="flex items-center gap-1">
+                   <li key={id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0">
+                    <span className="truncate min-w-0">{catsById.get(id)?.name || "Untitled"}</span>
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"
@@ -1132,7 +1132,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Featured Posts</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             {design.featured_blog_ids.length === 0 ? (
               <p className="text-sm text-muted-foreground">Add posts to feature.</p>
             ) : (
@@ -1140,9 +1140,9 @@ export default function DesignDashboardPage() {
                 {design.featured_blog_ids.map((id, idx) => {
                   const b = blogs.find((x) => x.blog_id === id);
                   return (
-                    <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                   <li key={id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0">
                       <span className="truncate min-w-0">{b?.title || "Unknown blog"}</span>
-                      <div className="flex items-center gap-1 shrink-0 ml-4">
+                      <div className="flex shrink-0 items-center gap-1">
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1229,15 +1229,15 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Footer Pages</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             {selectedFooterPages.length === 0 ? (
               <p className="text-sm text-muted-foreground">Add pages to display in the footer.</p>
             ) : (
               <ul className="space-y-2">
                 {footerSelection.map((id, idx) => (
-                  <li key={id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                  <li key={id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0">
                     <span className="truncate min-w-0">{pagesById.get(id)?.title || "Untitled"}</span>
-                    <div className="flex items-center gap-1">
+                    <div className="flex shrink-0 items-center gap-1">
                       <Button
                         variant="ghost"
                         size="icon"

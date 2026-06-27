@@ -75,6 +75,10 @@ function BlogPostShareMenu({
     }
   }
 
+  function shareInstagram() {
+    window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+  }
+
   function handleOpenChange(nextOpen: boolean) {
     setOpen(nextOpen);
     if (!nextOpen) triggerRef.current?.blur();
@@ -118,7 +122,7 @@ function BlogPostShareMenu({
             <SiWhatsapp className="h-4 w-4" /> Share on WhatsApp
           </a>
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={copyLink}>
+        <DropdownMenuItem onClick={shareInstagram}>
           <SiInstagram className="h-4 w-4" /> Share on Instagram
         </DropdownMenuItem>
       </DropdownMenuContent>
