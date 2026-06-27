@@ -58,7 +58,7 @@ export function SchedulePublishDialog({ open, onOpenChange, onConfirm, defaultDa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Schedule publish</DialogTitle>
           <DialogDescription>

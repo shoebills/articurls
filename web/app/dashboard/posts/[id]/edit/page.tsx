@@ -1020,7 +1020,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       </div>
 
       <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
-        <DialogContent className="!w-[90vw] !max-w-[22rem] rounded-lg p-4 sm:!w-[min(calc(100vw-1.5rem),32rem)] sm:!max-w-[32rem] sm:p-6">
+        <DialogContent>
           <DialogHeader className="space-y-1">
             <DialogTitle className="text-base font-medium leading-snug">{getConfirmLine()}</DialogTitle>
           </DialogHeader>

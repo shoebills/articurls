@@ -67,7 +67,7 @@ export function PromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="!w-[90vw] !max-w-[22rem] rounded-lg p-4 sm:!w-[min(calc(100vw-1.5rem),32rem)] sm:!max-w-[32rem] sm:p-6">
+      <DialogContent>
         <DialogHeader className="space-y-1">
           <DialogTitle className="text-base">{title}</DialogTitle>
           {description && <DialogDescription className="text-xs">{description}</DialogDescription>}
