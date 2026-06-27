@@ -198,8 +198,6 @@ export function BlogEditor({
   const [selectionTick, setSelectionTick] = useState(0);
   const prevImageSrcsRef = useRef<Set<string>>(extractImageSrcsFromHtml(content || ""));
   const deletingSrcsRef = useRef<Set<string>>(new Set());
-  const lastUserUpdatedContentRef = useRef(content || "");
-  
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -236,7 +234,6 @@ export function BlogEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const nextHtml = ed.getHTML();
-      lastUserUpdatedContentRef.current = nextHtml;
       
       onChange(nextHtml);
 
@@ -350,17 +347,9 @@ export function BlogEditor({
   useEffect(() => {
     if (!editor) return;
     
-    // If the incoming content matches what we last sent from the editor,
-    // don't update - this prevents autosave from overwriting active typing
-    if (content === lastUserUpdatedContentRef.current) {
-      return;
-    }
-    
     const current = editor.getHTML();
     prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
     
-    // Only update editor content when the user is not focused in the editor.
-    // If the editor is focused, the user's version is authoritative.
     if (content !== current && !isEditorFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
     }
