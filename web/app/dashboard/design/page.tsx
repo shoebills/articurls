@@ -94,7 +94,7 @@ function SectionPanel({
         selected && "border-border/80"
       )}
     >
-      <div className="px-6 py-4">
+      <div className="p-5 sm:p-6">
         <div>
           <h2 id={headingId} className="text-base font-semibold leading-none tracking-tight">
             {title}
@@ -102,7 +102,7 @@ function SectionPanel({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
-      <div className="border-t px-6 py-5 space-y-5">{children}</div>
+      <div className="border-t p-5 sm:p-6 space-y-5">{children}</div>
     </section>
   );
 }
