@@ -495,16 +495,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               />
               <p className="text-xs text-muted-foreground">
                 {slugEditable
-                  ? "Updates from the title until you edit this field. Must be unique before you publish."
+                  ? "Updates from the title until you edit this field."
                   : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
 
             <Separator />
 
-            {/* Search Engine Optimization */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold">Search Engine Optimization</h3>
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>Meta title</Label>

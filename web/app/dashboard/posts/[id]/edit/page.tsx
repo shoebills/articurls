@@ -750,16 +750,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               />
               <p className="text-xs text-muted-foreground">
                 {slugEditable
-                  ? "Updates from the title until you edit this field. Must be unique before you publish."
+                  ? "Updates from the title until you edit this field."
                   : "The public URL cannot be changed after the post is published."}
               </p>
             </div>
 
             <Separator />
 
-            {/* Search Engine Optimization */}
             <div className="space-y-4">
-              <h3 className="text-sm font-semibold">Search Engine Optimization</h3>
               <div className="space-y-3">
                 <div className="space-y-2">
                   <Label>Meta title</Label>
@@ -874,7 +872,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <div className="space-y-1">
                 <Label>Assign category</Label>
                 <p className="text-xs text-muted-foreground">Manage categories and their visibility via{" "}
-                  <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">design section</Link>
+                  <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">design</Link>
                 </p>
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
@@ -946,7 +944,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="ghost"
+                          variant="outline"
                           className="flex-1"
                           onClick={() => {
                             setPendingCatIds([...selectedCatIds]);
