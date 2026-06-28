@@ -869,7 +869,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <div className="space-y-2">
                 <Label>Assign category</Label>
                 <p className="text-xs text-muted-foreground pt-1">Manage categories and their visibility via{" "}
-                  <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">design</Link>
+                  <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">Design</Link>
                 </p>
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
@@ -893,9 +893,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 {catDropdownOpen && (
                   <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
                     {allCategories.length === 0 ? (
-                      <p className="px-3 pt-3 pb-3 text-sm text-muted-foreground">No categories yet.</p>
+                       <p className="px-3 pt-3 pb-1 text-sm text-muted-foreground">No categories yet.</p>
                     ) : (
-                      <div className="max-h-56 min-w-[14rem] overflow-y-auto p-1">
+                       <div className="max-h-56 min-w-[14rem] overflow-y-auto px-1 pt-1 pb-0">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
@@ -924,7 +924,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         })}
                       </div>
                     )}
-                    <div className="border-t border-border/70 p-2 space-y-2">
+                    <div className="border-t border-border/70 px-2 py-1.5 space-y-4">
                       <div className="flex items-center gap-2">
                         <Input
                           value={newCatName}
@@ -935,14 +935,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                             if (e.key === "Enter") createCategoryInline();
                           }}
                         />
-                        <Button size="sm" onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
+                        <Button onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
                           Add
                         </Button>
                       </div>
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                  variant="default"
+                  variant="outline"
                           className="flex-1"
                           onClick={() => {
                             setPendingCatIds([...selectedCatIds]);
