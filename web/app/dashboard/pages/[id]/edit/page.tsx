@@ -82,13 +82,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const slugMatchesTitle = derived !== "" && p.slug === derived;
       setSlugCustomDirty(p.status !== "draft" || (!isPlaceholderDraftSlug && !slugMatchesTitle));
     }
-    setMetaTitle(p.meta_title || "");
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
-    setMetaDesc(p.meta_description || "");
+    setMetaTitle(metaSynced ? p.title : (p.meta_title || ""));
     const contentExcerpt = getContentExcerpt(p.content || "");
     const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
+    setMetaDesc(descSynced ? contentExcerpt : (p.meta_description || ""));
   }, []);
 
   const load = useCallback(async () => {
@@ -150,9 +150,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextSlug = slugEditable
       ? (slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true }))
       : page.slug;
-    const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
+    const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim();
     const contentExcerpt = getContentExcerpt(content);
-    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim();
     const pageContentExcerpt = getContentExcerpt(page.content || "");
     const currentMetaTitle =
       !page.meta_title || page.meta_title === page.title ? null : page.meta_title;
@@ -208,8 +208,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       if (!titleChanged) setTitle(responsePage.title);
       if (!contentChanged) setContent(responsePage.content || "");
-      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || "");
-      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || "");
+      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || responsePage.title);
+      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || getContentExcerpt(responsePage.content));
       if (slugEditable && !slugCustomChanged) setSlugCustom(responsePage.slug);
 
       // Re-derive dirty flags from effective (current) state
@@ -262,7 +262,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -315,6 +315,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         metaTitle?: string;
         metaTitleDirty?: boolean;
         metaDesc?: string;
+        metaDescDirty?: boolean;
       };
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
@@ -323,6 +324,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
+      if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
     }
@@ -356,11 +358,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           metaTitle,
           metaTitleDirty,
           metaDesc,
+          metaDescDirty,
         })
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty]);
 
   useEffect(() => {
     return () => {

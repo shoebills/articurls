@@ -113,6 +113,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const slugEditable = b.status === "draft" || b.status === "scheduled";
     if (!slugEditable) {
       setSlugCustom(b.slug);
+      setSlugCustomDirty(false);
     } else {
       const derived = slugify(b.title, { lower: true, strict: true });
       const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(b.slug);
@@ -120,13 +121,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? derived : b.slug);
       setSlugCustomDirty(!isPlaceholderDraftSlug && !slugMatchesTitle);
     }
-    setMetaTitle(b.meta_title || "");
     const metaSynced = !b.meta_title || b.meta_title === b.title;
     setMetaTitleDirty(!metaSynced);
-    setMetaDesc(b.meta_description || "");
+    setMetaTitle(metaSynced ? b.title : (b.meta_title || ""));
     const contentExcerpt = getContentExcerpt(b.content || "");
     const descSynced = !b.meta_description || b.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
+    setMetaDesc(descSynced ? contentExcerpt : (b.meta_description || ""));
     setFeaturedImageUrl(b.featured_image_url || "");
     setHidePreviewInLists(b.hide_preview_in_lists);
     setNotify(b.notify_subscribers);
@@ -215,9 +216,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       ? (slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true }))
       : blog.slug;
     const nextMetaTitle =
-      !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
+      !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim();
     const contentExcerpt = getContentExcerpt(content);
-    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim() || null;
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim();
     const blogContentExcerpt = getContentExcerpt(blog.content || "");
     const currentMetaTitle =
       !blog.meta_title || blog.meta_title === blog.title ? null : blog.meta_title;
@@ -229,7 +230,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       savedCatIdsRef.current.length !== selectedCatIds.length ||
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
     return (
-      blog.title !== title ||
+      blog.title !== title.trim() ||
       (blog.content || "") !== (content || "") ||
       blog.notify_subscribers !== notify ||
       (slugEditable && blog.slug !== nextSlug) ||
@@ -244,7 +245,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   async function save(silent = false) {
     if (!token || !blog) return false;
     if (!isDirty()) return true;
-    const nextTitle = title;
+    const nextTitle = title.trim();
     const nextContent = content;
     const nextNotify = notify;
     const nextSlugCustom = slugCustom;
@@ -313,8 +314,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (!titleChanged) setTitle(finalBlog.title);
       if (!contentChanged) setContent(finalBlog.content || "");
-      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || "");
-      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || "");
+      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || finalBlog.title);
+      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || getContentExcerpt(finalBlog.content));
       if (slugEditable && !slugCustomChanged) setSlugCustom(finalBlog.slug);
       if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
       if (!hidePreviewChanged) setHidePreviewInLists(finalBlog.hide_preview_in_lists);
@@ -452,7 +453,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, notify, featuredImageUrl, isDirty, saving]);
+  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, notify, featuredImageUrl, hidePreviewInLists, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -507,6 +508,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         metaTitle?: string;
         metaTitleDirty?: boolean;
         metaDesc?: string;
+        metaDescDirty?: boolean;
         notify?: boolean;
         featuredImageUrl?: string;
       };
@@ -517,6 +519,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
+      if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
       if (typeof draft.notify === "boolean") setNotify(draft.notify);
       if (typeof draft.featuredImageUrl === "string") setFeaturedImageUrl(draft.featuredImageUrl);
     } catch {
@@ -552,6 +555,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           metaTitle,
           metaTitleDirty,
           metaDesc,
+          metaDescDirty,
           notify,
           featuredImageUrl,
         })
@@ -570,6 +574,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     metaTitle,
     metaTitleDirty,
     metaDesc,
+    metaDescDirty,
     notify,
     featuredImageUrl,
   ]);
