@@ -854,7 +854,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
                 >
-                  <SelectTrigger id="preview-in-lists" className="h-10 w-full">
+                  <SelectTrigger id="preview-in-lists" className="h-10 w-full max-w-[15rem]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
