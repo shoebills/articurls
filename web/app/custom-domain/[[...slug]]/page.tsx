@@ -416,15 +416,15 @@ export default async function CustomDomainPage({ params }: Props) {
           ) : null}
           <PublicProfileFooter user={author} />
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
+        </main>
         {author.show_articurls_watermark !== false ? (
           <a
             href={MARKETING_ORIGIN}
-            className="ml-auto mt-6 w-fit rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
           >
             Made with <span className="font-semibold">Articurls</span>
           </a>
         ) : null}
-        </main>
       </article>
     );
   }
@@ -509,15 +509,15 @@ export default async function CustomDomainPage({ params }: Props) {
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+        </main>
         {user.show_articurls_watermark !== false ? (
           <a
             href={MARKETING_ORIGIN}
-            className="ml-auto mt-6 w-fit rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
           >
             Made with <span className="font-semibold">Articurls</span>
           </a>
         ) : null}
-        </main>
       </div>
     );
   }
@@ -622,15 +622,15 @@ export default async function CustomDomainPage({ params }: Props) {
             )}
             <PublicSiteFooter user={user} pages={pages} useCustomDomain />
           </SearchProvider>
+        </main>
         {user.show_articurls_watermark !== false ? (
           <a
             href={MARKETING_ORIGIN}
-            className="ml-auto mt-6 w-fit rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
           >
             Made with <span className="font-semibold">Articurls</span>
           </a>
         ) : null}
-        </main>
       </div>
     );
   }
@@ -712,15 +712,15 @@ export default async function CustomDomainPage({ params }: Props) {
           />
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </SearchProvider>
+      </main>
       {user.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="ml-auto mt-6 w-fit rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
           Made with <span className="font-semibold">Articurls</span>
         </a>
       ) : null}
-      </main>
       </div>
   );
 }
