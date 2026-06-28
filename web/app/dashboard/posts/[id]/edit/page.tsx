@@ -846,7 +846,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               ) : null}
               <div className="mt-6 space-y-2">
                 <Label htmlFor="preview-in-lists">Preview image in blog homepage</Label>
-                <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog list cards.</p>
+                <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog list cards. If Auto, featured/first image in blog is used for preview.</p>
                 <Select
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
@@ -895,7 +895,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     {allCategories.length === 0 ? (
                        <p className="px-3 pt-3 pb-1 text-sm text-muted-foreground">No categories yet.</p>
                     ) : (
-                       <div className="max-h-56 min-w-[14rem] overflow-y-auto px-1 pt-1 pb-0">
+                       <div className="max-h-56 min-w-[14rem] overflow-y-auto px-1 pt-1 pb-4">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
@@ -924,7 +924,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         })}
                       </div>
                     )}
-                    <div className="border-t border-border/70 px-2 py-1.5 space-y-4">
+                    <div className="border-t border-border/70 pt-4 pb-1.5 px-2 space-y-4 mx-3">
                       <div className="flex items-center gap-2">
                         <Input
                           value={newCatName}
@@ -941,7 +941,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       </div>
                       <div className="flex gap-2">
                         <Button
-                          size="sm"
                   variant="outline"
                           className="flex-1"
                           onClick={() => {
@@ -952,7 +951,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           Cancel
                         </Button>
                         <Button
-                          size="sm"
                           className="flex-1"
                           onClick={() => {
                             setSelectedCatIds([...pendingCatIds]);
