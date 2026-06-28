@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { SearchButton } from "@/components/search-button";
 import {
   normalizeNavBlogNameSize,
   publicNavDesktopBlogTitleClassName,
@@ -32,6 +33,7 @@ type PublicDesktopNavProps = {
   nameSize?: NavBlogNameSize | string | null;
   links: PublicNavDesktopLink[];
   showSubscribe: boolean;
+  showSearch?: boolean;
   userName?: string;
   authorName?: string;
 };
@@ -49,6 +51,7 @@ export function PublicDesktopNav({
   nameSize,
   links,
   showSubscribe,
+  showSearch = false,
   userName,
   authorName,
 }: PublicDesktopNavProps) {
@@ -170,6 +173,11 @@ export function PublicDesktopNav({
         ) : null}
       </div>
 
+      {showSearch ? (
+        <SearchButton
+          iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+        />
+      ) : null}
       {showSubscribe && userName ? (
         <div className="shrink-0">
           <SubscribeToAuthor mode="dialog" userName={userName} authorName={authorName} />

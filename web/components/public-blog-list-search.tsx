@@ -2,12 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Search } from "lucide-react";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
-import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
+import { useSearch } from "@/components/search-context";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
@@ -86,7 +85,7 @@ function BlogListItemRow({
 }
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
-  const [query, setQuery] = useState("");
+  const { query } = useSearch();
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -145,22 +144,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   return (
     <section className="mt-5 sm:mt-6">
-      <div className="mb-6 flex items-center gap-2 sm:mb-8 sm:gap-3">
-        <div className="relative min-w-0 flex-1">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
-          <Input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setPage(1);
-            }}
-            placeholder="Search"
-            aria-label="Search posts"
-            className="h-10 min-h-10 rounded-xl border-border/80 !bg-white pl-10 sm:h-11 sm:min-h-11"
-          />
-        </div>
-      </div>
-
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured Posts</h2>

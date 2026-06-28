@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Menu } from "lucide-react";
+import { SearchButton } from "@/components/search-button";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ type PublicMobileNavMenuProps = {
   userName?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
+  showSearch?: boolean;
   /** When false, only the title row is shown (no hamburger). */
   showMenuButton?: boolean;
 };
@@ -32,6 +34,7 @@ export function PublicMobileNavMenu({
   userName,
   authorName,
   showSubscribeAction = true,
+  showSearch = false,
   showMenuButton = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
@@ -114,26 +117,34 @@ export function PublicMobileNavMenu({
         )}
 
         {showMenuButton ? (
-          links.length > 0 ? (
-            <button
-              type="button"
-              aria-label="Open menu"
-              aria-expanded={open}
-              aria-controls={menuId}
-              onClick={() => setOpen((prev) => !prev)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
-            >
-              <Menu className="h-4 w-4" />
-            </button>
-          ) : showSubscribeAction && userName ? (
-            <SubscribeToAuthor
-              mode="dialog"
-              userName={userName}
-              authorName={authorName}
-              triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
-              triggerChildren={<Bell className="h-4 w-4" />}
-            />
-          ) : null
+          <div className="flex items-center gap-2">
+            {showSearch ? (
+              <SearchButton
+                iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+                trayClassName="fixed z-50 w-[calc(100vw-2.5rem)] max-w-sm overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
+              />
+            ) : null}
+            {links.length > 0 ? (
+              <button
+                type="button"
+                aria-label="Open menu"
+                aria-expanded={open}
+                aria-controls={menuId}
+                onClick={() => setOpen((prev) => !prev)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            ) : showSubscribeAction && userName ? (
+              <SubscribeToAuthor
+                mode="dialog"
+                userName={userName}
+                authorName={authorName}
+                triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
+                triggerChildren={<Bell className="h-4 w-4" />}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
 
