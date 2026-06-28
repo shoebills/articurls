@@ -701,7 +701,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Email Subscribers */}
       <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-background p-3 space-y-1">
+        <div className="rounded-md border border-border bg-white p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium">Email subscribers</p>
             <Switch
@@ -721,7 +721,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-background">
+      <div className="mt-6 rounded-lg border border-border bg-white">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
@@ -891,11 +891,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {catDropdownOpen && (
-                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] rounded-xl border border-border bg-popover shadow-lg">
-                    {allCategories.length === 0 ? (
-                       <p className="px-3 pt-3 pb-1 text-sm text-muted-foreground">No categories yet.</p>
-                    ) : (
-                       <div className="max-h-56 min-w-[14rem] overflow-y-auto px-1 pt-1 pb-4">
+                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] max-md:right-0 rounded-xl border border-border bg-popover shadow-lg">
+                    <div className="pt-4 pb-4 px-2 space-y-4">
+                      {allCategories.length === 0 ? (
+                        <p className="pt-1 pb-4 text-sm text-muted-foreground">No categories yet.</p>
+                      ) : (
+                        <div className="max-h-56 overflow-y-auto pt-1 pb-4">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
@@ -918,13 +919,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                               >
                                 {isChecked && <Check className="h-3 w-3" />}
                               </span>
-                              <span className="truncate">{cat.name}</span>
+                              <span className="truncate min-w-0">{cat.name}</span>
                             </button>
                           );
                         })}
                       </div>
-                    )}
-                    <div className="border-t border-border/70 pt-4 pb-1.5 px-2 space-y-4 mx-3">
+                      )}
+                      <div className="border-t border-border/70" />
                       <div className="flex items-center gap-2">
                         <Input
                           value={newCatName}
