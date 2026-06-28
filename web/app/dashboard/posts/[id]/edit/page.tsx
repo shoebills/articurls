@@ -896,7 +896,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       {allCategories.length === 0 ? (
                         <p className="pt-1 pb-4 text-sm text-muted-foreground">No categories yet.</p>
                       ) : (
-                        <div className="max-h-56 overflow-y-auto pt-1 pb-4">
+                        <div className="max-h-56 w-full overflow-y-auto pt-1 pb-4">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
@@ -926,7 +926,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       </div>
                       )}
                       <div className="border-t border-border/70" />
-                      <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 w-full">
                         <Input
                           value={newCatName}
                           onChange={(e) => setNewCatName(e.target.value)}
