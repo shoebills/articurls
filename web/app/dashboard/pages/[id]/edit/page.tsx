@@ -190,8 +190,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       if (!titleChanged) setTitle(responsePage.title);
       if (!contentChanged) setContent(responsePage.content || "");
-      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || "");
-      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || "");
+      if (!metaTitleChanged) {
+        const metaSynced = !responsePage.meta_title || responsePage.meta_title === responsePage.title;
+        setMetaTitle(metaSynced ? "" : (responsePage.meta_title || ""));
+      }
+      if (!metaDescChanged) {
+        const descSynced = !responsePage.meta_description || responsePage.meta_description === getContentExcerpt(responsePage.content);
+        setMetaDesc(descSynced ? "" : (responsePage.meta_description || ""));
+      }
       if (slugEditable && !slugCustomChanged) {
         const derived = slugify(responsePage.title || "", { lower: true, strict: true });
         setSlugCustom(responsePage.slug !== derived ? responsePage.slug : "");

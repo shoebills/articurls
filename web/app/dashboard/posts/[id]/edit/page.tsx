@@ -296,8 +296,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (!titleChanged) setTitle(finalBlog.title);
       if (!contentChanged) setContent(finalBlog.content || "");
-      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || "");
-      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || "");
+      if (!metaTitleChanged) {
+        const metaSynced = !finalBlog.meta_title || finalBlog.meta_title === finalBlog.title;
+        setMetaTitle(metaSynced ? "" : (finalBlog.meta_title || ""));
+      }
+      if (!metaDescChanged) {
+        const descSynced = !finalBlog.meta_description || finalBlog.meta_description === getContentExcerpt(finalBlog.content);
+        setMetaDesc(descSynced ? "" : (finalBlog.meta_description || ""));
+      }
       if (slugEditable && !slugCustomChanged) {
         const derived = slugify(finalBlog.title, { lower: true, strict: true });
         setSlugCustom(finalBlog.slug !== derived ? finalBlog.slug : "");
