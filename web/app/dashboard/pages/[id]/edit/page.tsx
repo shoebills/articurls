@@ -35,7 +35,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
   const derived = slugify(page.title || "", { lower: true, strict: true });
   const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(page.slug || "");
   const slugMatchesTitle = derived !== "" && page.slug === derived;
-  return isPlaceholderDraftSlug || slugMatchesTitle ? derived : page.slug || "";
+  return isPlaceholderDraftSlug || slugMatchesTitle ? "" : page.slug || "";
 }
 
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
@@ -84,11 +84,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
-    setMetaTitle(metaSynced ? p.title : (p.meta_title || ""));
+    setMetaTitle(metaSynced ? "" : (p.meta_title || ""));
     const contentExcerpt = getContentExcerpt(p.content || "");
     const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
-    setMetaDesc(descSynced ? contentExcerpt : (p.meta_description || ""));
+    setMetaDesc(descSynced ? "" : (p.meta_description || ""));
   }, []);
 
   const load = useCallback(async () => {
@@ -108,24 +108,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   useEffect(() => {
     void load();
   }, [load]);
-
-  useEffect(() => {
-    if (!metaTitleDirty) {
-      setMetaTitle(title);
-    }
-  }, [title, metaTitleDirty]);
-
-  useEffect(() => {
-    if (!slugCustomDirty) {
-      setSlugCustom(slugify(title, { lower: true, strict: true }));
-    }
-  }, [title, slugCustomDirty]);
-
-  useEffect(() => {
-    if (!metaDescDirty) {
-      setMetaDesc(getContentExcerpt(content));
-    }
-  }, [content, metaDescDirty]);
 
   useEffect(() => {
     const el = titleTextareaRef.current;
@@ -208,9 +190,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       if (!titleChanged) setTitle(responsePage.title);
       if (!contentChanged) setContent(responsePage.content || "");
-      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || responsePage.title);
-      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || getContentExcerpt(responsePage.content));
-      if (slugEditable && !slugCustomChanged) setSlugCustom(responsePage.slug);
+      if (!metaTitleChanged) setMetaTitle(responsePage.meta_title || "");
+      if (!metaDescChanged) setMetaDesc(responsePage.meta_description || "");
+      if (slugEditable && !slugCustomChanged) {
+        const derived = slugify(responsePage.title || "", { lower: true, strict: true });
+        setSlugCustom(responsePage.slug !== derived ? responsePage.slug : "");
+      }
 
       // Re-derive dirty flags from effective (current) state
       const effectiveTitle = titleChanged ? titleRef.current : responsePage.title;

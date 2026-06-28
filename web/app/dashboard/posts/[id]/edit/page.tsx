@@ -118,16 +118,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const derived = slugify(b.title, { lower: true, strict: true });
       const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(b.slug);
       const slugMatchesTitle = derived !== "" && b.slug === derived;
-      setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? derived : b.slug);
+      setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : b.slug);
       setSlugCustomDirty(!isPlaceholderDraftSlug && !slugMatchesTitle);
     }
     const metaSynced = !b.meta_title || b.meta_title === b.title;
     setMetaTitleDirty(!metaSynced);
-    setMetaTitle(metaSynced ? b.title : (b.meta_title || ""));
+    setMetaTitle(metaSynced ? "" : (b.meta_title || ""));
     const contentExcerpt = getContentExcerpt(b.content || "");
     const descSynced = !b.meta_description || b.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
-    setMetaDesc(descSynced ? contentExcerpt : (b.meta_description || ""));
+    setMetaDesc(descSynced ? "" : (b.meta_description || ""));
     setFeaturedImageUrl(b.featured_image_url || "");
     setHidePreviewInLists(b.hide_preview_in_lists);
     setNotify(b.notify_subscribers);
@@ -170,24 +170,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     load();
   }, [load]);
-
-  useEffect(() => {
-    if (!metaTitleDirty) {
-      setMetaTitle(title);
-    }
-  }, [title, metaTitleDirty]);
-
-  useEffect(() => {
-    if (!slugCustomDirty) {
-      setSlugCustom(slugify(title, { lower: true, strict: true }));
-    }
-  }, [title, slugCustomDirty]);
-
-  useEffect(() => {
-    if (!metaDescDirty) {
-      setMetaDesc(getContentExcerpt(content));
-    }
-  }, [content, metaDescDirty]);
 
   useEffect(() => {
     const el = titleTextareaRef.current;
@@ -314,9 +296,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (!titleChanged) setTitle(finalBlog.title);
       if (!contentChanged) setContent(finalBlog.content || "");
-      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || finalBlog.title);
-      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || getContentExcerpt(finalBlog.content));
-      if (slugEditable && !slugCustomChanged) setSlugCustom(finalBlog.slug);
+      if (!metaTitleChanged) setMetaTitle(finalBlog.meta_title || "");
+      if (!metaDescChanged) setMetaDesc(finalBlog.meta_description || "");
+      if (slugEditable && !slugCustomChanged) {
+        const derived = slugify(finalBlog.title, { lower: true, strict: true });
+        setSlugCustom(finalBlog.slug !== derived ? finalBlog.slug : "");
+      }
       if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
       if (!hidePreviewChanged) setHidePreviewInLists(finalBlog.hide_preview_in_lists);
       if (!notifyChanged) setNotify(finalBlog.notify_subscribers);
