@@ -35,7 +35,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
   const derived = slugify(page.title || "", { lower: true, strict: true });
   const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(page.slug || "");
   const slugMatchesTitle = derived !== "" && page.slug === derived;
-  return isPlaceholderDraftSlug || slugMatchesTitle ? "" : page.slug || "";
+  return isPlaceholderDraftSlug || slugMatchesTitle ? derived : page.slug || "";
 }
 
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
@@ -47,6 +47,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("<p></p>");
   const [slugCustom, setSlugCustom] = useState("");
+  const [slugCustomDirty, setSlugCustomDirty] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
   const [metaDescDirty, setMetaDescDirty] = useState(false);
@@ -64,6 +65,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const titleRef = useRef(title);
   const contentRef = useRef(content);
   const slugCustomRef = useRef(slugCustom);
+  const slugCustomDirtyRef = useRef(slugCustomDirty);
   const metaTitleRef = useRef(metaTitle);
   const metaTitleDirtyRef = useRef(metaTitleDirty);
   const metaDescDirtyRef = useRef(metaDescDirty);
@@ -74,6 +76,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setTitle(p.title || "");
     setContent(p.content || "<p></p>");
     setSlugCustom(normalizeEditableSlugCustom(p));
+    {
+      const derived = slugify(p.title || "", { lower: true, strict: true });
+      const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(p.slug || "");
+      const slugMatchesTitle = derived !== "" && p.slug === derived;
+      setSlugCustomDirty(p.status !== "draft" || (!isPlaceholderDraftSlug && !slugMatchesTitle));
+    }
     setMetaTitle(p.meta_title || "");
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
@@ -108,6 +116,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }, [title, metaTitleDirty]);
 
   useEffect(() => {
+    if (!slugCustomDirty) {
+      setSlugCustom(slugify(title, { lower: true, strict: true }));
+    }
+  }, [title, slugCustomDirty]);
+
+  useEffect(() => {
     if (!metaDescDirty) {
       setMetaDesc(getContentExcerpt(content));
     }
@@ -123,6 +137,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
+  useEffect(() => { slugCustomDirtyRef.current = slugCustomDirty; }, [slugCustomDirty]);
   useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
@@ -133,7 +148,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextTitle = title.trim();
     const slugEditable = page.status === "draft";
     const nextSlug = slugEditable
-      ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
+      ? ((slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true })) || page.slug)
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
     const contentExcerpt = getContentExcerpt(content);
@@ -151,7 +166,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc
     );
-  }, [page, title, content, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
 
   async function save(silent = false) {
     if (!token || !page) return false;
@@ -160,6 +175,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextTitle = title.trim();
     const nextContent = content;
     const nextSlugCustom = slugCustom;
+    const nextSlugCustomDirty = slugCustomDirty;
     const nextMetaTitle = metaTitle;
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
@@ -172,7 +188,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         title: nextTitle,
         content: nextContent,
         ...(slugEditable
-          ? { slug: nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug }
+          ? { slug: (!nextSlugCustomDirty ? slugify(nextTitle, { lower: true, strict: true }) : nextSlugCustom.trim()) || page.slug }
           : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
         meta_description:
@@ -203,6 +219,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const effectiveMetaDesc = metaDescChanged ? metaDescRef.current : (responsePage.meta_description || "");
       setMetaTitleDirty(!!effectiveMetaTitle && effectiveMetaTitle !== effectiveTitle);
       setMetaDescDirty(!!effectiveMetaDesc && effectiveMetaDesc !== getContentExcerpt(effectiveContent));
+
+      const effectiveSlugForDirty = slugCustomChanged ? slugCustomRef.current : responsePage.slug;
+      const effectiveTitleForSlug = titleChanged ? titleRef.current : responsePage.title;
+      const derivedSlug = slugify(effectiveTitleForSlug, { lower: true, strict: true });
+      setSlugCustomDirty(!!effectiveSlugForDirty && effectiveSlugForDirty !== derivedSlug);
       clearManualDraft();
       setSaveStatus("saved");
       return true;
@@ -241,7 +262,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -290,6 +311,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         title?: string;
         content?: string;
         slugCustom?: string;
+        slugCustomDirty?: boolean;
         metaTitle?: string;
         metaTitleDirty?: boolean;
         metaDesc?: string;
@@ -297,6 +319,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
       if (typeof draft.slugCustom === "string") setSlugCustom(draft.slugCustom);
+      if (typeof draft.slugCustomDirty === "boolean") setSlugCustomDirty(draft.slugCustomDirty);
       if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
@@ -329,6 +352,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           title,
           content,
           slugCustom,
+          slugCustomDirty,
           metaTitle,
           metaTitleDirty,
           metaDesc,
@@ -336,7 +360,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc]);
 
   useEffect(() => {
     return () => {
@@ -463,7 +487,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 className="mt-2"
                 value={slugCustom}
                 disabled={!slugEditable}
-                onChange={(e) => setSlugCustom(e.target.value)}
+                onChange={(e) => {
+                  setSlugCustomDirty(true);
+                  setSlugCustom(e.target.value);
+                }}
                 placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">

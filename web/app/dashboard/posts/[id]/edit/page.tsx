@@ -62,6 +62,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [slugCustom, setSlugCustom] = useState("");
+  const [slugCustomDirty, setSlugCustomDirty] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
   const [metaDescDirty, setMetaDescDirty] = useState(false);
@@ -85,6 +86,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const titleRef = useRef(title);
   const contentRef = useRef(content);
   const slugCustomRef = useRef(slugCustom);
+  const slugCustomDirtyRef = useRef(slugCustomDirty);
   const metaTitleRef = useRef(metaTitle);
   const metaTitleDirtyRef = useRef(metaTitleDirty);
   const metaDescDirtyRef = useRef(metaDescDirty);
@@ -114,7 +116,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const derived = slugify(b.title, { lower: true, strict: true });
       const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(b.slug);
       const slugMatchesTitle = derived !== "" && b.slug === derived;
-      setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? "" : b.slug);
+      setSlugCustom(isPlaceholderDraftSlug || slugMatchesTitle ? derived : b.slug);
+      setSlugCustomDirty(!isPlaceholderDraftSlug && !slugMatchesTitle);
     }
     setMetaTitle(b.meta_title || "");
     const metaSynced = !b.meta_title || b.meta_title === b.title;
@@ -173,6 +176,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }, [title, metaTitleDirty]);
 
   useEffect(() => {
+    if (!slugCustomDirty) {
+      setSlugCustom(slugify(title, { lower: true, strict: true }));
+    }
+  }, [title, slugCustomDirty]);
+
+  useEffect(() => {
     if (!metaDescDirty) {
       setMetaDesc(getContentExcerpt(content));
     }
@@ -188,6 +197,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
+  useEffect(() => { slugCustomDirtyRef.current = slugCustomDirty; }, [slugCustomDirty]);
   useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
@@ -200,7 +210,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const isDirty = useCallback(() => {
     if (!blog) return false;
-    const nextSlug = slugCustom.trim() || slugify(title.trim(), { lower: true, strict: true }) || blog.slug;
+    const nextSlug = slugEditable
+      ? ((slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true })) || blog.slug)
+      : blog.slug;
     const nextMetaTitle =
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
     const contentExcerpt = getContentExcerpt(content);
@@ -226,7 +238,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       blog.hide_preview_in_lists !== nextHidePreview ||
       catDirty
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl, hidePreviewInLists]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl, hidePreviewInLists]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -235,6 +247,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextContent = content;
     const nextNotify = notify;
     const nextSlugCustom = slugCustom;
+    const nextSlugCustomDirty = slugCustomDirty;
     const nextMetaTitle = metaTitle;
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
@@ -257,7 +270,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (slugEditable) {
         const derived = slugify(nextTitle.trim(), { lower: true, strict: true });
-        const nextSlug = nextSlugCustom.trim() || derived || blog.slug;
+        const nextSlug = (!nextSlugCustomDirty ? derived : nextSlugCustom.trim()) || blog.slug;
         body.slug = nextSlug;
       }
 
@@ -313,6 +326,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const effectiveMetaDesc = metaDescChanged ? metaDescRef.current : (finalBlog.meta_description || "");
       setMetaTitleDirty(!!effectiveMetaTitle && effectiveMetaTitle !== effectiveTitle);
       setMetaDescDirty(!!effectiveMetaDesc && effectiveMetaDesc !== getContentExcerpt(effectiveContent));
+
+      const effectiveSlugForDirty = slugCustomChanged ? slugCustomRef.current : finalBlog.slug;
+      const effectiveTitleForSlug = titleChanged ? titleRef.current : finalBlog.title;
+      const derivedSlug = slugify(effectiveTitleForSlug, { lower: true, strict: true });
+      setSlugCustomDirty(!!effectiveSlugForDirty && effectiveSlugForDirty !== derivedSlug);
 
       if (catDirty) {
         savedCatIdsRef.current = [...nextPendingCatIds];
@@ -433,7 +451,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc, notify, featuredImageUrl, isDirty, saving]);
+  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, notify, featuredImageUrl, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -484,6 +502,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         title?: string;
         content?: string;
         slugCustom?: string;
+        slugCustomDirty?: boolean;
         metaTitle?: string;
         metaTitleDirty?: boolean;
         metaDesc?: string;
@@ -493,6 +512,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
       if (typeof draft.slugCustom === "string") setSlugCustom(draft.slugCustom);
+      if (typeof draft.slugCustomDirty === "boolean") setSlugCustomDirty(draft.slugCustomDirty);
       if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
@@ -527,6 +547,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           title,
           content,
           slugCustom,
+          slugCustomDirty,
           metaTitle,
           metaTitleDirty,
           metaDesc,
@@ -544,6 +565,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     title,
     content,
     slugCustom,
+    slugCustomDirty,
     metaTitle,
     metaTitleDirty,
     metaDesc,
@@ -720,7 +742,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 className="mt-2"
                 value={slugCustom}
                 disabled={!slugEditable}
-                onChange={(e) => setSlugCustom(e.target.value)}
+                onChange={(e) => {
+                  setSlugCustomDirty(true);
+                  setSlugCustom(e.target.value);
+                }}
                 placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
