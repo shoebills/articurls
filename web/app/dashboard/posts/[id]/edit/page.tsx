@@ -876,7 +876,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <button
                   ref={catTriggerRef}
                   type="button"
-                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                     setCatDropdownOpen(!catDropdownOpen);
@@ -896,7 +896,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       {allCategories.length === 0 ? (
                         <p className="pt-1 pb-4 text-sm text-muted-foreground">No categories yet.</p>
                       ) : (
-                        <div className="max-h-56 w-full overflow-y-auto pt-1 pb-4">
+                        <div className="max-h-56 w-full overflow-y-auto pt-1 pb-0">
                         {allCategories.map((cat) => {
                           const isChecked = pendingCatIds.includes(cat.category_id);
                           return (
@@ -919,14 +919,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                               >
                                 {isChecked && <Check className="h-3 w-3" />}
                               </span>
-                              <span className="truncate min-w-0">{cat.name}</span>
+                              <span className="max-md:truncate max-md:min-w-0 whitespace-nowrap">{cat.name}</span>
                             </button>
                           );
                         })}
                       </div>
                       )}
-                      <div className="border-t border-border/70" />
-                        <div className="flex items-center gap-2 w-full">
+                      <div className="px-3"><div className="border-t border-border/70" /></div>
+                      <div className="flex items-center gap-2 w-full px-3">
                         <Input
                           value={newCatName}
                           onChange={(e) => setNewCatName(e.target.value)}
@@ -940,7 +940,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           Add
                         </Button>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 px-3">
                         <Button
                   variant="outline"
                           className="flex-1"
