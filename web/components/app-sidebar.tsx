@@ -126,7 +126,6 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
           <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-white px-3">
           <BrandLogo
             href="/dashboard"
-            size="sm"
             className="min-w-0"
             onClick={() => onNavigate?.()}
           />

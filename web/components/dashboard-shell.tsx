@@ -4,7 +4,6 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
-import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { MARKETING_ORIGIN } from "@/lib/env";
@@ -87,7 +86,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   >
                     <Menu className="h-4 w-4" />
                   </Button>
-                  <BrandLogo href="/dashboard" size="sm" className="min-w-0" onClick={() => setOpen(false)} />
+                  <Link
+                    href="/dashboard"
+                    className="min-w-0 truncate text-[1.6875rem] font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
+                    onClick={() => setOpen(false)}
+                  >
+                    Articurls
+                  </Link>
                 </div>
                 {publicBlogHref ? (
                   <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
