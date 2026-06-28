@@ -6,7 +6,6 @@ import { useSearch } from "@/components/search-context";
 import { Input } from "@/components/ui/input";
 
 const TRAY_GAP_PX = 8;
-const TRAY_WIDTH_PX = 320;
 
 export function SearchButton({
   iconClassName,
@@ -92,14 +91,13 @@ export function SearchButton({
         <div
           className={
             trayClassName ??
-            "fixed z-50 overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
+            "fixed z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
           }
           style={
             trayLayout
               ? {
                   top: trayLayout.bottom + TRAY_GAP_PX,
                   right: trayLayout.windowWidth - trayLayout.right,
-                  width: Math.min(TRAY_WIDTH_PX, trayLayout.windowWidth - 32),
                 }
               : undefined
           }
