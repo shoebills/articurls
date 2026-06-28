@@ -791,7 +791,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             {/* Featured Image */}
             <div className="space-y-2">
               <Label>Featured image</Label>
-              <p className="text-xs text-muted-foreground">Used for home preview and share cards. Recommended 1200×630px.</p>
+              <p className="text-xs text-muted-foreground pt-1">Used for home preview and share cards. Recommended 1200×630px.</p>
               <input
                 ref={featuredInputRef}
                 type="file"
@@ -847,14 +847,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
-              <div className="mt-3 space-y-1.5">
+              <div className="mt-6 space-y-2">
                 <Label htmlFor="preview-in-lists">Preview image in blog homepage</Label>
-                <p className="text-xs text-muted-foreground">Controls whether a preview image appears in blog list cards.</p>
+                <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog list cards.</p>
                 <Select
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}
                 >
-                  <SelectTrigger id="preview-in-lists" className="h-10 w-full max-w-[15rem]">
+                  <SelectTrigger id="preview-in-lists" className="h-10 w-full">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -869,9 +869,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
             {/* Categories */}
             <div className="space-y-2">
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground">Manage categories and their visibility via{" "}
+                <p className="text-xs text-muted-foreground pt-1">Manage categories and their visibility via{" "}
                   <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">design</Link>
                 </p>
               </div>
