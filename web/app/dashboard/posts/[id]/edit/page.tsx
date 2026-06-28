@@ -872,7 +872,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <Link href="/dashboard/design" className="underline underline-offset-2 hover:text-foreground transition-colors">Design</Link>
                 </p>
               </div>
-              <div className="relative inline-flex min-w-[14rem] max-w-full">
+              <div className="relative">
                 <button
                   ref={catTriggerRef}
                   type="button"
