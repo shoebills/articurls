@@ -195,7 +195,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const isDirty = useCallback(() => {
     if (!blog) return false;
     const nextSlug = slugEditable
-      ? (slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true }))
+      ? (slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true }) || blog.slug)
       : blog.slug;
     const nextMetaTitle =
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim();
@@ -771,7 +771,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       setMetaDescDirty(true);
                       setMetaDesc(e.target.value);
                     }}
-                    placeholder="Defaults from content"
+                    placeholder="Same as content by default"
                   />
                 </div>
               </div>

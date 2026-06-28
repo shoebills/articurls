@@ -130,7 +130,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextTitle = title.trim();
     const slugEditable = page.status === "draft";
     const nextSlug = slugEditable
-      ? (slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true }))
+      ? (slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true }) || page.slug)
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim();
     const contentExcerpt = getContentExcerpt(content);
@@ -513,7 +513,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                       setMetaDescDirty(true);
                       setMetaDesc(e.target.value);
                     }}
-                    placeholder="Defaults from content"
+                    placeholder="Same as content by default"
                   />
                 </div>
               </div>
