@@ -211,7 +211,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const isDirty = useCallback(() => {
     if (!blog) return false;
     const nextSlug = slugEditable
-      ? ((slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true })) || blog.slug)
+      ? (slugCustomDirty ? slugCustom.trim() : slugify(title.trim(), { lower: true, strict: true }))
       : blog.slug;
     const nextMetaTitle =
       !metaTitleDirty || metaTitle.trim() === title.trim() ? null : metaTitle.trim() || null;
@@ -270,7 +270,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       if (slugEditable) {
         const derived = slugify(nextTitle.trim(), { lower: true, strict: true });
-        const nextSlug = (!nextSlugCustomDirty ? derived : nextSlugCustom.trim()) || blog.slug;
+        const nextSlug = (!nextSlugCustomDirty ? derived : nextSlugCustom.trim()) || derived;
         body.slug = nextSlug;
       }
 

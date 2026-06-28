@@ -148,7 +148,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextTitle = title.trim();
     const slugEditable = page.status === "draft";
     const nextSlug = slugEditable
-      ? ((slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true })) || page.slug)
+      ? (slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true }))
       : page.slug;
     const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
     const contentExcerpt = getContentExcerpt(content);
@@ -188,7 +188,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         title: nextTitle,
         content: nextContent,
         ...(slugEditable
-          ? { slug: (!nextSlugCustomDirty ? slugify(nextTitle, { lower: true, strict: true }) : nextSlugCustom.trim()) || page.slug }
+          ? { slug: (!nextSlugCustomDirty ? slugify(nextTitle, { lower: true, strict: true }) : nextSlugCustom.trim()) || slugify(nextTitle, { lower: true, strict: true }) }
           : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
         meta_description:
