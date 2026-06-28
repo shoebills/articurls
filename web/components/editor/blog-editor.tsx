@@ -822,7 +822,6 @@ export function BlogEditor({
         defaultValue={linkUrl}
         onConfirm={handleLinkConfirm}
         submitLabel="Add Link"
-        compact
       />
 
       {/* YouTube Dialog */}
@@ -835,7 +834,6 @@ export function BlogEditor({
         defaultValue={youtubeUrl}
         onConfirm={handleYoutubeConfirm}
         submitLabel="Add Video"
-        compact
       />
 
       {/* Alt Text Dialog */}

@@ -23,7 +23,6 @@ export type PromptDialogProps = {
   onConfirm: (value: string) => void;
   submitLabel?: string;
   readOnly?: boolean;
-  compact?: boolean;
 };
 
 export function PromptDialog({
@@ -36,7 +35,6 @@ export function PromptDialog({
   onConfirm,
   submitLabel = "Confirm",
   readOnly = false,
-  compact = false,
 }: PromptDialogProps) {
   const [value, setValue] = useState(defaultValue);
   const [copied, setCopied] = useState(false);
@@ -69,14 +67,12 @@ export function PromptDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className={compact ? "w-auto max-w-sm rounded-md border bg-popover p-3 shadow-md" : undefined}
-      >
-        <DialogHeader className="space-y-1">
-          <DialogTitle className="text-base">{title}</DialogTitle>
-          {description && <DialogDescription className="text-xs">{description}</DialogDescription>}
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
-        <div className="grid gap-3 py-3">
+        <div className="grid gap-4 py-4">
           <div className="relative">
             <Input
               value={value}
@@ -109,10 +105,10 @@ export function PromptDialog({
           )}
         </div>
         <DialogFooter className="flex flex-row justify-end gap-2">
-          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handleConfirm} disabled={readOnly}>
+          <Button onClick={handleConfirm} disabled={readOnly}>
             {submitLabel}
           </Button>
         </DialogFooter>
