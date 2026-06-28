@@ -15,7 +15,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 import { API_URL } from "@/lib/env";
 
-const FIELD_GROUP = "flex flex-col gap-2.5";
+const FIELD_GROUP = "flex flex-col gap-2";
 
 function LoginForm() {
   const { login, token, loading } = useAuth();
@@ -109,18 +109,18 @@ function LoginForm() {
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Log in</CardTitle>
-          <CardDescription className="text-base">Use the email and password for your account.</CardDescription>
+        <CardHeader className="space-y-1.5">
+          <CardTitle className="text-xl font-bold tracking-tight">Log in</CardTitle>
+          <CardDescription className="text-sm">Use the email and password for your account.</CardDescription>
         </CardHeader>
         <CardContent>
           {signup && (
-            <p className="mb-6 rounded-xl border border-border/60 bg-muted/50 px-4 py-3.5 text-sm leading-relaxed text-muted-foreground">
+              <p className="mb-4 rounded-xl border border-border/60 bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
               Account created — check your email to verify, then sign in here.
             </p>
           )}
           {info && (
-            <p className="mb-6 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-3.5 text-sm leading-relaxed text-emerald-900">
+              <p className="mb-4 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
               {info}
             </p>
           )}
@@ -129,7 +129,6 @@ function LoginForm() {
             type="button"
             variant="outline"
             className="w-full"
-            size="lg"
             onClick={() => {
               window.location.href = `${API_URL}/auth/google/login`;
             }}
@@ -155,7 +154,7 @@ function LoginForm() {
             Continue with Google
           </Button>
 
-          <div className="relative my-6">
+          <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-border/60" />
             </div>
@@ -164,7 +163,7 @@ function LoginForm() {
             </div>
           </div>
 
-          <form onSubmit={onSubmit} className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className={FIELD_GROUP}>
               <Label htmlFor="email">Email</Label>
               <Input
@@ -206,12 +205,12 @@ function LoginForm() {
                 </Button>
               )}
             </div>
-            <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Signing in…" : "Sign in"}
             </Button>
           </form>
 
-          <p className="mt-8 border-t border-border/60 pt-8 text-center text-sm text-muted-foreground">
+          <p className="mt-6 border-t border-border/60 pt-6 text-center text-sm text-muted-foreground">
             No account?{" "}
             <Link href="/signup" className="font-medium text-primary underline-offset-4 hover:underline">
               Sign up

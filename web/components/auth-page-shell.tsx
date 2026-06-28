@@ -15,8 +15,8 @@ export function AuthPageShell({ children }: { children: ReactNode }) {
         aria-hidden
       />
 
-      <div className="relative z-10 w-full max-w-lg">
-        <div className="mb-10 flex justify-center sm:mb-12">
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-6 flex justify-center sm:mb-8">
           <BrandLogo href={MARKETING_ORIGIN} />
         </div>
         {children}

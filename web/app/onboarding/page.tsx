@@ -13,7 +13,7 @@ import { Loader2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 /** Label → control spacing; same for text inputs. */
-const FIELD_GROUP = "flex flex-col gap-2.5";
+const FIELD_GROUP = "flex flex-col gap-2";
 
 function OnboardingForm() {
   const router = useRouter();
@@ -89,14 +89,14 @@ function OnboardingForm() {
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Claim your space</CardTitle>
-          <CardDescription className="text-base">
+        <CardHeader className="space-y-1.5">
+          <CardTitle className="text-xl font-bold tracking-tight">Claim your space</CardTitle>
+          <CardDescription className="text-sm">
             Choose your unique username to start publishing
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className={FIELD_GROUP}>
               <Label htmlFor="email" className="text-sm font-medium">
                 Email
@@ -168,7 +168,7 @@ function OnboardingForm() {
                 Secure your account and content
               </p>
             </div>
-            <Button type="submit" className="w-full" size="lg" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy}>
               {busy ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
