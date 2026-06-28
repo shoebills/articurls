@@ -104,6 +104,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [catBusy, setCatBusy] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const catDropdownRef = useRef<HTMLDivElement | null>(null);
+  const catTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -157,7 +158,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     if (!catDropdownOpen) return;
     const handler = (e: MouseEvent) => {
-      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node)) {
+      if (catDropdownRef.current && !catDropdownRef.current.contains(e.target as Node) && !(catTriggerRef.current?.contains(e.target as Node))) {
         setCatDropdownOpen(false);
       }
     };
@@ -806,7 +807,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <div className="flex flex-wrap items-center gap-2">
                 <Button
                   type="button"
-                  variant="outline"
+                  variant="default"
                   onClick={() => featuredInputRef.current?.click()}
                   disabled={uploadingFeatured}
                 >
@@ -877,6 +878,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               </div>
               <div className="relative inline-flex min-w-[14rem] max-w-full">
                 <button
+                  ref={catTriggerRef}
                   type="button"
                   className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
@@ -944,7 +946,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       <div className="flex gap-2">
                         <Button
                           size="sm"
-                          variant="outline"
+                  variant="default"
                           className="flex-1"
                           onClick={() => {
                             setPendingCatIds([...selectedCatIds]);
