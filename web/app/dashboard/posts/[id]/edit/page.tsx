@@ -891,7 +891,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {catDropdownOpen && (
-                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] max-md:right-0 rounded-xl border border-border bg-popover shadow-lg">
+                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] max-md:right-0 max-md:w-auto rounded-xl border border-border bg-popover shadow-lg">
                     <div className="pt-4 pb-4 px-2 space-y-4">
                       {allCategories.length === 0 ? (
                         <p className="pt-1 pb-4 text-sm text-muted-foreground">No categories yet.</p>
