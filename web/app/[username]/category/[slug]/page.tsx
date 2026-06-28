@@ -216,15 +216,15 @@ export default async function PublicCategoryPage({ params }: Props) {
           )}
           <PublicSiteFooter user={user} pages={pages} />
         </SearchProvider>
-      </main>
       {user.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="ml-auto mt-6 w-fit rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
-          Made with Articurls
+          Made with <span className="font-semibold">Articurls</span>
         </a>
       ) : null}
+      </main>
     </div>
   );
 }
