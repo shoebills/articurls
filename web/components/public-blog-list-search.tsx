@@ -137,7 +137,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
   if (blogs.length === 0) {
     return (
       <section className="mt-5 sm:mt-6">
-        <p className="text-muted-foreground">No published posts yet.</p>
+        <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">No published posts yet.</p>
       </section>
     );
   }
