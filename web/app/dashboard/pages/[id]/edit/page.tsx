@@ -492,7 +492,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-background">
+      <div className="mt-6 rounded-lg border border-border bg-white">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"

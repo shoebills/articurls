@@ -295,7 +295,7 @@ export default function PagesDashboardPage() {
           </div>
           <p className="text-base font-medium text-foreground">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
-            Create pages and add it in the footer from Design or Editor.
+            Create pages e.g. About, Contact, etc. and add it in the footer from Design or Editor.
           </p>
         </div>
       ) : (
