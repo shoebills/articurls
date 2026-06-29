@@ -561,7 +561,7 @@ export default function DesignDashboardPage() {
                 <Label htmlFor="blogName">Blog name</Label>
                 <Input
                   id="blogName"
-                className="mt-2 min-h-[120px]"
+                className="mt-2"
                   value={design.nav_blog_name || ""}
                   onChange={(e) => setDesign((prev) => ({ ...prev, nav_blog_name: e.target.value }))}
                   onBlur={() =>
@@ -576,7 +576,7 @@ export default function DesignDashboardPage() {
               </div>
               <div className="shrink-0 space-y-2 sm:min-w-[220px]">
                 <Label id="blog-name-size-label">
-                  Font size
+                  Header font size
                 </Label>
                 <div
                   role="group"
@@ -796,7 +796,7 @@ export default function DesignDashboardPage() {
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"
-                className="mt-2"
+                className="mt-2 min-h-[120px]"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 onBlur={() => saveBioSocials()}
