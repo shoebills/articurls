@@ -113,14 +113,14 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
-      featured_blogs_enabled: false, featured_blog_ids: [],
+      featured_blogs_enabled: true, featured_blog_ids: [],
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
-      featured_blogs_enabled: false, featured_blog_ids: [],
+      featured_blogs_enabled: true, featured_blog_ids: [],
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {
@@ -394,7 +394,7 @@ export default function DesignDashboardPage() {
     }
   }
 
-  async function saveBioSocials() {
+  async function saveBioSocials(linksOverride?: Record<SocialPlatform, string>) {
     if (!token) return;
     if ((bio.trim() ? bio.trim().split(/\s+/).length : 0) > 200) {
       setErr("Bio must be 200 words or fewer");
@@ -403,16 +403,17 @@ export default function DesignDashboardPage() {
     setBusy(true);
     setErr(null);
     try {
+      const s = linksOverride ?? socialLinks;
       await patchMe(token, {
         bio,
-        contact_email: socialLinks.contact_email || null,
-        instagram_link: socialLinks.instagram_link || null,
-        x_link: socialLinks.x_link || null,
-        pinterest_link: socialLinks.pinterest_link || null,
-        facebook_link: socialLinks.facebook_link || null,
-        linkedin_link: socialLinks.linkedin_link || null,
-        github_link: socialLinks.github_link || null,
-        youtube_link: socialLinks.youtube_link || null,
+        contact_email: s.contact_email || null,
+        instagram_link: s.instagram_link || null,
+        x_link: s.x_link || null,
+        pinterest_link: s.pinterest_link || null,
+        facebook_link: s.facebook_link || null,
+        linkedin_link: s.linkedin_link || null,
+        github_link: s.github_link || null,
+        youtube_link: s.youtube_link || null,
       });
       showSavedToast();
     } catch (e) {
@@ -937,8 +938,10 @@ export default function DesignDashboardPage() {
                           size="icon"
                           className="h-10 w-10 shrink-0 text-muted-foreground hover:text-destructive"
                           onClick={() => {
+                            const nextLinks = { ...socialLinks, [platformKey]: "" };
                             setEnabledSocials((prev) => prev.filter((k) => k !== platformKey));
-                            setSocialLinks((prev) => ({ ...prev, [platformKey]: "" }));
+                            setSocialLinks(nextLinks);
+                            saveBioSocials(nextLinks);
                           }}
                           aria-label={`Remove ${option.label}`}
                         >

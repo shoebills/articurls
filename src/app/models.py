@@ -57,7 +57,7 @@ class User(Base):
     site_footer_enabled = Column(Boolean, nullable=False, default=False)
     rss_enabled = Column(Boolean, nullable=False, default=True)
     last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
+    featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     welcome_email_enabled = Column(Boolean, nullable=False, default=False)

@@ -38,7 +38,7 @@ class UserSettings(BaseModel):
     last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
     favicon_url: Optional[str] = None
-    featured_blogs_enabled: bool = False
+    featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = True
     remove_branding: bool = True
@@ -73,7 +73,7 @@ class PublicUser(BaseModel):
     site_footer_enabled: bool = False
     show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None
-    featured_blogs_enabled: bool = False
+    featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
