@@ -505,9 +505,10 @@ function NativeAnalytics({ token }: { token: string }) {
     const viMap = new Map(timeseries.visitors.map((p) => [normX(p.x), p.y]));
 
     if (timeseries.unit === "hour") {
-      // Always generate all 24 hourly slots anchored to now-24h → now in UTC.
-      // Umami buckets by UTC hour (format: "YYYY-MM-DDTHH:00:00Z") and only
-      // returns hours that have data — we fill the rest with zeros.
+      // Generate all 25 hourly slots for the full 24h window anchored to
+      // now-24h → now in UTC. Umami buckets by UTC hour (format:
+      // "YYYY-MM-DDTHH:00:00Z") and only returns hours that have data — we fill
+      // the rest with zeros.
       //
       // IMPORTANT: snap to UTC hour boundaries, not local time, so the keys
       // match exactly what Umami returns.
@@ -516,7 +517,7 @@ function NativeAnalytics({ token }: { token: string }) {
       const currentHourMs = nowMs - (nowMs % (60 * 60 * 1000));
 
       const slots: string[] = [];
-      for (let i = 23; i >= 0; i--) {
+      for (let i = 24; i >= 0; i--) {
         const slotMs = currentHourMs - i * 60 * 60 * 1000;
         // Produce "YYYY-MM-DDTHH:00:00Z" — exactly what Umami returns
         const d = new Date(slotMs);

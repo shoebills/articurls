@@ -74,7 +74,7 @@ def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
 
 MONTH_SLOT_COUNTS: dict[str, int] = {}
 DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7}
-HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 24}
+HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 25}
 
 
 def _generate_series_slots(start: datetime, unit: str, end: datetime, period: Optional[str] = None) -> list[datetime]:
