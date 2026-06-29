@@ -412,12 +412,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/pages">
-            <ChevronLeft className="h-4 w-4" />
-            Pages
-          </Link>
-        </Button>
+        <Link
+          href="/dashboard/pages"
+          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0" />
+          Pages
+        </Link>
         <div className="flex flex-wrap items-center gap-2">
           {liveUrl && (
             <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>

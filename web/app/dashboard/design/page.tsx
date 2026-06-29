@@ -257,8 +257,6 @@ export default function DesignDashboardPage() {
         .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999))
         .map((x) => x.page_id);
       setFooterSelection(selectedFooter);
-      const firstFooterAvailable = p.find((x) => !selectedFooter.includes(x.page_id));
-      setFooterPageToAdd(firstFooterAvailable ? String(firstFooterAvailable.page_id) : "");
       // Load bio and social links from user settings
       const nextLinks: Record<SocialPlatform, string> = {
         contact_email: me.contact_email || "",
@@ -564,7 +562,7 @@ export default function DesignDashboardPage() {
                 <Label htmlFor="blogName">Blog name</Label>
                 <Input
                   id="blogName"
-                  className="mt-2"
+                className="mt-2 min-h-[120px]"
                   value={design.nav_blog_name || ""}
                   onChange={(e) => setDesign((prev) => ({ ...prev, nav_blog_name: e.target.value }))}
                   onBlur={() =>
@@ -801,7 +799,7 @@ export default function DesignDashboardPage() {
                           <Input
                             type={platformKey === "contact_email" ? "email" : "url"}
                             value={socialLinks[platformKey]}
-                            className="min-w-0"
+                            className="h-9 min-w-0"
                             onChange={(e) =>
                               setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
                             }
@@ -888,7 +886,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
             <DialogDescription>
-              Assign category to posts via editor advanced settings.
+              Assign category to posts via post editor advanced settings.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 min-w-0">
@@ -901,12 +899,9 @@ export default function DesignDashboardPage() {
               </div>
               {categories.length === 0 ? (
                 <div
-                  className="flex min-h-[160px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-8 text-center"
+                  className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center"
                   role="status"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
-                    <Tag className="h-4 w-4" aria-hidden />
-                  </div>
                   <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
                 </div>
               ) : (
@@ -1044,12 +1039,14 @@ export default function DesignDashboardPage() {
             </div>
             {menuCatSelection.length === 0 ? (
               <div
-                className="flex min-h-[120px] flex-col items-center justify-center gap-3 rounded-xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-8 text-center"
+                className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center"
                 role="status"
               >
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
-                  <Tag className="h-4 w-4" aria-hidden />
-                </div>
+                {categories.length === 0 && (
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+                    <Tag className="h-4 w-4" aria-hidden />
+                  </div>
+                )}
                 <p className="text-sm font-medium text-muted-foreground">
                   {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
                 </p>
@@ -1141,7 +1138,9 @@ export default function DesignDashboardPage() {
           </DialogHeader>
           <div className="space-y-4 min-w-0">
             {design.featured_blog_ids.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Add posts to feature.</p>
+              <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
+                <p className="text-sm font-medium text-muted-foreground">Add posts to feature.</p>
+              </div>
             ) : (
               <ul className="space-y-2">
                 {design.featured_blog_ids.map((id, idx) => {
@@ -1238,7 +1237,9 @@ export default function DesignDashboardPage() {
           </DialogHeader>
           <div className="space-y-4 min-w-0">
             {selectedFooterPages.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Add pages to display in the footer.</p>
+              <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
+                <p className="text-sm font-medium text-muted-foreground">Add pages to display in the footer.</p>
+              </div>
             ) : (
               <ul className="space-y-2">
                 {footerSelection.map((id, idx) => (
