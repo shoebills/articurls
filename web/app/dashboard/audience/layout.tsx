@@ -37,7 +37,7 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
         )}
 
         <nav aria-label="Audience sections" className="overflow-x-auto pb-1">
-          <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+          <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
             {audienceTabs.map((tab) => {
               const active = tab.match(pathname);
               return (

@@ -30,7 +30,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Pencil, Plus, Tag, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -457,7 +457,7 @@ export default function DesignDashboardPage() {
           aria-label="Design sections"
           className="overflow-x-auto pb-1"
         >
-          <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+          <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
             {sectionTabs.map((section, i) => (
               <Button
                 key={section.id}
@@ -515,7 +515,7 @@ export default function DesignDashboardPage() {
         aria-label="Design sections"
         className="overflow-x-auto pb-1"
       >
-        <div className="inline-flex min-w-full rounded-xl border bg-muted/30 p-1 sm:min-w-0">
+        <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
           {sectionTabs.map((section) => (
             <Button
               key={section.id}
@@ -697,7 +697,11 @@ export default function DesignDashboardPage() {
                   );
                 })}
               </ul>
-            ) : null}
+            ) : (
+              <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
+                <p className="text-sm font-medium text-muted-foreground">No featured posts yet.</p>
+              </div>
+            )}
           </>
         ) : null}
       </SectionPanel>
@@ -782,7 +786,11 @@ export default function DesignDashboardPage() {
                     </li>
                   ))}
                 </ul>
-              ) : null}
+              ) : (
+                <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
+                  <p className="text-sm font-medium text-muted-foreground">No pages in footer yet.</p>
+                </div>
+              )}
             </div>
             <div className="space-y-4 border-t border-border/60 pt-5">
               <p className="font-medium mb-4">Social links</p>
@@ -886,7 +894,7 @@ export default function DesignDashboardPage() {
           <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
             <DialogDescription>
-              Assign category to posts via post editor advanced settings.
+              Assign category via post editor.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 min-w-0">
@@ -1042,11 +1050,6 @@ export default function DesignDashboardPage() {
                 className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center"
                 role="status"
               >
-                {categories.length === 0 && (
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
-                    <Tag className="h-4 w-4" aria-hidden />
-                  </div>
-                )}
                 <p className="text-sm font-medium text-muted-foreground">
                   {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
                 </p>
