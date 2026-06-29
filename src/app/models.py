@@ -52,7 +52,7 @@ class User(Base):
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_blog_name_size = Column(String(16), nullable=False, default="medium")
-    nav_menu_enabled = Column(Boolean, nullable=False, default=False)
+    nav_menu_enabled = Column(Boolean, nullable=False, default=True)
     footer_enabled = Column(Boolean, nullable=False, default=False)
     site_footer_enabled = Column(Boolean, nullable=False, default=False)
     rss_enabled = Column(Boolean, nullable=False, default=True)
@@ -270,7 +270,7 @@ class Category(Base):
     user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
-    show_in_menu = Column(Boolean, nullable=False, default=False)
+    show_in_menu = Column(Boolean, nullable=False, default=True)
     menu_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

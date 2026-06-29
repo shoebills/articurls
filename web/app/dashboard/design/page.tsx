@@ -28,7 +28,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ChevronDown, ChevronUp, Pencil, Plus, Tag, Trash2, X } from "lucide-react";
 import {
@@ -112,14 +112,14 @@ export default function DesignDashboardPage() {
   const [design, setDesign] = useState<DesignSettings>(() => {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: false, footer_enabled: false, site_footer_enabled: false,
+      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
       featured_blogs_enabled: false, featured_blog_ids: [],
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: false, footer_enabled: false, site_footer_enabled: false,
+      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
       featured_blogs_enabled: false, featured_blog_ids: [],
     };
   });
@@ -641,7 +641,9 @@ export default function DesignDashboardPage() {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-muted-foreground">No categories added.</p>
+                  <div className="border border-dashed rounded-lg p-4 text-center">
+                    <p className="text-sm text-muted-foreground">No categories added.</p>
+                  </div>
                 )}
               </>
             ) : null}
@@ -885,6 +887,9 @@ export default function DesignDashboardPage() {
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
           <DialogHeader className="text-left">
             <DialogTitle>Manage Navigation Menu</DialogTitle>
+            <DialogDescription>
+              Assign category to posts via editor advanced settings.
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-5 min-w-0">
             <div className="space-y-3 border-t border-border/60 pt-4">
