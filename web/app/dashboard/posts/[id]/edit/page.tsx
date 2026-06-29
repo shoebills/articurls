@@ -639,8 +639,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           {liveUrl && (
             <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>
               <a href={liveUrl} target="_blank" rel="noopener">
-                <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                View
+                View post
               </a>
             </Button>
           )}
@@ -896,7 +895,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] max-md:right-0 max-md:w-auto rounded-xl border border-border bg-popover shadow-lg">
                     <div className="pt-4 pb-4 px-2 space-y-4">
                       {allCategories.length === 0 ? (
-                        <p className="pt-1 pb-4 text-sm text-muted-foreground">No categories yet.</p>
+                        <div className="flex min-h-[56px] flex-col items-center justify-center rounded-lg border border-dashed px-4 py-3 text-center">
+                          <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
+                        </div>
                       ) : (
                         <div className="max-h-56 w-full overflow-y-auto pt-1 pb-0">
                         {allCategories.map((cat) => {
