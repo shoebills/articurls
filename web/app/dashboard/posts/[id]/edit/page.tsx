@@ -844,6 +844,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
+              <Separator className="mt-6" />
               <div className="mt-6 space-y-2">
                 <Label htmlFor="preview-in-lists">Preview image in blog homepage</Label>
                 <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog list cards. If Auto, featured/first image in blog is used for preview.</p>
