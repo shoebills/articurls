@@ -112,14 +112,14 @@ export default function DesignDashboardPage() {
   const [design, setDesign] = useState<DesignSettings>(() => {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
+      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
       featured_blogs_enabled: true, featured_blog_ids: [],
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: false,
+      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
       featured_blogs_enabled: true, featured_blog_ids: [],
     };
   });
@@ -799,7 +799,7 @@ export default function DesignDashboardPage() {
                 className="mt-2"
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                onBlur={saveBioSocials}
+                onBlur={() => saveBioSocials()}
                 maxLength={1400}
                 placeholder="Optional short bio (max 200 words)"
               />
@@ -929,7 +929,7 @@ export default function DesignDashboardPage() {
                             onChange={(e) =>
                               setSocialLinks((prev) => ({ ...prev, [platformKey]: e.target.value }))
                             }
-                            onBlur={saveBioSocials}
+                            onBlur={() => saveBioSocials()}
                             placeholder={option.placeholder}
                           />
                         <Button

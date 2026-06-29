@@ -70,6 +70,6 @@ class DesignSettings(BaseModel):
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
-    site_footer_enabled: bool = False
+    site_footer_enabled: bool = True
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []

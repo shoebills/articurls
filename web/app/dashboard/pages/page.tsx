@@ -292,11 +292,8 @@ export default function PagesDashboardPage() {
         >
           <p className="text-base font-medium text-foreground">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
-            Create your first page and add it to your footer from Design section.
+            Create pages and add it in the footer from Design or Editor.
           </p>
-          <Button onClick={() => router.push("/dashboard/pages/new")}>
-            Add new page
-          </Button>
         </div>
       ) : (
         <>

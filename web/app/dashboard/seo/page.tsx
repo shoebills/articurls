@@ -55,11 +55,11 @@ export default function SeoDashboardPage() {
     return cached?.meta_description || "";
   });
   const [rssEnabled, setRssEnabled] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     const t = localStorage.getItem("articurls_token");
-    if (!t) return true;
+    if (!t) return false;
     const cached = getCachedApiData<MetaSettings>("/user/meta", t);
-    return cached ? cached.rss_enabled !== false : true;
+    return cached ? cached.rss_enabled !== false : false;
   });
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;

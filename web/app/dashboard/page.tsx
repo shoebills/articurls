@@ -499,12 +499,9 @@ export default function DashboardPage() {
           <div className="space-y-1.5">
             <p className="text-base font-medium text-foreground">No posts yet</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              Create your first draft — you can edit and publish whenever you are ready.
+              Create your first draft. You can edit and publish whenever you are ready.
             </p>
           </div>
-          <Button asChild className="touch-manipulation">
-            <Link href="/dashboard/posts/new">+ New post</Link>
-          </Button>
         </div>
       )}
         </>

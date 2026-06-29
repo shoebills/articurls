@@ -34,7 +34,7 @@ class UserSettings(BaseModel):
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
-    site_footer_enabled: bool = False
+    site_footer_enabled: bool = True
     last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
     favicon_url: Optional[str] = None
@@ -44,7 +44,7 @@ class UserSettings(BaseModel):
     remove_branding: bool = True
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -70,7 +70,7 @@ class PublicUser(BaseModel):
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
-    site_footer_enabled: bool = False
+    site_footer_enabled: bool = True
     show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
@@ -78,7 +78,7 @@ class PublicUser(BaseModel):
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
     umami_website_id: Optional[str] = None
 
     class Config:
@@ -120,7 +120,7 @@ class AdminUsernameChange(BaseModel):
 class MetaSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
 
     class Config:
         from_attributes = True
