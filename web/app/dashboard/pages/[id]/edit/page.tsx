@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ChevronDown, ChevronUp, ExternalLink, ChevronLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 import { MARKETING_ORIGIN } from "@/lib/env";
@@ -53,6 +54,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [metaDescDirty, setMetaDescDirty] = useState(false);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
+  const [showInFooter, setShowInFooter] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
@@ -70,6 +72,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const metaTitleDirtyRef = useRef(metaTitleDirty);
   const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
+  const showInFooterRef = useRef(showInFooter);
 
   const applyPageToForm = useCallback((p: UserPage) => {
     setPage(p);
@@ -89,6 +92,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
     setMetaDesc(descSynced ? "" : (p.meta_description || ""));
+    setShowInFooter(p.show_in_footer);
   }, []);
 
   const load = useCallback(async () => {
@@ -124,6 +128,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
+  useEffect(() => { showInFooterRef.current = showInFooter; }, [showInFooter]);
 
   const isDirty = useCallback(() => {
     if (!page) return false;
@@ -146,9 +151,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       (page.content || "") !== content ||
       page.slug !== nextSlug ||
       currentMetaTitle !== nextMetaTitle ||
-      currentMetaDesc !== nextMetaDesc
+      currentMetaDesc !== nextMetaDesc ||
+      page.show_in_footer !== showInFooter
     );
-  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter]);
 
   async function save(silent = false) {
     if (!token || !page) return false;
@@ -162,6 +168,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
     const nextMetaDescDirty = metaDescDirty;
+    const nextShowInFooter = showInFooter;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -177,6 +184,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           !nextMetaDescDirty || nextMetaDesc.trim() === getContentExcerpt(nextContent)
             ? null
             : nextMetaDesc.trim() || null,
+        show_in_footer: nextShowInFooter,
       };
       const responsePage = await updatePage(token, page.page_id, body);
       setPage(responsePage);
@@ -187,6 +195,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const metaTitleChanged = nextMetaTitle !== metaTitleRef.current;
       const metaDescChanged = nextMetaDesc !== metaDescRef.current;
       const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
+      const showInFooterChanged = nextShowInFooter !== showInFooterRef.current;
 
       if (!titleChanged) setTitle(responsePage.title);
       if (!contentChanged) setContent(responsePage.content || "");
@@ -201,6 +210,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (slugEditable && !slugCustomChanged) {
         const derived = slugify(responsePage.title || "", { lower: true, strict: true });
         setSlugCustom(responsePage.slug !== derived ? responsePage.slug : "");
+      }
+      if (!showInFooterChanged) {
+        setShowInFooter(responsePage.show_in_footer);
       }
 
       // Re-derive dirty flags from effective (current) state
@@ -253,7 +265,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -307,6 +319,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         metaTitleDirty?: boolean;
         metaDesc?: string;
         metaDescDirty?: boolean;
+        showInFooter?: boolean;
       };
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
@@ -316,6 +329,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
       if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
+      if (typeof draft.showInFooter === "boolean") setShowInFooter(draft.showInFooter);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
     }
@@ -350,11 +364,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           metaTitleDirty,
           metaDesc,
           metaDescDirty,
+          showInFooter,
         })
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
 
   useEffect(() => {
     return () => {
@@ -462,6 +477,20 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       </p>
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
+
+      <div className="mt-6 space-y-2">
+        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">Show in Footer</p>
+            <Switch
+              className="shrink-0"
+              checked={showInFooter}
+              onCheckedChange={(v) => setShowInFooter(v)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
+        </div>
+      </div>
 
       <div className="mt-6 rounded-lg border border-border bg-background">
         <button

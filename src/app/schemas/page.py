@@ -19,6 +19,7 @@ class UserPageUpdate(BaseModel):
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    show_in_footer: Optional[bool] = None
 
 
 class PageMediaOut(BaseModel):

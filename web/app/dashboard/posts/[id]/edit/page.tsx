@@ -15,10 +15,11 @@ import {
   listCategories,
   createCategory,
   assignBlogCategories,
+  patchDesignSettings,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail, Category } from "@/lib/types";
+import type { BlogDetail, Category, DesignSettings } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { Button } from "@/components/ui/button";
@@ -719,6 +720,42 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         {!isPro && notify === false && (
           <p className="text-xs text-muted-foreground">{wasPro ? "Reactivate Pro to enable per-post subscriber emails." : "Upgrade to Pro in Billing to enable per-post subscriber emails."}</p>
         )}
+      </div>
+
+      {/* Show in Featured Posts */}
+      <div className="mt-6 space-y-2">
+        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">Show in Featured Posts</p>
+            <Switch
+              className="shrink-0"
+              checked={(user?.featured_blog_ids ?? []).includes(blogId)}
+              disabled={!user || !token}
+              onCheckedChange={async (v) => {
+                if (!user || !token) return;
+                const next = v
+                  ? [...(user.featured_blog_ids ?? []), blogId]
+                  : (user.featured_blog_ids ?? []).filter((id) => id !== blogId);
+                try {
+                  await patchDesignSettings(token, {
+                    navbar_enabled: user.navbar_enabled,
+                    nav_blog_name: user.nav_blog_name,
+                    nav_blog_name_size: user.nav_blog_name_size ?? "medium",
+                    nav_menu_enabled: user.nav_menu_enabled,
+                    footer_enabled: user.footer_enabled,
+                    site_footer_enabled: user.site_footer_enabled,
+                    featured_blogs_enabled: user.featured_blogs_enabled,
+                    featured_blog_ids: next,
+                  });
+                  await refreshUser();
+                } catch {
+                  setErr("Failed to update featured status");
+                }
+              }}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Show this post at the top of your blog when featured posts are enabled.</p>
+        </div>
       </div>
 
       <div className="mt-6 rounded-lg border border-border bg-white">
