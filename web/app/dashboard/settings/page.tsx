@@ -317,10 +317,11 @@ export default function SettingsPage() {
             <CardTitle className="text-xl">Profile</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+            <div className="flex flex-row items-center gap-3 sm:gap-6">
               <Skeleton className="h-[4.875rem] w-[4.875rem] rounded-full" />
               <div className="flex items-center gap-2">
-                <Skeleton className="h-9 w-9" />
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-10 w-10" />
               </div>
             </div>
             <div className="grid gap-6 sm:grid-cols-2">
@@ -406,7 +407,7 @@ export default function SettingsPage() {
           <CardTitle className="text-xl">Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex flex-row items-center gap-3 sm:gap-6">
             <div className="relative inline-flex shrink-0">
               <input
                 ref={pfpInputRef}

@@ -29,7 +29,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, FileText, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { scoreByTitleAndContent } from "@/lib/search";
 
@@ -290,6 +290,9 @@ export default function PagesDashboardPage() {
           role="status"
           aria-label="No pages yet"
         >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <FileText className="h-5 w-5" aria-hidden />
+          </div>
           <p className="text-base font-medium text-foreground">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
             Create pages and add it in the footer from Design or Editor.
