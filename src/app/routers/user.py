@@ -228,13 +228,11 @@ def update_design_settings(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 10 featured blogs allowed")
     
     if blog_ids:
-        valid_blogs = db.query(models.Blog.blog_id).filter(
+        owned_ids = {b[0] for b in db.query(models.Blog.blog_id).filter(
             models.Blog.user_id == current_user.user_id,
             models.Blog.blog_id.in_(blog_ids),
-            models.Blog.status == "published"
-        ).all()
-        valid_ids = {b[0] for b in valid_blogs}
-        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in valid_ids]
+        ).all()}
+        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in owned_ids]
     else:
         db_user.featured_blog_ids = []
         

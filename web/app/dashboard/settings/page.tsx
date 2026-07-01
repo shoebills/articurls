@@ -345,7 +345,7 @@ export default function SettingsPage() {
           <CardHeader>
             <CardTitle className="text-xl">Storage</CardTitle>
             <CardDescription>
-              Free plan includes up to 1 GB total media storage.
+              <Skeleton className="h-4 w-72" />
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
