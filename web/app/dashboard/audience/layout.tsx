@@ -23,16 +23,16 @@ export default function AudienceLayout({ children }: { children: React.ReactNode
       <div className="mx-auto max-w-[1100px] space-y-6">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Audience</h1>
 
-        {loading ? null : !isPro ? (
-          <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-            {wasPro ? "Reactivate Pro to resume subscriber collection." : "Upgrade under Billing to collect subscribers."}
-          </p>
-        ) : (
+        {(loading || isPro) ? (
           <p className="text-sm text-muted-foreground">
             Manage subscriber collection in{" "}
             <Link href="/dashboard/settings#pro-features" className="underline underline-offset-2 hover:text-foreground transition-colors">
-              settings
+              Settings
             </Link>.
+          </p>
+        ) : (
+          <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
+            {wasPro ? "Reactivate Pro to resume subscriber collection." : "Upgrade under Billing to collect subscribers."}
           </p>
         )}
 
