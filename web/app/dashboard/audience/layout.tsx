@@ -11,7 +11,7 @@ const audienceTabs = [
     label: "Analytics",
     match: (path: string) => path.startsWith("/dashboard/audience/analytics"),
   },
-  { href: "/dashboard/audience", label: "Emails", match: (path: string) => path === "/dashboard/audience" },
+  { href: "/dashboard/audience/emails", label: "Emails", match: (path: string) => path === "/dashboard/audience/emails" },
 ] as const;
 
 export default function AudienceLayout({ children }: { children: React.ReactNode }) {
