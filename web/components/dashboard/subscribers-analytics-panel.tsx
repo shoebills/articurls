@@ -46,9 +46,12 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
       return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
     }
     if (period === "7d" || period === "this_month" || period === "last_month") {
-      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+      return date.getDate().toString();
     }
-    return date.toLocaleDateString(undefined, { month: "short", year: period === "all" ? "numeric" : "2-digit" });
+    if (period === "all") {
+      return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
+    }
+    return date.toLocaleDateString(undefined, { month: "short" });
   } catch {
     if (period === "24h") return value.slice(11, 16);
     if (period === "7d" || period === "this_month" || period === "last_month") return value.slice(0, 10);

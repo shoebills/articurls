@@ -313,7 +313,7 @@ function formatChartLabel(value: string, unit?: string, tz?: string): string {
   if (unit === "month") {
     try {
       const date = new Date(value);
-      return date.toLocaleDateString(undefined, { month: "short", year: "2-digit" });
+      return date.toLocaleDateString(undefined, { month: "short" });
     } catch {
       return value.slice(0, 7);
     }
@@ -321,7 +321,7 @@ function formatChartLabel(value: string, unit?: string, tz?: string): string {
 
   try {
     const date = new Date(value);
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    return date.getDate().toString();
   } catch {
     return value.slice(0, 10);
   }
