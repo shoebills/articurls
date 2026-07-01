@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, exchangeOAuthCode } from "@/lib/api";
@@ -72,11 +72,15 @@ export default function DashboardPage() {
   const [shareUrl, setShareUrl] = useState("");
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
+  const exchangedOAuth = useRef(false);
+
   useEffect(() => {
+    if (exchangedOAuth.current) return;
     const params = new URLSearchParams(window.location.search);
     const oauthCode = params.get("code");
     
     if (oauthCode) {
+      exchangedOAuth.current = true;
       const url = new URL(window.location.href);
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());

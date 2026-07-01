@@ -7,14 +7,9 @@ import { useAuth } from "@/lib/auth-context";
 export function DashboardGate({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
   const router = useRouter();
-  const [hasOAuthCode, setHasOAuthCode] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      setHasOAuthCode(!!params.get("code"));
-    }
-  }, []);
+  const [hasOAuthCode] = useState(
+    () => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("code")
+  );
 
   useEffect(() => {
     if (loading) return;
@@ -22,5 +17,7 @@ export function DashboardGate({ children }: { children: React.ReactNode }) {
     if (!token) router.replace("/login");
   }, [token, loading, router, hasOAuthCode]);
 
+  if (loading || hasOAuthCode) return null;
+  if (!token) return null;
   return <>{children}</>;
 }
