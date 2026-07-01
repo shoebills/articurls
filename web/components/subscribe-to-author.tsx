@@ -144,7 +144,7 @@ export function SubscribeToAuthor({
               {triggerChildren ?? "Subscribe"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm sm:max-w-md">
+          <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
               <DialogTitle>Email updates</DialogTitle>
               <DialogDescription>{description}</DialogDescription>

@@ -292,6 +292,7 @@ export function SubscribersAnalyticsPanel() {
                   tickFormatter={(v) => seriesLabelFormatter(v, sPeriod, userTz)}
                   tickLine={false}
                   axisLine={false}
+                  interval={0}
                 />
                 <YAxis
                   tick={{ fontSize: 10 }}
