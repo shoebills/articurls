@@ -46,7 +46,7 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
       return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
     }
     if (period === "7d" || period === "this_month" || period === "last_month") {
-      return date.getDate().toString();
+      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
     if (period === "all") {
       return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
@@ -295,7 +295,7 @@ export function SubscribersAnalyticsPanel() {
                   tickFormatter={(v) => seriesLabelFormatter(v, sPeriod, userTz)}
                   tickLine={false}
                   axisLine={false}
-                  interval={0}
+                  interval={chartSubs.length > 10 ? "preserveStartEnd" : 0}
                 />
                 <YAxis
                   tick={{ fontSize: 10 }}

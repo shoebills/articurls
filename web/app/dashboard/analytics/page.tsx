@@ -321,7 +321,7 @@ function formatChartLabel(value: string, unit?: string, tz?: string): string {
 
   try {
     const date = new Date(value);
-    return date.getDate().toString();
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
   } catch {
     return value.slice(0, 10);
   }
@@ -758,13 +758,13 @@ function NativeAnalytics({ token }: { token: string }) {
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
-                      <XAxis
+                       <XAxis
                         dataKey="x"
                         tick={{ fontSize: 10 }}
                         tickFormatter={trafficLabelFormatter}
                         tickLine={false}
                         axisLine={false}
-                        interval={0}
+                        interval={trafficSeries.length > 10 ? "preserveStartEnd" : 0}
                       />
                       <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
                       <Tooltip
