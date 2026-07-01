@@ -17,7 +17,8 @@ export function DashboardGate({ children }: { children: React.ReactNode }) {
     if (!token) router.replace("/login");
   }, [token, loading, router, hasOAuthCode]);
 
-  if (loading || hasOAuthCode) return null;
+  if (hasOAuthCode) return <>{children}</>;
+  if (loading) return null;
   if (!token) return null;
   return <>{children}</>;
 }
