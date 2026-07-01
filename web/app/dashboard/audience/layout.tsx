@@ -16,14 +16,14 @@ const audienceTabs = [
 
 export default function AudienceLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { isPro, wasPro } = useAuth();
+  const { isPro, wasPro, loading } = useAuth();
 
   return (
     <>
       <div className="mx-auto max-w-[1100px] space-y-6">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Audience</h1>
 
-        {!isPro ? (
+        {loading ? null : !isPro ? (
           <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
             {wasPro ? "Reactivate Pro to resume subscriber collection." : "Upgrade under Billing to collect subscribers."}
           </p>

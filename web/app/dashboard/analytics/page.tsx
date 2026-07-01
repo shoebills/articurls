@@ -1054,9 +1054,9 @@ function NativeAnalytics({ token }: { token: string }) {
 
 export default function AnalyticsPage() {
   const router = useRouter();
-  const { token, isPro, wasPro } = useAuth();
+  const { token, isPro, wasPro, loading } = useAuth();
 
-  if (!token) {
+  if (!token || loading) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
         <div className="flex items-center justify-between gap-3">

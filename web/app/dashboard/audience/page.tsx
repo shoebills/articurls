@@ -34,7 +34,7 @@ function isEmptyBody(html: string): boolean {
 }
 
 export default function AudienceEmailsPage() {
-  const { token, isPro, wasPro, user } = useAuth();
+  const { token, isPro, wasPro, user, loading: authLoading } = useAuth();
   const blogName = (user?.name || "").trim() || "My Blog";
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
@@ -179,7 +179,7 @@ export default function AudienceEmailsPage() {
     }
   }
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div className="space-y-6">
         <Card>
