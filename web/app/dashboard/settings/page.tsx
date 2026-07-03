@@ -33,7 +33,7 @@ import CustomDomainSettings from "@/components/custom-domain-settings";
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
 export default function SettingsPage() {
-  const { token, isPro, wasPro, refreshUser, user: ctxUser } = useAuth();
+  const { token, isPro, refreshUser, user: ctxUser } = useAuth();
   const [name, setName] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
@@ -552,11 +552,7 @@ export default function SettingsPage() {
           <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {!isPro && (
-            <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-              {wasPro ? "Reactivate Pro to restore these features." : "Upgrade under Billing to edit these."}
-            </p>
-          )}
+
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
