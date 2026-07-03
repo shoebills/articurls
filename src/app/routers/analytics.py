@@ -521,7 +521,9 @@ def get_umami_pages(
             for row in pages
         ]
 
-        return {"period": period, "rows": enriched}
+        live_and_archived = [r for r in enriched if r["status"] != "deleted"]
+
+        return {"period": period, "rows": live_and_archived}
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

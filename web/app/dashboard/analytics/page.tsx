@@ -423,7 +423,7 @@ function NativeAnalytics({ token }: { token: string }) {
   const [pages, setPages] = useState<UmamiPagesResponse | null>(() => {
     if (typeof window === "undefined") return null;
     const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<UmamiPagesResponse>("/analytics/umami/pages?period=7d&limit=20", t) : null;
+    return t ? getCachedApiData<UmamiPagesResponse>("/analytics/umami/pages?period=7d&limit=50", t) : null;
   });
   const [sources, setSources] = useState<UmamiSourcesResponse | null>(() => {
     if (typeof window === "undefined") return null;
@@ -447,19 +447,21 @@ function NativeAnalytics({ token }: { token: string }) {
     return !(
       apiCacheHas("/analytics/umami/overview?period=7d", t) &&
       apiCacheHas("/analytics/umami/timeseries?period=7d", t) &&
-      apiCacheHas("/analytics/umami/pages?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/pages?period=7d&limit=50", t) &&
       apiCacheHas("/analytics/umami/sources?period=7d&limit=20", t) &&
       apiCacheHas("/analytics/umami/geo?period=7d&limit=20", t) &&
       apiCacheHas("/analytics/umami/tech?period=7d&limit=20", t)
     );
   });
   const [err, setErr] = useState<string | null>(null);
+  const [pagesVisible, setPagesVisible] = useState(10);
 
   // Detect browser timezone once — used to display chart labels in local time
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     let cancelled = false;
+    setPagesVisible(10);
     (async () => {
       setLoading(true);
       setErr(null);
@@ -816,20 +818,48 @@ function NativeAnalytics({ token }: { token: string }) {
                   <CardContent className="pt-0">
                     <MetricsTableHeader label="Page" />
                     <div className="space-y-1 sm:space-y-2">
-                      {pages.rows.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <div className="flex items-center gap-2">
-                            <PathStatusDot status={row.status} />
-                            <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                              {row.x}
+                      {(() => {
+                        const filtered = pages.rows.filter((r) => r.status !== "deleted");
+                        const visible = filtered.slice(0, pagesVisible);
+                        return visible.map((row: UmamiMetricsRow, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div className="flex items-center gap-2">
+                              <PathStatusDot status={row.status} />
+                              <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                                {row.x}
+                              </span>
+                            </div>
+                            <span className="font-medium text-xs sm:text-sm">
+                              {row.y}
                             </span>
                           </div>
-                          <span className="font-medium text-xs sm:text-sm">
-                            {row.y}
-                          </span>
-                        </div>
-                      ))}
+                        ));
+                      })()}
                     </div>
+                    {(() => {
+                      const filtered = pages.rows.filter((r) => r.status !== "deleted");
+                      const hasMore = filtered.length > pagesVisible;
+                      return (
+                        <>
+                          {hasMore && (
+                            <button
+                              onClick={() => setPagesVisible((p) => p + 10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show more
+                            </button>
+                          )}
+                          {pagesVisible > 10 && (
+                            <button
+                              onClick={() => setPagesVisible(10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show less
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
                     <div className="mt-6 flex items-center gap-4 text-[10px] sm:text-xs text-muted-foreground">
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px_rgba(34,197,94,0.3)]" />
@@ -838,10 +868,6 @@ function NativeAnalytics({ token }: { token: string }) {
                       <span className="flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
                         Archived
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <span className="h-2 w-2 rounded-full bg-red-500 shadow-[0_0_4px_1px_rgba(239,68,68,0.3)]" />
-                        Deleted
                       </span>
                     </div>
                   </CardContent>

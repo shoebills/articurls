@@ -5,6 +5,7 @@ from typing import Optional, List, Dict, Any
 class MetricsRow(BaseModel):
     x: str
     y: int
+    status: Optional[str] = None
 
 
 class UmamiOverview(BaseModel):

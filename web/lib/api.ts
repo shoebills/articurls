@@ -796,7 +796,7 @@ export async function getUmamiTimeseries(
 export async function getUmamiPages(
   token: string,
   period: AnalyticsPeriod = "7d",
-  limit = 20,
+  limit = 50,
 ): Promise<UmamiPagesResponse> {
   const q = new URLSearchParams({ period, limit: String(limit) });
   return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token });
