@@ -64,12 +64,13 @@ export default function CustomDomainSettings() {
         const pro = isProSubscription(sub);
         setIsPro(pro);
         setWasPro(sub?.plan_type === "pro" || sub?.plan_type === "lifetime");
-        if (pro) loadDomain(token);
-        else setDomain(null);
+        // Always load the domain: during a grace period the user is no longer
+        // Pro but the domain is still serving and must remain visible/manageable.
+        loadDomain(token);
       })
       .catch(() => {
         setIsPro(false);
-        setDomain(null);
+        loadDomain(token);
       });
   }, [token, loadDomain]);
 
@@ -171,8 +172,12 @@ export default function CustomDomainSettings() {
     );
   }
 
+  // During the grace period the subscription has lapsed (isPro === false) but the
+  // domain is still live, so keep showing the full domain UI + a grace notice.
+  const inGrace = domain?.domain_status === "grace";
+
   // ── Upgrade prompt ─────────────────────────────────────────────────────────
-  if (!isPro) {
+  if (!isPro && !inGrace) {
     return (
       <Card className="p-8 text-center">
         <div className="mx-auto max-w-sm space-y-4">
@@ -207,7 +212,7 @@ export default function CustomDomainSettings() {
       <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
       {/* No domain configured */}
-      {!domain?.hostname && (
+      {isPro && !domain?.hostname && (
         <div className="space-y-4">
           <form onSubmit={handleAddDomain} className="flex gap-3">
             <Input
@@ -377,23 +382,22 @@ export default function CustomDomainSettings() {
 
           {/* Grace period */}
           {domain.domain_status === "grace" && (
-            <div className="space-y-2">
-              <p className="text-sm text-muted-foreground">
-                Your Pro subscription has lapsed. Your custom domain is still active during the grace period.{" "}
-                <button
-                  type="button"
-                  onClick={() => router.push("/dashboard/billing")}
-                  className="font-medium text-foreground underline underline-offset-4"
-                >
-                  Renew now
-                </button>{" "}
-                to keep it.
+            <div className="space-y-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+              <p className="text-sm text-orange-900">
+                Your Pro plan has ended, but your custom domain is still live.
+                {domain.grace_expires_at && (
+                  <>
+                    {" "}It will stop serving on{" "}
+                    <span className="font-semibold">
+                      {new Date(domain.grace_expires_at).toLocaleDateString()}
+                    </span>
+                    , after which visitors are redirected to your Articurls URL.
+                  </>
+                )}
               </p>
-              {domain.grace_expires_at && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Grace period ends {new Date(domain.grace_expires_at).toLocaleDateString()}
-                </p>
-              )}
+              <Button size="sm" onClick={() => router.push("/dashboard/billing")}>
+                Renew Pro
+              </Button>
             </div>
           )}
 

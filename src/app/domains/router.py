@@ -188,14 +188,9 @@ async def get_domain(
     if dns_instructions is not None:
         db.commit()
 
-    is_manually_removed = (
-        db_user.domain_status == models.DomainStatus.EXPIRED
-        and not db_user.cloudflare_hostname_id
-    )
-
     return DomainOut(
-        custom_domain=None if is_manually_removed else db_user.custom_domain,
-        domain_status=models.DomainStatus.NONE if is_manually_removed else db_user.domain_status,
+        custom_domain=db_user.custom_domain,
+        domain_status=db_user.domain_status,
         verified_at=db_user.verified_at,
         grace_started_at=db_user.grace_started_at,
         grace_expires_at=db_user.grace_expires_at,
@@ -279,7 +274,11 @@ async def delete_domain(
     if old_domain := db_user.custom_domain:
         await _remove_vercel_domain(old_domain)
 
-    db_user.domain_status = models.DomainStatus.EXPIRED
+    # Fully release the hostname. custom_domain is UNIQUE, so leaving it set
+    # would permanently reserve the domain and block any other account (and even
+    # this one) from re-adding it. Reset to a clean "no domain" state.
+    db_user.custom_domain = None
+    db_user.domain_status = models.DomainStatus.NONE
     db_user.is_domain_verified = False
     db_user.cloudflare_hostname_id = None
     db_user.domain_dns_instructions = None

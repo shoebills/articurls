@@ -177,11 +177,11 @@ def expired_pro_fallback():
             if db_user:
                 # Handle custom domain lifecycle when Pro lapses
                 if db_user.domain_status == models.DomainStatus.ACTIVE:
-                    # Move to grace period — domain still serves for 30 days
+                    # Move to grace period — domain still serves for 14 days
                     from datetime import timedelta
                     db_user.domain_status = models.DomainStatus.GRACE
                     db_user.grace_started_at = now
-                    db_user.grace_expires_at = now + timedelta(days=30)
+                    db_user.grace_expires_at = now + timedelta(days=14)
                     # Invalidate Redis cache so middleware sees new status
                     try:
                         from .celery_app import celery as _celery
@@ -205,7 +205,26 @@ def expired_pro_fallback():
             sub.plan_type = "free"
             if sub.status != "cancelled":
                 sub.status = "inactive"
-            
+
+        # Grace-period expiry is independent of the subscription row: the loop
+        # above demotes the subscription to "free" on the first tick, so a user
+        # already in GRACE would never be revisited via the query. Sweep them
+        # separately so GRACE reliably advances to EXPIRED after the window.
+        grace_expired_users = db.query(models.User).filter(
+            models.User.domain_status == models.DomainStatus.GRACE,
+            models.User.grace_expires_at.isnot(None),
+            models.User.grace_expires_at < now,
+        ).all()
+
+        for db_user in grace_expired_users:
+            db_user.domain_status = models.DomainStatus.EXPIRED
+            try:
+                from ..redis_client import redis_client
+                if db_user.custom_domain:
+                    redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
+            except Exception:
+                pass
+
         db.commit()
 
     finally:

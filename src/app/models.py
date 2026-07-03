@@ -11,7 +11,7 @@ class DomainStatus(str, enum.Enum):
     NONE    = "none"     # No custom domain configured
     PENDING = "pending"  # Domain saved, ownership not yet verified
     ACTIVE  = "active"   # Verified + Pro subscription active
-    GRACE   = "grace"    # Pro lapsed; domain still serving, 30-day countdown
+    GRACE   = "grace"    # Pro lapsed; domain still serving, 14-day countdown
     EXPIRED = "expired"  # Grace period over; 301 redirect to articurls URL
 
 class User(Base):
