@@ -57,7 +57,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = Number(id);
-  const { token, isPro, wasPro, refreshUser, user } = useAuth();
+  const { token, isPro, refreshUser, user } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [title, setTitle] = useState("");
@@ -717,9 +717,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           </div>
           <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
         </div>
-        {!isPro && notify === false && (
-          <p className="text-xs text-muted-foreground">{wasPro ? "Reactivate Pro to enable per-post subscriber emails." : "Upgrade to Pro in Billing to enable per-post subscriber emails."}</p>
-        )}
       </div>
 
       {/* Show in Featured Posts */}
@@ -884,7 +881,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <Separator className="mt-6" />
               <div className="mt-6 space-y-2">
                 <Label htmlFor="preview-in-lists">Preview image in blog homepage</Label>
-                <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog list cards. If Auto, featured/first image in blog is used for preview.</p>
+                <p className="text-xs text-muted-foreground pt-1">Controls whether a preview image appears in blog homepage. If Auto, featured/first image in blog is used for preview.</p>
                 <Select
                   value={hidePreviewInLists ? "hidden" : "auto"}
                   onValueChange={(v) => setHidePreviewInLists(v === "hidden")}

@@ -801,7 +801,7 @@ export default function DesignDashboardPage() {
                 onChange={(e) => setBio(e.target.value)}
                 onBlur={() => saveBioSocials()}
                 maxLength={1400}
-                placeholder="Optional short bio (max 200 words)"
+                placeholder="Tell more about yourself..."
               />
               <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
             </div>
