@@ -521,7 +521,42 @@ def get_umami_pages(
             for row in pages
         ]
 
-        live_and_archived = [r for r in enriched if r["status"] != "deleted"]
+        domain_is_active = current_user.domain_status in (
+            models.DomainStatus.ACTIVE,
+            models.DomainStatus.GRACE,
+        )
+
+        def extract_content_key(x: str) -> tuple[str, str] | None:
+            p = x.strip().rstrip("/") or "/"
+            if p.startswith("/blog/"):
+                return ("blog", p[len("/blog/"):])
+            if p.startswith("/page/"):
+                return ("page", p[len("/page/"):])
+            parts = p.lstrip("/").split("/")
+            if len(parts) >= 3 and parts[0].lower() == username_lower:
+                if parts[1] in ("blog", "page"):
+                    return (parts[1], "/".join(parts[2:]))
+            return None
+
+        merged: dict = {}
+        for row in enriched:
+            key = extract_content_key(row["x"])
+            if key is not None:
+                if key not in merged:
+                    merged[key] = row
+                else:
+                    merged[key]["y"] += row["y"]
+                    if merged[key]["status"] != "live" and row["status"] == "live":
+                        merged[key]["status"] = "live"
+            else:
+                merged[row["x"]] = row
+
+        for key, row in merged.items():
+            if isinstance(key, tuple):
+                type_, slug = key
+                row["x"] = f"/{type_}/{slug}" if domain_is_active else f"/{username_lower}/{type_}/{slug}"
+
+        live_and_archived = [r for r in merged.values() if r["status"] != "deleted"]
 
         return {"period": period, "rows": live_and_archived}
     except UmamiError as exc:
