@@ -492,6 +492,8 @@ def get_umami_pages(
                 if slug in archived_page_slugs:
                     return "archived"
                 return "deleted"
+            if p.startswith("/category/"):
+                return "live"
             parts = p.lstrip("/").split("/")
             # shared domain: /{username} — profile homepage
             if len(parts) == 1 and parts[0].lower() == username_lower:
@@ -534,11 +536,13 @@ def get_umami_pages(
                 return ("blog", p[len("/blog/"):])
             if p.startswith("/page/"):
                 return ("page", p[len("/page/"):])
+            if p.startswith("/category/"):
+                return ("category", p[len("/category/"):])
             parts = p.lstrip("/").split("/")
             if len(parts) == 1 and parts[0].lower() == username_lower:
                 return ("home",)
             if len(parts) >= 3 and parts[0].lower() == username_lower:
-                if parts[1] in ("blog", "page"):
+                if parts[1] in ("blog", "page", "category"):
                     return (parts[1], "/".join(parts[2:]))
             return None
 
@@ -563,7 +567,10 @@ def get_umami_pages(
                     type_, slug = key
                     row["x"] = f"/{type_}/{slug}" if domain_is_active else f"/{username_lower}/{type_}/{slug}"
 
-        live_and_archived = [r for r in merged.values() if r["status"] != "deleted"]
+        live_and_archived = [
+            r for k, r in merged.items()
+            if r["status"] != "deleted" and not (isinstance(k, tuple) and k[0] == "category")
+        ]
 
         return {"period": period, "rows": live_and_archived}
     except UmamiError as exc:
