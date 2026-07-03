@@ -526,13 +526,17 @@ def get_umami_pages(
             models.DomainStatus.GRACE,
         )
 
-        def extract_content_key(x: str) -> tuple[str, str] | None:
+        def extract_content_key(x: str) -> tuple | None:
             p = x.strip().rstrip("/") or "/"
+            if p == "/":
+                return ("home",)
             if p.startswith("/blog/"):
                 return ("blog", p[len("/blog/"):])
             if p.startswith("/page/"):
                 return ("page", p[len("/page/"):])
             parts = p.lstrip("/").split("/")
+            if len(parts) == 1 and parts[0].lower() == username_lower:
+                return ("home",)
             if len(parts) >= 3 and parts[0].lower() == username_lower:
                 if parts[1] in ("blog", "page"):
                     return (parts[1], "/".join(parts[2:]))
@@ -553,8 +557,11 @@ def get_umami_pages(
 
         for key, row in merged.items():
             if isinstance(key, tuple):
-                type_, slug = key
-                row["x"] = f"/{type_}/{slug}" if domain_is_active else f"/{username_lower}/{type_}/{slug}"
+                if key[0] == "home":
+                    row["x"] = "/" if domain_is_active else f"/{username_lower}"
+                else:
+                    type_, slug = key
+                    row["x"] = f"/{type_}/{slug}" if domain_is_active else f"/{username_lower}/{type_}/{slug}"
 
         live_and_archived = [r for r in merged.values() if r["status"] != "deleted"]
 
