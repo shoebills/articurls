@@ -8,7 +8,8 @@ const audienceTabs = [
   {
     href: "/dashboard/audience/analytics",
     label: "Analytics",
-    match: (path: string) => path.startsWith("/dashboard/audience/analytics"),
+    match: (path: string) =>
+      path.startsWith("/dashboard/audience/analytics") || path === "/dashboard/audience",
   },
   { href: "/dashboard/audience/emails", label: "Emails", match: (path: string) => path === "/dashboard/audience/emails" },
 ] as const;
