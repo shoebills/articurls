@@ -52,9 +52,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
             {!isPro && (
-              <Button asChild size="icon" className="h-8 w-8 rounded-md bg-foreground text-background hover:bg-foreground/90">
+              <Button asChild size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90">
                 <Link href="/dashboard/billing?plan=pro">
                   <Zap className="h-3.5 w-3.5" />
+                  Upgrade
                 </Link>
               </Button>
             )}
