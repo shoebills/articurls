@@ -21,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProGate } from "@/components/pro/pro-gate";
 import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 
@@ -84,14 +85,7 @@ export default function SeoDashboardPage() {
     if (!t) return false;
     const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
     return cached ? isProSubscription(cached) : false;
-  });
-  const [wasPro, setWasPro] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return false;
-    const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
-    return cached ? cached.plan_type === "pro" || cached.plan_type === "lifetime" : false;
-  });
+  }  );
   const [username, setUsername] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
@@ -133,7 +127,6 @@ export default function SeoDashboardPage() {
         setDomain(domainData);
         setUsername(me.user_name || "");
         setIsPro(isProSubscription(subscription));
-        setWasPro(subscription?.plan_type === "pro" || subscription?.plan_type === "lifetime");
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       } finally {
@@ -297,25 +290,27 @@ export default function SeoDashboardPage() {
                 When enabled, RSS icon appears in the footer.
               </p>
             </div>
-            <SeoResourceRow
-              label="Sitemap"
-              url={sitemapResourceUrl}
-              displayText="/sitemap.xml"
-              enabled={sitemapResourceEnabled}
-              unavailableText={
-                !isPro
-                  ? wasPro
-                    ? "Sitemap requires an active Pro plan."
-                    : "Sitemap is available on Pro."
-                  : "Sitemap URL unavailable."
-              }
-            />
-            <SeoResourceRow
-              label="Robots control"
-              url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : undefined}
-              displayText="/robots.txt"
-              enabled={seoResourcesEnabled}
-            />
+            <ProGate isPro={isPro}>
+              <SeoResourceRow
+                label="Sitemap"
+                url={sitemapResourceUrl || (username ? `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(username)}/sitemap.xml` : "#")}
+                displayText="/sitemap.xml"
+                enabled={true}
+                unavailableText={
+                  isPro && !sitemapResourceEnabled
+                    ? "Sitemap URL unavailable."
+                    : undefined
+                }
+              />
+            </ProGate>
+            <ProGate isPro={isPro}>
+              <SeoResourceRow
+                label="Robots control"
+                url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}
+                displayText="/robots.txt"
+                enabled={true}
+              />
+            </ProGate>
           </div>
         </CardContent>
       </Card>

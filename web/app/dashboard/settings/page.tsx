@@ -28,6 +28,7 @@ import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "luc
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProGate } from "@/components/pro/pro-gate";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
@@ -553,117 +554,123 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
 
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Blog favicon</p>
-              <p className="text-sm text-muted-foreground">
-                Ideal 512×512px, max 256KB.
-              </p>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
-                {ctxUser?.favicon_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={assetUrl(ctxUser.favicon_url)}
-                    alt="Favicon"
-                    className="h-8 w-8 object-contain"
-                  />
-                ) : (
-                  <Globe className="h-6 w-6 text-muted-foreground/50" />
-                )}
+          <ProGate>
+            <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium">Blog favicon</p>
+                <p className="text-sm text-muted-foreground">
+                  Ideal 512×512px, max 256KB.
+                </p>
               </div>
-              <input
-                ref={faviconInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
-                className="sr-only"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !token) return;
-                  if (file.size > 256 * 1024) {
-                    setErr("Favicon too large (max 256KB)");
-                    e.target.value = "";
-                    return;
-                  }
-                  setFaviconBusy(true);
-                  setErr(null);
-                  try {
-                    await uploadFavicon(token, file);
-                    await refreshUser();
-                  } catch (ex) {
-                    setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
-                  } finally {
-                    setFaviconBusy(false);
-                    e.target.value = "";
-                  }
-                }}
-                disabled={!isPro || faviconBusy}
-              />
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  disabled={!isPro || faviconBusy}
-                  onClick={() => faviconInputRef.current?.click()}
-                  title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
-                >
-                  {faviconBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
+                  {ctxUser?.favicon_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={assetUrl(ctxUser.favicon_url)}
+                      alt="Favicon"
+                      className="h-8 w-8 object-contain"
+                    />
                   ) : (
-                    <Pencil className="h-4 w-4" />
+                    <Globe className="h-6 w-6 text-muted-foreground/50" />
                   )}
-                </Button>
-                {ctxUser?.favicon_url ? (
+                </div>
+                <input
+                  ref={faviconInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !token) return;
+                    if (file.size > 256 * 1024) {
+                      setErr("Favicon too large (max 256KB)");
+                      e.target.value = "";
+                      return;
+                    }
+                    setFaviconBusy(true);
+                    setErr(null);
+                    try {
+                      await uploadFavicon(token, file);
+                      await refreshUser();
+                    } catch (ex) {
+                      setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
+                    } finally {
+                      setFaviconBusy(false);
+                      e.target.value = "";
+                    }
+                  }}
+                  disabled={faviconBusy}
+                />
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                    disabled={!isPro || faviconBusy}
-                    onClick={() => setFaviconDeleteOpen(true)}
-                    title="Remove favicon"
+                    className="h-10 w-10 shrink-0"
+                    disabled={faviconBusy}
+                    onClick={() => faviconInputRef.current?.click()}
+                    title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {faviconBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
                   </Button>
-                ) : null}
+                  {ctxUser?.favicon_url ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      disabled={faviconBusy}
+                      onClick={() => setFaviconDeleteOpen(true)}
+                      title="Remove favicon"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
-            <div className="flex items-center justify-between gap-4 sm:gap-6">
-              <p className="text-sm font-medium">Collect subscribers</p>
-              <Switch
-                checked={isPro ? collectSubscribers : false}
-                onCheckedChange={(v) => {
-                  setCollectSubscribers(v);
-                  void savePro(v, removeBranding);
-                }}
-                disabled={!isPro || busy}
-              />
+          </ProGate>
+          <ProGate>
+            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+              <div className="flex items-center justify-between gap-4 sm:gap-6">
+                <p className="text-sm font-medium">Collect subscribers</p>
+                <Switch
+                  checked={collectSubscribers}
+                  onCheckedChange={(v) => {
+                    setCollectSubscribers(v);
+                    void savePro(v, removeBranding);
+                  }}
+                  disabled={busy}
+                />
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Show the subscribe button in your blog menu and below blog posts.
+              </p>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Show the subscribe button in your blog menu and below blog posts.
-            </p>
-          </div>
-          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
-            <div className="flex items-center justify-between gap-4 sm:gap-6">
-              <p className="text-sm font-medium">Remove branding</p>
-              <Switch
-                checked={isPro ? removeBranding : false}
-                onCheckedChange={(v) => {
-                  setRemoveBranding(v);
-                  void savePro(collectSubscribers, v);
-                }}
-                disabled={!isPro || busy}
-              />
+          </ProGate>
+          <ProGate>
+            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+              <div className="flex items-center justify-between gap-4 sm:gap-6">
+                <p className="text-sm font-medium">Remove branding</p>
+                <Switch
+                  checked={removeBranding}
+                  onCheckedChange={(v) => {
+                    setRemoveBranding(v);
+                    void savePro(collectSubscribers, v);
+                  }}
+                  disabled={busy}
+                />
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Hide the "Made with Articurls" badge from your blog.
+              </p>
             </div>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              Hide the "Made with Articurls" badge from your blog.
-            </p>
-          </div>
+          </ProGate>
         </CardContent>
       </Card>
 

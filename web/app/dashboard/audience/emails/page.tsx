@@ -18,6 +18,7 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProGate } from "@/components/pro/pro-gate";
 
 const DELAY_OPTIONS = [
   { value: "0", label: "Immediately after confirm" },
@@ -34,7 +35,7 @@ function isEmptyBody(html: string): boolean {
 }
 
 export default function AudienceEmailsPage() {
-  const { token, isPro, wasPro, user, loading: authLoading } = useAuth();
+  const { token, isPro, user, loading: authLoading } = useAuth();
   const blogName = (user?.name || "").trim() || "My Blog";
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
@@ -218,11 +219,7 @@ export default function AudienceEmailsPage() {
     <>
       <div className="space-y-6">
 
-        {!isPro ? (
-          <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-            {wasPro ? "Reactivate Pro to restore welcome emails." : "Upgrade under Billing to enable welcome emails."}
-          </p>
-        ) : (
+        <ProGate>
           <Card>
             <CardHeader>
               <div className="flex w-full items-center justify-between gap-4">
@@ -290,7 +287,7 @@ export default function AudienceEmailsPage() {
               </Button>
             </CardContent>
           </Card>
-        )}
+        </ProGate>
       </div>
 
       <FloatingErrorToast
