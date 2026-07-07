@@ -32,11 +32,12 @@ export function ProLockOverlay({
         className="relative cursor-pointer"
         onClick={() => setDialogOpen(true)}
       >
-        <div className="pointer-events-none select-none blur-[2px]">
+        <div className="pointer-events-none select-none">
           {children}
         </div>
+        <div className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0.3)_40%,transparent_70%)]" />
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
-          <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/95 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:max-w-[280px]">
+          <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/05 px-5 py-4 text-center shadow-lg backdrop-blur-lg sm:max-w-[280px]">
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
               <Sparkles className="h-5 w-5 text-amber-600" />
             </div>
