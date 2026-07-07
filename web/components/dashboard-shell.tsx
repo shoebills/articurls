@@ -101,7 +101,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 {!isPro && (
-                  <Button asChild size="icon" className="h-8 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90">
+                  <Button asChild size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90">
                     <Link href="/dashboard/billing?plan=pro">
                       <Zap className="h-3.5 w-3.5" />
                     </Link>

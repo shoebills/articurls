@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
+import { Button } from "@/components/ui/button";
 
 interface ProLockOverlayProps {
   children: React.ReactNode;
@@ -30,7 +32,7 @@ export function ProLockOverlay({
         className="relative cursor-pointer"
         onClick={() => setDialogOpen(true)}
       >
-        <div className="pointer-events-none select-none blur-[4px]">
+        <div className="pointer-events-none select-none blur-[2px]">
           {children}
         </div>
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
@@ -42,6 +44,14 @@ export function ProLockOverlay({
             <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
               {description}
             </p>
+            <Button
+              asChild
+              size="sm"
+              className="mt-3 w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Link href="/dashboard/billing">Check plans</Link>
+            </Button>
           </div>
         </div>
       </div>
