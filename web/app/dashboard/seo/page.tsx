@@ -260,36 +260,38 @@ export default function SeoDashboardPage() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <div className="rounded-lg border bg-white px-4 py-3 space-y-1.5">
-              <div className="flex items-center justify-between gap-4">
-                <p className="text-sm font-medium">RSS feed</p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Switch
-                    checked={rssEnabled}
-                    onCheckedChange={onToggleRss}
-                    disabled={busy}
-                    aria-label="Enable RSS feed"
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 min-h-0"
-                    disabled={!rssResourceEnabled}
-                    onClick={() => {
-                      if (rssResourceUrl) {
-                        window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
-                      }
-                    }}
-                  >
-                    View
-                  </Button>
+            <ProGate isPro={isPro}>
+              <div className="rounded-lg border bg-white px-4 py-3 space-y-1.5">
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm font-medium">RSS feed</p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Switch
+                      checked={rssEnabled}
+                      onCheckedChange={onToggleRss}
+                      disabled={busy}
+                      aria-label="Enable RSS feed"
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 min-h-0"
+                      disabled={!rssResourceEnabled}
+                      onClick={() => {
+                        if (rssResourceUrl) {
+                          window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
+                        }
+                      }}
+                    >
+                      View
+                    </Button>
+                  </div>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  When enabled, RSS icon appears in the footer.
+                </p>
               </div>
-              <p className="text-xs text-muted-foreground">
-                When enabled, RSS icon appears in the footer.
-              </p>
-            </div>
+            </ProGate>
             <ProGate isPro={isPro}>
               <SeoResourceRow
                 label="Sitemap"
