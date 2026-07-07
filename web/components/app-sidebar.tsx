@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Users, Zap } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Users } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
@@ -32,7 +32,7 @@ type PanelProps = {
 
 export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
-  const { logout, user, loading, isPro } = useAuth();
+  const { logout, user, loading } = useAuth();
 
   const linkItems = links.map(({ href, label, icon: Icon }) => {
     const active =
@@ -140,18 +140,6 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
         ) : (
           <>
             <nav className="flex flex-1 flex-col gap-1 overflow-y-auto overscroll-contain p-2.5 min-h-0">{linkItems}</nav>
-            {!isPro && (
-              <div className="px-2.5 pb-1">
-                <Link
-                  href="/dashboard/billing?plan=pro"
-                  onClick={() => onNavigate?.()}
-                  className="flex min-h-10 items-center gap-2.5 rounded-lg bg-foreground px-3 text-sm font-medium text-background transition-[background-color,transform] duration-200 hover:bg-foreground/90 active:scale-[0.98]"
-                >
-                  <Zap className="h-4 w-4 shrink-0" />
-                  Upgrade to Pro
-                </Link>
-              </div>
-            )}
             {footer}
           </>
         )}
