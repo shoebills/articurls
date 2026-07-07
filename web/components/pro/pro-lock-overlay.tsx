@@ -35,7 +35,7 @@ export function ProLockOverlay({
         <div className="pointer-events-none select-none">
           {children}
         </div>
-        <div className="pointer-events-none absolute inset-0 z-[5] bg-[radial-gradient(ellipse_at_center,rgba(255,255,255,0.7)_0%,rgba(255,255,255,0.3)_40%,transparent_70%)]" />
+        <div className="pointer-events-none absolute inset-0 z-[5] backdrop-blur-[3px] [mask-image:radial-gradient(ellipse_at_center,black_0%,black_30%,transparent_65%)] [-webkit-mask-image:radial-gradient(ellipse_at_center,black_0%,black_30%,transparent_65%)]" />
         <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
           <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/05 px-5 py-4 text-center shadow-lg backdrop-blur-lg sm:max-w-[280px]">
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
