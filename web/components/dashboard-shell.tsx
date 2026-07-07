@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, Zap } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
   const publicBlogHref =
@@ -51,6 +51,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
+            {!isPro && (
+              <Button asChild size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90">
+                <Link href="/dashboard/billing?plan=pro">
+                  <Zap className="h-3.5 w-3.5" />
+                  Upgrade
+                </Link>
+              </Button>
+            )}
             {publicBlogHref ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
                 <Link href={publicBlogHref}>
@@ -92,6 +100,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     Articurls
                   </Link>
                 </div>
+                {!isPro && (
+                  <Button asChild size="sm" className="h-8 min-h-0 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90">
+                    <Link href="/dashboard/billing?plan=pro">
+                      <Zap className="h-3.5 w-3.5" />
+                      Upgrade
+                    </Link>
+                  </Button>
+                )}
                 {publicBlogHref ? (
                   <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
                     <Link href={publicBlogHref}>
