@@ -1,0 +1,51 @@
+"use client";
+
+import { useState } from "react";
+import { Sparkles } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
+import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
+
+interface ProLockOverlayProps {
+  children: React.ReactNode;
+  isPro?: boolean;
+  title: string;
+  description: string;
+}
+
+export function ProLockOverlay({
+  children,
+  isPro: isProOverride,
+  title,
+  description,
+}: ProLockOverlayProps) {
+  const { isPro: authIsPro } = useAuth();
+  const pro = isProOverride ?? authIsPro;
+  const [dialogOpen, setDialogOpen] = useState(false);
+
+  if (pro) return <>{children}</>;
+
+  return (
+    <>
+      <div
+        className="relative cursor-pointer"
+        onClick={() => setDialogOpen(true)}
+      >
+        <div className="pointer-events-none select-none blur-[4px]">
+          {children}
+        </div>
+        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
+          <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/95 px-5 py-4 text-center shadow-lg backdrop-blur-sm sm:max-w-[280px]">
+            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
+              <Sparkles className="h-5 w-5 text-amber-600" />
+            </div>
+            <p className="mt-2 text-sm font-semibold">{title}</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              {description}
+            </p>
+          </div>
+        </div>
+      </div>
+      <ProUpgradeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+    </>
+  );
+}

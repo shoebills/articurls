@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import {
   ApiError,
   apiCacheHas,
@@ -23,7 +22,6 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -33,7 +31,6 @@ import {
 } from "@/components/ui/select";
 
 import {
-  BarChart2,
   Users,
   Eye,
   TrendingDown,
@@ -115,6 +112,7 @@ import {
 } from "recharts";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AnalyticsPreview } from "@/components/pro/pro-analytics-preview";
 
 const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
@@ -1079,8 +1077,7 @@ function NativeAnalytics({ token }: { token: string }) {
 }
 
 export default function AnalyticsPage() {
-  const router = useRouter();
-  const { token, isPro, wasPro, loading } = useAuth();
+  const { token, isPro, loading } = useAuth();
 
   if (!token || loading) {
     return (
@@ -1102,32 +1099,9 @@ export default function AnalyticsPage() {
     );
   }
 
-  return (
-    <div className="mx-auto max-w-[1100px] sm:px-0">
-      {isPro ? (
-        <NativeAnalytics token={token} />
-      ) : (
-        <Card className="p-6 sm:p-8">
-          <div className="flex flex-col items-start gap-6 sm:flex-row sm:items-center">
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-full bg-primary/10">
-              <BarChart2 className="h-6 w-6 sm:h-7 sm:w-7 text-primary" />
-            </div>
-            <div className="flex-1 space-y-1">
-              <h2 className="text-base sm:text-lg font-semibold">{wasPro ? "Reactivate Pro to restore analytics" : "Unlock full analytics with Pro"}</h2>
-              <p className="text-xs sm:text-sm text-muted-foreground">
-                Pro gives you a real-time dashboard with page views, unique visitors, referrers,
-                countries, devices, and more — powered by Umami.
-              </p>
-            </div>
-            <Button
-              onClick={() => router.push("/dashboard/billing")}
-              className="shrink-0 h-10 sm:h-auto"
-            >
-              {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
-            </Button>
-          </div>
-        </Card>
-      )}
-    </div>
-  );
+  if (!isPro) {
+    return <AnalyticsPreview />;
+  }
+
+  return <NativeAnalytics token={token} />;
 }
