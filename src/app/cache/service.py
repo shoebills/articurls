@@ -5,6 +5,7 @@ Provides granular cache invalidation for multi-tenant blog platform using
 Cache-Tags with automatic cascade purging.
 """
 
+import asyncio
 import logging
 from typing import List, Optional
 
@@ -52,7 +53,9 @@ async def purge_by_tags(zone_id: str, tags: List[str]) -> bool:
     payload = {"tags": tags}
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = await asyncio.to_thread(
+            requests.post, url, headers=headers, json=payload, timeout=10
+        )
         data = response.json()
 
         if data.get("success"):
@@ -89,7 +92,9 @@ async def purge_by_hostnames(zone_id: str, hosts: List[str]) -> bool:
     payload = {"hosts": hosts}
 
     try:
-        response = requests.post(url, headers=headers, json=payload, timeout=10)
+        response = await asyncio.to_thread(
+            requests.post, url, headers=headers, json=payload, timeout=10
+        )
         data = response.json()
         return data.get("success", False)
     except Exception as e:

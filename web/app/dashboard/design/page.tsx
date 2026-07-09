@@ -287,6 +287,8 @@ export default function DesignDashboardPage() {
 
   async function saveDesign(next: DesignSettings) {
     if (!token) return;
+    const previous = design;
+    setDesign(next);
     setBusy(true);
     setErr(null);
     try {
@@ -294,6 +296,7 @@ export default function DesignDashboardPage() {
       setDesign(d);
       showSavedToast();
     } catch (e) {
+      setDesign(previous);
       setErr(e instanceof ApiError ? e.message : "Failed to save design");
     } finally {
       setBusy(false);

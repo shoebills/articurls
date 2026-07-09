@@ -80,6 +80,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
+  const [featuredBusy, setFeaturedBusy] = useState(false);
+  const [featuredIds, setFeaturedIds] = useState<number[]>([]);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -172,6 +174,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    setFeaturedIds(user?.featured_blog_ids ?? []);
+  }, [user?.featured_blog_ids]);
 
   useEffect(() => {
     const el = titleTextareaRef.current;
@@ -727,13 +733,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <p className="text-sm font-medium">Show in Featured Posts</p>
             <Switch
               className="shrink-0"
-              checked={(user?.featured_blog_ids ?? []).includes(blogId)}
-              disabled={!user || !token}
+              checked={featuredIds.includes(blogId)}
+              disabled={!user || !token || featuredBusy}
               onCheckedChange={async (v) => {
-                if (!user || !token) return;
+                if (!user || !token || featuredBusy) return;
+                const prev = featuredIds;
                 const next = v
-                  ? [...(user.featured_blog_ids ?? []), blogId]
-                  : (user.featured_blog_ids ?? []).filter((id) => id !== blogId);
+                  ? [...featuredIds, blogId]
+                  : featuredIds.filter((id) => id !== blogId);
+                setFeaturedIds(next);
+                setFeaturedBusy(true);
                 try {
                   await patchDesignSettings(token, {
                     navbar_enabled: user.navbar_enabled,
@@ -747,7 +756,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   });
                   await refreshUser();
                 } catch {
+                  setFeaturedIds(prev);
                   setErr("Failed to update featured status");
+                } finally {
+                  setFeaturedBusy(false);
                 }
               }}
             />
