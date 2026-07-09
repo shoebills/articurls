@@ -53,7 +53,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           <div className="flex items-center gap-2">
             {!isPro && (
               <Button asChild size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90">
-                <Link href="/dashboard/billing?plan=pro">
+                <Link href="/dashboard/billing">
                   <Zap className="h-3.5 w-3.5" />
                   Upgrade
                 </Link>
@@ -102,7 +102,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
                 {!isPro && (
                   <Button asChild size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90">
-                    <Link href="/dashboard/billing?plan=pro">
+                    <Link href="/dashboard/billing">
                       <Zap className="h-3.5 w-3.5" />
                     </Link>
                   </Button>
