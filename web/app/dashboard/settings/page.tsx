@@ -69,18 +69,18 @@ export default function SettingsPage() {
     );
   });
   const [removeBranding, setRemoveBranding] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     const t = localStorage.getItem("articurls_token");
-    if (!t) return true;
+    if (!t) return false;
     const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.remove_branding ?? false;
+    return isPro ? (cached?.remove_branding ?? false) : false;
   });
   const [collectSubscribers, setCollectSubscribers] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined") return false;
     const t = localStorage.getItem("articurls_token");
-    if (!t) return true;
+    if (!t) return false;
     const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.subscriber_collection_enabled ?? false;
+    return isPro ? (cached?.subscriber_collection_enabled ?? false) : false;
   });
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
     if (typeof window === "undefined") return null;
@@ -121,8 +121,8 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setRemoveBranding(u.remove_branding ?? false);
-      setCollectSubscribers(u.subscriber_collection_enabled ?? false);
+      setRemoveBranding(isPro ? (u.remove_branding ?? false) : false);
+      setCollectSubscribers(isPro ? (u.subscriber_collection_enabled ?? false) : false);
       setLastUsernameChangeAt(u.last_username_change_at || null);
       setStorageUsage(usage);
     } catch (e) {
@@ -141,8 +141,8 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setRemoveBranding(ctxUser.remove_branding ?? false);
-      setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? false);
+      setRemoveBranding(isPro ? (ctxUser.remove_branding ?? false) : false);
+      setCollectSubscribers(isPro ? (ctxUser.subscriber_collection_enabled ?? false) : false);
       setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
     }
   }, [ctxUser]);
