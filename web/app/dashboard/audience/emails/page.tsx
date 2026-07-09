@@ -219,7 +219,7 @@ export default function AudienceEmailsPage() {
     <>
       <div className="space-y-6">
 
-        <ProGate>
+        <ProGate feature="Welcome email automation">
           <Card>
             <CardHeader>
               <div className="flex w-full items-center justify-between gap-4">
