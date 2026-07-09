@@ -8,7 +8,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/componen
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays, Check, Flame, Sparkles, Star, Zap } from "lucide-react";
+import { CalendarDays, Check, Flame, Sparkles, Zap } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -216,10 +216,6 @@ export default function BillingPage() {
       {!pro && !isLifetime ? (
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="relative flex flex-col overflow-hidden rounded-2xl border-primary/35 bg-gradient-to-b from-card to-primary/[0.05] shadow-xl shadow-primary/10 ring-1 ring-primary/25">
-            <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary">
-              <Star className="h-3.5 w-3.5" aria-hidden />
-              Recommended
-            </div>
             <CardHeader className="space-y-1 p-6">
               <CardTitle className="text-2xl">Pro</CardTitle>
               <p className="text-sm text-muted-foreground">Everything you need to grow.</p>
