@@ -251,9 +251,9 @@ export default function MarketingPage() {
                     "Everything in Free",
                     "Custom domain & SSL",
                     "Publish emails to subscribers",
-                    "Verification badge",
+                    "Collect email subscribers",
                     "Footer branding removal",
-                    "Monetization controls",
+                    "Unlimited media storage",
                   ].map((x) => (
                     <div key={x} className="flex items-center gap-2.5">
                       <Check className="h-4 w-4 text-emerald-700" aria-hidden />

@@ -15,9 +15,12 @@ import { upgradeHref } from "@/lib/upgrade-href";
 const BENEFITS = [
   "Custom domain & SSL",
   "Publish emails to subscribers",
+  "Collect email subscribers",
   "Full reader & subscriber analytics",
   "Remove Articurls branding",
-  "Verification badge",
+  "Custom favicon",
+  "Unlimited media storage",
+  "RSS, sitemap & robots control",
 ];
 
 export function ProUpgradeDialog({
@@ -90,9 +93,6 @@ export function ProUpgradeDialog({
               50 seats left
             </span>
           </Button>
-          <p className="text-center text-xs text-muted-foreground">
-            Cancel anytime · instant access
-          </p>
         </div>
       </DialogContent>
     </Dialog>

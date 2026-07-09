@@ -227,10 +227,11 @@ export default function BillingPage() {
               {[
                 "Custom domain & SSL",
                 "Publish emails to subscribers",
+                "Collect email subscribers",
                 "Full reader & subscriber analytics",
                 "Remove Articurls branding",
+                "Custom favicon",
                 "Unlimited media storage",
-                "Verification badge",
               ].map((x) => (
                 <div key={x} className="flex items-center gap-2.5">
                   <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
