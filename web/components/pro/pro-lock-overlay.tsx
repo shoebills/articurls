@@ -36,7 +36,7 @@ export function ProLockOverlay({
           {children}
         </div>
         <div className="pointer-events-none absolute inset-0 z-[5] bg-[linear-gradient(to_bottom,transparent_0%,rgba(255,255,255,0.85)_70%)] backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent_0%,black_70%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_70%)]" />
-        <div className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center px-4">
+        <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center px-4">
           <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/05 px-5 py-4 text-center shadow-lg backdrop-blur-lg sm:max-w-[280px]">
             <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
               <Sparkles className="h-5 w-5 text-amber-600" />
