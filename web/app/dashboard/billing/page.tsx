@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createCheckout, getSubscription, getTransactions, getCustomerPortalLink, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays, Flame } from "lucide-react";
+import { CalendarDays, Check, Flame, Sparkles, Star, Zap } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -197,7 +197,7 @@ export default function BillingPage() {
                 <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50 ring-2 ring-muted-foreground/20" aria-hidden />
                 Free plan
               </div>
-            )}
+             )}
           </div>
           {sub?.current_period_end && pro && !isLifetime ? (
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
@@ -210,18 +210,89 @@ export default function BillingPage() {
               </span>
             </div>
           ) : null}
-          {!pro && !isLifetime ? (
-            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
-              <Button className="h-10 min-h-10 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" onClick={upgrade} disabled={busy}>
-                {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
-              </Button>
-              <Button className="h-10 min-h-10 w-full touch-manipulation sm:w-auto sm:min-w-[14rem]" variant="outline" onClick={upgradeLifetime} disabled={busyLifetime}>
-                {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
-              </Button>
-            </div>
-          ) : null}
         </CardContent>
       </Card>
+
+      {!pro && !isLifetime ? (
+        <div className="grid gap-6 md:grid-cols-2">
+          <Card className="relative flex flex-col overflow-hidden rounded-2xl border-primary/35 bg-gradient-to-b from-card to-primary/[0.05] shadow-xl shadow-primary/10 ring-1 ring-primary/25">
+            <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary">
+              <Star className="h-3.5 w-3.5" aria-hidden />
+              Recommended
+            </div>
+            <CardHeader className="space-y-1 p-6">
+              <CardTitle className="text-2xl">Pro</CardTitle>
+              <p className="text-sm text-muted-foreground">Everything you need to grow.</p>
+              <p className="pt-2 text-4xl font-semibold tracking-tight">
+                $9<span className="text-base font-normal text-muted-foreground">/mo</span>
+              </p>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-3 px-6 text-sm">
+              {[
+                "Custom domain & SSL",
+                "Publish emails to subscribers",
+                "Full reader & subscriber analytics",
+                "Remove Articurls branding",
+                "Unlimited media storage",
+                "Verification badge",
+              ].map((x) => (
+                <div key={x} className="flex items-center gap-2.5">
+                  <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  <span className="text-muted-foreground">{x}</span>
+                </div>
+              ))}
+            </CardContent>
+            <CardFooter className="p-6 pt-4">
+              <Button
+                className="h-12 w-full touch-manipulation shadow-md shadow-primary/20"
+                onClick={upgrade}
+                disabled={busy}
+              >
+                <Sparkles className="mr-1.5 h-4 w-4" aria-hidden />
+                {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <Card className="relative flex flex-col overflow-hidden rounded-2xl border-amber-500/30 bg-gradient-to-b from-card to-amber-500/[0.06] shadow-xl shadow-amber-500/[0.08] ring-1 ring-amber-500/20">
+            <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
+              <Flame className="h-3.5 w-3.5" aria-hidden />
+              50 seats left
+            </div>
+            <CardHeader className="space-y-1 p-6">
+              <CardTitle className="text-2xl">Lifetime</CardTitle>
+              <p className="text-sm text-muted-foreground">Buy once, own forever.</p>
+              <p className="pt-2 text-4xl font-semibold tracking-tight">
+                $99<span className="text-base font-normal text-muted-foreground"> one-time</span>
+              </p>
+            </CardHeader>
+            <CardContent className="flex-1 space-y-3 px-6 text-sm">
+              {[
+                "Everything in Pro, forever",
+                "No recurring charges",
+                "Lifetime custom domain & SSL",
+                "Lifetime subscriber emails",
+                "Future Pro features included",
+              ].map((x) => (
+                <div key={x} className="flex items-center gap-2.5">
+                  <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
+                  <span className="text-muted-foreground">{x}</span>
+                </div>
+              ))}
+            </CardContent>
+            <CardFooter className="p-6 pt-4">
+              <Button
+                className="h-12 w-full touch-manipulation bg-amber-500 text-amber-950 shadow-md shadow-amber-500/25 hover:bg-amber-500/90"
+                onClick={upgradeLifetime}
+                disabled={busyLifetime}
+              >
+                <Zap className="mr-1.5 h-4 w-4" aria-hidden />
+                {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
