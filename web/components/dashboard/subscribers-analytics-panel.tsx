@@ -91,6 +91,7 @@ export function SubscribersAnalyticsPanel() {
 
   useEffect(() => {
     if (!token) return;
+    if (!isPro) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -115,7 +116,7 @@ export function SubscribersAnalyticsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [token, sPeriod]);
+  }, [token, isPro, sPeriod]);
 
   async function exportCsv() {
     if (!token) return;

@@ -159,7 +159,7 @@ export function AnalyticsPreview() {
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Analytics
         </h1>
-        <Select defaultValue="7d">
+        <Select defaultValue="7d" disabled={!isPro}>
           <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto">
             <SelectValue />
           </SelectTrigger>
