@@ -155,23 +155,9 @@ export function AnalyticsPreview() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Analytics
-        </h1>
-        <Select defaultValue="7d" disabled={!isPro}>
-          <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {PERIOD_OPTIONS.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+        Analytics
+      </h1>
 
       <ProLockOverlay
         isPro={isPro}
@@ -179,6 +165,20 @@ export function AnalyticsPreview() {
         description="Get real-time pageviews, sources, countries, browsers, and more."
       >
         <div className="space-y-4 sm:space-y-6">
+          <div className="flex items-center justify-end gap-3">
+            <Select defaultValue="7d">
+              <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PERIOD_OPTIONS.map((o) => (
+                  <SelectItem key={o.value} value={o.value}>
+                    {o.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
             <KpiCard title="Pageviews" value="1,247" icon={Eye} />
             <KpiCard title="Visitors" value="684" icon={Users} />
