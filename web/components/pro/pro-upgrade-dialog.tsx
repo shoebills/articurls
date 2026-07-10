@@ -34,7 +34,7 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] rounded-2xl gap-2.5 p-3 sm:max-w-sm sm:gap-3 sm:p-5">
+      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] rounded-2xl gap-2.5 p-[1.125rem] sm:max-w-sm sm:gap-3 sm:p-[1.875rem]">
         <DialogHeader className="space-y-1.5 sm:space-y-3">
           <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 sm:h-11 sm:w-11">
             <Sparkles className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
