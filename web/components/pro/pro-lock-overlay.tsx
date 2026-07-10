@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
-import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 import { Button } from "@/components/ui/button";
@@ -46,12 +45,14 @@ export function ProLockOverlay({
               {description}
             </p>
             <Button
-              asChild
               size="sm"
               className="mt-3 w-full"
-              onClick={(e) => e.stopPropagation()}
+              onClick={(e) => {
+                e.stopPropagation();
+                setDialogOpen(true);
+              }}
             >
-              <Link href="/dashboard/billing">Check plans</Link>
+              Check plans
             </Button>
           </div>
         </div>
