@@ -45,16 +45,18 @@ export function ProUpgradeDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-1 sm:space-y-1.5">
+        <div className="mt-2 space-y-2 sm:mt-0 sm:space-y-1.5">
           {BENEFITS.map((benefit) => (
-            <div key={benefit} className="flex items-center gap-1.5 text-xs sm:gap-2 sm:text-sm">
-              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
+            <div key={benefit} className="flex items-center gap-2 text-xs sm:text-sm">
+              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 sm:h-5 sm:w-5">
+                <Check className="h-2.5 w-2.5 text-emerald-600 sm:h-3 sm:w-3" />
+              </span>
               <span>{benefit}</span>
             </div>
           ))}
         </div>
 
-        <div className="space-y-1.5 sm:space-y-2">
+        <div className="mt-2 space-y-1.5 sm:mt-0 sm:space-y-2">
           <Button
             className="h-9 w-full touch-manipulation text-xs sm:h-11 sm:text-sm"
             onClick={() => router.push(upgradeHref("pro"))}
