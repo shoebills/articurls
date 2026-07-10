@@ -61,7 +61,7 @@ export function ProUpgradeDialog({
             className="h-9 w-full touch-manipulation text-xs sm:h-11 sm:text-sm"
             onClick={() => router.push(upgradeHref("pro"))}
           >
-            Get Pro Features— $9/mo
+            Get Pro Monthly— $9/mo
           </Button>
           <div className="flex items-center gap-2 py-0.5">
             <span className="h-px flex-1 bg-border" />
@@ -76,7 +76,7 @@ export function ProUpgradeDialog({
             onClick={() => router.push(upgradeHref("lifetime"))}
           >
             <Flame className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-600 sm:mr-1.5 sm:h-4 sm:w-4" />
-            Lifetime — $99{" "}
+            Pro Lifetime — $99{" "}
             <span className="ml-1 text-[0.625rem] font-normal text-muted-foreground line-through sm:text-xs">
               $149
             </span>
