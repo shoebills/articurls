@@ -56,11 +56,7 @@ export function ProLockOverlay({
           </div>
         </div>
       </div>
-      <ProUpgradeDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        feature={title.replace(/^unlock\s+/i, "")}
-      />
+      <ProUpgradeDialog open={dialogOpen} onOpenChange={setDialogOpen} />
     </>
   );
 }

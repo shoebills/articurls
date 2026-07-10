@@ -26,20 +26,11 @@ const BENEFITS = [
 export function ProUpgradeDialog({
   open,
   onOpenChange,
-  feature,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  feature?: string;
 }) {
   const router = useRouter();
-
-  const benefits = feature
-    ? [
-        feature,
-        ...BENEFITS.filter((b) => b.toLowerCase() !== feature.toLowerCase()),
-      ]
-    : BENEFITS;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -48,24 +39,15 @@ export function ProUpgradeDialog({
           <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-amber-100">
             <Sparkles className="h-5 w-5 text-amber-600" />
           </div>
-          <DialogTitle className="text-center text-lg">
-            {feature ? `${feature} is a Pro feature` : "Upgrade to Pro"}
-          </DialogTitle>
+          <DialogTitle className="text-center text-lg">Upgrade to Pro</DialogTitle>
           <DialogDescription className="text-center text-sm">
-            {feature
-              ? "Upgrade to unlock it — plus everything below."
-              : "Unlock premium features and grow your blog faster."}
+            Unlock premium features and grow your blog faster.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-1.5">
-          {benefits.map((benefit, i) => (
-            <div
-              key={benefit}
-              className={`flex items-center gap-2 text-sm ${
-                feature && i === 0 ? "font-semibold" : ""
-              }`}
-            >
+          {BENEFITS.map((benefit) => (
+            <div key={benefit} className="flex items-center gap-2 text-sm">
               <Check className="h-4 w-4 shrink-0 text-emerald-600" />
               <span>{benefit}</span>
             </div>

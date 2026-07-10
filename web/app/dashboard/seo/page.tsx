@@ -260,7 +260,7 @@ export default function SeoDashboardPage() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <ProGate isPro={isPro} feature="RSS feed">
+            <ProGate isPro={isPro}>
               <div className="rounded-lg border bg-white px-4 py-3 space-y-1.5">
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-sm font-medium">RSS feed</p>
@@ -292,7 +292,7 @@ export default function SeoDashboardPage() {
                 </p>
               </div>
             </ProGate>
-            <ProGate isPro={isPro} feature="Sitemap">
+            <ProGate isPro={isPro}>
               <SeoResourceRow
                 label="Sitemap"
                 url={sitemapResourceUrl || (username ? `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(username)}/sitemap.xml` : "#")}
@@ -305,7 +305,7 @@ export default function SeoDashboardPage() {
                 }
               />
             </ProGate>
-            <ProGate isPro={isPro} feature="Robots control">
+            <ProGate isPro={isPro}>
               <SeoResourceRow
                 label="Robots control"
                 url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}

@@ -708,7 +708,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       />
 
       {/* Email Subscribers */}
-      <ProGate feature="Publish emails to subscribers">
+      <ProGate>
         <div className="mt-6 space-y-2">
           <div className="rounded-md border border-border bg-white p-3 space-y-1">
             <div className="flex items-center justify-between gap-4">

@@ -554,7 +554,7 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
 
-          <ProGate feature="Custom favicon">
+          <ProGate>
             <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">Blog favicon</p>
@@ -635,7 +635,7 @@ export default function SettingsPage() {
               </div>
             </div>
           </ProGate>
-          <ProGate feature="Collect email subscribers">
+          <ProGate>
             <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
               <div className="flex items-center justify-between gap-4 sm:gap-6">
                 <p className="text-sm font-medium">Collect subscribers</p>
@@ -653,7 +653,7 @@ export default function SettingsPage() {
               </p>
             </div>
           </ProGate>
-          <ProGate feature="Remove Articurls branding">
+          <ProGate>
             <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
               <div className="flex items-center justify-between gap-4 sm:gap-6">
                 <p className="text-sm font-medium">Remove branding</p>
