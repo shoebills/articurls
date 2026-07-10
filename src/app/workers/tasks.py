@@ -4,6 +4,7 @@ from sqlalchemy import func
 from .celery_app import celery
 from .. import database, models
 from ..config import settings
+from ..domains.utils import expire_domain_access, start_domain_grace_period
 from ..email.service import send_new_post_email, send_welcome_email as deliver_welcome_email
 from ..email.welcome import render_welcome_email
 from ..security.oauth2 import create_unsubscribe_token
@@ -177,30 +178,12 @@ def expired_pro_fallback():
             if db_user:
                 # Handle custom domain lifecycle when Pro lapses
                 if db_user.domain_status == models.DomainStatus.ACTIVE:
-                    # Move to grace period — domain still serves for 14 days
-                    from datetime import timedelta
-                    db_user.domain_status = models.DomainStatus.GRACE
-                    db_user.grace_started_at = now
-                    db_user.grace_expires_at = now + timedelta(days=14)
-                    # Invalidate Redis cache so middleware sees new status
-                    try:
-                        from .celery_app import celery as _celery
-                        from ..redis_client import redis_client
-                        if db_user.custom_domain:
-                            redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-                    except Exception:
-                        pass
+                    start_domain_grace_period(db_user, now=now)
 
                 elif db_user.domain_status == models.DomainStatus.GRACE:
                     # Check if grace period has expired
                     if db_user.grace_expires_at and db_user.grace_expires_at < now:
-                        db_user.domain_status = models.DomainStatus.EXPIRED
-                        try:
-                            from ..redis_client import redis_client
-                            if db_user.custom_domain:
-                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-                        except Exception:
-                            pass
+                        expire_domain_access(db_user)
 
             sub.plan_type = "free"
             if sub.status != "cancelled":
@@ -217,13 +200,7 @@ def expired_pro_fallback():
         ).all()
 
         for db_user in grace_expired_users:
-            db_user.domain_status = models.DomainStatus.EXPIRED
-            try:
-                from ..redis_client import redis_client
-                if db_user.custom_domain:
-                    redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-            except Exception:
-                pass
+            expire_domain_access(db_user)
 
         db.commit()
 

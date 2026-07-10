@@ -1,5 +1,7 @@
 import re
+from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
+from .. import models
 
 # articurls.com and any subdomain of it are reserved
 _RESERVED_RE = re.compile(r"(^|\.)articurls\.com$", re.IGNORECASE)
@@ -42,3 +44,44 @@ def validate_hostname(hostname: str) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="articurls.com domains cannot be used as custom domains.",
         )
+
+
+def invalidate_domain_lookup_cache(custom_domain: str | None) -> None:
+    if not custom_domain:
+        return
+    try:
+        from ..redis_client import redis_client
+        redis_client.delete(f"domain_lookup:{custom_domain}")
+    except Exception:
+        pass
+
+
+def restore_domain_access(user) -> None:
+    if user.domain_status not in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+        return
+    if not user.custom_domain or not user.is_domain_verified:
+        return
+
+    user.domain_status = models.DomainStatus.ACTIVE
+    user.grace_started_at = None
+    user.grace_expires_at = None
+    invalidate_domain_lookup_cache(user.custom_domain)
+
+
+def start_domain_grace_period(user, now: datetime | None = None) -> None:
+    if user.domain_status != models.DomainStatus.ACTIVE:
+        return
+
+    current_time = now or datetime.now(timezone.utc)
+    user.domain_status = models.DomainStatus.GRACE
+    user.grace_started_at = current_time
+    user.grace_expires_at = current_time + timedelta(days=14)
+    invalidate_domain_lookup_cache(user.custom_domain)
+
+
+def expire_domain_access(user) -> None:
+    if user.domain_status != models.DomainStatus.GRACE:
+        return
+
+    user.domain_status = models.DomainStatus.EXPIRED
+    invalidate_domain_lookup_cache(user.custom_domain)
