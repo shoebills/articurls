@@ -41,7 +41,7 @@ export function ProUpgradeDialog({
           </div>
           <DialogTitle className="text-center text-base sm:text-lg">Upgrade to Pro</DialogTitle>
           <DialogDescription className="text-center text-xs sm:text-sm">
-            Unlock premium features and grow your blog faster.
+            Access advanced features and grow your blog.
           </DialogDescription>
         </DialogHeader>
 
@@ -59,8 +59,15 @@ export function ProUpgradeDialog({
             className="h-9 w-full touch-manipulation text-xs sm:h-11 sm:text-sm"
             onClick={() => router.push(upgradeHref("pro"))}
           >
-            Get Pro — $9/mo
+            Get Pro Features— $9/mo
           </Button>
+          <div className="flex items-center gap-2 py-0.5">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+              or
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
           <Button
             variant="outline"
             className="h-9 w-full touch-manipulation border-amber-300 text-xs text-amber-900 hover:bg-amber-50 sm:h-11 sm:text-sm"
@@ -71,7 +78,7 @@ export function ProUpgradeDialog({
             <span className="ml-1 text-[0.625rem] font-normal text-muted-foreground line-through sm:text-xs">
               $149
             </span>
-            <span className="ml-1.5 text-[0.625rem] font-medium text-amber-700 sm:text-xs">
+            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-amber-700 sm:text-xs">
               50 seats left
             </span>
           </Button>
