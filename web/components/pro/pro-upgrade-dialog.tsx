@@ -34,44 +34,44 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-sm rounded-2xl gap-3 p-4 sm:p-5">
-        <DialogHeader className="space-y-2 sm:space-y-3">
-          <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-amber-100">
-            <Sparkles className="h-5 w-5 text-amber-600" />
+      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] rounded-2xl gap-2.5 p-3 sm:max-w-sm sm:gap-3 sm:p-5">
+        <DialogHeader className="space-y-1.5 sm:space-y-3">
+          <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 sm:h-11 sm:w-11">
+            <Sparkles className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
           </div>
-          <DialogTitle className="text-center text-lg">Upgrade to Pro</DialogTitle>
-          <DialogDescription className="text-center text-sm">
+          <DialogTitle className="text-center text-base sm:text-lg">Upgrade to Pro</DialogTitle>
+          <DialogDescription className="text-center text-xs sm:text-sm">
             Unlock premium features and grow your blog faster.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1 sm:space-y-1.5">
           {BENEFITS.map((benefit) => (
-            <div key={benefit} className="flex items-center gap-2 text-sm">
-              <Check className="h-4 w-4 shrink-0 text-emerald-600" />
+            <div key={benefit} className="flex items-center gap-1.5 text-xs sm:gap-2 sm:text-sm">
+              <Check className="h-3.5 w-3.5 shrink-0 text-emerald-600 sm:h-4 sm:w-4" />
               <span>{benefit}</span>
             </div>
           ))}
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-1.5 sm:space-y-2">
           <Button
-            className="h-11 w-full touch-manipulation"
+            className="h-9 w-full touch-manipulation text-xs sm:h-11 sm:text-sm"
             onClick={() => router.push(upgradeHref("pro"))}
           >
             Get Pro — $9/mo
           </Button>
           <Button
             variant="outline"
-            className="h-11 w-full touch-manipulation border-amber-300 text-amber-900 hover:bg-amber-50"
+            className="h-9 w-full touch-manipulation border-amber-300 text-xs text-amber-900 hover:bg-amber-50 sm:h-11 sm:text-sm"
             onClick={() => router.push(upgradeHref("lifetime"))}
           >
-            <Flame className="mr-1.5 h-4 w-4 text-amber-600" />
+            <Flame className="mr-1.5 h-3.5 w-3.5 text-amber-600 sm:h-4 sm:w-4" />
             Lifetime — $99{" "}
-            <span className="ml-1 text-xs font-normal text-muted-foreground line-through">
+            <span className="ml-1 text-[0.625rem] font-normal text-muted-foreground line-through sm:text-xs">
               $149
             </span>
-            <span className="ml-1.5 text-xs font-medium text-amber-700">
+            <span className="ml-1.5 text-[0.625rem] font-medium text-amber-700 sm:text-xs">
               50 seats left
             </span>
           </Button>

@@ -5,12 +5,14 @@ import Link from "next/link";
 import { Menu, Zap } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
+import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 import { useAuth } from "@/lib/auth-context";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
   const { user, isPro } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
@@ -52,11 +54,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
             {!isPro && (
-              <Button asChild size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90">
-                <Link href="/dashboard/billing">
-                  <Zap className="h-3.5 w-3.5" />
-                  Upgrade
-                </Link>
+              <Button size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)}>
+                <Zap className="h-3.5 w-3.5" />
+                Upgrade
               </Button>
             )}
             {publicBlogHref ? (
@@ -101,10 +101,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 {!isPro && (
-                  <Button asChild size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90">
-                    <Link href="/dashboard/billing">
-                      <Zap className="h-3.5 w-3.5" />
-                    </Link>
+                  <Button size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)} aria-label="Upgrade to Pro">
+                    <Zap className="h-3.5 w-3.5" />
                   </Button>
                 )}
                 {publicBlogHref ? (
@@ -156,6 +154,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
+    <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
   </div>
   );
 }

@@ -19,6 +19,7 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 
 const FALLBACK_ORIGIN = "fallback.articurls.com";
 
@@ -40,6 +41,7 @@ export default function CustomDomainSettings() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
   const [wasPro, setWasPro] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const loadDomain = useCallback(async (tok: string) => {
     try {
@@ -190,10 +192,11 @@ export default function CustomDomainSettings() {
               ? "Reactivate your Pro plan to restore your custom domain."
               : "Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog."}
           </p>
-          <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
+          <Button onClick={() => setUpgradeOpen(true)} className="mt-2">
             {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
           </Button>
         </div>
+        <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       </Card>
     );
   }
@@ -201,6 +204,7 @@ export default function CustomDomainSettings() {
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
+      <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       {info && (
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
@@ -395,7 +399,7 @@ export default function CustomDomainSettings() {
                   </>
                 )}
               </p>
-              <Button size="sm" onClick={() => router.push("/dashboard/billing")}>
+              <Button size="sm" onClick={() => setUpgradeOpen(true)}>
                 Renew Pro
               </Button>
             </div>
@@ -408,7 +412,7 @@ export default function CustomDomainSettings() {
                 This domain has expired and is no longer serving your blog.{" "}
                 <button
                   type="button"
-                  onClick={() => router.push("/dashboard/billing")}
+                  onClick={() => setUpgradeOpen(true)}
                   className="font-medium text-foreground underline underline-offset-4"
                 >
                   Upgrade to Pro

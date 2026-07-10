@@ -214,7 +214,7 @@ export default function BillingPage() {
       </Card>
 
       {!pro && !isLifetime ? (
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="mx-auto grid max-w-[880px] gap-6 md:grid-cols-2">
           <Card className="relative flex flex-col overflow-hidden rounded-2xl border-primary/35 bg-gradient-to-b from-card to-primary/[0.05] shadow-xl shadow-primary/10 ring-1 ring-primary/25">
             <CardHeader className="space-y-1 p-6">
               <CardTitle className="text-2xl">Pro</CardTitle>
