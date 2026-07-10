@@ -34,7 +34,7 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] rounded-2xl gap-2.5 p-[1.125rem] sm:max-w-sm sm:gap-3 sm:p-[1.875rem]">
+      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] overflow-x-hidden rounded-2xl gap-2.5 p-[1.125rem] sm:max-w-sm sm:gap-3 sm:p-[1.875rem]">
         <DialogHeader className="space-y-1.5 sm:space-y-3">
           <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 sm:h-11 sm:w-11">
             <Sparkles className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
@@ -72,10 +72,10 @@ export function ProUpgradeDialog({
           </div>
           <Button
             variant="outline"
-            className="h-9 w-full touch-manipulation border-amber-300 text-xs text-amber-900 hover:bg-amber-50 sm:h-11 sm:text-sm"
+            className="h-9 w-full touch-manipulation gap-0 border-amber-300 px-2 text-xs text-amber-900 hover:bg-amber-50 sm:h-11 sm:px-4 sm:text-sm"
             onClick={() => router.push(upgradeHref("lifetime"))}
           >
-            <Flame className="mr-1.5 h-3.5 w-3.5 text-amber-600 sm:h-4 sm:w-4" />
+            <Flame className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-600 sm:mr-1.5 sm:h-4 sm:w-4" />
             Lifetime — $99{" "}
             <span className="ml-1 text-[0.625rem] font-normal text-muted-foreground line-through sm:text-xs">
               $149
