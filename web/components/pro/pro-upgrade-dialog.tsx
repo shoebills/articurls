@@ -14,9 +14,9 @@ import { upgradeHref } from "@/lib/upgrade-href";
 
 const BENEFITS = [
   "Custom domain & SSL",
-  "Publish emails to subscribers",
+  "Send emails to subscribers",
   "Collect email subscribers",
-  "Full reader & subscriber analytics",
+  "Full views & subscriber analytics",
   "Remove Articurls branding",
   "Custom favicon",
   "Unlimited media storage",

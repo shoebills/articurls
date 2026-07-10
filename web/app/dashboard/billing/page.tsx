@@ -226,9 +226,9 @@ export default function BillingPage() {
             <CardContent className="flex-1 space-y-3 px-6 text-sm">
               {[
                 "Custom domain & SSL",
-                "Publish emails to subscribers",
+                "Send emails to subscribers",
                 "Collect email subscribers",
-                "Full reader & subscriber analytics",
+                "Full views & subscriber analytics",
                 "Remove Articurls branding",
                 "Custom favicon",
                 "Unlimited media storage",
