@@ -1,6 +1,7 @@
 import { HeroShowcase } from "@/components/hero-showcase";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
+import { ProblemSection } from "@/components/problem-section";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { appAuthHref } from "@/lib/env";
@@ -103,6 +104,8 @@ export default function MarketingPage() {
             </div>
           </div>
         </section>
+
+        <ProblemSection />
 
         <section id="how-it-works" className="px-[max(1rem,env(safe-area-inset-left))] pt-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pt-24">
           <div className="mx-auto max-w-6xl">
