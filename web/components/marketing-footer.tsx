@@ -46,7 +46,13 @@ const SOCIALS = [
 
 export function MarketingFooter() {
   return (
-    <footer className="border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]">
+    <>
+      <div aria-hidden className="mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
+        <p className="-mb-[0.25em] block translate-y-[25%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/[0.14] to-transparent bg-clip-text text-center font-bold leading-none tracking-tighter text-transparent [font-size:23vw] lg:[font-size:17rem]">
+          Articurls
+        </p>
+      </div>
+      <footer className="border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] py-14 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:py-20">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
@@ -96,5 +102,6 @@ export function MarketingFooter() {
         </p>
       </div>
     </footer>
+    </>
   );
 }
