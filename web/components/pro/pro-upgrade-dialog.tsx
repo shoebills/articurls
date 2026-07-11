@@ -34,8 +34,8 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(88dvh,88vh)] w-[calc(100vw-2rem)] max-w-sm overflow-y-auto rounded-2xl border-primary/30 bg-gradient-to-b from-primary/[0.06] to-card p-0 ring-1 ring-primary/20 sm:max-w-md">
-        <div className="p-6 sm:p-7">
+      <DialogContent className="max-h-[min(88dvh,88vh)] w-[calc(100vw-2rem)] max-w-sm overflow-y-auto rounded-2xl border-primary/30 bg-card p-0 shadow-2xl ring-1 ring-primary/20 sm:max-w-md">
+        <div className="rounded-2xl bg-gradient-to-b from-primary/[0.07] to-card p-6 sm:p-7">
           <DialogHeader className="space-y-0">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grow audience</p>
             <DialogTitle className="mt-1.5 text-2xl font-semibold tracking-tight">Upgrade to Pro</DialogTitle>
