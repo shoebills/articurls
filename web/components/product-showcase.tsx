@@ -180,7 +180,7 @@ export function ProductShowcase() {
       </div>
 
       {/* Mobile / tablet: stacked reveal cards */}
-      <div className="mx-auto mt-12 max-w-xl space-y-10 lg:hidden">
+      <div className="mx-auto mt-12 max-w-xl space-y-20 lg:hidden">
         {PANELS.map((panel) => (
           <MobileCard key={panel.key} panel={panel} />
         ))}
