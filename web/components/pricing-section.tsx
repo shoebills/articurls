@@ -124,7 +124,7 @@ function PlanCard({ plan }: { plan: Plan }) {
   return (
     <div className={`${base} ${variant} ${plan.featured ? "lg:-translate-y-3" : ""}`}>
       {plan.premium && (
-        <span className="badge-vibrate absolute right-5 top-5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white">
+        <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
           50 seats left
         </span>
       )}

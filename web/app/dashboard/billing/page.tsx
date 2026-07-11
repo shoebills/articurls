@@ -257,7 +257,7 @@ export default function BillingPage() {
 
           {/* Lifetime — exclusive dark card */}
           <div className="relative flex flex-col rounded-2xl border border-transparent bg-foreground p-6 text-background shadow-2xl shadow-black/20 sm:p-7">
-            <span className="badge-vibrate absolute right-5 top-5 rounded-full border border-white/25 bg-white/10 px-2.5 py-1 text-[11px] font-medium text-white">
+            <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
               50 seats left
             </span>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-background/60">Own forever</p>
