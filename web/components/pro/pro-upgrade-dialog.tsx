@@ -34,7 +34,7 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7">
+      <DialogContent className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 bg-card bg-gradient-to-b from-primary/[0.05] to-card p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7">
         <DialogHeader className="space-y-0">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-primary sm:text-xs">Grow audience</p>
           <DialogTitle className="mt-1 text-xl font-semibold tracking-tight sm:mt-1.5 sm:text-2xl">Upgrade to Pro</DialogTitle>
@@ -59,6 +59,13 @@ export function ProUpgradeDialog({
           >
             Start Pro — $9/mo
           </Button>
+          <div className="flex items-center gap-3 py-0.5">
+            <span className="h-px flex-1 bg-border" />
+            <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
+              or
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
           <Button
             variant="outline"
             className="h-11 w-full touch-manipulation gap-1.5 sm:h-12"
