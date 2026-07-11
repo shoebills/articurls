@@ -1,3 +1,4 @@
+import { BentoGrid } from "@/components/bento-grid";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { HowItWorks } from "@/components/how-it-works";
 import { MarketingFooter } from "@/components/marketing-footer";
@@ -66,6 +67,8 @@ export default function MarketingPage() {
         <HowItWorks />
 
         <ProductShowcase />
+
+        <BentoGrid />
 
         <section
           id="pricing"
