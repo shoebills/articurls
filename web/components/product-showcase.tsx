@@ -247,7 +247,7 @@ function EditorPanel() {
     { icon: ImageIcon, on: false },
   ];
   return (
-    <AppFrame label="Editor Draft">
+    <AppFrame label="Editor">
       <div className="flex flex-wrap items-center gap-1 border-b border-border/60 bg-background px-3 py-2">
         {tools.map(({ icon: Icon, on }, i) => (
           <span
@@ -283,7 +283,7 @@ function EditorPanel() {
 function PublishingPanel() {
   return (
     <div className="relative">
-    <AppFrame label="Editor Draft">
+    <AppFrame label="Editor">
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -300,7 +300,7 @@ function PublishingPanel() {
       </AppFrame>
 
       {/* Schedule dialog overlay */}
-      <div className="absolute -bottom-6 left-1/2 w-[85%] max-w-sm -translate-x-1/2 rounded-2xl border border-border bg-background p-5 shadow-2xl shadow-black/10">
+      <div className="absolute -bottom-16 left-1/2 w-[85%] max-w-sm -translate-x-1/2 rounded-2xl border border-border bg-background p-5 shadow-2xl shadow-black/10">
         <p className="text-base font-semibold tracking-tight">Schedule publish</p>
         <p className="mt-0.5 text-sm text-muted-foreground">Pick a date and time.</p>
         <div className="mt-3 space-y-1.5">
@@ -333,7 +333,7 @@ function SeoPanel() {
         <div className="mt-4 space-y-4">
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Meta title</p>
-            <div className="flex h-10 items-center rounded-lg border border-input bg-white px-3 text-sm text-foreground">
+            <div className="flex items-center rounded-lg border border-input bg-white px-3 py-2 text-sm text-foreground md:h-10 md:py-0">
             My blog, writing about building products
             </div>
           </div>
@@ -377,13 +377,13 @@ function SeoPanel() {
 
 function SubscribersPanel() {
   return (
-    <AppFrame label="www.yourblog.com Post">
+    <AppFrame label="Subscribe">
       <div className="p-6">
         <div className="rounded-xl border border-border/80 bg-muted/20 p-5">
           <p className="text-sm font-semibold text-foreground">Email updates</p>
           <p className="mt-1 text-sm text-muted-foreground">Get an email when new posts are published.</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex h-10 flex-1 items-center rounded-lg border border-input bg-white px-3 text-sm text-muted-foreground">
+            <div className="flex h-10 w-full items-center rounded-lg border border-input bg-white px-3 text-sm text-muted-foreground sm:flex-1">
               you@example.com
             </div>
             <span className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm sm:min-w-[7.5rem]">
@@ -417,7 +417,7 @@ function AnalyticsPanel() {
     { label: "Avg Duration", value: "1m 24s", icon: TrendingUp },
   ];
   return (
-    <AppFrame label="Dashboard Analytics">
+    <AppFrame label="Analytics">
       <div className="p-5">
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {kpis.map((k) => (
@@ -470,7 +470,7 @@ function AnalyticsPanel() {
 
 function DomainPanel() {
   return (
-    <AppFrame label="Dashboard Custom domain">
+    <AppFrame label="Custom domain">
       <div className="p-6">
         <div className="flex items-center gap-3">
           <p className="min-w-0 flex-1 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">
@@ -496,7 +496,7 @@ function DomainPanel() {
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
             <Check className="h-3.5 w-3.5 shrink-0" />
-            Your blog is live on your own domain with HTTPS enabled.
+            Your blog is live on your domain.
           </div>
         </div>
       </div>
