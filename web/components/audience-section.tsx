@@ -6,7 +6,7 @@ import { PenLine, Code2, Rocket, Building2, FileText } from "lucide-react";
 const AUDIENCES = [
   {
     who: "Hobby writers",
-    outcome: "Share your words on a home that's truly yours — and just write.",
+    outcome: "Share your words on a home that's truly yours, and just write.",
     icon: PenLine,
   },
   {

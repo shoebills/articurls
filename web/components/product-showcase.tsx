@@ -26,7 +26,7 @@ const PANELS = [
     key: "editor",
     kicker: "Write",
     title: "A calm, focused editor",
-    body: "Rich formatting, images, and embeds — nothing to configure, nothing in your way.",
+    body: "Rich formatting, images, and embeds with nothing to configure, and nothing in your way.",
     visual: <EditorPanel />,
   },
   {
@@ -54,7 +54,7 @@ const PANELS = [
     key: "analytics",
     kicker: "Understand",
     title: "Analytics that make sense",
-    body: "Pageviews, visitors, and trends — privacy-friendly, no setup required.",
+    body: "Pageviews, visitors, and trends, all privacy-friendly with no setup required.",
     visual: <AnalyticsPanel />,
   },
   {
@@ -247,7 +247,7 @@ function EditorPanel() {
     { icon: ImageIcon, on: false },
   ];
   return (
-    <AppFrame label="Editor — Draft">
+    <AppFrame label="Editor Draft">
       <div className="flex flex-wrap items-center gap-1 border-b border-border/60 bg-background px-3 py-2">
         {tools.map(({ icon: Icon, on }, i) => (
           <span
@@ -283,7 +283,7 @@ function EditorPanel() {
 function PublishingPanel() {
   return (
     <div className="relative">
-      <AppFrame label="Editor — Draft">
+    <AppFrame label="Editor Draft">
         <div className="space-y-3 p-6">
           <div className="flex items-center justify-between">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground">
@@ -327,14 +327,14 @@ function PublishingPanel() {
 
 function SeoPanel() {
   return (
-    <AppFrame label="Dashboard — SEO">
+    <AppFrame label="Dashboard SEO">
       <div className="p-6">
         <p className="text-sm font-semibold">Search result appearance</p>
         <div className="mt-4 space-y-4">
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Meta title</p>
             <div className="flex h-10 items-center rounded-lg border border-input bg-white px-3 text-sm text-foreground">
-              My blog — writing about building products
+            My blog, writing about building products
             </div>
           </div>
           <div className="space-y-1.5">
@@ -377,7 +377,7 @@ function SeoPanel() {
 
 function SubscribersPanel() {
   return (
-    <AppFrame label="www.yourblog.com — Post">
+    <AppFrame label="www.yourblog.com Post">
       <div className="p-6">
         <div className="rounded-xl border border-border/80 bg-muted/20 p-5">
           <p className="text-sm font-semibold text-foreground">Email updates</p>
@@ -396,7 +396,7 @@ function SubscribersPanel() {
             <Check className="h-4 w-4" />
           </span>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Welcome email sent</span> — new subscribers are greeted
+            <span className="font-medium text-foreground">Welcome email sent</span>, new subscribers are greeted
             automatically.
           </p>
         </div>
@@ -417,7 +417,7 @@ function AnalyticsPanel() {
     { label: "Avg Duration", value: "1m 24s", icon: TrendingUp },
   ];
   return (
-    <AppFrame label="Dashboard — Analytics">
+    <AppFrame label="Dashboard Analytics">
       <div className="p-5">
         <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4">
           {kpis.map((k) => (
@@ -470,7 +470,7 @@ function AnalyticsPanel() {
 
 function DomainPanel() {
   return (
-    <AppFrame label="Dashboard — Custom domain">
+    <AppFrame label="Dashboard Custom domain">
       <div className="p-6">
         <div className="flex items-center gap-3">
           <p className="min-w-0 flex-1 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">
@@ -496,7 +496,7 @@ function DomainPanel() {
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
             <Check className="h-3.5 w-3.5 shrink-0" />
-            Your blog is live on your own domain — HTTPS enabled.
+            Your blog is live on your own domain with HTTPS enabled.
           </div>
         </div>
       </div>

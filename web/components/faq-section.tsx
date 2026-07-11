@@ -6,11 +6,11 @@ import { Plus } from "lucide-react";
 const FAQS = [
   {
     q: "What is Articurls?",
-    a: "Articurls is a hosted blogging platform for a beautiful, fast, SEO-ready blog on your own domain — without managing WordPress, servers, or plugins.",
+    a: "Articurls is a hosted blogging platform for a beautiful, fast, SEO-ready blog on your own domain, without managing WordPress, servers, or plugins.",
   },
   {
     q: "How do I get started?",
-    a: "Create a free account, claim your username, and start writing. Your blog is live in minutes — no setup or configuration required.",
+    a: "Create a free account, claim your username, and start writing. Your blog is live in minutes with no setup or configuration required.",
   },
   {
     q: "Can I use my own domain?",
@@ -18,7 +18,7 @@ const FAQS = [
   },
   {
     q: "Do I need hosting?",
-    a: "No. Everything is fully hosted and managed for you — no servers to run, no updates to install, no maintenance.",
+    a: "No. Everything is fully hosted and managed for you. No servers to run, no updates to install, no maintenance.",
   },
   {
     q: "Is SEO built in?",
@@ -26,7 +26,7 @@ const FAQS = [
   },
   {
     q: "Can I schedule posts?",
-    a: "Yes. Write now and pick a future date and time — your post publishes automatically when the moment arrives.",
+    a: "Yes. Write now and pick a future date and time. Your post publishes automatically when the moment arrives.",
   },
   {
     q: "Can I collect subscribers?",
@@ -34,7 +34,7 @@ const FAQS = [
   },
   {
     q: "What's included in the free plan?",
-    a: "Unlimited posts, unlimited pages, categories, scheduling, built-in SEO, and media uploads — everything you need to start writing.",
+    a: "Unlimited posts, unlimited pages, categories, scheduling, built-in SEO, and media uploads. Everything you need to start writing.",
   },
   {
     q: "Can I upgrade anytime?",

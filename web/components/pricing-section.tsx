@@ -201,7 +201,7 @@ function StickyCta({ href }: { href: string }) {
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium leading-tight">Start free today</p>
-            <p className="truncate text-xs text-muted-foreground">Upgrade to Pro anytime — $9/mo</p>
+            <p className="truncate text-xs text-muted-foreground">Upgrade to Pro anytime, $9/mo</p>
           </div>
           <Button className="h-11 shrink-0 px-5 shadow-md shadow-primary/20" asChild>
             <a href={href}>Start Free</a>

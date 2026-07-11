@@ -78,7 +78,7 @@ export default function MarketingPage() {
                 Own your words. Own your audience.
               </h2>
               <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/60 sm:text-lg">
-                Not a rented profile. A blog that&apos;s truly yours — for as long as you write.
+                Not a rented profile. A blog that&apos;s truly yours, for as long as you write.
               </p>
               <div className="mt-10 flex justify-center">
                 <Button
