@@ -62,7 +62,7 @@ export function MarketingNav() {
           <NavLink href={loginUrl}>Login</NavLink>
           <a
             href={signupUrl}
-            className="inline-flex h-9 items-center rounded-lg bg-[#7C3AED] px-4 text-sm font-medium text-white shadow-sm shadow-[#7C3AED]/25 outline-none transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-[#6D28D9] hover:shadow-md hover:shadow-[#7C3AED]/30 focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+            className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-md shadow-primary/15 outline-none transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-primary/92 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
             Start Free
           </a>
@@ -110,7 +110,7 @@ export function MarketingNav() {
             <div className="p-2 pt-0">
               <a
                 href={signupUrl}
-                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-[#7C3AED] px-4 text-[0.95rem] font-medium text-white transition-colors duration-200 hover:bg-[#6D28D9] active:scale-[0.99] motion-reduce:active:scale-100"
+                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-[0.95rem] font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/92 active:scale-[0.99] motion-reduce:active:scale-100"
                 onClick={() => setOpen(false)}
               >
                 Start Free

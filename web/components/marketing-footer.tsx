@@ -1,6 +1,4 @@
 import Link from "next/link";
-import { SiGithub, SiX } from "react-icons/si";
-import { FaLinkedinIn } from "react-icons/fa6";
 import { BrandLogo } from "@/components/brand-logo";
 import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
 
@@ -38,17 +36,11 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   },
 ];
 
-const SOCIALS = [
-  { label: "GitHub", href: "https://github.com", icon: SiGithub },
-  { label: "X", href: "https://x.com", icon: SiX },
-  { label: "LinkedIn", href: "https://linkedin.com", icon: FaLinkedinIn },
-];
-
 export function MarketingFooter() {
   return (
     <>
       <div aria-hidden className="mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
-        <p className="-mb-[0.25em] block translate-y-[6%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
+        <p className="-mb-[0.25em] block translate-y-[4%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
           Articurls
         </p>
       </div>
@@ -57,23 +49,6 @@ export function MarketingFooter() {
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
             <BrandLogo />
-            <p className="mt-4 max-w-[15rem] text-sm leading-relaxed text-muted-foreground">
-              A blog you own, on your own domain.
-            </p>
-            <div className="mt-5 flex items-center gap-1.5">
-              {SOCIALS.map((s) => (
-                <a
-                  key={s.label}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={s.label}
-                  className="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-colors duration-200 hover:bg-muted hover:text-foreground"
-                >
-                  <s.icon className="h-[1.05rem] w-[1.05rem]" />
-                </a>
-              ))}
-            </div>
           </div>
 
           {COLUMNS.map((col) => (

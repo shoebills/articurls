@@ -300,7 +300,7 @@ function PublishingPanel() {
       </AppFrame>
 
       {/* Schedule dialog overlay */}
-      <div className="absolute -bottom-10 left-1/2 w-[85%] max-w-sm -translate-x-1/2 rounded-2xl border border-border bg-background p-5 shadow-2xl shadow-black/10">
+      <div className="relative z-10 mx-auto -mt-10 w-[85%] max-w-sm rounded-2xl border border-border bg-background p-5 shadow-2xl shadow-black/10">
         <p className="text-base font-semibold tracking-tight">Schedule publish</p>
         <p className="mt-0.5 text-sm text-muted-foreground">Pick a date and time.</p>
         <div className="mt-3 space-y-1.5">
@@ -318,7 +318,6 @@ function PublishingPanel() {
           </span>
         </div>
       </div>
-      <div className="h-8" />
     </div>
   );
 }
