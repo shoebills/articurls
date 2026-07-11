@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Github, Twitter, Linkedin } from "lucide-react";
+import { SiGithub, SiX } from "react-icons/si";
+import { FaLinkedinIn } from "react-icons/fa6";
 import { BrandLogo } from "@/components/brand-logo";
 import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
 
@@ -38,9 +39,9 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 ];
 
 const SOCIALS = [
-  { label: "GitHub", href: "https://github.com", icon: Github },
-  { label: "X", href: "https://x.com", icon: Twitter },
-  { label: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
+  { label: "GitHub", href: "https://github.com", icon: SiGithub },
+  { label: "X", href: "https://x.com", icon: SiX },
+  { label: "LinkedIn", href: "https://linkedin.com", icon: FaLinkedinIn },
 ];
 
 export function MarketingFooter() {
