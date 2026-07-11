@@ -32,7 +32,8 @@ export function PricingSection() {
       desc: "Everything you need to publish your first posts.",
       features: [
         "Unlimited posts",
-        "Pages & categories",
+        "Unlimited pages",
+        "Assign categories",
         "Post scheduling",
         "Built-in SEO & meta fields",
         "Media upload up to 1GB",
