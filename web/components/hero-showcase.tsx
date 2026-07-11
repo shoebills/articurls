@@ -4,11 +4,11 @@ export function HeroShowcase() {
   return (
     <div
       aria-hidden
-      className="relative mx-auto w-full max-w-[38rem] select-none [perspective:1600px]"
+      className="relative mx-auto w-full max-w-[38rem] select-none pb-10 [perspective:1600px] sm:pb-0"
     >
       <div className="pointer-events-none absolute -inset-8 -z-10 bg-[radial-gradient(ellipse_60%_60%_at_60%_35%,oklch(0.55_0.2_293/0.16),transparent_72%)]" />
 
-      <div className="hero-rise relative aspect-[4/3.35] w-full [animation-delay:60ms] sm:aspect-[4/3]">
+      <div className="hero-rise relative aspect-[4/3.9] w-full [animation-delay:60ms] sm:aspect-[4/3]">
         <div className="hero-float-a absolute inset-x-0 top-0 z-10">
           <div className="overflow-hidden rounded-2xl border border-border/70 bg-card/95 shadow-[0_28px_90px_-40px_rgba(15,23,42,0.55)] backdrop-blur">
             <div className="flex items-center gap-2 border-b border-border/60 bg-muted/40 px-4 py-2.5">
@@ -71,7 +71,7 @@ export function HeroShowcase() {
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">www.yourblog.com</p>
                 <p className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-600">
-                  <Check className="h-3 w-3" /> SSL active
+                  <Check className="h-3 w-3" /> Active
                 </p>
               </div>
             </div>
@@ -81,7 +81,7 @@ export function HeroShowcase() {
         <div className="hero-float-b absolute -bottom-6 right-2 z-40 [animation-delay:800ms] sm:-bottom-8 sm:right-8">
           <div className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/95 px-3.5 py-2 shadow-[0_18px_60px_-30px_rgba(15,23,42,0.5)] backdrop-blur">
             <Mail className="h-3.5 w-3.5 text-[#7C3AED]" />
-            <span className="text-xs font-medium text-foreground">Published — subscribers notified</span>
+            <span className="text-xs font-medium text-foreground">Published. Subscribers notified</span>
           </div>
         </div>
       </div>

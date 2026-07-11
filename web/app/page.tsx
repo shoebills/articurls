@@ -23,17 +23,14 @@ export default function MarketingPage() {
           <div className="pointer-events-none absolute inset-0 bg-dot-pattern opacity-30" aria-hidden />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 sm:px-6 sm:pt-24 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-28">
             <div className="min-w-0">
-              <p className="inline-flex items-center rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs font-medium text-primary backdrop-blur">
-                A better way to blog.
-              </p>
-              <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
                 Publish your own blog in minutes
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
                 No servers, plugins or updates. Just a fast,
                 SEO-ready blog that&apos;s entirely yours.
               </p>
-              <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
+              <div className="mt-16 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>
                   <a href={signupUrl}>Start free</a>
                 </Button>
