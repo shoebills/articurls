@@ -4,11 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createCheckout, getSubscription, getTransactions, getCustomerPortalLink, ApiError, isProSubscription, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, TransactionOut } from "@/lib/types";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays, Check, Flame, Sparkles, Zap } from "lucide-react";
+import { CalendarDays, Check, Flame } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -214,80 +214,84 @@ export default function BillingPage() {
       </Card>
 
       {!pro && !isLifetime ? (
-        <div className="mx-auto grid max-w-[880px] gap-6 md:grid-cols-2">
-          <Card className="relative flex flex-col overflow-hidden rounded-2xl border-primary/35 bg-gradient-to-b from-card to-primary/[0.05] shadow-xl shadow-primary/10 ring-1 ring-primary/25">
-            <CardHeader className="space-y-1 p-6">
-              <CardTitle className="text-2xl">Pro</CardTitle>
-              <p className="text-sm text-muted-foreground">Everything you need to grow.</p>
-              <p className="pt-2 text-4xl font-semibold tracking-tight">
-                $9<span className="text-base font-normal text-muted-foreground">/mo</span>
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-3 px-6 text-sm">
-              {[
-                "Custom domain & SSL",
-                "Send emails to subscribers",
-                "Collect email subscribers",
-                "Full views & subscriber analytics",
-                "Remove Articurls branding",
-                "Custom favicon",
-                "Unlimited media storage",
-              ].map((x) => (
-                <div key={x} className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
-                  <span className="text-muted-foreground">{x}</span>
-                </div>
-              ))}
-            </CardContent>
-            <CardFooter className="p-6 pt-4">
-              <Button
-                className="h-12 w-full touch-manipulation shadow-md shadow-primary/20"
-                onClick={upgrade}
-                disabled={busy}
-              >
-                <Sparkles className="mr-1.5 h-4 w-4" aria-hidden />
-                {busy ? "Redirecting…" : "Upgrade to Pro — $9/mo"}
-              </Button>
-            </CardFooter>
-          </Card>
-
-          <Card className="relative flex flex-col overflow-hidden rounded-2xl border-amber-500/30 bg-gradient-to-b from-card to-amber-500/[0.06] shadow-xl shadow-amber-500/[0.08] ring-1 ring-amber-500/20">
-            <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-              <Flame className="h-3.5 w-3.5" aria-hidden />
-              50 seats left
+        <div className="mx-auto grid max-w-[880px] items-start gap-5 md:grid-cols-2">
+          {/* Pro — highlighted */}
+          <div className="relative flex flex-col rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:p-7">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grow audience</p>
+            <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Pro</h3>
+            <div className="mt-4 flex items-baseline gap-1.5">
+              <span className="text-4xl font-semibold tracking-tight">$9</span>
+              <span className="text-base font-normal text-muted-foreground">/mo</span>
             </div>
-            <CardHeader className="space-y-1 p-6">
-              <CardTitle className="text-2xl">Lifetime</CardTitle>
-              <p className="text-sm text-muted-foreground">Buy once, own forever.</p>
-              <p className="pt-2 text-4xl font-semibold tracking-tight">
-                $99<span className="text-base font-normal text-muted-foreground"> one-time</span>
-              </p>
-            </CardHeader>
-            <CardContent className="flex-1 space-y-3 px-6 text-sm">
-              {[
-                "Everything in Pro, forever",
-                "No recurring charges",
-                "Lifetime custom domain & SSL",
-                "Lifetime subscriber emails",
-                "Future Pro features included",
-              ].map((x) => (
-                <div key={x} className="flex items-center gap-2.5">
-                  <Check className="h-4 w-4 shrink-0 text-emerald-600" aria-hidden />
-                  <span className="text-muted-foreground">{x}</span>
-                </div>
-              ))}
-            </CardContent>
-            <CardFooter className="p-6 pt-4">
-              <Button
-                className="h-12 w-full touch-manipulation bg-amber-500 text-amber-950 shadow-md shadow-amber-500/25 hover:bg-amber-500/90"
-                onClick={upgradeLifetime}
-                disabled={busyLifetime}
-              >
-                <Zap className="mr-1.5 h-4 w-4" aria-hidden />
-                {busyLifetime ? "Redirecting…" : "Buy Lifetime — $99 one-time"}
-              </Button>
-            </CardFooter>
-          </Card>
+            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Reach readers on your own domain.
+            </p>
+            <Button
+              className="mt-6 h-12 w-full touch-manipulation shadow-md shadow-primary/20"
+              onClick={upgrade}
+              disabled={busy}
+            >
+              {busy ? "Redirecting…" : "Start Pro — $9/mo"}
+            </Button>
+            <div className="mt-6 border-t border-border/60 pt-6">
+              <ul className="space-y-3">
+                {[
+                  "Custom domain & automatic SSL",
+                  "Collect email subscribers",
+                  "Publish emails to subscribers",
+                  "RSS, sitemap & robots control",
+                  "Remove Articurls branding",
+                  "Custom favicon",
+                  "Unlimited media storage",
+                ].map((x) => (
+                  <li key={x} className="flex items-start gap-2.5 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                    <span className="text-foreground/80">{x}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Lifetime — exclusive dark card */}
+          <div className="relative flex flex-col rounded-2xl border border-transparent bg-foreground p-6 text-background shadow-2xl shadow-black/20 sm:p-7">
+            <span className="absolute right-5 top-5 rounded-full border border-background/20 px-2.5 py-1 text-[11px] font-medium text-background/70">
+              50 seats left
+            </span>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-background/60">Own forever</p>
+            <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Lifetime</h3>
+            <div className="mt-4 flex items-baseline gap-1.5">
+              <span className="text-4xl font-semibold tracking-tight">$99</span>
+              <span className="text-base font-normal text-background/60"> once</span>
+              <span className="ml-1 text-sm text-background/60 line-through">$149</span>
+            </div>
+            <p className="mt-3 text-sm leading-relaxed text-background/60">
+              Pay one time. Keep Pro for lifetime.
+            </p>
+            <Button
+              className="mt-6 h-12 w-full touch-manipulation bg-background text-foreground hover:bg-background/90"
+              onClick={upgradeLifetime}
+              disabled={busyLifetime}
+            >
+              {busyLifetime ? "Redirecting…" : "Get Lifetime — $99 once"}
+            </Button>
+            <p className="mt-2 text-center text-xs text-background/60">One-time launch price</p>
+            <div className="mt-6 border-t border-background/15 pt-6">
+              <ul className="space-y-3">
+                {[
+                  "Everything in Pro",
+                  "No recurring charges, ever",
+                  "Future Pro features included",
+                  "Yours for life",
+                ].map((x) => (
+                  <li key={x} className="flex items-start gap-2.5 text-sm">
+                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-background/70" aria-hidden />
+                    <span className="text-background/90">{x}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
         </div>
       ) : null}
 

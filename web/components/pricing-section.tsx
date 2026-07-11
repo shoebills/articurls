@@ -35,8 +35,8 @@ export function PricingSection() {
         "Pages & categories",
         "Post scheduling",
         "Built-in SEO & meta fields",
-        "Reader analytics",
-        "Responsive image optimization",
+        "Media upload up to 1GB",
+        "Customize blog design",
       ],
       cta: "Get started",
       href: signupUrl,
@@ -46,7 +46,7 @@ export function PricingSection() {
       tagline: "Grow audience",
       price: "$9",
       unit: "/mo",
-      desc: "Reach readers on your own domain and keep them.",
+      desc: "Reach readers on your own domain.",
       features: [
         "Everything in Free",
         "Custom domain & automatic SSL",
@@ -54,6 +54,7 @@ export function PricingSection() {
         "Publish emails to subscribers",
         "RSS, sitemap & robots control",
         "Remove Articurls branding",
+        "Custom favicon",
         "Unlimited media storage",
       ],
       cta: "Start Pro",
@@ -66,7 +67,7 @@ export function PricingSection() {
       price: "$99",
       unit: " once",
       was: "$149",
-      desc: "Pay one time. Keep Pro for as long as it exists.",
+      desc: "Pay one time. Keep Pro for lifetime.",
       features: [
         "Everything in Pro",
         "No recurring charges, ever",
@@ -92,7 +93,7 @@ export function PricingSection() {
             Start free. Upgrade when it counts.
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
-            No annual contracts. Cancel anytime. Lifetime is a single payment.
+            No annual contracts. Cancel anytime.
           </p>
         </div>
 
@@ -122,14 +123,9 @@ function PlanCard({ plan }: { plan: Plan }) {
 
   return (
     <div className={`${base} ${variant} ${plan.featured ? "lg:-translate-y-3" : ""}`}>
-      {plan.featured && (
-        <span className="absolute right-5 top-5 rounded-full bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground">
-          Recommended
-        </span>
-      )}
       {plan.premium && (
         <span className="absolute right-5 top-5 rounded-full border border-background/20 px-2.5 py-1 text-[11px] font-medium text-background/70">
-          Best value
+          50 seats left
         </span>
       )}
 
