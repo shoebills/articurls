@@ -403,3 +403,29 @@ body {
     transform: none;
   }
 }
+
+@keyframes badge-vibrate {
+  0%,
+  88%,
+  100% {
+    transform: translateX(0);
+  }
+  90%,
+  94% {
+    transform: translateX(-1.5px);
+  }
+  92%,
+  96% {
+    transform: translateX(1.5px);
+  }
+}
+
+.badge-vibrate {
+  animation: badge-vibrate 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .badge-vibrate {
+    animation: none;
+  }
+}
