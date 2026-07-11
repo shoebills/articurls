@@ -1,4 +1,5 @@
 import { HeroShowcase } from "@/components/hero-showcase";
+import { HowItWorks } from "@/components/how-it-works";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
 import { ProblemSection } from "@/components/problem-section";
@@ -107,39 +108,7 @@ export default function MarketingPage() {
 
         <ProblemSection />
 
-        <section id="how-it-works" className="px-[max(1rem,env(safe-area-inset-left))] pt-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pt-24">
-          <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">How it works</h2>
-              <p className="mt-3 text-base text-justify text-muted-foreground">From first draft to published post in three steps.</p>
-            </div>
-            <div className="mt-8 grid gap-4 sm:grid-cols-3">
-              {[
-                {
-                  step: "01",
-                  title: "Write your draft",
-                  body: "Start with the editor and shape your post with media, embeds, and formatting.",
-                },
-                {
-                  step: "02",
-                  title: "Set publish details",
-                  body: "Choose slug, meta fields, schedule, and whether to notify subscribers.",
-                },
-                {
-                  step: "03",
-                  title: "Publish and iterate",
-                  body: "Share your link, watch reader analytics, and update anytime.",
-                },
-              ].map((item) => (
-                <div key={item.step} className="rounded-2xl border border-border/70 bg-card/70 p-5">
-                  <p className="text-xs font-semibold tracking-[0.14em] text-primary">{item.step}</p>
-                  <h3 className="mt-3 text-lg font-semibold tracking-tight">{item.title}</h3>
-                  <p className="mt-2 text-sm text-justify text-muted-foreground">{item.body}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <HowItWorks />
 
         <section
           id="features"
