@@ -214,7 +214,9 @@ export default function BillingPage() {
       </Card>
 
       {!pro && !isLifetime ? (
-        <div className="mx-auto grid max-w-[880px] items-start gap-5 md:grid-cols-2">
+        <div className="mx-auto max-w-[880px] space-y-6">
+          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Choose a plan</h2>
+          <div className="grid items-start gap-5 md:grid-cols-2">
           {/* Pro — highlighted */}
           <div className="relative flex flex-col rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:p-7">
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grow audience</p>
@@ -291,6 +293,7 @@ export default function BillingPage() {
                 ))}
               </ul>
             </div>
+          </div>
           </div>
         </div>
       ) : null}
