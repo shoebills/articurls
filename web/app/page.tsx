@@ -4,11 +4,11 @@ import { HowItWorks } from "@/components/how-it-works";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
 import { ProblemSection } from "@/components/problem-section";
+import { PricingSection } from "@/components/pricing-section";
 import { ProductShowcase } from "@/components/product-showcase";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { appAuthHref } from "@/lib/env";
-import { ArrowUpRight, Check, Flame, Star, Zap } from "lucide-react";
+import { ArrowUpRight, Check } from "lucide-react";
 
 export default function MarketingPage() {
   const signupUrl = appAuthHref("/signup");
@@ -70,114 +70,7 @@ export default function MarketingPage() {
 
         <AudienceSection />
 
-        <section
-          id="pricing"
-          className="scroll-mt-[calc(4.5rem+env(safe-area-inset-top))] px-[max(1rem,env(safe-area-inset-left))] pb-20 pr-[max(1rem,env(safe-area-inset-right))] pt-6 sm:px-6 sm:pb-28"
-        >
-          <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Simple plans</h2>
-              <p className="mt-3 text-base text-muted-foreground">Start free. Upgrade only when your workflow needs more.</p>
-            </div>
-
-            <div className="mt-10 grid gap-6 lg:grid-cols-3">
-              <Card className="flex flex-col rounded-2xl border-border/80 bg-card/90">
-                <CardHeader className="space-y-1 p-6">
-                  <CardTitle className="text-2xl">Free</CardTitle>
-                  <CardDescription>Core publishing workflow</CardDescription>
-                  <p className="text-4xl font-semibold tracking-tight">$0<span className="text-base font-normal text-muted-foreground">/mo</span></p>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-3 px-6 text-sm">
-                  {[
-                    "Unlimited posts",
-                    "Unlimited pages & categories",
-                    "Post scheduling",
-                    "Meta fields",
-                    "Reader analytics",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 text-emerald-700" aria-hidden />
-                      <span className="text-muted-foreground">{x}</span>
-                    </div>
-                  ))}
-                </CardContent>
-                <CardFooter className="p-6 pt-4">
-                  <Button className="h-12 w-full" variant="outline" asChild>
-                    <a href={signupUrl}>Get started</a>
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className="relative flex flex-col rounded-2xl border-primary/35 bg-gradient-to-b from-card to-primary/[0.05] shadow-xl shadow-primary/10 ring-1 ring-primary/25">
-                <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-primary/15 px-2.5 py-1 text-[11px] font-medium text-primary">
-                  <Star className="h-3.5 w-3.5" />
-                  Recommended
-                </div>
-                <CardHeader className="space-y-1 p-6">
-                  <CardTitle className="text-2xl">Pro</CardTitle>
-                  <CardDescription>For teams shipping consistently</CardDescription>
-                  <p className="text-4xl font-semibold tracking-tight">$9<span className="text-base font-normal text-muted-foreground">/mo</span></p>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-3 px-6 text-sm">
-                  {[
-                    "Everything in Free",
-                    "Custom domain & SSL",
-                    "Publish emails to subscribers",
-                    "Collect email subscribers",
-                    "Footer branding removal",
-                    "Unlimited media storage",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 text-emerald-700" aria-hidden />
-                      <span className="text-muted-foreground">{x}</span>
-                    </div>
-                  ))}
-                </CardContent>
-                <CardFooter className="p-6 pt-4">
-                  <Button className="h-12 w-full shadow-md shadow-primary/20" asChild>
-                    <a href={`${signupUrl}?plan=pro`}>Start Pro</a>
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              <Card className="relative flex flex-col rounded-2xl border-amber-500/30 bg-gradient-to-b from-card to-amber-500/[0.06] shadow-xl shadow-amber-500/8 ring-1 ring-amber-500/20">
-                <div className="absolute right-5 top-5 inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-700">
-                  <Flame className="h-3.5 w-3.5" />
-                  Only 50 seats
-                </div>
-                <CardHeader className="space-y-1 p-6">
-                  <CardTitle className="text-2xl">Lifetime</CardTitle>
-                  <CardDescription>Buy once, own forever</CardDescription>
-                  <p className="text-4xl font-semibold tracking-tight">$99<span className="text-base font-normal text-muted-foreground"> one-time</span></p>
-                </CardHeader>
-                <CardContent className="flex-1 space-y-3 px-6 text-sm">
-                  {[
-                    "Everything in Pro, forever",
-                    "No recurring charges",
-                    "Lifetime custom domain & SSL",
-                    "Lifetime subscriber emails",
-                    "Future Pro features included",
-                    "Pay once, yours for life",
-                  ].map((x) => (
-                    <div key={x} className="flex items-center gap-2.5">
-                      <Check className="h-4 w-4 text-emerald-700" aria-hidden />
-                      <span className="text-muted-foreground">{x}</span>
-                    </div>
-                  ))}
-                </CardContent>
-                <CardFooter className="p-6 pt-4">
-                  <Button className="h-12 w-full bg-amber-500 text-amber-950 shadow-md shadow-amber-500/25 hover:bg-amber-500/90" asChild>
-                    <a href={`${signupUrl}?plan=lifetime`}>
-                      <Zap className="mr-1.5 h-4 w-4" />
-                      Get Lifetime Access
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
-            </div>
-            <p className="mt-4 text-sm text-muted-foreground">No annual contract. Cancel anytime. Lifetime is a one-time payment — no recurring fees.</p>
-          </div>
-        </section>
+        <PricingSection />
 
         <section className="px-[max(1rem,env(safe-area-inset-left))] pb-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-24">
           <div className="mx-auto max-w-5xl rounded-2xl border border-border/70 bg-gradient-to-r from-background to-muted/40 p-8 sm:p-10">
