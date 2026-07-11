@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Check, Flame, Sparkles } from "lucide-react";
+import { Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -13,14 +13,14 @@ import { Button } from "@/components/ui/button";
 import { upgradeHref } from "@/lib/upgrade-href";
 
 const BENEFITS = [
-  "Custom domain & SSL",
-  "Send emails to subscribers",
+  "Custom domain & automatic SSL",
   "Collect email subscribers",
+  "Publish emails to subscribers",
   "Full views & subscriber analytics",
+  "RSS, sitemap & robots control",
   "Remove Articurls branding",
   "Custom favicon",
   "Unlimited media storage",
-  "RSS, sitemap & robots control",
 ];
 
 export function ProUpgradeDialog({
@@ -34,56 +34,47 @@ export function ProUpgradeDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[min(85dvh,85vh)] w-[calc(100vw-2rem)] max-w-[19rem] overflow-x-hidden rounded-2xl gap-2.5 p-[1.125rem] sm:max-w-sm sm:gap-3 sm:p-[1.875rem]">
-        <DialogHeader className="space-y-1.5 sm:space-y-3">
-          <div className="mx-auto flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 sm:h-11 sm:w-11">
-            <Sparkles className="h-4 w-4 text-amber-600 sm:h-5 sm:w-5" />
-          </div>
-          <DialogTitle className="text-center text-base sm:text-lg">Upgrade to Pro</DialogTitle>
-          <DialogDescription className="text-center text-xs sm:text-sm">
-            Access advanced features and grow your blog.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="mt-2 space-y-2 sm:mt-0 sm:space-y-1.5">
-          {BENEFITS.map((benefit) => (
-            <div key={benefit} className="flex items-center gap-2 text-xs sm:text-sm">
-              <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-100 sm:h-5 sm:w-5">
-                <Check className="h-2.5 w-2.5 text-emerald-600 sm:h-3 sm:w-3" />
-              </span>
-              <span>{benefit}</span>
+      <DialogContent className="max-h-[min(88dvh,88vh)] w-[calc(100vw-2rem)] max-w-sm overflow-y-auto rounded-2xl border-primary/30 bg-gradient-to-b from-primary/[0.06] to-card p-0 ring-1 ring-primary/20 sm:max-w-md">
+        <div className="p-6 sm:p-7">
+          <DialogHeader className="space-y-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grow audience</p>
+            <DialogTitle className="mt-1.5 text-2xl font-semibold tracking-tight">Upgrade to Pro</DialogTitle>
+            <div className="mt-4 flex items-baseline gap-1.5">
+              <span className="text-4xl font-semibold tracking-tight">$9</span>
+              <span className="text-base font-normal text-muted-foreground">/mo</span>
             </div>
-          ))}
-        </div>
+            <DialogDescription className="mt-3 text-sm leading-relaxed text-muted-foreground">
+              Reach readers on your own domain and unlock everything you need to grow.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="mt-2 space-y-1.5 sm:mt-0 sm:space-y-2">
           <Button
-            className="h-9 w-full touch-manipulation text-xs sm:h-11 sm:text-sm"
+            className="mt-6 h-12 w-full touch-manipulation shadow-md shadow-primary/20"
             onClick={() => router.push(upgradeHref("pro"))}
           >
-            Get Pro Monthly— $9/mo
+            Start Pro — $9/mo
           </Button>
-          <div className="flex items-center gap-2 py-0.5">
-            <span className="h-px flex-1 bg-border" />
-            <span className="text-[0.625rem] font-medium uppercase tracking-wide text-muted-foreground sm:text-xs">
-              or
-            </span>
-            <span className="h-px flex-1 bg-border" />
-          </div>
-          <Button
-            variant="outline"
-            className="h-9 w-full touch-manipulation gap-0 border-amber-300 px-2 text-xs text-amber-900 hover:bg-amber-50 sm:h-11 sm:px-4 sm:text-sm"
+
+          <button
+            type="button"
             onClick={() => router.push(upgradeHref("lifetime"))}
+            className="mt-2.5 flex w-full items-center justify-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            <Flame className="mr-1 h-3.5 w-3.5 shrink-0 text-amber-600 sm:mr-1.5 sm:h-4 sm:w-4" />
-            Pro Lifetime — $99{" "}
-            <span className="ml-1 text-[0.625rem] font-normal text-muted-foreground line-through sm:text-xs">
-              $149
-            </span>
-            <span className="ml-1.5 rounded-full bg-amber-100 px-1.5 py-0.5 text-[0.625rem] font-medium text-amber-700 sm:text-xs">
-              50 seats left
-            </span>
-          </Button>
+            <span>Or pay once — Lifetime for</span>
+            <span className="font-medium text-foreground">$99</span>
+            <span className="line-through">$149</span>
+          </button>
+
+          <div className="mt-6 border-t border-border/60 pt-6">
+            <ul className="space-y-3">
+              {BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2.5 text-sm">
+                  <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                  <span className="text-foreground/80">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
