@@ -1,4 +1,4 @@
-import { ArrowDown, ArrowRight, LayoutDashboard } from "lucide-react";
+import { ArrowDown, ArrowRight } from "lucide-react";
 
 const SCATTERED = [
   { label: "WordPress", x: "left-0 top-0", rotate: "-rotate-3" },
@@ -12,7 +12,7 @@ const SCATTERED = [
   { label: "DNS", x: "left-4 top-64", rotate: "rotate-1" },
 ] as const;
 
-const CALM = ["One dashboard", "One editor", "One domain", "One analytics", "One workflow"] as const;
+const CALM = ["One dashboard", "One editor", "One audience", "One workflow", "One subscription"] as const;
 
 export function ProblemSection() {
   return (
@@ -56,7 +56,7 @@ export function ProblemSection() {
           <div className="relative overflow-hidden rounded-3xl border border-primary/25 bg-card p-6 shadow-[0_28px_90px_-46px_rgba(124,58,237,0.5)] sm:p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_10%,oklch(0.55_0.2_293/0.08),transparent_72%)]" />
             <p className="relative inline-flex items-center gap-2 text-sm font-medium text-primary">
-              <LayoutDashboard className="h-4 w-4" /> With Articurls
+              With Articurls
             </p>
             <p className="relative mt-1 text-lg font-semibold tracking-tight">One calm place</p>
 
@@ -66,7 +66,6 @@ export function ProblemSection() {
                   key={item}
                   className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3 text-base font-medium"
                 >
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
                   {item}
                 </li>
               ))}
