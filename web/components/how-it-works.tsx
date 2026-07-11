@@ -153,12 +153,12 @@ function ClaimVisual() {
       <div className="space-y-3 p-5">
         <p className="text-xs font-medium text-muted-foreground">Your address</p>
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
-          <span className="flex h-11 items-center pl-3 pr-1 text-muted-foreground">
-            <AtSign className="h-4 w-4" />
+          <span className="flex h-11 items-center bg-muted/60 pl-3 pr-2 text-sm text-muted-foreground">
+            articurls.com/
           </span>
-          <span className="flex h-11 flex-1 items-center text-sm font-medium text-foreground">yourname</span>
-          <span className="flex h-11 items-center bg-muted/60 px-3 text-sm text-muted-foreground">
-            .articurls.com
+          <span className="flex h-11 flex-1 items-center pr-3 text-sm font-medium text-foreground">
+            yourname
+            <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-px bg-primary group-hover:animate-pulse" />
           </span>
         </div>
         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
@@ -193,29 +193,77 @@ function WriteVisual() {
 }
 
 function GrowVisual() {
+  const pageviews = [0.34, 0.5, 0.42, 0.7, 0.58, 0.86, 0.78];
+  const visitors = [0.2, 0.32, 0.27, 0.46, 0.4, 0.6, 0.55];
   return (
     <div aria-hidden>
-      <Chrome label="yourname.com — Analytics" />
-      <div className="space-y-4 p-5">
-        <div className="flex items-end justify-between">
-          <div>
-            <p className="text-xs font-medium text-muted-foreground">Readers this month</p>
-            <p className="text-2xl font-semibold tracking-tight">2,481</p>
+      <Chrome label="yourblog.com — Analytics" />
+      <div className="p-4 sm:p-5">
+        <div className="grid grid-cols-2 gap-2">
+          <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+            <p className="text-[10px] font-medium text-muted-foreground">Pageviews</p>
+            <p className="text-lg font-bold tracking-tight">3,942</p>
           </div>
-          <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-            <BarChart3 className="h-3.5 w-3.5" /> Growing
-          </span>
+          <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+            <p className="text-[10px] font-medium text-muted-foreground">Visitors</p>
+            <p className="text-lg font-bold tracking-tight">2,481</p>
+          </div>
         </div>
-        <div className="flex h-16 items-end gap-1.5">
-          {[34, 46, 40, 58, 52, 70, 64, 82].map((h, i) => (
-            <div
-              key={i}
-              className="flex-1 origin-bottom rounded-sm bg-primary/75 transition-transform duration-500 group-hover:scale-y-105"
-              style={{ height: `${h}%` }}
-            />
-          ))}
+
+        <div className="mt-3">
+          <p className="text-[11px] font-medium text-muted-foreground">Traffic · Last 7 days</p>
+          <svg viewBox="0 0 320 120" className="mt-1 h-24 w-full overflow-visible" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="hiw-pv" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0" />
+              </linearGradient>
+              <linearGradient id="hiw-vi" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0.32" />
+                <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0" />
+              </linearGradient>
+            </defs>
+            {[24, 52, 80].map((y) => (
+              <line key={y} x1="0" y1={y} x2="320" y2={y} className="stroke-border" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
+            ))}
+            <path d={areaPath(pageviews)} fill="url(#hiw-pv)" />
+            <path d={linePath(pageviews)} fill="none" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" strokeLinecap="round" />
+            <path d={areaPath(visitors)} fill="url(#hiw-vi)" />
+            <path d={linePath(visitors)} fill="none" stroke="oklch(0.58 0.18 280)" strokeWidth="2.5" strokeLinecap="round" />
+          </svg>
+          <div className="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[oklch(0.6_0.15_145)]" /> Pageviews
+            </span>
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-[oklch(0.58_0.18_280)]" /> Visitors
+            </span>
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+function chartPoints(values: number[]) {
+  const w = 320;
+  const stepX = w / (values.length - 1);
+  return values.map((v, i) => [i * stepX, 100 - v * 78] as const);
+}
+
+function linePath(values: number[]) {
+  const pts = chartPoints(values);
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [px, py] = pts[i - 1];
+    const [x, y] = pts[i];
+    const cx = (px + x) / 2;
+    d += ` C ${cx} ${py} ${cx} ${y} ${x} ${y}`;
+  }
+  return d;
+}
+
+function areaPath(values: number[]) {
+  const pts = chartPoints(values);
+  return `${linePath(values)} L ${pts[pts.length - 1][0]} 120 L ${pts[0][0]} 120 Z`;
 }
