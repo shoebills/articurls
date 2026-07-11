@@ -2,32 +2,40 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { BrandLogo } from "@/components/brand-logo";
-import { Button } from "@/components/ui/button";
 import { appAuthHref } from "@/lib/env";
+
+const LINKS = [
+  { label: "Features", href: "#features" },
+  { label: "Pricing", href: "#pricing" },
+  { label: "Blog Examples", href: "#examples" },
+  { label: "Docs", href: "/docs" },
+] as const;
 
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
   const signupUrl = appAuthHref("/signup");
-  const login = appAuthHref("/login");
+  const loginUrl = appAuthHref("/login");
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
 
     function onPointerDown(event: MouseEvent | TouchEvent) {
       const target = event.target as Node | null;
-      if (!target) return;
-      if (!navRef.current?.contains(target)) {
-        setOpen(false);
-      }
+      if (target && !navRef.current?.contains(target)) setOpen(false);
     }
-
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") {
-        setOpen(false);
-      }
+      if (event.key === "Escape") setOpen(false);
     }
 
     document.addEventListener("mousedown", onPointerDown);
@@ -40,102 +48,106 @@ export function MarketingNav() {
     };
   }, [open]);
 
-  const mobileLinks = (
-    <nav className="flex flex-col gap-1 p-2">
-      <a
-        href="#features"
-        className="flex min-h-12 items-center justify-center rounded-lg px-4 text-center text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
-        onClick={() => setOpen(false)}
-      >
-        Features
-      </a>
-      <a
-        href="#how-it-works"
-        className="flex min-h-12 items-center justify-center rounded-lg px-4 text-center text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
-        onClick={() => setOpen(false)}
-      >
-        How it works
-      </a>
-      <a
-        href="#pricing"
-        className="flex min-h-12 items-center justify-center rounded-lg px-4 text-center text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
-        onClick={() => setOpen(false)}
-      >
-        Pricing
-      </a>
-      <Link
-        href={login}
-        className="flex min-h-12 items-center justify-center rounded-lg px-4 text-center text-base font-medium text-foreground transition-colors duration-200 hover:bg-muted active:bg-muted/80"
-        onClick={() => setOpen(false)}
-      >
-        Log in
-      </Link>
-    </nav>
-  );
-
   return (
     <header
       ref={navRef}
-      className="sticky top-0 z-40 border-b border-border/70 bg-background/80 pt-[env(safe-area-inset-top)] shadow-sm shadow-black/[0.02] [--mobile-nav-rail-gap:0.5rem] backdrop-blur-xl backdrop-saturate-150 transition-[background-color,backdrop-filter] duration-200 supports-[backdrop-filter]:bg-background/70"
+      data-scrolled={scrolled || undefined}
+      className="sticky top-0 z-50 pt-[env(safe-area-inset-top)] transition-[background-color,border-color,backdrop-filter] duration-300 ease-out border-b border-transparent data-[scrolled]:border-border/60 data-[scrolled]:bg-background/70 data-[scrolled]:backdrop-blur-xl data-[scrolled]:backdrop-saturate-150"
     >
-      <div className="mx-auto w-full max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-6 sm:pr-6">
-        <div className="flex min-h-11 w-full items-center gap-2 py-[var(--mobile-nav-rail-gap)] sm:h-16 sm:min-h-16 sm:gap-3 sm:py-0">
-          <div className="flex min-h-11 min-w-0 flex-1 items-center gap-1.5 sm:min-h-0 sm:gap-2">
-            <BrandLogo className="min-w-0" />
+      <div className="mx-auto w-full max-w-[1280px] px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] sm:px-8">
+        <div className="flex h-[72px] items-center justify-between gap-6">
+          <div className="flex shrink-0 items-center">
+            <BrandLogo />
           </div>
 
-          <div className="flex shrink-0 items-center gap-2 min-[400px]:gap-3 sm:gap-5 md:gap-6 lg:gap-8">
-            <nav className="hidden items-center gap-4 text-sm font-medium text-muted-foreground md:flex lg:gap-8">
-              <a href="#features" className="transition-colors duration-200 hover:text-foreground">
-                Features
-              </a>
-              <a href="#how-it-works" className="transition-colors duration-200 hover:text-foreground">
-                How it works
-              </a>
-              <a href="#pricing" className="transition-colors duration-200 hover:text-foreground">
-                Pricing
-              </a>
-              <Link href={login} className="transition-colors duration-200 hover:text-foreground">
-                Log in
-              </Link>
-            </nav>
-            <Button size="sm" className="hidden h-10 min-w-[6.5rem] touch-manipulation md:inline-flex sm:min-w-0" asChild>
-              <a href={signupUrl}>Get started</a>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              className="h-11 w-11 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground md:hidden"
-              aria-label="Open menu"
-              aria-expanded={open}
-              aria-controls="mobile-marketing-menu"
-              onClick={() => setOpen((prev) => !prev)}
+          <nav className="hidden items-center gap-9 md:flex" aria-label="Primary">
+            {LINKS.map((link) => (
+              <NavLink key={link.label} href={link.href}>
+                {link.label}
+              </NavLink>
+            ))}
+          </nav>
+
+          <div className="hidden shrink-0 items-center gap-7 md:flex">
+            <NavLink href={loginUrl}>Login</NavLink>
+            <a
+              href={signupUrl}
+              className="inline-flex h-9 items-center rounded-lg bg-[#7C3AED] px-4 text-sm font-medium text-white shadow-sm shadow-[#7C3AED]/25 outline-none transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-[#6D28D9] hover:shadow-md hover:shadow-[#7C3AED]/30 focus-visible:ring-2 focus-visible:ring-[#7C3AED] focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              <Menu className="h-5 w-5" />
-            </Button>
+              Start Free
+            </a>
           </div>
+
+          <button
+            type="button"
+            className="-mr-1.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-foreground/70 outline-none transition-colors duration-200 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background md:hidden"
+            aria-label={open ? "Close menu" : "Open menu"}
+            aria-expanded={open}
+            aria-controls="mobile-marketing-menu"
+            onClick={() => setOpen((prev) => !prev)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
       </div>
+
       <div
         id="mobile-marketing-menu"
-        className={`absolute inset-x-0 top-full z-30 mt-[calc(var(--mobile-nav-rail-gap)+1px+var(--mobile-nav-rail-gap))] md:hidden transition-all duration-250 ease-in-out ${
-          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-2 opacity-0"
+        className={`absolute inset-x-0 top-full origin-top md:hidden transition-all duration-250 ease-out ${
+          open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1.5 opacity-0"
         }`}
       >
-        <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))] sm:px-6 sm:pr-6">
-          <div className="overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl shadow-black/10">
-            {mobileLinks}
-            <div className="border-t border-border p-3">
-              <Button className="h-11 w-full touch-manipulation" asChild>
-                <a href={signupUrl} className="inline-flex w-full items-center justify-center text-center" onClick={() => setOpen(false)}>
-                  Get started — free
+        <div className="mx-auto max-w-[1280px] px-[max(1.25rem,env(safe-area-inset-left))] pr-[max(1.25rem,env(safe-area-inset-right))] pb-4 sm:px-8">
+          <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-xl shadow-black/[0.06] backdrop-blur-xl">
+            <nav className="flex flex-col p-2" aria-label="Mobile">
+              {LINKS.map((link) => (
+                <a
+                  key={link.label}
+                  href={link.href}
+                  className="flex min-h-12 items-center rounded-xl px-4 text-[0.95rem] font-medium text-foreground/80 transition-colors duration-200 hover:bg-muted hover:text-foreground active:bg-muted/80"
+                  onClick={() => setOpen(false)}
+                >
+                  {link.label}
                 </a>
-              </Button>
+              ))}
+              <a
+                href={loginUrl}
+                className="flex min-h-12 items-center rounded-xl px-4 text-[0.95rem] font-medium text-foreground/80 transition-colors duration-200 hover:bg-muted hover:text-foreground active:bg-muted/80"
+                onClick={() => setOpen(false)}
+              >
+                Login
+              </a>
+            </nav>
+            <div className="p-2 pt-0">
+              <a
+                href={signupUrl}
+                className="flex min-h-12 w-full items-center justify-center rounded-xl bg-[#7C3AED] px-4 text-[0.95rem] font-medium text-white transition-colors duration-200 hover:bg-[#6D28D9] active:scale-[0.99] motion-reduce:active:scale-100"
+                onClick={() => setOpen(false)}
+              >
+                Start Free
+              </a>
             </div>
           </div>
         </div>
       </div>
     </header>
+  );
+}
+
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
+  const isInternal = href.startsWith("/") && !href.startsWith("//");
+  const className =
+    "text-sm font-medium text-foreground/60 outline-none transition-colors duration-200 hover:text-foreground focus-visible:text-foreground focus-visible:underline focus-visible:underline-offset-4";
+  if (isInternal) {
+    return (
+      <Link href={href} className={className}>
+        {children}
+      </Link>
+    );
+  }
+  return (
+    <a href={href} className={className}>
+      {children}
+    </a>
   );
 }
