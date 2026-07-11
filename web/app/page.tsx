@@ -16,7 +16,7 @@ export default function MarketingPage() {
   return (
     <>
       <MarketingNav />
-      <main className="min-w-0 flex-1 overflow-x-clip">
+      <main className="min-w-0 flex-1 overflow-x-clip pt-[calc(3.5rem+0.75rem+env(safe-area-inset-top))] sm:pt-[calc(4rem+1rem)]">
         <section className="relative overflow-hidden">
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_72%_55%_at_22%_12%,oklch(0.53_0.16_265/0.2),transparent_70%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_45%_45%_at_80%_18%,oklch(0.7_0.11_206/0.12),transparent_74%)]" />

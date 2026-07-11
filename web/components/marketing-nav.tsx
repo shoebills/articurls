@@ -43,7 +43,7 @@ export function MarketingNav() {
   return (
     <header
       ref={navRef}
-      className="sticky top-0 z-50 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-6 sm:pt-4"
+      className="fixed inset-x-0 top-0 z-50 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-6 sm:pt-4"
     >
       <div className="mx-auto flex h-14 w-full max-w-3xl items-center justify-between gap-6 rounded-2xl border border-border/60 bg-background/70 pl-5 pr-2.5 shadow-lg shadow-black/[0.04] backdrop-blur-xl backdrop-saturate-150 sm:h-16 sm:pl-6 sm:pr-3">
         <div className="flex shrink-0 items-center">
