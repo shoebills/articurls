@@ -1,3 +1,4 @@
+import { HeroShowcase } from "@/components/hero-showcase";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
 import { Button } from "@/components/ui/button";
@@ -63,69 +64,42 @@ export default function MarketingPage() {
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_72%_55%_at_22%_12%,oklch(0.53_0.16_265/0.2),transparent_70%)]" />
           <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_45%_45%_at_80%_18%,oklch(0.7_0.11_206/0.12),transparent_74%)]" />
           <div className="pointer-events-none absolute inset-0 bg-dot-pattern opacity-30" aria-hidden />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 sm:px-6 sm:pt-24 lg:grid-cols-[0.95fr_1.05fr] lg:pt-28">
+          <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 sm:px-6 sm:pt-24 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-28">
             <div className="min-w-0">
-              <p className="inline-flex items-center rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs text-primary backdrop-blur">
-                Built for focused publishing
+              <p className="inline-flex items-center rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs font-medium text-primary backdrop-blur">
+                Your blog. Your domain. Your rules.
               </p>
-              <h1 className="mt-5 max-w-[18ch] text-4xl font-semibold leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-                Publish in one clean flow
+              <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+                Own a beautiful blog on your&nbsp;own domain
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Write, schedule, publish, and track readers without bouncing between tools.
+                No WordPress to maintain. No Ghost to host. No servers, plugins, or updates. Just a fast,
+                SEO-ready blog that&apos;s entirely yours.
               </p>
               <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>
                   <a href={signupUrl}>Start free</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 min-h-12 bg-background/80" asChild>
-                  <a href="#pricing">See pricing</a>
+                  <a href="#examples">See live examples</a>
                 </Button>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                No credit card required
+                No credit card required · Publish on your domain in minutes
               </p>
+
+              <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-sm text-muted-foreground">
+                {["Custom domains", "SEO built-in", "Subscribers", "Analytics"].map((item) => (
+                  <li key={item} className="inline-flex items-center gap-1.5">
+                    <Check className="h-4 w-4 text-primary" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
             </div>
 
-            <div className="relative mx-auto hidden w-full max-w-[40rem] lg:block" aria-hidden>
-              <div className="absolute -inset-3 rounded-3xl bg-gradient-to-br from-primary/15 to-transparent blur-2xl" />
-              <div className="relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 shadow-[0_24px_80px_-34px_rgba(15,23,42,0.55)] backdrop-blur">
-                <div className="flex items-center gap-2 border-b border-border/70 bg-muted/45 px-4 py-3">
-                  <span className="h-2.5 w-2.5 rounded-full bg-red-400/90" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-amber-400/90" />
-                  <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/90" />
-                  <span className="ml-3 truncate text-xs text-muted-foreground">Editor preview</span>
-                </div>
-                <div className="grid gap-4 p-5 lg:grid-cols-[1.3fr_0.7fr]">
-                  <div className="space-y-4 rounded-xl border border-border/60 bg-background/80 p-4">
-                    <div className="h-2.5 w-24 rounded bg-primary/20" />
-                    <div className="h-8 w-[88%] rounded bg-foreground/10" />
-                    <div className="h-2.5 w-full rounded bg-muted-foreground/20" />
-                    <div className="h-2.5 w-full rounded bg-muted-foreground/15" />
-                    <div className="h-2.5 w-3/4 rounded bg-muted-foreground/15" />
-                    <div className="mt-3 rounded-lg border border-dashed border-border/70 bg-muted/35 p-3">
-                      <div className="h-28 rounded-md bg-background ring-1 ring-border/70" />
-                    </div>
-                  </div>
-                  <div className="space-y-3 rounded-xl border border-border/60 bg-background/70 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Publish</span>
-                      <span className="rounded bg-emerald-500/15 px-2 py-0.5 text-[11px] text-emerald-800">Ready</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-2.5 w-20 rounded bg-muted-foreground/30" />
-                      <div className="h-8 rounded bg-muted/70 ring-1 ring-border/70" />
-                    </div>
-                    <div className="space-y-2">
-                      <div className="h-2.5 w-16 rounded bg-muted-foreground/30" />
-                      <div className="h-8 rounded bg-muted/70 ring-1 ring-border/70" />
-                    </div>
-                    <div className="rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
-                      1,284 reads this month
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div className="relative w-full pt-4 lg:pt-0">
+              <HeroShowcase />
             </div>
           </div>
         </section>
