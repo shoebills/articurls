@@ -9,7 +9,6 @@ import { PricingSection } from "@/components/pricing-section";
 import { ProductShowcase } from "@/components/product-showcase";
 import { Button } from "@/components/ui/button";
 import { appAuthHref } from "@/lib/env";
-import { Check } from "lucide-react";
 
 export default function MarketingPage() {
   const signupUrl = appAuthHref("/signup");
@@ -25,13 +24,13 @@ export default function MarketingPage() {
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-16 sm:px-6 sm:pt-24 lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-28">
             <div className="min-w-0">
               <p className="inline-flex items-center rounded-full border border-primary/20 bg-background/75 px-3 py-1 text-xs font-medium text-primary backdrop-blur">
-                Your blog. Your domain. Your rules.
+                A better way to blog.
               </p>
               <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
-                Own a beautiful blog on your&nbsp;own domain
+                Publish your own blog in minutes
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                No WordPress to maintain. No Ghost to host. No servers, plugins, or updates. Just a fast,
+                No servers, plugins or updates. Just a fast,
                 SEO-ready blog that&apos;s entirely yours.
               </p>
               <div className="mt-8 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
@@ -39,21 +38,12 @@ export default function MarketingPage() {
                   <a href={signupUrl}>Start free</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 min-h-12 bg-background/80" asChild>
-                  <a href="#examples">See live examples</a>
+                  <a href="#pricing">See pricing</a>
                 </Button>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">
-                No credit card required · Publish on your domain in minutes
+                No credit card required
               </p>
-
-              <ul className="mt-8 flex flex-wrap items-center gap-x-6 gap-y-2.5 text-sm text-muted-foreground">
-                {["Custom domains", "SEO built-in", "Subscribers", "Analytics"].map((item) => (
-                  <li key={item} className="inline-flex items-center gap-1.5">
-                    <Check className="h-4 w-4 text-primary" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
             </div>
 
             <div className="relative w-full pt-4 lg:pt-0">

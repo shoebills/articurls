@@ -377,7 +377,7 @@ function SeoPanel() {
 
 function SubscribersPanel() {
   return (
-    <AppFrame label="yourblog.com — Post">
+    <AppFrame label="www.yourblog.com — Post">
       <div className="p-6">
         <div className="rounded-xl border border-border/80 bg-muted/20 p-5">
           <p className="text-sm font-semibold text-foreground">Email updates</p>

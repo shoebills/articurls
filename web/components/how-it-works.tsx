@@ -197,7 +197,7 @@ function GrowVisual() {
   const visitors = [0.2, 0.32, 0.27, 0.46, 0.4, 0.6, 0.55];
   return (
     <div aria-hidden>
-      <Chrome label="yourblog.com — Analytics" />
+      <Chrome label="www.yourblog.com — Analytics" />
       <div className="p-4 sm:p-5">
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
