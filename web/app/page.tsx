@@ -75,7 +75,7 @@ export default function MarketingPage() {
 
             <div className="relative">
               <h2 className="mx-auto max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl">
-                Own your words. Own your audience.
+                Own your words.<br />Own your audience.
               </h2>
               <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/60 sm:text-lg">
                 Not a rented profile. A blog that&apos;s truly yours, for as long as you write.
