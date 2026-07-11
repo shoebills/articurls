@@ -9,11 +9,10 @@ import { PricingSection } from "@/components/pricing-section";
 import { ProductShowcase } from "@/components/product-showcase";
 import { Button } from "@/components/ui/button";
 import { appAuthHref } from "@/lib/env";
-import { ArrowUpRight, Check } from "lucide-react";
+import { Check } from "lucide-react";
 
 export default function MarketingPage() {
   const signupUrl = appAuthHref("/signup");
-  const loginUrl = appAuthHref("/login");
 
   return (
     <>
@@ -75,26 +74,35 @@ export default function MarketingPage() {
 
         <FaqSection />
 
-        <section className="px-[max(1rem,env(safe-area-inset-left))] pb-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-24">
-          <div className="mx-auto max-w-5xl rounded-2xl border border-border/70 bg-gradient-to-r from-background to-muted/40 p-8 sm:p-10">
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Ready to publish your next post?</h2>
-                <p className="mt-2 max-w-xl text-sm text-muted-foreground sm:text-base">
-                  Create a workspace, draft your post, and publish today.
-                </p>
-              </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" className="h-12" asChild>
-                  <a href={signupUrl}>Create free account</a>
+        <section className="px-[max(1rem,env(safe-area-inset-left))] pb-16 pr-[max(1rem,env(safe-area-inset-right))] pt-12 sm:px-6 sm:pb-20">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[1.75rem] bg-neutral-950 px-6 py-24 text-center sm:px-10 sm:py-32 lg:py-40">
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_115%,oklch(0.55_0.2_293/0.35),transparent_70%)]" aria-hidden />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_40%_40%_at_50%_-10%,oklch(0.55_0.2_293/0.12),transparent_70%)]" aria-hidden />
+
+            <p
+              className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none bg-gradient-to-b from-white/[0.06] to-transparent bg-clip-text text-[22vw] font-semibold leading-none tracking-tighter text-transparent sm:text-[16rem]"
+              aria-hidden
+            >
+              Own it
+            </p>
+
+            <div className="relative">
+              <h2 className="mx-auto max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl">
+                Own your words. Own your audience.
+              </h2>
+              <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/60 sm:text-lg">
+                Not a rented profile. A blog that&apos;s truly yours — for as long as you write.
+              </p>
+              <div className="mt-10 flex justify-center">
+                <Button
+                  size="lg"
+                  className="h-14 bg-white px-10 text-base text-neutral-950 shadow-2xl shadow-primary/20 hover:bg-white/90"
+                  asChild
+                >
+                  <a href={signupUrl}>Start Free</a>
                 </Button>
-                <Button size="lg" variant="outline" className="h-12" asChild>
-                  <a href={loginUrl} className="inline-flex items-center gap-1.5">
-                    Log in
-                    <ArrowUpRight className="h-4 w-4" />
-                  </a>
-                </Button>
               </div>
+              <p className="mt-5 text-sm text-white/40">No credit card required</p>
             </div>
           </div>
         </section>
