@@ -3,60 +3,15 @@ import { HowItWorks } from "@/components/how-it-works";
 import { MarketingFooter } from "@/components/marketing-footer";
 import { MarketingNav } from "@/components/marketing-nav";
 import { ProblemSection } from "@/components/problem-section";
+import { ProductShowcase } from "@/components/product-showcase";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { appAuthHref } from "@/lib/env";
-import {
-  ArrowUpRight,
-  CalendarClock,
-  Check,
-  Eye,
-  FolderKanban,
-  Flame,
-  Mail,
-  PenLine,
-  Search,
-  Star,
-  Zap,
-} from "lucide-react";
+import { ArrowUpRight, Check, Flame, Star, Zap } from "lucide-react";
 
 export default function MarketingPage() {
   const signupUrl = appAuthHref("/signup");
   const loginUrl = appAuthHref("/login");
-
-  const features = [
-    {
-      icon: PenLine,
-      title: "Distraction-free editor",
-      description: "Write, embed, and format without leaving the draft.",
-    },
-    {
-      icon: CalendarClock,
-      title: "Ship on your timeline",
-      description: "Draft now, schedule later, publish when it matters.",
-    },
-    {
-      icon: Search,
-      title: "Meta controls",
-      description: "Set post metadata without touching extra tools.",
-    },
-    {
-      icon: Eye,
-      title: "Reader analytics",
-      description: "Track views and unique readers in one glance.",
-    },
-    {
-      icon: Mail,
-      title: "Subscriber emails",
-      description: "Notify confirmed readers when new posts go live.",
-      pro: true,
-    },
-    {
-      icon: FolderKanban,
-      title: "Pages and navigation",
-      description: "Add About, links, and custom pages in minutes.",
-    },
-  ] as const;
 
   return (
     <>
@@ -110,39 +65,7 @@ export default function MarketingPage() {
 
         <HowItWorks />
 
-        <section
-          id="features"
-          className="scroll-mt-[calc(4.5rem+env(safe-area-inset-top))] px-[max(1rem,env(safe-area-inset-left))] py-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:py-28"
-        >
-          <div className="mx-auto max-w-6xl">
-            <div className="max-w-2xl">
-              <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">Core workflow, no filler</h2>
-              <p className="mt-3 text-base text-muted-foreground">Six tools you use every week, in one calm interface.</p>
-            </div>
-
-            <div className="mt-10 grid gap-4 lg:grid-cols-3">
-              {features.map((f, idx) => (
-                <div
-                  key={f.title}
-                  className={`group relative rounded-2xl border border-border/70 bg-card/80 p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/[0.08] ${
-                    idx === 0 || idx === 3 ? "lg:col-span-2" : ""
-                  }`}
-                >
-                  {"pro" in f && f.pro ? (
-                    <span className="absolute right-4 top-4 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary">
-                      Pro
-                    </span>
-                  ) : null}
-                  <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20">
-                    <f.icon className="h-5 w-5" strokeWidth={1.75} aria-hidden />
-                  </div>
-                  <h3 className="mt-4 text-lg font-semibold tracking-tight">{f.title}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{f.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </section>
+        <ProductShowcase />
 
         <section
           id="pricing"
