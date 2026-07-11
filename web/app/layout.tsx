@@ -60,7 +60,7 @@ export default function RootLayout({
       data-theme="light"
       data-scroll-behavior="smooth"
     >
-      <body className="flex min-h-dvh flex-col overflow-x-hidden">
+      <body className="flex min-h-dvh flex-col overflow-x-clip">
         <Providers>{children}</Providers>
       </body>
     </html>
