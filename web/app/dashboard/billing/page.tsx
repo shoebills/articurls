@@ -241,6 +241,7 @@ export default function BillingPage() {
                   "Custom domain & automatic SSL",
                   "Collect email subscribers",
                   "Publish emails to subscribers",
+                  "Views & subscribers analytics",
                   "RSS, sitemap & robots control",
                   "Remove Articurls branding",
                   "Custom favicon",
