@@ -1,4 +1,5 @@
 import { AudienceSection } from "@/components/audience-section";
+import { FaqSection } from "@/components/faq-section";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { HowItWorks } from "@/components/how-it-works";
 import { MarketingFooter } from "@/components/marketing-footer";
@@ -71,6 +72,8 @@ export default function MarketingPage() {
         <AudienceSection />
 
         <PricingSection />
+
+        <FaqSection />
 
         <section className="px-[max(1rem,env(safe-area-inset-left))] pb-20 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pb-24">
           <div className="mx-auto max-w-5xl rounded-2xl border border-border/70 bg-gradient-to-r from-background to-muted/40 p-8 sm:p-10">
