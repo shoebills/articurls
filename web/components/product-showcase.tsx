@@ -13,9 +13,8 @@ import {
   Link2,
   Highlighter,
   CalendarClock,
-  Copy,
   Check,
-  Loader2,
+  ShieldCheck,
   TrendingUp,
   TrendingDown,
   Eye,
@@ -483,31 +482,21 @@ function DomainPanel() {
         </div>
 
         <div className="mt-4 space-y-3">
-          <div className="rounded-lg border bg-muted/20 p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-green-500" />
-                <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  SSL certificate
-                </span>
-              </div>
-              <span className="rounded border bg-background px-2 py-0.5 font-mono text-xs font-medium">CNAME</span>
+          <div className="flex items-center gap-3 rounded-lg border bg-muted/20 p-4">
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-500/10 text-green-600">
+              <ShieldCheck className="h-4.5 w-4.5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Automatic SSL</p>
+              <p className="text-xs text-muted-foreground">Certificate issued and auto-renewing.</p>
             </div>
-            <div className="mt-3 space-y-1">
-              <p className="text-xs text-muted-foreground">Value</p>
-              <div className="flex items-center gap-2">
-                <code className="min-w-0 flex-1 truncate rounded border bg-background px-3 py-1.5 font-mono text-xs">
-                  fallback.articurls.com
-                </code>
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-input bg-white">
-                  <Copy className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            </div>
+            <span className="ml-auto inline-flex items-center gap-1 text-xs font-medium text-green-700">
+              <Check className="h-3.5 w-3.5" /> Secured
+            </span>
           </div>
           <div className="flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-xs text-blue-900">
-            <Loader2 className="h-3.5 w-3.5 shrink-0" />
-            Automatic SSL issued — your domain is live and secure.
+            <Check className="h-3.5 w-3.5 shrink-0" />
+            Your blog is live on your own domain — HTTPS enabled.
           </div>
         </div>
       </div>
