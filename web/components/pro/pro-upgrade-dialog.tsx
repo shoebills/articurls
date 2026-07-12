@@ -38,12 +38,10 @@ export function ProUpgradeDialog({
         style={{
           backgroundColor: "white",
         }}
-        className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7"
+        className="relative max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-gray-400/20 before:pointer-events-none"
       >
-        <div className="relative">
-          <div className="pointer-events-none absolute inset-0 rounded-2xl bg-gradient-to-b from-transparent via-transparent to-gray-400/20" />
-
-          <DialogHeader className="relative z-10 space-y-0">
+        <div className="relative z-10">
+          <DialogHeader className="space-y-0">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-primary sm:text-xs">Grow audience</p>
             <DialogTitle className="mt-1 text-xl font-semibold tracking-tight sm:mt-1.5 sm:text-2xl">Upgrade to Pro</DialogTitle>
             <DialogDescription className="mt-2 text-[0.8125rem] leading-relaxed text-muted-foreground sm:mt-3 sm:text-sm">
@@ -51,7 +49,7 @@ export function ProUpgradeDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <ul className="relative z-10 mt-4 space-y-2 sm:mt-6 sm:space-y-3">
+          <ul className="mt-4 space-y-2 sm:mt-6 sm:space-y-3">
             {BENEFITS.map((benefit) => (
               <li key={benefit} className="flex items-start gap-2.5 text-[0.8125rem] sm:text-sm">
                 <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
@@ -60,7 +58,7 @@ export function ProUpgradeDialog({
             ))}
           </ul>
 
-          <div className="relative z-10 mt-5 space-y-2 sm:mt-6 sm:space-y-2.5">
+          <div className="mt-5 space-y-2 sm:mt-6 sm:space-y-2.5">
             <Button
               className="h-11 w-full touch-manipulation shadow-md shadow-primary/20 sm:h-12"
               onClick={() => router.push(upgradeHref("pro"))}
