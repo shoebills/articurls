@@ -10,12 +10,14 @@ import logging
 from typing import List, Optional
 
 import requests
+from fastapi import BackgroundTasks
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configuration
+# Configuration — zone IDs are read lazily from settings so they can be
+# configured at runtime and gracefully degrade when empty.
 CLOUDFLARE_API_TOKEN = settings.cloudflare_api_token
 CLOUDFLARE_ZONE_ID = settings.cloudflare_zone_id
 
@@ -224,7 +226,7 @@ async def purge_across_multiple_zones(
     Purge content across multiple zones (for tenants with custom domains).
 
     Args:
-        tenant_hosts: List of tenant hosts (e.g., ["pabloo.io", "articurls.com/username"])
+        tenant_hosts: List of tenant hosts (e.g., ["pabloo.io", "articurls.site/username"])
         content_type: Type of content ("post", "page", "category")
         slug: Content slug
 
@@ -234,6 +236,7 @@ async def purge_across_multiple_zones(
     # Map of hostname -> zone_id (configure this based on your setup)
     ZONE_MAP = {
         "articurls.com": CLOUDFLARE_ZONE_ID,
+        "articurls.site": settings.cloudflare_ugs_zone_id,
         # Add custom domain zones as needed:
         # "pabloo.io": "zone-id-for-pabloo",
     }
@@ -256,3 +259,43 @@ async def purge_across_multiple_zones(
             results[host] = await purge_entire_tenant(zone_id, host)
 
     return results
+
+
+# ---------------------------------------------------------------------------
+# Convenience helpers for routers — schedule purges across all relevant zones
+# (UGC domain + optional custom domain) in one call.
+# ---------------------------------------------------------------------------
+
+def schedule_post_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
+    if settings.cloudflare_ugs_zone_id:
+        background_tasks.add_task(purge_blog_post, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
+    if user.custom_domain and settings.cloudflare_zone_id:
+        background_tasks.add_task(purge_blog_post, settings.cloudflare_zone_id, user.custom_domain, slug)
+
+
+def schedule_page_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
+    if settings.cloudflare_ugs_zone_id:
+        background_tasks.add_task(purge_custom_page, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
+    if user.custom_domain and settings.cloudflare_zone_id:
+        background_tasks.add_task(purge_custom_page, settings.cloudflare_zone_id, user.custom_domain, slug)
+
+
+def schedule_category_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
+    if settings.cloudflare_ugs_zone_id:
+        background_tasks.add_task(purge_category, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
+    if user.custom_domain and settings.cloudflare_zone_id:
+        background_tasks.add_task(purge_category, settings.cloudflare_zone_id, user.custom_domain, slug)
+
+
+def schedule_homepage_purge(background_tasks: BackgroundTasks, user) -> None:
+    if settings.cloudflare_ugs_zone_id:
+        background_tasks.add_task(purge_homepage, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}")
+    if user.custom_domain and settings.cloudflare_zone_id:
+        background_tasks.add_task(purge_homepage, settings.cloudflare_zone_id, user.custom_domain)
+
+
+def schedule_tenant_purge(background_tasks: BackgroundTasks, user) -> None:
+    if settings.cloudflare_ugs_zone_id:
+        background_tasks.add_task(purge_entire_tenant, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}")
+    if user.custom_domain and settings.cloudflare_zone_id:
+        background_tasks.add_task(purge_entire_tenant, settings.cloudflare_zone_id, user.custom_domain)

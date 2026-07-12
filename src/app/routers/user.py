@@ -39,7 +39,7 @@ from ..utils import (
     validate_username_or_raise,
     public_blog_home_url,
 )
-from ..cache.service import purge_entire_tenant, purge_homepage
+from ..cache.service import schedule_homepage_purge, schedule_tenant_purge
 from ..utils.rate_limit import check_rate_limit_ip
 
 router = APIRouter(
@@ -242,18 +242,7 @@ def update_design_settings(
     # Design settings affect public homepage chrome/content (header, featured
     # posts, about/footer), so purge the same homepage/listing cache tags used
     # by public blog updates instead of requiring a manual Cloudflare purge.
-    if settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_homepage,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_homepage,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    schedule_homepage_purge(background_tasks, db_user)
 
     return db_user
 
@@ -290,18 +279,8 @@ def update_meta_settings(
     db.commit()
     db.refresh(db_user)
 
-    if rss_changed and settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    if rss_changed:
+        schedule_tenant_purge(background_tasks, db_user)
 
     return db_user
 
@@ -369,18 +348,7 @@ def update_user(
     db.refresh(db_user)
 
     if name_changed or username_changed or pfp_changed:
-        if settings.cloudflare_zone_id:
-            if db_user.custom_domain:
-                background_tasks.add_task(
-                    purge_entire_tenant,
-                    settings.cloudflare_zone_id,
-                    db_user.custom_domain,
-                )
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                "articurls.com",
-            )
+        schedule_tenant_purge(background_tasks, db_user)
 
     return db_user
 
@@ -518,20 +486,10 @@ def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTas
     db.commit()
     db.refresh(db_user)
 
-    if settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    schedule_tenant_purge(background_tasks, db_user)
 
     return db_user
+
 
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
 async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
@@ -546,20 +504,12 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
     db.commit()
     db.refresh(db_user)
 
-    if settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    schedule_tenant_purge(background_tasks, db_user)
 
     return {"profile_image_url": db_user.profile_image_url}
+
+
+
 
 
 FAVICON_MAX_BYTES = 256 * 1024  # 256KB
@@ -613,18 +563,7 @@ async def upload_favicon(
     db.commit()
     db.refresh(db_user)
 
-    if settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    schedule_tenant_purge(background_tasks, db_user)
 
     return {"favicon_url": db_user.favicon_url}
 
@@ -661,17 +600,6 @@ async def delete_favicon(
     db.commit()
     db.refresh(db_user)
 
-    if settings.cloudflare_zone_id:
-        if db_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id,
-                db_user.custom_domain,
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id,
-            "articurls.com",
-        )
+    schedule_tenant_purge(background_tasks, db_user)
 
     return {"favicon_url": None}

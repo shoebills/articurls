@@ -11,7 +11,7 @@ def public_blog_home_url(user: models.User) -> str:
     if user.custom_domain and domain_status in ("active", "grace"):
         return f"https://{user.custom_domain}/"
 
-    base = settings.marketing_origin.rstrip("/")
+    base = settings.ugc_origin.rstrip("/")
     return f"{base}/{user.user_name}/"
 
 
@@ -25,5 +25,5 @@ def public_post_url(user: models.User, blog: models.Blog, _db: Session) -> str:
     ):
         return f"https://{user.custom_domain}/blog/{blog.slug}"
 
-    base = settings.marketing_origin.rstrip("/")
+    base = settings.ugc_origin.rstrip("/")
     return f"{base}/{user.user_name}/blog/{blog.slug}"

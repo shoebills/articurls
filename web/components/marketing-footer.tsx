@@ -12,14 +12,14 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       { label: "Start free", href: appAuthHref("/signup") },
     ],
   },
-  {
-    title: "Resources",
-    links: [
-      { label: "Docs", href: "/docs" },
-      { label: "Blog examples", href: `${MARKETING_ORIGIN}/#examples` },
-      { label: "Log in", href: appAuthHref("/login") },
-    ],
-  },
+      {
+        title: "Resources",
+        links: [
+          { label: "Docs", href: "/docs" },
+          { label: "Blog", href: `${MARKETING_ORIGIN}/#examples` },
+          { label: "Log in", href: appAuthHref("/login") },
+        ],
+      },
   {
     title: "Company",
     links: [

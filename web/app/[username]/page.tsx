@@ -1,6 +1,6 @@
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
@@ -65,7 +65,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (!user) return { title: "Not found", robots: { index: false, follow: true } };
   const seoEligibility = await fetchSeoEligibility(user.user_name || username);
   const marketingPath = `/${encodeURIComponent(user.user_name)}`;
-  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
+  const canonical = resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, "/");
   const title = user.meta_title || `${user.name} — Articurls`;
   const description = user.meta_description || undefined;
   const siteName = resolveUserSiteName(user);
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     domain_status: user.domain_status,
   });
   const feedUrl = shouldIndex && user.rss_enabled !== false
-    ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
+    ? `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
     : undefined;
   const alternates = feedUrl
     ? { canonical, types: { "application/rss+xml": feedUrl } }
@@ -134,7 +134,7 @@ export default async function PublicProfilePage({ params }: Props) {
   
   // Define canonical URL for structured data
   const marketingPath = `/${encodeURIComponent(user.user_name)}`;
-  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
+  const canonical = resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, "/");
 
   return (
     <div className="min-h-screen bg-white">
@@ -170,7 +170,7 @@ export default async function PublicProfilePage({ params }: Props) {
             </header>
           ) : null}
           <StructuredData data={generateWebSiteSchema(user, canonical)} />
-          <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={MARKETING_ORIGIN} />
+          <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} />
           <PublicSiteFooter user={user} pages={pages} />
         </SearchProvider>
       </main>

@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     uploads_dir: str = "uploads"
     # Reader/marketing site origin (blog links in emails; env: MARKETING_ORIGIN).
     marketing_origin: str = "http://localhost:3000"
+    # UGC (user-generated content) origin — where user blogs live (e.g. https://articurls.site).
+    ugc_origin: str = "http://localhost:3000"
     public_base_url: str
     storage_backend: str = "local"
     r2_account_id: Optional[str] = None
@@ -50,6 +52,7 @@ class Settings(BaseSettings):
 
     cloudflare_api_token: str = ""
     cloudflare_zone_id: str = ""
+    cloudflare_ugs_zone_id: str = ""
     cloudflare_fallback_origin: str = "fallback.articurls.com"
 
     vercel_api_token: str = ""

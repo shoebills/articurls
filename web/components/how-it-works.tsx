@@ -154,7 +154,7 @@ function ClaimVisual() {
         <p className="text-xs font-medium text-muted-foreground">Your address</p>
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
           <span className="flex h-11 items-center bg-muted/60 pl-3 pr-2 text-sm text-muted-foreground">
-            articurls.com/
+            articurls.site/
           </span>
           <span className="flex h-11 flex-1 items-center pr-3 text-sm font-medium text-foreground">
             yourname

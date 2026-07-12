@@ -26,7 +26,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
+import { assetUrl, UGS_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProGate } from "@/components/pro/pro-gate";
 import CustomDomainSettings from "@/components/custom-domain-settings";
@@ -256,7 +256,7 @@ export default function SettingsPage() {
   const cooldownRemainingDays = Math.ceil(cooldownRemainingMs / 86400000);
   const canChange = cooldownRemainingMs <= 0;
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
-  const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+  const liveProfileUrl = `${UGS_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
   const limitBytes = storageUsage?.limit_bytes ?? null;
   const isUnlimitedStorage = storageUsage?.is_unlimited ?? false;

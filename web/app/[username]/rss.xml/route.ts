@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, UGS_ORIGIN } from "@/lib/env";
 import type { PublicUser } from "@/lib/types";
 import { buildRssXml, fetchPublishedPosts, fetchSeoEligibility, type RssItem } from "@/lib/seo-data";
 
@@ -54,7 +54,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
     (a, b) => toTimestamp(b.published_at || b.updated_at) - toTimestamp(a.published_at || a.updated_at),
   );
   const items: RssItem[] = sorted.slice(0, MAX_RSS_ITEMS).map((post) => {
-    const link = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUsername)}/blog/${encodeURIComponent(post.slug)}`;
+    const link = `${UGS_ORIGIN}/${encodeURIComponent(canonicalUsername)}/blog/${encodeURIComponent(post.slug)}`;
     return {
       title: post.title || "Untitled post",
       link,
@@ -64,7 +64,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
     };
   });
 
-  const siteLink = `${MARKETING_ORIGIN}/${encodeURIComponent(canonicalUsername)}`;
+  const siteLink = `${UGS_ORIGIN}/${encodeURIComponent(canonicalUsername)}`;
   const xml = buildRssXml({
     title: user.meta_title || `${user.name} — Articurls`,
     link: siteLink,

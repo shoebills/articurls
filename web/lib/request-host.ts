@@ -7,6 +7,7 @@
 
 const STATIC_INTERNAL_DOMAINS = new Set([
   "articurls.com",
+  "articurls.site",
   "app.articurls.com",
   "api.articurls.com",
   "blogs.articurls.com",
@@ -30,11 +31,23 @@ export function buildRuntimeHosts(appOrigin: string, marketingOrigin: string): s
   return hosts;
 }
 
-/** Runtime hosts from Next.js public env (app + marketing origins). */
+/** Runtime hosts from Next.js public env (app + marketing + UGC origins). */
 export function buildRuntimeHostsFromEnv(): string[] {
   const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "") || "";
   const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "") || "";
-  return buildRuntimeHosts(appOrigin, marketingOrigin);
+  const hosts = buildRuntimeHosts(appOrigin, marketingOrigin);
+
+  const ugcOrigin = process.env.NEXT_PUBLIC_UGS_ORIGIN?.replace(/\/$/, "");
+  if (ugcOrigin) {
+    try {
+      const host = new URL(ugcOrigin).hostname.toLowerCase();
+      if (!hosts.includes(host)) hosts.push(host);
+    } catch {
+      // ignore malformed env
+    }
+  }
+
+  return hosts;
 }
 
 export function isInternalHost(host: string, runtimeHosts: string[] = []): boolean {

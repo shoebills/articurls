@@ -10,7 +10,7 @@ from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
-from ..cache.service import purge_blog_post
+from ..cache.service import schedule_post_purge
 from ..config import settings
 from ..utils.rate_limit import check_rate_limit_user
 from typing import List
@@ -325,18 +325,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
 
     # Purge cache for this blog post and all listing pages (home + categories)
     # Use FastAPI BackgroundTasks for reliable async execution in sync routes
-    if settings.cloudflare_zone_id:
-        # Purge from custom domain if set
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_blog_post,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-            )
-        # Also purge from articurls.com/username path
-        background_tasks.add_task(
-            purge_blog_post,
-            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-        )
+    schedule_post_purge(background_tasks, current_user, db_blog.slug)
 
     return db_blog
 
@@ -435,16 +424,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_blog_post,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-            )
-        background_tasks.add_task(
-            purge_blog_post,
-            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-        )
+    schedule_post_purge(background_tasks, current_user, db_blog.slug)
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -489,18 +469,10 @@ def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_blog_post,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-            )
-        background_tasks.add_task(
-            purge_blog_post,
-            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-        )
+    schedule_post_purge(background_tasks, current_user, db_blog.slug)
 
     return db_blog
+
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
@@ -677,15 +649,6 @@ def assign_blog_categories(
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_blog_post,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
-            )
-        background_tasks.add_task(
-            purge_blog_post,
-            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
-        )
+    schedule_post_purge(background_tasks, current_user, db_blog.slug)
 
     return db_blog

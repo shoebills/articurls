@@ -1,4 +1,4 @@
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import { hasActiveCustomDomain } from "@/lib/custom-domain-redirect";
 import type { PublicUser } from "@/lib/types";
 
@@ -17,6 +17,7 @@ export function buildUmamiDomains(user: PublicUser): string {
 
   try {
     addHost(domains, new URL(MARKETING_ORIGIN).hostname);
+    addHost(domains, new URL(UGS_ORIGIN).hostname);
   } catch {
     return "";
   }

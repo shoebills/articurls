@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { PublicBlog, PublicUser } from "@/lib/types";
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { UGS_ORIGIN } from "@/lib/env";
 import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
 import { useSearch } from "@/components/search-context";
@@ -24,7 +24,7 @@ const POSTS_PER_PAGE = 10;
 
 function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
   const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
-  return `${siteOrigin || MARKETING_ORIGIN}${path}`;
+  return `${siteOrigin || UGS_ORIGIN}${path}`;
 }
 
 function BlogListItemRow({

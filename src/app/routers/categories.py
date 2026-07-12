@@ -8,7 +8,7 @@ from ..schemas import category as cat_schema
 from ..schemas import blog as blog_schema
 from ..security import oauth2
 from ..utils import make_excerpt
-from ..cache.service import purge_category, purge_entire_tenant
+from ..cache.service import schedule_category_purge, schedule_tenant_purge
 from ..config import settings
 
 router = APIRouter(
@@ -87,16 +87,7 @@ def create_category(
     db.commit()
     db.refresh(new_cat)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id, current_user.custom_domain
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id, "articurls.com"
-        )
+    schedule_tenant_purge(background_tasks, current_user)
     return _category_out(db, new_cat)
 
 
@@ -149,16 +140,7 @@ def update_menu_categories(
 
     db.commit()
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id, current_user.custom_domain
-            )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id, "articurls.com"
-        )
+    schedule_tenant_purge(background_tasks, current_user)
 
     cats = (
         db.query(models.Category)
@@ -204,24 +186,8 @@ def update_category(
     db.commit()
     db.refresh(db_cat)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_category,
-                settings.cloudflare_zone_id, current_user.custom_domain, old_slug
-            )
-            background_tasks.add_task(
-                purge_category,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-            )
-        background_tasks.add_task(
-            purge_category,
-            settings.cloudflare_zone_id, "articurls.com", old_slug
-        )
-        background_tasks.add_task(
-            purge_category,
-            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-        )
+    schedule_category_purge(background_tasks, current_user, old_slug)
+    schedule_category_purge(background_tasks, current_user, db_cat.slug)
 
     return _category_out(db, db_cat)
 
@@ -246,24 +212,8 @@ def delete_category(
     db.delete(db_cat)
     db.commit()
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_category,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-            )
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id, current_user.custom_domain
-            )
-        background_tasks.add_task(
-            purge_category,
-            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-        )
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id, "articurls.com"
-        )
+    schedule_category_purge(background_tasks, current_user, db_cat.slug)
+    schedule_tenant_purge(background_tasks, current_user)
 
     return {"message": "Category deleted"}
 
@@ -359,15 +309,6 @@ def set_category_blogs(
     db.commit()
     db.refresh(db_cat)
 
-    if settings.cloudflare_zone_id:
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_category,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
-            )
-        background_tasks.add_task(
-            purge_category,
-            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
-        )
+    schedule_category_purge(background_tasks, current_user, db_cat.slug)
 
     return _category_out(db, db_cat)

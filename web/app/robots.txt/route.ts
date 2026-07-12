@@ -20,7 +20,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -180,6 +180,29 @@ Sitemap: ${MARKETING_ORIGIN}/sitemap.xml
   });
 }
 
+// ── UGC domain robots.txt ─────────────────────────────────────────────────────
+
+function ugcDomainRobots(): Response {
+  const body = `User-agent: *
+Allow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: PetalBot
+Disallow: /
+
+Sitemap: ${UGS_ORIGIN}/sitemap.xml
+`;
+
+  return new Response(body, {
+    headers: {
+      "Content-Type": "text/plain; charset=utf-8",
+      "Cache-Control": "public, max-age=86400, stale-while-revalidate=604800",
+    },
+  });
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<Response> {
@@ -188,6 +211,10 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   if (!isInternalHost(tenantHost, runtimeHosts)) {
     return customDomainRobots(tenantHost);
+  }
+
+  if (tenantHost.toLowerCase() === "articurls.site") {
+    return ugcDomainRobots();
   }
 
   if (tenantHost.toLowerCase().startsWith("app.articurls.com")) {

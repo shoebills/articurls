@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -75,7 +75,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const catName = data?.category?.name || slug;
   const marketingPath = `/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
   const customDomainPath = `/category/${encodeURIComponent(slug)}`;
-  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath);
+  const canonical = resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, customDomainPath);
   const title = `${catName} — ${user.name}`;
   const description = `Browse all ${catName} posts by ${user.name} on Articurls.`;
   const siteName = resolveUserSiteName(user);
@@ -87,7 +87,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     domain_status: user.domain_status,
   });
   const feedUrl = shouldIndex && user.rss_enabled !== false
-    ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
+    ? `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
     : undefined;
   const alternates = feedUrl
     ? { canonical, types: { "application/rss+xml": feedUrl } }
@@ -159,7 +159,7 @@ export default async function PublicCategoryPage({ params }: Props) {
   
   // Define canonical URL for structured data
   const marketingPath = `/${encodeURIComponent(user.user_name)}/category/${encodeURIComponent(slug)}`;
-  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, `/category/${slug}`);
+  const canonical = resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, `/category/${slug}`);
 
   return (
     <div className="min-h-screen bg-white">

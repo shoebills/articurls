@@ -247,7 +247,7 @@ function SignupForm() {
                 title="Letters, numbers, underscore, hyphen"
               />
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Your public URL: articurls.com/{user_name || "username"}
+                Your public URL: articurls.site/{user_name || "username"}
               </p>
             </div>
             <div className={FIELD_GROUP}>

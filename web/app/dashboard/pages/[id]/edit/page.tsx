@@ -26,7 +26,7 @@ import { ChevronDown, ChevronUp, ExternalLink, ChevronLeft } from "lucide-react"
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { UGS_ORIGIN } from "@/lib/env";
 import { getContentExcerpt } from "@/lib/utils";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -390,7 +390,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     page.status === "published" && user
       ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
         ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
-        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
+        : `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
       : null;
 
   const slugEditable = page.status === "draft";

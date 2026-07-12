@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, assetUrl } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -83,8 +83,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const marketingPath = `/${encodeURIComponent(canonicalUserName)}/page/${encodeURIComponent(slug)}`;
   const customDomainPath = `/page/${encodeURIComponent(slug)}`;
   const canonical = user
-    ? resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, customDomainPath)
-    : `${MARKETING_ORIGIN}${marketingPath}`;
+    ? resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, customDomainPath)
+    : `${UGS_ORIGIN}${marketingPath}`;
   const title = page.meta_title || page.title;
   const description = resolvePageDescription(page);
   const siteName = resolveUserSiteName(user);
@@ -94,7 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     domain_status: user.domain_status,
   });
   const feedUrl = shouldIndex && user && user.rss_enabled !== false
-    ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
+    ? `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}/rss.xml`
     : undefined;
   const alternates = feedUrl
     ? { canonical, types: { "application/rss+xml": feedUrl } }
@@ -150,7 +150,7 @@ export default async function PublicCustomPage({ params }: Props) {
   
   // Define canonical URL for structured data
   const marketingPath = `/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(slug)}`;
-  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, `/page/${slug}`);
+  const canonical = resolveCanonicalUrl(user, UGS_ORIGIN, marketingPath, `/page/${slug}`);
 
   return (
     <div className="min-h-screen bg-white">
@@ -193,7 +193,7 @@ export default async function PublicCustomPage({ params }: Props) {
             Back
           </Link>
           <BlogPostShareMenu
-            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
+            url={`${UGS_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
             title={page.title}
           />
         </div>

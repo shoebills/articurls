@@ -11,7 +11,7 @@ from ..utils.html_sanitizer import sanitize_html
 from ..schemas import page as page_schema
 from ..security import oauth2
 from ..storage.service import delete_media, save_media
-from ..cache.service import purge_custom_page, purge_entire_tenant
+from ..cache.service import schedule_page_purge, schedule_tenant_purge
 from ..config import settings
 from .. import utils
 from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
@@ -331,17 +331,7 @@ def update_page(
     db.commit()
     db.refresh(db_page)
 
-    # Purge cache for this custom page when updated
-    if settings.cloudflare_zone_id:
-        background_tasks.add_task(
-            purge_custom_page,
-            settings.cloudflare_zone_id, "articurls.com", db_page.slug
-        )
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_custom_page,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
-            )
+    schedule_page_purge(background_tasks, current_user, db_page.slug)
 
     return db_page
 
@@ -383,17 +373,7 @@ def publish_page(
     db.commit()
     db.refresh(db_page)
 
-    # Purge cache when page is published (becomes publicly visible)
-    if settings.cloudflare_zone_id:
-        background_tasks.add_task(
-            purge_custom_page,
-            settings.cloudflare_zone_id, "articurls.com", db_page.slug
-        )
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_custom_page,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
-            )
+    schedule_page_purge(background_tasks, current_user, db_page.slug)
 
     return db_page
 
@@ -424,17 +404,7 @@ def archive_page(
     db.commit()
     db.refresh(db_page)
 
-    # Purge cache when page is archived (removed from public)
-    if settings.cloudflare_zone_id:
-        background_tasks.add_task(
-            purge_custom_page,
-            settings.cloudflare_zone_id, "articurls.com", db_page.slug
-        )
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_custom_page,
-                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
-            )
+    schedule_page_purge(background_tasks, current_user, db_page.slug)
 
     return db_page
 
@@ -488,17 +458,7 @@ def update_footer_pages(
 
     db.commit()
 
-    # Purge entire tenant cache when footer changes (footer appears on all pages)
-    if settings.cloudflare_zone_id:
-        background_tasks.add_task(
-            purge_entire_tenant,
-            settings.cloudflare_zone_id, "articurls.com"
-        )
-        if current_user.custom_domain:
-            background_tasks.add_task(
-                purge_entire_tenant,
-                settings.cloudflare_zone_id, current_user.custom_domain
-            )
+    schedule_tenant_purge(background_tasks, current_user)
 
     return (
         db.query(models.UserPage)

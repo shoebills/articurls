@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -72,8 +72,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
   const canonical = author
-    ? resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath)
-    : `${MARKETING_ORIGIN}${marketingPath}`;
+    ? resolveCanonicalUrl(author, UGS_ORIGIN, marketingPath, customDomainPath)
+    : `${UGS_ORIGIN}${marketingPath}`;
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
   const ogImage = resolveBlogOgImage(blog);
@@ -83,7 +83,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     domain_status: author.domain_status,
   });
   const feedUrl = shouldIndex && author && author.rss_enabled !== false
-    ? `${MARKETING_ORIGIN}/${encodeURIComponent(author.user_name)}/rss.xml`
+    ? `${UGS_ORIGIN}/${encodeURIComponent(author.user_name)}/rss.xml`
     : undefined;
   const alternates = feedUrl
     ? { canonical, types: { "application/rss+xml": feedUrl } }
@@ -94,7 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: { index: shouldIndex, follow: true },
     alternates,
     icons: faviconIcons(author),
-    metadataBase: new URL(MARKETING_ORIGIN),
+    metadataBase: new URL(UGS_ORIGIN),
     openGraph: {
       title,
       description,
@@ -159,7 +159,7 @@ export default async function PublicBlogPage({ params }: Props) {
   const canonicalUserName = author?.user_name || username;
   const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
   const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
-  const canonical = resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath);
+  const canonical = resolveCanonicalUrl(author, UGS_ORIGIN, marketingPath, customDomainPath);
 
 
   return (
@@ -202,7 +202,7 @@ export default async function PublicBlogPage({ params }: Props) {
             Back
           </Link>
           <BlogPostShareMenu
-            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`}
+            url={`${UGS_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`}
             title={blog.title}
           />
         </div>

@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -266,6 +266,47 @@ async function marketingDomainSitemap(): Promise<Response> {
   });
 }
 
+// ── UGC domain sitemap ────────────────────────────────────────────────────────
+
+/**
+ * Sitemap for articurls.site — user-generated content only.
+ *
+ * Returns a sitemap index pointing to user sitemaps.
+ */
+async function ugcDomainSitemap(): Promise<Response> {
+  const today = new Date().toISOString().split("T")[0];
+
+  try {
+    const sitemaps = [
+      {
+        loc: `${UGS_ORIGIN}/sitemaps/users.xml`,
+        lastmod: today,
+      },
+    ];
+
+    return new Response(buildSitemapIndex(sitemaps), {
+      headers: {
+        "Content-Type": "application/xml; charset=utf-8",
+        "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+        "Vary": "Host",
+      },
+    });
+  } catch (error) {
+    console.error("Failed to generate UGC sitemap:", error);
+  }
+
+  const entries = [
+    { loc: `${UGS_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },
+  ];
+
+  return new Response(buildXml(entries), {
+    headers: {
+      "Content-Type": "application/xml; charset=utf-8",
+      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
+    },
+  });
+}
+
 // ── Route handler ─────────────────────────────────────────────────────────────
 
 export async function GET(req: NextRequest): Promise<Response> {
@@ -274,6 +315,10 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   if (!isInternalHost(tenantHost, runtimeHosts)) {
     return customDomainSitemap(tenantHost);
+  }
+
+  if (tenantHost.toLowerCase() === "articurls.site") {
+    return ugcDomainSitemap();
   }
 
   if (tenantHost.toLowerCase().startsWith("app.articurls.com")) {

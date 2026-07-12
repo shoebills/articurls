@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, UGS_ORIGIN } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
 
@@ -45,7 +45,7 @@ async function loadMarketingIndexableUsers(): Promise<InternalSitemapUser[]> {
 export async function GET(_req: NextRequest): Promise<Response> {
   const users = await loadMarketingIndexableUsers();
   const sitemaps = users.map((user) => ({
-    loc: `${MARKETING_ORIGIN}/sitemaps/${encodeURIComponent(user.username)}/sitemap.xml`,
+    loc: `${UGS_ORIGIN}/sitemaps/${encodeURIComponent(user.username)}/sitemap.xml`,
     lastmod: toIsoDate(user.updated_at),
   }));
 

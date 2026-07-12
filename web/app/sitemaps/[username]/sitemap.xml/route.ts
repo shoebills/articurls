@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
+import { API_URL, UGS_ORIGIN } from "@/lib/env";
 import { fetchCategories, fetchPages, fetchPublishedPosts, fetchSeoEligibility } from "@/lib/seo-data";
 import { isIndexableDomainStatus } from "@/lib/seo";
 import type { PublicUser } from "@/lib/types";
@@ -70,7 +70,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
   if (isIndexableDomainStatus(user.domain_status)) return new NextResponse(null, { status: 404 });
 
   const usernamePath = encodeURIComponent(user.user_name || username);
-  const siteOrigin = `${MARKETING_ORIGIN}/${usernamePath}`;
+  const siteOrigin = `${UGS_ORIGIN}/${usernamePath}`;
 
   const [blogs, pages, categories] = await Promise.all([
     fetchPublishedPosts(user.user_name || username),

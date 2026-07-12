@@ -7,7 +7,7 @@ import { ApiError, archivePage, deletePage, listPages, publishPage, apiCacheHas,
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserPage } from "@/lib/types";
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { UGS_ORIGIN } from "@/lib/env";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
   DropdownMenu,
@@ -177,7 +177,7 @@ export default function PagesDashboardPage() {
     const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
     const base = hasCustomDomain
       ? `https://${user.custom_domain}`
-      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`;
+      : `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}`;
     const url = `${base}/page/${encodeURIComponent(page.slug)}`;
     try {
       await navigator.clipboard.writeText(url);

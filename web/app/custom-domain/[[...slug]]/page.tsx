@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, assetUrl } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -299,7 +299,7 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "expired") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    const redirectUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`;
+    const redirectUrl = `${UGS_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`;
     permanentRedirect(redirectUrl);
   }
 
@@ -307,7 +307,7 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "pending") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    redirect(`${MARKETING_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`);
+    redirect(`${UGS_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`);
   }
 
   // Any other unrecognised status (none, etc.) — 404

@@ -7,7 +7,7 @@ import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 import { useAuth } from "@/lib/auth-context";
-import { MARKETING_ORIGIN } from "@/lib/env";
+import { UGS_ORIGIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
@@ -20,7 +20,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
       ? `https://${user.custom_domain}`
       : user?.user_name
-        ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`
+        ? `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}`
         : null;
 
   const close = useCallback(() => setOpen(false), []);

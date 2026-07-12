@@ -19,6 +19,12 @@ def umami_marketing_domain() -> str:
     return host.lower().strip()
 
 
+def umami_ugc_domain() -> str:
+    parsed = urlparse(settings.ugc_origin.strip())
+    host = parsed.netloc or parsed.path.split("/")[0]
+    return host.lower().strip()
+
+
 def umami_app_domain() -> str:
     parsed = urlparse(settings.app_base_url.strip())
     host = parsed.netloc or parsed.path.split("/")[0]
@@ -26,7 +32,7 @@ def umami_app_domain() -> str:
 
 
 def umami_internal_domains() -> set[str]:
-    domains = {umami_marketing_domain(), umami_app_domain()}
+    domains = {umami_marketing_domain(), umami_ugc_domain(), umami_app_domain()}
     expanded: set[str] = set()
 
     for domain in domains:
@@ -49,7 +55,7 @@ def _primary_umami_domain(user: models.User) -> str:
     )
     if user.custom_domain and domain_status in ("active", "grace"):
         return user.custom_domain.lower().strip()
-    return umami_marketing_domain()
+    return umami_ugc_domain()
 
 
 def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:

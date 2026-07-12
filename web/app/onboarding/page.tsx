@@ -143,11 +143,11 @@ function OnboardingForm() {
               />
               {user_name ? (
                 <p className="text-sm leading-relaxed text-foreground font-medium">
-                  articurls.com/<span className="text-primary">{user_name}</span>
+                  articurls.site/<span className="text-primary">{user_name}</span>
                 </p>
               ) : (
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Your blog will live at articurls.com/username
+                  Your blog will live at articurls.site/username
                 </p>
               )}
             </div>

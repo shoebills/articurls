@@ -6,6 +6,11 @@ export const MARKETING_ORIGIN =
   process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "") ||
   "https://articurls.com";
 
+/** UGC (user-generated content) origin — where user blogs live (e.g. https://articurls.site) */
+export const UGS_ORIGIN =
+  process.env.NEXT_PUBLIC_UGS_ORIGIN?.replace(/\/$/, "") ||
+  "https://articurls.site";
+
 /** App origin (login, dashboard) */
 export const APP_ORIGIN =
   process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "") ||
