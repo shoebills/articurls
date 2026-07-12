@@ -262,7 +262,7 @@ function EditorPanel() {
       </div>
       <div className="space-y-3 p-6">
         <div className="text-2xl font-semibold tracking-tight text-foreground">
-          Building in public: month one
+          Building and breaking in public
           <span className="hero-caret ml-0.5 inline-block h-6 w-[2px] translate-y-1 bg-primary" />
         </div>
         <div className="h-2.5 w-full rounded-full bg-foreground/[0.07]" />
@@ -293,7 +293,7 @@ function PublishingPanel() {
               <CalendarClock className="h-3.5 w-3.5" /> Scheduled
             </span>
           </div>
-          <div className="text-xl font-semibold tracking-tight">Building in public: month one</div>
+          <div className="text-xl font-semibold tracking-tight">Building and breaking in public</div>
           <div className="h-2.5 w-full rounded-full bg-foreground/[0.07]" />
           <div className="h-2.5 w-4/5 rounded-full bg-foreground/[0.07]" />
         </div>
