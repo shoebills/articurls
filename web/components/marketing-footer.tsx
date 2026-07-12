@@ -41,14 +41,14 @@ export function MarketingFooter() {
     <>
       <div aria-hidden className="mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
         <p className="-mb-[0.25em] block translate-y-[4%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
-          Articurls
+          Write, Publish & Grow
         </p>
       </div>
       <footer className="border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]">
       <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] py-14 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:py-20">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
-            <BrandLogo />
+            <p className="text-lg font-semibold text-foreground">Write, Publish & Grow</p>
           </div>
 
           {COLUMNS.map((col) => (

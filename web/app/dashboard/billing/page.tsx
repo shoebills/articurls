@@ -229,7 +229,7 @@ export default function BillingPage() {
               Reach readers on your own domain.
             </p>
             <Button
-              className="mt-6 h-12 w-full touch-manipulation shadow-md shadow-primary/20"
+              className="mt-6 h-12 w-full touch-manipulation bg-background text-foreground hover:bg-background/90"
               onClick={upgrade}
               disabled={busy}
             >
@@ -272,7 +272,7 @@ export default function BillingPage() {
               Pay one time. Keep Pro for lifetime.
             </p>
             <Button
-              className="mt-6 h-12 w-full touch-manipulation bg-background text-foreground hover:bg-background/90"
+              className="mt-6 h-12 w-full touch-manipulation shadow-md shadow-primary/20"
               onClick={upgradeLifetime}
               disabled={busyLifetime}
             >
