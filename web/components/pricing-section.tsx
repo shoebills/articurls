@@ -79,7 +79,7 @@ export function PricingSection() {
       cta: "Get Lifetime",
       href: `${signupUrl}?plan=lifetime`,
       premium: true,
-      note: "One-time launch price",
+      note: "Limited time deal",
     },
   ];
 
@@ -127,7 +127,7 @@ function PlanCard({ plan }: { plan: Plan }) {
     <div className={`${base} ${variant} ${plan.featured ? "lg:-translate-y-3" : ""}`}>
       {plan.premium && (
         <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
-          50 seats left
+          10 seats left
         </span>
       )}
 

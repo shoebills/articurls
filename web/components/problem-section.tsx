@@ -2,8 +2,8 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 
 const SCATTERED = [
   { label: "WordPress", x: "left-0 top-0", rotate: "-rotate-3" },
-  { label: "Ghost", x: "right-2 top-1", rotate: "rotate-2" },
-  { label: "Notion", x: "left-10 top-16", rotate: "rotate-1" },
+  { label: "Maintenance", x: "right-2 top-1", rotate: "rotate-2" },
+  { label: "Media", x: "left-10 top-16", rotate: "rotate-1" },
   { label: "Plugins", x: "right-0 top-20", rotate: "-rotate-2" },
   { label: "Hosting", x: "left-2 top-32", rotate: "rotate-3" },
   { label: "SSL", x: "right-10 top-32", rotate: "-rotate-1" },

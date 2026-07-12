@@ -259,7 +259,7 @@ export default function BillingPage() {
           {/* Lifetime — exclusive dark card */}
           <div className="relative flex flex-col rounded-2xl border border-transparent bg-foreground p-6 text-background shadow-2xl shadow-black/20 sm:p-7">
             <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
-              50 seats left
+              10 seats left
             </span>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-background/60">Own forever</p>
             <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Lifetime</h3>
@@ -278,7 +278,7 @@ export default function BillingPage() {
             >
               {busyLifetime ? "Redirecting…" : "Get Lifetime — $99 once"}
             </Button>
-            <p className="mt-2 text-center text-xs text-background/60">One-time launch price</p>
+            <p className="mt-2 text-center text-xs text-background/60">Limited time deal</p>
             <div className="mt-6 border-t border-background/15 pt-6">
               <ul className="space-y-3">
                 {[
