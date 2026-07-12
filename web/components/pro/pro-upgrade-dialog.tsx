@@ -37,10 +37,8 @@ export function ProUpgradeDialog({
       <DialogContent
         style={{
           backgroundColor: "white",
-          backgroundImage:
-            "linear-gradient(to bottom, color-mix(in oklab, var(--primary) 5%, transparent), transparent)",
         }}
-        className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7"
+        className="relative max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-gray-400/20 before:pointer-events-none"
       >
         <DialogHeader className="space-y-0">
           <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-primary sm:text-xs">Grow audience</p>
