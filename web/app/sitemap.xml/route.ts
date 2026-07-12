@@ -234,10 +234,6 @@ async function marketingDomainSitemap(): Promise<Response> {
         loc: `${MARKETING_ORIGIN}/sitemaps/pages.xml`,
         lastmod: today,
       },
-      {
-        loc: `${MARKETING_ORIGIN}/sitemaps/users.xml`,
-        lastmod: today,
-      },
     ];
 
     return new Response(buildSitemapIndex(sitemaps), {
