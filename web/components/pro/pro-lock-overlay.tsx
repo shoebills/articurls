@@ -36,17 +36,16 @@ export function ProLockOverlay({
         </div>
         <div className="pointer-events-none absolute inset-0 z-[5] bg-[linear-gradient(to_bottom,transparent_0%,rgba(255,255,255,0.85)_70%)] backdrop-blur-[2px] [mask-image:linear-gradient(to_bottom,transparent_0%,black_70%)] [-webkit-mask-image:linear-gradient(to_bottom,transparent_0%,black_70%)]" />
         <div className="pointer-events-none fixed inset-0 z-10 flex items-center justify-center px-4 md:left-[14.25rem]">
-          <div className="pointer-events-auto w-full max-w-[260px] rounded-xl border border-border/60 bg-white/05 px-5 py-4 text-center shadow-lg backdrop-blur-lg sm:max-w-[280px]">
-            <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-amber-100">
-              <Sparkles className="h-5 w-5 text-amber-600" />
+          <div className="pointer-events-auto w-full max-w-[320px] rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card px-6 py-7 text-center ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:max-w-[340px]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+              <Sparkles className="h-6 w-6 text-primary" />
             </div>
-            <p className="mt-2 text-sm font-semibold">{title}</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            <p className="mt-3 text-lg font-semibold">{title}</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
               {description}
             </p>
             <Button
-              size="sm"
-              className="mt-3 w-full"
+              className="mt-6 h-11 w-full shadow-md shadow-primary/20"
               onClick={(e) => {
                 e.stopPropagation();
                 setDialogOpen(true);
