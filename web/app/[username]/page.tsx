@@ -6,6 +6,7 @@ import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
+import { SearchProvider } from "@/components/search-context";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
@@ -13,10 +14,12 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebSiteSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string }> };
 
-const REVALIDATE = 300;
+export const dynamic = "force-dynamic";
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
@@ -36,13 +39,13 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -126,48 +129,57 @@ export default async function PublicProfilePage({ params }: Props) {
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
   const desktopLinks = user.nav_menu_enabled ? catLinks : [];
   const hasMobileNav =
-    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
+    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+  
+  // Define canonical URL for structured data
+  const marketingPath = `/${encodeURIComponent(user.user_name)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, "/");
 
   return (
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
-        {user.navbar_enabled ? (
-          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className="hidden w-full sm:block">
-              <PublicDesktopNav
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username)}
-                nameSize={blogNameSize}
-                links={desktopLinks}
-                showSubscribe={showSubscriberCollection}
-                userName={user.user_name}
-                authorName={user.name}
-              />
-            </div>
-            <div className="sm:hidden">
-              <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username)}
-                nameSize={blogNameSize}
-                links={user.nav_menu_enabled ? catLinks : []}
-                userName={user.user_name}
-                authorName={user.name}
-                showSubscribeAction={showSubscriberCollection}
-                showMenuButton={hasMobileNav}
-              />
-            </div>
-          </header>
-        ) : null}
-        <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={MARKETING_ORIGIN} />
-        <PublicSiteFooter user={user} pages={pages} />
+        <SearchProvider>
+          {user.navbar_enabled ? (
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username)}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  showSearch={blogs.length > 0}
+                  userName={user.user_name}
+                  authorName={user.name}
+                />
+              </div>
+              <div className="sm:hidden">
+                <PublicMobileNavMenu
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username)}
+                  nameSize={blogNameSize}
+                  links={user.nav_menu_enabled ? catLinks : []}
+                  userName={user.user_name}
+                  authorName={user.name}
+                  showSubscribeAction={showSubscriberCollection}
+                  showSearch={blogs.length > 0}
+                  showMenuButton={hasMobileNav}
+                />
+              </div>
+            </header>
+          ) : null}
+          <StructuredData data={generateWebSiteSchema(user, canonical)} />
+          <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={MARKETING_ORIGIN} />
+          <PublicSiteFooter user={user} pages={pages} />
+        </SearchProvider>
       </main>
       {user.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
-          Made with Articurls
+          Made with <span className="font-semibold">Articurls</span>
         </a>
       ) : null}
     </div>

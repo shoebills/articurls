@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, Literal
 
@@ -7,7 +7,7 @@ class CreateUser(BaseModel):
     name: str
     user_name: str
     email: EmailStr
-    password: str 
+    password: str = Field(..., min_length=8)
 
 
 class UserSettings(BaseModel):
@@ -34,17 +34,17 @@ class UserSettings(BaseModel):
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
-    site_footer_enabled: bool = False
-    username_change_count: int
+    site_footer_enabled: bool = True
+    last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
     favicon_url: Optional[str] = None
-    featured_blogs_enabled: bool = False
+    featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = True
     remove_branding: bool = True
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
 
     class Config:
         from_attributes = True
@@ -70,15 +70,16 @@ class PublicUser(BaseModel):
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     footer_enabled: bool
-    site_footer_enabled: bool = False
+    site_footer_enabled: bool = True
     show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None
-    featured_blogs_enabled: bool = False
+    featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
+    umami_website_id: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -116,34 +117,10 @@ class AdminUsernameChange(BaseModel):
     reason: Optional[str] = None
 
 
-class UsernameChangeRequestCreate(BaseModel):
-    desired_username: str
-    reason: Optional[str] = None
-
-
-class UsernameChangeRequestOut(BaseModel):
-    request_id: int
-    user_id: int
-    desired_username: str
-    reason: Optional[str] = None
-    status: str
-    admin_note: Optional[str] = None
-    reviewed_by_user_id: Optional[int] = None
-    created_at: Optional[datetime] = None
-
-    class Config:
-        from_attributes = True
-
-
-class UsernameChangeRequestReview(BaseModel):
-    status: Literal["approved", "rejected"]
-    admin_note: Optional[str] = None
-
-
 class MetaSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    rss_enabled: bool = True
+    rss_enabled: bool = False
 
     class Config:
         from_attributes = True

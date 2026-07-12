@@ -7,35 +7,18 @@ import { useAuth } from "@/lib/auth-context";
 export function DashboardGate({ children }: { children: React.ReactNode }) {
   const { token, loading } = useAuth();
   const router = useRouter();
-  const [hasAccessToken, setHasAccessToken] = useState(false);
-
-  // Check for access_token on mount
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
-      setHasAccessToken(!!params.get("access_token"));
-    }
-  }, []);
+  const [hasOAuthCode] = useState(
+    () => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("code")
+  );
 
   useEffect(() => {
     if (loading) return;
-    if (hasAccessToken) return; // Don't redirect during OAuth callback
+    if (hasOAuthCode) return;
     if (!token) router.replace("/login");
-  }, [token, loading, router, hasAccessToken]);
+  }, [token, loading, router, hasOAuthCode]);
 
-  // If OAuth callback, always render children
-  if (hasAccessToken) {
-    return <>{children}</>;
-  }
-
-  // Normal auth check
-  if (loading || !token) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-      </div>
-    );
-  }
-
+  if (hasOAuthCode) return <>{children}</>;
+  if (loading) return null;
+  if (!token) return null;
   return <>{children}</>;
 }

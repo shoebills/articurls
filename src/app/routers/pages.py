@@ -1,14 +1,20 @@
-from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status
+from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
 from datetime import datetime, timezone
+import re
 import secrets
 from .. import models
 from ..database import get_db
+from ..utils.html_sanitizer import sanitize_html
 from ..schemas import page as page_schema
 from ..security import oauth2
 from ..storage.service import delete_media, save_media
+from ..cache.service import purge_custom_page, purge_entire_tenant
+from ..config import settings
+from .. import utils
+from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
 
 router = APIRouter(
     tags=["Pages"],
@@ -137,21 +143,6 @@ def delete_page_media_by_url(
     return {"message": "Media deleted"}
 
 
-def _unique_page_slug(db: Session, user_id: int, title: str) -> str:
-    base = slugify(title) or "page"
-    candidate = base
-    idx = 2
-    while (
-        db.query(models.UserPage)
-        .filter(models.UserPage.user_id == user_id, models.UserPage.slug == candidate)
-        .first()
-        is not None
-    ):
-        candidate = f"{base}-{idx}"
-        idx += 1
-    return candidate
-
-
 def _validate_publishable_page(db_page: models.UserPage) -> None:
     title = (db_page.title or "").strip()
     if not title:
@@ -159,8 +150,6 @@ def _validate_publishable_page(db_page: models.UserPage) -> None:
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Title is required to publish",
         )
-
-    import re
 
     content_text = re.sub(r"<[^>]+>", "", db_page.content or "").strip()
     if not content_text:
@@ -183,6 +172,22 @@ def list_pages(
     )
 
 
+@router.get("/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def get_page(
+    page_id: int,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    return db_page
+
+
 @router.post("/", response_model=page_schema.UserPageOut, status_code=status.HTTP_201_CREATED)
 def create_page(
     request: page_schema.UserPageCreate,
@@ -190,14 +195,21 @@ def create_page(
     current_user=Depends(oauth2.get_current_user),
 ):
     title = (request.title or "").strip()
-    content = request.content or ""
-    base_slug = slugify(title) if title else f"draft-{secrets.token_hex(6)}"
+    content = sanitize_html(request.content or "")
+
+    if request.slug:
+        base_slug = slugify(request.slug) or None
+    else:
+        base_slug = slugify(title) if title else None
+
+    if not base_slug:
+        base_slug = f"draft-{secrets.token_hex(6)}"
 
     new_page = models.UserPage(
         user_id=current_user.user_id,
         title=title,
         content=content,
-        slug=_unique_page_slug(db, current_user.user_id, base_slug),
+        slug=unique_page_slug(db, current_user.user_id, base_slug),
         status=models.PageStatus.DRAFT,
     )
     db.add(new_page)
@@ -243,6 +255,7 @@ def delete_page(
 def update_page(
     page_id: int,
     request: page_schema.UserPageUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -256,53 +269,87 @@ def update_page(
 
     update_data = request.model_dump(exclude_unset=True)
 
-    if "title" in update_data:
-        db_page.title = (update_data["title"] or "").strip()
+    is_locked = db_page.status in (models.PageStatus.PUBLISHED, models.PageStatus.ARCHIVED)
+    if is_locked:
+        if "title" in update_data and not (update_data["title"] or "").strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Title cannot be empty.",
+            )
+        if "content" in update_data:
+            content_stripped = re.sub(r"<[^>]+>", "", update_data["content"] or "").strip()
+            if not content_stripped:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Content cannot be empty.",
+                )
+
+    slug_in = update_data.pop("slug", None)
+    if slug_in is not None:
+        new_slug = slugify(slug_in.strip()) if slug_in.strip() else None
+        slug_locked = db_page.status in (models.PageStatus.PUBLISHED, models.PageStatus.ARCHIVED)
+        wants_different_slug = new_slug is not None and new_slug != db_page.slug
+
+        if slug_locked and wants_different_slug:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cannot change the URL slug after the page is published.",
+            )
+
+        if not slug_locked and wants_different_slug:
+            db_page.slug = unique_page_slug(
+                db, current_user.user_id, new_slug, exclude_page_id=page_id
+            )
 
     if "content" in update_data:
-        db_page.content = update_data["content"] or ""
+        update_data["content"] = sanitize_html(update_data["content"] or "")
 
-    if "slug" in update_data:
-        new_slug = (update_data["slug"] or "").strip()
-        if new_slug and new_slug != db_page.slug:
-            if db_page.published_at is not None:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Cannot change the URL slug after the page is published.",
-                )
-            # Validate slug format
-            from slugify import slugify as _slugify
-            normalized = _slugify(new_slug) or ""
-            if not normalized:
-                raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid slug")
-            # Check uniqueness
-            conflict = (
-                db.query(models.UserPage)
-                .filter(
-                    models.UserPage.user_id == current_user.user_id,
-                    models.UserPage.slug == normalized,
-                    models.UserPage.page_id != page_id,
-                )
-                .first()
-            )
-            if conflict:
-                raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Slug already in use by another page")
-            db_page.slug = normalized
+    if "title" in update_data:
+        update_data["title"] = (update_data["title"] or "").strip()
 
-    if "meta_title" in update_data:
-        db_page.meta_title = (update_data["meta_title"] or "").strip() or None
+    if "meta_title" in update_data and update_data["meta_title"] is None:
+        title = update_data.get("title", db_page.title)
+        update_data["meta_title"] = (title or "").strip() or None
+    elif "meta_title" in update_data:
+        update_data["meta_title"] = (update_data["meta_title"] or "").strip() or None
 
-    if "meta_description" in update_data:
-        db_page.meta_description = (update_data["meta_description"] or "").strip() or None
+    if "meta_description" in update_data and update_data["meta_description"] is None:
+        content = update_data.get("content", db_page.content)
+        update_data["meta_description"] = utils.make_meta_description(content or "") or None
+    elif "meta_description" in update_data:
+        update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
+
+    MEANINGFUL_FIELDS = {"title", "content", "meta_title", "meta_description"}
+    has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
+
+    for key, value in update_data.items():
+        setattr(db_page, key, value)
+
+    if has_meaningful_change:
+        db_page.updated_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache for this custom page when updated
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.post("/{page_id:int}/publish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def publish_page(
     page_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -323,17 +370,38 @@ def publish_page(
     first_publish = db_page.published_at is None
     db_page.status = models.PageStatus.PUBLISHED
     if first_publish:
+        maybe_replace_placeholder_page_slug_on_publish(db, db_page)
         db_page.published_at = now
+    db_page.meta_title, db_page.meta_description = utils.materialize_content_meta_defaults(
+        title=db_page.title,
+        content=db_page.content,
+        meta_title=db_page.meta_title,
+        meta_description=db_page.meta_description,
+    )
     db_page.updated_at = now
 
     db.commit()
     db.refresh(db_page)
+
+    # Purge cache when page is published (becomes publicly visible)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
+
     return db_page
 
 
 @router.post("/{page_id:int}/archive", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def archive_page(
     page_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -350,35 +418,30 @@ def archive_page(
             detail="Only published pages can be archived",
         )
 
+    old_updated = db_page.updated_at
     db_page.status = models.PageStatus.ARCHIVED
+    db_page.updated_at = old_updated
     db.commit()
     db.refresh(db_page)
-    return db_page
 
+    # Purge cache when page is archived (removed from public)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_custom_page,
+            settings.cloudflare_zone_id, "articurls.com", db_page.slug
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_custom_page,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_page.slug
+            )
 
-@router.post("/{page_id:int}/draft", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
-def move_page_to_draft(
-    page_id: int,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    db_page = (
-        db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
-        .first()
-    )
-    if not db_page:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
-    if db_page.status == models.PageStatus.DRAFT:
-        return db_page
-    db_page.status = models.PageStatus.DRAFT
-    db.commit()
-    db.refresh(db_page)
     return db_page
 
 
 @router.patch("/footer", response_model=list[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
 def update_footer_pages(
+    background_tasks: BackgroundTasks,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
@@ -424,6 +487,19 @@ def update_footer_pages(
         pages_by_id[page_id].footer_order = idx
 
     db.commit()
+
+    # Purge entire tenant cache when footer changes (footer appears on all pages)
+    if settings.cloudflare_zone_id:
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+
     return (
         db.query(models.UserPage)
         .filter(models.UserPage.user_id == current_user.user_id)

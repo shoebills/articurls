@@ -6,17 +6,16 @@ import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Tag, Globe, Users } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Users } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
-  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-  { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
-  { href: "/dashboard/categories", label: "Categories", icon: Tag },
   { href: "/dashboard/design", label: "Design", icon: Palette },
   { href: "/dashboard/seo", label: "SEO", icon: Search },
-  { href: "/dashboard/domain", label: "Custom Domain", icon: Globe },
+  { href: "/dashboard/audience", label: "Audience", icon: Users },
+  { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -33,7 +32,7 @@ type PanelProps = {
 
 export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, loading } = useAuth();
 
   const linkItems = links.map(({ href, label, icon: Icon }) => {
     const active =
@@ -61,31 +60,51 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   const footer = (
     <div
       className={cn(
-        "shrink-0 border-t border-sidebar-border/70 bg-sidebar/75 p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+        "shrink-0 border-t border-sidebar-border/70 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
         mobileTrayLayout && "mt-[20px] -mx-2.5"
       )}
     >
       <div className="mb-2 flex flex-col gap-1.5">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-        >
-          <Bug className="h-4 w-4" />
-          Report a bug
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-        >
-          <CircleHelp className="h-4 w-4" />
-          Support
-        </Button>
+        <div className="group relative">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            asChild
+            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+          >
+            <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
+              <Bug className="h-4 w-4" />
+              Report a bug
+            </a>
+          </Button>
+          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            bugs@articurls.com
+          </span>
+        </div>
+        <div className="group relative">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            asChild
+            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+          >
+            <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
+              <CircleHelp className="h-4 w-4" />
+              Support
+            </a>
+          </Button>
+          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+            support@articurls.com
+          </span>
+        </div>
       </div>
-      <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
+      {loading ? (
+        <Skeleton className="mb-0.5 h-3 w-32" />
+      ) : (
+        <p className="truncate px-1 text-xs text-muted-foreground">{user?.email}</p>
+      )}
       <Button
         variant="ghost"
         size="sm"
@@ -104,10 +123,9 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       {showBrand ? (
-        <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-sidebar/70 px-3">
+          <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-white px-3">
           <BrandLogo
             href="/dashboard"
-            size="sm"
             className="min-w-0"
             onClick={() => onNavigate?.()}
           />
@@ -132,7 +150,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col bg-sidebar/65 md:sticky md:top-0 md:self-start md:flex">
+    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col bg-white md:sticky md:top-0 md:self-start md:flex">
       <DashboardSidebarPanel />
     </aside>
   );

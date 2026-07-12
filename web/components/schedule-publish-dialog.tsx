@@ -30,17 +30,18 @@ export type SchedulePublishDialogProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (isoUtc: string) => void | Promise<void>;
+  defaultDate?: Date | null;
 };
 
-export function SchedulePublishDialog({ open, onOpenChange, onConfirm }: SchedulePublishDialogProps) {
+export function SchedulePublishDialog({ open, onOpenChange, onConfirm, defaultDate }: SchedulePublishDialogProps) {
   const [scheduleAt, setScheduleAt] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (open) {
-      setScheduleAt(defaultOpenValue());
+      setScheduleAt(defaultDate ? toDatetimeLocalValue(defaultDate) : defaultOpenValue());
     }
-  }, [open]);
+  }, [open, defaultDate]);
 
   const parsed = scheduleAt ? new Date(scheduleAt) : null;
   const isValidFuture = parsed != null && !Number.isNaN(parsed.getTime()) && isAfter(parsed, addMinutes(new Date(), 1));
@@ -57,12 +58,11 @@ export function SchedulePublishDialog({ open, onOpenChange, onConfirm }: Schedul
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Schedule publish</DialogTitle>
           <DialogDescription>
-            Pick a date and time. This uses your device&apos;s local timezone ({Intl.DateTimeFormat().resolvedOptions().timeZone}
-            ).
+            Pick a date and time.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-2 py-2">
@@ -80,7 +80,7 @@ export function SchedulePublishDialog({ open, onOpenChange, onConfirm }: Schedul
             </p>
           )}
         </div>
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={submitting}>
             Cancel
           </Button>

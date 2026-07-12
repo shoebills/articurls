@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, FileCode2, LogOut, Users, UserRoundPen } from "lucide-react";
+import { CreditCard, FileCode2, LogOut, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
@@ -9,7 +9,6 @@ import { cn } from "@/lib/utils";
 const sections = [
   { key: "users", label: "Users", icon: Users },
   { key: "payments", label: "Payments", icon: CreditCard },
-  { key: "username_requests", label: "Username requests", icon: UserRoundPen },
 ] as const;
 
 export type AdminSection = (typeof sections)[number]["key"];

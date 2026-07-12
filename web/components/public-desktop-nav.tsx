@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import {
@@ -10,6 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { SearchButton } from "@/components/search-button";
 import {
   normalizeNavBlogNameSize,
   publicNavDesktopBlogTitleClassName,
@@ -32,6 +33,7 @@ type PublicDesktopNavProps = {
   nameSize?: NavBlogNameSize | string | null;
   links: PublicNavDesktopLink[];
   showSubscribe: boolean;
+  showSearch?: boolean;
   userName?: string;
   authorName?: string;
 };
@@ -49,6 +51,7 @@ export function PublicDesktopNav({
   nameSize,
   links,
   showSubscribe,
+  showSearch = false,
   userName,
   authorName,
 }: PublicDesktopNavProps) {
@@ -91,13 +94,20 @@ export function PublicDesktopNav({
     setInlineCount(best);
   }, [links]);
 
-  useLayoutEffect(() => {
-    recompute();
+  useEffect(() => {
+    // Defer measurement to avoid forced reflow during initial render
+    const timer = requestAnimationFrame(() => {
+      recompute();
+    });
+
     const slot = navSlotRef.current;
     if (!slot) return;
     const ro = new ResizeObserver(() => recompute());
     ro.observe(slot);
-    return () => ro.disconnect();
+    return () => {
+      cancelAnimationFrame(timer);
+      ro.disconnect();
+    };
   }, [recompute]);
 
   const inlineLinks = links.slice(0, inlineCount);
@@ -125,6 +135,7 @@ export function PublicDesktopNav({
       </div>
 
       <Link
+        prefetch={false}
         href={titleHref}
         className={cn(
           publicNavDesktopBlogTitleClassName(size),
@@ -136,7 +147,7 @@ export function PublicDesktopNav({
 
       <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-6 overflow-hidden">
         {inlineLinks.map((l) => (
-          <Link key={l.href} href={l.href} className={linkClass(l.active)}>
+          <Link prefetch={false} key={l.href} href={l.href} className={linkClass(l.active)}>
             {l.label}
           </Link>
         ))}
@@ -154,7 +165,7 @@ export function PublicDesktopNav({
             <DropdownMenuContent align="end" className="min-w-[10rem] bg-white">
               {overflowLinks.map((l) => (
                 <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
-                  <Link href={l.href}>{l.label}</Link>
+                  <Link prefetch={false} href={l.href}>{l.label}</Link>
                 </DropdownMenuItem>
               ))}
             </DropdownMenuContent>
@@ -162,6 +173,11 @@ export function PublicDesktopNav({
         ) : null}
       </div>
 
+      {showSearch ? (
+        <SearchButton
+          iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+        />
+      ) : null}
       {showSubscribe && userName ? (
         <div className="shrink-0">
           <SubscribeToAuthor mode="dialog" userName={userName} authorName={authorName} />

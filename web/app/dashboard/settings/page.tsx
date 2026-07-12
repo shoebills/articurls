@@ -10,50 +10,101 @@ import {
   uploadFavicon,
   deleteFavicon,
   checkUsernameAvailability,
-  createUsernameChangeRequest,
-  listMyUsernameChangeRequests,
   ApiError,
+  apiCacheHas,
+  getCachedApiData,
 } from "@/lib/api";
-import type { StorageUsage, UsernameChangeRequestOut } from "@/lib/types";
+import type { StorageUsage, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Check, Globe, Loader2, Pencil, UserRound, X } from "lucide-react";
+import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, MARKETING_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProGate } from "@/components/pro/pro-gate";
+import CustomDomainSettings from "@/components/custom-domain-settings";
 
-const USERNAME_CHANGE_LIMIT = 5;
+const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
-  const [name, setName] = useState("");
-  const [user_name, setUserName] = useState("");
-  const [email, setEmail] = useState("");
+  const [name, setName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return cached?.name ?? "";
+  });
+  const [user_name, setUserName] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return cached?.user_name ?? "";
+  });
+  const [email, setEmail] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return cached?.email ?? "";
+  });
   const [err, setErr] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [removeBranding, setRemoveBranding] = useState(true);
-  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
-  const [usernameChangeCount, setUsernameChangeCount] = useState(0);
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !(
+      apiCacheHas("/user/me", t) &&
+      apiCacheHas("/user/storage", t)
+    );
+  });
+  const [removeBranding, setRemoveBranding] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return false;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return isPro ? (cached?.remove_branding ?? false) : false;
+  });
+  const [collectSubscribers, setCollectSubscribers] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return false;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return isPro ? (cached?.subscriber_collection_enabled ?? false) : false;
+  });
+  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
+  });
+  const [lastUsernameChangeAt, setLastUsernameChangeAt] = useState<string | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return null;
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
+    return cached?.last_username_change_at || null;
+  });
   const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
   const [usernameAvailability, setUsernameAvailability] = useState<{
     state: "idle" | "checking" | "available" | "taken" | "invalid";
     message: string;
-  }>({ state: "idle", message: "" });
-  const [usernameRequestReason, setUsernameRequestReason] = useState("");
-  const [usernameRequests, setUsernameRequests] = useState<UsernameChangeRequestOut[]>([]);
-  const [requestBusy, setRequestBusy] = useState(false);
+  }  >({ state: "idle", message: "" });
   const pfpInputRef = useRef<HTMLInputElement>(null);
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
+  const [pfpDeleteOpen, setPfpDeleteOpen] = useState(false);
+  const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
 
   function formatBytes(bytes: number): string {
     if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -70,11 +121,14 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setRemoveBranding(u.remove_branding ?? true);
-      setUsernameChangeCount(u.username_change_count || 0);
+      setRemoveBranding(isPro ? (u.remove_branding ?? false) : false);
+      setCollectSubscribers(isPro ? (u.subscriber_collection_enabled ?? false) : false);
+      setLastUsernameChangeAt(u.last_username_change_at || null);
       setStorageUsage(usage);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
+    } finally {
+      setLoading(false);
     }
   }, [token]);
 
@@ -87,23 +141,26 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setRemoveBranding(ctxUser.remove_branding ?? true);
-      setUsernameChangeCount(ctxUser.username_change_count || 0);
+      setRemoveBranding(isPro ? (ctxUser.remove_branding ?? false) : false);
+      setCollectSubscribers(isPro ? (ctxUser.subscriber_collection_enabled ?? false) : false);
+      setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
     }
   }, [ctxUser]);
+
+  const profileDirty = name.trim() !== (ctxUser?.name ?? "") || email.trim() !== (ctxUser?.email ?? "");
 
   async function saveBase() {
     if (!token) return;
     setBusy(true);
     setErr(null);
-    setSaved(false);
+    setSaved(null);
     try {
       await patchMe(token, {
         name,
         email,
       });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
@@ -111,17 +168,25 @@ export default function SettingsPage() {
     }
   }
 
-  async function savePro() {
+  async function savePro(collect?: boolean, branding?: boolean) {
     if (!token || !isPro) return;
+    const nextCollect = collect ?? collectSubscribers;
+    const nextBranding = branding ?? removeBranding;
     setBusy(true);
     setErr(null);
+    setSaved(null);
+    const prevCollect = collectSubscribers;
+    const prevBranding = removeBranding;
     try {
       await patchProMe(token, {
-        remove_branding: removeBranding,
+        remove_branding: nextBranding,
+        subscriber_collection_enabled: nextCollect,
       });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
+      setCollectSubscribers(prevCollect);
+      setRemoveBranding(prevBranding);
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
       setBusy(false);
@@ -149,15 +214,31 @@ export default function SettingsPage() {
     if (!token) return;
     setBusy(true);
     setErr(null);
-    setSaved(false);
+    setSaved(null);
     try {
       await patchMe(token, { profile_image_url: null });
       await refreshUser();
-      setSaved(true);
+      setSaved("Saved");
+      setPfpDeleteOpen(false);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Could not remove photo");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function removeFavicon() {
+    if (!token) return;
+    setFaviconBusy(true);
+    setErr(null);
+    try {
+      await deleteFavicon(token);
+      await refreshUser();
+      setFaviconDeleteOpen(false);
+    } catch (ex) {
+      setErr(ex instanceof ApiError ? ex.message : "Could not remove favicon");
+    } finally {
+      setFaviconBusy(false);
     }
   }
 
@@ -168,7 +249,12 @@ export default function SettingsPage() {
     profileImageUrl.includes("/uploads/defaults/");
   const hasCustomProfileImage = Boolean(profileImageUrl) && !isDefaultProfileImage;
 
-  const usernameChangesRemaining = Math.max(0, USERNAME_CHANGE_LIMIT - usernameChangeCount);
+  const cooldownEnd = lastUsernameChangeAt
+    ? new Date(lastUsernameChangeAt).getTime() + USERNAME_CHANGE_COOLDOWN_DAYS * 86400000
+    : 0;
+  const cooldownRemainingMs = Math.max(0, cooldownEnd - Date.now());
+  const cooldownRemainingDays = Math.ceil(cooldownRemainingMs / 86400000);
+  const canChange = cooldownRemainingMs <= 0;
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `${MARKETING_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
@@ -201,24 +287,9 @@ export default function SettingsPage() {
     return () => clearTimeout(timer);
   }, [pendingUsername, token, usernameDialogOpen]);
 
-  useEffect(() => {
-    if (!usernameDialogOpen || !token) return;
-    (async () => {
-      try {
-        const rows = await listMyUsernameChangeRequests(token);
-        setUsernameRequests(rows);
-      } catch {
-        // Non-blocking for dialog UX.
-      }
-    })();
-  }, [token, usernameDialogOpen]);
-
   async function saveUsername() {
     if (!token) return;
-    if (usernameChangesRemaining <= 0) {
-      setUsernameAvailability({ state: "invalid", message: "No username changes remaining" });
-      return;
-    }
+    if (!canChange) return;
     if (!pendingUsername.trim()) {
       setUsernameAvailability({ state: "invalid", message: "Username is required" });
       return;
@@ -230,7 +301,7 @@ export default function SettingsPage() {
       await refreshUser();
       setUserName(pendingUsername.trim().toLowerCase());
       setUsernameDialogOpen(false);
-      setSaved(true);
+      setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not update username");
     } finally {
@@ -238,41 +309,106 @@ export default function SettingsPage() {
     }
   }
 
-  async function submitUsernameChangeRequest() {
-    if (!token) return;
-    if (!pendingUsername.trim()) {
-      setUsernameAvailability({ state: "invalid", message: "Username is required" });
-      return;
-    }
-    setRequestBusy(true);
-    setErr(null);
-    try {
-      await createUsernameChangeRequest(token, {
-        desired_username: pendingUsername.trim().toLowerCase(),
-        reason: usernameRequestReason.trim() || undefined,
-      });
-      const rows = await listMyUsernameChangeRequests(token);
-      setUsernameRequests(rows);
-      setUsernameRequestReason("");
-      setSaved(true);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not submit request");
-    } finally {
-      setRequestBusy(false);
-    }
+  if (loading) {
+    return (
+      <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Profile</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-row items-center gap-3 sm:gap-6">
+              <Skeleton className="h-[4.875rem] w-[4.875rem] rounded-full" />
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-10 w-10" />
+                <Skeleton className="h-10 w-10" />
+              </div>
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Skeleton className="h-4 w-12" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+              <div className="space-y-2.5">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            </div>
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-10" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-11 w-24" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">Storage</CardTitle>
+            <CardDescription>
+              <Skeleton className="h-4 w-72" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+            <Skeleton className="h-2.5 w-full rounded-full" />
+          </CardContent>
+        </Card>
+        <Card id="pro-features">
+          <CardHeader>
+            <CardTitle className="text-xl">Pro features</CardTitle>
+            <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1.5">
+                <Skeleton className="h-4 w-20" />
+                <Skeleton className="h-3 w-40" />
+              </div>
+              <Skeleton className="h-14 w-14 rounded-lg" />
+            </div>
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-64" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-28" />
+                <Skeleton className="h-3 w-56" />
+              </div>
+              <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-4 sm:pb-4">
+            <CardTitle className="text-xl">Custom Domain</CardTitle>
+            <CardDescription>Use your own domain for your blog.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Skeleton className="h-40 w-full rounded-md" />
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
-      {saved && <p className="text-sm font-medium text-emerald-600">Saved.</p>}
 
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Profile</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-6">
+          <div className="flex flex-row items-center gap-3 sm:gap-6">
             <div className="relative inline-flex shrink-0">
               <input
                 ref={pfpInputRef}
@@ -289,7 +425,7 @@ export default function SettingsPage() {
                 type="button"
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
-                className="group relative h-[6.5rem] w-[6.5rem] shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow,transform,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
+                className="group relative h-[4.875rem] w-[4.875rem] shrink-0 overflow-hidden rounded-full border border-border/60 bg-muted shadow-sm ring-1 ring-black/[0.04] transition-[box-shadow,transform,border-color] duration-200 hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-60 active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
                 aria-label={hasCustomProfileImage ? "Change profile photo" : "Upload profile photo"}
               >
                 {ctxUser?.profile_image_url ? (
@@ -316,27 +452,29 @@ export default function SettingsPage() {
                 </span>
               </button>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="h-10 w-fit shrink-0"
+                size="icon"
+                className="h-10 w-10 shrink-0"
                 disabled={busy}
                 onClick={() => pfpInputRef.current?.click()}
+                title={hasCustomProfileImage ? "Change photo" : "Upload photo"}
               >
-                {hasCustomProfileImage ? "Change photo" : "Upload photo"}
+                <Pencil className="h-4 w-4" />
               </Button>
               {hasCustomProfileImage ? (
                 <Button
                   type="button"
                   variant="outline"
-                  size="sm"
-                  className="h-10 w-fit shrink-0 border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
+                  size="icon"
+                  className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                   disabled={busy}
-                  onClick={removePfp}
+                  onClick={() => setPfpDeleteOpen(true)}
+                  title="Remove photo"
                 >
-                  Remove photo
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               ) : null}
             </div>
@@ -344,16 +482,16 @@ export default function SettingsPage() {
           <div className="grid gap-6 sm:grid-cols-2">
             <div className="space-y-2.5">
               <Label htmlFor="name">Name</Label>
-              <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input id="name" className="mt-2" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="user_name">Username</Label>
-              <div className="flex items-center gap-2">
-                <Input id="user_name" value={user_name} readOnly className="h-12 min-h-12 bg-muted/30 sm:h-10 sm:min-h-10" />
+              <div className="mt-2 flex items-center gap-2">
+                <Input id="user_name" className="h-10 min-h-10 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
                 <Button
                   type="button"
                   variant="outline"
-                  className="h-12 min-h-12 w-12 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
+                  className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
                   onClick={() => {
                     setPendingUsername(user_name);
                     setUsernameAvailability({ state: "idle", message: "" });
@@ -369,11 +507,11 @@ export default function SettingsPage() {
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
-          <div className="border-t border-border/60 pt-6">
-            <Button size="lg" onClick={saveBase} disabled={busy}>
-              Save profile
+          <div className="pt-2">
+            <Button size="lg" onClick={saveBase} disabled={busy || !profileDirty}>
+              Save
             </Button>
           </div>
         </CardContent>
@@ -384,7 +522,7 @@ export default function SettingsPage() {
           <CardTitle className="text-xl">Storage</CardTitle>
           <CardDescription>
             {isUnlimitedStorage
-              ? "Unlimited media storage on Pro."
+              ? "Unlimited media storage on Pro plan."
               : "Free plan includes up to 1 GB total media storage."}
           </CardDescription>
         </CardHeader>
@@ -396,146 +534,193 @@ export default function SettingsPage() {
             </p>
           </div>
           <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
-            {isUnlimitedStorage ? (
-              <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600" />
-            ) : (
+            {!isUnlimitedStorage && (
               <div
                 className="h-full rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600"
                 style={{ width: `${storagePct}%` }}
               />
             )}
           </div>
-          {!isUnlimitedStorage ? (
-            <p className="text-xs text-muted-foreground">{storagePct}% of free quota used</p>
-          ) : (
-            <p className="text-xs text-muted-foreground">Unlimited plan active</p>
+          {!isUnlimitedStorage && (
+            <p className="text-xs text-muted-foreground">{storagePct}% used</p>
           )}
+        </CardContent>
+      </Card>
+
+      <Card id="pro-features">
+        <CardHeader>
+          <CardTitle className="text-xl">Pro features</CardTitle>
+          <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+
+          <ProGate>
+            <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium">Blog favicon</p>
+                <p className="text-sm text-muted-foreground">
+                  Ideal 512×512px, max 256KB.
+                </p>
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
+                  {ctxUser?.favicon_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={assetUrl(ctxUser.favicon_url)}
+                      alt="Favicon"
+                      className="h-8 w-8 object-contain"
+                    />
+                  ) : (
+                    <Globe className="h-6 w-6 text-muted-foreground/50" />
+                  )}
+                </div>
+                <input
+                  ref={faviconInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !token) return;
+                    if (file.size > 256 * 1024) {
+                      setErr("Favicon too large (max 256KB)");
+                      e.target.value = "";
+                      return;
+                    }
+                    setFaviconBusy(true);
+                    setErr(null);
+                    try {
+                      await uploadFavicon(token, file);
+                      await refreshUser();
+                    } catch (ex) {
+                      setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
+                    } finally {
+                      setFaviconBusy(false);
+                      e.target.value = "";
+                    }
+                  }}
+                  disabled={faviconBusy}
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    disabled={faviconBusy}
+                    onClick={() => faviconInputRef.current?.click()}
+                    title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
+                  >
+                    {faviconBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
+                  </Button>
+                  {ctxUser?.favicon_url ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      disabled={faviconBusy}
+                      onClick={() => setFaviconDeleteOpen(true)}
+                      title="Remove favicon"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </ProGate>
+          <ProGate>
+            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+              <div className="flex items-center justify-between gap-4 sm:gap-6">
+                <p className="text-sm font-medium">Collect subscribers</p>
+                <Switch
+                  checked={collectSubscribers}
+                  onCheckedChange={(v) => {
+                    setCollectSubscribers(v);
+                    void savePro(v, removeBranding);
+                  }}
+                  disabled={busy}
+                />
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Show the subscribe button in your blog menu and below blog posts.
+              </p>
+            </div>
+          </ProGate>
+          <ProGate>
+            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+              <div className="flex items-center justify-between gap-4 sm:gap-6">
+                <p className="text-sm font-medium">Remove branding</p>
+                <Switch
+                  checked={removeBranding}
+                  onCheckedChange={(v) => {
+                    setRemoveBranding(v);
+                    void savePro(collectSubscribers, v);
+                  }}
+                  disabled={busy}
+                />
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                Hide the "Made with Articurls" badge from your blog.
+              </p>
+            </div>
+          </ProGate>
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Pro options</CardTitle>
+        <CardHeader className="pb-4 sm:pb-4">
+          <CardTitle className="text-xl">Custom Domain</CardTitle>
+          <CardDescription>Use your own domain for your blog.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {!isPro && (
-            <p className="rounded-xl border border-dashed border-border/80 bg-muted/30 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
-              Upgrade under Billing to edit these.
-            </p>
-          )}
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Blog favicon</Label>
-              <p className="text-sm text-muted-foreground">
-                Custom favicon shown in browser tabs for your blog. Recommended: 512×512 PNG, max 256KB.
-              </p>
-            </div>
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/30">
-                {ctxUser?.favicon_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={assetUrl(ctxUser.favicon_url)}
-                    alt="Favicon"
-                    className="h-8 w-8 object-contain"
-                  />
-                ) : (
-                  <Globe className="h-6 w-6 text-muted-foreground/50" />
-                )}
-              </div>
-              <input
-                ref={faviconInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
-                className="sr-only"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !token) return;
-                  if (file.size > 256 * 1024) {
-                    setErr("Favicon too large (max 256KB)");
-                    e.target.value = "";
-                    return;
-                  }
-                  setFaviconBusy(true);
-                  setErr(null);
-                  try {
-                    await uploadFavicon(token, file);
-                    await refreshUser();
-                  } catch (ex) {
-                    setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
-                  } finally {
-                    setFaviconBusy(false);
-                    e.target.value = "";
-                  }
-                }}
-                disabled={!isPro || faviconBusy}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={!isPro || faviconBusy}
-                  onClick={() => faviconInputRef.current?.click()}
-                >
-                  {faviconBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  {ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
-                </Button>
-                {ctxUser?.favicon_url ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="border-destructive/50 bg-destructive/5 text-destructive hover:bg-destructive/15 hover:text-destructive"
-                    disabled={!isPro || faviconBusy}
-                    onClick={async () => {
-                      if (!token) return;
-                      setFaviconBusy(true);
-                      setErr(null);
-                      try {
-                        await deleteFavicon(token);
-                        await refreshUser();
-                      } catch (ex) {
-                        setErr(ex instanceof ApiError ? ex.message : "Could not remove favicon");
-                      } finally {
-                        setFaviconBusy(false);
-                      }
-                    }}
-                  >
-                    Remove
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          </div>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Remove Articurls branding</p>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Hide the "Made with Articurls" text on your public pages.
-              </p>
-            </div>
-            <Switch
-              checked={isPro ? removeBranding : false}
-              onCheckedChange={setRemoveBranding}
-              disabled={!isPro || busy}
-            />
-          </div>
-          <div className="pt-2">
-            <Button size="lg" onClick={savePro} disabled={!isPro || busy}>
-              Save Pro settings
-            </Button>
-          </div>
+        <CardContent>
+          <CustomDomainSettings />
         </CardContent>
       </Card>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+      {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
+
+      <Dialog open={pfpDeleteOpen} onOpenChange={setPfpDeleteOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Remove profile photo?</DialogTitle>
+            <DialogDescription>Your photo will be replaced with the default avatar.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPfpDeleteOpen(false)} disabled={busy}>Cancel</Button>
+            <Button variant="destructive" onClick={removePfp} disabled={busy}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={faviconDeleteOpen} onOpenChange={setFaviconDeleteOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Remove favicon?</DialogTitle>
+            <DialogDescription>Your favicon will be removed and the default icon will be shown instead.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFaviconDeleteOpen(false)} disabled={faviconBusy}>Cancel</Button>
+            <Button variant="destructive" onClick={removeFavicon} disabled={faviconBusy}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
             <DialogTitle>Change username</DialogTitle>
             <DialogDescription>
-              You can change your username up to {USERNAME_CHANGE_LIMIT} times. Remaining: {usernameChangesRemaining}.
+              {canChange
+                ? "You can change your username once every 7 days."
+                : `Please wait ${cooldownRemainingDays} day${cooldownRemainingDays === 1 ? "" : "s"} before changing again.`}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
@@ -543,6 +728,7 @@ export default function SettingsPage() {
               <Label htmlFor="username-dialog">Username</Label>
               <Input
                 id="username-dialog"
+                className="mt-2"
                 value={pendingUsername}
                 onChange={(e) => setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
                 placeholder="yourusername"
@@ -550,7 +736,7 @@ export default function SettingsPage() {
                 autoCorrect="off"
               />
             </div>
-            <p className="rounded-md border border-border/70 bg-muted/30 px-3 py-2 text-xs text-muted-foreground break-all">
+            <p className="text-xs text-muted-foreground break-all">
               {liveProfileUrl}
             </p>
             <div className="min-h-5 text-sm">
@@ -566,28 +752,14 @@ export default function SettingsPage() {
                 <span className="text-destructive">{usernameAvailability.message}</span>
               ) : null}
             </div>
-            {usernameChangesRemaining <= 0 ? (
-              <div className="space-y-2 rounded-lg border border-border/70 bg-muted/20 p-3">
-                <p className="text-xs text-muted-foreground">
-                  You have reached the self-service limit. Submit an admin review request for legal, safety, or trademark cases.
-                </p>
-                <Textarea
-                  value={usernameRequestReason}
-                  onChange={(e) => setUsernameRequestReason(e.target.value)}
-                  placeholder="Reason for admin review (optional)"
-                  className="min-h-20"
-                />
-                <Button type="button" variant="outline" onClick={submitUsernameChangeRequest} disabled={requestBusy}>
-                  {requestBusy ? "Submitting..." : "Request admin change"}
-                </Button>
-                {usernameRequests.length > 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    Latest request: {usernameRequests[0].status}
-                    {usernameRequests[0].admin_note ? ` - ${usernameRequests[0].admin_note}` : ""}
-                  </p>
-                ) : null}
-              </div>
-            ) : null}
+            {!canChange && (
+              <p className="text-xs text-muted-foreground">
+                Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Links with previous username will be redirected to new links.
+            </p>
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
@@ -598,13 +770,15 @@ export default function SettingsPage() {
               onClick={saveUsername}
               disabled={
                 busy ||
-                usernameChangesRemaining <= 0 ||
+                !canChange ||
                 usernameAvailability.state === "checking" ||
                 usernameAvailability.state === "taken" ||
                 usernameAvailability.state === "invalid"
               }
             >
-              {usernameChangesRemaining <= 0 ? "Save disabled" : "Save username"}
+              {!canChange
+                ? `Available in ${cooldownRemainingDays}d`
+                : "Save username"}
             </Button>
           </DialogFooter>
         </DialogContent>

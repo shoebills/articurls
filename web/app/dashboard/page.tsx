@@ -1,10 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError } from "@/lib/api";
+import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, exchangeOAuthCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiCacheHas, getCachedApiData } from "@/lib/api";
 import type { BlogListItem } from "@/lib/types";
 import { MARKETING_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
@@ -26,41 +28,73 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, Loader2, MoreVertical, PenLine, Pencil, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
+import { PromptDialog } from "@/components/prompt-dialog";
 import { scoreByTitleAndContent } from "@/lib/search";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogContentThumbnail } from "@/lib/blog-images";
 
 const POSTS_PER_PAGE = 10;
 
 export default function DashboardPage() {
   const router = useRouter();
   const { token, user } = useAuth();
-  const [blogs, setBlogs] = useState<BlogListItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return [];
+    const cached = getCachedApiData<BlogListItem[]>("/blog/", t);
+    if (cached) {
+      return [...cached].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !apiCacheHas("/blog/", t);
+  });
   const [err, setErr] = useState<string | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [archiveId, setArchiveId] = useState<number | null>(null);
+  const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
+  const [menuOpenBlogId, setMenuOpenBlogId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
-  const [sortBy, setSortBy] = useState<"latest" | "oldest" | "most_popular">("latest");
+  const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
+  const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
 
-  // Handle access token from OAuth callback (for existing user login)
+  // Share dialog state
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [shareUrl, setShareUrl] = useState("");
+  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
+
+  const exchangedOAuth = useRef(false);
+
   useEffect(() => {
+    if (exchangedOAuth.current) return;
     const params = new URLSearchParams(window.location.search);
-    const accessToken = params.get("access_token");
+    const oauthCode = params.get("code");
     
-    if (accessToken) {
-      // Store token
-      localStorage.setItem("articurls_token", accessToken);
-      // Remove token from URL
+    if (oauthCode) {
+      exchangedOAuth.current = true;
       const url = new URL(window.location.href);
-      url.searchParams.delete("access_token");
+      url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
-      // Reload page to let auth context pick up the token
-      window.location.reload();
+      exchangeOAuthCode(oauthCode).then(() => {
+        const plan = localStorage.getItem("pendingPlan");
+        localStorage.removeItem("pendingPlan");
+        if (plan === "pro" || plan === "lifetime") {
+          window.location.replace(`/dashboard/billing?plan=${plan}`);
+        } else {
+          window.location.reload();
+        }
+      }).catch(() => {
+        router.replace("/login?error=oauth_failed");
+      });
     }
   }, []);
 
@@ -69,7 +103,7 @@ export default function DashboardPage() {
     setErr(null);
     try {
       const data = await listBlogs(token);
-      data.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
       setBlogs(data);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load posts");
@@ -93,12 +127,13 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleArchive(id: number) {
-    if (!token) return;
-    setRowBusyId(id);
+  async function confirmArchive() {
+    if (!token || archiveId == null) return;
+    setRowBusyId(archiveId);
     setErr(null);
     try {
-      await archiveBlog(token, id);
+      await archiveBlog(token, archiveId);
+      setArchiveId(null);
       await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Archive failed");
@@ -107,18 +142,27 @@ export default function DashboardPage() {
     }
   }
 
-  async function handlePublishAgain(id: number) {
-    if (!token) return;
-    setRowBusyId(id);
+  async function confirmUnarchive() {
+    if (!token || unarchiveId == null) return;
+    setRowBusyId(unarchiveId);
     setErr(null);
     try {
-      await publishBlog(token, id);
+      await publishBlog(token, unarchiveId);
+      setUnarchiveId(null);
       await load();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not publish post");
+      setErr(e instanceof ApiError ? e.message : "Could not unarchive post");
     } finally {
       setRowBusyId(null);
     }
+  }
+
+  function handleArchive(id: number) {
+    setArchiveId(id);
+  }
+
+  function handlePublishAgain(id: number) {
+    setUnarchiveId(id);
   }
 
   function openEditor(blogId: number) {
@@ -134,22 +178,20 @@ export default function DashboardPage() {
     const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
     try {
       await navigator.clipboard.writeText(url);
+      setCopiedMsg("Link copied");
+      setMenuOpenBlogId(null);
     } catch {
-      window.prompt("Copy link:", url);
+      setShareUrl(url);
+      setShareDialogOpen(true);
     }
   }
 
   const filteredBlogs = useMemo(() => {
     const compareBySort = (a: BlogListItem, b: BlogListItem) => {
-      if (sortBy === "most_popular") {
-        const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
-        if (byViews !== 0) return byViews;
-        return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
-      }
       if (sortBy === "oldest") {
-        return new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
       }
-      return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     };
 
     const byStatus =
@@ -190,15 +232,6 @@ export default function DashboardPage() {
     return filteredBlogs.slice(start, start + POSTS_PER_PAGE);
   }, [filteredBlogs, currentPage]);
 
-  if (loading) {
-    return (
-      <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-muted-foreground">
-        <Loader2 className="h-8 w-8 animate-spin" aria-hidden />
-        <p className="text-sm">Loading posts…</p>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-[1100px]">
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
@@ -215,8 +248,11 @@ export default function DashboardPage() {
             </Link>
           </Button>
         </div>
-        <Button asChild className="hidden h-11 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
-          <Link href="/dashboard/posts/new">+ New Post</Link>
+        <Button asChild className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
+          <Link href="/dashboard/posts/new">
+            <Plus className="h-4 w-4" />
+            New Post
+          </Link>
         </Button>
       </div>
 
@@ -228,13 +264,13 @@ export default function DashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-12 min-h-12 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11"
+            className="h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
           />
         </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-10 min-h-10 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <Filter className="h-4 w-4" />
               <span className="hidden sm:inline">Filter</span>
             </Button>
@@ -244,12 +280,13 @@ export default function DashboardPage() {
             <DropdownMenuItem onClick={() => setStatusFilter("published")}>Published</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("archived")}>Archived</DropdownMenuItem>
             <DropdownMenuItem onClick={() => setStatusFilter("draft")}>Draft</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter("scheduled")}>Scheduled</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button type="button" variant="outline" className="h-12 min-h-12 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
+            <Button type="button" variant="outline" className="h-10 min-h-10 gap-2 rounded-xl px-3 sm:h-11 sm:min-h-11 sm:px-3.5">
               <ArrowUpDown className="h-4 w-4" />
               <span className="hidden sm:inline">Sort</span>
             </Button>
@@ -263,20 +300,39 @@ export default function DashboardPage() {
               <Check className={`h-4 w-4 ${sortBy === "oldest" ? "opacity-100" : "opacity-0"}`} />
               Oldest
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setSortBy("most_popular")}>
-              <Check className={`h-4 w-4 ${sortBy === "most_popular" ? "opacity-100" : "opacity-0"}`} />
-              Most popular
-            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
 
-      {blogs.length > 0 ? (
+      {loading ? (
+        <ul className="space-y-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <li key={i}>
+                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <Skeleton className="h-6 w-3/4" />
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-2/3" />
+                    </div>
+                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
+                  </div>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                    <Skeleton className="h-4 w-24" />
+                    <Skeleton className="h-8 w-8 shrink-0 rounded-md" />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+      ) : (
+        <>
+        {blogs.length > 0 ? (
         filteredBlogs.length > 0 ? (
           <>
             <ul className="space-y-4">
           {pagedBlogs.map((b) => {
-            const views = typeof b.view_count === "number" ? b.view_count : 0;
             return (
             <li key={b.blog_id}>
               <Card
@@ -299,14 +355,6 @@ export default function DashboardPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="flex items-start gap-4">
-                    {resolveBlogPreviewImage(b) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={resolveBlogPreviewImage(b)}
-                        alt=""
-                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
-                      />
-                    ) : null}
                     <div className="min-w-0 flex-1 space-y-1">
                       <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
                         {b.title || "Untitled"}
@@ -315,78 +363,101 @@ export default function DashboardPage() {
                         {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
                       </p>
                     </div>
+                    {resolveBlogContentThumbnail(b) ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={resolveBlogContentThumbnail(b)}
+                        alt=""
+                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
+                      />
+                    ) : null}
                   </div>
-
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
-                    <BlogStatusBadge status={b.status} className="shrink-0" />
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
-                    <span className="text-slate-300 select-none" aria-hidden>
-                      ·
-                    </span>
-                    <span className="whitespace-nowrap">
-                      {views} view{views === 1 ? "" : "s"}
-                    </span>
-                    <div className="ml-auto" data-card-action="true">
-                      <DropdownMenu>
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
+                    {b.status === "scheduled" && b.scheduled_at ? (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[0.625rem] sm:text-xs font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
+                          <span className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75 animate-pulse" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500 ring-2 ring-amber-500/40" />
+                          </span>
+                          Scheduled {format(new Date(b.scheduled_at), "MMM d, yyyy h:mm a")}
+                        </span>
+                      </>
+                    ) : (
+                      <BlogStatusBadge status={b.status} className="shrink-0 !text-[0.625rem] sm:!text-xs" />
+                    )}
+                    {b.status !== "scheduled" && (
+                      <>
+                        <span className="text-slate-300 select-none" aria-hidden>
+                          ·
+                        </span>
+                        {b.status === "published" && b.published_at ? (
+                          <span className="whitespace-nowrap">Published {format(new Date(b.published_at), "MMM d, yyyy")}</span>
+                        ) : (
+                          <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                        )}
+                      </>
+                    )}
+                    <div className="ml-auto">
+                      <DropdownMenu open={menuOpenBlogId === b.blog_id} onOpenChange={(open) => { if (!open) setMenuOpenBlogId(null); }}>
                         <DropdownMenuTrigger asChild>
                           <Button
                             data-card-action="true"
                             variant="ghost"
                             size="icon"
-                            className="h-8 w-8 shrink-0 text-slate-500 hover:text-slate-700"
+                            className="h-10 w-10 shrink-0 text-slate-500 hover:text-slate-700"
                             aria-label={`Actions for ${b.title || "Untitled"}`}
-                            disabled={rowBusyId === b.blog_id}
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent data-card-action="true" align="end" className="w-48">
-                          <DropdownMenuItem data-card-action="true" asChild>
-                            <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
-                              <Pencil className="h-4 w-4" />
-                              Edit
-                            </Link>
+                          disabled={rowBusyId === b.blog_id}
+                          onPointerDown={(e) => e.preventDefault()}
+                          onClick={() => setMenuOpenBlogId(b.blog_id)}
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent data-card-action="true" align="end" className="w-48">
+                        <DropdownMenuItem data-card-action="true" asChild>
+                          <Link href={`/dashboard/posts/${b.blog_id}/edit`}>
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </Link>
+                        </DropdownMenuItem>
+                        {(b.status === "published" || b.status === "archived") && (
+                          <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
+                            <Share2 className="h-4 w-4" />
+                            Copy link
                           </DropdownMenuItem>
-                          {(b.status === "published" || b.status === "archived") && (
-                            <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
-                              <Share2 className="h-4 w-4" />
-                              Copy link
-                            </DropdownMenuItem>
-                          )}
-                          {b.status === "published" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => handleArchive(b.blog_id)}
-                              disabled={rowBusyId === b.blog_id}
-                            >
-                              <Archive className="h-4 w-4" />
-                              Archive
-                            </DropdownMenuItem>
-                          )}
-                          {b.status === "archived" && (
-                            <DropdownMenuItem
-                              data-card-action="true"
-                              onClick={() => handlePublishAgain(b.blog_id)}
-                              disabled={rowBusyId === b.blog_id}
-                            >
-                              <ArchiveRestore className="h-4 w-4" />
-                              Unarchive
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
+                        )}
+                        {b.status === "published" && (
                           <DropdownMenuItem
                             data-card-action="true"
-                            className="text-destructive focus:bg-destructive/10 focus:text-destructive"
-                            onClick={() => setDeleteId(b.blog_id)}
+                            onClick={() => handleArchive(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
                           >
-                            <Trash2 className="h-4 w-4" />
-                            Delete
+                            <Archive className="h-4 w-4" />
+                            Archive
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                        )}
+                        {b.status === "archived" && (
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            onClick={() => handlePublishAgain(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <ArchiveRestore className="h-4 w-4" />
+                            Unarchive
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          data-card-action="true"
+                          className="text-destructive focus:bg-destructive/10 focus:text-destructive"
+                          onClick={() => setDeleteId(b.blog_id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     </div>
                   </div>
                 </CardContent>
@@ -395,17 +466,18 @@ export default function DashboardPage() {
             );
           })}
             </ul>
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-background px-3 py-2 sm:px-4">
+            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Page {currentPage} of {totalPages}
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                <Button variant="outline" size="sm" className="h-8 min-h-0 px-3 py-1.5" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
                   Prev
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
+                  className="h-8 min-h-0 px-3 py-1.5"
                   onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage >= totalPages}
                 >
@@ -415,7 +487,7 @@ export default function DashboardPage() {
             </div>
           </>
         ) : (
-          <div className="rounded-xl border border-border/70 bg-muted/30 px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
             No posts match your search.
           </div>
         )
@@ -425,19 +497,18 @@ export default function DashboardPage() {
           role="status"
           aria-label="No posts yet"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background/80 text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
             <PenLine className="h-5 w-5" aria-hidden />
           </div>
           <div className="space-y-1.5">
             <p className="text-base font-medium text-foreground">No posts yet</p>
             <p className="max-w-sm text-sm text-muted-foreground">
-              Create your first draft — you can edit and publish whenever you are ready.
+              Create your first draft. You can edit and publish whenever you are ready.
             </p>
           </div>
-          <Button asChild className="touch-manipulation">
-            <Link href="/dashboard/posts/new">+ New post</Link>
-          </Button>
         </div>
+      )}
+        </>
       )}
 
       <Dialog open={deleteId != null} onOpenChange={(o) => !o && setDeleteId(null)}>
@@ -456,7 +527,52 @@ export default function DashboardPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={archiveId != null} onOpenChange={(o) => !o && setArchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Archive this post?</DialogTitle>
+            <DialogDescription>Move this post to your archive.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setArchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmArchive}>
+              Archive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unarchiveId != null} onOpenChange={(o) => !o && setUnarchiveId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Unarchive this post?</DialogTitle>
+            <DialogDescription>Restore the post so it appears in your published list again.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnarchiveId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmUnarchive}>
+              Unarchive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+
+      <FloatingErrorToast message={copiedMsg} onDismiss={() => setCopiedMsg(null)} variant="success" autoDismissMs={1500} />
+
+      {/* Share Link Dialog */}
+      <PromptDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        title="Share Link"
+        description="Copy this link to share your post."
+        defaultValue={shareUrl}
+        onConfirm={() => {}}
+        readOnly
+      />
     </div>
   );
 }

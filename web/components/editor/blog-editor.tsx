@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
+import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
 import Underline from "@tiptap/extension-underline";
 import Link from "@tiptap/extension-link";
@@ -9,8 +10,7 @@ import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
 import Youtube from "@tiptap/extension-youtube";
 import Placeholder from "@tiptap/extension-placeholder";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { common, createLowlight } from "lowlight";
+// CodeBlock comes from StarterKit (no syntax highlighting needed)
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -31,8 +31,21 @@ import {
   Underline as UnderlineIcon,
   Undo2,
   X,
-  Video,
+  ChevronDown,
+  MoreHorizontal,
+  Strikethrough,
+  Type,
+  Quote,
+  WrapText,
 } from "lucide-react";
+import { SiYoutube } from "react-icons/si";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { PromptDialog } from "@/components/prompt-dialog";
 import {
   ApiError,
   deleteBlogMediaByUrl,
@@ -42,8 +55,114 @@ import {
 } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
+import { transformImageUrl, generateSrcSet, generateSizes } from "@/lib/image-transform";
 
-const lowlight = createLowlight(common);
+// Toolbar action types (minimal-tiptap pattern)
+type ToolbarAction = {
+  value: string;
+  label: string;
+  icon: React.ReactNode;
+  action: (editor: Editor) => void;
+  isActive: (editor: Editor) => boolean;
+  canExecute: (editor: Editor) => boolean;
+};
+
+type SetImageAttrs = Parameters<NonNullable<Editor["commands"]["setImage"]>>[0];
+
+function ToolbarButton({
+  editor,
+  action,
+  variant = "ghost",
+}: {
+  editor: Editor;
+  action: ToolbarAction;
+  variant?: "ghost" | "secondary";
+}) {
+  const active = action.isActive(editor);
+  const disabled = !action.canExecute(editor);
+  return (
+    <Button
+      type="button"
+      variant={active ? "secondary" : variant}
+      size="icon"
+      onClick={() => action.action(editor)}
+      disabled={disabled}
+      title={action.label}
+    >
+      {action.icon}
+    </Button>
+  );
+}
+
+function ToolbarSection({
+  editor,
+  actions,
+  mainActionCount = 2,
+  dropdownIcon,
+  dropdownTooltip,
+}: {
+  editor: Editor;
+  actions: ToolbarAction[];
+  mainActionCount?: number;
+  dropdownIcon?: React.ReactNode;
+  dropdownTooltip?: string;
+}) {
+  const { main, dropdown } = useMemo(() => {
+    return {
+      main: actions.slice(0, mainActionCount),
+      dropdown: actions.slice(mainActionCount),
+    };
+  }, [actions, mainActionCount]);
+
+  const isDropdownActive = dropdown.some((a) => a.isActive(editor));
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+
+  return (
+    <>
+      {main.map((action) => (
+        <ToolbarButton key={action.value} editor={editor} action={action} />
+      ))}
+      {dropdown.length > 0 && (
+        <DropdownMenu
+          modal={false}
+          open={dropdownOpen}
+          onOpenChange={setDropdownOpen}
+        >
+          <DropdownMenuTrigger
+            asChild
+            onPointerDown={(e) => e.preventDefault()}
+          >
+            <Button
+              type="button"
+              variant={isDropdownActive ? "secondary" : "ghost"}
+              size="icon"
+              title={dropdownTooltip || "More options"}
+              onClick={() => setDropdownOpen((o) => !o)}
+            >
+              {dropdownIcon || <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+            {dropdown.map((action) => (
+              <DropdownMenuItem
+                key={action.value}
+                onClick={() => action.action(editor)}
+                disabled={!action.canExecute(editor)}
+                className={cn(
+                  "flex items-center gap-2",
+                  action.isActive(editor) && "bg-accent"
+                )}
+              >
+                {action.icon}
+                <span>{action.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </>
+  );
+}
 
 function extractImageSrcsFromHtml(html: string): Set<string> {
   const urls = new Set<string>();
@@ -83,13 +202,27 @@ export function BlogEditor({
     extensions: [
       StarterKit.configure({
         heading: { levels: [1, 2, 3] },
-        codeBlock: false,
       }),
-      CodeBlockLowlight.configure({ lowlight }),
       Underline,
       Highlight.configure({ multicolor: false }),
       Link.configure({ openOnClick: false, autolink: true }),
-      Image.configure({ inline: false }),
+      Image.configure({
+        inline: false,
+        HTMLAttributes: {
+          loading: "lazy",
+          decoding: "async",
+        },
+      }).extend({
+        addAttributes() {
+          return {
+            ...this.parent?.(),
+            srcset: { default: null },
+            sizes: { default: null },
+            loading: { default: "lazy" },
+            decoding: { default: "async" },
+          };
+        },
+      }),
       Youtube.configure({ width: 640, height: 360, nocookie: true }),
       Placeholder.configure({ placeholder }),
     ],
@@ -101,6 +234,7 @@ export function BlogEditor({
     },
     onUpdate: ({ editor: ed }) => {
       const nextHtml = ed.getHTML();
+      
       onChange(nextHtml);
 
       if ((blogId || pageId) && token) {
@@ -147,6 +281,46 @@ export function BlogEditor({
     ((editor.state.selection as { node?: { type?: { name?: string } } }).node?.type?.name === "image" ||
       editor.isActive("image"));
 
+  // Mobile swipe vs tap detection for heading dropdown
+  const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
+
+  // Dialog states
+  const [linkDialogOpen, setLinkDialogOpen] = useState(false);
+  const [linkUrl, setLinkUrl] = useState("");
+  const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false);
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const [altDialogOpen, setAltDialogOpen] = useState(false);
+  const [altValue, setAltValue] = useState("");
+  const [altDialogMode, setAltDialogMode] = useState<"new" | "edit">("new");
+
+  // Editor toast for errors
+  const [editorToast, setEditorToast] = useState<string | null>(null);
+  const editorToastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Pending image upload result (stored between upload and alt dialog)
+  const pendingImageUploadRef = useRef<{
+    imageUrl: string;
+    originalUrl: string;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  // Auto-dismiss editor toast
+  useEffect(() => {
+    if (editorToast) {
+      if (editorToastTimerRef.current) clearTimeout(editorToastTimerRef.current);
+      editorToastTimerRef.current = setTimeout(() => {
+        setEditorToast(null);
+        editorToastTimerRef.current = null;
+      }, 3000);
+    }
+    return () => {
+      if (editorToastTimerRef.current) {
+        clearTimeout(editorToastTimerRef.current);
+      }
+    };
+  }, [editorToast]);
+
   // Track if editor is focused to prevent overwriting during active editing
   const isEditorFocusedRef = useRef(false);
 
@@ -172,13 +346,10 @@ export function BlogEditor({
 
   useEffect(() => {
     if (!editor) return;
+    
     const current = editor.getHTML();
     prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
     
-    // Only update editor content if:
-    // 1. Content is different from current editor state, AND
-    // 2. Editor is not currently focused (user is not actively typing)
-    // This prevents autosave from overwriting content during active editing
     if (content !== current && !isEditorFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
     }
@@ -187,8 +358,12 @@ export function BlogEditor({
   const setLink = useCallback(() => {
     if (!editor) return;
     const prev = editor.getAttributes("link").href;
-    const url = window.prompt("URL", prev || "https://");
-    if (url === null) return;
+    setLinkUrl(prev || "https://");
+    setLinkDialogOpen(true);
+  }, [editor]);
+
+  const handleLinkConfirm = useCallback((url: string) => {
+    if (!editor) return;
     if (url === "") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
@@ -198,11 +373,11 @@ export function BlogEditor({
 
   const addImage = useCallback(async () => {
     if (!editor || !token) {
-      window.alert("Please log in to upload images.");
+      setEditorToast("Please log in to upload images.");
       return;
     }
     if (!blogId && !pageId) {
-      window.alert("Save first to upload images.");
+      setEditorToast("Save first to upload images.");
       return;
     }
 
@@ -216,30 +391,94 @@ export function BlogEditor({
         const media = blogId
           ? await uploadBlogMedia(token, blogId, file)
           : await uploadPageMedia(token, pageId!, file);
-        const alt = window.prompt("Alt text (recommended for accessibility)", "") ?? "";
-        editor.chain().focus().setImage({ src: assetUrl(media.url), alt: alt.trim() }).run();
+        const originalUrl = assetUrl(media.url);
+
+        // Transform URL to use Cloudflare Image Transformations
+        // This converts the URL to: images.articurls.com/cdn-cgi/image/format=auto,width=600/...
+        const imageUrl = transformImageUrl(originalUrl, { width: 600 });
+
+        // Load original image to get natural dimensions (prevents CLS)
+        const img = new window.Image();
+        img.src = originalUrl;
+        await new Promise((resolve, reject) => {
+          img.onload = resolve;
+          img.onerror = reject;
+        });
+
+        // Store upload result and open alt dialog
+        pendingImageUploadRef.current = {
+          imageUrl,
+          originalUrl,
+          width: img.naturalWidth,
+          height: img.naturalHeight,
+        };
+        setAltValue("");
+        setAltDialogMode("new");
+        setAltDialogOpen(true);
       } catch (e) {
         const detail = e instanceof ApiError ? e.message : "Image upload failed.";
-        window.alert(detail);
+        setEditorToast(detail);
       }
     };
     input.click();
   }, [blogId, pageId, editor, token]);
 
+  const handleAltConfirm = useCallback(
+    (alt: string) => {
+      if (!editor) return;
+
+      if (altDialogMode === "new") {
+        if (!pendingImageUploadRef.current) return;
+        const { imageUrl, width, height } = pendingImageUploadRef.current;
+        const srcset = generateSrcSet(pendingImageUploadRef.current.originalUrl);
+        const sizes = generateSizes();
+
+        const imageAttrs: SetImageAttrs & {
+          srcset?: string;
+          sizes?: string;
+          loading?: "lazy";
+          decoding?: "async";
+        } = {
+          src: imageUrl,
+          alt: alt.trim(),
+          width,
+          height,
+          srcset,
+          sizes,
+          loading: "lazy",
+          decoding: "async",
+        };
+
+        editor.chain().focus().setImage(imageAttrs).run();
+        pendingImageUploadRef.current = null;
+      } else {
+        editor.chain().focus().updateAttributes("image", { alt: alt.trim() }).run();
+      }
+    },
+    [editor, altDialogMode]
+  );
+
   const editSelectedImageAlt = useCallback(() => {
     if (!editor || !isImageSelected) return;
     const attrs = editor.getAttributes("image");
-    const nextAlt = window.prompt("Image alt text", attrs.alt || "");
-    if (nextAlt === null) return;
-    editor.chain().focus().updateAttributes("image", { alt: nextAlt.trim() }).run();
+    setAltValue(attrs.alt || "");
+    setAltDialogMode("edit");
+    setAltDialogOpen(true);
   }, [editor, isImageSelected]);
 
   const addYoutube = useCallback(() => {
     if (!editor) return;
-    const url = window.prompt("YouTube URL");
-    if (!url) return;
-    editor.commands.setYoutubeVideo({ src: url });
+    setYoutubeUrl("");
+    setYoutubeDialogOpen(true);
   }, [editor]);
+
+  const handleYoutubeConfirm = useCallback(
+    (url: string) => {
+      if (!editor || !url) return;
+      editor.commands.setYoutubeVideo({ src: url });
+    },
+    [editor]
+  );
 
   const removeSelectedImage = useCallback(async () => {
     if (!editor || !isImageSelected) return;
@@ -263,138 +502,362 @@ export function BlogEditor({
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;
   }
 
+  // Toolbar action definitions (minimal-tiptap pattern)
+  const historyActions: ToolbarAction[] = [
+    {
+      value: "undo",
+      label: "Undo",
+      icon: <Undo2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().undo().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().undo().run(),
+    },
+    {
+      value: "redo",
+      label: "Redo",
+      icon: <Redo2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().redo().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().redo().run(),
+    },
+  ];
+
+  const headingActions: ToolbarAction[] = [
+    {
+      value: "heading1",
+      label: "Heading 1",
+      icon: <Heading1 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 1 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 1 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 1 }).run(),
+    },
+    {
+      value: "heading2",
+      label: "Heading 2",
+      icon: <Heading2 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 2 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 2 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 2 }).run(),
+    },
+    {
+      value: "heading3",
+      label: "Heading 3",
+      icon: <Heading3 className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHeading({ level: 3 }).run(),
+      isActive: (e) => e.isActive("heading", { level: 3 }),
+      canExecute: (e) => e.can().chain().focus().toggleHeading({ level: 3 }).run(),
+    },
+    {
+      value: "paragraph",
+      label: "Paragraph",
+      icon: <Type className="h-4 w-4" />,
+      action: (e) => e.chain().focus().setParagraph().run(),
+      isActive: (e) => e.isActive("paragraph"),
+      canExecute: (e) => e.can().chain().focus().setParagraph().run(),
+    },
+  ];
+
+  const formatActions: ToolbarAction[] = [
+    {
+      value: "bold",
+      label: "Bold",
+      icon: <Bold className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBold().run(),
+      isActive: (e) => e.isActive("bold"),
+      canExecute: (e) => e.can().chain().focus().toggleBold().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "italic",
+      label: "Italic",
+      icon: <Italic className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleItalic().run(),
+      isActive: (e) => e.isActive("italic"),
+      canExecute: (e) => e.can().chain().focus().toggleItalic().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "underline",
+      label: "Underline",
+      icon: <UnderlineIcon className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleUnderline().run(),
+      isActive: (e) => e.isActive("underline"),
+      canExecute: (e) => e.can().chain().focus().toggleUnderline().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "strikethrough",
+      label: "Strikethrough",
+      icon: <Strikethrough className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleStrike().run(),
+      isActive: (e) => e.isActive("strike"),
+      canExecute: (e) => e.can().chain().focus().toggleStrike().run() && !e.isActive("codeBlock"),
+    },
+    {
+      value: "highlight",
+      label: "Highlight",
+      icon: <Highlighter className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleHighlight().run(),
+      isActive: (e) => e.isActive("highlight"),
+      canExecute: (e) => e.can().chain().focus().toggleHighlight().run() && !e.isActive("codeBlock"),
+    },
+  ];
+
+  const listActions: ToolbarAction[] = [
+    {
+      value: "bulletList",
+      label: "Bullet List",
+      icon: <List className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBulletList().run(),
+      isActive: (e) => e.isActive("bulletList"),
+      canExecute: (e) => e.can().chain().focus().toggleBulletList().run(),
+    },
+    {
+      value: "orderedList",
+      label: "Ordered List",
+      icon: <ListOrdered className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleOrderedList().run(),
+      isActive: (e) => e.isActive("orderedList"),
+      canExecute: (e) => e.can().chain().focus().toggleOrderedList().run(),
+    },
+    {
+      value: "blockquote",
+      label: "Quote",
+      icon: <Quote className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleBlockquote().run(),
+      isActive: (e) => e.isActive("blockquote"),
+      canExecute: (e) => e.can().chain().focus().toggleBlockquote().run(),
+    },
+    {
+      value: "codeBlock",
+      label: "Code Block",
+      icon: <Code className="h-4 w-4" />,
+      action: (e) => e.chain().focus().toggleCodeBlock().run(),
+      isActive: (e) => e.isActive("codeBlock"),
+      canExecute: (e) => e.can().chain().focus().toggleCodeBlock().run(),
+    },
+    {
+      value: "horizontalRule",
+      label: "Divider",
+      icon: <Minus className="h-4 w-4" />,
+      action: (e) => e.chain().focus().setHorizontalRule().run(),
+      isActive: () => false,
+      canExecute: (e) => e.can().chain().focus().setHorizontalRule().run(),
+    },
+  ];
+
+  const insertActions: ToolbarAction[] = [
+    {
+      value: "link",
+      label: "Link",
+      icon: <Link2 className="h-4 w-4" />,
+      action: setLink,
+      isActive: (e) => e.isActive("link"),
+      canExecute: () => true,
+    },
+    {
+      value: "image",
+      label: "Image",
+      icon: <ImageIcon className="h-4 w-4" />,
+      action: addImage,
+      isActive: () => false,
+      canExecute: () => !!token && !!(blogId || pageId),
+    },
+    {
+      value: "youtube",
+      label: "YouTube",
+      icon: <SiYoutube className="h-4 w-4" />,
+      action: addYoutube,
+      isActive: () => false,
+      canExecute: () => true,
+    },
+  ];
+
+
   return (
-    <div className={cn("tiptap-editor rounded-lg border border-input bg-background", className)}>
+    <div className={cn("tiptap-editor rounded-lg border border-input bg-white", className)}>
       <span className="hidden" aria-hidden>
         {selectionTick}
       </span>
-      <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border p-2 [scrollbar-width:thin] sm:flex-wrap">
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
-          <Undo2 className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().redo().run()}>
-          <Redo2 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 1 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+      <div className="flex h-12 shrink-0 items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {/* History */}
+        <ToolbarSection editor={editor} actions={historyActions} mainActionCount={2} />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Formatting: Bold/Italic main, rest in dropdown */}
+        <ToolbarSection
+          editor={editor}
+          actions={formatActions}
+          mainActionCount={3}
+          dropdownIcon={<MoreHorizontal className="h-4 w-4" />}
+          dropdownTooltip="More formatting"
+        />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Headings in dropdown */}
+        <DropdownMenu
+          modal={false}
+          open={headingDropdownOpen}
+          onOpenChange={setHeadingDropdownOpen}
         >
-          <Heading1 className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        >
-          <Heading2 className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("heading", { level: 3 }) ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        >
-          <Heading3 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("bold") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBold().run()}
-        >
-          <Bold className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("italic") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleItalic().run()}
-        >
-          <Italic className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("underline") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleUnderline().run()}
-        >
-          <UnderlineIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("highlight") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleHighlight().run()}
-        >
-          <Highlighter className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={setLink}>
-          <Link2 className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button
-          type="button"
-          variant={editor.isActive("bulletList") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleBulletList().run()}
-        >
-          <List className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("orderedList") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        >
-          <ListOrdered className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().setHorizontalRule().run()}>
-          <Minus className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={editor.isActive("codeBlock") ? "secondary" : "ghost"}
-          size="icon"
-          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        >
-          <Code className="h-4 w-4" />
-        </Button>
-        <Separator orientation="vertical" className="mx-1 h-6" />
-        <Button type="button" variant="ghost" size="icon" onClick={addImage} title="Image">
-          <ImageIcon className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={isImageSelected ? "secondary" : "ghost"}
-          size="icon"
-          onClick={editSelectedImageAlt}
-          title="Edit image alt text"
-          disabled={!isImageSelected}
-        >
-          <ScanText className="h-4 w-4" />
-        </Button>
-        <Button
-          type="button"
-          variant={isImageSelected ? "secondary" : "ghost"}
-          size="icon"
-          onClick={removeSelectedImage}
-          title="Remove selected image"
-          disabled={!isImageSelected}
-        >
-          <X className="h-4 w-4" />
-        </Button>
-        <Button type="button" variant="ghost" size="icon" onClick={addYoutube} title="YouTube">
-          <Video className="h-4 w-4" />
-        </Button>
+          <DropdownMenuTrigger
+            asChild
+            onPointerDown={(e) => e.preventDefault()}
+          >
+            <Button
+              type="button"
+              variant={editor.isActive("heading") ? "secondary" : "ghost"}
+              size="sm"
+              className="h-10 w-12 px-1"
+              title="Headings"
+              onClick={() => setHeadingDropdownOpen((o) => !o)}
+            >
+              {editor.isActive("heading", { level: 1 }) ? (
+                <Heading1 className="h-4 w-4 shrink-0" />
+              ) : editor.isActive("heading", { level: 2 }) ? (
+                <Heading2 className="h-4 w-4 shrink-0" />
+              ) : editor.isActive("heading", { level: 3 }) ? (
+                <Heading3 className="h-4 w-4 shrink-0" />
+              ) : (
+                <Type className="h-4 w-4 shrink-0" />
+              )}
+              <ChevronDown className="ml-0.5 h-3 w-3 shrink-0" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+            {headingActions.map((action) => (
+              <DropdownMenuItem
+                key={action.value}
+                onClick={() => action.action(editor)}
+                disabled={!action.canExecute(editor)}
+                className={cn(
+                  "flex items-center gap-2",
+                  action.isActive(editor) && "bg-accent"
+                )}
+              >
+                {action.icon}
+                <span>{action.label}</span>
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Lists & Blocks */}
+        <ToolbarSection
+          editor={editor}
+          actions={listActions}
+          mainActionCount={2}
+          dropdownIcon={<WrapText className="h-4 w-4" />}
+          dropdownTooltip="More blocks"
+        />
+        <Separator orientation="vertical" className="mx-2 h-6" />
+
+        {/* Insert */}
+        <ToolbarSection
+          editor={editor}
+          actions={insertActions}
+          mainActionCount={3}
+          dropdownIcon={<MoreHorizontal className="h-4 w-4" />}
+          dropdownTooltip="Insert"
+        />
+
       </div>
       <div className="p-3 sm:p-4 md:p-6">
         <EditorContent editor={editor} />
+        {editor && (
+          <BubbleMenu
+            editor={editor}
+            shouldShow={({ editor: ed }) =>
+              ed.isActive("image") && ed.isEditable
+            }
+            updateDelay={0}
+            resizeDelay={0}
+            options={{
+              placement: "top",
+              strategy: "absolute",
+              hide: true,
+            }}
+          >
+            <div
+              className="flex items-center gap-1 rounded-md border bg-popover p-1 shadow-md"
+              onMouseDown={(e) => e.preventDefault()}
+            >
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-10 gap-1.5 px-2 text-xs"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  editSelectedImageAlt();
+                }}
+              >
+                <ScanText className="h-3.5 w-3.5" />
+                Alt text
+              </Button>
+              <Separator orientation="vertical" className="h-5" />
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="h-10 gap-1.5 px-2 text-xs text-destructive hover:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeSelectedImage();
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+                Remove
+              </Button>
+            </div>
+          </BubbleMenu>
+        )}
       </div>
+
+      {/* Link Dialog */}
+      <PromptDialog
+        open={linkDialogOpen}
+        onOpenChange={setLinkDialogOpen}
+        title="Add Link"
+        description="Enter the URL for this link."
+        placeholder="https://"
+        defaultValue={linkUrl}
+        onConfirm={handleLinkConfirm}
+        submitLabel="Add Link"
+      />
+
+      {/* YouTube Dialog */}
+      <PromptDialog
+        open={youtubeDialogOpen}
+        onOpenChange={setYoutubeDialogOpen}
+        title="Add YouTube Video"
+        description="Paste a YouTube video URL."
+        placeholder="https://youtube.com/watch?v=..."
+        defaultValue={youtubeUrl}
+        onConfirm={handleYoutubeConfirm}
+        submitLabel="Add Video"
+      />
+
+      {/* Alt Text Dialog */}
+      <PromptDialog
+        open={altDialogOpen}
+        onOpenChange={setAltDialogOpen}
+        title={altDialogMode === "new" ? "Image Alt Text" : "Edit Alt Text"}
+        description="Describe the image for accessibility (optional)."
+        placeholder="Describe the image"
+        defaultValue={altValue}
+        onConfirm={handleAltConfirm}
+        submitLabel={altDialogMode === "new" ? "Insert Image" : "Save"}
+      />
+
+      {/* Editor Toast */}
+      {editorToast && (
+        <div
+          role="alert"
+          aria-live="assertive"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] w-fit max-w-[min(calc(100vw-1.5rem),36rem)] -translate-x-1/2 rounded-xl border border-destructive/35 bg-background/95 px-4 py-3 text-center text-sm leading-relaxed text-destructive shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/85 break-words"
+        >
+          {editorToast}
+        </div>
+      )}
     </div>
   );
 }

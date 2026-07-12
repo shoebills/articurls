@@ -36,16 +36,16 @@ export default function ForgotPasswordPage() {
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Reset password</CardTitle>
-          <CardDescription className="text-base">
+        <CardHeader className="space-y-1.5">
+          <CardTitle className="text-xl font-bold tracking-tight">Reset password</CardTitle>
+          <CardDescription className="text-sm">
             Enter your account email and we&apos;ll send you a reset link.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {submitted ? (
             <div className="space-y-4">
-              <p className="rounded-xl border border-border/60 bg-muted/50 px-4 py-3.5 text-sm leading-relaxed text-muted-foreground">
+              <p className="rounded-xl border border-border/60 bg-muted/50 px-4 py-3 text-sm leading-relaxed text-muted-foreground">
                 If an account exists for <span className="font-medium text-foreground">{email}</span>, you&apos;ll receive an
                 email with a reset link shortly.
               </p>
@@ -54,8 +54,8 @@ export default function ForgotPasswordPage() {
               </Button>
             </div>
           ) : (
-            <form onSubmit={onSubmit} className="space-y-5">
-              <div className="space-y-2.5">
+            <form onSubmit={onSubmit} className="space-y-4">
+              <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
@@ -66,10 +66,10 @@ export default function ForgotPasswordPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="mt-1 w-full" size="lg" disabled={busy}>
+              <Button type="submit" className="w-full" disabled={busy}>
                 {busy ? "Sending link…" : "Send reset link"}
               </Button>
-              <p className="mt-4 text-center text-sm text-muted-foreground">
+              <p className="mt-3 text-center text-sm text-muted-foreground">
                 Remembered your password?{" "}
                 <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
                   Back to login

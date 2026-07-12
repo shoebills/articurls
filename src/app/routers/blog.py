@@ -1,17 +1,30 @@
-from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query
+from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.dialects.postgresql import insert
 from ..database import get_db
 from .. import models, utils
+from ..utils.html_sanitizer import sanitize_html
 from ..schemas import blog
 from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
+from ..cache.service import purge_blog_post
+from ..config import settings
+from ..utils.rate_limit import check_rate_limit_user
 from typing import List
 import secrets
 from slugify import slugify
 from datetime import datetime, timezone
+import re
+
+_BLOG_CREATE_LIMIT = 50
+_BLOG_UPLOAD_LIMIT = 120
+_BLOG_UPDATE_LIMIT = 50
+_BLOG_PUBLISH_LIMIT = 30
+_BLOG_DELETE_LIMIT = 20
+_BLOG_RATE_WINDOW = 60
 
 
 def _attach_category_ids(db: Session, db_blog):
@@ -32,6 +45,7 @@ router = APIRouter(
 
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
 def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-create", current_user.user_id, _BLOG_CREATE_LIMIT, _BLOG_RATE_WINDOW)
 
     # Meta
     if request.meta_title is not None:
@@ -60,7 +74,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     new_blog = models.Blog(
         title=request.title,
-        content=request.content,
+        content=sanitize_html(request.content),
         user_id=current_user.user_id,
         slug=candidate_slug,
         meta_title=candidate_meta_title,
@@ -79,7 +93,6 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 @router.get("/", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
 def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
 
-    # Read view_count directly from the denormalized column — no JOIN needed
     results = db.query(models.Blog).filter(
         models.Blog.user_id == current_user.user_id
     ).all()
@@ -106,6 +119,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
 async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
@@ -149,6 +163,7 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
 
 @router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
 def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
@@ -181,10 +196,12 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
 @router.delete("/{id}/media", status_code=status.HTTP_200_OK)
 def delete_blog_media_by_url(
     id: int,
-    url: str = Query(...),
+    url: str = Query(..., description="URL of the media to delete"),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
+
     db_blog = (
         db.query(models.Blog)
         .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
@@ -219,7 +236,8 @@ def delete_blog_media_by_url(
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -233,6 +251,21 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     )
 
     update_data = request.model_dump(exclude_unset=True)
+
+    is_locked = db_blog.status in (models.BlogStatus.PUBLISHED, models.BlogStatus.SCHEDULED, models.BlogStatus.ARCHIVED)
+    if is_locked:
+        if "title" in update_data and not (update_data["title"] or "").strip():
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Title cannot be empty.",
+            )
+        if "content" in update_data:
+            content_stripped = re.sub(r"<[^>]+>", "", update_data["content"] or "").strip()
+            if not content_stripped:
+                raise HTTPException(
+                    status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                    detail="Content cannot be empty.",
+                )
 
     if update_data.get("notify_subscribers") is True:
         utils.assert_pro(db, current_user.user_id)
@@ -257,6 +290,22 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
             # Use the resolved unique slug
             db_blog.slug = resolved
 
+    # Sanitize content if present in update
+    if "content" in update_data:
+        update_data["content"] = sanitize_html(update_data["content"])
+
+    if "meta_title" in update_data and update_data["meta_title"] is None:
+        title = update_data.get("title", db_blog.title)
+        update_data["meta_title"] = (title or "").strip() or None
+    elif "meta_title" in update_data:
+        update_data["meta_title"] = (update_data["meta_title"] or "").strip() or None
+
+    if "meta_description" in update_data and update_data["meta_description"] is None:
+        content = update_data.get("content", db_blog.content)
+        update_data["meta_description"] = utils.make_meta_description(content or "") or None
+    elif "meta_description" in update_data:
+        update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
+
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
     MEANINGFUL_FIELDS = {
@@ -274,10 +323,26 @@ def update_blog(id: int, request: blog.UpdateBlog, db: Session = Depends(get_db)
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
+    # Purge cache for this blog post and all listing pages (home + categories)
+    # Use FastAPI BackgroundTasks for reliable async execution in sync routes
+    if settings.cloudflare_zone_id:
+        # Purge from custom domain if set
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        # Also purge from articurls.com/username path
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
+
     return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
 def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -307,21 +372,15 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
             pass
 
     db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
-    db.query(models.Views).filter(models.Views.blog_id == db_blog.blog_id).delete(synchronize_session=False)
+    db.query(models.BlogCategory).filter(models.BlogCategory.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
     db.commit()
-
-    # Clean up orphaned Redis delta key so flush task doesn't try to update a deleted blog
-    try:
-        from ..redis_client import redis_client
-        redis_client.delete(f"views_delta:{blog_id}")
-    except Exception:
-        pass
 
     return {"message": "Blog deleted"}
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -342,7 +401,6 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
         )
     
     # Check if content is empty (strip HTML tags and whitespace)
-    import re
     content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
     if not content_text:
         raise HTTPException(
@@ -362,6 +420,13 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
         utils.maybe_replace_placeholder_slug_on_publish(db, db_blog)
         db_blog.published_at = now
 
+    db_blog.meta_title, db_blog.meta_description = utils.materialize_content_meta_defaults(
+        title=db_blog.title,
+        content=db_blog.content,
+        meta_title=db_blog.meta_title,
+        meta_description=db_blog.meta_description,
+    )
+
     # Publishing is a meaningful lifecycle event — bump updated_at so
     # sitemap lastmod reflects when the post became publicly visible.
     db_blog.updated_at = now
@@ -370,6 +435,17 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
+
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
     if not db_user:
@@ -377,11 +453,12 @@ def publish_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
 
     if first_publish and db_blog.notify_subscribers:
         tasks.send_post_emails.delay(db_blog.blog_id)
-    
+
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -412,10 +489,22 @@ def archive_blog(id: int, db: Session = Depends(get_db), current_user = Depends(
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
+
     return db_blog
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -439,7 +528,6 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
         )
     
     # Check if content is empty (strip HTML tags and whitespace)
-    import re
     content_text = re.sub(r'<[^>]+>', '', db_blog.content or '').strip()
     if not content_text:
         raise HTTPException(
@@ -458,12 +546,6 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Archived blogs cannot be scheduled"
     )
-
-    if db_blog.status == models.BlogStatus.SCHEDULED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="You cannot reschedule a scheduled blog"
-    )
     
     now = datetime.now(timezone.utc)
 
@@ -476,6 +558,12 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
     old_updated = db_blog.updated_at
     db_blog.status = models.BlogStatus.SCHEDULED
     db_blog.scheduled_at = request.scheduled_at.astimezone(timezone.utc)
+    db_blog.meta_title, db_blog.meta_description = utils.materialize_content_meta_defaults(
+        title=db_blog.title,
+        content=db_blog.content,
+        meta_title=db_blog.meta_title,
+        meta_description=db_blog.meta_description,
+    )
     # Scheduling is not a meaningful content change — preserve updated_at
     db_blog.updated_at = old_updated
 
@@ -524,9 +612,12 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
 def assign_blog_categories(
     id: int,
     request: cat_schema.BlogCategoryAssign,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
 ):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+
     db_blog = db.query(models.Blog).filter(
         models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id
     ).first()
@@ -551,16 +642,50 @@ def assign_blog_categories(
                 detail=f"Invalid category ids: {list(invalid)}",
             )
 
-    # Remove existing assignments
-    db.query(models.BlogCategory).filter(
-        models.BlogCategory.blog_id == db_blog.blog_id
-    ).delete(synchronize_session=False)
+    # Compute diff to avoid mass-delete races that cause unique-constraint violations
+    existing_rows = (
+        db.query(models.BlogCategory)
+        .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+        .all()
+    )
+    existing_ids = {row.category_id for row in existing_rows}
+    desired_ids = set(request.category_ids)
 
-    # Add new assignments
-    for cat_id in request.category_ids:
-        db.add(models.BlogCategory(blog_id=db_blog.blog_id, category_id=cat_id))
+    to_remove = existing_ids - desired_ids
+    to_add = desired_ids - existing_ids
+
+    if to_remove:
+        db.query(models.BlogCategory).filter(
+            models.BlogCategory.blog_id == db_blog.blog_id,
+            models.BlogCategory.category_id.in_(to_remove),
+        ).delete(synchronize_session=False)
+
+    if to_add:
+        stmt = (
+            insert(models.BlogCategory)
+            .values([
+                {"blog_id": db_blog.blog_id, "category_id": cat_id}
+                for cat_id in to_add
+            ])
+            .on_conflict_do_nothing(
+                index_elements=["blog_id", "category_id"]
+            )
+        )
+        db.execute(stmt)
 
     db.commit()
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_blog_post,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_blog.slug
+            )
+        background_tasks.add_task(
+            purge_blog_post,
+            settings.cloudflare_zone_id, "articurls.com", db_blog.slug
+        )
+
     return db_blog

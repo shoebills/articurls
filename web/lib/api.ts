@@ -21,13 +21,31 @@ import type {
   StorageUsage,
   AdminUserListItem,
   AdminPaymentListItem,
-  AdminUsernameRequestListItem,
   TokenResponse,
   TransactionOut,
+  UmamiMetricsRow,
+  UmamiTimeseriesItem,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiRealtimeResponse,
   UserSettings,
-  UsernameChangeRequestOut,
-  ViewsAnalytics,
 } from "./types";
+
+export type {
+  UmamiMetricsRow,
+  UmamiTimeseriesItem,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiRealtimeResponse,
+};
 
 export class ApiError extends Error {
   constructor(
@@ -69,7 +87,26 @@ export async function refreshAccessToken(): Promise<string> {
   return data.access_token;
 }
 
+const API_CACHE_TTL_MS = 60_000;
+
 const apiCache = new Map<string, { data: unknown; timestamp: number }>();
+
+export function apiCacheHas(path: string, token?: string | null): boolean {
+  if (typeof window === "undefined") return false;
+  const key = `GET:${path}:${token || ""}`;
+  const cached = apiCache.get(key);
+  return !!(cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS);
+}
+
+export function getCachedApiData<T>(path: string, token?: string | null): T | null {
+  if (typeof window === "undefined") return null;
+  const key = `GET:${path}:${token || ""}`;
+  const cached = apiCache.get(key);
+  if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
+    return cached.data as T;
+  }
+  return null;
+}
 
 export async function apiFetch<T>(
   path: string,
@@ -83,7 +120,7 @@ export async function apiFetch<T>(
 
   if (!disableCache && method === "GET" && typeof window !== "undefined") {
     const cached = apiCache.get(cacheKey);
-    if (cached && Date.now() - cached.timestamp < 30000) {
+    if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
       return cached.data as T;
     }
   }
@@ -113,7 +150,7 @@ export async function apiFetch<T>(
           const newToken = await refreshPromise;
           return apiFetch<T>(path, { ...init, token: newToken }, true);
       } catch (err) {
-          throw new ApiError(await parseError(res), res.status);
+          throw err;
       }
   }
   
@@ -189,6 +226,22 @@ export async function signup(data: {
   });
 }
 
+export async function exchangeOAuthCode(code: string): Promise<string> {
+  const res = await fetch(`${API_URL}/auth/google/exchange-token`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ code }),
+  });
+  if (!res.ok) {
+    throw new ApiError(await parseError(res), res.status);
+  }
+  const data = await res.json() as TokenResponse;
+  if (typeof window !== "undefined") {
+    localStorage.setItem("articurls_token", data.access_token);
+  }
+  return data.access_token;
+}
+
 export async function completeGoogleSignup(data: {
   session_id: string;
   user_name: string;
@@ -221,22 +274,6 @@ export async function checkUsernameAvailability(
 ): Promise<{ available: boolean; normalized: string; reason: string | null }> {
   const q = new URLSearchParams({ user_name });
   return apiFetch(`/user/username-availability?${q.toString()}`, { token });
-}
-
-export async function createUsernameChangeRequest(
-  token: string,
-  body: { desired_username: string; reason?: string }
-): Promise<UsernameChangeRequestOut> {
-  return apiFetch("/user/username-change-requests", {
-    method: "POST",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-export async function listMyUsernameChangeRequests(token: string): Promise<UsernameChangeRequestOut[]> {
-  return apiFetch("/user/username-change-requests", { token });
 }
 
 export async function patchMe(
@@ -353,7 +390,14 @@ export async function listPages(token: string): Promise<UserPage[]> {
   return apiFetch("/pages/", { token });
 }
 
-export async function createPage(token: string, body: { title: string; content: string }): Promise<UserPage> {
+export async function getPage(token: string, pageId: number): Promise<UserPage> {
+  return apiFetch(`/pages/${pageId}`, { token });
+}
+
+export async function createPage(
+  token: string,
+  body: { title: string; content: string; slug?: string }
+): Promise<UserPage> {
   return apiFetch("/pages/", {
     method: "POST",
     token,
@@ -369,7 +413,7 @@ export async function deletePage(token: string, pageId: number): Promise<void> {
 export async function updatePage(
   token: string,
   pageId: number,
-  body: { title?: string; content?: string; slug?: string; meta_title?: string | null; meta_description?: string | null }
+  body: { title?: string; content?: string; slug?: string; meta_title?: string | null; meta_description?: string | null; show_in_footer?: boolean }
 ): Promise<UserPage> {
   return apiFetch(`/pages/id/${pageId}`, {
     method: "PATCH",
@@ -385,10 +429,6 @@ export async function publishPage(token: string, pageId: number): Promise<UserPa
 
 export async function archivePage(token: string, pageId: number): Promise<UserPage> {
   return apiFetch(`/pages/${pageId}/archive`, { method: "POST", token });
-}
-
-export async function movePageToDraft(token: string, pageId: number): Promise<UserPage> {
-  return apiFetch(`/pages/${pageId}/draft`, { method: "POST", token });
 }
 
 export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
@@ -476,6 +516,7 @@ export async function updateBlog(
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
+    hide_preview_in_lists?: boolean;
     notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {
@@ -557,6 +598,11 @@ export async function confirmSubscription(token: string): Promise<{ message: str
   return apiFetch(`/confirm-subscription?token=${encodeURIComponent(token)}`);
 }
 
+/** Public: unsubscribe via token from email link. */
+export async function unsubscribeViaEmail(token: string): Promise<{ message: string }> {
+  return apiFetch(`/unsubscribe?token=${encodeURIComponent(token)}`);
+}
+
 // ── Categories ────────────────────────────────────────────────────────
 
 export async function listCategories(token: string): Promise<Category[]> {
@@ -585,19 +631,6 @@ export async function deleteCategory(token: string, id: number): Promise<void> {
   await apiFetch(`/categories/${id}`, { method: "DELETE", token });
 }
 
-export async function getCategoryBlogs(token: string, id: number): Promise<BlogListItem[]> {
-  return apiFetch(`/categories/${id}/blogs`, { token });
-}
-
-export async function setCategoryBlogs(token: string, categoryId: number, blog_ids: number[]): Promise<Category> {
-  return apiFetch(`/categories/${categoryId}/blogs`, {
-    method: "PUT",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ blog_ids }),
-  });
-}
-
 export async function assignBlogCategories(token: string, blogId: number, category_ids: number[]): Promise<BlogDetail> {
   return apiFetch(`/blog/${blogId}/categories`, {
     method: "PATCH",
@@ -624,11 +657,6 @@ export async function getPublicCategoryBlogs(userName: string, slug: string): Pr
   return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
 }
 
-export async function viewsAnalytics(token: string, period?: string): Promise<ViewsAnalytics> {
-  const q = period ? `?period=${encodeURIComponent(period)}` : "";
-  return apiFetch(`/analytics/views${q}`, { token });
-}
-
 export async function subscribersAnalytics(token: string, period?: string): Promise<SubscribersAnalytics> {
   const q = period ? `?period=${encodeURIComponent(period)}` : "";
   return apiFetch(`/analytics/subscribers${q}`, { token });
@@ -651,18 +679,31 @@ export async function getSubscription(token: string): Promise<SubscriptionOut | 
   }
 }
 
-export async function createCheckout(token: string): Promise<{ checkout_url: string }> {
-  return apiFetch("/billing/checkout", { method: "POST", token });
+export async function createCheckout(
+  token: string,
+  plan: "monthly" | "lifetime" = "monthly"
+): Promise<{ checkout_url: string }> {
+  return apiFetch("/billing/checkout", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ plan }),
+  });
 }
 
 export async function getTransactions(token: string): Promise<TransactionOut[]> {
   return apiFetch("/billing/transactions", { token });
 }
 
+export async function getCustomerPortalLink(token: string): Promise<{ url: string }> {
+  return apiFetch("/billing/customer-portal", { token });
+}
+
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
+  if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;
   if (sub.plan_type !== "pro") return false;
-  if (!["active", "past_due"].includes(sub.status)) return false;
+  if (!["active", "past_due", "cancelled"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;
   return new Date(sub.current_period_end) >= new Date();
 }
@@ -678,38 +719,6 @@ export async function adminListUsers(
   if (typeof params.limit === "number") query.set("limit", String(params.limit));
   if (typeof params.offset === "number") query.set("offset", String(params.offset));
   return apiFetch(`/admin/users?${query.toString()}`, { token });
-}
-
-export async function adminListUsernameChangeRequests(
-  token: string,
-  params: {
-    status?: "pending" | "approved" | "rejected";
-    q?: string;
-    sort?: "latest" | "oldest";
-    limit?: number;
-    offset?: number;
-  } = {}
-): Promise<AdminUsernameRequestListItem[]> {
-  const query = new URLSearchParams();
-  if (params.status) query.set("status", params.status);
-  if (params.q) query.set("q", params.q);
-  if (params.sort) query.set("sort", params.sort);
-  if (typeof params.limit === "number") query.set("limit", String(params.limit));
-  if (typeof params.offset === "number") query.set("offset", String(params.offset));
-  return apiFetch(`/admin/username-change-requests?${query.toString()}`, { token });
-}
-
-export async function adminReviewUsernameChangeRequest(
-  token: string,
-  requestId: number,
-  body: { status: "approved" | "rejected"; admin_note?: string }
-): Promise<UsernameChangeRequestOut> {
-  return apiFetch(`/admin/username-change-requests/${requestId}`, {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
 }
 
 export async function adminListPayments(
@@ -764,4 +773,64 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
     method: "DELETE",
     token,
   });
+}
+
+export type AnalyticsPeriod = "24h" | "7d" | "this_month" | "last_month" | "this_year" | "1y" | "all";
+
+export async function getUmamiOverview(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+): Promise<UmamiOverviewResponse> {
+  const q = new URLSearchParams({ period });
+  return apiFetch(`/analytics/umami/overview?${q.toString()}`, { token });
+}
+
+export async function getUmamiTimeseries(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+): Promise<UmamiTimeseriesResponse> {
+  const q = new URLSearchParams({ period });
+  return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token });
+}
+
+export async function getUmamiPages(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 50,
+): Promise<UmamiPagesResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token });
+}
+
+export async function getUmamiSources(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiSourcesResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/sources?${q.toString()}`, { token });
+}
+
+export async function getUmamiGeo(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiGeoResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/geo?${q.toString()}`, { token });
+}
+
+export async function getUmamiTech(
+  token: string,
+  period: AnalyticsPeriod = "7d",
+  limit = 20,
+): Promise<UmamiTechResponse> {
+  const q = new URLSearchParams({ period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/tech?${q.toString()}`, { token });
+}
+
+export async function getUmamiRealtime(
+  token: string,
+): Promise<UmamiRealtimeResponse> {
+  return apiFetch("/analytics/umami/realtime", { token });
 }

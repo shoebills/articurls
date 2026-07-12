@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 from ..models import BlogStatus
@@ -14,8 +14,8 @@ class BlogMediaOut(BaseModel):
 
 
 class CreateBlog(BaseModel):
-    title: str
-    content: str
+    title: str = Field(..., max_length=300)
+    content: str = Field(..., max_length=500_000)
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -30,6 +30,7 @@ class GetBlog(BaseModel):
     meta_title: Optional[str]
     meta_description: Optional[str]
     featured_image_url: Optional[str]
+    hide_preview_in_lists: bool
     notify_subscribers: bool
     status: BlogStatus
     scheduled_at: Optional[datetime]
@@ -45,7 +46,6 @@ class GetBlog(BaseModel):
 
 
 class GetAll(GetBlog):
-    view_count: int
     excerpt: Optional[str] = None
         
 
@@ -57,6 +57,7 @@ class PublicBlog(BaseModel):
     meta_title: Optional[str]
     meta_description: Optional[str]
     featured_image_url: Optional[str]
+    hide_preview_in_lists: bool
     published_at: Optional[datetime]
     updated_at: datetime
     user_id: int
@@ -69,16 +70,16 @@ class PublicBlog(BaseModel):
 
 class PublicBlogs(PublicBlog):
     excerpt: Optional[str] = None
-    view_count: Optional[int] = None
 
 
 class UpdateBlog(BaseModel):
-    title: Optional[str] = None
-    content: Optional[str] = None
+    title: Optional[str] = Field(None, max_length=300)
+    content: Optional[str] = Field(None, max_length=500_000)
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
+    hide_preview_in_lists: Optional[bool] = None
     notify_subscribers: Optional[bool] = None
 
 class ScheduleBlog(BaseModel):

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, Suspense, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { signup as apiSignup, ApiError, resendVerificationEmail } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -14,12 +15,20 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { API_URL } from "@/lib/env";
 
 /** Label → control spacing; same for text inputs. */
-const FIELD_GROUP = "flex flex-col gap-2.5";
+const FIELD_GROUP = "flex flex-col gap-2";
 
 type SignupStep = "email" | "profile";
 
 function SignupForm() {
   const [step, setStep] = useState<SignupStep>("email");
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const plan = searchParams.get("plan");
+    if (plan === "pro" || plan === "lifetime") {
+      localStorage.setItem("pendingPlan", plan);
+    }
+  }, [searchParams]);
 
   const [name, setName] = useState("");
   const [user_name, setUserName] = useState("");
@@ -79,29 +88,28 @@ function SignupForm() {
       <AuthPageShell>
         <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
         <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl font-bold tracking-tight">Check your email</CardTitle>
-            <CardDescription className="text-base">
+          <CardHeader className="space-y-1.5">
+            <CardTitle className="text-xl font-bold tracking-tight">Check your email</CardTitle>
+            <CardDescription className="text-sm">
               We sent a verification link to <strong>{email}</strong>. After verifying, you can log in.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {info && (
-              <p className="mb-4 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-3 text-sm leading-relaxed text-emerald-900">
+              <p className="mb-4 rounded-xl border border-emerald-300/60 bg-emerald-50/50 px-4 py-2.5 text-sm leading-relaxed text-emerald-900">
                 {info}
               </p>
             )}
             <Button
               type="button"
               variant="outline"
-              className="mb-3 w-full"
-              size="lg"
+              className="mb-2 w-full"
               onClick={onResendVerification}
               disabled={resending}
             >
               {resending ? "Sending..." : "Resend verification email"}
             </Button>
-            <Button asChild className="w-full" size="lg">
+            <Button asChild className="w-full">
               <Link href="/login?signup=1">Go to log in</Link>
             </Button>
           </CardContent>
@@ -116,9 +124,9 @@ function SignupForm() {
       <AuthPageShell>
         <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
         <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-          <CardHeader className="space-y-2">
-            <CardTitle className="text-2xl font-bold tracking-tight">Create your account</CardTitle>
-            <CardDescription className="text-base">
+          <CardHeader className="space-y-1.5">
+            <CardTitle className="text-xl font-bold tracking-tight">Create your account</CardTitle>
+            <CardDescription className="text-sm">
               Start publishing your ideas in minutes
             </CardDescription>
           </CardHeader>
@@ -127,7 +135,6 @@ function SignupForm() {
               type="button"
               variant="outline"
               className="w-full"
-              size="lg"
               onClick={() => {
                 window.location.href = `${API_URL}/auth/google/login`;
               }}
@@ -153,7 +160,7 @@ function SignupForm() {
               Continue with Google
             </Button>
 
-            <div className="relative my-6">
+            <div className="relative my-4">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-border/60" />
               </div>
@@ -162,7 +169,7 @@ function SignupForm() {
               </div>
             </div>
 
-            <form onSubmit={handleEmailContinue} className="space-y-5">
+            <form onSubmit={handleEmailContinue} className="space-y-4">
               <div className={FIELD_GROUP}>
                 <Label htmlFor="email">Email</Label>
                 <Input 
@@ -175,12 +182,12 @@ function SignupForm() {
                   required 
                 />
               </div>
-              <Button type="submit" className="w-full" size="lg">
+              <Button type="submit" className="w-full">
                 Continue
               </Button>
             </form>
 
-            <p className="mt-8 border-t border-border/60 pt-8 text-center text-sm text-muted-foreground">
+            <p className="mt-6 border-t border-border/60 pt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
               <Link href="/login" className="font-medium text-primary underline-offset-4 hover:underline">
                 Log in
@@ -197,7 +204,7 @@ function SignupForm() {
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-2">
+        <CardHeader className="space-y-1.5">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -209,14 +216,14 @@ function SignupForm() {
             >
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <CardTitle className="text-2xl font-bold tracking-tight">Complete your profile</CardTitle>
+            <CardTitle className="text-xl font-bold tracking-tight">Complete your profile</CardTitle>
           </div>
-          <CardDescription className="text-base">
+          <CardDescription className="text-sm">
             Choose your identity and secure your account
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-5">
+          <form onSubmit={onSubmit} className="space-y-4">
             <div className={FIELD_GROUP}>
               <Label htmlFor="name">Display name</Label>
               <Input 
@@ -255,7 +262,7 @@ function SignupForm() {
                 minLength={8}
               />
             </div>
-            <Button type="submit" className="w-full" size="lg" disabled={busy}>
+            <Button type="submit" className="w-full" disabled={busy}>
               {busy ? "Creating account..." : "Create account"}
             </Button>
           </form>

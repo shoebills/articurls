@@ -1,4 +1,5 @@
 import { assetUrl } from "@/lib/env";
+import { transformImageUrl } from "./image-transform";
 import type { BlogListItem, PublicBlog } from "@/lib/types";
 
 function firstImageFromHtml(html: string | null | undefined): string | null {
@@ -9,10 +10,24 @@ function firstImageFromHtml(html: string | null | undefined): string | null {
 
 type BlogLike = Pick<BlogListItem, "featured_image_url" | "content"> | Pick<PublicBlog, "featured_image_url" | "content">;
 
-export function resolveBlogPreviewImage(blog: BlogLike): string {
+export function resolveBlogCoverImage(blog: BlogLike): string {
   const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
-  if (explicit) return explicit;
+  if (explicit) return transformImageUrl(explicit, { width: 600 });
   const fromContent = assetUrl(firstImageFromHtml(blog.content));
-  if (fromContent) return fromContent;
+  if (fromContent) return transformImageUrl(fromContent, { width: 600 });
+  return "";
+}
+
+export function resolveBlogContentThumbnail(blog: BlogLike): string {
+  const fromContent = assetUrl(firstImageFromHtml(blog.content));
+  if (fromContent) return transformImageUrl(fromContent, { width: 600 });
+  return "";
+}
+
+export function resolveBlogOgImage(blog: BlogLike): string {
+  const explicit = blog.featured_image_url ? assetUrl(blog.featured_image_url) : "";
+  if (explicit) return transformImageUrl(explicit, { width: 1200, height: 630, fit: "cover" });
+  const fromContent = assetUrl(firstImageFromHtml(blog.content));
+  if (fromContent) return transformImageUrl(fromContent, { width: 1200, height: 630, fit: "cover" });
   return "";
 }

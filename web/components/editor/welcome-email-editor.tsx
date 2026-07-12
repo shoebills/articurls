@@ -39,14 +39,26 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   Bold,
+  ChevronDown,
   Heading2,
   Heading3,
   Italic,
   Link2,
   List,
+  ListOrdered,
+  Minus,
+  MoreHorizontal,
   MousePointerClick,
   Redo2,
+  Strikethrough,
+  Type,
   Underline as UnderlineIcon,
   Undo2,
 } from "lucide-react";
@@ -325,6 +337,8 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkHref, setLinkHref] = useState("https://");
   const [linkIsActive, setLinkIsActive] = useState(false);
+  const [moreDropdownOpen, setMoreDropdownOpen] = useState(false);
+  const [headingDropdownOpen, setHeadingDropdownOpen] = useState(false);
 
   const emailButtonExtension = useMemo(() => createEmailButtonExtension(), []);
 
@@ -343,7 +357,6 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         blockquote: false,
         code: false,
         codeBlock: false,
-        horizontalRule: false,
       }),
       Underline,
       WelcomeEmailLink.configure({ openOnClick: false, autolink: true }),
@@ -465,7 +478,7 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
     <>
       <div
         className={cn(
-          "overflow-hidden rounded-lg border border-input bg-[#f4f4f4] shadow-sm",
+          "overflow-hidden rounded-lg border border-input bg-white shadow-sm",
           disabled && "pointer-events-none opacity-60",
           className
         )}
@@ -473,31 +486,66 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
         <span className="hidden" aria-hidden>
           {selectionTick}
         </span>
-        <div className="-mx-px flex flex-nowrap items-center gap-0.5 overflow-x-auto overscroll-x-contain border-b border-border bg-background p-2 [scrollbar-width:thin] sm:flex-wrap">
+        <div className="-mx-px flex h-12 shrink-0 flex-nowrap items-center gap-px overflow-x-auto border-b border-border p-2 sm:overflow-visible [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().undo().run()}>
             <Undo2 className="h-4 w-4" />
           </Button>
           <Button type="button" variant="ghost" size="icon" onClick={() => editor.chain().focus().redo().run()}>
             <Redo2 className="h-4 w-4" />
           </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
-          <Button
-            type="button"
-            variant={editor.isActive("heading", { level: 2 }) ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          <Separator orientation="vertical" className="mx-2 h-6" />
+          <DropdownMenu
+            modal={false}
+            open={headingDropdownOpen}
+            onOpenChange={setHeadingDropdownOpen}
           >
-            <Heading2 className="h-4 w-4" />
-          </Button>
-          <Button
-            type="button"
-            variant={editor.isActive("heading", { level: 3 }) ? "secondary" : "ghost"}
-            size="icon"
-            onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-          >
-            <Heading3 className="h-4 w-4" />
-          </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
+            <DropdownMenuTrigger
+              asChild
+              onPointerDown={(e) => e.preventDefault()}
+            >
+              <Button
+                type="button"
+                variant={editor.isActive("heading") ? "secondary" : "ghost"}
+                size="sm"
+                className="h-10 w-12 px-1"
+                title="Headings"
+                onClick={() => setHeadingDropdownOpen((o) => !o)}
+              >
+                {editor.isActive("heading", { level: 2 }) ? (
+                  <Heading2 className="h-4 w-4 shrink-0" />
+                ) : editor.isActive("heading", { level: 3 }) ? (
+                  <Heading3 className="h-4 w-4 shrink-0" />
+                ) : (
+                  <Type className="h-4 w-4 shrink-0" />
+                )}
+                <ChevronDown className="ml-0.5 h-3 w-3 shrink-0" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+                className={editor.isActive("heading", { level: 2 }) ? "bg-accent" : ""}
+              >
+                <Heading2 className="h-4 w-4" />
+                <span>Heading 2</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                className={editor.isActive("heading", { level: 3 }) ? "bg-accent" : ""}
+              >
+                <Heading3 className="h-4 w-4" />
+                <span>Heading 3</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().setParagraph().run()}
+                className={editor.isActive("paragraph") ? "bg-accent" : ""}
+              >
+                <Type className="h-4 w-4" />
+                <span>Paragraph</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
             variant={editor.isActive("bold") ? "secondary" : "ghost"}
@@ -539,12 +587,58 @@ export function WelcomeEmailEditor({ content, onChange, disabled, className }: W
           >
             <List className="h-4 w-4" />
           </Button>
-          <Separator orientation="vertical" className="mx-1 h-6" />
+          <DropdownMenu
+            modal={false}
+            open={moreDropdownOpen}
+            onOpenChange={setMoreDropdownOpen}
+          >
+            <DropdownMenuTrigger
+              asChild
+              onPointerDown={(e) => e.preventDefault()}
+            >
+              <Button
+                type="button"
+                variant={
+                  editor.isActive("orderedList") || editor.isActive("strike")
+                    ? "secondary"
+                    : "ghost"
+                }
+                size="icon"
+                title="More options"
+                onClick={() => setMoreDropdownOpen((o) => !o)}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" onCloseAutoFocus={(e) => e.preventDefault()}>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleOrderedList().run()}
+                className={editor.isActive("orderedList") ? "bg-accent" : ""}
+              >
+                <ListOrdered className="h-4 w-4" />
+                <span>Ordered list</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().toggleStrike().run()}
+                className={editor.isActive("strike") ? "bg-accent" : ""}
+              >
+                <Strikethrough className="h-4 w-4" />
+                <span>Strikethrough</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => editor.chain().focus().setHorizontalRule().run()}
+              >
+                <Minus className="h-4 w-4" />
+                <span>Divider</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Separator orientation="vertical" className="mx-2 h-6" />
           <Button
             type="button"
             variant="ghost"
             size="sm"
-            className="h-8 gap-1 px-2"
+            className="h-10 gap-1 px-2"
             onClick={() => openButtonDialog("insert")}
           >
             <MousePointerClick className="h-4 w-4" />

@@ -1,23 +1,15 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .config import settings
-from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages, admin, categories, oauth
+from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages, admin, categories, oauth, umami
 from .domains.router import router as domains_router
+from .middleware.cors import DynamicCORSMiddleware
 
 
 app = FastAPI()
 
-_cors = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=_cors or ["http://localhost:3000"],
-    allow_origin_regex=r"https://.*",  # allow all custom domains over HTTPS
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.add_middleware(DynamicCORSMiddleware)
 
 
 Path(settings.uploads_dir).mkdir(parents=True, exist_ok=True)
@@ -35,6 +27,7 @@ app.include_router(admin.router)
 app.include_router(categories.router)
 app.include_router(public.router)
 app.include_router(domains_router)
+app.include_router(umami.router)
 
 @app.get("/")
 def home():

@@ -4,9 +4,10 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { confirmSubscription, ApiError } from "@/lib/api";
 import { AuthPageShell } from "@/components/auth-page-shell";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
+import { StructuredData } from "@/components/structured-data";
+import { generateSubscriptionConfirmationSchema } from "@/lib/structured-data";
 
 type State = "loading" | "success" | "already" | "error";
 
@@ -14,6 +15,9 @@ function ConfirmInner() {
   const searchParams = useSearchParams();
   const [state, setState] = useState<State>("loading");
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  
+  // Get current URL for structured data
+  const currentUrl = typeof window !== 'undefined' ? window.location.href : '';
 
   useEffect(() => {
     const token = searchParams.get("token");
@@ -35,6 +39,7 @@ function ConfirmInner() {
 
   return (
     <AuthPageShell>
+      <StructuredData data={generateSubscriptionConfirmationSchema(currentUrl)} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="space-y-3">
           {state === "loading" && (
@@ -65,13 +70,6 @@ function ConfirmInner() {
             {state === "error" && (errMsg ?? "The link may be invalid or expired.")}
           </CardDescription>
         </CardHeader>
-        {state === "error" && (
-          <CardContent>
-            <Button className="w-full" variant="outline" onClick={() => window.history.back()}>
-              Go back
-            </Button>
-          </CardContent>
-        )}
       </Card>
     </AuthPageShell>
   );

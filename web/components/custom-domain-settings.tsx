@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Copy, Check, AlertCircle, Loader2, Globe } from "lucide-react";
 import {
   addCustomDomain,
@@ -17,8 +18,12 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
+import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 
-export default function DomainSettingsPage() {
+const FALLBACK_ORIGIN = "fallback.articurls.com";
+
+export default function CustomDomainSettings() {
   const router = useRouter();
   const { token } = useAuth();
 
@@ -31,9 +36,12 @@ export default function DomainSettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [showSeoWarning, setShowSeoWarning] = useState(false);
   const [error, setError] = useState("");
+  const [info, setInfo] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
+  const [wasPro, setWasPro] = useState(false);
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
 
   const loadDomain = useCallback(async (tok: string) => {
     try {
@@ -42,6 +50,8 @@ export default function DomainSettingsPage() {
       // Populate DNS instructions from GET response (for page refresh)
       if (data?.dns_instructions && data.dns_instructions.length > 0) {
         setDnsInstructions(data.dns_instructions);
+      } else if (data?.domain_status === "active") {
+        setDnsInstructions([]);
       }
     } catch {
       setDomain(null);
@@ -55,12 +65,14 @@ export default function DomainSettingsPage() {
       .then((sub) => {
         const pro = isProSubscription(sub);
         setIsPro(pro);
-        if (pro) loadDomain(token);
-        else setDomain(null);
+        setWasPro(sub?.plan_type === "pro" || sub?.plan_type === "lifetime");
+        // Always load the domain: during a grace period the user is no longer
+        // Pro but the domain is still serving and must remain visible/manageable.
+        loadDomain(token);
       })
       .catch(() => {
         setIsPro(false);
-        setDomain(null);
+        loadDomain(token);
       });
   }, [token, loadDomain]);
 
@@ -71,6 +83,7 @@ export default function DomainSettingsPage() {
 
     setLoading(true);
     setError("");
+    setInfo("");
     setSuccess("");
 
     try {
@@ -80,7 +93,7 @@ export default function DomainSettingsPage() {
       setHostname("");
       // Reload from server to get canonical state
       await loadDomain(token);
-      setSuccess("Domain added. Configure your DNS records below, then click Verify.");
+      setSuccess("Domain added. Configure and verify it.");
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Failed to add domain");
     } finally {
@@ -92,6 +105,7 @@ export default function DomainSettingsPage() {
     if (!token) { router.push("/login"); return; }
     setVerifying(true);
     setError("");
+    setInfo("");
     setSuccess("");
 
     try {
@@ -102,33 +116,12 @@ export default function DomainSettingsPage() {
         setDnsInstructions([]);
         setSuccess("Domain verified! Your custom domain is now active.");
       } else {
-        const updatedInstructions = result.dns_instructions ?? dnsInstructions;
-        setDnsInstructions(updatedInstructions);
-
-        // If all records are verified but CF hasn't flipped status yet,
-        // retry once automatically after 3 seconds instead of making user click again
-        const allVerified = updatedInstructions.length > 0 && updatedInstructions.every(r => r.verified);
-        if (allVerified) {
-          setTimeout(async () => {
-            try {
-              const retry = await verifyCustomDomain(token);
-              if (retry.verification_status === "verified" || retry.verification_status === "already_verified") {
-                await loadDomain(token);
-                setDnsInstructions([]);
-                setSuccess("Domain verified! Your custom domain is now active.");
-              } else if (retry.dns_instructions) {
-                setDnsInstructions(retry.dns_instructions);
-              }
-            } catch {
-              // silent — user can still click verify manually
-            } finally {
-              setVerifying(false);
-            }
-          }, 3000);
-          return; // keep spinner going during the auto-retry
+        if (result.dns_instructions) {
+          setDnsInstructions(result.dns_instructions);
         }
-
-        setError("DNS records not detected yet. Please double-check your records and try again in a few minutes.");
+        if (result.message) {
+          setInfo(result.message);
+        }
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -146,6 +139,7 @@ export default function DomainSettingsPage() {
 
     setDeleting(true);
     setError("");
+    setInfo("");
     setSuccess("");
     setConfirmDelete(false);
 
@@ -171,73 +165,63 @@ export default function DomainSettingsPage() {
   // ── Loading state ──────────────────────────────────────────────────────────
   if (isPro === null || domain === undefined) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      <div className="space-y-4">
+        <form className="flex gap-3">
+          <Skeleton className="h-10 flex-1 rounded-md" />
+          <Skeleton className="h-10 w-28 shrink-0 rounded-md" />
+        </form>
       </div>
     );
   }
 
+  // During the grace period the subscription has lapsed (isPro === false) but the
+  // domain is still live, so keep showing the full domain UI + a grace notice.
+  const inGrace = domain?.domain_status === "grace";
+
   // ── Upgrade prompt ─────────────────────────────────────────────────────────
-  if (!isPro) {
+  if (!isPro && !inGrace) {
     return (
-      <div className="mx-auto max-w-[1100px] space-y-6">
-        <PageHeader />
-        <Card className="p-8 text-center">
-          <div className="mx-auto max-w-sm space-y-4">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
-              <Globe className="h-7 w-7 text-primary" />
-            </div>
-            <h2 className="text-xl font-semibold">Pro plan required</h2>
-            <p className="text-sm text-muted-foreground">
-              Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
-            </p>
-            <Button onClick={() => router.push("/dashboard/billing")} className="mt-2">
-              Upgrade to Pro
-            </Button>
+      <Card className="p-8 text-center">
+        <div className="mx-auto max-w-sm space-y-4">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
+            <Globe className="h-7 w-7 text-primary" />
           </div>
-        </Card>
-      </div>
+          <h2 className="text-xl font-semibold">{wasPro ? "Reactivate Pro" : "Pro plan required"}</h2>
+          <p className="text-sm text-muted-foreground">
+            {wasPro
+              ? "Reactivate your Pro plan to restore your custom domain."
+              : "Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog."}
+          </p>
+          <Button onClick={() => setUpgradeOpen(true)} className="mt-2">
+            {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
+          </Button>
+        </div>
+        <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      </Card>
     );
   }
 
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6">
-      <PageHeader />
-
-      {error && (
-        <div className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{error}</p>
+    <div className="space-y-4">
+      <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+      {info && (
+        <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
+          <p>{info}</p>
         </div>
       )}
 
-      {success && (
-        <div className="flex items-start gap-3 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
-          <Check className="mt-0.5 h-4 w-4 shrink-0" />
-          <p>{success}</p>
-        </div>
-      )}
+      <FloatingErrorToast message={error} onDismiss={() => setError("")} />
+      <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
       {/* No domain configured */}
-      {!domain?.hostname && (
-        <Card className="p-6">
-          <h2 className="text-base font-semibold">Add Custom Domain</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Subdomains only — e.g. <span className="font-mono">blog.example.com</span>. Root domains are not supported.
-          </p>
-          {hostname.trim().toLowerCase().startsWith("www.") && (
-            <div className="mt-3 flex items-start gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5 text-sm text-yellow-900">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-600" />
-              <p>
-                Make sure to add all DNS records shown after adding — including the SSL TXT record at <span className="font-mono">_acme-challenge.www.yourdomain.com</span>. If your domain is on Cloudflare, also set the www record to <strong>DNS-only</strong> (grey cloud).
-              </p>
-            </div>
-          )}
-          <form onSubmit={handleAddDomain} className="mt-5 flex gap-3">
+      {isPro && !domain?.hostname && (
+        <div className="space-y-4">
+          <form onSubmit={handleAddDomain} className="flex gap-3">
             <Input
               type="text"
-              placeholder="blog.example.com"
+              placeholder="www.example.com"
               value={hostname}
               onChange={(e) => setHostname(e.target.value)}
               disabled={loading}
@@ -248,82 +232,70 @@ export default function DomainSettingsPage() {
               Add Domain
             </Button>
           </form>
-        </Card>
+        </div>
       )}
 
       {/* Domain configured */}
       {domain?.hostname && (
-        <Card className="divide-y divide-border/70">
+        <div className="space-y-6">
           {/* Header row */}
-          <div className="flex items-center justify-between p-5">
-            <div className="space-y-1.5">
-              <p className="text-base font-semibold tracking-tight">{domain.hostname}</p>
-              <StatusBadge status={domain.domain_status} />
-            </div>
-            {confirmDelete ? (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Remove domain?</span>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleDeleteDomain}
-                  disabled={deleting}
-                >
-                  {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, remove"}
-                </Button>
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <p className="min-w-0 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
+              {confirmDelete ? (
+                <div className="ml-auto flex shrink-0 items-center gap-2">
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    onClick={handleDeleteDomain}
+                    disabled={deleting}
+                  >
+                    {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Yes, remove"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setConfirmDelete(false)}
+                    disabled={deleting}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              ) : (
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setConfirmDelete(false)}
-                  disabled={deleting}
+                  className="ml-auto shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
+                  onClick={() => {
+                    if (domain.domain_status === "active" || domain.domain_status === "grace") {
+                      setShowSeoWarning(true);
+                    } else {
+                      setConfirmDelete(true);
+                    }
+                  }}
                 >
-                  Cancel
+                  Remove
                 </Button>
-              </div>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  // Verified domains (active/grace) get an SEO impact warning
-                  if (domain.domain_status === "active" || domain.domain_status === "grace") {
-                    setShowSeoWarning(true);
-                  } else {
-                    setConfirmDelete(true);
-                  }
-                }}
-                className="text-destructive hover:bg-destructive/10 hover:text-destructive border-destructive/30"
-              >
-                Remove
-              </Button>
-            )}
+              )}
+            </div>
+            <StatusBadge status={domain.domain_status} />
           </div>
 
           {/* Active state */}
           {domain.domain_status === "active" && (
-            <div className="p-5">
-              <p className="text-sm text-muted-foreground">
-                Your blog is live at{" "}
-                <a
-                  href={`https://${domain.hostname}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-foreground underline underline-offset-4"
-                >
-                  https://{domain.hostname}
-                </a>
-              </p>
-              {domain.verified_at && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Verified {new Date(domain.verified_at).toLocaleDateString()}
-                </p>
-              )}
+            <div className="space-y-3">
+              {domain.verified_at &&
+                Date.now() - new Date(domain.verified_at).getTime() < 10 * 60 * 1000 && (
+                  <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                    Your domain is active on our end. It can take a few minutes for SSL certificates and DNS to finish propagating before the site loads in your browser.
+                  </p>
+                )}
             </div>
           )}
 
           {/* Pending state — DNS instructions */}
           {domain.domain_status === "pending" && dnsInstructions.length > 0 && (
-            <div className="space-y-5 p-5">
+            <div className="space-y-5">
               <div>
                 <p className="text-sm font-medium">Configure DNS records</p>
                 <p className="mt-0.5 text-sm text-muted-foreground">
@@ -333,8 +305,8 @@ export default function DomainSettingsPage() {
 
               <div className="space-y-3">
                 {(() => {
-                  const sslRecords = dnsInstructions.filter(r => r.purpose === "ssl");
-                  const hasMultipleSslTxt = sslRecords.filter(r => r.type === "TXT").length > 1;
+                  const sslRecords = dnsInstructions.filter((r) => r.purpose === "ssl");
+                  const hasMultipleSslTxt = sslRecords.filter((r) => r.type === "TXT").length > 1;
                   let sslCounter = 0;
                   return dnsInstructions.map((record, idx) => {
                     let label: string | undefined;
@@ -343,7 +315,7 @@ export default function DomainSettingsPage() {
                         label = "SSL certificate (delegated)";
                       } else if (hasMultipleSslTxt) {
                         sslCounter++;
-                        label = `SSL certificate (${sslCounter} of ${sslRecords.filter(r => r.type === "TXT").length})`;
+                        label = `SSL certificate (${sslCounter} of ${sslRecords.filter((r) => r.type === "TXT").length})`;
                       }
                     }
                     return (
@@ -361,19 +333,24 @@ export default function DomainSettingsPage() {
               </div>
 
               {(() => {
-                const sslTxtRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "TXT");
-                const sslCnameRecords = dnsInstructions.filter(r => r.purpose === "ssl" && r.type === "CNAME");
+                const sslTxtRecords = dnsInstructions.filter((r) => r.purpose === "ssl" && r.type === "TXT");
+                const sslCnameRecords = dnsInstructions.filter((r) => r.purpose === "ssl" && r.type === "CNAME");
+                const hasVercel = dnsInstructions.some((r) => r.purpose === "vercel");
                 if (sslCnameRecords.length > 0) {
-                  return (
-                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                      The SSL record uses delegated validation — add this single CNAME once and it covers all future certificate renewals automatically.
-                    </p>
-                  );
+                  return null;
                 }
                 if (sslTxtRecords.length > 1) {
                   return (
                     <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
                       Two SSL TXT records are required (same name, different values). If your DNS provider only allows one TXT record per name, add the first value, wait for it to validate, then replace it with the second value.
+                    </p>
+                  );
+                }
+                if (hasVercel) {
+                  return (
+                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                      Point your subdomain routing CNAME to <span className="font-mono">{FALLBACK_ORIGIN}</span>.
+                      After Cloudflare shows connected, add the Vercel domain verification TXT record if shown below — your domain stays pending until both steps complete.
                     </p>
                   );
                 }
@@ -383,7 +360,7 @@ export default function DomainSettingsPage() {
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
                 {domain.hostname?.startsWith("www.") && (
-                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> record is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
+                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> routing CNAME is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
                 )}
               </p>
 
@@ -396,7 +373,7 @@ export default function DomainSettingsPage() {
 
           {/* Pending but no DNS instructions yet (just added, page refreshed) */}
           {domain.domain_status === "pending" && dnsInstructions.length === 0 && (
-            <div className="space-y-4 p-5">
+            <div className="space-y-4">
               <p className="text-sm text-muted-foreground">
                 DNS records are required to verify this domain. Click below to load them.
               </p>
@@ -409,34 +386,33 @@ export default function DomainSettingsPage() {
 
           {/* Grace period */}
           {domain.domain_status === "grace" && (
-            <div className="p-5">
-              <p className="text-sm text-muted-foreground">
-                Your Pro subscription has lapsed. Your custom domain is still active during the grace period.{" "}
-                <button
-                  type="button"
-                  onClick={() => router.push("/dashboard/billing")}
-                  className="font-medium text-foreground underline underline-offset-4"
-                >
-                  Renew now
-                </button>{" "}
-                to keep it.
+            <div className="space-y-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3">
+              <p className="text-sm text-orange-900">
+                Your Pro plan has ended, but your custom domain is still live.
+                {domain.grace_expires_at && (
+                  <>
+                    {" "}It will stop serving on{" "}
+                    <span className="font-semibold">
+                      {new Date(domain.grace_expires_at).toLocaleDateString()}
+                    </span>
+                    , after which visitors are redirected to your Articurls URL.
+                  </>
+                )}
               </p>
-              {domain.grace_expires_at && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Grace period ends {new Date(domain.grace_expires_at).toLocaleDateString()}
-                </p>
-              )}
+              <Button size="sm" onClick={() => setUpgradeOpen(true)}>
+                Renew Pro
+              </Button>
             </div>
           )}
 
           {/* Expired */}
           {domain.domain_status === "expired" && (
-            <div className="p-5">
+            <div className="space-y-2">
               <p className="text-sm text-muted-foreground">
                 This domain has expired and is no longer serving your blog.{" "}
                 <button
                   type="button"
-                  onClick={() => router.push("/dashboard/billing")}
+                  onClick={() => setUpgradeOpen(true)}
                   className="font-medium text-foreground underline underline-offset-4"
                 >
                   Upgrade to Pro
@@ -445,26 +421,20 @@ export default function DomainSettingsPage() {
               </p>
             </div>
           )}
-        </Card>
+        </div>
       )}
 
       {/* SEO warning dialog for verified domains */}
       {showSeoWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="mx-4 w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl">
-            <div className="flex items-start gap-3">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-yellow-100">
-                <AlertCircle className="h-5 w-5 text-yellow-600" />
-              </div>
-              <div className="space-y-2">
-                <h3 className="text-base font-semibold">Remove custom domain?</h3>
-                <p className="text-sm text-muted-foreground">
-                  Removing a verified domain may negatively affect your Google search rankings.
-                  You may lose accumulated SEO authority.
-                </p>
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+          <div className="w-[calc(100vw-2rem)] max-w-sm rounded-2xl border border-border bg-background p-4 shadow-lg sm:max-w-md sm:rounded-xl sm:p-6">
+            <div className="space-y-1.5 text-left">
+              <h3 className="text-lg font-semibold leading-none tracking-tight">Remove custom domain?</h3>
+              <p className="text-sm text-muted-foreground">
+                Removing a verified domain may negatively affect your Google search rankings.
+              </p>
             </div>
-            <div className="mt-6 flex justify-end gap-3">
+            <div className="mt-4 flex flex-row flex-wrap items-center justify-start gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -494,17 +464,6 @@ export default function DomainSettingsPage() {
 }
 
 // ── Sub-components ─────────────────────────────────────────────────────────
-
-function PageHeader() {
-  return (
-    <div>
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Custom Domain</h1>
-      <p className="mt-1 text-sm text-muted-foreground">
-        Connect your own domain to your blog
-      </p>
-    </div>
-  );
-}
 
 function StatusBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; className: string }> = {
@@ -539,6 +498,7 @@ function DnsRecordCard({
     ownership: "Ownership verification",
     ssl: "SSL certificate",
     routing: "Traffic routing",
+    vercel: "Vercel domain verification",
   };
 
   return (
@@ -547,7 +507,7 @@ function DnsRecordCard({
         <div className="flex items-center gap-2">
           <span
             className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
-            title={record.verified ? "Detected by Cloudflare" : "Not yet detected"}
+            title={record.verified ? "Detected" : "Not yet detected"}
           />
           <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
             {overrideLabel ?? purposeLabel[record.purpose] ?? record.purpose}
@@ -589,7 +549,7 @@ function CopyRow({
           type="button"
           variant="outline"
           size="icon"
-          className="h-8 w-8 shrink-0"
+          className="h-10 w-10 shrink-0"
           onClick={() => onCopy(value, fieldKey)}
           aria-label={`Copy ${label}`}
         >

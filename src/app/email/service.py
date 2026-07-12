@@ -27,7 +27,7 @@ def send_new_post_email(to_email: str, post_title: str, blog_url: str, blog_name
     html = html.replace("{{ blog_name }}", blog_name)
     html = html.replace(
         "{{ unsubscribe_url }}",
-        f"{_api_base()}/unsubscribe?token={unsubscribe_token}",
+        f"{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}",
     )
 
     subject = f"New post from {blog_name}: {post_title}"

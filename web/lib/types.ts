@@ -15,6 +15,7 @@ export interface BlogListItem {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  hide_preview_in_lists: boolean;
   notify_subscribers: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
@@ -23,12 +24,11 @@ export interface BlogListItem {
   updated_at: string;
   user_id: number;
   media: BlogMediaOut[];
-  view_count: number;
   excerpt?: string | null;
   category_ids?: number[];
 }
 
-export type BlogDetail = Omit<BlogListItem, "view_count" | "excerpt">;
+export type BlogDetail = Omit<BlogListItem, "excerpt">;
 
 export interface PublicBlog {
   blog_id: number;
@@ -38,6 +38,7 @@ export interface PublicBlog {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  hide_preview_in_lists: boolean;
   published_at: string | null;
   updated_at: string;
   user_id: number;
@@ -45,7 +46,6 @@ export interface PublicBlog {
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
   /** Optional aggregate from list endpoint when available. */
-  view_count?: number;
   category_ids?: number[];
 }
 
@@ -84,6 +84,8 @@ export interface PublicUser {
   domain_status?: DomainStatus | null;
   /** Controls RSS feed publishing and discovery. */
   rss_enabled?: boolean;
+  /** Umami website UUID for first-party analytics (Step 6 tracker). */
+  umami_website_id?: string | null;
 }
 
 export interface UserSettings {
@@ -110,7 +112,7 @@ export interface UserSettings {
   nav_menu_enabled: boolean;
   footer_enabled: boolean;
   site_footer_enabled: boolean;
-  username_change_count: number;
+  last_username_change_at: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
@@ -126,17 +128,6 @@ export interface StorageUsage {
   used_bytes: number;
   limit_bytes: number | null;
   is_unlimited: boolean;
-}
-
-export interface UsernameChangeRequestOut {
-  request_id: number;
-  user_id: number;
-  desired_username: string;
-  reason: string | null;
-  status: "pending" | "approved" | "rejected";
-  admin_note: string | null;
-  reviewed_by_user_id: number | null;
-  created_at: string | null;
 }
 
 export interface AdminUserListItem {
@@ -158,11 +149,6 @@ export interface AdminPaymentListItem {
   status: string;
   dodo_payment_id: string | null;
   created_at: string | null;
-}
-
-export interface AdminUsernameRequestListItem extends UsernameChangeRequestOut {
-  user_name: string;
-  email: string;
 }
 
 export interface UserPage {
@@ -233,11 +219,10 @@ export interface TokenResponse {
   message?: string;
 }
 
-export interface ViewsAnalytics {
-  period: string;
-  total_posts: number;
-  total_views: number;
-  unique_visitors: number;
+export interface SubscribersAnalyticsSeriesPoint {
+  timestamp: string;
+  subscribed: number;
+  unsubscribed: number;
 }
 
 export interface SubscribersAnalytics {
@@ -245,6 +230,7 @@ export interface SubscribersAnalytics {
   current_subscribers: number;
   subscribed: number;
   unsubscribed: number;
+  series: SubscribersAnalyticsSeriesPoint[];
 }
 
 export interface Category {
@@ -269,7 +255,7 @@ export interface DNSRecord {
   type: "TXT" | "CNAME";
   name: string;
   value: string;
-  purpose: "ownership" | "ssl" | "routing";
+  purpose: "ownership" | "ssl" | "routing" | "vercel";
   verified: boolean;
 }
 
@@ -292,4 +278,68 @@ export interface DomainVerifyResponse {
   verification_status: "verified" | "pending" | "already_verified";
   domain_status: DomainStatus;
   dns_instructions: DNSRecord[] | null;
+  message?: string | null;
+}
+
+export interface UmamiMetricsRow {
+  x: string;
+  y: number;
+  status?: "live" | "archived" | "deleted";
+}
+
+export interface UmamiOverview {
+  pageviews: number;
+  visitors: number;
+  visits?: number;
+  bounce_rate?: number;
+  avg_visit_time?: number;
+}
+
+export interface UmamiOverviewResponse {
+  period: string;
+  overview: UmamiOverview;
+  change?: Record<string, number>;
+}
+
+export interface UmamiTimeseriesItem {
+  x: string;
+  t?: string;
+  y: number;
+}
+
+export interface UmamiTimeseriesResponse {
+  period: string;
+  unit: string;
+  pageviews: UmamiTimeseriesItem[];
+  visitors: UmamiTimeseriesItem[];
+}
+
+export interface UmamiPagesResponse {
+  period: string;
+  rows: UmamiMetricsRow[];
+}
+
+export interface UmamiSourcesResponse {
+  period: string;
+  referrers: UmamiMetricsRow[];
+}
+
+export interface UmamiGeoResponse {
+  period: string;
+  countries: UmamiMetricsRow[];
+}
+
+export interface UmamiTechResponse {
+  period: string;
+  browsers: UmamiMetricsRow[];
+  os: UmamiMetricsRow[];
+  devices: UmamiMetricsRow[];
+}
+
+export interface UmamiRealtimeResponse {
+  active_visitors: number;
+  urls: Record<string, number>;
+  countries: Record<string, number>;
+  referrers: Record<string, number>;
+  events: Array<Record<string, unknown>>;
 }

@@ -3,18 +3,41 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, listPages, publishPage, updatePage } from "@/lib/api";
+import { ApiError, archivePage, getPage, publishPage, updatePage } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
+import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ChevronDown, ChevronUp, ExternalLink, ChevronLeft } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 import { MARKETING_ORIGIN } from "@/lib/env";
+import { getContentExcerpt } from "@/lib/utils";
+
+const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
+
+function normalizeEditableSlugCustom(page: UserPage): string {
+  if (page.status !== "draft") return page.slug || "";
+  const derived = slugify(page.title || "", { lower: true, strict: true });
+  const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(page.slug || "");
+  const slugMatchesTitle = derived !== "" && page.slug === derived;
+  return isPlaceholderDraftSlug || slugMatchesTitle ? "" : page.slug || "";
+}
 
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
@@ -25,10 +48,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("<p></p>");
   const [slugCustom, setSlugCustom] = useState("");
+  const [slugCustomDirty, setSlugCustomDirty] = useState(false);
   const [metaTitle, setMetaTitle] = useState("");
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
+  const [metaDescDirty, setMetaDescDirty] = useState(false);
+  const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
+  const [showInFooter, setShowInFooter] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -39,34 +67,40 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const titleRef = useRef(title);
   const contentRef = useRef(content);
   const slugCustomRef = useRef(slugCustom);
+  const slugCustomDirtyRef = useRef(slugCustomDirty);
   const metaTitleRef = useRef(metaTitle);
   const metaTitleDirtyRef = useRef(metaTitleDirty);
+  const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
+  const showInFooterRef = useRef(showInFooter);
 
   const applyPageToForm = useCallback((p: UserPage) => {
     setPage(p);
     setTitle(p.title || "");
     setContent(p.content || "<p></p>");
-    setSlugCustom(p.slug || "");
-    setMetaTitle(p.meta_title || "");
+    setSlugCustom(normalizeEditableSlugCustom(p));
+    {
+      const derived = slugify(p.title || "", { lower: true, strict: true });
+      const isPlaceholderDraftSlug = DRAFT_SLUG_RE.test(p.slug || "");
+      const slugMatchesTitle = derived !== "" && p.slug === derived;
+      setSlugCustomDirty(p.status !== "draft" || (!isPlaceholderDraftSlug && !slugMatchesTitle));
+    }
     const metaSynced = !p.meta_title || p.meta_title === p.title;
     setMetaTitleDirty(!metaSynced);
-    setMetaDesc(p.meta_description || "");
+    setMetaTitle(metaSynced ? "" : (p.meta_title || ""));
+    const contentExcerpt = getContentExcerpt(p.content || "");
+    const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
+    setMetaDescDirty(!descSynced);
+    setMetaDesc(descSynced ? "" : (p.meta_description || ""));
+    setShowInFooter(p.show_in_footer);
   }, []);
-
-  const canEditSlug = page?.published_at == null;
 
   const load = useCallback(async () => {
     if (!token || Number.isNaN(pageId)) return;
     setErr(null);
     setLoading(true);
     try {
-      const [pages] = await Promise.all([listPages(token), refreshUser()]);
-      const found = pages.find((p) => p.page_id === pageId);
-      if (!found) {
-        setErr("Page not found");
-        return;
-      }
+      const [found] = await Promise.all([getPage(token, pageId), refreshUser()]);
       applyPageToForm(found);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -80,49 +114,61 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }, [load]);
 
   useEffect(() => {
-    if (!metaTitleDirty) {
-      setMetaTitle(title);
-    }
-  }, [title, metaTitleDirty]);
+    const el = titleTextareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
+  }, [title]);
 
   useEffect(() => { titleRef.current = title; }, [title]);
   useEffect(() => { contentRef.current = content; }, [content]);
   useEffect(() => { slugCustomRef.current = slugCustom; }, [slugCustom]);
+  useEffect(() => { slugCustomDirtyRef.current = slugCustomDirty; }, [slugCustomDirty]);
   useEffect(() => { metaTitleRef.current = metaTitle; }, [metaTitle]);
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
+  useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
+  useEffect(() => { showInFooterRef.current = showInFooter; }, [showInFooter]);
 
   const isDirty = useCallback(() => {
     if (!page) return false;
     const nextTitle = title.trim();
-    const nextSlug = canEditSlug
-      ? slugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug
+    const slugEditable = page.status === "draft";
+    const nextSlug = slugEditable
+      ? (slugCustomDirty ? slugCustom.trim() : slugify(nextTitle, { lower: true, strict: true }) || page.slug)
       : page.slug;
-    const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim() || null;
-    const nextMetaDesc = metaDesc.trim() || null;
+    const nextMetaTitle = !metaTitleDirty || metaTitle.trim() === nextTitle ? null : metaTitle.trim();
+    const contentExcerpt = getContentExcerpt(content);
+    const nextMetaDesc = !metaDescDirty || metaDesc.trim() === contentExcerpt ? null : metaDesc.trim();
+    const pageContentExcerpt = getContentExcerpt(page.content || "");
+    const currentMetaTitle =
+      !page.meta_title || page.meta_title === page.title ? null : page.meta_title;
+    const currentMetaDesc =
+      !page.meta_description || page.meta_description === pageContentExcerpt ? null : page.meta_description;
 
     return (
       page.title !== nextTitle ||
       (page.content || "") !== content ||
       page.slug !== nextSlug ||
-      (page.meta_title || null) !== nextMetaTitle ||
-      (page.meta_description || null) !== nextMetaDesc
+      currentMetaTitle !== nextMetaTitle ||
+      currentMetaDesc !== nextMetaDesc ||
+      page.show_in_footer !== showInFooter
     );
-  }, [page, canEditSlug, title, slugCustom, metaTitleDirty, metaTitle, metaDesc, content]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter]);
 
   async function save(silent = false) {
-    if (!token || !page) return;
-    if (!title.trim()) {
-      setErr("Page title is required");
-      return;
-    }
-    if (!isDirty()) return;
+    if (!token || !page) return false;
+    if (!isDirty()) return true;
+    const slugEditable = page.status === "draft";
     const nextTitle = title.trim();
     const nextContent = content;
     const nextSlugCustom = slugCustom;
+    const nextSlugCustomDirty = slugCustomDirty;
     const nextMetaTitle = metaTitle;
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
+    const nextMetaDescDirty = metaDescDirty;
+    const nextShowInFooter = showInFooter;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -130,28 +176,64 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const body = {
         title: nextTitle,
         content: nextContent,
-        ...(canEditSlug
-          ? { slug: nextSlugCustom.trim() || slugify(nextTitle, { lower: true, strict: true }) || page.slug }
+        ...(slugEditable
+          ? { slug: (!nextSlugCustomDirty ? slugify(nextTitle, { lower: true, strict: true }) : nextSlugCustom.trim()) || slugify(nextTitle, { lower: true, strict: true }) }
           : {}),
         meta_title: !nextMetaTitleDirty || nextMetaTitle.trim() === nextTitle ? null : nextMetaTitle.trim() || null,
-        meta_description: nextMetaDesc.trim() || null,
+        meta_description:
+          !nextMetaDescDirty || nextMetaDesc.trim() === getContentExcerpt(nextContent)
+            ? null
+            : nextMetaDesc.trim() || null,
+        show_in_footer: nextShowInFooter,
       };
-      const updated = await updatePage(token, page.page_id, body);
-      setPage(updated);
-      if (titleRef.current.trim() === nextTitle) setTitle(updated.title || "");
-      if (contentRef.current === nextContent) setContent(updated.content || "<p></p>");
-      if (slugCustomRef.current === nextSlugCustom) setSlugCustom(updated.slug || "");
-      if (metaTitleRef.current === nextMetaTitle && metaTitleDirtyRef.current === nextMetaTitleDirty) {
-        setMetaTitle(updated.meta_title || "");
-        const metaSynced = !updated.meta_title || updated.meta_title === updated.title;
-        setMetaTitleDirty(!metaSynced);
+      const responsePage = await updatePage(token, page.page_id, body);
+      setPage(responsePage);
+
+      // Only overwrite fields the user hasn't changed during the API call.
+      const titleChanged = nextTitle !== titleRef.current;
+      const contentChanged = nextContent !== contentRef.current;
+      const metaTitleChanged = nextMetaTitle !== metaTitleRef.current;
+      const metaDescChanged = nextMetaDesc !== metaDescRef.current;
+      const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
+      const showInFooterChanged = nextShowInFooter !== showInFooterRef.current;
+
+      if (!titleChanged) setTitle(responsePage.title);
+      if (!contentChanged) setContent(responsePage.content || "");
+      if (!metaTitleChanged) {
+        const metaSynced = !responsePage.meta_title || responsePage.meta_title === responsePage.title;
+        setMetaTitle(metaSynced ? "" : (responsePage.meta_title || ""));
       }
-      if (metaDescRef.current === nextMetaDesc) setMetaDesc(updated.meta_description || "");
+      if (!metaDescChanged) {
+        const descSynced = !responsePage.meta_description || responsePage.meta_description === getContentExcerpt(responsePage.content);
+        setMetaDesc(descSynced ? "" : (responsePage.meta_description || ""));
+      }
+      if (slugEditable && !slugCustomChanged) {
+        const derived = slugify(responsePage.title || "", { lower: true, strict: true });
+        setSlugCustom(responsePage.slug !== derived ? responsePage.slug : "");
+      }
+      if (!showInFooterChanged) {
+        setShowInFooter(responsePage.show_in_footer);
+      }
+
+      // Re-derive dirty flags from effective (current) state
+      const effectiveTitle = titleChanged ? titleRef.current : responsePage.title;
+      const effectiveMetaTitle = metaTitleChanged ? metaTitleRef.current : (responsePage.meta_title || "");
+      const effectiveContent = contentChanged ? contentRef.current : (responsePage.content || "");
+      const effectiveMetaDesc = metaDescChanged ? metaDescRef.current : (responsePage.meta_description || "");
+      setMetaTitleDirty(!!effectiveMetaTitle && effectiveMetaTitle !== effectiveTitle);
+      setMetaDescDirty(!!effectiveMetaDesc && effectiveMetaDesc !== getContentExcerpt(effectiveContent));
+
+      const effectiveSlugForDirty = slugCustomChanged ? slugCustomRef.current : responsePage.slug;
+      const effectiveTitleForSlug = titleChanged ? titleRef.current : responsePage.title;
+      const derivedSlug = slugify(effectiveTitleForSlug, { lower: true, strict: true });
+      setSlugCustomDirty(!!effectiveSlugForDirty && effectiveSlugForDirty !== derivedSlug);
       clearManualDraft();
       setSaveStatus("saved");
+      return true;
     } catch (e) {
       setSaveStatus("idle");
       setErr(e instanceof ApiError ? e.message : "Save failed");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -160,6 +242,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   async function updateStatus(next: "published" | "archived") {
     if (!token || !page) return;
     setErr(null);
+    if (!(await save(true))) return;
     try {
       const updated =
         next === "published"
@@ -182,7 +265,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -231,16 +314,22 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         title?: string;
         content?: string;
         slugCustom?: string;
+        slugCustomDirty?: boolean;
         metaTitle?: string;
         metaTitleDirty?: boolean;
         metaDesc?: string;
+        metaDescDirty?: boolean;
+        showInFooter?: boolean;
       };
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
       if (typeof draft.slugCustom === "string") setSlugCustom(draft.slugCustom);
+      if (typeof draft.slugCustomDirty === "boolean") setSlugCustomDirty(draft.slugCustomDirty);
       if (typeof draft.metaTitle === "string") setMetaTitle(draft.metaTitle);
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
+      if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
+      if (typeof draft.showInFooter === "boolean") setShowInFooter(draft.showInFooter);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
     }
@@ -248,6 +337,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!page) return;
     if (!requiresManualUpdate) {
       if (localAutosaveTimerRef.current) clearTimeout(localAutosaveTimerRef.current);
       window.localStorage.removeItem(manualDraftKey);
@@ -269,14 +359,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           title,
           content,
           slugCustom,
+          slugCustomDirty,
           metaTitle,
           metaTitleDirty,
           metaDesc,
+          metaDescDirty,
+          showInFooter,
         })
       );
       setSaveStatus("saved");
     }, 350);
-  }, [requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, metaTitle, metaTitleDirty, metaDesc]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
 
   useEffect(() => {
     return () => {
@@ -287,102 +380,178 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   if (loading || !page) {
     return (
       <>
-        <p className="text-muted-foreground">{loading ? "Loading…" : "Not found"}</p>
+        <EditorSkeleton />
         <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       </>
     );
   }
 
-  const liveUrl = user
-    ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-      ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
-      : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
-    : null;
+  const liveUrl =
+    page.status === "published" && user
+      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+        ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
+        : `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(page.slug)}`
+      : null;
 
-  const slugPlaceholder = slugify(title, { lower: true, strict: true });
+  const slugEditable = page.status === "draft";
+
+  function getConfirmMeta(): { title: string; description?: string } {
+    if (!page) return { title: "" };
+    if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
+    if (pendingAction === "publish") return { title: "Publish this page now?" };
+    if (pendingAction === "archive") return { title: "Archive this page?", description: "Move this page to your archive." };
+    if (pendingAction === "unarchive") return { title: "Unarchive this page?", description: "Restore the page so it appears in your published list again." };
+    if (page.status === "published") return { title: "Save changes?", description: "This will update your live page." };
+    return { title: "Save changes to this archived page?" };
+  }
+
+  function confirmPendingAction() {
+    if (!page) return;
+    if (pendingAction === "undo") {
+      applyPageToForm(page);
+      clearManualDraft();
+      setErr(null);
+      setSaveStatus("saved");
+    } else if (pendingAction === "update") {
+      void save(false);
+    } else if (pendingAction === "publish") {
+      void updateStatus("published");
+    } else if (pendingAction === "archive") {
+      void updateStatus("archived");
+    } else if (pendingAction === "unarchive") {
+      void updateStatus("published");
+    }
+    setPendingAction(null);
+  }
 
   return (
     <div className="mx-auto max-w-[1100px] pb-24">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/dashboard/pages">← Pages</Link>
-        </Button>
+        <Link
+          href="/dashboard/pages"
+          className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+        >
+          <ChevronLeft className="h-4 w-4 shrink-0" />
+          Pages
+        </Link>
         <div className="flex flex-wrap items-center gap-2">
-          <BlogStatusBadge status={page.status} />
           {liveUrl && (
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>
               <a href={liveUrl} target="_blank" rel="noopener">
-                <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                View
+                View page
               </a>
             </Button>
           )}
         </div>
       </div>
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
+        <BlogStatusBadge status={page.status} />
+        <span className="text-slate-300 select-none" aria-hidden>
+          ·
+        </span>
+        {page.status === "published" && page.published_at ? (
+          <span className="whitespace-nowrap">Published {format(new Date(page.published_at), "MMM d, yyyy")}</span>
+        ) : (
+          <span className="whitespace-nowrap">Updated {format(new Date(page.updated_at), "MMM d, yyyy")}</span>
+        )}
+      </div>
 
-      <Input
-        className="mb-4 min-h-0 border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+      <Textarea
+        ref={titleTextareaRef}
+        className="mb-4 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
+        onInput={(e) => {
+          const el = e.currentTarget;
+          el.style.height = "auto";
+          el.style.height = el.scrollHeight + "px";
+        }}
         placeholder="Title"
       />
       <p className="mb-3 text-xs text-muted-foreground">
         {saveStatus === "saving"
-          ? requiresManualUpdate
-            ? "Saving draft changes locally..."
-            : "Saving changes..."
+          ? "Saving changes..."
           : saveStatus === "saved"
-            ? requiresManualUpdate
-              ? "Draft changes saved locally"
-              : "Saved"
+            ? "Saved"
             : "\u00a0"}
       </p>
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
-      <div className="mt-6">
+      <div className="mt-6 space-y-2">
+        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">Show in Footer</p>
+            <Switch
+              className="shrink-0"
+              checked={showInFooter}
+              onCheckedChange={(v) => setShowInFooter(v)}
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
+        </div>
+      </div>
+
+      <div className="mt-6 rounded-lg border border-border bg-white">
         <button
           type="button"
-          className="flex w-full items-center justify-between rounded-lg border border-border bg-muted/30 px-4 py-3 text-left text-sm font-medium"
+          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
           onClick={() => setAdvancedOpen(!advancedOpen)}
         >
-          Advanced — slug & meta
+          Advanced settings
           {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
         </button>
         {advancedOpen && (
-          <div className="mt-4 space-y-4 rounded-lg border border-border p-4">
+          <div className="space-y-6 px-4 py-4">
+            {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
               <Input
+                className="mt-2"
                 value={slugCustom}
-                onChange={(e) => setSlugCustom(e.target.value)}
-                placeholder={slugPlaceholder || "(from title)"}
-                disabled={!canEditSlug}
+                disabled={!slugEditable}
+                onChange={(e) => {
+                  setSlugCustomDirty(true);
+                  setSlugCustom(e.target.value);
+                }}
+                placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
-                {canEditSlug
-                  ? "Editable while draft. Lock happens after first publish."
-                  : "Slug is permanently locked after first publish."}
+                {slugEditable
+                  ? "Updates from the title until you edit this field."
+                  : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
-            <div className="space-y-2">
-              <Label>Meta title</Label>
-              <Input
-                value={metaTitle}
-                onChange={(e) => {
-                  setMetaTitleDirty(true);
-                  setMetaTitle(e.target.value);
-                }}
-                placeholder="Same as page title"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Meta description</Label>
-              <Input
-                value={metaDesc}
-                onChange={(e) => setMetaDesc(e.target.value)}
-                placeholder="Defaults from content"
-              />
+
+            <Separator />
+
+            <div className="space-y-4">
+              <div className="space-y-3">
+                <div className="space-y-2">
+                  <Label>Meta title</Label>
+                  <Input
+                    className="mt-2"
+                    value={metaTitle}
+                    onChange={(e) => {
+                      setMetaTitleDirty(true);
+                      setMetaTitle(e.target.value);
+                    }}
+                    placeholder="Same as title by default"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Meta description</Label>
+                  <Input
+                    className="mt-2"
+                    value={metaDesc}
+                    onChange={(e) => {
+                      setMetaDescDirty(true);
+                      setMetaDesc(e.target.value);
+                    }}
+                    placeholder="Same as content by default"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -395,34 +564,65 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           <>
             <Button
               variant="outline"
-              onClick={() => {
-                applyPageToForm(page);
-                clearManualDraft();
-                setErr(null);
-                setSaveStatus("saved");
-              }}
+              onClick={() => setPendingAction("undo")}
               disabled={saving || !dirty}
             >
-              Cancel
+              Undo
             </Button>
-            <Button onClick={() => void save(false)} disabled={saving || !dirty}>
-              {saving ? "Updating…" : "Update"}
+            <Button
+              variant="default"
+              onClick={() => setPendingAction("update")}
+              disabled={saving || !dirty}
+            >
+              {saving ? "Updating…" : "Update page"}
             </Button>
           </>
         ) : (
           <></>
         )}
-        {page.status !== "published" && (
-          <Button variant="default" onClick={() => void updateStatus("published")} disabled={saving}>
+        {page.status === "draft" && (
+          <Button variant="default" onClick={() => setPendingAction("publish")}>
             Publish
           </Button>
         )}
         {page.status === "published" && (
-          <Button variant="outline" onClick={() => void updateStatus("archived")} disabled={saving}>
+          <Button variant="outline" onClick={() => setPendingAction("archive")}>
             Archive
           </Button>
         )}
+        {page.status === "archived" && (
+          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
+            Unarchive
+          </Button>
+        )}
       </div>
+
+      <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{getConfirmMeta().title}</DialogTitle>
+            {getConfirmMeta().description && (
+              <DialogDescription>{getConfirmMeta().description}</DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingAction(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmPendingAction}>
+              {pendingAction === "undo"
+                ? "Undo"
+                : pendingAction === "publish"
+                  ? "Publish"
+                  : pendingAction === "archive"
+                    ? "Archive"
+                    : pendingAction === "unarchive"
+                      ? "Unarchive"
+                      : "Update page"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>

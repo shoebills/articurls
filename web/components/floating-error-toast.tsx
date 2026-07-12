@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 const DEFAULT_MS = 5000;
 
@@ -9,34 +11,50 @@ export type FloatingErrorToastProps = {
   /** Called when the toast auto-hides. Omit to keep parent state (e.g. verify page still shows actions). */
   onDismiss?: () => void;
   autoDismissMs?: number;
+  variant?: "error" | "success";
 };
 
 /**
  * Fixed bottom error toast. Auto-hides after `autoDismissMs` (default 5s).
  * Uses z-[100] so it appears above dialogs (z-50).
  */
-export function FloatingErrorToast({ message, onDismiss, autoDismissMs = DEFAULT_MS }: FloatingErrorToastProps) {
+export function FloatingErrorToast({
+  message,
+  onDismiss,
+  autoDismissMs = DEFAULT_MS,
+  variant = "error",
+}: FloatingErrorToastProps) {
   const onDismissRef = useRef(onDismiss);
-  onDismissRef.current = onDismiss;
-  const [visible, setVisible] = useState(false);
+  const toastRef = useRef<HTMLDivElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    onDismissRef.current = onDismiss;
+  }, [onDismiss]);
+
+  useEffect(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
     if (!message) {
-      setVisible(false);
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
+      timerRef.current = null;
       return;
     }
-    setVisible(true);
-    if (timerRef.current) clearTimeout(timerRef.current);
+    if (toastRef.current) {
+      toastRef.current.hidden = false;
+      toastRef.current.removeAttribute("aria-hidden");
+      toastRef.current.style.opacity = "1";
+      toastRef.current.style.transform = "translateY(0)";
+    }
     if (autoDismissMs <= 0) return;
     timerRef.current = setTimeout(() => {
-      setVisible(false);
       timerRef.current = null;
-      onDismissRef.current?.();
+      if (onDismissRef.current) {
+        onDismissRef.current();
+        return;
+      }
+      if (!toastRef.current) return;
+      toastRef.current.setAttribute("aria-hidden", "true");
+      toastRef.current.style.opacity = "0";
+      toastRef.current.style.transform = "translateY(8px)";
     }, autoDismissMs);
     return () => {
       if (timerRef.current) {
@@ -46,15 +64,34 @@ export function FloatingErrorToast({ message, onDismiss, autoDismissMs = DEFAULT
     };
   }, [message, autoDismissMs]);
 
-  if (!message || !visible) return null;
+  if (!message) return null;
 
   return (
     <div
-      role="alert"
-      aria-live="assertive"
-      className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-[100] w-fit max-w-[min(calc(100vw-1.5rem),36rem)] -translate-x-1/2 rounded-xl border border-destructive/35 bg-background/95 px-4 py-3 text-center text-sm leading-relaxed text-destructive shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/85 break-words"
+      className="pointer-events-none fixed inset-x-0 bottom-[max(1rem,env(safe-area-inset-bottom))] z-[100] flex justify-center px-4"
     >
-      {message}
+      <div
+        ref={toastRef}
+        role="alert"
+        aria-live={variant === "success" ? "polite" : "assertive"}
+        className={cn(
+          "pointer-events-auto w-fit max-w-[36rem] break-words border shadow-lg transition-all duration-200 backdrop-blur-md supports-[backdrop-filter]:bg-background/85",
+          variant === "success"
+            ? "flex items-center gap-2 rounded-full border-emerald-500/30 bg-emerald-50/95 px-4 py-2 text-sm font-medium text-emerald-700 shadow-[0_10px_30px_rgba(16,185,129,0.18)] dark:bg-emerald-950/70 dark:text-emerald-200"
+            : "rounded-xl border-destructive/35 bg-background/95 px-4 py-3 text-center text-sm leading-relaxed text-destructive"
+        )}
+      >
+        {variant === "success" ? (
+          <>
+            <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white">
+              <Check className="h-3 w-3" />
+            </span>
+            <span>{message}</span>
+          </>
+        ) : (
+          message
+        )}
+      </div>
     </div>
   );
 }

@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { notFound, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogOgImage } from "@/lib/blog-images";
+import { transformHtmlImages } from "@/lib/image-transform";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
@@ -18,24 +19,22 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { StructuredData } from "@/components/structured-data";
+import { generateBlogPostingSchema } from "@/lib/structured-data";
+import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
-const REVALIDATE = 300;
+export const dynamic = "force-dynamic";
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
 }
 
-function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
-  const profileImage = assetUrl(user?.profile_image_url);
-  if (profileImage) return profileImage;
-  return undefined;
-}
-
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`, {
-    next: { revalidate: REVALIDATE },
+    cache: "no-store",
   });
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -49,7 +48,7 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -77,8 +76,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : `${MARKETING_ORIGIN}${marketingPath}`;
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
-  const ogImage =
-    resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
+  const ogImage = resolveBlogOgImage(blog);
   const siteName = resolveUserSiteName(author);
   const shouldIndex = !!author && !!seoEligibility && shouldIndexOnMarketingHost({
     is_pro: seoEligibility.is_pro,
@@ -96,6 +94,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: { index: shouldIndex, follow: true },
     alternates,
     icons: faviconIcons(author),
+    metadataBase: new URL(MARKETING_ORIGIN),
     openGraph: {
       title,
       description,
@@ -112,6 +111,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     },
   };
 }
+
+// Preconnect to image CDN for faster mobile image loading
+export const viewport = {
+  themeColor: "#f4f5f8",
+  other: {
+    preconnect: ["https://images.articurls.com"],
+    "dns-prefetch": "https://images.articurls.com",
+  },
+};
 
 export default async function PublicBlogPage({ params }: Props) {
   const { username, slug } = await params;
@@ -143,10 +151,21 @@ export default async function PublicBlogPage({ params }: Props) {
     (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
 
+  // Server-side sanitization + image transform for LCP optimization
+  const sanitizedContent = sanitizeHtml(blog.content);
+  const transformedContent = transformHtmlImages(sanitizedContent);
+  
+  // Define canonical URL for structured data
+  const canonicalUserName = author?.user_name || username;
+  const marketingPath = `/${encodeURIComponent(canonicalUserName)}/blog/${encodeURIComponent(slug)}`;
+  const customDomainPath = `/blog/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(author, MARKETING_ORIGIN, marketingPath, customDomainPath);
+
+
   return (
-    <article className="min-h-screen bg-white">
-      <div className={containerSpacing}>
-        <PublicBlogViewTracker userName={username} slug={slug} />
+      <article className="min-h-screen bg-white">
+      <StructuredData data={generateBlogPostingSchema(blog, author, canonical)} />
+      <main className={containerSpacing}>
         {author.navbar_enabled ? (
           <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
             <div className="hidden w-full sm:block">
@@ -174,12 +193,19 @@ export default async function PublicBlogPage({ params }: Props) {
             </div>
           </header>
         ) : null}
-        <Link
-          href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link
+            href={getPublicProfileUrl(username)}
+            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
+          </Link>
+          <BlogPostShareMenu
+            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`}
+            title={blog.title}
+          />
+        </div>
         <header className="mt-6 sm:mt-8">
           <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
             {blog.title}
@@ -187,21 +213,9 @@ export default async function PublicBlogPage({ params }: Props) {
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Link
               href={getPublicProfileUrl(username)}
-              className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
+              className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
-              {author.profile_image_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={assetUrl(author.profile_image_url)}
-                  alt=""
-                  className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70"
-                />
-              ) : (
-                <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
-              )}
-              <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
-                <span className="truncate">{author.name}</span>
-              </span>
+              <span className="truncate">{author.name}</span>
             </Link>
             {blog.published_at && (
               <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
@@ -214,23 +228,21 @@ export default async function PublicBlogPage({ params }: Props) {
             )}
           </div>
         </header>
-        <div className="mt-12">
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blog.content }} />
-        </div>
+        <div className="mt-12 prose-blog" dangerouslySetInnerHTML={{ __html: transformedContent }} />
         {showSubscriberCollection ? (
-          <div className="mt-14 border-t border-border/80 pt-6">
+          <div className="mt-14">
             <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
           </div>
         ) : null}
         <PublicProfileFooter user={author} />
         <PublicSiteFooter user={author} pages={pages} />
-      </div>
+      </main>
       {author.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
-          Made with Articurls
+          Made with <span className="font-semibold">Articurls</span>
         </a>
       ) : null}
     </article>

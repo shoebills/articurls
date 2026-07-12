@@ -1,4 +1,3 @@
-import hashlib
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -8,8 +7,8 @@ from ..schemas import subscribers
 from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
 from ..email.service import send_sub_confirmation_email
 from ..email.scheduling import schedule_welcome_email_after_confirm
-from ..redis_client import redis_client
 from ..utils import normalize_email, is_pro_entitled
+from ..utils.rate_limit import check_rate_limit_ip_and_email
 
 
 router = APIRouter(
@@ -17,65 +16,22 @@ router = APIRouter(
     )
 
 
-# ---------------------------------------------------------------------------
-# Subscribe endpoint rate limits
-# IP limit:    5 attempts per IP per 10 minutes   — slows single-source abuse
-# Email limit: 3 attempts per email per hour      — stops inbox-flooding attacks
-#              (email is hashed before use as key — no PII stored in Redis)
-# Both fail open if Redis is unavailable.
-# ---------------------------------------------------------------------------
-_IP_LIMIT = 5
-_IP_WINDOW = 600       # 10 minutes
-_EMAIL_LIMIT = 3
-_EMAIL_WINDOW = 3600   # 1 hour
-
-
-def _check_subscribe_rate_limits(ip: str, email: str) -> None:
-    try:
-        # IP-based limit
-        ip_key = f"rl:subscribe:ip:{ip}"
-        ip_count = redis_client.incr(ip_key)
-        if ip_count == 1:
-            redis_client.expire(ip_key, _IP_WINDOW)
-        if ip_count > _IP_LIMIT:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many requests",
-            )
-
-        # Email-based limit (hash email so no PII sits in Redis)
-        email_hash = hashlib.sha256(email.encode()).hexdigest()
-        email_key = f"rl:subscribe:email:{email_hash}"
-        email_count = redis_client.incr(email_key)
-        if email_count == 1:
-            redis_client.expire(email_key, _EMAIL_WINDOW)
-        if email_count > _EMAIL_LIMIT:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many requests",
-            )
-    except HTTPException:
-        raise
-    except Exception:
-        # Redis unavailable — fail open, don't block legitimate traffic
-        pass
+_SUBSCRIBE_IP_LIMIT = 5
+_SUBSCRIBE_IP_WINDOW = 600       # 10 minutes
+_SUBSCRIBE_EMAIL_LIMIT = 3
+_SUBSCRIBE_EMAIL_WINDOW = 3600   # 1 hour
 
 
 @router.post("/subscribe/{user_name}", status_code=status.HTTP_200_OK)
 def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe, db: Session = Depends(get_db)):
 
-    # Extract real client IP (Cloudflare sets CF-Connecting-IP; fall back gracefully)
-    ip = (
-        request.headers.get("cf-connecting-ip")
-        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        or (request.client.host if request.client else None)
-        or ""
-    )
-
-    # Normalize email before any DB work or rate-limit keying
     email = normalize_email(str(body.email))
 
-    _check_subscribe_rate_limits(ip, email)
+    check_rate_limit_ip_and_email(
+        request, "subscribe", email,
+        _SUBSCRIBE_IP_LIMIT, _SUBSCRIBE_IP_WINDOW,
+        _SUBSCRIBE_EMAIL_LIMIT, _SUBSCRIBE_EMAIL_WINDOW,
+    )
 
     db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
 
@@ -101,7 +57,10 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
     # resubscribe
     if db_subscriber and db_subscriber.unsubscribed_at:
         db_subscriber.unsubscribed_at = None
+        db_subscriber.welcome_sent_at = None
         db.commit()
+        db.refresh(db_subscriber)
+        schedule_welcome_email_after_confirm(db, db_subscriber)
         return {"message": "Subscribed again"}
     
     new_subscriber = models.Subscriber(email=email, 

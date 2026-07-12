@@ -15,10 +15,16 @@ import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { excerptFromHtml } from "@/lib/text";
 import { shouldIndexOnMarketingHost } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
+import { sanitizeHtml } from "@/lib/sanitize-html";
+import { transformHtmlImages } from "@/lib/image-transform";
+import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebPageSchema } from "@/lib/structured-data";
 
 type Props = { params: Promise<{ username: string; slug: string }> };
 
-const REVALIDATE = 300;
+export const dynamic = "force-dynamic";
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
@@ -44,14 +50,14 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
 
 async function loadPage(username: string, slug: string): Promise<UserPage | null> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`, {
-    next: { revalidate: REVALIDATE },
+    cache: "no-store",
   });
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -141,6 +147,10 @@ export default async function PublicCustomPage({ params }: Props) {
   const hasMobileNav =
     (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+  
+  // Define canonical URL for structured data
+  const marketingPath = `/${encodeURIComponent(user.user_name)}/page/${encodeURIComponent(slug)}`;
+  const canonical = resolveCanonicalUrl(user, MARKETING_ORIGIN, marketingPath, `/page/${slug}`);
 
   return (
     <div className="min-h-screen bg-white">
@@ -173,27 +183,35 @@ export default async function PublicCustomPage({ params }: Props) {
           </header>
         ) : null}
 
-        <Link
-          href={getPublicProfileUrl(username)}
-          className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Back
-        </Link>
+        <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
+        <div className="flex items-center justify-between">
+          <Link
+            href={getPublicProfileUrl(username)}
+            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
+          </Link>
+          <BlogPostShareMenu
+            url={`${MARKETING_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
+            title={page.title}
+          />
+        </div>
 
         <header className="mt-6 sm:mt-8">
           <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
         </header>
-        <article className="mt-4">
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+        <article className="mt-12">
+          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
         </article>
         <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-4 z-20 rounded-full border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
-          Made with Articurls
+          Made with <span className="font-semibold">Articurls</span>
         </a>
       ) : null}
     </div>

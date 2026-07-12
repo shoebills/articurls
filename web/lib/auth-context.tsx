@@ -12,6 +12,7 @@ type AuthContextValue = {
   user: UserSettings | null;
   subscription: SubscriptionOut | null;
   isPro: boolean;
+  wasPro: boolean;
   loading: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -38,11 +39,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
       setUser(me);
       setSubscription(sub);
-    } catch {
-      localStorage.removeItem(TOKEN_KEY);
-      setToken(null);
-      setUser(null);
-      setSubscription(null);
+    } catch (err: any) {
+      // Only clear token on auth errors (401), not network/server errors
+      if (err?.status === 401 || err?.response?.status === 401) {
+        localStorage.removeItem(TOKEN_KEY);
+        setToken(null);
+        setUser(null);
+        setSubscription(null);
+      }
+      // For other errors, keep token and let user retry
     }
   }, []);
 
@@ -58,9 +63,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
         setUser(me);
         setSubscription(sub);
-      } catch {
-        localStorage.removeItem(TOKEN_KEY);
-        setToken(null);
+      } catch (err: any) {
+        if (err?.status === 401 || err?.response?.status === 401) {
+          localStorage.removeItem(TOKEN_KEY);
+          setToken(null);
+        }
       } finally {
         setLoading(false);
       }
@@ -73,6 +80,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(TOKEN_KEY, res.access_token);
       setToken(res.access_token);
       await refreshUser();
+      if (redirectTo === "/dashboard") {
+        const plan = localStorage.getItem("pendingPlan");
+        localStorage.removeItem("pendingPlan");
+        if (plan === "pro" || plan === "lifetime") {
+          router.push(`/dashboard/billing?plan=${plan}`);
+          return;
+        }
+      }
       router.push(redirectTo);
     },
     [refreshUser, router]
@@ -88,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const isPro = isProSubscription(subscription);
+  const wasPro = subscription?.plan_type === "pro" || subscription?.plan_type === "lifetime";
 
   const value = useMemo(
     () => ({
@@ -95,12 +111,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       subscription,
       isPro,
+      wasPro,
       loading,
       login,
       logout,
       refreshUser,
     }),
-    [token, user, subscription, isPro, loading, login, logout, refreshUser]
+    [token, user, subscription, isPro, wasPro, loading, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

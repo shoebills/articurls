@@ -1,11 +1,27 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { viewsAnalytics, listBlogs, ApiError } from "@/lib/api";
+import {
+  ApiError,
+  apiCacheHas,
+  getCachedApiData,
+  AnalyticsPeriod,
+  getUmamiOverview,
+  getUmamiTimeseries,
+  getUmamiPages,
+  getUmamiSources,
+  getUmamiGeo,
+  getUmamiTech,
+  UmamiOverviewResponse,
+  UmamiTimeseriesResponse,
+  UmamiPagesResponse,
+  UmamiSourcesResponse,
+  UmamiGeoResponse,
+  UmamiTechResponse,
+  UmamiMetricsRow,
+} from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogListItem } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -13,9 +29,80 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+
 import {
-  LineChart,
-  Line,
+  Users,
+  Eye,
+  TrendingDown,
+  Clock,
+  Smartphone,
+  Laptop,
+  Monitor as MonitorIcon,
+  Globe,
+  ExternalLink,
+  Zap,
+  Compass,
+} from "lucide-react";
+import {
+  SiGooglechrome,
+  SiFirefox,
+  SiSafari,
+  SiOpera,
+  SiBrave,
+  SiVivaldi,
+  SiDuckduckgo,
+  SiSamsung,
+  SiTorbrowser,
+  SiApple,
+  SiLinux,
+  SiUbuntu,
+  SiDebian,
+  SiFedora,
+  SiAndroid,
+  SiIos,
+  SiGoogle,
+  SiX,
+  SiInstagram,
+  SiFacebook,
+  SiYoutube,
+  SiReddit,
+  SiDiscord,
+  SiGithub,
+  SiPinterest,
+  SiTiktok,
+  SiWhatsapp,
+  SiTelegram,
+  SiSlack,
+  SiQuora,
+  SiMedium,
+  SiTumblr,
+  SiFlickr,
+  SiVimeo,
+  SiTwitch,
+  SiSpotify,
+  SiSoundcloud,
+  SiStackoverflow,
+  SiCodepen,
+  SiCodesandbox,
+  SiGitlab,
+  SiBitbucket,
+  SiDevdotto,
+  SiHashnode,
+  SiDribbble,
+  SiBehance,
+  SiFigma,
+  SiCanva,
+  SiProducthunt,
+  SiYcombinator,
+  SiBaidu,
+} from "react-icons/si";
+import {
+  FaEdge,
+  FaLinkedinIn,
+} from "react-icons/fa6";
+import {
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -24,105 +111,582 @@ import {
   Legend,
 } from "recharts";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { Skeleton } from "@/components/ui/skeleton";
+import { AnalyticsPreview } from "@/components/pro/pro-analytics-preview";
 
-const PERIODS = ["24h", "7d", "28d", "3m", "6m", "1y", "all"] as const;
-
-const CHART_PERIOD_ORDER = ["24h", "7d", "28d", "3m", "6m", "1y"] as const;
-
-function chartPeriodsForSelection(selected: (typeof PERIODS)[number]): (typeof CHART_PERIOD_ORDER)[number][] {
-  if (selected === "all") return [...CHART_PERIOD_ORDER];
-  const idx = CHART_PERIOD_ORDER.indexOf(selected as (typeof CHART_PERIOD_ORDER)[number]);
-  if (idx === -1) return [...CHART_PERIOD_ORDER];
-  return CHART_PERIOD_ORDER.slice(0, idx + 1) as (typeof CHART_PERIOD_ORDER)[number][];
-}
-
-const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
+const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
-  { value: "28d", label: "Last 28 days" },
-  { value: "3m", label: "Last 3 months" },
-  { value: "6m", label: "Last 6 months" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+  { value: "this_year", label: "This year" },
   { value: "1y", label: "Last year" },
   { value: "all", label: "All time" },
 ];
 
-const POSTS_PAGE_SIZE = 10;
+const COLORS = [
+  "oklch(0.6 0.15 145)",
+  "oklch(0.55 0.2 25)",
+  "oklch(0.58 0.18 280)",
+  "oklch(0.62 0.16 30)",
+  "oklch(0.56 0.17 200)",
+];
 
-export default function AnalyticsPage() {
-  const { token } = useAuth();
-  const [vPeriod, setVPeriod] = useState<(typeof PERIODS)[number]>("28d");
-  const [views, setViews] = useState<{ period: string; total_views: number; unique_visitors: number; total_posts: number } | null>(null);
-  const [chartViews, setChartViews] = useState<{ name: string; views: number; visitors: number }[]>([]);
-  const [posts, setPosts] = useState<BlogListItem[]>([]);
-  const [postSort, setPostSort] = useState<"most_viewed" | "latest">("most_viewed");
-  const [postPage, setPostPage] = useState(1);
+function getCountryFlag(code: string): string {
+  const codeUpper = code.toUpperCase();
+  if (codeUpper.length !== 2) return "";
+  const offset = 0x1F1E6;
+  const first = codeUpper.charCodeAt(0) - 0x41 + offset;
+  const second = codeUpper.charCodeAt(1) - 0x41 + offset;
+  return String.fromCodePoint(first, second);
+}
+
+const COUNTRY_NAMES: Record<string, string> = {
+  SG: "Singapore",
+  IN: "India",
+  US: "United States",
+  NL: "Netherlands",
+  GB: "United Kingdom",
+  DE: "Germany",
+  FR: "France",
+  CA: "Canada",
+  AU: "Australia",
+  JP: "Japan",
+  CN: "China",
+  BR: "Brazil",
+  RU: "Russia",
+  KR: "South Korea",
+  MX: "Mexico",
+  ES: "Spain",
+  IT: "Italy",
+  ID: "Indonesia",
+  TH: "Thailand",
+  MY: "Malaysia",
+  PH: "Philippines",
+  VN: "Vietnam",
+  PL: "Poland",
+  TR: "Turkey",
+  SA: "Saudi Arabia",
+  AE: "United Arab Emirates",
+  IL: "Israel",
+  EG: "Egypt",
+  ZA: "South Africa",
+  NG: "Nigeria",
+  KE: "Kenya",
+  AR: "Argentina",
+  CL: "Chile",
+  CO: "Colombia",
+  PE: "Peru",
+};
+
+function getReferrerIcon(domain: string) {
+  const domainLower = domain.toLowerCase();
+  if (domainLower.includes("google")) return SiGoogle;
+  if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return SiX;
+  if (domainLower.includes("instagram")) return SiInstagram;
+  if (domainLower.includes("facebook") || domainLower.includes("fb.com")) return SiFacebook;
+  if (domainLower.includes("linkedin")) return FaLinkedinIn;
+  if (domainLower.includes("youtube")) return SiYoutube;
+  if (domainLower.includes("reddit")) return SiReddit;
+  if (domainLower.includes("discord")) return SiDiscord;
+  if (domainLower.includes("github")) return SiGithub;
+  if (domainLower.includes("pinterest")) return SiPinterest;
+  if (domainLower.includes("tiktok")) return SiTiktok;
+  if (domainLower.includes("whatsapp")) return SiWhatsapp;
+  if (domainLower.includes("telegram")) return SiTelegram;
+  if (domainLower.includes("slack")) return SiSlack;
+  if (domainLower.includes("quora")) return SiQuora;
+  if (domainLower.includes("medium")) return SiMedium;
+  if (domainLower.includes("tumblr")) return SiTumblr;
+  if (domainLower.includes("flickr")) return SiFlickr;
+  if (domainLower.includes("vimeo")) return SiVimeo;
+  if (domainLower.includes("twitch")) return SiTwitch;
+  if (domainLower.includes("spotify")) return SiSpotify;
+  if (domainLower.includes("soundcloud")) return SiSoundcloud;
+  if (domainLower.includes("duckduckgo")) return SiDuckduckgo;
+  if (domainLower.includes("bing")) return Globe;
+  if (domainLower.includes("yahoo")) return Globe;
+  if (domainLower.includes("baidu")) return SiBaidu;
+  if (domainLower.includes("stackoverflow") || domainLower.includes("stackexchange")) return SiStackoverflow;
+  if (domainLower.includes("codepen")) return SiCodepen;
+  if (domainLower.includes("codesandbox")) return SiCodesandbox;
+  if (domainLower.includes("gitlab")) return SiGitlab;
+  if (domainLower.includes("bitbucket")) return SiBitbucket;
+  if (domainLower.includes("dev.to")) return SiDevdotto;
+  if (domainLower.includes("hashnode")) return SiHashnode;
+  if (domainLower.includes("dribbble")) return SiDribbble;
+  if (domainLower.includes("behance")) return SiBehance;
+  if (domainLower.includes("figma")) return SiFigma;
+  if (domainLower.includes("canva")) return SiCanva;
+  if (domainLower.includes("producthunt")) return SiProducthunt;
+  if (domainLower.includes("hackernews") || domainLower.includes("news.ycombinator")) return SiYcombinator;
+  return ExternalLink;
+}
+
+function getBrowserIcon(browser: string) {
+  const browserLower = browser.toLowerCase();
+  if (browserLower.includes("chrome")) return SiGooglechrome;
+  if (browserLower.includes("firefox")) return SiFirefox;
+  if (browserLower.includes("safari")) return SiSafari;
+  if (browserLower.includes("edge")) return FaEdge;
+  if (browserLower.includes("opera")) return SiOpera;
+  if (browserLower.includes("brave")) return SiBrave;
+  if (browserLower.includes("vivaldi")) return SiVivaldi;
+  if (browserLower.includes("duckduckgo")) return SiDuckduckgo;
+  if (browserLower.includes("samsung")) return SiSamsung;
+  if (browserLower.includes("yandex")) return Compass; // fallback lucide icon
+  if (browserLower.includes("torbrowser") || browserLower.includes("tor browser") || browserLower.includes("tor ")) return SiTorbrowser;
+  if (browserLower.includes("librewolf")) return Zap; // LibreWolf fork of Firefox, use flame-like icon
+  if (browserLower.includes("uc browser")) return Globe;
+  if (browserLower.includes("maxthon")) return Globe;
+  if (browserLower.includes("puffin")) return Globe;
+  if (browserLower.includes("sleipnir")) return Globe;
+  if (browserLower.includes("palemoon")) return Globe;
+  if (browserLower.includes("waterfox")) return Globe;
+  if (browserLower.includes("falkon")) return Globe;
+  if (browserLower.includes("konqueror")) return Globe;
+  if (browserLower.includes("epiphany")) return Globe;
+  if (browserLower.includes("midori")) return Globe;
+  if (browserLower.includes("luakit")) return Globe;
+  if (browserLower.includes("qutebrowser")) return Globe;
+  if (browserLower.includes("surf")) return Globe;
+  if (browserLower.includes("uzbl")) return Globe;
+  if (browserLower.includes("vimb")) return Globe;
+  if (browserLower.includes("dillo")) return Globe;
+  if (browserLower.includes("netsurf")) return Globe;
+  return Globe;
+}
+
+function getOsIcon(os: string) {
+  const osLower = os.toLowerCase();
+  if (osLower === "windows" || osLower.startsWith("windows ")) return MonitorIcon; // use Monitor for Windows
+  if (osLower.includes("mac")) return SiApple;
+  if (osLower.includes("ubuntu")) return SiUbuntu;
+  if (osLower.includes("debian")) return SiDebian;
+  if (osLower.includes("fedora")) return SiFedora;
+  if (osLower.includes("linux")) return SiLinux;
+  if (osLower.includes("android")) return SiAndroid;
+  if (osLower.includes("ios")) return SiIos;
+  if (osLower.includes("ipad")) return SiIos;
+  if (osLower.includes("ipod")) return SiIos;
+  if (osLower.includes("chrome")) return MonitorIcon;
+  return Laptop;
+}
+
+function getDeviceIcon(device: string) {
+  const deviceLower = device.toLowerCase();
+  if (deviceLower.includes("mobile")) return Smartphone;
+  if (deviceLower.includes("tablet")) return Smartphone;
+  if (deviceLower.includes("ipad")) return Smartphone;
+  if (deviceLower.includes("desktop")) return MonitorIcon;
+  if (deviceLower.includes("laptop")) return Laptop;
+  return Laptop;
+}
+
+function formatDuration(seconds: number): string {
+  if (!seconds || seconds <= 0) return "0s";
+  const totalSeconds = Math.round(seconds);
+  const m = Math.floor(totalSeconds / 60);
+  const s = totalSeconds % 60;
+  if (m === 0) return `${s}s`;
+  return `${m}m ${s}s`;
+}
+
+function formatChartLabel(value: string, unit?: string, tz?: string): string {
+  if (unit === "hour") {
+    try {
+      const date = new Date(value);
+      return date.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+        timeZone: tz,
+      });
+    } catch {
+      const timePart = value.replace("T", " ").slice(11, 16);
+      return timePart || value.slice(0, 16);
+    }
+  }
+
+  if (unit === "month") {
+    try {
+      const date = new Date(value);
+      return date.toLocaleDateString(undefined, { month: "short" });
+    } catch {
+      return value.slice(0, 7);
+    }
+  }
+
+  try {
+    const date = new Date(value);
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return value.slice(0, 10);
+  }
+}
+
+function KpiCard({
+  title,
+  value,
+  description,
+  icon: Icon,
+}: {
+  title: string;
+  value: string | number;
+  description?: string;
+  icon: React.ElementType;
+}) {
+  return (
+    <Card>
+      <CardContent className="p-3 sm:p-4 lg:p-5">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="flex-1 min-w-0">
+            <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+              {title}
+            </p>
+            <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+              {value}
+            </p>
+            {description && (
+              <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
+                {description}
+              </p>
+            )}
+          </div>
+          <div className="shrink-0 mt-0.5">
+            <Icon className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function KpiCardSkeleton() {
+  return (
+    <Card>
+      <CardContent className="p-3 sm:p-4 lg:p-5">
+        <div className="flex items-start justify-between gap-2 sm:gap-3">
+          <div className="flex-1 min-w-0">
+            <Skeleton className="h-3 w-16 sm:h-3.5 sm:w-20 mb-2" />
+            <Skeleton className="h-6 w-24 sm:h-8 sm:w-28" />
+          </div>
+          <Skeleton className="h-4 w-4 sm:h-5 sm:w-5 shrink-0 rounded-md" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function MetricsTableHeader({ label }: { label: string }) {
+  return (
+    <div className="flex items-center justify-between pb-1 mb-1 border-b text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">
+      <span>{label}</span>
+      <span>Visitors</span>
+    </div>
+  );
+}
+
+function PathStatusDot({ status }: { status?: "live" | "deleted" | "archived" }) {
+  if (status === "live") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px_rgba(34,197,94,0.3)]" />
+    );
+  }
+  if (status === "deleted") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-red-500 shadow-[0_0_4px_1px_rgba(239,68,68,0.3)]" />
+    );
+  }
+  if (status === "archived") {
+    return (
+      <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/50" />
+    );
+  }
+  return <span className="shrink-0 h-2 w-2 rounded-full bg-muted-foreground/25" />;
+}
+
+function NativeAnalytics({ token }: { token: string }) {
+  const [period, setPeriod] = useState<AnalyticsPeriod>("7d");
+  const [overview, setOverview] = useState<UmamiOverviewResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiOverviewResponse>("/analytics/umami/overview?period=7d", t) : null;
+  });
+  const [timeseries, setTimeseries] = useState<UmamiTimeseriesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiTimeseriesResponse>("/analytics/umami/timeseries?period=7d", t) : null;
+  });
+  const [pages, setPages] = useState<UmamiPagesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiPagesResponse>("/analytics/umami/pages?period=7d&limit=50", t) : null;
+  });
+  const [sources, setSources] = useState<UmamiSourcesResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiSourcesResponse>("/analytics/umami/sources?period=7d&limit=20", t) : null;
+  });
+  const [geo, setGeo] = useState<UmamiGeoResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiGeoResponse>("/analytics/umami/geo?period=7d&limit=20", t) : null;
+  });
+  const [tech, setTech] = useState<UmamiTechResponse | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<UmamiTechResponse>("/analytics/umami/tech?period=7d&limit=20", t) : null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return true;
+    return !(
+      apiCacheHas("/analytics/umami/overview?period=7d", t) &&
+      apiCacheHas("/analytics/umami/timeseries?period=7d", t) &&
+      apiCacheHas("/analytics/umami/pages?period=7d&limit=50", t) &&
+      apiCacheHas("/analytics/umami/sources?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/geo?period=7d&limit=20", t) &&
+      apiCacheHas("/analytics/umami/tech?period=7d&limit=20", t)
+    );
+  });
   const [err, setErr] = useState<string | null>(null);
+  const [pagesVisible, setPagesVisible] = useState(10);
+
+  // Detect browser timezone once — used to display chart labels in local time
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
-    if (!token) return;
     let cancelled = false;
+    setPagesVisible(10);
     (async () => {
+      setLoading(true);
       setErr(null);
       try {
-        const vPeriods = chartPeriodsForSelection(vPeriod);
-        const [v, viewRows, postRows] = await Promise.all([
-          viewsAnalytics(token, vPeriod),
-          Promise.all(vPeriods.map((p) => viewsAnalytics(token, p))),
-          listBlogs(token),
+        const [o, t, p, s, g, te] = await Promise.all([
+          getUmamiOverview(token, period),
+          getUmamiTimeseries(token, period),
+          getUmamiPages(token, period),
+          getUmamiSources(token, period),
+          getUmamiGeo(token, period),
+          getUmamiTech(token, period),
         ]);
-        if (cancelled) return;
-        setViews(v);
-        setPosts(postRows.filter((post) => post.status === "published"));
-        setChartViews(
-          viewRows.map((d, i) => ({
-            name: vPeriods[i],
-            views: d.total_views,
-            visitors: d.unique_visitors,
-          }))
-        );
+        if (!cancelled) {
+          setOverview(o);
+          setTimeseries(t);
+          setPages(p);
+          setSources(s);
+          setGeo(g);
+          setTech(te);
+        }
       } catch (e) {
-        if (!cancelled) setErr(e instanceof ApiError ? e.message : "Failed to load analytics");
+        if (!cancelled) {
+          setErr(e instanceof ApiError ? e.message : "Failed to load analytics");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     })();
-    return () => {
-      cancelled = true;
-    };
-  }, [token, vPeriod]);
+    return () => { cancelled = true; };
+  }, [token, period]);
 
-  const sortedPosts = useMemo(() => {
-    const rows = posts.filter((post) => post.status === "published");
-    const comparePublished = (a: BlogListItem, b: BlogListItem) => {
-      const aPub = a.published_at;
-      const bPub = b.published_at;
-      if (aPub && bPub) return new Date(bPub).getTime() - new Date(aPub).getTime();
-      if (aPub && !bPub) return -1;
-      if (!aPub && bPub) return 1;
-      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  const trafficSeries = useMemo(() => {
+    if (!timeseries) return [];
+
+    // Umami returns full ISO datetimes for all units (e.g. "2025-06-01T00:00:00Z"
+    // for day/month). Normalize keys so they match the slot format we generate.
+    const normX = (x: string) => {
+      if (timeseries.unit === "day") return x.slice(0, 10);
+      if (timeseries.unit === "month") return x.slice(0, 7);
+      return x;
     };
-    if (postSort === "latest") {
-      rows.sort(comparePublished);
-      return rows;
+    const pvMap = new Map(timeseries.pageviews.map((p) => [normX(p.x), p.y]));
+    const viMap = new Map(timeseries.visitors.map((p) => [normX(p.x), p.y]));
+
+    if (timeseries.unit === "hour") {
+      // Generate all 25 hourly slots for the full 24h window anchored to
+      // now-24h → now in UTC. Umami buckets by UTC hour (format:
+      // "YYYY-MM-DDTHH:00:00Z") and only returns hours that have data — we fill
+      // the rest with zeros.
+      //
+      // IMPORTANT: snap to UTC hour boundaries, not local time, so the keys
+      // match exactly what Umami returns.
+      const nowMs = Date.now();
+      // Round down to the current UTC hour
+      const currentHourMs = nowMs - (nowMs % (60 * 60 * 1000));
+
+      const slots: string[] = [];
+      for (let i = 24; i >= 0; i--) {
+        const slotMs = currentHourMs - i * 60 * 60 * 1000;
+        // Produce "YYYY-MM-DDTHH:00:00Z" — exactly what Umami returns
+        const d = new Date(slotMs);
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
+        const hh = String(d.getUTCHours()).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}-${dd}T${hh}:00:00Z`);
+      }
+
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
     }
-    rows.sort((a, b) => {
-      const byViews = (b.view_count ?? 0) - (a.view_count ?? 0);
-      if (byViews !== 0) return byViews;
-      return comparePublished(a, b);
-    });
-    return rows;
-  }, [posts, postSort]);
 
-  const postPageCount = Math.max(1, Math.ceil(sortedPosts.length / POSTS_PAGE_SIZE));
-  const safePostPage = Math.min(postPage, postPageCount);
-  const pagedPosts = sortedPosts.slice((safePostPage - 1) * POSTS_PAGE_SIZE, safePostPage * POSTS_PAGE_SIZE);
+    // Period → slot count mapping
+    const periodSlots: Record<string, number> = {
+      "7d": 7,
+    };
+
+    const slotCount = periodSlots[timeseries.period];
+
+    if (timeseries.unit === "day" && slotCount) {
+      // Generate all expected day slots anchored to today in UTC,
+      // because the backend queries Umami without a timezone parameter
+      // so Umami buckets by UTC days. Days with zero data are filled
+      // so keys match exactly what Umami returns.
+      const now = new Date();
+      const slots: string[] = [];
+      for (let i = slotCount - 1; i >= 0; i--) {
+        const d = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate() - i,
+        ));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        const dd = String(d.getUTCDate()).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}-${dd}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.unit === "month" && slotCount) {
+      const now = new Date();
+      const slots: string[] = [];
+      for (let i = slotCount - 1; i >= 0; i--) {
+        const d = new Date(Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth() - i,
+          1,
+        ));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.period === "this_year") {
+      const now = new Date();
+      const slots: string[] = [];
+      const currentMonth = now.getUTCMonth();
+      for (let i = 0; i <= currentMonth; i++) {
+        const d = new Date(Date.UTC(now.getUTCFullYear(), i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    if (timeseries.period === "1y") {
+      const now = new Date();
+      const slots: string[] = [];
+      const prevYear = now.getUTCFullYear() - 1;
+      for (let i = 0; i < 12; i++) {
+        const d = new Date(Date.UTC(prevYear, i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    // Fallback for “all” (or any future period) — use data-driven keys,
+    // but still fill gaps between the min and max observed dates.
+    const allKeys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()]));
+    if (allKeys.length === 0) return [];
+    allKeys.sort();
+    const minKey = allKeys[0];
+    const maxKey = allKeys[allKeys.length - 1];
+
+    if (timeseries.unit === "month") {
+      // Expand all months between min and max (local timezone safe —
+      // months always have day=1 so no DST boundary issues).
+      const [minY, minM] = minKey.split("-").map(Number);
+      const [maxY, maxM] = maxKey.split("-").map(Number);
+      const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
+      const slots: string[] = [];
+      for (let i = 0; i < totalMonths; i++) {
+        const d = new Date(Date.UTC(minY, minM - 1 + i, 1));
+        const yyyy = d.getUTCFullYear();
+        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+        slots.push(`${yyyy}-${mm}`);
+      }
+      return slots.map((x) => ({
+        x,
+        pageviews: pvMap.get(x) ?? 0,
+        visitors: viMap.get(x) ?? 0,
+      }));
+    }
+
+    // Day unit or unknown — expand all days between min and max.
+    // Use UTC date arithmetic so keys match Umami's UTC-bucketed output
+    // (the backend queries Umami without a timezone parameter).
+    const [minY2, minM2, minD2] = minKey.split("-").map(Number);
+    const [maxY2, maxM2, maxD2] = maxKey.split("-").map(Number);
+    // Count days using UTC dates to avoid DST-related off-by-one
+    const startDate = new Date(Date.UTC(minY2, minM2 - 1, minD2));
+    const endDate = new Date(Date.UTC(maxY2, maxM2 - 1, maxD2));
+    const dayCount =
+      Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
+    const slots: string[] = [];
+    for (let i = 0; i < dayCount; i++) {
+      const d = new Date(Date.UTC(minY2, minM2 - 1, minD2 + i));
+      const yyyy = d.getUTCFullYear();
+      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
+      const dd = String(d.getUTCDate()).padStart(2, "0");
+      slots.push(`${yyyy}-${mm}-${dd}`);
+    }
+    return slots.map((x) => ({
+      x,
+      pageviews: pvMap.get(x) ?? 0,
+      visitors: viMap.get(x) ?? 0,
+    }));
+  }, [timeseries]);
+  const trafficLabelFormatter = (value: string | number) =>
+    formatChartLabel(String(value), timeseries?.unit, userTz);
+  const trafficTooltipLabelFormatter = (label: unknown) =>
+    formatChartLabel(String(label ?? ""), timeseries?.unit, userTz);
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-10">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
-
-      <div className="space-y-6">
-        <div className="sm:max-w-xs">
-          <Select value={vPeriod} onValueChange={(v) => setVPeriod(v as (typeof PERIODS)[number])}>
-            <SelectTrigger className="touch-manipulation" aria-label="Views time range">
+    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
+        </div>
+        <div className="w-auto shrink-0">
+          <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
+            <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Analytics time range">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -134,144 +698,410 @@ export default function AnalyticsPage() {
             </SelectContent>
           </Select>
         </div>
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader>
-              <CardDescription>Total views</CardDescription>
-              <CardTitle className="text-3xl">{views?.total_views ?? "—"}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Unique visitors</CardDescription>
-              <CardTitle className="text-3xl">{views?.unique_visitors ?? "—"}</CardTitle>
-            </CardHeader>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardDescription>Total posts</CardDescription>
-              <CardTitle className="text-3xl">{views?.total_posts ?? "—"}</CardTitle>
-            </CardHeader>
-          </Card>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle>Views by window</CardTitle>
-            <CardDescription>
-              Each point is total views and unique visitors for that rolling window. The chart includes every window
-              length up to the range you selected.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="h-56 sm:h-72">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartViews} margin={{ top: 8, right: 4, left: -8, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                <Tooltip />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                <Line
-                  type="linear"
-                  dataKey="views"
-                  name="Views"
-                  stroke="oklch(0.5 0.2 260)"
-                  strokeWidth={2}
-                  dot={{ r: 4, strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
-                />
-                <Line
-                  type="linear"
-                  dataKey="visitors"
-                  name="Unique visitors"
-                  stroke="oklch(0.55 0.14 200)"
-                  strokeWidth={2}
-                  dot={{ r: 4, strokeWidth: 2 }}
-                  activeDot={{ r: 6 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="space-y-3">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle>Posts</CardTitle>
-                <CardDescription>Sort by latest published or most viewed.</CardDescription>
-              </div>
-              <div className="w-full sm:w-52">
-                <Select
-                  value={postSort}
-                  onValueChange={(v) => {
-                    setPostSort(v as "most_viewed" | "latest");
-                    setPostPage(1);
-                  }}
-                >
-                  <SelectTrigger aria-label="Sort posts list">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="most_viewed">Most viewed</SelectItem>
-                    <SelectItem value="latest">Latest</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {pagedPosts.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No posts yet.</p>
-            ) : (
-              <>
-                <ul className="divide-y divide-border rounded-lg border border-border">
-                  {pagedPosts.map((post) => (
-                    <li key={post.blog_id} className="px-4 py-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">{post.title || "Untitled"}</p>
-                          <p className="mt-1 text-xs text-muted-foreground">
-                            {post.published_at
-                              ? `Published ${new Date(post.published_at).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" })}`
-                              : "Not published"}
-                          </p>
-                        </div>
-                        <p className="shrink-0 text-sm text-muted-foreground">
-                          {post.view_count ?? 0} view{(post.view_count ?? 0) === 1 ? "" : "s"}
-                        </p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-4 flex items-center justify-between">
-                  <p className="text-xs text-muted-foreground">
-                    Page {safePostPage} of {postPageCount}
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPostPage((p) => Math.max(1, p - 1))}
-                      disabled={safePostPage <= 1}
-                    >
-                      Prev
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setPostPage((p) => Math.min(postPageCount, p + 1))}
-                      disabled={safePostPage >= postPageCount}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
-              </>
-            )}
-          </CardContent>
-        </Card>
       </div>
+
+      {loading ? (
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+          </div>
+          <Skeleton className="h-56 sm:h-72 w-full rounded-lg border" />
+        </div>
+      ) : (
+        <div className="space-y-4 sm:space-y-6">
+            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+              <KpiCard
+                title="Pageviews"
+                value={overview?.overview.pageviews ?? "—"}
+                icon={Eye}
+              />
+              <KpiCard
+                title="Visitors"
+                value={overview?.overview.visitors ?? "—"}
+                icon={Users}
+              />
+              <KpiCard
+                title="Bounce Rate"
+                value={overview?.overview.bounce_rate != null ? `${overview.overview.bounce_rate}%` : "—"}
+                icon={TrendingDown}
+              />
+              <KpiCard
+                title="Avg Duration"
+                value={overview?.overview.avg_visit_time != null ? formatDuration(overview.overview.avg_visit_time) : "—"}
+                icon={Clock}
+              />
+            </div>
+
+            {timeseries && (
+              <Card>
+                <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
+                  <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">Pageviews and visitors over time.</CardDescription>
+                </CardHeader>
+                <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart
+                      data={trafficSeries}
+                      margin={{ top: 12, right: 8, left: 0, bottom: 8 }}
+                    >
+                      <defs>
+                        <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35}/>
+                          <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
+                        </linearGradient>
+                        <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.35}/>
+                          <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
+                       <XAxis
+                        dataKey="x"
+                        tick={{ fontSize: 10 }}
+                        tickFormatter={trafficLabelFormatter}
+                        tickLine={false}
+                        axisLine={false}
+                        interval={trafficSeries.length > 10 ? "preserveStartEnd" : 0}
+                      />
+                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
+                      <Tooltip
+                        labelFormatter={trafficTooltipLabelFormatter}
+                        contentStyle={{
+                          fontSize: 12,
+                          borderRadius: "10px",
+                          border: "1px solid hsl(var(--border))",
+                          backgroundColor: "hsl(var(--background))",
+                          boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
+                        }}
+                      />
+                      <Legend
+                        wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
+                        iconType="circle"
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="pageviews"
+                        name="Pageviews"
+                        stroke="oklch(0.6 0.15 145)"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorPageviews)"
+                        activeDot={{ r: 5 }}
+                      />
+                      <Area
+                        type="monotone"
+                        dataKey="visitors"
+                        name="Visitors"
+                        stroke="oklch(0.58 0.18 280)"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorVisitors)"
+                        activeDot={{ r: 5 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </CardContent>
+              </Card>
+            )}
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              {pages && pages.rows.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <MetricsTableHeader label="Page" />
+                    <div className="space-y-1 sm:space-y-2">
+                      {(() => {
+                        const filtered = pages.rows.filter((r) => r.status !== "deleted");
+                        const visible = filtered.slice(0, pagesVisible);
+                        return visible.map((row: UmamiMetricsRow, i: number) => (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div className="flex items-center gap-2">
+                              <PathStatusDot status={row.status} />
+                              <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                                {row.x}
+                              </span>
+                            </div>
+                            <span className="font-medium text-xs sm:text-sm">
+                              {row.y}
+                            </span>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                    {(() => {
+                      const filtered = pages.rows.filter((r) => r.status !== "deleted");
+                      const hasMore = filtered.length > pagesVisible;
+                      return (
+                        <>
+                          {hasMore && (
+                            <button
+                              onClick={() => setPagesVisible((p) => p + 10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show more
+                            </button>
+                          )}
+                          {pagesVisible > 10 && (
+                            <button
+                              onClick={() => setPagesVisible(10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show less
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+                    <div className="mt-6 flex items-center gap-4 text-[10px] sm:text-xs text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-green-500 shadow-[0_0_4px_1px_rgba(34,197,94,0.3)]" />
+                        Live
+                      </span>
+                      <span className="flex items-center gap-1.5">
+                        <span className="h-2 w-2 rounded-full bg-muted-foreground/50" />
+                        Archived
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {sources && sources.referrers.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <MetricsTableHeader label="Source" />
+                    <div className="space-y-1 sm:space-y-2">
+                      {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                        const isDirect = !row.x || row.x.trim() === "";
+                        const ReferrerIcon = isDirect ? Globe : getReferrerIcon(row.x);
+                        return (
+                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                            <div className="flex items-center gap-2">
+                              <ReferrerIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                              <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
+                                {isDirect ? "Direct" : row.x}
+                              </span>
+                            </div>
+                            <span className="font-medium text-xs sm:text-sm">
+                              {row.y}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
+                </Card>
+              )}
+
+              {geo && geo.countries.length > 0 ? (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <MetricsTableHeader label="Country" />
+                    <div className="space-y-1 sm:space-y-2">
+                      {geo.countries.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">{getCountryFlag(row.x)}</span>
+                            <span className="text-xs sm:text-sm">
+                              {COUNTRY_NAMES[row.x.toUpperCase()] || row.x}
+                            </span>
+                          </div>
+                          <span className="font-medium text-xs sm:text-sm">
+                            {row.y}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground">No data available.</p>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            {tech ? (
+              <div className="grid gap-4 lg:grid-cols-3">
+                {tech.browsers.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <MetricsTableHeader label="Browser" />
+                      <div className="space-y-1 sm:space-y-2">
+                        {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const BrowserIcon = getBrowserIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <BrowserIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
+                    </CardContent>
+                  </Card>
+                )}
+                {tech.os.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <MetricsTableHeader label="OS" />
+                      <div className="space-y-1 sm:space-y-2">
+                        {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const OsIcon = getOsIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <OsIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
+                    </CardContent>
+                  </Card>
+                )}
+                {tech.devices.length > 0 ? (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <MetricsTableHeader label="Device" />
+                      <div className="space-y-1 sm:space-y-2">
+                        {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
+                          const DeviceIcon = getDeviceIcon(row.x);
+                          return (
+                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
+                              <div className="flex items-center gap-2">
+                                <DeviceIcon className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span className="text-xs sm:text-sm capitalize">{row.x}</span>
+                              </div>
+                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
+                    </CardHeader>
+                    <CardContent className="pt-0">
+                      <p className="text-sm text-muted-foreground">No data available.</p>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-base sm:text-lg">Browsers / OS / Devices</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p className="text-sm text-muted-foreground">No data available.</p>
+                </CardContent>
+              </Card>
+            )}
+        </div>
+      )}
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </div>
   );
+}
+
+export default function AnalyticsPage() {
+  const { token, isPro, loading } = useAuth();
+
+  if (!token || loading) {
+    return (
+      <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
+          <Skeleton className="h-10 w-[120px]" />
+        </div>
+        <div className="space-y-6">
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+            <KpiCardSkeleton />
+          </div>
+          <Skeleton className="h-56 sm:h-72 w-full rounded-lg border" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!isPro) {
+    return <AnalyticsPreview />;
+  }
+
+  return <NativeAnalytics token={token} />;
 }

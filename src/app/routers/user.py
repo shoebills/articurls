@@ -1,5 +1,5 @@
 import jwt
-from fastapi import Depends, APIRouter, HTTPException, Request, status
+from fastapi import Depends, APIRouter, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from ..database import get_db
@@ -19,10 +19,12 @@ from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import (
     FREE_STORAGE_LIMIT_BYTES,
+    _verify_magic_bytes,
     ensure_user_storage_quota,
     get_user_storage_usage_bytes,
     save_image_local,
 )
+from ..umami.service import enqueue_umami_provision
 from ..utils import (
     assert_admin_email,
     is_admin_email,
@@ -37,14 +39,21 @@ from ..utils import (
     validate_username_or_raise,
     public_blog_home_url,
 )
+from ..cache.service import purge_entire_tenant, purge_homepage
+from ..utils.rate_limit import check_rate_limit_ip
 
 router = APIRouter(
     tags=["User"],
     prefix="/user"
 )
 
+_SIGNUP_IP_LIMIT = 5
+_SIGNUP_IP_WINDOW = 3600  # 1 hour
+
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, req: Request, db: Session = Depends(get_db)):
+
+    check_rate_limit_ip(req, "signup", _SIGNUP_IP_LIMIT, _SIGNUP_IP_WINDOW)
 
     email = normalize_email(str(request.email))
     user_name = validate_username_or_raise(request.user_name)
@@ -91,6 +100,8 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     )
     db.commit()
     db.refresh(new_user)
+
+    enqueue_umami_provision(new_user.user_id)
 
     verify_token = oauth2.create_new_user_token(email)
     send_verify_new_user(email, request.name, verify_token)
@@ -196,6 +207,7 @@ def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oa
 @router.patch("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_design_settings(
     request: page_schema.DesignSettings,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -216,18 +228,33 @@ def update_design_settings(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 10 featured blogs allowed")
     
     if blog_ids:
-        valid_blogs = db.query(models.Blog.blog_id).filter(
+        owned_ids = {b[0] for b in db.query(models.Blog.blog_id).filter(
             models.Blog.user_id == current_user.user_id,
             models.Blog.blog_id.in_(blog_ids),
-            models.Blog.status == "published"
-        ).all()
-        valid_ids = {b[0] for b in valid_blogs}
-        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in valid_ids]
+        ).all()}
+        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in owned_ids]
     else:
         db_user.featured_blog_ids = []
         
     db.commit()
     db.refresh(db_user)
+
+    # Design settings affect public homepage chrome/content (header, featured
+    # posts, about/footer), so purge the same homepage/listing cache tags used
+    # by public blog updates instead of requiring a manual Cloudflare purge.
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_homepage,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_homepage,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return db_user
 
 
@@ -242,6 +269,7 @@ def get_meta_settings(db: Session = Depends(get_db), current_user=Depends(oauth2
 @router.patch("/meta", response_model=user.MetaSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_meta_settings(
     request: user.MetaSettingsUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -255,11 +283,26 @@ def update_meta_settings(
         db_user.meta_title = (update_data["meta_title"] or "").strip() or None
     if "meta_description" in update_data:
         db_user.meta_description = (update_data["meta_description"] or "").strip() or None
-    if "rss_enabled" in update_data:
+    rss_changed = "rss_enabled" in update_data
+    if rss_changed:
         db_user.rss_enabled = bool(update_data["rss_enabled"])
 
     db.commit()
     db.refresh(db_user)
+
+    if rss_changed and settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return db_user
 
 
@@ -267,6 +310,7 @@ def update_meta_settings(
 def update_user(
     request: user.UpdateUser,
     req: Request,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -283,6 +327,10 @@ def update_user(
 
     if "contact_email" in update_data and update_data["contact_email"] is not None:
         update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
+
+    name_changed = "name" in update_data and update_data["name"] != db_user.name
+    username_changed = "user_name" in update_data and update_data["user_name"] is not None
+    pfp_changed = "profile_image_url" in update_data
 
     if "user_name" in update_data and update_data["user_name"] is not None:
         apply_username_change_or_raise(
@@ -319,6 +367,20 @@ def update_user(
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
     db.refresh(db_user)
+
+    if name_changed or username_changed or pfp_changed:
+        if settings.cloudflare_zone_id:
+            if db_user.custom_domain:
+                background_tasks.add_task(
+                    purge_entire_tenant,
+                    settings.cloudflare_zone_id,
+                    db_user.custom_domain,
+                )
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                "articurls.com",
+            )
 
     return db_user
 
@@ -358,52 +420,6 @@ def admin_change_username(
     db.refresh(db_user)
     return db_user
 
-
-@router.post("/username-change-requests", response_model=user.UsernameChangeRequestOut, status_code=status.HTTP_201_CREATED)
-def create_username_change_request(
-    request: user.UsernameChangeRequestCreate,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    desired = validate_username_or_raise(request.desired_username)
-    claim = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == desired).first()
-    if claim and claim.user_id != current_user.user_id:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username is taken.")
-    if desired == current_user.user_name:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="New username must be different.")
-    existing_pending = (
-        db.query(models.UsernameChangeRequest)
-        .filter(
-            models.UsernameChangeRequest.user_id == current_user.user_id,
-            models.UsernameChangeRequest.status == "pending",
-        )
-        .first()
-    )
-    if existing_pending:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="You already have a pending request.")
-    row = models.UsernameChangeRequest(
-        user_id=current_user.user_id,
-        desired_username=desired,
-        reason=(request.reason or "").strip() or None,
-        status="pending",
-    )
-    db.add(row)
-    db.commit()
-    db.refresh(row)
-    return row
-
-
-@router.get("/username-change-requests", response_model=list[user.UsernameChangeRequestOut], status_code=status.HTTP_200_OK)
-def list_my_username_change_requests(
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    return (
-        db.query(models.UsernameChangeRequest)
-        .filter(models.UsernameChangeRequest.user_id == current_user.user_id)
-        .order_by(models.UsernameChangeRequest.created_at.desc())
-        .all()
-    )
 
 @router.get("/welcome-email", response_model=user.WelcomeEmailSettings, status_code=status.HTTP_200_OK)
 def get_welcome_email_settings(
@@ -487,7 +503,7 @@ def preview_welcome_email(
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
+def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
     
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -502,10 +518,23 @@ def update_pro_user(request: user.UpdateProUser, db: Session = Depends(get_db), 
     db.commit()
     db.refresh(db_user)
 
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return db_user
 
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -517,16 +546,30 @@ async def upload_profile_image(file: UploadFile = File(...), db: Session = Depen
     db.commit()
     db.refresh(db_user)
 
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
+
     return {"profile_image_url": db_user.profile_image_url}
 
 
 FAVICON_MAX_BYTES = 256 * 1024  # 256KB
-FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon", "image/svg+xml"}
+FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon"}
 
 
 @router.post("/me/favicon", status_code=status.HTTP_200_OK)
 async def upload_favicon(
     file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
     is_pro=Depends(require_pro),
@@ -541,19 +584,24 @@ async def upload_favicon(
     if content_type not in FAVICON_ALLOWED_TYPES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only png, jpg, webp, ico, and svg images are allowed for favicons.",
+            detail="Only png, jpg, webp, and ico images are allowed for favicons.",
         )
     if len(data) > FAVICON_MAX_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Favicon too large (max 256KB).",
         )
+    if not _verify_magic_bytes(data, content_type):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="File content does not match the claimed image type",
+        )
     ensure_user_storage_quota(db, current_user.user_id, len(data))
 
     from uuid import uuid4
     from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
 
-    ext_map = {**dict.fromkeys(["image/png"], ".png"), "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico", "image/svg+xml": ".svg"}
+    ext_map = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico"}
     ext = ext_map.get(content_type, _ext_from_content_type(content_type))
     filename = f"{uuid4().hex}{ext}"
     storage_key = f"favicons/{current_user.user_id}/{filename}"
@@ -564,6 +612,19 @@ async def upload_favicon(
     db_user.favicon_url = stored.url
     db.commit()
     db.refresh(db_user)
+
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
 
     return {"favicon_url": db_user.favicon_url}
 
@@ -588,6 +649,7 @@ def get_storage_usage(
 
 @router.delete("/me/favicon", status_code=status.HTTP_200_OK)
 async def delete_favicon(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -598,5 +660,18 @@ async def delete_favicon(
     db_user.favicon_url = None
     db.commit()
     db.refresh(db_user)
+
+    if settings.cloudflare_zone_id:
+        if db_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id,
+                db_user.custom_domain,
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id,
+            "articurls.com",
+        )
 
     return {"favicon_url": None}

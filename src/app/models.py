@@ -11,7 +11,7 @@ class DomainStatus(str, enum.Enum):
     NONE    = "none"     # No custom domain configured
     PENDING = "pending"  # Domain saved, ownership not yet verified
     ACTIVE  = "active"   # Verified + Pro subscription active
-    GRACE   = "grace"    # Pro lapsed; domain still serving, 30-day countdown
+    GRACE   = "grace"    # Pro lapsed; domain still serving, 14-day countdown
     EXPIRED = "expired"  # Grace period over; 301 redirect to articurls URL
 
 class User(Base):
@@ -23,6 +23,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     google_id = Column(String, nullable=True, unique=True, index=True)
+    dodo_customer_id = Column(String, nullable=True, unique=True, index=True)
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     bio = Column(Text, nullable=True)
@@ -37,6 +38,7 @@ class User(Base):
     profile_image_url = Column(String, nullable=True)
     favicon_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
+    token_version = Column(Integer, nullable=False, default=0)
 
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
     is_domain_verified = Column(Boolean, nullable=False, default=False)
@@ -50,12 +52,12 @@ class User(Base):
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_blog_name_size = Column(String(16), nullable=False, default="medium")
-    nav_menu_enabled = Column(Boolean, nullable=False, default=False)
+    nav_menu_enabled = Column(Boolean, nullable=False, default=True)
     footer_enabled = Column(Boolean, nullable=False, default=False)
-    site_footer_enabled = Column(Boolean, nullable=False, default=False)
-    rss_enabled = Column(Boolean, nullable=False, default=True)
-    username_change_count = Column(Integer, nullable=False, default=0)
-    featured_blogs_enabled = Column(Boolean, nullable=False, default=False)
+    site_footer_enabled = Column(Boolean, nullable=False, default=True)
+    rss_enabled = Column(Boolean, nullable=False, default=False)
+    last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     welcome_email_enabled = Column(Boolean, nullable=False, default=False)
@@ -63,6 +65,8 @@ class User(Base):
     welcome_email_body_html = Column(Text, nullable=True)
     welcome_email_delay_minutes = Column(Integer, nullable=False, default=0)
     remove_branding = Column(Boolean, nullable=False, default=True)
+    umami_website_id = Column(String(36), nullable=True, default=None, index=True)
+    umami_share_url = Column(String(512), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
@@ -92,19 +96,6 @@ class UsernameChangeAudit(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
-class UsernameChangeRequest(Base):
-    __tablename__ = "username_change_requests"
-
-    request_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
-    desired_username = Column(String, nullable=False)
-    reason = Column(String, nullable=True)
-    status = Column(String, nullable=False, default="pending")  # pending|approved|rejected
-    admin_note = Column(String, nullable=True)
-    reviewed_by_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
-    reviewed_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
 class BlogStatus(str, enum.Enum):
     DRAFT = "draft"
     PUBLISHED = "published"
@@ -132,9 +123,9 @@ class Blog(Base):
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     featured_image_url = Column(String, nullable=True)
+    hide_preview_in_lists = Column(Boolean, nullable=False, default=False)
     notify_subscribers = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
-    view_count = Column(BigInteger, nullable=False, default=0)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -279,7 +270,7 @@ class Category(Base):
     user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
-    show_in_menu = Column(Boolean, nullable=False, default=False)
+    show_in_menu = Column(Boolean, nullable=False, default=True)
     menu_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

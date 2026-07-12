@@ -1,0 +1,42 @@
+# Umami v3 on DO droplet — Postgres on Neon, HTTPS via Caddy.
+# 1. Copy .env.example → .env and fill secrets
+# 2. Cloudflare A record → droplet IP (proxied)
+# 3. ufw allow 80,443 && ufw allow OpenSSH
+# 4. docker compose up -d
+
+services:
+  umami:
+    image: docker.umami.is/umami-software/umami:latest
+    container_name: umami
+    restart: unless-stopped
+    # Keep localhost binding so you can still use: ssh -L 3000:127.0.0.1:3000
+    ports:
+      - "127.0.0.1:3000:3000"
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:3000/api/heartbeat >/dev/null || wget -q --spider http://127.0.0.1:3000/api/heartbeat || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: umami-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      ANALYTICS_HOSTNAME: analytics.articurls.com
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - umami
+
+volumes:
+  caddy_data:
+  caddy_config:

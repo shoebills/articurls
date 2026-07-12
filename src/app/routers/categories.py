@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Body, Depends, HTTPException, status
+from fastapi import APIRouter, Body, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -8,6 +8,8 @@ from ..schemas import category as cat_schema
 from ..schemas import blog as blog_schema
 from ..security import oauth2
 from ..utils import make_excerpt
+from ..cache.service import purge_category, purge_entire_tenant
+from ..config import settings
 
 router = APIRouter(
     tags=["Categories"],
@@ -65,6 +67,7 @@ def list_categories(
 @router.post("/", response_model=cat_schema.CategoryOut, status_code=status.HTTP_201_CREATED)
 def create_category(
     request: cat_schema.CategoryCreate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -83,11 +86,23 @@ def create_category(
     db.add(new_cat)
     db.commit()
     db.refresh(new_cat)
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
     return _category_out(db, new_cat)
 
 
 @router.patch("/menu", response_model=list[cat_schema.CategoryOut], status_code=status.HTTP_200_OK)
 def update_menu_categories(
+    background_tasks: BackgroundTasks,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
@@ -133,6 +148,18 @@ def update_menu_categories(
         cats_by_id[cat_id].menu_order = idx
 
     db.commit()
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
+
     cats = (
         db.query(models.Category)
         .filter(models.Category.user_id == current_user.user_id)
@@ -146,6 +173,7 @@ def update_menu_categories(
 def update_category(
     category_id: int,
     request: cat_schema.CategoryUpdate,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -160,6 +188,8 @@ def update_category(
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
+    old_slug = db_cat.slug
+
     if request.name is not None:
         name = request.name.strip()
         if not name:
@@ -173,12 +203,33 @@ def update_category(
 
     db.commit()
     db.refresh(db_cat)
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, old_slug
+            )
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", old_slug
+        )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
+
     return _category_out(db, db_cat)
 
 
 @router.delete("/{category_id}", status_code=status.HTTP_200_OK)
 def delete_category(
     category_id: int,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
@@ -194,6 +245,26 @@ def delete_category(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
     db.delete(db_cat)
     db.commit()
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+            background_tasks.add_task(
+                purge_entire_tenant,
+                settings.cloudflare_zone_id, current_user.custom_domain
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
+        background_tasks.add_task(
+            purge_entire_tenant,
+            settings.cloudflare_zone_id, "articurls.com"
+        )
+
     return {"message": "Category deleted"}
 
 
@@ -214,7 +285,6 @@ def get_category_blogs(
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
         db.query(models.Blog)
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)
@@ -288,4 +358,16 @@ def set_category_blogs(
 
     db.commit()
     db.refresh(db_cat)
+
+    if settings.cloudflare_zone_id:
+        if current_user.custom_domain:
+            background_tasks.add_task(
+                purge_category,
+                settings.cloudflare_zone_id, current_user.custom_domain, db_cat.slug
+            )
+        background_tasks.add_task(
+            purge_category,
+            settings.cloudflare_zone_id, "articurls.com", db_cat.slug
+        )
+
     return _category_out(db, db_cat)

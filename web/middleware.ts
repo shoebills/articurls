@@ -1,4 +1,104 @@
 import { NextResponse, type NextRequest } from "next/server";
+import {
+  buildRuntimeHostsFromEnv,
+  isInternalHost,
+  resolveTenantHost,
+  withTenantHostHeader,
+} from "@/lib/request-host";
+
+function getApiHost(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (!apiUrl) return "";
+  try {
+    return new URL(apiUrl).hostname;
+  } catch {
+    return "";
+  }
+}
+
+/** Add security headers to responses serving HTML content */
+function withSecurityHeaders(response: NextResponse): NextResponse {
+  const apiHost = getApiHost();
+  const connectSrc = apiHost ? `'self' https://${apiHost}` : "'self'";
+
+  response.headers.set(
+    "Content-Security-Policy",
+    "default-src 'self'; " +
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://static.cloudflareinsights.com; " +
+      "style-src 'self' 'unsafe-inline'; " +
+      "img-src 'self' https: data: blob:; " +
+      "font-src 'self'; " +
+      `connect-src ${connectSrc}; ` +
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; " +
+      "frame-ancestors 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self';"
+  );
+  response.headers.set(
+    "Strict-Transport-Security",
+    "max-age=31536000; includeSubDomains"
+  );
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=()"
+  );
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  return response;
+}
+
+/** Add cache headers with granular Cache-Tags for multi-tenant purging */
+function withCacheHeaders(
+  response: NextResponse,
+  host: string,
+  pathname: string
+): NextResponse {
+  // Only cache public content (not auth/dashboard/internal)
+  const isPublicContent =
+    !pathname.startsWith("/dashboard") &&
+    !pathname.startsWith("/login") &&
+    !pathname.startsWith("/signup") &&
+    !pathname.startsWith("/api") &&
+    !pathname.startsWith("/_next") &&
+    !pathname.startsWith("/internal");
+
+  if (!isPublicContent) return response;
+
+  // Generate cache tags
+  const tenantTag = `tenant-${host}`;
+  const tags: string[] = [tenantTag];
+
+  // Extract content-specific tags based on path pattern
+  const blogMatch = pathname.match(/\/blog\/([^\/]+)/);
+  const pageMatch = pathname.match(/\/page\/([^\/]+)/);
+  const categoryMatch = pathname.match(/\/category\/([^\/]+)/);
+
+  if (blogMatch) {
+    // Individual blog post
+    tags.push(`post-${blogMatch[1]}`);
+  } else if (pageMatch) {
+    // Custom page
+    tags.push(`page-${pageMatch[1]}`);
+  } else if (categoryMatch) {
+    // Category listing page - add posts-list for cascade purging
+    tags.push(`category-${categoryMatch[1]}`);
+    tags.push("posts-list");
+  } else if (pathname === "/" || pathname === "") {
+    // Home/profile page - also a listing page
+    tags.push("home");
+    tags.push("posts-list");
+  }
+
+  // Set cache tags for targeted purging via backend.
+  response.headers.set("Cache-Tag", tags.join(","));
+
+  // Hard-disable edge caching of HTML. Even if upstream headers get lost,
+  // this keeps category/home/blog pages from serving stale content.
+  response.headers.set("Cache-Control", "no-store, must-revalidate");
+
+  return response;
+}
 
 const APP_ALLOWED_PREFIXES = [
   "/dashboard",
@@ -9,38 +109,14 @@ const APP_ALLOWED_PREFIXES = [
   "/forgot-password",
   "/reset-password",
   "/confirm-subscription",
+  "/unsubscribe",
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml"];
-
-const STATIC_INTERNAL_DOMAINS = [
-  "articurls.com",
-  "app.articurls.com",
-  "api.articurls.com",
-  "blogs.articurls.com",
-  "fallback.articurls.com",
-];
+const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/script.js"];
 
 function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
-}
-
-function buildRuntimeHosts(appOrigin: string, marketingOrigin: string): string[] {
-  const hosts: string[] = [];
-  for (const origin of [appOrigin, marketingOrigin]) {
-    try {
-      hosts.push(new URL(origin).hostname);
-    } catch {
-      // ignore malformed env
-    }
-  }
-  return hosts;
-}
-
-function isInternalDomain(host: string, runtimeHosts: string[]): boolean {
-  const h = host.toLowerCase();
-  return STATIC_INTERNAL_DOMAINS.includes(h) || runtimeHosts.includes(h);
 }
 
 export function middleware(request: NextRequest) {
@@ -49,85 +125,68 @@ export function middleware(request: NextRequest) {
 
   if (!appOrigin || !marketingOrigin) return NextResponse.next();
 
-  const runtimeHosts = buildRuntimeHosts(appOrigin, marketingOrigin);
-
-  // request.nextUrl.hostname on Vercel is always the deployment domain
-  // (blogs.articurls.com). The real public-facing hostname comes from
-  // x-original-host which Cloudflare SaaS sets via a CF Worker, or from
-  // x-forwarded-host. Fall back to nextUrl.hostname for direct Vercel hits.
-  const rawHost =
-    request.headers.get("x-original-host") ||
-    request.headers.get("x-forwarded-host") ||
-    request.nextUrl.hostname;
-  const host = rawHost.toLowerCase().split(",")[0].trim();
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const host = resolveTenantHost(
+    request.headers,
+    request.nextUrl.hostname,
+    runtimeHosts,
+  );
 
   const { pathname, search } = request.nextUrl;
 
-  // Trailing slash normalization — 308 redirect to canonical URL without trailing slash
-  // Exception: root path "/" keeps its trailing slash
   if (pathname !== "/" && pathname.endsWith("/")) {
     const url = request.nextUrl.clone();
     url.pathname = pathname.slice(0, -1);
     return NextResponse.redirect(url, 308);
   }
 
-  // Strip query parameters from public content URLs (SEO consolidation)
-  // Preserve query params for auth/dashboard/internal routes
   if (request.nextUrl.searchParams.size > 0) {
-    const isPublicContent = 
-      !pathname.startsWith('/dashboard') &&
-      !pathname.startsWith('/login') &&
-      !pathname.startsWith('/signup') &&
-      !pathname.startsWith('/onboarding') &&
-      !pathname.startsWith('/verify') &&
-      !pathname.startsWith('/forgot-password') &&
-      !pathname.startsWith('/reset-password') &&
-      !pathname.startsWith('/confirm-subscription') &&
-      !pathname.startsWith('/internal') &&
-      !pathname.startsWith('/api') &&
-      !pathname.startsWith('/_next');
-    
+    const isPublicContent =
+      !pathname.startsWith("/dashboard") &&
+      !pathname.startsWith("/login") &&
+      !pathname.startsWith("/signup") &&
+      !pathname.startsWith("/onboarding") &&
+      !pathname.startsWith("/verify") &&
+      !pathname.startsWith("/forgot-password") &&
+      !pathname.startsWith("/reset-password") &&
+      !pathname.startsWith("/confirm-subscription") &&
+      !pathname.startsWith("/unsubscribe") &&
+      !pathname.startsWith("/internal") &&
+      !pathname.startsWith("/api") &&
+      !pathname.startsWith("/_next");
+
     if (isPublicContent) {
       const url = request.nextUrl.clone();
-      url.search = '';  // Remove all query parameters
+      url.search = "";
       return NextResponse.redirect(url, 301);
     }
   }
 
-  // CASE 1: Custom domain — rewrite to /custom-domain route
-  // Domain status check happens server-side in the /custom-domain page
-  if (!isInternalDomain(host, runtimeHosts)) {
-    // robots.txt and sitemap.xml are exempt from the /custom-domain rewrite
-    // but still need x-original-host so their route handlers can identify
-    // which custom domain is being requested.
+  // Custom domain — CF SaaS preserves Host; legacy Worker used x-original-host.
+  if (!isInternalHost(host, runtimeHosts)) {
+    const tenantHeaders = withTenantHostHeader(request.headers, host);
+
     if (isExemptPath(pathname)) {
       return NextResponse.next({
-        request: {
-          headers: new Headers({
-            ...Object.fromEntries(request.headers),
-            "x-original-host": host,
-          }),
-        },
+        request: { headers: tenantHeaders },
       });
     }
 
-    // Rewrite to /custom-domain route and pass hostname via header
-    // The server-side page will handle domain lookup and lifecycle
     const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
-    rewriteUrl.pathname = segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
-    return NextResponse.rewrite(rewriteUrl, {
-      request: {
-        headers: new Headers({
-          ...Object.fromEntries(request.headers),
-          "x-original-host": host,
-        }),
-      },
-    });
+    rewriteUrl.pathname =
+      segments.length === 0 ? "/custom-domain" : `/custom-domain/${segments.join("/")}`;
+
+    return withCacheHeaders(
+      withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {
+        request: { headers: tenantHeaders },
+      })),
+      host,
+      pathname
+    );
   }
 
-  // CASE 2: Marketing domain (articurls.com / localhost in dev)
-  // Let all path-based routing work normally: /[username], /[username]/blog/[slug], etc.
+  // Marketing domain — /[username], /[username]/blog/[slug], etc.
   let appHost = "";
   try {
     appHost = new URL(appOrigin).hostname;
@@ -135,18 +194,28 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (host !== appHost) return NextResponse.next();
+  if (host !== appHost) {
+    return withCacheHeaders(
+      withSecurityHeaders(NextResponse.next()),
+      host,
+      pathname
+    );
+  }
 
-  // CASE 3: App domain (app.articurls.com)
+  // App domain — dashboard/auth only; redirect public paths to marketing.
   if (isExemptPath(pathname)) return NextResponse.next();
 
   const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
-    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`)
+    (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
-  if (allowedOnAppHost) return NextResponse.next();
-
-  return NextResponse.redirect(`${marketingOrigin}${pathname}${search}`);
+  if (allowedOnAppHost) return withSecurityHeaders(NextResponse.next());
+  // Public paths on app host (marketing domain blog/user pages) get cached
+  return withCacheHeaders(
+    withSecurityHeaders(NextResponse.next()),
+    host,
+    pathname
+  );
 }
 
 export const config = {

@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     dodopayments_webhook_key: str
     dodopayments_environment: str
     dodopayments_product_id: str
+    dodopayments_lifetime_product_id: str
 
     uploads_dir: str = "uploads"
     # Reader/marketing site origin (blog links in emails; env: MARKETING_ORIGIN).
@@ -46,13 +47,22 @@ class Settings(BaseSettings):
     admin_emails: str = ""
     
     internal_api_secret: str = ""
+
     cloudflare_api_token: str = ""
     cloudflare_zone_id: str = ""
     cloudflare_fallback_origin: str = "fallback.articurls.com"
 
+    vercel_api_token: str = ""
+    vercel_project_name: str = ""
+    vercel_team_id: str = ""
+
     google_client_id: str = ""
     google_client_secret: str = ""
     google_redirect_uri: str = ""
+
+    umami_api_url: str = ""
+    umami_api_username: str = ""
+    umami_api_password: str = ""
 
     # Database connection pool settings.
     # Tune these based on server RAM and PostgreSQL max_connections.

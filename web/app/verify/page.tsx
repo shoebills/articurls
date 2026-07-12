@@ -40,13 +40,13 @@ function VerifyInner() {
     <AuthPageShell>
       <FloatingErrorToast message={err} />
       <Card className="border-border/70 shadow-xl shadow-black/[0.04] ring-1 ring-black/[0.03]">
-        <CardHeader className="space-y-2">
-          <CardTitle className="text-2xl font-bold tracking-tight">Email verification</CardTitle>
-          <CardDescription className="text-base">{err ? "Something went wrong." : msg}</CardDescription>
+        <CardHeader className="space-y-1.5">
+          <CardTitle className="text-xl font-bold tracking-tight">Email verification</CardTitle>
+          <CardDescription className="text-sm">{err ? "Something went wrong." : msg}</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-5">
+        <CardContent className="space-y-4">
           {err && (
-            <Button className="w-full" size="lg" variant="outline" onClick={() => (window.location.href = "/login")}>
+            <Button className="w-full" variant="outline" onClick={() => (window.location.href = "/login")}>
               Back to log in
             </Button>
           )}

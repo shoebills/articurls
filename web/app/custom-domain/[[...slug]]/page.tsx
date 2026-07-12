@@ -3,29 +3,36 @@ import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { API_URL, MARKETING_ORIGIN, assetUrl } from "@/lib/env";
+import {
+  buildRuntimeHostsFromEnv,
+  isInternalHost,
+  resolveTenantHostFromHeaders,
+} from "@/lib/request-host";
 import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
+import { SearchProvider } from "@/components/search-context";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
-import { PublicBlogViewTracker } from "@/components/public-blog-view-tracker";
-import { resolveBlogPreviewImage } from "@/lib/blog-images";
+import { resolveBlogOgImage } from "@/lib/blog-images";
+import { sanitizeHtml } from "@/lib/sanitize-html";
+import { transformHtmlImages } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { StructuredData } from "@/components/structured-data";
+import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
+import { ChevronLeft } from "lucide-react";
+import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
-// ── Data loaders ─────────────────────────────────────────────────────────────
+export const dynamic = "force-dynamic";
 
-// Revalidation window (seconds). Balances freshness with backend load.
-// Domain lookups, user profiles, blog lists, etc. rarely change more than
-// once every few minutes — 300 s (5 min) is a safe default. On a cache miss
-// Next.js serves the stale page instantly and revalidates in the background.
-const REVALIDATE = 300;
+// ── Data loaders ─────────────────────────────────────────────────────────────
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
@@ -53,7 +60,8 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
-        cache: "no-store",
+        cache: "force-cache",
+        next: { revalidate: 60 },
         headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET || "" },
       }
     );
@@ -72,7 +80,7 @@ async function loadUser(username: string): Promise<PublicUser | null> {
 }
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -80,7 +88,7 @@ async function loadBlogs(username: string): Promise<PublicBlog[]> {
 async function loadBlog(username: string, slug: string): Promise<PublicBlog | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/blog/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -88,7 +96,7 @@ async function loadBlog(username: string, slug: string): Promise<PublicBlog | nu
 }
 
 async function loadPages(username: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { next: { revalidate: REVALIDATE } });
+  const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, { cache: "no-store" });
   if (!res.ok) return [];
   return res.json();
 }
@@ -102,7 +110,7 @@ async function loadCategories(username: string): Promise<Category[]> {
 async function loadPage(username: string, slug: string): Promise<UserPage | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -112,7 +120,7 @@ async function loadPage(username: string, slug: string): Promise<UserPage | null
 async function loadCategoryBlogs(username: string, slug: string): Promise<PublicCategoryBlogsResponse | null> {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(username)}/category/${encodeURIComponent(slug)}`,
-    { next: { revalidate: REVALIDATE } }
+    { cache: "no-store" }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
@@ -123,8 +131,9 @@ async function loadCategoryBlogs(username: string, slug: string): Promise<Public
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const h = await headers();
-  const host = h.get("x-original-host");
-  if (!host) return {};
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
+  if (isInternalHost(host, runtimeHosts)) return {};
 
   const domainInfo = await resolveDomainInfo(host);
   if (!domainInfo) return {};
@@ -147,8 +156,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const title = blog.meta_title || blog.title;
     const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
     const siteName = resolveUserSiteName(author);
-    const ogImage =
-      resolveBlogPreviewImage(blog) || resolveUserOgImage(author);
+    const ogImage = resolveBlogOgImage(blog);
     return {
       title,
       description,
@@ -160,13 +168,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "article",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
       },
     };
   }
@@ -189,13 +197,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
       },
     };
   }
@@ -208,7 +216,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const description = `Browse all ${categoryName} posts by ${user.name}.`;
     const siteName = resolveUserSiteName(user);
     const ogImage =
-      (data.blogs[0] ? resolveBlogPreviewImage(data.blogs[0]) : "") ||
+      (data.blogs[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
       resolveUserOgImage(user);
     return {
       title,
@@ -221,13 +229,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
         card: "summary_large_image",
         title,
         description,
-        images: ogImage ? [ogImage] : undefined,
+        images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
       },
     };
   }
@@ -250,24 +258,35 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: canonical,
       type: "website",
       siteName,
-      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image`, width: 1200, height: 630 }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ogImage ? [ogImage] : undefined,
+      images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
     },
   };
 }
 
+// Preconnect to image CDN for faster mobile image loading
+export const viewport = {
+  themeColor: "#f4f5f8",
+  other: {
+    preconnect: ["https://images.articurls.com"],
+    "dns-prefetch": "https://images.articurls.com",
+  },
+};
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function CustomDomainPage({ params }: Props) {
+  // Current URL for structured data
   const h = await headers();
-  const host = h.get("x-original-host");
+  const runtimeHosts = buildRuntimeHostsFromEnv();
+  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
 
-  if (!host) notFound();
+  if (isInternalHost(host, runtimeHosts)) notFound();
 
   // Check domain status and handle lifecycle
   const domainInfo = await resolveDomainInfo(host);
@@ -329,10 +348,12 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
+    const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
+
     return (
       <article className="min-h-screen bg-white">
-        <div className={containerSpacing}>
-          <PublicBlogViewTracker userName={username} slug={postSlug} />
+        <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
+        <main className={containerSpacing}>
           {author.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className="hidden w-full sm:block">
@@ -360,9 +381,13 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground">
-            ← Back
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu url={currentUrl} title={blog.title} />
+          </div>
           <header className="mt-6 sm:mt-8">
             <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
               {blog.title}
@@ -370,17 +395,9 @@ export default async function CustomDomainPage({ params }: Props) {
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
               <Link
                 href={getPublicProfileUrl(username, { customDomain: true })}
-                className="inline-flex items-center gap-3 rounded-md -mx-1 px-1 py-0.5 text-muted-foreground hover:text-foreground"
+                className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
               >
-                {author.profile_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={assetUrl(author.profile_image_url)} alt="" className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-border/70" />
-                ) : (
-                  <div className="h-9 w-9 shrink-0 rounded-full bg-muted ring-1 ring-border/70" aria-hidden />
-                )}
-                <span className="inline-flex min-w-0 max-w-full items-center gap-1 truncate text-sm">
-                  <span className="truncate">{author.name}</span>
-                </span>
+                <span className="truncate">{author.name}</span>
               </Link>
               {blog.published_at && (
                 <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
@@ -390,16 +407,24 @@ export default async function CustomDomainPage({ params }: Props) {
             </div>
           </header>
           <div className="mt-12">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blog.content }} />
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
           </div>
           {showSubscriberCollection ? (
-            <div className="mt-14 border-t border-border/80 pt-6">
+            <div className="mt-14">
               <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
             </div>
           ) : null}
           <PublicProfileFooter user={author} />
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
-        </div>
+        </main>
+        {author.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with <span className="font-semibold">Articurls</span>
+          </a>
+        ) : null}
       </article>
     );
   }
@@ -432,9 +457,12 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
+    const currentUrl = `https://${host}/page/${encodeURIComponent(pageSlug)}`;
+
     return (
       <div className="min-h-screen bg-white">
         <main className={mainSpacing}>
+          <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className="hidden w-full sm:block">
@@ -463,21 +491,33 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
 
-          <Link
-            href={getPublicProfileUrl(username, { customDomain: true })}
-            className="inline-flex min-h-10 items-center text-sm text-muted-foreground hover:text-foreground"
-          >
-            ← Back
-          </Link>
+          <div className="flex items-center justify-between">
+            <Link
+              href={getPublicProfileUrl(username, { customDomain: true })}
+              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu url={currentUrl} title={page.title} />
+          </div>
 
           <header className="mt-6 sm:mt-8">
             <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
           </header>
-          <article className="mt-4">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: page.content || "" }} />
+          <article className="mt-12">
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
           </article>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
+        {user.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with <span className="font-semibold">Articurls</span>
+          </a>
+        ) : null}
       </div>
     );
   }
@@ -516,66 +556,81 @@ export default async function CustomDomainPage({ params }: Props) {
         }))
       : [];
     const hasMobileNav =
-      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
+      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
+
+    const currentUrl = `https://${host}/category/${encodeURIComponent(categorySlug)}`;
 
     return (
       <div className="min-h-screen bg-white">
+        <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
-          {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  userName={user.user_name}
-                  authorName={user.name}
-                />
-              </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                  nameSize={blogNameSize}
-                  links={user.nav_menu_enabled ? catLinks : []}
-                  userName={user.user_name}
-                  authorName={user.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showMenuButton={hasMobileNav}
-                />
-              </div>
-            </header>
-          ) : null}
+          <SearchProvider>
+            {user.navbar_enabled ? (
+              <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+                <div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    showSearch={blogs.length > 0}
+                    userName={user.user_name}
+                    authorName={user.name}
+                  />
+                </div>
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                    nameSize={blogNameSize}
+                    links={user.nav_menu_enabled ? catLinks : []}
+                    userName={user.user_name}
+                    authorName={user.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showSearch={blogs.length > 0}
+                    showMenuButton={hasMobileNav}
+                  />
+                </div>
+              </header>
+            ) : null}
 
-          <div className="mb-6 flex items-center gap-3">
-            <Link
-              href={getPublicProfileUrl(username, { customDomain: true })}
-              className="text-sm text-muted-foreground hover:text-foreground"
-            >
-              ← All posts
-            </Link>
-            <span className="select-none text-sm text-muted-foreground">·</span>
-            <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{categoryName}</h1>
-          </div>
-
-          {blogs.length > 0 ? (
-            <PublicBlogListSearch
-              blogs={blogs}
-              username={username}
-              user={user}
-              hideFeatured
-              useCustomDomain
-              siteOrigin={siteOrigin}
-            />
-          ) : (
-            <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
-              <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
+            <div className="mb-6 flex items-center gap-3">
+              <Link
+                href={getPublicProfileUrl(username, { customDomain: true })}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                ← All posts
+              </Link>
+              <span className="select-none text-sm text-muted-foreground">·</span>
+              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{categoryName}</h1>
             </div>
-          )}
-          <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+
+            {blogs.length > 0 ? (
+              <PublicBlogListSearch
+                blogs={blogs}
+                username={username}
+                user={user}
+                hideFeatured
+                useCustomDomain
+                siteOrigin={siteOrigin}
+              />
+            ) : (
+              <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
+                <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
+              </div>
+            )}
+            <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+          </SearchProvider>
         </main>
+        {user.show_articurls_watermark !== false ? (
+          <a
+            href={MARKETING_ORIGIN}
+            className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          >
+            Made with <span className="font-semibold">Articurls</span>
+          </a>
+        ) : null}
       </div>
     );
   }
@@ -607,50 +662,65 @@ export default async function CustomDomainPage({ params }: Props) {
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
   const desktopLinks = user.nav_menu_enabled ? catLinks : [];
   const hasMobileNav =
-    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
+    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
 
   // Rewrite blog hrefs to be relative for custom domain
   const blogsWithRelativeHrefs = blogs;
 
+  const currentUrl = `https://${host}`;
+
   return (
     <div className="min-h-screen bg-white">
+        <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
-        {user.navbar_enabled ? (
-          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-            <div className="hidden w-full sm:block">
-              <PublicDesktopNav
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                nameSize={blogNameSize}
-                links={desktopLinks}
-                showSubscribe={showSubscriberCollection}
-                userName={user.user_name}
-                authorName={user.name}
-              />
-            </div>
-            <div className="sm:hidden">
-              <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                nameSize={blogNameSize}
-                links={user.nav_menu_enabled ? catLinks : []}
-                userName={user.user_name}
-                authorName={user.name}
-                showSubscribeAction={showSubscriberCollection}
-                showMenuButton={hasMobileNav}
-              />
-            </div>
-          </header>
-        ) : null}
-        <PublicBlogListSearch
-          blogs={blogsWithRelativeHrefs}
-          username={username}
-          user={user}
-          useCustomDomain
-          siteOrigin={siteOrigin}
-        />
-        <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+        <SearchProvider>
+          {user.navbar_enabled ? (
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  showSearch={blogs.length > 0}
+                  userName={user.user_name}
+                  authorName={user.name}
+                />
+              </div>
+              <div className="sm:hidden">
+                <PublicMobileNavMenu
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={user.nav_menu_enabled ? catLinks : []}
+                  userName={user.user_name}
+                  authorName={user.name}
+                  showSubscribeAction={showSubscriberCollection}
+                  showSearch={blogs.length > 0}
+                  showMenuButton={hasMobileNav}
+                />
+              </div>
+            </header>
+          ) : null}
+          <PublicBlogListSearch
+            blogs={blogsWithRelativeHrefs}
+            username={username}
+            user={user}
+            useCustomDomain
+            siteOrigin={siteOrigin}
+          />
+          <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+        </SearchProvider>
       </main>
-    </div>
+      {user.show_articurls_watermark !== false ? (
+        <a
+          href={MARKETING_ORIGIN}
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-48rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+        >
+          Made with <span className="font-semibold">Articurls</span>
+        </a>
+      ) : null}
+      </div>
   );
 }

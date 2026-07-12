@@ -1,78 +1,16 @@
+import logging
 from datetime import datetime, timezone
-from sqlalchemy import func, text
+from sqlalchemy import func
 from .celery_app import celery
 from .. import database, models
 from ..config import settings
+from ..domains.utils import expire_domain_access, start_domain_grace_period
 from ..email.service import send_new_post_email, send_welcome_email as deliver_welcome_email
 from ..email.welcome import render_welcome_email
-from ..redis_client import redis_client
 from ..security.oauth2 import create_unsubscribe_token
 from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_blog_home_url, public_post_url
 
-
-@celery.task
-def record_blog_view(user_id: int, blog_id: int, visitor_hash: str):
-    """
-    Record a blog view in the database asynchronously and increment
-    the Redis delta counter for the periodic flush to pick up.
-    """
-    db = database.SessionLocal()
-    try:
-        db.add(models.Views(
-            user_id=user_id,
-            blog_id=blog_id,
-            visitor_hash=visitor_hash,
-        ))
-        db.commit()
-    except Exception:
-        pass
-    finally:
-        db.close()
-
-    # Increment Redis delta — flush_view_counts will apply this to blogs.view_count
-    try:
-        redis_client.incr(f"views_delta:{blog_id}")
-    except Exception:
-        pass
-
-
-@celery.task
-def flush_view_counts():
-    """
-    Flush Redis view count deltas into the denormalized blogs.view_count column.
-    Runs every 60 seconds via Celery beat.
-
-    Uses GETSET(key, 0) for atomic swap — new INCRs after the swap are safe
-    and will be picked up by the next flush cycle.
-    """
-    db = database.SessionLocal()
-    try:
-        for key in redis_client.scan_iter(match="views_delta:*", count=1000):
-            try:
-                blog_id = int(key.split(":")[-1])
-            except (ValueError, IndexError):
-                continue
-
-            # Atomic: returns old value and resets to 0 in one operation
-            delta = int(redis_client.getset(key, 0) or 0)
-
-            if delta <= 0:
-                continue
-
-            result = db.execute(
-                text("UPDATE blogs SET view_count = view_count + :delta WHERE blog_id = :blog_id"),
-                {"delta": delta, "blog_id": blog_id},
-            )
-
-            # Blog was deleted — clean up the orphaned Redis key
-            if result.rowcount == 0:
-                redis_client.delete(key)
-
-        db.commit()
-    except Exception:
-        db.rollback()
-    finally:
-        db.close()
+logger = logging.getLogger(__name__)
 
 
 @celery.task
@@ -173,7 +111,7 @@ def send_welcome_email(subscriber_id: int):
             return
 
         unsubscribe_token = create_unsubscribe_token(db_subscriber.subscriber_id, db_user.user_id)
-        unsubscribe_url = f"{settings.public_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}"
+        unsubscribe_url = f"{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}"
         blog_url = public_blog_home_url(db_user)
         blog_name = db_user.name
 
@@ -189,7 +127,7 @@ def send_welcome_email(subscriber_id: int):
         db_subscriber.welcome_sent_at = func.now()
         db.commit()
     except Exception:
-        pass
+        logger.exception("Failed to send welcome email for subscriber %s", subscriber_id)
     finally:
         db.close()
 
@@ -240,35 +178,30 @@ def expired_pro_fallback():
             if db_user:
                 # Handle custom domain lifecycle when Pro lapses
                 if db_user.domain_status == models.DomainStatus.ACTIVE:
-                    # Move to grace period — domain still serves for 30 days
-                    from datetime import timedelta
-                    db_user.domain_status = models.DomainStatus.GRACE
-                    db_user.grace_started_at = now
-                    db_user.grace_expires_at = now + timedelta(days=30)
-                    # Invalidate Redis cache so middleware sees new status
-                    try:
-                        from .celery_app import celery as _celery
-                        from ..redis_client import redis_client
-                        if db_user.custom_domain:
-                            redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-                    except Exception:
-                        pass
+                    start_domain_grace_period(db_user, now=now)
 
                 elif db_user.domain_status == models.DomainStatus.GRACE:
                     # Check if grace period has expired
                     if db_user.grace_expires_at and db_user.grace_expires_at < now:
-                        db_user.domain_status = models.DomainStatus.EXPIRED
-                        try:
-                            from ..redis_client import redis_client
-                            if db_user.custom_domain:
-                                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-                        except Exception:
-                            pass
+                        expire_domain_access(db_user)
 
             sub.plan_type = "free"
             if sub.status != "cancelled":
                 sub.status = "inactive"
-            
+
+        # Grace-period expiry is independent of the subscription row: the loop
+        # above demotes the subscription to "free" on the first tick, so a user
+        # already in GRACE would never be revisited via the query. Sweep them
+        # separately so GRACE reliably advances to EXPIRED after the window.
+        grace_expired_users = db.query(models.User).filter(
+            models.User.domain_status == models.DomainStatus.GRACE,
+            models.User.grace_expires_at.isnot(None),
+            models.User.grace_expires_at < now,
+        ).all()
+
+        for db_user in grace_expired_users:
+            expire_domain_access(db_user)
+
         db.commit()
 
     finally:
@@ -278,64 +211,99 @@ def expired_pro_fallback():
 @celery.task(bind=True, max_retries=8)
 def poll_domain_ssl_records(self, user_id: int):
     """
-    Poll Cloudflare until SSL validation records are available,
-    then update the cached DNS instructions in the DB.
-
-    Retries with exponential backoff: 3s, 6s, 12s, 24s, 48s, 96s, 192s, 384s
+    Poll Cloudflare until SSL records are ready and activation completes (CF + Vercel).
+    Retries: 3s, 6s, 12s, … up to ~21 min total.
     """
     from ..cloudflare.client import CloudflareClient
-    from ..domains.router import extract_dns_instructions
+    from ..domains.activation import apply_domain_verification, build_dns_instructions
+    from ..domains.cf_dns import is_cloudflare_ready
 
     db = database.SessionLocal()
     try:
         db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-        if not db_user:
-            return
-        if not db_user.cloudflare_hostname_id:
+        if not db_user or not db_user.cloudflare_hostname_id:
             return
         if db_user.domain_status != models.DomainStatus.PENDING:
-            return  # Already resolved
+            return
 
         cf_client = CloudflareClient()
         cf_result = cf_client.get_custom_hostname_sync(db_user.cloudflare_hostname_id)
-
         if not cf_result:
-            # Use current retry count for backoff (not next, so first retry is 3s)
             raise self.retry(countdown=3 * (2 ** self.request.retries))
 
-        hostname_status = cf_result.get("status")
-        ssl_info = cf_result.get("ssl", {})
-        ssl_status = ssl_info.get("status")
-
-        # Domain fully active — update DB and stop
-        if hostname_status == "active" and ssl_status == "active":
-            db_user.domain_status = models.DomainStatus.ACTIVE
-            db_user.is_domain_verified = True
-            db_user.verified_at = datetime.now(timezone.utc)
-            db_user.domain_dns_instructions = None
+        if is_cloudflare_ready(cf_result):
+            result = apply_domain_verification(db_user, cf_result)
             db.commit()
-            try:
-                from ..redis_client import redis_client
-                redis_client.delete(f"domain_lookup:{db_user.custom_domain}")
-            except Exception:
-                pass
-            return
+            if result.verification_status == "verified":
+                return
+            raise self.retry(countdown=3 * (2 ** self.request.retries))
 
-        # Check if we have useful SSL records (either delegation CNAME or TXT records)
-        dcv_delegation = ssl_info.get("dcv_delegation_records", [])
-        validation_records = ssl_info.get("validation_records", [])
+        ssl_info = cf_result.get("ssl") or {}
+        dcv_delegation = ssl_info.get("dcv_delegation_records") or []
+        validation_records = ssl_info.get("validation_records") or []
         has_ssl_records = bool(dcv_delegation) or len(validation_records) >= 2
 
-        # Always update DB with latest records
-        dns_instructions = extract_dns_instructions(cf_result, db_user.custom_domain)
-        db_user.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
+        instructions = build_dns_instructions(cf_result, db_user.custom_domain or "")
+        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
         db.commit()
 
-        # Keep retrying until we have complete SSL records
         if not has_ssl_records:
             raise self.retry(countdown=3 * (2 ** self.request.retries))
 
     except self.MaxRetriesExceededError:
-        pass  # Give up — user can click verify to trigger a fresh check
+        pass
+    finally:
+        db.close()
+
+
+@celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
+def provision_umami_website(self, user_id: int):
+    """Create an Umami website for a user if not already provisioned."""
+    from ..umami.client import UmamiClient
+    from ..umami.service import provision_umami_website_for_user
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        provision_umami_website_for_user(db, user_id)
+    finally:
+        db.close()
+
+
+@celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
+def sync_umami_website_domain(self, user_id: int):
+    """Update Umami website domain when custom domain becomes active."""
+    from ..umami.client import UmamiClient
+    from ..umami.service import sync_umami_website_domain_for_user
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        sync_umami_website_domain_for_user(db, user_id)
+    finally:
+        db.close()
+
+
+@celery.task
+def backfill_umami_websites():
+    """Enqueue Umami provisioning for all users missing umami_website_id."""
+    from ..umami.client import UmamiClient
+
+    if not UmamiClient().configured:
+        return
+
+    db = database.SessionLocal()
+    try:
+        rows = (
+            db.query(models.User.user_id)
+            .filter(models.User.umami_website_id.is_(None))
+            .all()
+        )
+        for (user_id,) in rows:
+            provision_umami_website.delay(user_id)
     finally:
         db.close()

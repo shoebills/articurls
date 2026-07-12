@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass
+from datetime import datetime, timedelta, timezone
 from typing import Optional
 
 from fastapi import HTTPException, status
@@ -13,7 +14,7 @@ from .text import normalize_username
 USERNAME_MIN_LEN = 3
 USERNAME_MAX_LEN = 30
 USERNAME_RE = re.compile(r"^[a-z0-9_-]+$")
-USERNAME_CHANGE_LIMIT = 5
+USERNAME_CHANGE_COOLDOWN_DAYS = 7
 RESERVED_USERNAMES = {
     "login",
     "signup",
@@ -106,15 +107,18 @@ def apply_username_change_or_raise(
     if new_username == old_username:
         return old_username
 
-    if db_user.username_change_count >= USERNAME_CHANGE_LIMIT and not is_admin_override:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Username change limit reached ({USERNAME_CHANGE_LIMIT} lifetime changes).",
-        )
+    if db_user.last_username_change_at and not is_admin_override:
+        elapsed = datetime.now(timezone.utc) - db_user.last_username_change_at
+        if elapsed < timedelta(days=USERNAME_CHANGE_COOLDOWN_DAYS):
+            remaining_days = USERNAME_CHANGE_COOLDOWN_DAYS - elapsed.days
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Please wait {remaining_days} day(s) before changing again.",
+            )
 
     claim_username_or_raise(db, db_user.user_id, new_username)
     db_user.user_name = new_username
-    db_user.username_change_count = (db_user.username_change_count or 0) + 1
+    db_user.last_username_change_at = datetime.now(timezone.utc)
 
     audit_username_change(
         db,

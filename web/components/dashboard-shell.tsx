@@ -2,22 +2,25 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { ExternalLink, Menu } from "lucide-react";
+import { Menu, Zap } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
+import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 import { useAuth } from "@/lib/auth-context";
+import { MARKETING_ORIGIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { user } = useAuth();
+  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const { user, isPro } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
   const publicBlogHref =
     user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
       ? `https://${user.custom_domain}`
       : user?.user_name
-        ? `/${user.user_name}`
+        ? `${MARKETING_ORIGIN}/${encodeURIComponent(user.user_name)}`
         : null;
 
   const close = useCallback(() => setOpen(false), []);
@@ -44,21 +47,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }, [open, close]);
 
   return (
-    <div className="flex min-h-dvh w-full bg-[#f8fafc] md:h-dvh md:max-h-dvh md:overflow-hidden">
-      <AppSidebar />
-      <div className="flex min-h-0 min-w-0 flex-1 flex-col md:min-h-0 md:overflow-hidden">
-        <header className="hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background/95 px-8 md:flex">
+    <div className="flex min-h-dvh w-full bg-white md:justify-center">
+      <div className="flex w-full max-w-[1200px]">
+        <AppSidebar />
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
+            {!isPro && (
+              <Button size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)}>
+                <Zap className="h-3.5 w-3.5" />
+                Upgrade
+              </Button>
+            )}
             {publicBlogHref ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
                 <Link href={publicBlogHref}>
-                  <ExternalLink className="mr-0.75 h-3.5 w-3.5" />
                   Visit blog
                 </Link>
               </Button>
             ) : (
               <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
-                <ExternalLink className="mr-0.75 h-3.5 w-3.5" />
                 Visit blog
               </Button>
             )}
@@ -66,7 +74,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-white pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
         >
           <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">
@@ -76,7 +84,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-9 w-9 shrink-0 border-border/70 bg-background/95 text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-background hover:text-foreground"
+                    className="h-10 w-10 min-h-10 min-w-10 shrink-0 border-border/70 bg-white text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-white hover:text-foreground"
                     aria-label="Open menu"
                     aria-expanded={open}
                     aria-controls={mobileMenuId}
@@ -92,14 +100,22 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     Articurls
                   </Link>
                 </div>
+                {!isPro && (
+                  <Button size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)} aria-label="Upgrade to Pro">
+                    <Zap className="h-3.5 w-3.5" />
+                  </Button>
+                )}
                 {publicBlogHref ? (
-                  <Button asChild variant="outline" size="sm" className="h-9 shrink-0 rounded-md text-slate-700">
+                  <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
                     <Link href={publicBlogHref}>
-                      <ExternalLink className="mr-1 h-3.5 w-3.5" />
-                      Visit
+                      Visit blog
                     </Link>
                   </Button>
-                ) : null}
+                ) : (
+                  <Button type="button" variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-600">
+                    Visit blog
+                  </Button>
+                )}
               </div>
 
               <div
@@ -111,7 +127,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 )}
                 aria-hidden={!open}
               >
-                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-sidebar">
+                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-white">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
@@ -133,10 +149,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="flex-1 touch-pan-y bg-[#f8fafc] px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-4 sm:px-5 sm:py-6 md:min-h-0 md:overflow-y-auto md:overscroll-contain md:p-8 md:pb-10">
+        <main className="flex-1 touch-pan-y bg-white px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
           {children}
         </main>
       </div>
     </div>
+    <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
+  </div>
   );
 }

@@ -58,6 +58,13 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
             detail="Could not validate credentials"
         )
 
+    token_ver = payload.get("ver")
+    if token_ver is not None and token_ver != db_user.token_version:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token has been revoked",
+        )
+
     return db_user
 
 def create_refresh_token(email: str):
@@ -137,11 +144,13 @@ def verify_new_user_token(token: str):
     return payload
 
 def create_unsubscribe_token(subscriber_id: int, user_id: int):
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
         "subscriber_id": subscriber_id,
         "user_id": user_id,
-        "purpose": "unsubscribe"
+        "purpose": "unsubscribe",
+        "exp": expire,
         }
 
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
@@ -158,11 +167,13 @@ def verify_unsubscribe_token(token: str):
     return payload
 
 def create_sub_confirm_token(subscriber_id: int, user_id: int):
+    expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
         "subscriber_id": subscriber_id,
         "user_id": user_id,
-        "purpose": "confirm-subscription"
+        "purpose": "confirm-subscription",
+        "exp": expire,
         }
 
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)

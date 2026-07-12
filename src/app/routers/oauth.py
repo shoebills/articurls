@@ -5,10 +5,13 @@ Endpoints:
 - GET /auth/google/login - Initiate OAuth flow
 - GET /auth/google/callback - Handle OAuth callback
 - POST /auth/google/complete - Complete onboarding for new users
+- POST /auth/exchange-token - Exchange one-time code for access token
 """
 
+import secrets
 from fastapi import APIRouter, HTTPException, status, Response, Depends
 from fastapi.responses import RedirectResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from datetime import timedelta
 
@@ -17,6 +20,7 @@ from ..config import settings
 from ..schemas.oauth import GoogleUserInfo, GoogleOAuthSession, CompleteGoogleSignup
 from ..schemas.token import Token
 from ..security import oauth2, hashing
+from ..redis_client import redis_client
 from ..utils.google_oauth import (
     get_authorization_url,
     validate_state_token,
@@ -33,6 +37,13 @@ from ..utils import (
     claim_username_or_raise,
 )
 from .. import models
+
+
+class ExchangeTokenRequest(BaseModel):
+    code: str
+
+
+_OAUTH_EXCHANGE_TTL = 30  # seconds — code is single-use and short-lived
 
 
 router = APIRouter(
@@ -98,14 +109,13 @@ async def google_callback(
         error_url = f"{settings.app_base_url}/login?error=invalid_request"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
-    # Validate state token (CSRF protection)
-    if not validate_state_token(state):
+    state_valid, code_verifier = validate_state_token(state)
+    if not state_valid:
         error_url = f"{settings.app_base_url}/login?error=invalid_state"
         return RedirectResponse(url=error_url, status_code=status.HTTP_302_FOUND)
     
     try:
-        # Exchange code for access token
-        token_response = await exchange_code_for_token(code, settings.google_redirect_uri)
+        token_response = await exchange_code_for_token(code, settings.google_redirect_uri, code_verifier)
         access_token = token_response.get("access_token")
         
         if not access_token:
@@ -340,10 +350,14 @@ async def complete_google_signup(
     
     db.commit()
     db.refresh(new_user)
-    
+
+    from ..umami.service import enqueue_umami_provision
+
+    enqueue_umami_provision(new_user.user_id)
+
     # Issue tokens
     access_token = oauth2.create_access_token(
-        data={"sub": new_user.email},
+        data={"sub": new_user.email, "ver": new_user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
@@ -355,6 +369,7 @@ async def complete_google_signup(
         httponly=True,
         secure=True,
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
@@ -380,17 +395,17 @@ async def _login_existing_user(
     Returns:
         RedirectResponse: Redirect to dashboard with tokens
     """
-    # Issue tokens
     access_token = oauth2.create_access_token(
-        data={"sub": user.email},
+        data={"sub": user.email, "ver": user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
     
     refresh_token = oauth2.create_refresh_token(user.email)
-    
-    # Redirect to dashboard with access token in URL
-    # Frontend will extract and store it
-    dashboard_url = f"{settings.app_base_url}/dashboard?access_token={access_token}"
+
+    code = secrets.token_urlsafe(32)
+    redis_client.setex(f"oauth_exchange:{code}", _OAUTH_EXCHANGE_TTL, access_token)
+
+    dashboard_url = f"{settings.app_base_url}/dashboard?code={code}"
     redirect = RedirectResponse(url=dashboard_url, status_code=status.HTTP_302_FOUND)
     
     # Set the refresh_token cookie on the actual RedirectResponse that is
@@ -403,7 +418,21 @@ async def _login_existing_user(
         httponly=True,
         secure=True,
         samesite="lax",
+        path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
     
     return redirect
+
+
+@router.post("/exchange-token", response_model=Token)
+def exchange_token(request: ExchangeTokenRequest):
+    redis_key = f"oauth_exchange:{request.code}"
+    access_token = redis_client.get(redis_key)
+    if not access_token:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired code",
+        )
+    redis_client.delete(redis_key)
+    return {"access_token": access_token, "token_type": "bearer"}

@@ -69,3 +69,15 @@ def make_meta_description(content: str, max_len: int = 160) -> str:
         cut = cut.rsplit(" ", 1)[0]
 
     return cut.rstrip() + "..."
+
+
+def materialize_content_meta_defaults(
+    *,
+    title: str | None,
+    content: str | None,
+    meta_title: str | None,
+    meta_description: str | None,
+) -> tuple[str | None, str | None]:
+    resolved_title = (meta_title or "").strip() or (title or "").strip() or None
+    resolved_description = (meta_description or "").strip() or make_meta_description(content or "") or None
+    return resolved_title, resolved_description

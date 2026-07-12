@@ -15,7 +15,13 @@ __pycache__/
 .zed
 
 tests/
+.clinerules/
+.cursor/
+.windsurf/
+.junie/
+.aiassistant/
 test.py
 README.md
 docker-compose.yml
 uploads/
+opencode.json

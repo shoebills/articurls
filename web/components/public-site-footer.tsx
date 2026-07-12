@@ -80,7 +80,7 @@ export function PublicSiteFooter({ user, pages, useCustomDomain = false }: Publi
                 href={isMail ? href : normalizePublicLink(href)}
                 target={isMail ? undefined : "_blank"}
                 rel={isMail ? undefined : "noreferrer"}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-muted/25 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-10 sm:w-10"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-muted/25 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:h-10 sm:w-10"
                 aria-label={item.label}
                 title={item.label}
               >

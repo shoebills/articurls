@@ -5,7 +5,6 @@ from ..config import settings
 celery = Celery(
     "articurls",
     broker=settings.redis_url,
-    backend=settings.redis_url
 )
 
 celery.conf.task_ignore_result = True
@@ -27,10 +26,5 @@ celery.conf.beat_schedule = {
     "expired-pro-fallback": {
         "task": "src.app.workers.tasks.expired_pro_fallback",
         "schedule": crontab(minute=0),
-    },
-
-    "flush-view-counts": {
-        "task": "src.app.workers.tasks.flush_view_counts",
-        "schedule": 60.0,  # every 60 seconds
     },
 }

@@ -1,6 +1,7 @@
 import re
 from html import escape
 from pathlib import Path
+from ..utils.html_sanitizer import sanitize_html
 
 TEMPLATE_DIR = Path(__file__).parent
 DEFAULT_SUBJECT = "Welcome to {{ blog_name }}'s blog"
@@ -20,32 +21,6 @@ def sanitize_welcome_subject(subject: str | None) -> str | None:
     return cleaned
 
 
-def _strip_disallowed_tags(html: str) -> str:
-    html = re.sub(
-        r"<script\b[^<]*(?:(?!</script>)<[^<]*)*</script>",
-        "",
-        html,
-        flags=re.IGNORECASE,
-    )
-    # Only strip real <button> elements — not data-email-button attributes on anchors.
-    html = re.sub(
-        r"<button\b[^>]*>.*?</button>",
-        "",
-        html,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    html = re.sub(
-        r"<(iframe|object|embed|form|input|textarea|select)\b[^>]*>.*?</\1>",
-        "",
-        html,
-        flags=re.IGNORECASE | re.DOTALL,
-    )
-    html = re.sub(r"<(iframe|object|embed|form|input|img)\b[^>]*/?>", "", html, flags=re.IGNORECASE)
-    html = re.sub(r"\s+on\w+\s*=\s*[\"'][^\"']*[\"']", "", html, flags=re.IGNORECASE)
-    html = re.sub(r"\s+on\w+\s*=\s*\S+", "", html, flags=re.IGNORECASE)
-    return html
-
-
 def sanitize_welcome_body(html: str | None) -> str | None:
     if html is None:
         return None
@@ -54,7 +29,8 @@ def sanitize_welcome_body(html: str | None) -> str | None:
         return None
     if len(cleaned) > MAX_BODY_LEN:
         raise ValueError(f"Body must be {MAX_BODY_LEN} characters or fewer")
-    return _strip_disallowed_tags(cleaned)
+    # Use nh3-based sanitizer for consistent, robust HTML cleaning
+    return sanitize_html(cleaned)
 
 
 def validate_delay_minutes(delay: int) -> int:
@@ -103,7 +79,7 @@ def normalize_body_fragment(html: str) -> str:
             for p in paragraphs
         )
 
-    return _strip_disallowed_tags(text)
+    return sanitize_html(text)
 
 
 def inline_fragment_styles(fragment: str) -> str:

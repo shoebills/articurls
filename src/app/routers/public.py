@@ -1,45 +1,11 @@
-import hashlib
-import jwt
 from fastapi import Depends, APIRouter, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List
 from ..database import get_db
 from .. import models, utils
-from ..workers.tasks import record_blog_view
 from ..schemas import blog, user
 from ..schemas import page as page_schema
-from ..config import settings
-from ..redis_client import redis_client
-
-
-# ---------------------------------------------------------------------------
-# View-endpoint rate limiter
-# Allows VIEW_RATE_LIMIT requests per IP per VIEW_RATE_WINDOW seconds.
-# Implemented with a Redis counter + TTL — no extra dependencies needed.
-# ---------------------------------------------------------------------------
-VIEW_RATE_LIMIT = 10   # max POST /view calls
-VIEW_RATE_WINDOW = 60  # per 60-second window
-
-
-def _check_view_rate_limit(ip: str) -> None:
-    """Raise 429 if this IP has exceeded the view-tracking rate limit."""
-    key = f"rl:view:{ip}"
-    try:
-        count = redis_client.incr(key)
-        if count == 1:
-            # First hit in this window — set the expiry
-            redis_client.expire(key, VIEW_RATE_WINDOW)
-        if count > VIEW_RATE_LIMIT:
-            raise HTTPException(
-                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                detail="Too many requests",
-            )
-    except HTTPException:
-        raise
-    except Exception:
-        # Redis unavailable — fail open (don't block legitimate traffic)
-        pass
 
 
 router = APIRouter(
@@ -57,7 +23,6 @@ def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
 
-    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
         db.query(models.Blog)
         .filter(models.Blog.user_id == db_user.user_id, models.Blog.status == models.BlogStatus.PUBLISHED)
@@ -93,62 +58,6 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
 
     db_blog.excerpt = utils.make_excerpt(db_blog.content)
     return db_blog
-
-
-@router.post("/{user_name}/blog/{slug}/view", status_code=status.HTTP_204_NO_CONTENT)
-def track_blog_view(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    db_blog = (
-        db.query(models.Blog)
-        .filter(
-            models.Blog.slug == slug,
-            models.Blog.user_id == db_user.user_id,
-            models.Blog.status == models.BlogStatus.PUBLISHED,
-        )
-        .first()
-    )
-    if not db_blog:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
-
-    is_owner_view = False
-    auth_header = request.headers.get("authorization", "")
-    if auth_header.lower().startswith("bearer "):
-        token = auth_header.split(" ", 1)[1].strip()
-        if token:
-            try:
-                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
-                email = payload.get("sub")
-                if email:
-                    viewer = utils.user_by_email(db, email)
-                    is_owner_view = bool(viewer and viewer.user_id == db_user.user_id)
-            except jwt.PyJWTError:
-                pass
-
-    if is_owner_view:
-        return
-
-    # CF-Connecting-IP is the real client IP set by Cloudflare (safe to trust
-    # because origin is bound to 127.0.0.1 and not reachable externally).
-    # Falls back to X-Forwarded-For for non-Cloudflare proxies, then direct IP.
-    ip = (
-        request.headers.get("cf-connecting-ip")
-        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
-        or (request.client.host if request.client else None)
-        or ""
-    )
-
-    _check_view_rate_limit(ip)
-
-    user_agent = request.headers.get("user-agent", "")
-    visitor_hash = hashlib.sha256(f"{ip}{user_agent}".encode()).hexdigest()
-    
-    # Queue the view tracking task to run asynchronously in the background
-    record_blog_view.delay(db_user.user_id, db_blog.blog_id, visitor_hash)
 
 
 @router.get("/{user_name}", response_model=user.PublicUser)
@@ -195,7 +104,6 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
         .filter(
             models.UserPage.user_id == db_user.user_id,
             models.UserPage.slug == slug,
-            models.UserPage.show_in_footer.is_(True),  # Only return pages visible in footer
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
         .first()
@@ -259,7 +167,6 @@ def get_public_category_blogs(user_name: str, slug: str, request: Request, db: S
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
 
-    # Read view_count directly from the denormalized column — no JOIN needed
     results = (
         db.query(models.Blog)
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)

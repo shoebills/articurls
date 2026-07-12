@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu } from "lucide-react";
+import { Bell, Menu } from "lucide-react";
+import { SearchButton } from "@/components/search-button";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
@@ -20,6 +21,7 @@ type PublicMobileNavMenuProps = {
   userName?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
+  showSearch?: boolean;
   /** When false, only the title row is shown (no hamburger). */
   showMenuButton?: boolean;
 };
@@ -32,6 +34,7 @@ export function PublicMobileNavMenu({
   userName,
   authorName,
   showSubscribeAction = true,
+  showSearch = false,
   showMenuButton = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
@@ -54,16 +57,20 @@ export function PublicMobileNavMenu({
     });
   }, [open]);
 
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!open) {
       setTrayLayout(null);
       return;
     }
-    updateTrayLayout();
+    // Defer measurement to avoid forced reflow
+    const timer = requestAnimationFrame(() => {
+      updateTrayLayout();
+    });
     const scrollOpts: AddEventListenerOptions = { capture: true };
     window.addEventListener("resize", updateTrayLayout);
     window.addEventListener("scroll", updateTrayLayout, scrollOpts);
     return () => {
+      cancelAnimationFrame(timer);
       window.removeEventListener("resize", updateTrayLayout);
       window.removeEventListener("scroll", updateTrayLayout, scrollOpts);
     };
@@ -75,6 +82,7 @@ export function PublicMobileNavMenu({
     function onPointerDown(event: MouseEvent | TouchEvent) {
       const target = event.target as Node | null;
       if (!target) return;
+      if (target instanceof Element && target.closest('[role="dialog"]')) return;
       if (!rootRef.current?.contains(target)) setOpen(false);
     }
 
@@ -109,16 +117,34 @@ export function PublicMobileNavMenu({
         )}
 
         {showMenuButton ? (
-          <button
-            type="button"
-            aria-label="Open menu"
-            aria-expanded={open}
-            aria-controls={menuId}
-            onClick={() => setOpen((prev) => !prev)}
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
-          >
-            <Menu className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {showSearch ? (
+              <SearchButton
+                iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+                trayClassName="fixed z-50 w-48 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
+              />
+            ) : null}
+            {links.length > 0 ? (
+              <button
+                type="button"
+                aria-label="Open menu"
+                aria-expanded={open}
+                aria-controls={menuId}
+                onClick={() => setOpen((prev) => !prev)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+              >
+                <Menu className="h-4 w-4" />
+              </button>
+            ) : showSubscribeAction && userName ? (
+              <SubscribeToAuthor
+                mode="dialog"
+                userName={userName}
+                authorName={authorName}
+                triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
+                triggerChildren={<Bell className="h-4 w-4" />}
+              />
+            ) : null}
+          </div>
         ) : null}
       </div>
 
@@ -144,6 +170,7 @@ export function PublicMobileNavMenu({
             <div className="space-y-1.5 p-1.5">
               {links.map((item) => (
                 <Link
+                  prefetch={false}
                   key={item.href}
                   href={item.href}
                   onClick={() => setOpen(false)}
@@ -163,7 +190,7 @@ export function PublicMobileNavMenu({
                 mode="dialog"
                 userName={userName}
                 authorName={authorName}
-                triggerClassName="h-8 min-h-8 w-full justify-center rounded-md px-3 text-center text-xs font-medium"
+                triggerClassName="h-10 min-h-10 w-full justify-center rounded-md px-3 text-center text-sm font-medium"
               />
             </div>
           ) : null}
