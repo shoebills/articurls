@@ -220,7 +220,6 @@ async function customDomainSitemap(host: string): Promise<Response> {
  *
  * Returns a sitemap index pointing only to:
  * - /sitemaps/pages.xml (marketing pages)
- * - /sitemaps/users.xml (indexable user sitemap index)
  *
  * Fallback: If anything fails, returns a basic sitemap with homepage only.
  */
