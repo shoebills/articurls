@@ -41,7 +41,7 @@ export function MarketingFooter() {
     <>
       <div aria-hidden className="mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
         <p className="-mb-[0.25em] block translate-y-[4%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
-          Write, Publish & Grow
+          Articurls
         </p>
       </div>
       <footer className="border-t border-border/70 bg-background pb-[env(safe-area-inset-bottom)]">
