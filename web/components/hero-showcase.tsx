@@ -4,7 +4,7 @@ export function HeroShowcase() {
   return (
     <div
       aria-hidden
-      className="relative mx-auto w-full max-w-[38rem] select-none pb-10 [perspective:1600px] sm:pb-0"
+      className="relative mx-auto w-full max-w-[38rem] select-none pb-16 [perspective:1600px] sm:pb-0"
     >
       <div className="pointer-events-none absolute -inset-8 -z-10 bg-[radial-gradient(ellipse_60%_60%_at_60%_35%,oklch(0.55_0.2_293/0.16),transparent_72%)]" />
 
