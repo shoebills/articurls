@@ -38,7 +38,7 @@ export function ProUpgradeDialog({
         style={{
           backgroundColor: "white",
         }}
-        className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 after:absolute after:inset-0 after:rounded-2xl after:bg-gradient-to-b after:from-transparent after:via-transparent after:to-gray-400/20 after:pointer-events-none"
+        className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 after:absolute after:inset-0 after:rounded-2xl after:bg-gradient-to-b after:from-transparent after:via-gray-400/10 after:to-gray-500/35 after:pointer-events-none"
       >
           <DialogHeader className="space-y-0">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-primary sm:text-xs">Grow audience</p>
@@ -59,7 +59,8 @@ export function ProUpgradeDialog({
 
           <div className="mt-5 space-y-2 sm:mt-6 sm:space-y-2.5">
             <Button
-              className="h-11 w-full touch-manipulation shadow-md shadow-primary/20 sm:h-12"
+              variant="outline"
+              className="h-11 w-full touch-manipulation sm:h-12"
               onClick={() => router.push(upgradeHref("pro"))}
             >
               Start Pro — $9/mo
@@ -72,8 +73,7 @@ export function ProUpgradeDialog({
               <span className="h-px flex-1 bg-border" />
             </div>
             <Button
-              variant="outline"
-              className="h-11 w-full touch-manipulation gap-1.5 sm:h-12"
+              className="h-11 w-full touch-manipulation gap-1.5 shadow-md shadow-primary/20 sm:h-12"
               onClick={() => router.push(upgradeHref("lifetime"))}
             >
               Get Lifetime — $99
