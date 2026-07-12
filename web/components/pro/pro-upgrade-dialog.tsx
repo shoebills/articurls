@@ -38,9 +38,8 @@ export function ProUpgradeDialog({
         style={{
           backgroundColor: "white",
         }}
-        className="relative max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 before:absolute before:inset-0 before:rounded-2xl before:bg-gradient-to-b before:from-transparent before:via-transparent before:to-gray-400/20 before:pointer-events-none"
+        className="max-h-[min(90dvh,90vh)] w-[calc(100vw-1.5rem)] max-w-sm gap-0 overflow-y-auto rounded-2xl border-primary/30 p-5 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:max-w-md sm:p-7 after:absolute after:inset-0 after:rounded-2xl after:bg-gradient-to-b after:from-transparent after:via-transparent after:to-gray-400/20 after:pointer-events-none"
       >
-        <div className="relative z-10">
           <DialogHeader className="space-y-0">
             <p className="text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-primary sm:text-xs">Grow audience</p>
             <DialogTitle className="mt-1 text-xl font-semibold tracking-tight sm:mt-1.5 sm:text-2xl">Upgrade to Pro</DialogTitle>
@@ -81,7 +80,6 @@ export function ProUpgradeDialog({
               <span className="text-xs text-muted-foreground line-through">$149</span>
             </Button>
           </div>
-        </div>
       </DialogContent>
     </Dialog>
   );
