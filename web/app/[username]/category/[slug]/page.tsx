@@ -15,7 +15,7 @@ import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-do
 import { faviconIcons } from "@/lib/favicon";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
-import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { shouldIndexOnUgcDomain } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { StructuredData } from "@/components/structured-data";
 import { generateCollectionPageSchema } from "@/lib/structured-data";
@@ -82,7 +82,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const ogImage =
     (data?.blogs?.[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
     resolveUserOgImage(user);
-  const shouldIndex = !!seoEligibility && shouldIndexOnMarketingHost({
+  const shouldIndex = !!seoEligibility && shouldIndexOnUgcDomain({
     is_pro: seoEligibility.is_pro,
     domain_status: user.domain_status,
   });

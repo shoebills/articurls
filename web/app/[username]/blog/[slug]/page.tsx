@@ -17,7 +17,7 @@ import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-do
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
-import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { shouldIndexOnUgcDomain } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { StructuredData } from "@/components/structured-data";
 import { generateBlogPostingSchema } from "@/lib/structured-data";
@@ -78,7 +78,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
   const ogImage = resolveBlogOgImage(blog);
   const siteName = resolveUserSiteName(author);
-  const shouldIndex = !!author && !!seoEligibility && shouldIndexOnMarketingHost({
+  const shouldIndex = !!author && !!seoEligibility && shouldIndexOnUgcDomain({
     is_pro: seoEligibility.is_pro,
     domain_status: author.domain_status,
   });

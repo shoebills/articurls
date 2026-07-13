@@ -12,7 +12,7 @@ import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
-import { shouldIndexOnMarketingHost } from "@/lib/seo";
+import { shouldIndexOnUgcDomain } from "@/lib/seo";
 import { fetchSeoEligibility } from "@/lib/seo-data";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema } from "@/lib/structured-data";
@@ -70,7 +70,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = user.meta_description || undefined;
   const siteName = resolveUserSiteName(user);
   const ogImage = resolveUserOgImage(user);
-  const shouldIndex = !!seoEligibility && shouldIndexOnMarketingHost({
+  const shouldIndex = !!seoEligibility && shouldIndexOnUgcDomain({
     is_pro: seoEligibility.is_pro,
     domain_status: user.domain_status,
   });

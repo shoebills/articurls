@@ -83,7 +83,7 @@ export async function fetchCategories(username: string): Promise<Category[]> {
 
 export interface SeoEligibility {
   is_pro: boolean;
-  can_index_on_marketing: boolean;
+  can_index_on_ugc: boolean;
 }
 
 /**

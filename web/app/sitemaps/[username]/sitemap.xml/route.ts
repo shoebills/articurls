@@ -62,11 +62,11 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
   const user = await loadUser(username);
   if (!user) return new NextResponse(null, { status: 404 });
 
-  // This sitemap exists only for users indexed on articurls.com:
+  // This sitemap exists only for users indexed on articurls.site:
   // - Pro entitlement
   // - no active/grace custom domain
   const seoEligibility = await fetchSeoEligibility(user.user_name || username);
-  if (!seoEligibility?.can_index_on_marketing) return new NextResponse(null, { status: 404 });
+  if (!seoEligibility?.can_index_on_ugc) return new NextResponse(null, { status: 404 });
   if (isIndexableDomainStatus(user.domain_status)) return new NextResponse(null, { status: 404 });
 
   const usernamePath = encodeURIComponent(user.user_name || username);

@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest, { params }: RouteContext): Promise<
 
   const canonicalUsername = user.user_name || username;
   const seoEligibility = await fetchSeoEligibility(canonicalUsername);
-  if (!seoEligibility?.can_index_on_marketing) return new NextResponse(null, { status: 404 });
+  if (!seoEligibility?.can_index_on_ugc) return new NextResponse(null, { status: 404 });
 
   const posts = await fetchPublishedPosts(canonicalUsername);
   const sorted = [...posts].sort(

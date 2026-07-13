@@ -367,4 +367,4 @@ def user_seo_eligibility(username: str, request: Request, db: Session = Depends(
 
     is_pro = is_pro_entitled(db_user, db)
     has_active_custom_domain = db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
-    return {"is_pro": is_pro, "can_index_on_marketing": bool(is_pro and not has_active_custom_domain)}
+    return {"is_pro": is_pro, "can_index_on_ugc": bool(is_pro and not has_active_custom_domain)}
