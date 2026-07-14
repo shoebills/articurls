@@ -162,7 +162,7 @@ export function PublicDesktopNav({
                 <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem] bg-white">
+            <DropdownMenuContent align="end" className="min-w-[10rem] bg-white origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
               {overflowLinks.map((l) => (
                 <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
                   <Link prefetch={false} href={l.href}>{l.label}</Link>

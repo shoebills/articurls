@@ -429,3 +429,25 @@ body {
     animation: none;
   }
 }
+
+@keyframes dropdown-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes dropdown-out {
+  to {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+@utility animate-dropdown-in {
+  animation: dropdown-in 150ms ease-out;
+}
+
+@utility animate-dropdown-out {
+  animation: dropdown-out 150ms ease-out;
+}
