@@ -576,9 +576,9 @@ export async function getPublicUser(userName: string): Promise<PublicUser> {
   return apiFetch(`/${encodeURIComponent(userName)}`);
 }
 
-export async function searchPublicBlogs(userName: string, query: string): Promise<PublicBlog[]> {
+export async function searchPublicBlogs(userName: string, query: string, offset = 0): Promise<PublicBlog[]> {
   return apiFetch(
-    `/${encodeURIComponent(userName)}/blogs/search?q=${encodeURIComponent(query)}`
+    `/${encodeURIComponent(userName)}/blogs/search?q=${encodeURIComponent(query)}&limit=5&offset=${offset}`
   );
 }
 

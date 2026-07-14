@@ -10,6 +10,7 @@ import { getPublicPostUrl } from "@/lib/public-url";
 
 const TRAY_GAP_PX = 8;
 const DEBOUNCE_MS = 300;
+const PAGE_SIZE = 5;
 
 export function SearchButton({
   iconClassName,
@@ -25,9 +26,13 @@ export function SearchButton({
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PublicBlog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const offsetRef = useRef(0);
+  const requestIdRef = useRef(0);
   const [trayLayout, setTrayLayout] = useState<{
     bottom: number;
     right: number;
@@ -40,18 +45,28 @@ export function SearchButton({
     const trimmed = query.trim();
     if (!trimmed) {
       setResults([]);
+      setHasMore(false);
+      offsetRef.current = 0;
       return;
     }
 
     setLoading(true);
+    offsetRef.current = 0;
+    const rid = ++requestIdRef.current;
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await searchPublicBlogs(userName, trimmed);
+        const data = await searchPublicBlogs(userName, trimmed, 0);
+        if (requestIdRef.current !== rid) return;
         setResults(data);
+        setHasMore(data.length === PAGE_SIZE);
       } catch {
+        if (requestIdRef.current !== rid) return;
         setResults([]);
+        setHasMore(false);
       } finally {
-        setLoading(false);
+        if (requestIdRef.current === rid) {
+          setLoading(false);
+        }
       }
     }, DEBOUNCE_MS);
 
@@ -59,6 +74,25 @@ export function SearchButton({
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
   }, [query, userName]);
+
+  const handleShowMore = useCallback(async () => {
+    const nextOffset = offsetRef.current + PAGE_SIZE;
+    const rid = ++requestIdRef.current;
+    setLoadingMore(true);
+    try {
+      const data = await searchPublicBlogs(userName, query.trim(), nextOffset);
+      if (requestIdRef.current !== rid) return;
+      setResults((prev) => [...prev, ...data]);
+      setHasMore(data.length === PAGE_SIZE);
+      offsetRef.current = nextOffset;
+    } catch {
+      // keep existing results
+    } finally {
+      if (requestIdRef.current === rid) {
+        setLoadingMore(false);
+      }
+    }
+  }, [userName, query]);
 
   const measure = useCallback(() => {
     const root = rootRef.current;
@@ -76,6 +110,8 @@ export function SearchButton({
       setTrayLayout(null);
       setQuery("");
       setResults([]);
+      setHasMore(false);
+      offsetRef.current = 0;
       return;
     }
     const timer = requestAnimationFrame(() => measure());
@@ -161,33 +197,52 @@ export function SearchButton({
           </div>
 
           {query.trim() ? (
-            <div className="border-t border-border/70">
-              {loading ? (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+            <>
+              <div className="border-t border-border/70">
+                {loading ? (
+                  <div className="flex items-center justify-center py-6">
+                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                  </div>
+                ) : results.length > 0 ? (
+                  <ul className="max-h-80 overflow-y-auto py-1">
+                    {results.map((blog) => (
+                      <li key={blog.blog_id}>
+                        <Link
+                          href={getPublicPostUrl(userName, blog.slug, {
+                            customDomain: useCustomDomain,
+                          })}
+                          onClick={() => setOpen(false)}
+                          className="block px-4 py-2.5 text-sm hover:bg-muted/50"
+                        >
+                          <span className="line-clamp-1">{blog.title}</span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="px-4 py-4 text-center text-sm text-muted-foreground">
+                    No posts match your search
+                  </p>
+                )}
+              </div>
+              {hasMore && !loading ? (
+                <div className="border-t border-border/70 px-4 py-2">
+                  {loadingMore ? (
+                    <div className="flex items-center justify-center py-1">
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleShowMore}
+                      className="w-full rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                    >
+                      Show more
+                    </button>
+                  )}
                 </div>
-              ) : results.length > 0 ? (
-                <ul className="max-h-80 overflow-y-auto py-1">
-                  {results.map((blog) => (
-                    <li key={blog.blog_id}>
-                      <Link
-                        href={getPublicPostUrl(userName, blog.slug, {
-                          customDomain: useCustomDomain,
-                        })}
-                        onClick={() => setOpen(false)}
-                        className="block px-4 py-2.5 text-sm hover:bg-muted/50"
-                      >
-                        <span className="line-clamp-1">{blog.title}</span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="px-4 py-4 text-center text-sm text-muted-foreground">
-                  No posts match your search
-                </p>
-              )}
-            </div>
+              ) : null}
+            </>
           ) : null}
         </div>
       ) : null}

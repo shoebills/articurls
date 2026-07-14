@@ -18,7 +18,8 @@ def search_blogs(
     user_name: str,
     request: Request,
     q: str = Query(..., min_length=1, description="Search query"),
-    limit: int = Query(5, ge=1, le=20),
+    limit: int = Query(5, ge=1, le=100),
+    offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
     db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
@@ -41,6 +42,7 @@ def search_blogs(
             ),
         )
         .order_by(models.Blog.published_at.desc())
+        .offset(offset)
         .limit(limit)
         .all()
     )
