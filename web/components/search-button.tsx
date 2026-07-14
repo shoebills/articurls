@@ -91,7 +91,7 @@ export function SearchButton({
         <div
           className={
             trayClassName ??
-            "fixed z-50 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
+            "fixed z-50 w-[25rem] max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
           }
           style={
             trayLayout
