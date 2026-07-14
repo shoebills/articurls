@@ -21,7 +21,7 @@ type PublicMobileNavMenuProps = {
   userName?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
-  showSearch?: boolean;
+  useCustomDomain?: boolean;
   /** When false, only the title row is shown (no hamburger). */
   showMenuButton?: boolean;
 };
@@ -34,7 +34,7 @@ export function PublicMobileNavMenu({
   userName,
   authorName,
   showSubscribeAction = true,
-  showSearch = false,
+  useCustomDomain,
   showMenuButton = true,
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
@@ -111,10 +111,12 @@ export function PublicMobileNavMenu({
 
         {showMenuButton ? (
           <div className="flex items-center gap-2">
-            {showSearch ? (
+            {userName ? (
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
                 trayClassName="fixed z-50 w-60 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out"
+                userName={userName}
+                useCustomDomain={useCustomDomain}
               />
             ) : null}
             {links.length > 0 ? (

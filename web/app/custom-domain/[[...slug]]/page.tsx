@@ -13,7 +13,6 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
-import { SearchProvider } from "@/components/search-context";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
@@ -365,6 +364,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   showSubscribe={showSubscriberCollection}
                   userName={author.user_name}
                   authorName={author.name}
+                  useCustomDomain
                 />
               </div>
               <div className="sm:hidden">
@@ -377,6 +377,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   authorName={author.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
+                  useCustomDomain
                 />
               </div>
             </header>
@@ -474,6 +475,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
+                  useCustomDomain
                 />
               </div>
               <div className="sm:hidden">
@@ -486,6 +488,7 @@ export default async function CustomDomainPage({ params }: Props) {
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
+                  useCustomDomain
                 />
               </div>
             </header>
@@ -564,38 +567,37 @@ export default async function CustomDomainPage({ params }: Props) {
       <div className="min-h-screen bg-white">
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
-          <SearchProvider>
-            {user.navbar_enabled ? (
-              <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-                <div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                    nameSize={blogNameSize}
-                    links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
-                    showSearch={blogs.length > 0}
-                    userName={user.user_name}
-                    authorName={user.name}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={getPublicProfileUrl(username, { customDomain: true })}
-                    nameSize={blogNameSize}
-                    links={user.nav_menu_enabled ? catLinks : []}
-                    userName={user.user_name}
-                    authorName={user.name}
-                    showSubscribeAction={showSubscriberCollection}
-                    showSearch={blogs.length > 0}
-                    showMenuButton={hasMobileNav}
-                  />
-                </div>
-              </header>
-            ) : null}
+          {user.navbar_enabled ? (
+            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+              <div className="hidden w-full sm:block">
+                <PublicDesktopNav
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={desktopLinks}
+                  showSubscribe={showSubscriberCollection}
+                  userName={user.user_name}
+                  authorName={user.name}
+                  useCustomDomain
+                />
+              </div>
+              <div className="sm:hidden">
+                <PublicMobileNavMenu
+                  title={navBlogName}
+                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  nameSize={blogNameSize}
+                  links={user.nav_menu_enabled ? catLinks : []}
+                  userName={user.user_name}
+                  authorName={user.name}
+                  showSubscribeAction={showSubscriberCollection}
+                  showMenuButton={hasMobileNav}
+                  useCustomDomain
+                />
+              </div>
+            </header>
+          ) : null}
 
-            <div className="mb-6 flex items-center gap-3">
+          <div className="mb-6 flex items-center gap-3">
               <Link
                 href={getPublicProfileUrl(username, { customDomain: true })}
                 className="text-sm text-muted-foreground hover:text-foreground"
@@ -621,7 +623,6 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             )}
             <PublicSiteFooter user={user} pages={pages} useCustomDomain />
-          </SearchProvider>
         </main>
         {user.show_articurls_watermark !== false ? (
           <a
@@ -673,7 +674,6 @@ export default async function CustomDomainPage({ params }: Props) {
     <div className="min-h-screen bg-white">
         <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
-        <SearchProvider>
           {user.navbar_enabled ? (
             <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
               <div className="hidden w-full sm:block">
@@ -683,9 +683,9 @@ export default async function CustomDomainPage({ params }: Props) {
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
-                  showSearch={blogs.length > 0}
                   userName={user.user_name}
                   authorName={user.name}
+                  useCustomDomain
                 />
               </div>
               <div className="sm:hidden">
@@ -697,8 +697,8 @@ export default async function CustomDomainPage({ params }: Props) {
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
-                  showSearch={blogs.length > 0}
                   showMenuButton={hasMobileNav}
+                  useCustomDomain
                 />
               </div>
             </header>
@@ -711,7 +711,6 @@ export default async function CustomDomainPage({ params }: Props) {
             siteOrigin={siteOrigin}
           />
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
-        </SearchProvider>
       </main>
       {user.show_articurls_watermark !== false ? (
         <a

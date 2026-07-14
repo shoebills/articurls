@@ -6,7 +6,6 @@ import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
-import { SearchProvider } from "@/components/search-context";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { resolveCanonicalUrl, getCustomDomainRedirectUrl } from "@/lib/custom-domain-redirect";
@@ -139,40 +138,36 @@ export default async function PublicProfilePage({ params }: Props) {
   return (
     <div className="min-h-screen bg-white">
       <main className={mainSpacing}>
-        <SearchProvider>
-          {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  showSearch={blogs.length > 0}
-                  userName={user.user_name}
-                  authorName={user.name}
-                />
-              </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
-                  nameSize={blogNameSize}
-                  links={user.nav_menu_enabled ? catLinks : []}
-                  userName={user.user_name}
-                  authorName={user.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showSearch={blogs.length > 0}
-                  showMenuButton={hasMobileNav}
-                />
-              </div>
-            </header>
-          ) : null}
-          <StructuredData data={generateWebSiteSchema(user, canonical)} />
-          <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} />
-          <PublicSiteFooter user={user} pages={pages} />
-        </SearchProvider>
+        {user.navbar_enabled ? (
+          <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <div className="hidden w-full sm:block">
+              <PublicDesktopNav
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username)}
+                nameSize={blogNameSize}
+                links={desktopLinks}
+                showSubscribe={showSubscriberCollection}
+                userName={user.user_name}
+                authorName={user.name}
+              />
+            </div>
+            <div className="sm:hidden">
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username)}
+                nameSize={blogNameSize}
+                links={user.nav_menu_enabled ? catLinks : []}
+                userName={user.user_name}
+                authorName={user.name}
+                showSubscribeAction={showSubscriberCollection}
+                showMenuButton={hasMobileNav}
+              />
+            </div>
+          </header>
+        ) : null}
+        <StructuredData data={generateWebSiteSchema(user, canonical)} />
+        <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} />
+        <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (
         <a

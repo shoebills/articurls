@@ -576,6 +576,12 @@ export async function getPublicUser(userName: string): Promise<PublicUser> {
   return apiFetch(`/${encodeURIComponent(userName)}`);
 }
 
+export async function searchPublicBlogs(userName: string, query: string): Promise<PublicBlog[]> {
+  return apiFetch(
+    `/${encodeURIComponent(userName)}/blogs/search?q=${encodeURIComponent(query)}`
+  );
+}
+
 export async function getPublicBlogs(userName: string): Promise<PublicBlog[]> {
   return apiFetch(`/${encodeURIComponent(userName)}/blogs`);
 }

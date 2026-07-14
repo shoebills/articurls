@@ -1,27 +1,64 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
-import { useSearch } from "@/components/search-context";
+import { Loader2, Search } from "lucide-react";
+import Link from "next/link";
 import { Input } from "@/components/ui/input";
+import type { PublicBlog } from "@/lib/types";
+import { searchPublicBlogs } from "@/lib/api";
+import { getPublicPostUrl } from "@/lib/public-url";
 
 const TRAY_GAP_PX = 8;
+const DEBOUNCE_MS = 300;
 
 export function SearchButton({
   iconClassName,
   trayClassName,
+  userName,
+  useCustomDomain,
 }: {
   iconClassName?: string;
   trayClassName?: string;
+  userName: string;
+  useCustomDomain?: boolean;
 }) {
-  const { query, setQuery } = useSearch();
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<PublicBlog[]>([]);
+  const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [trayLayout, setTrayLayout] = useState<{
     bottom: number;
     right: number;
     windowWidth: number;
   } | null>(null);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults([]);
+      return;
+    }
+
+    setLoading(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const data = await searchPublicBlogs(userName, trimmed);
+        setResults(data);
+      } catch {
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    }, DEBOUNCE_MS);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, userName]);
 
   const measure = useCallback(() => {
     const root = rootRef.current;
@@ -37,6 +74,8 @@ export function SearchButton({
   useEffect(() => {
     if (!open) {
       setTrayLayout(null);
+      setQuery("");
+      setResults([]);
       return;
     }
     const timer = requestAnimationFrame(() => measure());
@@ -120,6 +159,36 @@ export function SearchButton({
               />
             </div>
           </div>
+
+          {query.trim() ? (
+            <div className="border-t border-border/70">
+              {loading ? (
+                <div className="flex items-center justify-center py-6">
+                  <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : results.length > 0 ? (
+                <ul className="max-h-80 overflow-y-auto py-1">
+                  {results.map((blog) => (
+                    <li key={blog.blog_id}>
+                      <Link
+                        href={getPublicPostUrl(userName, blog.slug, {
+                          customDomain: useCustomDomain,
+                        })}
+                        onClick={() => setOpen(false)}
+                        className="block px-4 py-2.5 text-sm hover:bg-muted/50"
+                      >
+                        <span className="line-clamp-1">{blog.title}</span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="px-4 py-4 text-center text-sm text-muted-foreground">
+                  No posts match your search
+                </p>
+              )}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </div>

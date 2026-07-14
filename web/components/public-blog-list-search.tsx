@@ -4,9 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { PublicBlog, PublicUser } from "@/lib/types";
 import { UGS_ORIGIN } from "@/lib/env";
-import { scoreByTitleAndContent } from "@/lib/search";
 import { Button } from "@/components/ui/button";
-import { useSearch } from "@/components/search-context";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
@@ -85,7 +83,6 @@ function BlogListItemRow({
 }
 
 export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
-  const { query } = useSearch();
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -98,34 +95,17 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       .filter((b): b is PublicBlog => Boolean(b));
   }, [user, blogs, hideFeatured]);
   
-  const showFeatured = featuredBlogs.length > 0 && query.trim() === "";
+  const showFeatured = featuredBlogs.length > 0;
 
   const sortedBlogs = useMemo(() => {
-    const trimmed = query.trim();
-    if (!trimmed) {
-      const rows = [...blogs];
-      rows.sort((a, b) => {
-        const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
-        const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
-        return bDate - aDate;
-      });
-      return rows;
-    }
-
-    return blogs
-      .map((blog) => ({
-        blog,
-        score: scoreByTitleAndContent(blog.title || "", `${blog.content || ""} ${blog.excerpt || ""}`, trimmed),
-      }))
-      .filter((row) => row.score > 0)
-      .sort((a, b) => {
-        if (b.score !== a.score) return b.score - a.score;
-        const aDate = a.blog.published_at ? new Date(a.blog.published_at).getTime() : 0;
-        const bDate = b.blog.published_at ? new Date(b.blog.published_at).getTime() : 0;
-        return bDate - aDate;
-      })
-      .map((row) => row.blog);
-  }, [blogs, query]);
+    const rows = [...blogs];
+    rows.sort((a, b) => {
+      const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
+      const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
+      return bDate - aDate;
+    });
+    return rows;
+  }, [blogs]);
 
   const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / POSTS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -204,12 +184,6 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
           </div>
         </div>
       ) : null}
-
-      {sortedBlogs.length === 0 && (
-        <p className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
-          No posts match your search.
-        </p>
-      )}
     </section>
   );
 }

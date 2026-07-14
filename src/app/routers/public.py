@@ -1,6 +1,6 @@
-from fastapi import Depends, APIRouter, HTTPException, Request, status
+from fastapi import Depends, APIRouter, HTTPException, Request, Query, status
 from sqlalchemy.orm import Session
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from typing import List
 from ..database import get_db
 from .. import models, utils
@@ -11,6 +11,46 @@ from ..schemas import page as page_schema
 router = APIRouter(
     tags=["Public"],
 )
+
+
+@router.get("/{user_name}/blogs/search", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
+def search_blogs(
+    user_name: str,
+    q: str = Query(..., min_length=1, description="Search query"),
+    limit: int = Query(5, ge=1, le=20),
+    request: Request = None,
+    db: Session = Depends(get_db),
+):
+    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_user and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    term = f"%{q}%"
+    results = (
+        db.query(models.Blog)
+        .filter(
+            models.Blog.user_id == db_user.user_id,
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+            or_(
+                models.Blog.title.ilike(term),
+                models.Blog.content.ilike(term),
+                models.Blog.meta_title.ilike(term),
+                models.Blog.meta_description.ilike(term),
+            ),
+        )
+        .order_by(models.Blog.published_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    blogs = []
+    for db_blog in results:
+        db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        blogs.append(db_blog)
+
+    return blogs
 
 
 @router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
