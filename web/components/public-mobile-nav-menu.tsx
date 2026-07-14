@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Menu } from "lucide-react";
+import { Bell, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
@@ -46,7 +46,7 @@ export function PublicMobileNavMenu({
 
   const updateTrayLayout = useCallback(() => {
     const root = rootRef.current;
-    if (!root || !open) return;
+    if (!root) return;
     const rootBox = root.getBoundingClientRect();
     const navHost = root.closest("[data-public-nav]");
     const bottomEdge = navHost ? navHost.getBoundingClientRect().bottom : rootBox.bottom;
@@ -55,17 +55,10 @@ export function PublicMobileNavMenu({
       left: rootBox.left,
       width: rootBox.width,
     });
-  }, [open]);
+  }, []);
 
   useEffect(() => {
-    if (!open) {
-      setTrayLayout(null);
-      return;
-    }
-    // Defer measurement to avoid forced reflow
-    const timer = requestAnimationFrame(() => {
-      updateTrayLayout();
-    });
+    const timer = requestAnimationFrame(updateTrayLayout);
     const scrollOpts: AddEventListenerOptions = { capture: true };
     window.addEventListener("resize", updateTrayLayout);
     window.addEventListener("scroll", updateTrayLayout, scrollOpts);
@@ -74,7 +67,7 @@ export function PublicMobileNavMenu({
       window.removeEventListener("resize", updateTrayLayout);
       window.removeEventListener("scroll", updateTrayLayout, scrollOpts);
     };
-  }, [open, updateTrayLayout]);
+  }, [updateTrayLayout]);
 
   useEffect(() => {
     if (!open) return;
@@ -127,13 +120,13 @@ export function PublicMobileNavMenu({
             {links.length > 0 ? (
               <button
                 type="button"
-                aria-label="Open menu"
+                aria-label={open ? "Close menu" : "Open menu"}
                 aria-expanded={open}
                 aria-controls={menuId}
                 onClick={() => setOpen((prev) => !prev)}
                 className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
               >
-                <Menu className="h-4 w-4" />
+                {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
             ) : showSubscribeAction && userName ? (
               <SubscribeToAuthor
@@ -148,12 +141,14 @@ export function PublicMobileNavMenu({
         ) : null}
       </div>
 
-      {showMenuButton && open ? (
+      {showMenuButton ? (
         <div
           id={menuId}
           className={cn(
-            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-white shadow-lg transition-opacity duration-200 ease-out",
-            trayLayout ? "opacity-100" : "pointer-events-none opacity-0"
+            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-white shadow-lg origin-top transition-all duration-250 ease-out",
+            open && trayLayout
+              ? "translate-y-0 opacity-100"
+              : "pointer-events-none -translate-y-1.5 opacity-0"
           )}
           style={
             trayLayout
@@ -164,7 +159,7 @@ export function PublicMobileNavMenu({
                 }
               : undefined
           }
-          aria-hidden={!trayLayout}
+          aria-hidden={!open || !trayLayout}
         >
           {links.length > 0 ? (
             <div className="space-y-1.5 p-1.5">
