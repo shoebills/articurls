@@ -17,7 +17,7 @@ const BENEFITS = [
   "Collect email subscribers",
   "Publish emails to subscribers",
   "Full views & subscriber analytics",
-  "RSS, sitemap & robots control",
+  "RSS, sitemap & robots.txt",
   "Remove Articurls branding",
   "Custom favicon",
   "Unlimited media storage",

@@ -242,7 +242,7 @@ export default function BillingPage() {
                   "Collect email subscribers",
                   "Publish emails to subscribers",
                   "Views & subscribers analytics",
-                  "RSS, sitemap & robots control",
+                  "RSS, sitemap & robots.txt",
                   "Remove Articurls branding",
                   "Custom favicon",
                   "Unlimited media storage",

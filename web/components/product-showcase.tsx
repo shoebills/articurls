@@ -40,7 +40,7 @@ const PANELS = [
     key: "seo",
     kicker: "Get found",
     title: "SEO handled for you",
-    body: "Meta tags, sitemap, robots, and RSS are built in and always up to date.",
+    body: "Image optimization, meta tags, Open Graph, JSON-LD structured data, sitemaps, and RSS — everything search engines need.",
     visual: <SeoPanel />,
   },
   {
