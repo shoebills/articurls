@@ -100,33 +100,35 @@ function BlogCardGridItem({
     <li className="break-inside-avoid">
       <Link
         href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
-        className="group block rounded-xl border border-border/70 bg-white shadow-sm transition-shadow hover:shadow-md"
+        className="group block"
       >
-        {showImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={previewImage}
-            alt=""
-            width={600}
-            height={400}
-            className="aspect-[3/2] w-full rounded-t-xl object-cover"
-          />
-        ) : (
-          <div
-            className="aspect-[3/2] w-full rounded-t-xl"
-            style={{
-              background: `
-                radial-gradient(ellipse 170% 85% at 18% -12%, rgba(255,255,255,.58) 0%, rgba(235,235,235,.26) 28%, rgba(185,185,185,.09) 52%, transparent 72%),
-                radial-gradient(circle at 12% 88%, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 35%, transparent 70%),
-                linear-gradient(135deg, #181818 0%, #242424 25%, #555 60%, #bdbdbd 100%),
-                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='6' seed='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
-              `,
-              backgroundBlendMode: "overlay, normal, normal, normal",
-              backgroundSize: "auto, auto, auto, 96px 96px",
-              filter: "blur(1px)",
-            }}
-          />
-        )}
+        <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
+          {showImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewImage}
+              alt=""
+              width={600}
+              height={400}
+              className="aspect-[3/2] w-full object-cover"
+            />
+          ) : (
+            <div
+              className="aspect-[3/2] w-full"
+              style={{
+                background: `
+                  radial-gradient(ellipse 170% 85% at 18% -12%, rgba(255,255,255,.58) 0%, rgba(235,235,235,.26) 28%, rgba(185,185,185,.09) 52%, transparent 72%),
+                  radial-gradient(circle at 12% 88%, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 35%, transparent 70%),
+                  linear-gradient(135deg, #181818 0%, #242424 25%, #555 60%, #bdbdbd 100%),
+                  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='6' seed='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
+                `,
+                backgroundBlendMode: "overlay, normal, normal, normal",
+                backgroundSize: "auto, auto, auto, 96px 96px",
+                filter: "blur(1px)",
+              }}
+            />
+          )}
+        </div>
         <div className="p-4 pb-3">
           <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
             {b.title}
@@ -136,7 +138,7 @@ function BlogCardGridItem({
           )}
         </div>
       </Link>
-      <div className="mt-2 flex items-center justify-between gap-2 px-1">
+      <div className="flex items-center justify-between gap-2 px-4 pb-1">
         {b.published_at ? (
           <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
             {new Date(b.published_at).toLocaleDateString("en-US", {
