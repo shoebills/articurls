@@ -453,6 +453,7 @@ function NativeAnalytics({ token }: { token: string }) {
   });
   const [err, setErr] = useState<string | null>(null);
   const [pagesVisible, setPagesVisible] = useState(10);
+  const [geoVisible, setGeoVisible] = useState(10);
 
   // Detect browser timezone once — used to display chart labels in local time
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -460,6 +461,7 @@ function NativeAnalytics({ token }: { token: string }) {
   useEffect(() => {
     let cancelled = false;
     setPagesVisible(10);
+    setGeoVisible(10);
     (async () => {
       setLoading(true);
       setErr(null);
@@ -928,7 +930,7 @@ function NativeAnalytics({ token }: { token: string }) {
                   <CardContent className="pt-0">
                     <MetricsTableHeader label="Country" />
                     <div className="space-y-1 sm:space-y-2">
-                      {geo.countries.slice(0, 8).map((row: UmamiMetricsRow, i: number) => (
+                      {geo.countries.slice(0, geoVisible).map((row: UmamiMetricsRow, i: number) => (
                         <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{getCountryFlag(row.x)}</span>
@@ -942,6 +944,29 @@ function NativeAnalytics({ token }: { token: string }) {
                         </div>
                       ))}
                     </div>
+                    {(() => {
+                      const hasMore = geo.countries.length > geoVisible;
+                      return (
+                        <>
+                          {hasMore && (
+                            <button
+                              onClick={() => setGeoVisible((p) => p + 10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show more
+                            </button>
+                          )}
+                          {geoVisible > 10 && (
+                            <button
+                              onClick={() => setGeoVisible(10)}
+                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
+                            >
+                              Show less
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               ) : (

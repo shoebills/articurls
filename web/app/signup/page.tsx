@@ -127,7 +127,7 @@ function SignupForm() {
           <CardHeader className="space-y-1.5">
             <CardTitle className="text-xl font-bold tracking-tight">Create your account</CardTitle>
             <CardDescription className="text-sm">
-              Start publishing your ideas in minutes
+              Start writing your ideas in minutes
             </CardDescription>
           </CardHeader>
           <CardContent>
