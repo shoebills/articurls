@@ -45,7 +45,7 @@ export function MarketingNav() {
       ref={navRef}
       className="fixed inset-x-0 top-0 z-50 px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] pt-3 sm:px-6 sm:pt-4"
     >
-      <div className="mx-auto flex h-14 w-full max-w-6xl items-center justify-between gap-6 rounded-2xl border border-border/60 bg-background/70 pl-5 pr-2.5 shadow-lg shadow-black/[0.04] backdrop-blur-xl backdrop-saturate-150 sm:h-16 sm:pl-6 sm:pr-3">
+      <div className="mx-auto flex h-14 w-full max-w-4xl items-center justify-between gap-6 rounded-2xl border border-border/60 bg-background/70 pl-5 pr-2.5 shadow-lg shadow-black/[0.04] backdrop-blur-xl backdrop-saturate-150 sm:h-16 sm:pl-6 sm:pr-3">
         <div className="flex shrink-0 items-center">
           <BrandLogo size="sm" />
         </div>
@@ -86,7 +86,7 @@ export function MarketingNav() {
           open ? "translate-y-0 opacity-100" : "pointer-events-none -translate-y-1.5 opacity-0"
         }`}
       >
-        <div className="mx-auto mt-2 max-w-6xl">
+        <div className="mx-auto mt-2 max-w-4xl">
           <div className="overflow-hidden rounded-2xl border border-border/70 bg-background/95 shadow-xl shadow-black/[0.06] backdrop-blur-xl">
             <nav className="flex flex-col p-2" aria-label="Mobile">
               {LINKS.map((link) => (

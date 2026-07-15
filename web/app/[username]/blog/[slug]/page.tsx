@@ -142,8 +142,8 @@ export default async function PublicBlogPage({ params }: Props) {
 
   const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
   const containerSpacing = author.navbar_enabled
-    ? "mx-auto max-w-6xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
-    : "mx-auto max-w-6xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
+    ? "mx-auto max-w-4xl px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
+    : "mx-auto max-w-4xl px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
   const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showSubscriberCollection = author.subscriber_collection_enabled === true;
   const desktopLinks = author.nav_menu_enabled ? catLinks : [];
@@ -240,7 +240,7 @@ export default async function PublicBlogPage({ params }: Props) {
       {author.show_articurls_watermark !== false ? (
         <a
           href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-[max(1rem,calc((100vw-72rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
+          className="fixed bottom-4 right-[max(1rem,calc((100vw-56rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
         >
           Made with <span className="font-semibold">Articurls</span>
         </a>
