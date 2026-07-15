@@ -141,43 +141,7 @@ function getCountryFlag(code: string): string {
   return String.fromCodePoint(first, second);
 }
 
-const COUNTRY_NAMES: Record<string, string> = {
-  SG: "Singapore",
-  IN: "India",
-  US: "United States",
-  NL: "Netherlands",
-  GB: "United Kingdom",
-  DE: "Germany",
-  FR: "France",
-  CA: "Canada",
-  AU: "Australia",
-  JP: "Japan",
-  CN: "China",
-  BR: "Brazil",
-  RU: "Russia",
-  KR: "South Korea",
-  MX: "Mexico",
-  ES: "Spain",
-  IT: "Italy",
-  ID: "Indonesia",
-  TH: "Thailand",
-  MY: "Malaysia",
-  PH: "Philippines",
-  VN: "Vietnam",
-  PL: "Poland",
-  TR: "Turkey",
-  SA: "Saudi Arabia",
-  AE: "United Arab Emirates",
-  IL: "Israel",
-  EG: "Egypt",
-  ZA: "South Africa",
-  NG: "Nigeria",
-  KE: "Kenya",
-  AR: "Argentina",
-  CL: "Chile",
-  CO: "Colombia",
-  PE: "Peru",
-};
+const countryName = new Intl.DisplayNames(["en"], { type: "region" });
 
 function getReferrerIcon(domain: string) {
   const domainLower = domain.toLowerCase();
@@ -935,7 +899,7 @@ function NativeAnalytics({ token }: { token: string }) {
                           <div className="flex items-center gap-2">
                             <span className="text-lg">{getCountryFlag(row.x)}</span>
                             <span className="text-xs sm:text-sm">
-                              {COUNTRY_NAMES[row.x.toUpperCase()] || row.x}
+                              {countryName.of(row.x.toUpperCase()) || row.x}
                             </span>
                           </div>
                           <span className="font-medium text-xs sm:text-sm">
