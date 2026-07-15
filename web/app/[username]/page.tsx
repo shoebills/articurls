@@ -166,7 +166,7 @@ export default async function PublicProfilePage({ params }: Props) {
           </header>
         ) : null}
         <StructuredData data={generateWebSiteSchema(user, canonical)} />
-        <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} />
+        <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} blog_list_layout={user.blog_list_layout || "list"} />
         <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (

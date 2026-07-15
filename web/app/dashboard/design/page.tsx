@@ -42,7 +42,7 @@ import {
 import { MdOutlineEmail } from "react-icons/md";
 import { FaLinkedinIn } from "react-icons/fa6";
 
-type DesignSectionId = "header" | "featured" | "footer";
+type DesignSectionId = "header" | "body" | "footer";
 
 type SocialPlatform =
   | "contact_email"
@@ -113,14 +113,14 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [],
+      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const,
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [],
+      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const,
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {
@@ -436,7 +436,7 @@ export default function DesignDashboardPage() {
   const hiddenSocialOptions = SOCIAL_OPTIONS.filter((s) => !enabledSocials.includes(s.key));
   const sectionTabs: Array<{ id: DesignSectionId; label: string }> = [
     { id: "header", label: "Header" },
-    { id: "featured", label: "Featured blogs" },
+    { id: "body", label: "Body" },
     { id: "footer", label: "Footer" },
   ];
 
@@ -653,15 +653,53 @@ export default function DesignDashboardPage() {
       </SectionPanel>
       ) : null}
 
-      {/* Featured blogs */}
-      {selectedSection === "featured" ? (
+      {/* Body */}
+      {selectedSection === "body" ? (
       <SectionPanel
-        title="Featured blogs"
-        description="Pin blogs to the top of blog homepage."
-        sectionId="design-featured"
-        headingId="design-featured-heading"
+        title="Body"
+        description="Control blog list layout and featured posts."
+        sectionId="design-body"
+        headingId="design-body-heading"
         selected
       >
+        <div className="space-y-3">
+          <p className="font-medium">Blog list layout</p>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                design.blog_list_layout === "list"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
+              }`}
+              onClick={() => saveDesign({ ...design, blog_list_layout: "list" })}
+              disabled={busy}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="2" y1="3" x2="14" y2="3" /><line x1="2" y1="8" x2="14" y2="8" /><line x1="2" y1="13" x2="14" y2="13" />
+              </svg>
+              List
+            </button>
+            <button
+              type="button"
+              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
+                design.blog_list_layout === "card_grid"
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
+              }`}
+              onClick={() => saveDesign({ ...design, blog_list_layout: "card_grid" })}
+              disabled={busy}
+            >
+              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" />
+              </svg>
+              Card Grid
+            </button>
+          </div>
+        </div>
+
+        <div className="border-t border-border/60" />
+
         <div className="rounded-xl border p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="font-medium">Enable featured blogs</p>
@@ -671,7 +709,7 @@ export default function DesignDashboardPage() {
               disabled={busy}
             />
           </div>
-          <p className="text-sm text-muted-foreground">Show a featured section below the search bar.</p>
+          <p className="text-sm text-muted-foreground">Show a featured section at the top of the blog list.</p>
         </div>
         {design.featured_blogs_enabled ? (
           <>

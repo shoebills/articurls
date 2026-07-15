@@ -222,6 +222,7 @@ def update_design_settings(
     db_user.footer_enabled = request.footer_enabled
     db_user.site_footer_enabled = request.site_footer_enabled
     db_user.featured_blogs_enabled = request.featured_blogs_enabled
+    db_user.blog_list_layout = request.blog_list_layout
     
     blog_ids = request.featured_blog_ids or []
     if len(blog_ids) > 10:

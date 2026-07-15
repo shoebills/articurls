@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { PublicBlog, PublicUser } from "@/lib/types";
+import type { PublicBlog, PublicUser, BlogListLayout } from "@/lib/types";
 import { UGS_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
@@ -16,6 +16,7 @@ type PublicBlogListSearchProps = {
   hideFeatured?: boolean;
   useCustomDomain?: boolean;
   siteOrigin?: string;
+  blog_list_layout?: BlogListLayout;
 };
 
 const POSTS_PER_PAGE = 10;
@@ -82,7 +83,68 @@ function BlogListItemRow({
   );
 }
 
-export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin }: PublicBlogListSearchProps) {
+function BlogCardGridItem({
+  blog: b,
+  username,
+  useCustomDomain = false,
+  siteOrigin,
+}: {
+  blog: PublicBlog;
+  username: string;
+  useCustomDomain?: boolean;
+  siteOrigin?: string;
+}) {
+  const previewImage = resolveBlogCoverImage(b);
+  const showImage = previewImage && !b.hide_preview_in_lists;
+  return (
+    <li className="break-inside-avoid">
+      <Link
+        href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
+        className="group block rounded-xl border border-border/70 bg-white shadow-sm transition-shadow hover:shadow-md"
+      >
+        {showImage ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={previewImage}
+            alt=""
+            width={600}
+            height={400}
+            className="aspect-[3/2] w-full rounded-t-xl object-cover"
+          />
+        ) : (
+          <div className="aspect-[3/2] w-full rounded-t-xl bg-gradient-to-b from-muted/40 to-muted/10" />
+        )}
+        <div className="p-4 pb-3">
+          <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
+            {b.title}
+          </h3>
+          {b.excerpt && (
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">{b.excerpt}</p>
+          )}
+        </div>
+      </Link>
+      <div className="mt-2 flex items-center justify-between gap-2 px-1">
+        {b.published_at ? (
+          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+            {new Date(b.published_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </time>
+        ) : (
+          <span className="text-xs text-muted-foreground" aria-hidden />
+        )}
+        <BlogPostShareMenu
+          url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
+          title={b.title}
+        />
+      </div>
+    </li>
+  );
+}
+
+export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin, blog_list_layout = "list" }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -114,6 +176,10 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
     return sortedBlogs.slice(start, start + POSTS_PER_PAGE);
   }, [sortedBlogs, currentPage]);
 
+  const isCardGrid = blog_list_layout === "card_grid";
+  const ItemComponent = isCardGrid ? BlogCardGridItem : BlogListItemRow;
+  const listClass = isCardGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-5" : "";
+
   if (blogs.length === 0) {
     return (
       <section className="mt-5 sm:mt-6">
@@ -127,9 +193,9 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured Posts</h2>
-          <ul>
+          <ul className={listClass}>
             {featuredBlogs.map(b => (
-               <BlogListItemRow
+               <ItemComponent
                  key={`featured-${b.blog_id}`}
                  blog={b}
                  username={username}
@@ -145,9 +211,9 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
         <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Recent Posts</h2>
       )}
 
-      <ul>
+      <ul className={listClass}>
         {pagedBlogs.map((b) => (
-          <BlogListItemRow
+          <ItemComponent
             key={b.blog_id}
             blog={b}
             username={username}
@@ -158,7 +224,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       </ul>
 
       {sortedBlogs.length > 0 ? (
-        <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
+        <div className={`flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4 ${isCardGrid ? "mt-5" : ""}`}>
           <p className="text-xs text-muted-foreground sm:text-sm">
             Page {currentPage} of {totalPages}
           </p>

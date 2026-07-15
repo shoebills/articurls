@@ -616,6 +616,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 hideFeatured
                 useCustomDomain
                 siteOrigin={siteOrigin}
+                blog_list_layout={user.blog_list_layout || "list"}
               />
             ) : (
               <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
@@ -709,6 +710,7 @@ export default async function CustomDomainPage({ params }: Props) {
             user={user}
             useCustomDomain
             siteOrigin={siteOrigin}
+            blog_list_layout={user.blog_list_layout || "list"}
           />
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
       </main>

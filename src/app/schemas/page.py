@@ -74,3 +74,4 @@ class DesignSettings(BaseModel):
     site_footer_enabled: bool = True
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
+    blog_list_layout: Literal["list", "card_grid"] = "list"

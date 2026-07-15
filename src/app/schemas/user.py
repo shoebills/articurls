@@ -75,6 +75,7 @@ class PublicUser(BaseModel):
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
+    blog_list_layout: Literal["list", "card_grid"] = "list"
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
