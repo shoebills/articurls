@@ -129,7 +129,7 @@ function BlogCardGridItem({
             />
           )}
         </div>
-        <div className="p-4 pb-3">
+        <div className="pt-4 pb-3">
           <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
             {b.title}
           </h3>
@@ -138,7 +138,7 @@ function BlogCardGridItem({
           )}
         </div>
       </Link>
-      <div className="flex items-center justify-between gap-2 px-4 pb-1">
+      <div className="flex items-center justify-between gap-2 pb-1">
         {b.published_at ? (
           <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
             {new Date(b.published_at).toLocaleDateString("en-US", {
@@ -193,7 +193,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   const isCardGrid = blog_list_layout === "card_grid";
   const ItemComponent = isCardGrid ? BlogCardGridItem : BlogListItemRow;
-  const listClass = isCardGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-5" : "";
+  const listClass = isCardGrid ? "grid grid-cols-1 sm:grid-cols-2 gap-8" : "";
 
   if (blogs.length === 0) {
     return (
