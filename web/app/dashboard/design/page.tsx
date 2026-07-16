@@ -176,6 +176,13 @@ export default function DesignDashboardPage() {
     const me = getCachedApiData<UserSettings>("/user/me", t);
     return me?.bio || "";
   });
+  const [aboutTitle, setAboutTitle] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<DesignSettings>("/user/design", t);
+    return cached?.about_title || "";
+  });
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
     if (typeof window === "undefined") return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
     const t = localStorage.getItem("articurls_token");
@@ -267,6 +274,7 @@ export default function DesignDashboardPage() {
         youtube_link: me.youtube_link || "",
       };
       setBio(me.bio || "");
+      setAboutTitle(me.about_title || "");
       setSocialLinks(nextLinks);
       initialBioRef.current = me.bio || "";
       initialSocialLinksRef.current = { ...nextLinks };
@@ -837,15 +845,13 @@ export default function DesignDashboardPage() {
               <Label htmlFor="about-title">Title</Label>
               <Input
                 id="about-title"
-                value={design.about_title || ""}
-                onChange={(e) => {
-                  const val = e.target.value.slice(0, 40);
-                  saveDesign({ ...design, about_title: val || null });
-                }}
+                value={aboutTitle}
+                onChange={(e) => setAboutTitle(e.target.value.slice(0, 40))}
+                onBlur={() => saveDesign({ ...design, about_title: aboutTitle.trim() || null })}
                 maxLength={40}
                 placeholder="Eg: Hi! I'm John Doe"
               />
-              <p className="text-xs text-muted-foreground">{(design.about_title || "").length}/40 characters</p>
+              <p className="text-xs text-muted-foreground">{aboutTitle.length}/40 characters</p>
             </div>
             <div className="space-y-2.5">
               <Label htmlFor="bio">Bio</Label>
