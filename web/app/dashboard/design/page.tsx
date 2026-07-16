@@ -665,11 +665,55 @@ export default function DesignDashboardPage() {
       {selectedSection === "body" ? (
       <SectionPanel
         title="Body"
-        description="Control blog list layout and featured posts."
+        description="Control blog list layout, about section, and featured posts."
         sectionId="design-body"
         headingId="design-body-heading"
         selected
       >
+        <div className="rounded-xl border p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-medium">Enable about section</p>
+            <Switch
+              checked={design.footer_enabled}
+              onCheckedChange={(v) => saveDesign({ ...design, footer_enabled: v })}
+              disabled={busy}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Shows title and bio at the top of the blog list.
+          </p>
+        </div>
+
+        {design.footer_enabled ? (
+          <>
+            <div className="space-y-3">
+              <Label htmlFor="about-title">Title</Label>
+              <Input
+                id="about-title"
+                value={aboutTitle}
+                onChange={(e) => setAboutTitle(e.target.value.slice(0, 40))}
+                onBlur={() => saveDesign({ ...design, about_title: aboutTitle.trim() || null })}
+                maxLength={40}
+                placeholder="Eg: Hi! I'm John Doe"
+              />
+              <p className="text-xs text-muted-foreground">{aboutTitle.length}/40 characters</p>
+            </div>
+            <div className="space-y-3">
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                className="mt-2 min-h-[120px]"
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                onBlur={() => saveBioSocials()}
+                maxLength={1400}
+                placeholder="Tell more about yourself..."
+              />
+              <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/50 words</p>
+            </div>
+          </>
+        ) : null}
+
         <div className="space-y-3">
           <p className="font-medium">Blog list layout</p>
           <div className="flex gap-2">
@@ -816,7 +860,7 @@ export default function DesignDashboardPage() {
       </SectionPanel>
       ) : null}
 
-      {/* About & footer */}
+      {/* Footer */}
       {selectedSection === "footer" ? (
       <SectionPanel
         title="Footer"
@@ -825,52 +869,6 @@ export default function DesignDashboardPage() {
         headingId="design-footer-heading"
         selected
       >
-        <div className="rounded-xl border p-3 space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <p className="font-medium">Enable about section</p>
-            <Switch
-              checked={design.footer_enabled}
-              onCheckedChange={(v) => saveDesign({ ...design, footer_enabled: v })}
-              disabled={busy}
-            />
-          </div>
-          <p className="text-sm text-muted-foreground">
-            Displays profile image, name, and bio below blogs.
-          </p>
-        </div>
-
-        {design.footer_enabled ? (
-          <>
-            <div className="space-y-2.5">
-              <Label htmlFor="about-title">Title</Label>
-              <Input
-                id="about-title"
-                value={aboutTitle}
-                onChange={(e) => setAboutTitle(e.target.value.slice(0, 40))}
-                onBlur={() => saveDesign({ ...design, about_title: aboutTitle.trim() || null })}
-                maxLength={40}
-                placeholder="Eg: Hi! I'm John Doe"
-              />
-              <p className="text-xs text-muted-foreground">{aboutTitle.length}/40 characters</p>
-            </div>
-            <div className="space-y-2.5">
-              <Label htmlFor="bio">Bio</Label>
-              <Textarea
-                id="bio"
-                className="mt-2 min-h-[120px]"
-                value={bio}
-                onChange={(e) => setBio(e.target.value)}
-                onBlur={() => saveBioSocials()}
-                maxLength={1400}
-                placeholder="Tell more about yourself..."
-              />
-              <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/50 words</p>
-            </div>
-          </>
-        ) : null}
-
-        <div className="border-t border-border/60" />
-
         <div className="rounded-xl border p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="font-medium">Enable footer</p>
