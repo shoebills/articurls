@@ -226,8 +226,8 @@ def update_design_settings(
     db_user.about_title = request.about_title
     
     blog_ids = request.featured_blog_ids or []
-    if len(blog_ids) > 10:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 10 featured blogs allowed")
+    if len(blog_ids) > 12:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 12 featured blogs allowed")
     
     if blog_ids:
         owned_ids = {b[0] for b in db.query(models.Blog.blog_id).filter(

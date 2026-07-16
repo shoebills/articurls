@@ -761,7 +761,7 @@ export default function DesignDashboardPage() {
         </div>
         {design.featured_blogs_enabled ? (
           <>
-            <p className="font-medium">Featured Posts ({design.featured_blog_ids.length}/10)</p>
+            <p className="font-medium">Featured Posts ({design.featured_blog_ids.length}/12)</p>
             {design.featured_blog_ids.length > 0 ? (
               <ul className="space-y-2">
                 {design.featured_blog_ids.map((id, idx) => {
@@ -812,7 +812,7 @@ export default function DesignDashboardPage() {
                 <p className="text-sm font-medium text-muted-foreground">No featured posts yet.</p>
               </div>
             )}
-            {design.featured_blog_ids.length < 10 ? (
+            {design.featured_blog_ids.length < 12 ? (
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Select value={blogToAdd} onValueChange={setBlogToAdd}>
                   <SelectTrigger className="sm:flex-1">
@@ -849,7 +849,7 @@ export default function DesignDashboardPage() {
                 </Button>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground mt-2">Maximum 10 posts allowed.</p>
+              <p className="text-sm text-muted-foreground mt-2">Maximum 12 posts allowed.</p>
             )}
           </>
         ) : null}

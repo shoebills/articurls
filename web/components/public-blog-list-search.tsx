@@ -19,7 +19,7 @@ type PublicBlogListSearchProps = {
   blog_list_layout?: BlogListLayout;
 };
 
-const POSTS_PER_PAGE = 10;
+const POSTS_PER_PAGE = 12;
 
 function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
   const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
@@ -222,9 +222,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
         </div>
       ) : null}
 
-      {showFeatured && (
-        <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Recent Posts</h2>
-      )}
+      <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Recent Posts</h2>
 
       <ul className={listClass}>
         {pagedBlogs.map((b) => (
