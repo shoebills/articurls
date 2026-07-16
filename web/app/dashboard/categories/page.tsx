@@ -189,7 +189,7 @@ export default function CategoriesDashboardPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Categories</h1>
 
       <section className="rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm">
-        <div className="p-5 sm:p-6">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-2 sm:pb-3">
           <h2 className="text-base font-semibold leading-none tracking-tight">Create Category</h2>
           <p className="mt-1 text-sm text-muted-foreground">Add a new category to organize your posts.</p>
         </div>
@@ -210,7 +210,7 @@ export default function CategoriesDashboardPage() {
       </section>
 
       <section className="rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm">
-        <div className="p-5 sm:p-6">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-2 sm:pb-3">
           <h2 className="text-base font-semibold leading-none tracking-tight">All Categories</h2>
           <p className="mt-1 text-sm text-muted-foreground">Rename or delete existing categories.</p>
         </div>
@@ -298,7 +298,7 @@ export default function CategoriesDashboardPage() {
       </section>
 
       <section className="rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm">
-        <div className="p-5 sm:p-6">
+        <div className="px-5 sm:px-6 pt-5 sm:pt-6 pb-2 sm:pb-3">
           <h2 className="text-base font-semibold leading-none tracking-tight">Menu Order</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Choose which categories appear in your blog header and in what order.
