@@ -180,8 +180,8 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
-    const cached = getCachedApiData<DesignSettings>("/user/design", t);
-    return cached?.about_title || "";
+    const me = getCachedApiData<UserSettings>("/user/me", t);
+    return me?.about_title || "";
   });
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
     if (typeof window === "undefined") return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
@@ -690,6 +690,7 @@ export default function DesignDashboardPage() {
               <Label htmlFor="about-title">Title</Label>
               <Input
                 id="about-title"
+                className="mt-2"
                 value={aboutTitle}
                 onChange={(e) => setAboutTitle(e.target.value.slice(0, 40))}
                 onBlur={() => saveDesign({ ...design, about_title: aboutTitle.trim() || null })}
@@ -713,6 +714,8 @@ export default function DesignDashboardPage() {
             </div>
           </>
         ) : null}
+
+        <div className="border-t border-border/60" />
 
         <div className="space-y-3">
           <p className="font-medium">Blog list layout</p>
