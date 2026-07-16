@@ -32,13 +32,6 @@ def validate_hostname(hostname: str) -> None:
             detail="Invalid hostname format.",
         )
 
-    parts = hostname.split(".")
-    if len(parts) < 3:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Root domains are not supported. Use a subdomain (e.g. www.example.com).",
-        )
-
     if _RESERVED_RE.search(hostname):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

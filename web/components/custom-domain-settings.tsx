@@ -221,7 +221,7 @@ export default function CustomDomainSettings() {
           <form onSubmit={handleAddDomain} className="flex gap-3">
             <Input
               type="text"
-              placeholder="www.example.com"
+              placeholder="example.com"
               value={hostname}
               onChange={(e) => setHostname(e.target.value)}
               disabled={loading}
@@ -318,6 +318,13 @@ export default function CustomDomainSettings() {
                         label = `SSL certificate (${sslCounter} of ${sslRecords.filter((r) => r.type === "TXT").length})`;
                       }
                     }
+                    const nameDisplay =
+                      record.purpose === "routing" &&
+                      record.type === "CNAME" &&
+                      domain.hostname &&
+                      domain.hostname.split(".").length < 3
+                        ? "@"
+                        : undefined;
                     return (
                       <DnsRecordCard
                         key={idx}
@@ -326,6 +333,7 @@ export default function CustomDomainSettings() {
                         copiedField={copiedField}
                         onCopy={copy}
                         overrideLabel={label}
+                        nameDisplay={nameDisplay}
                       />
                     );
                   });
@@ -487,12 +495,14 @@ function DnsRecordCard({
   copiedField,
   onCopy,
   overrideLabel,
+  nameDisplay,
 }: {
   record: DNSRecord;
   idx: number;
   copiedField: string | null;
   onCopy: (text: string, key: string) => void;
   overrideLabel?: string;
+  nameDisplay?: string;
 }) {
   const purposeLabel: Record<string, string> = {
     ownership: "Ownership verification",
@@ -518,7 +528,7 @@ function DnsRecordCard({
         </span>
       </div>
 
-      <CopyRow label="Name" value={record.name} fieldKey={`name-${idx}`} copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label="Name" value={record.name} displayValue={nameDisplay} fieldKey={`name-${idx}`} copiedField={copiedField} onCopy={onCopy} />
       <CopyRow label="Value" value={record.value} fieldKey={`value-${idx}`} copiedField={copiedField} onCopy={onCopy} />
     </div>
   );
@@ -527,12 +537,14 @@ function DnsRecordCard({
 function CopyRow({
   label,
   value,
+  displayValue,
   fieldKey,
   copiedField,
   onCopy,
 }: {
   label: string;
   value: string;
+  displayValue?: string;
   fieldKey: string;
   copiedField: string | null;
   onCopy: (text: string, key: string) => void;
@@ -543,7 +555,7 @@ function CopyRow({
       <p className="mb-1 text-xs text-muted-foreground">{label}</p>
       <div className="flex items-center gap-2">
         <code className="min-w-0 flex-1 truncate rounded bg-background px-3 py-1.5 text-xs font-mono border">
-          {value}
+          {displayValue ?? value}
         </code>
         <Button
           type="button"
