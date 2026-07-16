@@ -33,7 +33,7 @@ class UserSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
-    footer_enabled: bool
+    show_about_section: bool
     site_footer_enabled: bool = True
     last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
@@ -69,7 +69,7 @@ class PublicUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
-    footer_enabled: bool
+    show_about_section: bool
     site_footer_enabled: bool = True
     show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None

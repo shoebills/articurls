@@ -112,14 +112,14 @@ export default function DesignDashboardPage() {
   const [design, setDesign] = useState<DesignSettings>(() => {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
+      nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
       featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
-      nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
+      nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
       featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
     };
   });
@@ -667,8 +667,8 @@ export default function DesignDashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <p className="font-medium">Enable about section</p>
             <Switch
-              checked={design.footer_enabled}
-              onCheckedChange={(v) => saveDesign({ ...design, footer_enabled: v })}
+              checked={design.show_about_section}
+              onCheckedChange={(v) => saveDesign({ ...design, show_about_section: v })}
               disabled={busy}
             />
           </div>
@@ -677,7 +677,7 @@ export default function DesignDashboardPage() {
           </p>
         </div>
 
-        {design.footer_enabled ? (
+        {design.show_about_section ? (
           <>
             <div className="space-y-3">
               <Label htmlFor="about-title">Title</Label>

@@ -749,7 +749,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     nav_blog_name: user.nav_blog_name,
                     nav_blog_name_size: user.nav_blog_name_size ?? "medium",
                     nav_menu_enabled: user.nav_menu_enabled,
-                    footer_enabled: user.footer_enabled,
+                    show_about_section: user.show_about_section,
                     site_footer_enabled: user.site_footer_enabled,
                     featured_blogs_enabled: user.featured_blogs_enabled,
                     featured_blog_ids: next,

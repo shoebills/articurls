@@ -219,7 +219,7 @@ def update_design_settings(
     db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
     db_user.nav_blog_name_size = request.nav_blog_name_size
     db_user.nav_menu_enabled = request.nav_menu_enabled
-    db_user.footer_enabled = request.footer_enabled
+    db_user.show_about_section = request.show_about_section
     db_user.site_footer_enabled = request.site_footer_enabled
     db_user.featured_blogs_enabled = request.featured_blogs_enabled
     db_user.blog_list_layout = request.blog_list_layout

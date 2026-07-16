@@ -53,7 +53,7 @@ class User(Base):
     nav_blog_name = Column(String, nullable=True)
     nav_blog_name_size = Column(String(16), nullable=False, default="medium")
     nav_menu_enabled = Column(Boolean, nullable=False, default=True)
-    footer_enabled = Column(Boolean, nullable=False, default=False)
+    show_about_section = Column(Boolean, nullable=False, default=False)
     site_footer_enabled = Column(Boolean, nullable=False, default=True)
     rss_enabled = Column(Boolean, nullable=False, default=False)
     last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
