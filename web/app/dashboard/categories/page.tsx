@@ -174,7 +174,7 @@ export default function CategoriesDashboardPage() {
             <Skeleton className="h-5 w-32" />
             <Skeleton className="mt-1 h-4 w-64" />
           </div>
-          <div className="border-t p-5 sm:p-6 space-y-3">
+          <div className="p-5 sm:p-6 space-y-3">
             {[1, 2, 3].map((i) => (
               <Skeleton key={i} className="h-14 w-full rounded-md" />
             ))}
@@ -193,7 +193,7 @@ export default function CategoriesDashboardPage() {
           <h2 className="text-base font-semibold leading-none tracking-tight">Create Category</h2>
           <p className="mt-1 text-sm text-muted-foreground">Add a new category to organize your posts.</p>
         </div>
-        <div className="border-t p-5 sm:p-6">
+        <div className="p-5 sm:p-6">
           <div className="flex items-center gap-2">
             <Input
               placeholder="New category name"
@@ -214,7 +214,7 @@ export default function CategoriesDashboardPage() {
           <h2 className="text-base font-semibold leading-none tracking-tight">All Categories</h2>
           <p className="mt-1 text-sm text-muted-foreground">Rename or delete existing categories.</p>
         </div>
-        <div className="border-t p-5 sm:p-6 space-y-2">
+        <div className="p-5 sm:p-6 space-y-2">
           {categories.length === 0 ? (
             <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
               <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
@@ -304,7 +304,7 @@ export default function CategoriesDashboardPage() {
             Choose which categories appear in your blog header and in what order.
           </p>
         </div>
-        <div className="border-t p-5 sm:p-6 space-y-4">
+        <div className="p-5 sm:p-6 space-y-4">
           {menuCatSelection.length === 0 ? (
             <div className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center">
               <p className="text-sm font-medium text-muted-foreground">

@@ -13,7 +13,6 @@ import {
   uploadBlogMedia,
   deleteBlogMediaByUrl,
   listCategories,
-  createCategory,
   assignBlogCategories,
   patchDesignSettings,
   ApiError,
@@ -105,8 +104,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [selectedCatIds, setSelectedCatIds] = useState<number[]>([]);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
   const [pendingCatIds, setPendingCatIds] = useState<number[]>([]);
-  const [catBusy, setCatBusy] = useState(false);
-  const [newCatName, setNewCatName] = useState("");
   const catDropdownRef = useRef<HTMLDivElement | null>(null);
   const catTriggerRef = useRef<HTMLButtonElement | null>(null);
 
@@ -421,23 +418,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
       setUploadingFeatured(false);
-    }
-  }
-
-  async function createCategoryInline() {
-    if (!token || !newCatName.trim()) return;
-    setCatBusy(true);
-    setErr(null);
-    try {
-      const created = await createCategory(token, { name: newCatName.trim() });
-      setNewCatName("");
-      const updatedCats = await listCategories(token);
-      setAllCategories(updatedCats);
-      setPendingCatIds((prev) => [...prev, created.category_id]);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to create category");
-    } finally {
-      setCatBusy(false);
     }
   }
 
@@ -930,7 +910,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                     setCatDropdownOpen(!catDropdownOpen);
                   }}
-                  disabled={catBusy}
+                   disabled={false}
                 >
                   <span className="truncate text-muted-foreground">
                     {selectedCatIds.length === 0
@@ -976,21 +956,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         })}
                       </div>
                       )}
-                      <div className="px-3"><div className="border-t border-border/70" /></div>
-                      <div className="flex items-center gap-2 w-full px-3">
-                        <Input
-                          value={newCatName}
-                          onChange={(e) => setNewCatName(e.target.value)}
-                          placeholder="New category"
-                          className="h-10 min-w-0 flex-1 text-sm"
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") createCategoryInline();
-                          }}
-                        />
-                        <Button onClick={createCategoryInline} disabled={!newCatName.trim() || catBusy}>
-                          Add
-                        </Button>
-                      </div>
                       <div className="flex gap-2 px-3">
                         <Button
                   variant="outline"

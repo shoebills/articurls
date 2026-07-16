@@ -11,8 +11,8 @@ import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palett
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
-  { href: "/dashboard/categories", label: "Categories", icon: Tags },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
+  { href: "/dashboard/categories", label: "Categories", icon: Tags },
   { href: "/dashboard/design", label: "Design", icon: Palette },
   { href: "/dashboard/seo", label: "SEO", icon: Search },
   { href: "/dashboard/audience", label: "Audience", icon: Users },
