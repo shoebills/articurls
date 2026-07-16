@@ -193,7 +193,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
 
   const isCardGrid = blog_list_layout === "card_grid";
   const ItemComponent = isCardGrid ? BlogCardGridItem : BlogListItemRow;
-  const listClass = isCardGrid ? "grid grid-cols-1 gap-8" : "";
+  const listClass = isCardGrid ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "";
 
   if (blogs.length === 0) {
     return (
@@ -239,7 +239,7 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       </ul>
 
       {sortedBlogs.length > 0 ? (
-        <div className={`mt-5 flex items-center justify-between ${isCardGrid ? "" : ""}`}>
+        <div className="mt-10 flex items-center justify-between">
           <Button
             variant="outline"
             size="sm"
