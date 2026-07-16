@@ -5,7 +5,6 @@ import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import { isReservedUsername } from "@/lib/reserved-usernames";
 import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { resolveBlogOgImage } from "@/lib/blog-images";
@@ -234,7 +233,6 @@ export default async function PublicBlogPage({ params }: Props) {
             <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
           </div>
         ) : null}
-        <PublicProfileFooter user={author} />
         <PublicSiteFooter user={author} pages={pages} />
       </main>
       {author.show_articurls_watermark !== false ? (

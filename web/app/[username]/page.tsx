@@ -167,6 +167,12 @@ export default async function PublicProfilePage({ params }: Props) {
           </header>
         ) : null}
         <StructuredData data={generateWebSiteSchema(user, canonical)} />
+        {user.footer_enabled && (user.about_title || user.bio) ? (
+          <div className="mb-10 text-center">
+            <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h1>
+            {user.bio ? <p className="whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
+          </div>
+        ) : null}
         <PublicBlogListSearch blogs={blogs} username={username} user={user} siteOrigin={UGS_ORIGIN} blog_list_layout={user.blog_list_layout || "list"} />
         <PublicSiteFooter user={user} pages={pages} />
       </main>

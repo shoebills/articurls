@@ -7,7 +7,7 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
 
   return (
     <section className="mt-12 border-t border-border/80 pt-8 text-center">
-      <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h2>
+      <h1 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h1>
       {user.bio ? <p className="whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
     </section>
   );

@@ -14,7 +14,6 @@ import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
-import { PublicProfileFooter } from "@/components/public-profile-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages } from "@/lib/image-transform";
@@ -415,7 +414,6 @@ export default async function CustomDomainPage({ params }: Props) {
               <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
             </div>
           ) : null}
-          <PublicProfileFooter user={author} />
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
         </main>
         {author.show_articurls_watermark !== false ? (
@@ -704,6 +702,12 @@ export default async function CustomDomainPage({ params }: Props) {
                 />
               </div>
             </header>
+          ) : null}
+          {user.footer_enabled && (user.about_title || user.bio) ? (
+            <div className="mb-10 text-center">
+              <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h1>
+              {user.bio ? <p className="whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
+            </div>
           ) : null}
           <PublicBlogListSearch
             blogs={blogsWithRelativeHrefs}
