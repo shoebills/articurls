@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import {
   ApiError,
@@ -10,17 +11,12 @@ import {
   getMe,
   listPages,
   listBlogs,
-  listCategories,
-  createCategory,
-  updateCategory,
-  deleteCategory,
   patchDesignSettings,
   patchMe,
   updateFooterPages,
-  updateMenuCategories,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, Category, UserSettings } from "@/lib/types";
+import type { DesignSettings, NavBlogNameSize, UserPage, BlogListItem, UserSettings } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
@@ -28,9 +24,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -135,13 +130,6 @@ export default function DesignDashboardPage() {
     const cached = getCachedApiData<BlogListItem[]>("/blog/", t);
     return cached ? cached.filter((x) => x.status === "published") : [];
   });
-  const [categories, setCategories] = useState<Category[]>(() => {
-    if (typeof window === "undefined") return [];
-    const t = localStorage.getItem("articurls_token");
-    return t ? (getCachedApiData<Category[]>("/categories/", t) ?? []) : [];
-  });
-  const [menuCatSelection, setMenuCatSelection] = useState<number[]>([]);
-  const [catToAdd, setCatToAdd] = useState<string>("");
   const [footerSelection, setFooterSelection] = useState<number[]>([]);
   const [footerPageToAdd, setFooterPageToAdd] = useState<string>("");
   const [blogToAdd, setBlogToAdd] = useState<string>("");
@@ -153,7 +141,6 @@ export default function DesignDashboardPage() {
       apiCacheHas("/user/design", t) &&
       apiCacheHas("/pages/", t) &&
       apiCacheHas("/blog/", t) &&
-      apiCacheHas("/categories/", t) &&
       apiCacheHas("/user/me", t)
     );
   });
@@ -162,12 +149,6 @@ export default function DesignDashboardPage() {
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
   const initialBioRef = useRef<string | null>(null);
   const initialSocialLinksRef = useRef<Record<SocialPlatform, string> | null>(null);
-  const [catCreateName, setCatCreateName] = useState("");
-  const [catEditingId, setCatEditingId] = useState<number | null>(null);
-  const [catEditingName, setCatEditingName] = useState("");
-  const [catDeletingId, setCatDeletingId] = useState<number | null>(null);
-  const [navMenuModalOpen, setNavMenuModalOpen] = useState(false);
-
   // Bio and social links state (saved via patchMe, displayed in about section)
   const [bio, setBio] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -216,12 +197,6 @@ export default function DesignDashboardPage() {
   const [selectedSection, setSelectedSection] = useState<DesignSectionId>("header");
 
   const pagesById = useMemo(() => new Map(pages.map((p) => [p.page_id, p])), [pages]);
-  const catsById = useMemo(() => new Map(categories.map((c) => [c.category_id, c])), [categories]);
-
-  function getNextCatToAdd(rows: Category[], selection: number[]) {
-    const nextAvailable = rows.find((cat) => !selection.includes(cat.category_id));
-    return nextAvailable ? String(nextAvailable.category_id) : "";
-  }
 
   function showSavedToast() {
     setSavedMsg("Saved");
@@ -230,11 +205,10 @@ export default function DesignDashboardPage() {
   async function load() {
     if (!token) return;
     try {
-      const [d, p, b, c, me] = await Promise.all([
+      const [d, p, b, me] = await Promise.all([
         getDesignSettings(token),
         listPages(token),
         listBlogs(token),
-        listCategories(token),
         getMe(token),
       ]);
       setDesign({
@@ -244,13 +218,6 @@ export default function DesignDashboardPage() {
       });
       setPages(p);
       setBlogs(b.filter((x) => x.status === "published"));
-      setCategories(c);
-      const selectedCats = [...c]
-        .filter((x) => x.show_in_menu)
-        .sort((a, b) => (a.menu_order ?? 9999) - (b.menu_order ?? 9999))
-        .map((x) => x.category_id);
-      setMenuCatSelection(selectedCats);
-      setCatToAdd(getNextCatToAdd(c, selectedCats));
       const selectedFooter = [...p]
         .filter((x) => x.show_in_footer)
         .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999))
@@ -304,23 +271,6 @@ export default function DesignDashboardPage() {
     }
   }
 
-  async function saveMenu(nextSelection: number[]) {
-    if (!token) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      const rows = await updateMenuCategories(token, nextSelection);
-      setCategories(rows);
-      setMenuCatSelection(nextSelection);
-      setCatToAdd(getNextCatToAdd(rows, nextSelection));
-      showSavedToast();
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to save menu");
-    } finally {
-      setBusy(false);
-    }
-  }
-
   async function saveFooter(nextSelection: number[]) {
     if (!token) return;
     setBusy(true);
@@ -332,67 +282,6 @@ export default function DesignDashboardPage() {
       showSavedToast();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to save footer links");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onCreateCategory() {
-    if (!token || !catCreateName.trim()) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await createCategory(token, { name: catCreateName.trim() });
-      setCatCreateName("");
-      const rows = await listCategories(token);
-      setCategories(rows);
-      setCatToAdd(getNextCatToAdd(rows, menuCatSelection));
-      showSavedToast();
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to create category");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onSaveRename() {
-    if (!token || catEditingId == null || !catEditingName.trim()) return;
-    setBusy(true);
-    setErr(null);
-    try {
-      await updateCategory(token, catEditingId, { name: catEditingName.trim() });
-      setCatEditingId(null);
-      setCatEditingName("");
-      const rows = await listCategories(token);
-      setCategories(rows);
-      setCatToAdd(getNextCatToAdd(rows, menuCatSelection));
-      showSavedToast();
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to rename category");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function onDeleteCategory(id: number) {
-    if (!token) return;
-    setBusy(true);
-    setErr(null);
-    let nextSelection = menuCatSelection;
-    try {
-      await deleteCategory(token, id);
-      if (menuCatSelection.includes(id)) {
-        nextSelection = menuCatSelection.filter((x) => x !== id);
-        await updateMenuCategories(token, nextSelection);
-        setMenuCatSelection(nextSelection);
-      }
-      const rows = await listCategories(token);
-      setCategories(rows);
-      setCatToAdd(getNextCatToAdd(rows, nextSelection));
-      setCatDeletingId(null);
-      showSavedToast();
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to delete category");
     } finally {
       setBusy(false);
     }
@@ -441,7 +330,6 @@ export default function DesignDashboardPage() {
     { id: "footer", label: "Footer" },
   ];
 
-  const availableCats = categories.filter((c) => !menuCatSelection.includes(c.category_id));
   const footerAvailable = pages.filter((p) => p.status === "published" && !footerSelection.includes(p.page_id));
   const selectedFooterPages = footerSelection
     .map((id) => pagesById.get(id))
@@ -619,34 +507,9 @@ export default function DesignDashboardPage() {
               <p className="text-sm text-muted-foreground">Show categories in the header.</p>
             </div>
             {design.nav_menu_enabled ? (
-              <>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Menu Items</p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setNavMenuModalOpen(true)}
-                    disabled={busy}
-                  >
-                    Manage
-                  </Button>
-                </div>
-                {menuCatSelection.length > 0 ? (
-                  <div className="flex flex-wrap gap-2">
-                    {menuCatSelection.map((id) => (
-                      <span key={id} className="px-3 py-1 rounded-full bg-muted text-sm">
-                        {catsById.get(id)?.name || "Untitled"}
-                      </span>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="border border-dashed rounded-lg p-4 text-center">
-                    <p className="text-sm text-muted-foreground">No categories added.</p>
-                  </div>
-                )}
-              </>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/dashboard/categories">Manage Categories</Link>
+              </Button>
             ) : null}
           </>
         ) : null}
@@ -1064,252 +927,6 @@ export default function DesignDashboardPage() {
         ) : null}
       </SectionPanel>
       ) : null}
-
-      {/* Navigation Menu Modal */}
-      <Dialog open={navMenuModalOpen} onOpenChange={setNavMenuModalOpen}>
-        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-2xl rounded-2xl sm:rounded-xl">
-          <DialogHeader className="text-left">
-            <DialogTitle>Manage Navigation Menu</DialogTitle>
-            <DialogDescription>
-              Assign category via post editor.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-5 min-w-0">
-            <div className="space-y-3 border-t border-border/60 pt-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium">All categories</p>
-                <p className="text-sm text-muted-foreground">
-                  Create and manage categories.
-                </p>
-              </div>
-              {categories.length === 0 ? (
-                <div
-                  className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center"
-                  role="status"
-                >
-                  <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {categories.map((cat) => {
-                    const inMenu = menuCatSelection.includes(cat.category_id);
-                    const isEditing = catEditingId === cat.category_id;
-                    const isDeleting = catDeletingId === cat.category_id;
-                    return (
-                      <div
-                        key={cat.category_id}
-                        className="rounded-md border px-3 py-2"
-                      >
-                        <div className="min-w-0">
-                          {isEditing ? (
-                            <div className="flex items-center justify-between gap-2 min-w-0">
-                              <Input
-                                value={catEditingName}
-                                onChange={(e) => setCatEditingName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") onSaveRename();
-                                  if (e.key === "Escape") {
-                                    setCatEditingId(null);
-                                    setCatEditingName("");
-                                  }
-                                }}
-                                autoFocus
-                                disabled={busy}
-                              />
-                              <div className="flex shrink-0 items-center gap-1">
-                                <Button
-                                  size="sm"
-                                  className="h-10"
-                                  onClick={onSaveRename}
-                                  disabled={busy || !catEditingName.trim()}
-                                >
-                                  Save
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-10"
-                                  onClick={() => {
-                                    setCatEditingId(null);
-                                    setCatEditingName("");
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                              </div>
-                            </div>
-                          ) : isDeleting ? (
-                            <div className="flex items-center justify-between gap-2 min-w-0">
-                              <span className="truncate text-sm font-medium">{cat.name}</span>
-                              <div className="flex shrink-0 items-center gap-1">
-                                <Button size="sm" variant="outline" className="h-10" onClick={() => setCatDeletingId(null)}>
-                                  Cancel
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="destructive"
-                                  className="h-10"
-                                  onClick={() => onDeleteCategory(catDeletingId!)}
-                                  disabled={busy}
-                                >
-                                  Delete
-                                </Button>
-                              </div>
-                            </div>
-                          ) : (
-                            <div className="flex items-center justify-between gap-2 min-w-0">
-                              <span className="truncate text-sm font-medium">{cat.name}</span>
-                              {inMenu ? (
-                                <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
-                                  In menu
-                                </span>
-                              ) : null}
-                              <div className="flex shrink-0 items-center gap-1">
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  onClick={() => {
-                                    setCatEditingId(cat.category_id);
-                                    setCatEditingName(cat.name);
-                                  }}
-                                  disabled={busy}
-                                >
-                                  <Pencil className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                  onClick={() => setCatDeletingId(cat.category_id)}
-                                  disabled={busy}
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </Button>
-                              </div>
-                            </div>
-                          )}
-                          {!isEditing ? (
-                            <p className="text-xs text-muted-foreground">
-                              {cat.blog_count ?? 0} {cat.blog_count === 1 ? "post" : "posts"}
-                            </p>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-              <div className="flex items-center gap-2 pt-4">
-                <Input
-                  placeholder="New category name"
-                  value={catCreateName}
-                  onChange={(e) => setCatCreateName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") onCreateCategory();
-                  }}
-                  disabled={busy}
-                />
-                <Button onClick={onCreateCategory} disabled={busy || !catCreateName.trim()}>
-                  Create
-                </Button>
-              </div>
-            </div>
-            <div className="border-t border-border/60 pt-4" />
-            <div className="space-y-1">
-              <p className="text-sm font-medium">Menu order</p>
-              <p className="text-sm text-muted-foreground">
-                Choose which categories appear in your blog menu.
-              </p>
-            </div>
-            {menuCatSelection.length === 0 ? (
-              <div
-                className="flex min-h-[72px] flex-col items-center justify-center rounded-lg border border-dashed px-6 py-4 text-center"
-                role="status"
-              >
-                <p className="text-sm font-medium text-muted-foreground">
-                  {categories.length === 0 ? "No categories yet." : "Add categories to display in the menu."}
-                </p>
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {menuCatSelection.map((id, idx) => (
-                   <li key={id} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0">
-                    <span className="truncate min-w-0">{catsById.get(id)?.name || "Untitled"}</span>
-                    <div className="flex shrink-0 items-center gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy || idx === 0}
-                        onClick={() => {
-                          const next = [...menuCatSelection];
-                          [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
-                          saveMenu(next);
-                        }}
-                      >
-                        <ChevronUp className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy || idx === menuCatSelection.length - 1}
-                        onClick={() => {
-                          const next = [...menuCatSelection];
-                          [next[idx], next[idx + 1]] = [next[idx + 1], next[idx]];
-                          saveMenu(next);
-                        }}
-                      >
-                        <ChevronDown className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        disabled={busy}
-                        onClick={() => saveMenu(menuCatSelection.filter((x) => x !== id))}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {availableCats.length > 0 ? (
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Select value={catToAdd} onValueChange={setCatToAdd}>
-                  <SelectTrigger className="sm:flex-1">
-                    <SelectValue placeholder="Add category to menu" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableCats.map((c) => (
-                      <SelectItem key={c.category_id} value={String(c.category_id)}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="default"
-                  disabled={busy || !catToAdd}
-                  onClick={() => {
-                    const id = Number(catToAdd);
-                    if (!Number.isFinite(id)) return;
-                    saveMenu([...menuCatSelection, id]);
-                  }}
-                >
-                  Add category
-                </Button>
-              </div>
-            ) : null}
-          </div>
-          <DialogFooter className="justify-end border-t border-border/60 pt-4">
-            <Button variant="default" onClick={() => setNavMenuModalOpen(false)}>
-              Done
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
 
       <FloatingErrorToast
         message={savedMsg}
