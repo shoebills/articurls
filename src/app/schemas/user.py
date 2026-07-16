@@ -76,6 +76,7 @@ class PublicUser(BaseModel):
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     blog_list_layout: Literal["list", "card_grid"] = "list"
+    about_title: Optional[str] = None
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None

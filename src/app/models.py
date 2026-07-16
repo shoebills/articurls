@@ -60,6 +60,7 @@ class User(Base):
     featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     blog_list_layout = Column(String(16), nullable=False, default="list")
+    about_title = Column(String(40), nullable=True)
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     welcome_email_enabled = Column(Boolean, nullable=False, default=False)
     welcome_email_subject = Column(Text, nullable=True)

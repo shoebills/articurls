@@ -7,7 +7,7 @@ export function PublicProfileFooter({ user }: { user: PublicUser }) {
 
   return (
     <section className="mt-12 border-t border-border/80 pt-8">
-      <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">About the author</h2>
+      <h2 className="mb-6 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h2>
       <div className="flex items-center gap-3">
         {user.profile_image_url ? (
           // eslint-disable-next-line @next/next/no-img-element

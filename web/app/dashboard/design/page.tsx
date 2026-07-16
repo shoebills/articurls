@@ -834,6 +834,20 @@ export default function DesignDashboardPage() {
         {design.footer_enabled ? (
           <>
             <div className="space-y-2.5">
+              <Label htmlFor="about-title">Title</Label>
+              <Input
+                id="about-title"
+                value={design.about_title || ""}
+                onChange={(e) => {
+                  const val = e.target.value.slice(0, 40);
+                  saveDesign({ ...design, about_title: val || null });
+                }}
+                maxLength={40}
+                placeholder="Eg: Hi! I'm John Doe"
+              />
+              <p className="text-xs text-muted-foreground">{(design.about_title || "").length}/40 characters</p>
+            </div>
+            <div className="space-y-2.5">
               <Label htmlFor="bio">Bio</Label>
               <Textarea
                 id="bio"

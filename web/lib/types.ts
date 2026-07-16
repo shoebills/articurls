@@ -80,6 +80,7 @@ export interface PublicUser {
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   blog_list_layout?: BlogListLayout;
+  about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;
   custom_domain?: string | null;
@@ -120,6 +121,7 @@ export interface UserSettings {
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   blog_list_layout?: BlogListLayout;
+  about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;
   custom_domain?: string | null;
@@ -180,6 +182,7 @@ export interface DesignSettings {
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   blog_list_layout: BlogListLayout;
+  about_title?: string | null;
 }
 
 export interface MetaSettings {
