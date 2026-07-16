@@ -113,14 +113,14 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const,
+      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, footer_enabled: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const,
+      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {
@@ -176,13 +176,7 @@ export default function DesignDashboardPage() {
     const me = getCachedApiData<UserSettings>("/user/me", t);
     return me?.bio || "";
   });
-  const [aboutTitle, setAboutTitle] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return "";
-    const me = getCachedApiData<UserSettings>("/user/me", t);
-    return me?.about_title || "";
-  });
+  // about_title read/written via design state (saved via saveDesign)
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
     if (typeof window === "undefined") return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
     const t = localStorage.getItem("articurls_token");
@@ -274,7 +268,6 @@ export default function DesignDashboardPage() {
         youtube_link: me.youtube_link || "",
       };
       setBio(me.bio || "");
-      setAboutTitle(me.about_title || "");
       setSocialLinks(nextLinks);
       initialBioRef.current = me.bio || "";
       initialSocialLinksRef.current = { ...nextLinks };
@@ -691,13 +684,13 @@ export default function DesignDashboardPage() {
               <Input
                 id="about-title"
                 className="mt-2"
-                value={aboutTitle}
-                onChange={(e) => setAboutTitle(e.target.value.slice(0, 40))}
-                onBlur={() => saveDesign({ ...design, about_title: aboutTitle.trim() || null })}
+                value={design.about_title || ""}
+                onChange={(e) => setDesign((prev) => ({ ...prev, about_title: e.target.value.slice(0, 40) || null }))}
+                onBlur={() => saveDesign({ ...design, about_title: (design.about_title || "").trim() || null })}
                 maxLength={40}
                 placeholder="Eg: Hi! I'm John Doe"
               />
-              <p className="text-xs text-muted-foreground">{aboutTitle.length}/40 characters</p>
+              <p className="text-xs text-muted-foreground">{(design.about_title || "").length}/40 characters</p>
             </div>
             <div className="space-y-3">
               <Label htmlFor="bio">Bio</Label>
