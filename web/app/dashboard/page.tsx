@@ -466,24 +466,22 @@ export default function DashboardPage() {
             );
           })}
             </ul>
-            <div className="mt-5 flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4">
+            <div className="mt-5 flex items-center justify-between">
+              <Button variant="outline" size="sm" className="h-8 min-h-0 px-3 py-1.5" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
+                Prev
+              </Button>
               <p className="text-xs text-muted-foreground sm:text-sm">
                 Page {currentPage} of {totalPages}
               </p>
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-8 min-h-0 px-3 py-1.5" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={currentPage <= 1}>
-                  Prev
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0 px-3 py-1.5"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                >
-                  Next
-                </Button>
-              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 min-h-0 px-3 py-1.5"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+              >
+                Next
+              </Button>
             </div>
           </>
         ) : (

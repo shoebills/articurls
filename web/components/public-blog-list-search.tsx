@@ -239,30 +239,28 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
       </ul>
 
       {sortedBlogs.length > 0 ? (
-        <div className={`flex items-center justify-between rounded-xl border border-border/70 bg-white px-3 py-2 sm:px-4 ${isCardGrid ? "mt-5" : ""}`}>
+        <div className={`mt-5 flex items-center justify-between ${isCardGrid ? "" : ""}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={currentPage <= 1}
+          >
+            Prev
+          </Button>
           <p className="text-xs text-muted-foreground sm:text-sm">
             Page {currentPage} of {totalPages}
           </p>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-            >
-              Prev
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={currentPage >= totalPages}
+          >
+            Next
+          </Button>
         </div>
       ) : null}
     </section>
