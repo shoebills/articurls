@@ -323,7 +323,7 @@ async def complete_google_signup(
         google_id=google_id,
         email_verified=True,  # Google verified the email
         meta_title=f"{name}'s Blog",
-        meta_description=f"Explore all the blogs published by {name} on Articurls.",
+        meta_description=f"Explore all the blogs published by {name}.",
         profile_image_url=picture or settings.default_profile_image_url,
     )
     

@@ -79,7 +79,7 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
                            email=email, 
                            password=hashed_password, 
                            meta_title=f"{request.name}'s Blog",
-                           meta_description=f"Explore all the blogs published by {request.name} on Articurls.",
+                           meta_description=f"Explore all the blogs published by {request.name}.",
                            profile_image_url=settings.default_profile_image_url)
 
     db.add(new_user)
