@@ -120,9 +120,10 @@ export default async function PublicProfilePage({ params }: Props) {
   const pages = await loadPages(username);
   const categories = await loadCategories(username);
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+  const maxWidth = user.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
   const mainSpacing = user.navbar_enabled
-    ? "mx-auto max-w-4xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
-    : "mx-auto max-w-4xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
+    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
+    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
   const catLinks = categories.map((c) => ({ href: getPublicCategoryUrl(username, c.slug), label: c.name }));
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
