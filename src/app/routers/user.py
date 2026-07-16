@@ -333,7 +333,7 @@ def update_user(
         if word_count > 200:
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Bio must be 200 words or fewer",
+                detail="Bio must be 50 words or fewer",
             )
 
     for key, value in update_data.items():

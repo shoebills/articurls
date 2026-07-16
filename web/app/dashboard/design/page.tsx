@@ -407,8 +407,8 @@ export default function DesignDashboardPage() {
 
   async function saveBioSocials(linksOverride?: Record<SocialPlatform, string>) {
     if (!token) return;
-    if ((bio.trim() ? bio.trim().split(/\s+/).length : 0) > 200) {
-      setErr("Bio must be 200 words or fewer");
+    if ((bio.trim() ? bio.trim().split(/\s+/).length : 0) > 50) {
+      setErr("Bio must be 50 words or fewer");
       return;
     }
     setBusy(true);
@@ -864,7 +864,7 @@ export default function DesignDashboardPage() {
                 maxLength={1400}
                 placeholder="Tell more about yourself..."
               />
-              <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/200 words</p>
+              <p className="text-xs text-muted-foreground">{bio.trim() ? bio.trim().split(/\s+/).length : 0}/50 words</p>
             </div>
           </>
         ) : null}

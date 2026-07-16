@@ -168,7 +168,7 @@ export default async function PublicProfilePage({ params }: Props) {
         ) : null}
         <StructuredData data={generateWebSiteSchema(user, canonical)} />
         {user.footer_enabled && (user.about_title || user.bio) ? (
-          <div className="mb-10 text-center">
+          <div className="mb-20 text-center md:w-1/2 md:mx-auto">
             <h1 className="mb-4 text-2xl font-semibold tracking-tight sm:text-3xl">{user.about_title || "About the author"}</h1>
             {user.bio ? <p className="whitespace-pre-line text-base text-muted-foreground">{user.bio}</p> : null}
           </div>
