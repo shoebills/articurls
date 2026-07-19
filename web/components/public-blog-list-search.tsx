@@ -52,7 +52,7 @@ function BlogListItemRow({
               <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
                 {b.title}
               </h3>
-              {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "line-clamp-5" : "line-clamp-2"}`}>{b.excerpt}</p>}
             </div>
             {previewImage && !b.hide_preview_in_lists ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -294,7 +294,7 @@ export function PublicBlogListSearch({
     <section className="mt-5 sm:mt-6">
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
-          <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Featured Posts</h2>
+          <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
           <ul className={listClass}>
             {featuredBlogs.map(b => (
                <ItemComponent
@@ -309,7 +309,7 @@ export function PublicBlogListSearch({
         </div>
       ) : null}
 
-      <h2 className="mb-5 text-xl font-bold tracking-tight sm:mb-6 sm:text-2xl">Recent Posts</h2>
+      <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Recent Posts</h2>
 
       <ul className={listClass}>
         {pagedBlogs.map((b) => (
