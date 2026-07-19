@@ -33,19 +33,21 @@ function BlogListItemRow({
   useCustomDomain = false,
   siteOrigin,
   inGrid = false,
+  largeImage = false,
 }: {
   blog: PublicBlog;
   username: string;
   useCustomDomain?: boolean;
   siteOrigin?: string;
   inGrid?: boolean;
+  largeImage?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   return (
     <li className={inGrid ? "" : "py-5 first:pt-0"}>
       <div className="rounded-xl py-1">
         <Link href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })} className="group block transition-colors hover:bg-muted/30">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
                 {b.title}
@@ -57,9 +59,9 @@ function BlogListItemRow({
               <img
                 src={previewImage}
                 alt=""
-                width={96}
-                height={64}
-                className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
+                width={largeImage ? 224 : 96}
+                height={largeImage ? 149 : 64}
+                className={`aspect-[3/2] shrink-0 rounded-md border border-border/70 object-cover ${largeImage ? "w-36 sm:w-56" : "w-24 sm:w-36"}`}
               />
             ) : null}
           </div>
@@ -270,7 +272,7 @@ export function PublicBlogListSearch({
     ItemComponent = BlogCardGridItem;
     listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
   } else if (isWide && !isAboveTitle) {
-    ItemComponent = BlogListItemRow;
+    ItemComponent = (props) => <BlogListItemRow {...props} largeImage />;
     listClass = "";
   } else if (!isWide && isAboveTitle) {
     ItemComponent = BlogListAboveTitleItem;
