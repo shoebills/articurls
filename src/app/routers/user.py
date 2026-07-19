@@ -222,7 +222,8 @@ def update_design_settings(
     db_user.show_about_section = request.show_about_section
     db_user.site_footer_enabled = request.site_footer_enabled
     db_user.featured_blogs_enabled = request.featured_blogs_enabled
-    db_user.blog_list_layout = request.blog_list_layout
+    db_user.content_width = request.content_width
+    db_user.list_image_position = request.list_image_position
     db_user.about_title = request.about_title
     
     blog_ids = request.featured_blog_ids or []

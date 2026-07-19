@@ -137,7 +137,8 @@ export default async function PublicCustomPage({ params }: Props) {
   if (customRedirect) permanentRedirect(customRedirect);
 
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
-  const maxWidth = user.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+  const contentWidth = user.content_width === "wide" ? "max-w-3xl" : "";
   const mainSpacing = user.navbar_enabled
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -185,26 +186,28 @@ export default async function PublicCustomPage({ params }: Props) {
         ) : null}
 
         <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
-        <div className="flex items-center justify-between">
-          <Link
-            href={getPublicProfileUrl(username)}
-            className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Back
-          </Link>
-          <BlogPostShareMenu
-            url={`${UGS_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
-            title={page.title}
-          />
-        </div>
+        <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+          <div className="flex items-center justify-between">
+            <Link
+              href={getPublicProfileUrl(username)}
+              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu
+              url={`${UGS_ORIGIN}/${encodeURIComponent(username)}/page/${encodeURIComponent(slug)}`}
+              title={page.title}
+            />
+          </div>
 
-        <header className="mt-6 sm:mt-8">
-          <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
-        </header>
-        <article className="mt-12">
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
-        </article>
+          <header className="mt-6 sm:mt-8">
+            <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
+          </header>
+          <article className="mt-12">
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
+          </article>
+        </div>
         <PublicSiteFooter user={user} pages={pages} />
       </main>
       {user.show_articurls_watermark !== false ? (

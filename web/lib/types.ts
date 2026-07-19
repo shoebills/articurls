@@ -50,7 +50,8 @@ export interface PublicBlog {
 }
 
 export type NavBlogNameSize = "small" | "medium" | "large";
-export type BlogListLayout = "list" | "card_grid";
+export type ContentWidth = "narrow" | "wide";
+export type ListImagePosition = "above_title" | "next_to_title";
 
 export interface PublicUser {
   name: string;
@@ -79,7 +80,8 @@ export interface PublicUser {
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
-  blog_list_layout?: BlogListLayout;
+  content_width?: ContentWidth;
+  list_image_position?: ListImagePosition;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;
@@ -120,7 +122,8 @@ export interface UserSettings {
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
-  blog_list_layout?: BlogListLayout;
+  content_width?: ContentWidth;
+  list_image_position?: ListImagePosition;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;
@@ -181,7 +184,8 @@ export interface DesignSettings {
   site_footer_enabled: boolean;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
-  blog_list_layout: BlogListLayout;
+  content_width: ContentWidth;
+  list_image_position: ListImagePosition;
   about_title?: string | null;
 }
 

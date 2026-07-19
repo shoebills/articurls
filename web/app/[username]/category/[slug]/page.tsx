@@ -139,7 +139,7 @@ export default async function PublicCategoryPage({ params }: Props) {
   const categoryName = data.category.name;
 
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
-  const maxWidth = user.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
   const mainSpacing = user.navbar_enabled
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -205,7 +205,7 @@ export default async function PublicCategoryPage({ params }: Props) {
           </div>
 
           {blogs.length > 0 ? (
-            <PublicBlogListSearch blogs={blogs} username={username} user={user} hideFeatured blog_list_layout={user.blog_list_layout || "list"} />
+            <PublicBlogListSearch blogs={blogs} username={username} user={user} hideFeatured content_width={user.content_width || "wide"} list_image_position={user.list_image_position || "above_title"} />
           ) : (
             <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">No posts in this category yet.</p>

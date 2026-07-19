@@ -74,5 +74,6 @@ class DesignSettings(BaseModel):
     site_footer_enabled: bool = True
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
-    blog_list_layout: Literal["list", "card_grid"] = "list"
+    content_width: Literal["narrow", "wide"] = "wide"
+    list_image_position: Literal["above_title", "next_to_title"] = "above_title"
     about_title: Optional[str] = None

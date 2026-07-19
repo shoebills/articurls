@@ -333,7 +333,8 @@ export default async function CustomDomainPage({ params }: Props) {
 
     const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
-    const maxWidth = author.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
+    const maxWidth = author.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+    const contentWidth = author.content_width === "wide" ? "max-w-3xl" : "";
     const containerSpacing = author.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -382,39 +383,41 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <div className="flex items-center justify-between">
-            <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Back
-            </Link>
-            <BlogPostShareMenu url={currentUrl} title={blog.title} />
-          </div>
-          <header className="mt-6 sm:mt-8">
-            <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-              {blog.title}
-            </h1>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              <Link
-                href={getPublicProfileUrl(username, { customDomain: true })}
-                className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                <span className="truncate">{author.name}</span>
+          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+            <div className="flex items-center justify-between">
+              <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Back
               </Link>
-              {blog.published_at && (
-                <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
-                  {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
-                </time>
-              )}
+              <BlogPostShareMenu url={currentUrl} title={blog.title} />
             </div>
-          </header>
-          <div className="mt-12">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
+            <header className="mt-6 sm:mt-8">
+              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+                {blog.title}
+              </h1>
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+                <Link
+                  href={getPublicProfileUrl(username, { customDomain: true })}
+                  className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  <span className="truncate">{author.name}</span>
+                </Link>
+                {blog.published_at && (
+                  <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
+                    {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                  </time>
+                )}
+              </div>
+            </header>
+            <div className="mt-12">
+              <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
+            </div>
+            {showSubscriberCollection ? (
+              <div className="mt-14">
+                <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
+              </div>
+            ) : null}
           </div>
-          {showSubscriberCollection ? (
-            <div className="mt-14">
-              <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
-            </div>
-          ) : null}
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
         </main>
         {author.show_articurls_watermark !== false ? (
@@ -444,7 +447,8 @@ export default async function CustomDomainPage({ params }: Props) {
 
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-    const maxWidth = user.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
+    const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+    const contentWidth = user.content_width === "wide" ? "max-w-3xl" : "";
     const mainSpacing = user.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -494,23 +498,25 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
 
-          <div className="flex items-center justify-between">
-            <Link
-              href={getPublicProfileUrl(username, { customDomain: true })}
-              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Back
-            </Link>
-            <BlogPostShareMenu url={currentUrl} title={page.title} />
-          </div>
+          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+            <div className="flex items-center justify-between">
+              <Link
+                href={getPublicProfileUrl(username, { customDomain: true })}
+                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Back
+              </Link>
+              <BlogPostShareMenu url={currentUrl} title={page.title} />
+            </div>
 
-          <header className="mt-6 sm:mt-8">
-            <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
-          </header>
-          <article className="mt-12">
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
-          </article>
+            <header className="mt-6 sm:mt-8">
+              <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
+            </header>
+            <article className="mt-12">
+              <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
+            </article>
+          </div>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
         {user.show_articurls_watermark !== false ? (
@@ -542,9 +548,10 @@ export default async function CustomDomainPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+    const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
     const mainSpacing = user.navbar_enabled
-      ? "mx-auto max-w-4xl px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6"
-      : "mx-auto max-w-4xl px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14";
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
+      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
       href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
@@ -616,7 +623,8 @@ export default async function CustomDomainPage({ params }: Props) {
                 hideFeatured
                 useCustomDomain
                 siteOrigin={siteOrigin}
-                blog_list_layout={user.blog_list_layout || "list"}
+                content_width={user.content_width || "wide"}
+                list_image_position={user.list_image_position || "above_title"}
               />
             ) : (
               <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
@@ -652,7 +660,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-  const maxWidth = user.blog_list_layout === "card_grid" ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
   const mainSpacing = user.navbar_enabled
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -717,7 +725,8 @@ export default async function CustomDomainPage({ params }: Props) {
             user={user}
             useCustomDomain
             siteOrigin={siteOrigin}
-            blog_list_layout={user.blog_list_layout || "list"}
+            content_width={user.content_width || "wide"}
+            list_image_position={user.list_image_position || "above_title"}
           />
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
       </main>

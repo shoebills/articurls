@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { PublicBlog, PublicUser, BlogListLayout } from "@/lib/types";
+import type { PublicBlog, PublicUser, ContentWidth, ListImagePosition } from "@/lib/types";
 import { UGS_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
@@ -16,7 +16,8 @@ type PublicBlogListSearchProps = {
   hideFeatured?: boolean;
   useCustomDomain?: boolean;
   siteOrigin?: string;
-  blog_list_layout?: BlogListLayout;
+  content_width?: ContentWidth;
+  list_image_position?: ListImagePosition;
 };
 
 const POSTS_PER_PAGE = 12;
@@ -31,15 +32,17 @@ function BlogListItemRow({
   username,
   useCustomDomain = false,
   siteOrigin,
+  inGrid = false,
 }: {
   blog: PublicBlog;
   username: string;
   useCustomDomain?: boolean;
   siteOrigin?: string;
+  inGrid?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   return (
-    <li className="py-5 first:pt-0">
+    <li className={inGrid ? "" : "py-5 first:pt-0"}>
       <div className="rounded-xl py-1">
         <Link href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-3">
@@ -78,6 +81,63 @@ function BlogListItemRow({
             title={b.title}
           />
         </div>
+      </div>
+    </li>
+  );
+}
+
+function BlogListAboveTitleItem({
+  blog: b,
+  username,
+  useCustomDomain = false,
+  siteOrigin,
+}: {
+  blog: PublicBlog;
+  username: string;
+  useCustomDomain?: boolean;
+  siteOrigin?: string;
+}) {
+  const previewImage = resolveBlogCoverImage(b);
+  const showImage = previewImage && !b.hide_preview_in_lists;
+  return (
+    <li className="py-5 first:pt-0">
+      <Link
+        href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
+        className="group block"
+      >
+        {showImage ? (
+          <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm mb-4 transition-shadow group-hover:shadow-md">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={previewImage}
+              alt=""
+              width={600}
+              height={400}
+              className="aspect-[3/2] w-full object-cover"
+            />
+          </div>
+        ) : null}
+        <h3 className="text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
+          {b.title}
+        </h3>
+        {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+      </Link>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        {b.published_at ? (
+          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+            {new Date(b.published_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}
+          </time>
+        ) : (
+          <span className="text-xs text-muted-foreground" aria-hidden />
+        )}
+        <BlogPostShareMenu
+          url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
+          title={b.title}
+        />
       </div>
     </li>
   );
@@ -159,7 +219,16 @@ function BlogCardGridItem({
   );
 }
 
-export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useCustomDomain = false, siteOrigin, blog_list_layout = "list" }: PublicBlogListSearchProps) {
+export function PublicBlogListSearch({
+  blogs,
+  username,
+  user,
+  hideFeatured,
+  useCustomDomain = false,
+  siteOrigin,
+  content_width = "wide",
+  list_image_position = "above_title",
+}: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
   const featuredBlogs = useMemo(() => {
@@ -191,9 +260,25 @@ export function PublicBlogListSearch({ blogs, username, user, hideFeatured, useC
     return sortedBlogs.slice(start, start + POSTS_PER_PAGE);
   }, [sortedBlogs, currentPage]);
 
-  const isCardGrid = blog_list_layout === "card_grid";
-  const ItemComponent = isCardGrid ? BlogCardGridItem : BlogListItemRow;
-  const listClass = isCardGrid ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8" : "";
+  const isWide = content_width === "wide";
+  const isAboveTitle = list_image_position === "above_title";
+
+  let ItemComponent: typeof BlogListItemRow;
+  let listClass = "";
+
+  if (isWide && isAboveTitle) {
+    ItemComponent = BlogCardGridItem;
+    listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
+  } else if (isWide && !isAboveTitle) {
+    ItemComponent = (props) => <BlogListItemRow {...props} inGrid />;
+    listClass = "grid grid-cols-1 md:grid-cols-2 gap-8";
+  } else if (!isWide && isAboveTitle) {
+    ItemComponent = BlogListAboveTitleItem;
+    listClass = "";
+  } else {
+    ItemComponent = BlogListItemRow;
+    listClass = "";
+  }
 
   if (blogs.length === 0) {
     return (
