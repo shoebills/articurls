@@ -580,7 +580,7 @@ export default function DesignDashboardPage() {
             onValueChange={(v) => saveDesign({ ...design, content_width: v as "narrow" | "wide" })}
             disabled={busy}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="max-w-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -588,6 +588,7 @@ export default function DesignDashboardPage() {
               <SelectItem value="wide">Wide</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-sm text-muted-foreground">Controls the overall width of your blog pages on desktop.</p>
         </div>
 
         <div className="border-t border-border/60" />
@@ -599,7 +600,7 @@ export default function DesignDashboardPage() {
             onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
             disabled={busy}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="max-w-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -607,6 +608,7 @@ export default function DesignDashboardPage() {
               <SelectItem value="next_to_title">Next to title</SelectItem>
             </SelectContent>
           </Select>
+          <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
         </div>
 
         <div className="border-t border-border/60" />
