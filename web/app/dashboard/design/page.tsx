@@ -575,6 +575,7 @@ export default function DesignDashboardPage() {
 
         <div className="space-y-3">
           <p className="font-medium">Content width</p>
+          <p className="text-sm text-muted-foreground">Controls the overall width of your blog pages on desktop.</p>
           <Select
             value={design.content_width}
             onValueChange={(v) => saveDesign({ ...design, content_width: v as "narrow" | "wide" })}
@@ -588,13 +589,13 @@ export default function DesignDashboardPage() {
               <SelectItem value="wide">Wide</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-sm text-muted-foreground">Controls the overall width of your blog pages on desktop.</p>
         </div>
 
         <div className="border-t border-border/60" />
 
         <div className="space-y-3">
           <p className="font-medium">List image position</p>
+          <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
           <Select
             value={design.list_image_position}
             onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
@@ -608,7 +609,6 @@ export default function DesignDashboardPage() {
               <SelectItem value="next_to_title">Next to title</SelectItem>
             </SelectContent>
           </Select>
-          <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
         </div>
 
         <div className="border-t border-border/60" />
