@@ -46,7 +46,7 @@ def html_to_plain_text(s: str) -> str:
     return " ".join(t.split())
 
 
-def make_excerpt(text: str, max_len: int = 160) -> str:
+def make_excerpt(text: str, max_len: int = 240) -> str:
     if not text:
         return ""
     cleaned = html_to_plain_text(text)
