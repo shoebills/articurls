@@ -575,70 +575,38 @@ export default function DesignDashboardPage() {
 
         <div className="space-y-3">
           <p className="font-medium">Content width</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
-                design.content_width === "narrow"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
-              }`}
-              onClick={() => saveDesign({ ...design, content_width: "narrow" })}
-              disabled={busy}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="2" y1="3" x2="14" y2="3" /><line x1="2" y1="8" x2="14" y2="8" /><line x1="2" y1="13" x2="14" y2="13" />
-              </svg>
-              Narrow (48rem)
-            </button>
-            <button
-              type="button"
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
-                design.content_width === "wide"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
-              }`}
-              onClick={() => saveDesign({ ...design, content_width: "wide" })}
-              disabled={busy}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="2" width="5" height="5" rx="1" /><rect x="9" y="2" width="5" height="5" rx="1" /><rect x="2" y="9" width="5" height="5" rx="1" /><rect x="9" y="9" width="5" height="5" rx="1" />
-              </svg>
-              Wide (72rem)
-            </button>
-          </div>
+          <Select
+            value={design.content_width}
+            onValueChange={(v) => saveDesign({ ...design, content_width: v as "narrow" | "wide" })}
+            disabled={busy}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="narrow">Narrow</SelectItem>
+              <SelectItem value="wide">Wide</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="border-t border-border/60" />
 
         <div className="space-y-3">
           <p className="font-medium">List image position</p>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
-                design.list_image_position === "above_title"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
-              }`}
-              onClick={() => saveDesign({ ...design, list_image_position: "above_title" })}
-              disabled={busy}
-            >
-              Above title
-            </button>
-            <button
-              type="button"
-              className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-colors ${
-                design.list_image_position === "next_to_title"
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border/70 bg-white text-foreground/70 hover:bg-muted/50"
-              }`}
-              onClick={() => saveDesign({ ...design, list_image_position: "next_to_title" })}
-              disabled={busy}
-            >
-              Next to title
-            </button>
-          </div>
+          <Select
+            value={design.list_image_position}
+            onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
+            disabled={busy}
+          >
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="above_title">Above title</SelectItem>
+              <SelectItem value="next_to_title">Next to title</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="border-t border-border/60" />
