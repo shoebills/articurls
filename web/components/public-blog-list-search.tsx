@@ -52,7 +52,7 @@ function BlogListItemRow({
               <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
                 {b.title}
               </h3>
-{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "line-clamp-5" : "line-clamp-2"}`}>{b.excerpt}</p>}
+{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "" : "line-clamp-2"}`}>{b.excerpt}</p>}
             </div>
             {previewImage && !b.hide_preview_in_lists ? (
               // eslint-disable-next-line @next/next/no-img-element
