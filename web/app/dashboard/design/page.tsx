@@ -108,14 +108,14 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
+      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, about_title: null,
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], blog_list_layout: "list" as const, about_title: null,
+      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, about_title: null,
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {

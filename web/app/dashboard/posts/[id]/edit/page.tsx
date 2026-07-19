@@ -733,7 +733,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     site_footer_enabled: user.site_footer_enabled,
                     featured_blogs_enabled: user.featured_blogs_enabled,
                     featured_blog_ids: next,
-                    blog_list_layout: user.blog_list_layout ?? "list",
+                    content_width: user.content_width ?? "wide",
+                    list_image_position: user.list_image_position ?? "above_title",
                   });
                   await refreshUser();
                 } catch {
