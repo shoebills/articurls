@@ -270,8 +270,8 @@ export function PublicBlogListSearch({
     ItemComponent = BlogCardGridItem;
     listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
   } else if (isWide && !isAboveTitle) {
-    ItemComponent = (props) => <BlogListItemRow {...props} inGrid />;
-    listClass = "grid grid-cols-1 md:grid-cols-2 gap-8";
+    ItemComponent = BlogListItemRow;
+    listClass = "";
   } else if (!isWide && isAboveTitle) {
     ItemComponent = BlogListAboveTitleItem;
     listClass = "";
