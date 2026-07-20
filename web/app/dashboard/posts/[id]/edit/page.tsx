@@ -857,7 +857,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
-              <Separator className="mt-6" />
             </div>
 
             <Separator />

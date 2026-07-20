@@ -612,7 +612,7 @@ export default function DesignDashboardPage() {
         <div className="border-t border-border/60" />
 
         <div>
-          <div className="space-y-1">
+          <div className={`space-y-1 ${!design.show_preview_in_lists ? "opacity-50" : ""}`}>
             <p className="font-medium">List image position</p>
             <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
           </div>
