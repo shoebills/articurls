@@ -76,4 +76,5 @@ class DesignSettings(BaseModel):
     featured_blog_ids: list[int] | None = []
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
+    show_preview_in_lists: bool = True
     about_title: Optional[str] = None

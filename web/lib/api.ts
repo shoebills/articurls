@@ -516,7 +516,6 @@ export async function updateBlog(
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
-    hide_preview_in_lists?: boolean;
     notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {

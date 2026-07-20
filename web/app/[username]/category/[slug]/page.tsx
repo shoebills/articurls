@@ -205,7 +205,7 @@ export default async function PublicCategoryPage({ params }: Props) {
           </div>
 
           {blogs.length > 0 ? (
-            <PublicBlogListSearch blogs={blogs} username={username} user={user} hideFeatured content_width={user.content_width || "wide"} list_image_position={user.list_image_position || "above_title"} />
+            <PublicBlogListSearch blogs={blogs} username={username} user={user} hideFeatured content_width={user.content_width || "wide"} list_image_position={user.list_image_position || "above_title"} show_preview_in_lists={user.show_preview_in_lists ?? true} />
           ) : (
             <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
               <p className="text-sm text-muted-foreground">No posts in this category yet.</p>

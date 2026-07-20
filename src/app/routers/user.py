@@ -224,6 +224,7 @@ def update_design_settings(
     db_user.featured_blogs_enabled = request.featured_blogs_enabled
     db_user.content_width = request.content_width
     db_user.list_image_position = request.list_image_position
+    db_user.show_preview_in_lists = request.show_preview_in_lists
     db_user.about_title = request.about_title
     
     blog_ids = request.featured_blog_ids or []

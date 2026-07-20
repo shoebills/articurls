@@ -19,6 +19,7 @@ type PublicBlogListSearchProps = {
   siteOrigin?: string;
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
+  show_preview_in_lists?: boolean;
 };
 
 const POSTS_PER_PAGE = 12;
@@ -35,6 +36,7 @@ function BlogListItemRow({
   siteOrigin,
   inGrid = false,
   largeImage = false,
+  showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
@@ -42,6 +44,7 @@ function BlogListItemRow({
   siteOrigin?: string;
   inGrid?: boolean;
   largeImage?: boolean;
+  showPreview?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   return (
@@ -55,7 +58,7 @@ function BlogListItemRow({
               </h3>
 {b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "" : "line-clamp-2"}`}>{b.excerpt}</p>}
             </div>
-            {previewImage && !b.hide_preview_in_lists ? (
+            {previewImage && showPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewImage}
@@ -94,14 +97,16 @@ function BlogListAboveTitleItem({
   username,
   useCustomDomain = false,
   siteOrigin,
+  showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
   useCustomDomain?: boolean;
   siteOrigin?: string;
+  showPreview?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
-  const showImage = previewImage && !b.hide_preview_in_lists;
+  const showImage = previewImage && showPreview;
   return (
     <li className="py-5 first:pt-0">
       <Link
@@ -151,14 +156,16 @@ function BlogCardGridItem({
   username,
   useCustomDomain = false,
   siteOrigin,
+  showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
   useCustomDomain?: boolean;
   siteOrigin?: string;
+  showPreview?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
-  const showImage = previewImage && !b.hide_preview_in_lists;
+  const showImage = previewImage && showPreview;
   return (
     <li className="break-inside-avoid">
       <Link
@@ -221,6 +228,7 @@ export function PublicBlogListSearch({
   siteOrigin,
   content_width = "wide",
   list_image_position = "above_title",
+  show_preview_in_lists = true,
 }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
@@ -263,7 +271,7 @@ export function PublicBlogListSearch({
     ItemComponent = BlogCardGridItem;
     listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
   } else if (isWide && !isAboveTitle) {
-    ItemComponent = (props) => <BlogListItemRow {...props} largeImage />;
+    ItemComponent = function BlogListItemRowLarge(props) { return <BlogListItemRow {...props} largeImage />; };
     listClass = "";
   } else if (!isWide && isAboveTitle) {
     ItemComponent = BlogListAboveTitleItem;
@@ -288,13 +296,14 @@ export function PublicBlogListSearch({
           <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
           <ul className={listClass}>
             {featuredBlogs.map(b => (
-               <ItemComponent
-                 key={`featured-${b.blog_id}`}
-                 blog={b}
-                 username={username}
-                 useCustomDomain={useCustomDomain}
-                 siteOrigin={siteOrigin}
-               />
+                <ItemComponent
+                  key={`featured-${b.blog_id}`}
+                  blog={b}
+                  username={username}
+                  useCustomDomain={useCustomDomain}
+                  siteOrigin={siteOrigin}
+                  showPreview={show_preview_in_lists}
+                />
             ))}
           </ul>
         </div>
@@ -310,6 +319,7 @@ export function PublicBlogListSearch({
             username={username}
             useCustomDomain={useCustomDomain}
             siteOrigin={siteOrigin}
+            showPreview={show_preview_in_lists}
           />
         ))}
       </ul>

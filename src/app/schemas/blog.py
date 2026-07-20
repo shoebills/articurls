@@ -30,7 +30,6 @@ class GetBlog(BaseModel):
     meta_title: Optional[str]
     meta_description: Optional[str]
     featured_image_url: Optional[str]
-    hide_preview_in_lists: bool
     notify_subscribers: bool
     status: BlogStatus
     scheduled_at: Optional[datetime]
@@ -57,7 +56,6 @@ class PublicBlog(BaseModel):
     meta_title: Optional[str]
     meta_description: Optional[str]
     featured_image_url: Optional[str]
-    hide_preview_in_lists: bool
     published_at: Optional[datetime]
     updated_at: datetime
     user_id: int
@@ -79,7 +77,6 @@ class UpdateBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
-    hide_preview_in_lists: Optional[bool] = None
     notify_subscribers: Optional[bool] = None
 
 class ScheduleBlog(BaseModel):

@@ -108,14 +108,14 @@ export default function DesignDashboardPage() {
     if (typeof window === "undefined") return {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, about_title: null,
+      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, show_preview_in_lists: true, about_title: null,
     };
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
     return cached ?? {
       navbar_enabled: false, nav_blog_name: null, nav_blog_name_size: "medium" as const,
       nav_menu_enabled: true, show_about_section: false, site_footer_enabled: true,
-      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, about_title: null,
+      featured_blogs_enabled: true, featured_blog_ids: [], content_width: "wide" as const, list_image_position: "above_title" as const, show_preview_in_lists: true, about_title: null,
     };
   });
   const [pages, setPages] = useState<UserPage[]>(() => {
@@ -597,6 +597,20 @@ export default function DesignDashboardPage() {
 
         <div className="border-t border-border/60" />
 
+        <div className="rounded-xl border p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="font-medium">Show preview images</p>
+            <Switch
+              checked={design.show_preview_in_lists}
+              onCheckedChange={(v) => saveDesign({ ...design, show_preview_in_lists: v })}
+              disabled={busy}
+            />
+          </div>
+          <p className="text-sm text-muted-foreground">Show featured or first image as a preview on the blog homepage and category pages.</p>
+        </div>
+
+        <div className="border-t border-border/60" />
+
         <div>
           <div className="space-y-1">
             <p className="font-medium">List image position</p>
@@ -606,7 +620,7 @@ export default function DesignDashboardPage() {
             <Select
               value={design.list_image_position}
               onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
-              disabled={busy}
+              disabled={busy || !design.show_preview_in_lists}
             >
               <SelectTrigger>
                 <SelectValue />

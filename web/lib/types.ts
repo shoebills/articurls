@@ -15,7 +15,6 @@ export interface BlogListItem {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
-  hide_preview_in_lists: boolean;
   notify_subscribers: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
@@ -38,7 +37,6 @@ export interface PublicBlog {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
-  hide_preview_in_lists: boolean;
   published_at: string | null;
   updated_at: string;
   user_id: number;
@@ -82,6 +80,7 @@ export interface PublicUser {
   featured_blog_ids: number[];
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
+  show_preview_in_lists?: boolean;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;
@@ -186,6 +185,7 @@ export interface DesignSettings {
   featured_blog_ids: number[];
   content_width: ContentWidth;
   list_image_position: ListImagePosition;
+  show_preview_in_lists: boolean;
   about_title?: string | null;
 }
 
