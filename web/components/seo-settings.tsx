@@ -13,7 +13,7 @@ import {
   patchMetaSettings,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -177,8 +177,9 @@ export default function SeoSettings() {
   if (loading) {
     return (
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-4 sm:pb-4">
           <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-4 w-72 mt-2" />
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
@@ -221,8 +222,9 @@ export default function SeoSettings() {
   return (
     <>
       <Card>
-        <CardHeader>
-          <CardTitle>Search result appearance</CardTitle>
+        <CardHeader className="pb-4 sm:pb-4">
+          <CardTitle className="text-xl">Search Engine Optimization</CardTitle>
+          <CardDescription>Manage your meta title, description, and SEO resources.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
