@@ -175,20 +175,7 @@ function BlogCardGridItem({
               className="aspect-[3/2] w-full object-cover"
             />
           ) : (
-            <div
-              className="aspect-[3/2] w-full"
-              style={{
-                background: `
-                  radial-gradient(ellipse 170% 85% at 18% -12%, rgba(255,255,255,.58) 0%, rgba(235,235,235,.26) 28%, rgba(185,185,185,.09) 52%, transparent 72%),
-                  radial-gradient(circle at 12% 88%, rgba(255,255,255,.14) 0%, rgba(255,255,255,.05) 35%, transparent 70%),
-                  linear-gradient(135deg, #181818 0%, #242424 25%, #555 60%, #bdbdbd 100%),
-                  url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='96' height='96'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.8' numOctaves='6' seed='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")
-                `,
-                backgroundBlendMode: "overlay, normal, normal, normal",
-                backgroundSize: "auto, auto, auto, 96px 96px",
-                filter: "blur(1px)",
-              }}
-            />
+            <div className="aspect-[3/2] w-full bg-muted/30" />
           )}
         </div>
         <div className="pt-4 pb-3">
