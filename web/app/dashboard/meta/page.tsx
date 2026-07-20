@@ -1,3 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-export { default } from "../seo/page";
+export default function MetaPage() {
+  redirect("/dashboard/settings");
+}

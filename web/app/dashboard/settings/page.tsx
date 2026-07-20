@@ -30,6 +30,7 @@ import { assetUrl, UGS_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProGate } from "@/components/pro/pro-gate";
 import CustomDomainSettings from "@/components/custom-domain-settings";
+import SeoSettings from "@/components/seo-settings";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
@@ -395,6 +396,45 @@ export default function SettingsPage() {
             <Skeleton className="h-40 w-full rounded-md" />
           </CardContent>
         </Card>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-6 w-48" />
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-20" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2.5">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-24 w-full" />
+            </div>
+            <Skeleton className="h-10 w-20" />
+            <div className="border-t pt-5 mt-2 space-y-3">
+              <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-20" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-6 w-10 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-9 w-16" />
+              </div>
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-9 w-16" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -683,6 +723,8 @@ export default function SettingsPage() {
           <CustomDomainSettings />
         </CardContent>
       </Card>
+
+      <SeoSettings />
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}

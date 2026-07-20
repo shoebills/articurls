@@ -7,14 +7,13 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Search, Bug, CircleHelp, Users, Tags } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Bug, CircleHelp, Users, Tags } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },
   { href: "/dashboard/design", label: "Design", icon: Palette },
-  { href: "/dashboard/seo", label: "SEO", icon: Search },
   { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
