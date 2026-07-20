@@ -172,23 +172,25 @@ function BlogCardGridItem({
         href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
         className="group block"
       >
-        <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
-          {showImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewImage}
-              alt=""
-              width={600}
-              height={400}
-              className="aspect-[3/2] w-full object-cover"
-            />
-          ) : showPreview ? (
-            <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="h-8 w-8 text-muted-foreground/40" />
-            </div>
-          ) : null}
-        </div>
+        {showImage || showPreview ? (
+          <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
+            {showImage ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={previewImage}
+                alt=""
+                width={600}
+                height={400}
+                className="aspect-[3/2] w-full object-cover"
+              />
+            ) : (
+              <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
+                {/* eslint-disable-next-line jsx-a11y/alt-text */}
+                <Image className="h-8 w-8 text-muted-foreground/40" />
+              </div>
+            )}
+          </div>
+        ) : null}
         <div className="pt-4 pb-3">
           <h3 className="line-clamp-2 text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
             {b.title}
