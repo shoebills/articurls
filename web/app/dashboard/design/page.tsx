@@ -578,20 +578,21 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Content width</p>
             <p className="text-sm text-muted-foreground">Controls the overall width of your blog pages on desktop.</p>
           </div>
-          <Select
-            className="mt-2 max-w-xs"
-            value={design.content_width}
-            onValueChange={(v) => saveDesign({ ...design, content_width: v as "narrow" | "wide" })}
-            disabled={busy}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="narrow">Narrow</SelectItem>
-              <SelectItem value="wide">Wide</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="mt-2 max-w-xs">
+            <Select
+              value={design.content_width}
+              onValueChange={(v) => saveDesign({ ...design, content_width: v as "narrow" | "wide" })}
+              disabled={busy}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="narrow">Narrow</SelectItem>
+                <SelectItem value="wide">Wide</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="border-t border-border/60" />
@@ -601,20 +602,21 @@ export default function DesignDashboardPage() {
             <p className="font-medium">List image position</p>
             <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
           </div>
-          <Select
-            className="mt-2 max-w-xs"
-            value={design.list_image_position}
-            onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
-            disabled={busy}
-          >
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="above_title">Above title</SelectItem>
-              <SelectItem value="next_to_title">Next to title</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="mt-2 max-w-xs">
+            <Select
+              value={design.list_image_position}
+              onValueChange={(v) => saveDesign({ ...design, list_image_position: v as "above_title" | "next_to_title" })}
+              disabled={busy}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="above_title">Above title</SelectItem>
+                <SelectItem value="next_to_title">Next to title</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         <div className="border-t border-border/60" />
