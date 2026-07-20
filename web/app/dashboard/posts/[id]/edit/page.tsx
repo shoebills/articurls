@@ -415,7 +415,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, notify, featuredImageUrl, hidePreviewInLists, isDirty, saving]);
+  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, notify, featuredImageUrl, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
