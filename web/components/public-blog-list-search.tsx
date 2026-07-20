@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
+import { Image } from "lucide-react";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -175,7 +176,10 @@ function BlogCardGridItem({
               className="aspect-[3/2] w-full object-cover"
             />
           ) : (
-            <div className="aspect-[3/2] w-full bg-muted/30" />
+            <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image className="h-8 w-8 text-muted-foreground/40" />
+            </div>
           )}
         </div>
         <div className="pt-4 pb-3">
