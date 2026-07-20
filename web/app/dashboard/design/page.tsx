@@ -573,7 +573,7 @@ export default function DesignDashboardPage() {
 
         <div className="border-t border-border/60" />
 
-        <div className="space-y-3">
+        <div className="space-y-1">
           <p className="font-medium">Content width</p>
           <p className="text-sm text-muted-foreground">Controls the overall width of your blog pages on desktop.</p>
           <Select
@@ -593,7 +593,7 @@ export default function DesignDashboardPage() {
 
         <div className="border-t border-border/60" />
 
-        <div className="space-y-3">
+        <div className="space-y-1">
           <p className="font-medium">List image position</p>
           <p className="text-sm text-muted-foreground">Choose where cover images appear on your blog homepage and category pages.</p>
           <Select
