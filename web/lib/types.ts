@@ -123,6 +123,7 @@ export interface UserSettings {
   featured_blog_ids: number[];
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
+  show_preview_in_lists?: boolean;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
   remove_branding: boolean;

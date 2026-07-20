@@ -43,6 +43,9 @@ class UserSettings(BaseModel):
     subscriber_collection_enabled: bool = True
     remove_branding: bool = True
     custom_domain: Optional[str] = None
+    content_width: Literal["narrow", "wide"] = "wide"
+    list_image_position: Literal["above_title", "next_to_title"] = "above_title"
+    show_preview_in_lists: bool = True
     domain_status: Optional[str] = None
     rss_enabled: bool = False
 
