@@ -7,6 +7,7 @@ import { MarketingNav } from "@/components/marketing-nav";
 import { ProblemSection } from "@/components/problem-section";
 import { PricingSection } from "@/components/pricing-section";
 import { ProductShowcase } from "@/components/product-showcase";
+import { StyleItYourWay } from "@/components/style-it-your-way";
 import { Button } from "@/components/ui/button";
 import { appAuthHref } from "@/lib/env";
 
@@ -57,6 +58,8 @@ export default function MarketingPage() {
         <HowItWorks />
 
         <ProductShowcase />
+
+        <StyleItYourWay />
 
         <AudienceSection />
 
