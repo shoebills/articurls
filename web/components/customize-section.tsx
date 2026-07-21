@@ -49,6 +49,7 @@ export function CustomizeSection() {
 
   useEffect(() => {
     if (entering === null) return;
+    const nextIndex = entering;
 
     const stage =
       desktopStageRef.current?.offsetParent
@@ -72,7 +73,7 @@ export function CustomizeSection() {
 
     function onAnimationEnd() {
       cleanup(stage);
-      setActive(entering);
+      setActive(nextIndex);
       setEntering(null);
     }
 
