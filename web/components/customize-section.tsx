@@ -37,7 +37,8 @@ export function CustomizeSection() {
     });
   }, []);
 
-  const cleanup = useCallback((stage: HTMLElement) => {
+  const cleanup = useCallback((stage: HTMLElement | null) => {
+    if (!stage) return;
     const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
     const enteringEl = stage.querySelector<HTMLElement>("[data-role='entering']");
     enteringEl?.classList.remove("animate-customize-enter");
@@ -119,7 +120,7 @@ export function CustomizeSection() {
         </div>
 
         {/* Desktop */}
-        <div className="hidden mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:flex lg:items-center lg:gap-5 lg:w-[700px] mx-auto [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
+        <div className="hidden mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:flex lg:items-center lg:gap-5 [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <ArrowButton dir="left" onClick={() => navigate("prev")} />
           <div className="min-w-0 flex-1">
             <AppFrame>
