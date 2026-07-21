@@ -14,10 +14,8 @@ export function CustomizeSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
   const [active, setActive] = useState(0);
-  const [entering, setEntering] = useState<number | null>(null);
-  const [dir, setDir] = useState<"left" | "right">("right");
-  const desktopStageRef = useRef<HTMLDivElement | null>(null);
-  const mobileStageRef = useRef<HTMLDivElement | null>(null);
+  const [slideDir, setSlideDir] = useState<"right" | "left">("right");
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -37,68 +35,30 @@ export function CustomizeSection() {
     });
   }, []);
 
-  useEffect(() => {
-    if (entering === null) return;
-    const stage =
-      desktopStageRef.current?.offsetParent
-        ? desktopStageRef.current
-        : mobileStageRef.current;
-    if (!stage) return;
-
-    const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
-    const enteringEl = stage.querySelector<HTMLElement>("[data-role='entering']");
-    if (!exiting || !enteringEl) return;
-
-    const offset = 64;
-    const exitingEnd =
-      dir === "right"
-        ? `translateX(-${offset}px) scale(0.97)`
-        : `translateX(${offset}px) scale(0.97)`;
-
-    exiting.style.transition = "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
-    exiting.style.transform = exitingEnd;
-    exiting.style.opacity = "0";
-
-    void enteringEl.offsetHeight;
-
-    enteringEl.style.transition = "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
-    enteringEl.style.transform = "translateX(0) scale(1)";
-    enteringEl.style.opacity = "1";
-
-    const timeout = setTimeout(() => {
-      exiting.style.transition = "";
-      exiting.style.transform = "";
-      exiting.style.opacity = "";
-      setActive(entering);
-      setEntering(null);
-    }, 450);
-
-    return () => clearTimeout(timeout);
-  }, [entering, dir]);
-
   function navigate(to: "prev" | "next") {
-    if (entering !== null) return;
+    if (locked) return;
     const d = to === "next" ? "right" : "left";
     const next =
       to === "next"
         ? (active + 1) % CUSTOMIZATIONS.length
         : (active - 1 + CUSTOMIZATIONS.length) % CUSTOMIZATIONS.length;
-    setDir(d);
-    setEntering(next);
+    setSlideDir(d);
+    setActive(next);
+    setLocked(true);
+    setTimeout(() => setLocked(false), 400);
   }
 
   function jumpTo(i: number) {
-    if (entering !== null || i === active) return;
+    if (locked || i === active) return;
     const d = i > active ? "right" : "left";
-    setDir(d);
-    setEntering(i);
+    setSlideDir(d);
+    setActive(i);
+    setLocked(true);
+    setTimeout(() => setLocked(false), 400);
   }
 
-  const current = CUSTOMIZATIONS[active];
-  const enteringDir =
-    dir === "right"
-      ? "translateX(64px) scale(0.97)"
-      : "translateX(-64px) scale(0.97)";
+  const animClass =
+    slideDir === "right" ? "animate-slide-in-right" : "animate-slide-in-left";
 
   return (
     <section
@@ -122,12 +82,11 @@ export function CustomizeSection() {
           <ArrowButton dir="left" onClick={() => navigate("prev")} />
           <div className="min-w-0 flex-1">
             <AppFrame>
-              <ImageStage
-                stageRef={desktopStageRef}
-                current={current}
-                entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
-                enteringStyle={enteringDir}
-              />
+              <div className="relative overflow-hidden bg-muted/20">
+                <div key={`${active}-${slideDir}`} className={animClass}>
+                  <img src={CUSTOMIZATIONS[active].src} alt={CUSTOMIZATIONS[active].name} className="w-full" />
+                </div>
+              </div>
             </AppFrame>
           </div>
           <ArrowButton dir="right" onClick={() => navigate("next")} />
@@ -136,12 +95,11 @@ export function CustomizeSection() {
         {/* Mobile */}
         <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <AppFrame>
-            <ImageStage
-              stageRef={mobileStageRef}
-              current={current}
-              entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
-              enteringStyle={enteringDir}
-            />
+            <div className="relative overflow-hidden bg-muted/20">
+              <div key={`${active}-${slideDir}-m`} className={animClass}>
+                <img src={CUSTOMIZATIONS[active].src} alt={CUSTOMIZATIONS[active].name} className="w-full" />
+              </div>
+            </div>
           </AppFrame>
           <div className="mt-4 flex justify-center gap-3">
             <ArrowButton dir="left" onClick={() => navigate("prev")} />
@@ -186,36 +144,6 @@ function AppFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_30px_90px_-48px_rgba(15,23,42,0.5)]">
       {children}
-    </div>
-  );
-}
-
-function ImageStage({
-  stageRef,
-  current,
-  entering,
-  enteringStyle,
-}: {
-  stageRef: React.RefObject<HTMLDivElement | null>;
-  current: { name: string; src: string };
-  entering: { name: string; src: string } | null;
-  enteringStyle: string;
-}) {
-  return (
-    <div ref={stageRef} className="relative overflow-hidden bg-muted/20">
-      <div data-role="exiting">
-        <img src={current.src} alt={current.name} className="w-full" />
-      </div>
-
-      {entering && (
-        <div
-          data-role="entering"
-          className="absolute inset-0"
-          style={{ transform: enteringStyle, opacity: 0 }}
-        >
-          <img src={entering.src} alt={entering.name} className="w-full" />
-        </div>
-      )}
     </div>
   );
 }
