@@ -1,4 +1,5 @@
 import { AudienceSection } from "@/components/audience-section";
+import { CustomizeSection } from "@/components/customize-section";
 import { FaqSection } from "@/components/faq-section";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { HowItWorks } from "@/components/how-it-works";
@@ -57,6 +58,8 @@ export default function MarketingPage() {
         <HowItWorks />
 
         <ProductShowcase />
+
+        <CustomizeSection />
 
         <AudienceSection />
 
