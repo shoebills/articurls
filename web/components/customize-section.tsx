@@ -16,7 +16,8 @@ export function CustomizeSection() {
   const [active, setActive] = useState(0);
   const [entering, setEntering] = useState<number | null>(null);
   const [dir, setDir] = useState<"left" | "right">("right");
-  const stageRef = useRef<HTMLDivElement | null>(null);
+  const desktopStageRef = useRef<HTMLDivElement | null>(null);
+  const mobileStageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -38,7 +39,10 @@ export function CustomizeSection() {
 
   useEffect(() => {
     if (entering === null) return;
-    const stage = stageRef.current;
+    const stage =
+      desktopStageRef.current?.offsetParent
+        ? desktopStageRef.current
+        : mobileStageRef.current;
     if (!stage) return;
 
     const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
@@ -108,7 +112,7 @@ export function CustomizeSection() {
             Customize
           </p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight opacity-0 translate-y-4 transition-all delay-100 duration-500 ease-out sm:text-4xl [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
-            Your blog, your rules
+            Style it in your own way
           </h2>
         </div>
 
@@ -116,9 +120,9 @@ export function CustomizeSection() {
         <div className="hidden mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:flex lg:items-center lg:gap-5 [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <ArrowButton dir="left" onClick={() => navigate("prev")} />
           <div className="min-w-0 flex-1">
-            <AppFrame label={current.name}>
+            <AppFrame>
               <ImageStage
-                stageRef={stageRef}
+                stageRef={desktopStageRef}
                 current={current}
                 entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
                 enteringStyle={enteringDir}
@@ -132,7 +136,7 @@ export function CustomizeSection() {
         <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <AppFrame label={current.name}>
             <ImageStage
-              stageRef={stageRef}
+              stageRef={mobileStageRef}
               current={current}
               entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
               enteringStyle={enteringDir}
@@ -177,17 +181,9 @@ function ArrowButton({ dir, onClick }: { dir: "left" | "right"; onClick: () => v
   );
 }
 
-function AppFrame({ label, children }: { label: string; children: React.ReactNode }) {
+function AppFrame({ children }: { children: React.ReactNode }) {
   return (
     <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_30px_90px_-48px_rgba(15,23,42,0.5)]">
-      <div className="flex items-center gap-2 border-b border-border/60 bg-muted/40 px-4 py-2.5">
-        <span className="h-2.5 w-2.5 rounded-full bg-foreground/15" />
-        <span className="h-2.5 w-2.5 rounded-full bg-foreground/15" />
-        <span className="h-2.5 w-2.5 rounded-full bg-foreground/15" />
-        <span className="ml-2 truncate text-[11px] font-medium text-muted-foreground">
-          {label}
-        </span>
-      </div>
       {children}
     </div>
   );
