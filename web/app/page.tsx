@@ -39,7 +39,7 @@ export default function MarketingPage() {
                   <a href={signupUrl}>Start free</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 min-h-12 bg-background/80" asChild>
-                  <a href="#pricing">See pricing</a>
+                  <a href="#customize">See examples</a>
                 </Button>
               </div>
               <p className="mt-3 text-sm text-muted-foreground">

@@ -102,9 +102,10 @@ export function CustomizeSection() {
 
   return (
     <section
+      id="customize"
       ref={sectionRef}
       data-shown={shown || undefined}
-      className="px-[max(1rem,env(safe-area-inset-left))] pt-24 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pt-28"
+      className="scroll-mt-[calc(4.5rem+env(safe-area-inset-top))] px-[max(1rem,env(safe-area-inset-left))] pt-24 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:pt-28"
     >
       <div className="mx-auto max-w-6xl">
         <div className="mx-auto max-w-2xl text-center">
@@ -134,7 +135,7 @@ export function CustomizeSection() {
 
         {/* Mobile */}
         <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
-          <AppFrame label={current.name}>
+          <AppFrame>
             <ImageStage
               stageRef={mobileStageRef}
               current={current}
