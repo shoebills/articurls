@@ -171,6 +171,32 @@ body {
   margin: 1.5rem 0;
   color: var(--muted-foreground);
 }
+.prose-blog ul {
+  margin: 1.25rem 0;
+  padding-left: 1.75rem;
+  list-style-type: disc;
+  list-style-position: outside;
+}
+.prose-blog ol {
+  margin: 1.25rem 0;
+  padding-left: 1.75rem;
+  list-style-type: decimal;
+  list-style-position: outside;
+}
+.prose-blog li {
+  margin-bottom: 0.375rem;
+}
+.prose-blog li p {
+  margin-bottom: 0.25rem;
+}
+.prose-blog ul ul,
+.prose-blog ol ul {
+  list-style-type: circle;
+}
+.prose-blog ol ol,
+.prose-blog ul ol {
+  list-style-type: lower-alpha;
+}
 .prose-blog hr,
 .prose-email hr,
 .tiptap-editor .ProseMirror hr {
