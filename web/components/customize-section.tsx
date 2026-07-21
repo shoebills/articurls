@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const CUSTOMIZATIONS = [
@@ -47,7 +47,7 @@ export function CustomizeSection() {
     enteringEl?.style.removeProperty("--enter-offset");
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (entering === null) return;
     const nextIndex = entering;
 
