@@ -509,10 +509,19 @@ body {
   animation: customize-exit 400ms cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
+.customize-entering {
+  opacity: 0;
+  transform: translateX(var(--enter-offset, 64px)) scale(0.97);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .customize-entering {
+    opacity: 1;
+    transform: none;
+  }
+
   .animate-customize-enter,
   .animate-customize-exit {
     animation: none;
   }
 }
-

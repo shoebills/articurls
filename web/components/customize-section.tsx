@@ -139,6 +139,7 @@ export function CustomizeSection() {
                 stageRef={desktopStageRef}
                 current={current}
                 entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
+                direction={dir}
               />
             </AppFrame>
           </div>
@@ -152,6 +153,7 @@ export function CustomizeSection() {
               stageRef={mobileStageRef}
               current={current}
               entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
+              direction={dir}
             />
           </AppFrame>
           <div className="flex justify-center gap-3">
@@ -205,10 +207,12 @@ function ImageStage({
   stageRef,
   current,
   entering,
+  direction,
 }: {
   stageRef: React.RefObject<HTMLDivElement | null>;
   current: { name: string; src: string };
   entering: { name: string; src: string } | null;
+  direction: "left" | "right";
 }) {
   return (
     <div ref={stageRef} className="relative overflow-hidden bg-muted/20">
@@ -217,7 +221,13 @@ function ImageStage({
       </div>
 
       {entering && (
-        <div data-role="entering" className="absolute inset-0">
+        <div
+          data-role="entering"
+          className="customize-entering absolute inset-0"
+          style={{
+            "--enter-offset": direction === "right" ? "64px" : "-64px",
+          } as React.CSSProperties}
+        >
           <img src={entering.src} alt={entering.name} className="w-full" />
         </div>
       )}
