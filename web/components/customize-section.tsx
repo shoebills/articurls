@@ -71,15 +71,25 @@ export function CustomizeSection() {
     enteringEl.classList.add("animate-customize-enter");
     exiting.classList.add("animate-customize-exit");
 
+    let frame: number | null = null;
+    let finished = false;
+
     function onAnimationEnd() {
-      cleanup(stage);
+      if (finished) return;
+      finished = true;
+
+      // Commit the new image while the entering layer still covers the stage.
       setActive(nextIndex);
-      setEntering(null);
+      frame = requestAnimationFrame(() => {
+        cleanup(stage);
+        setEntering(null);
+      });
     }
 
     enteringEl.addEventListener("animationend", onAnimationEnd);
     return () => {
       enteringEl.removeEventListener("animationend", onAnimationEnd);
+      if (frame !== null) cancelAnimationFrame(frame);
     };
   }, [entering, dir, cleanup]);
 
