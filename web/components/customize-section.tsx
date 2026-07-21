@@ -14,10 +14,6 @@ export function CustomizeSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
   const [active, setActive] = useState(0);
-  const [entering, setEntering] = useState<number | null>(null);
-  const [dir, setDir] = useState<"left" | "right">("right");
-  const desktopStageRef = useRef<HTMLDivElement | null>(null);
-  const mobileStageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -37,68 +33,20 @@ export function CustomizeSection() {
     });
   }, []);
 
-  useEffect(() => {
-    if (entering === null) return;
-    const stage =
-      desktopStageRef.current?.offsetParent
-        ? desktopStageRef.current
-        : mobileStageRef.current;
-    if (!stage) return;
-
-    const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
-    const enteringEl = stage.querySelector<HTMLElement>("[data-role='entering']");
-    if (!exiting || !enteringEl) return;
-
-    const offset = 64;
-    const exitingEnd =
-      dir === "right"
-        ? `translateX(-${offset}px) scale(0.97)`
-        : `translateX(${offset}px) scale(0.97)`;
-
-    exiting.style.transition = "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
-    exiting.style.transform = exitingEnd;
-    exiting.style.opacity = "0";
-
-    void enteringEl.offsetHeight;
-
-    enteringEl.style.transition = "all 0.4s cubic-bezier(0.22, 1, 0.36, 1)";
-    enteringEl.style.transform = "translateX(0) scale(1)";
-    enteringEl.style.opacity = "1";
-
-    const timeout = setTimeout(() => {
-      exiting.style.transition = "";
-      exiting.style.transform = "";
-      exiting.style.opacity = "";
-      setActive(entering);
-      setEntering(null);
-    }, 450);
-
-    return () => clearTimeout(timeout);
-  }, [entering, dir]);
-
   function navigate(to: "prev" | "next") {
-    if (entering !== null) return;
-    const d = to === "next" ? "right" : "left";
-    const next =
+    setActive(
       to === "next"
         ? (active + 1) % CUSTOMIZATIONS.length
-        : (active - 1 + CUSTOMIZATIONS.length) % CUSTOMIZATIONS.length;
-    setDir(d);
-    setEntering(next);
+        : (active - 1 + CUSTOMIZATIONS.length) % CUSTOMIZATIONS.length
+    );
   }
 
   function jumpTo(i: number) {
-    if (entering !== null || i === active) return;
-    const d = i > active ? "right" : "left";
-    setDir(d);
-    setEntering(i);
+    if (i === active) return;
+    setActive(i);
   }
 
   const current = CUSTOMIZATIONS[active];
-  const enteringDir =
-    dir === "right"
-      ? "translateX(64px) scale(0.97)"
-      : "translateX(-64px) scale(0.97)";
 
   return (
     <section
@@ -118,32 +66,22 @@ export function CustomizeSection() {
         </div>
 
         {/* Desktop */}
-        <div className="hidden mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:flex lg:items-center lg:gap-5 [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
+        <div className="hidden mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:flex lg:items-center lg:gap-5 lg:w-[700px] mx-auto [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <ArrowButton dir="left" onClick={() => navigate("prev")} />
           <div className="min-w-0 flex-1">
             <AppFrame>
-              <ImageStage
-                stageRef={desktopStageRef}
-                current={current}
-                entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
-                enteringStyle={enteringDir}
-              />
+              <ImageStage current={current} />
             </AppFrame>
           </div>
           <ArrowButton dir="right" onClick={() => navigate("next")} />
         </div>
 
         {/* Mobile */}
-        <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
+        <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden flex flex-col items-center gap-5 w-full [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <AppFrame>
-            <ImageStage
-              stageRef={mobileStageRef}
-              current={current}
-              entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
-              enteringStyle={enteringDir}
-            />
+            <ImageStage current={current} />
           </AppFrame>
-          <div className="mt-4 flex justify-center gap-3">
+          <div className="flex justify-center gap-3">
             <ArrowButton dir="left" onClick={() => navigate("prev")} />
             <ArrowButton dir="right" onClick={() => navigate("next")} />
           </div>
@@ -191,31 +129,15 @@ function AppFrame({ children }: { children: React.ReactNode }) {
 }
 
 function ImageStage({
-  stageRef,
   current,
-  entering,
-  enteringStyle,
 }: {
-  stageRef: React.RefObject<HTMLDivElement | null>;
   current: { name: string; src: string };
-  entering: { name: string; src: string } | null;
-  enteringStyle: string;
 }) {
   return (
-    <div ref={stageRef} className="relative overflow-hidden bg-muted/20">
-      <div data-role="exiting">
+    <div className="relative overflow-hidden bg-muted/20">
+      <div key={current.src} className="animate-customize-enter">
         <img src={current.src} alt={current.name} className="w-full" />
       </div>
-
-      {entering && (
-        <div
-          data-role="entering"
-          className="absolute inset-0"
-          style={{ transform: enteringStyle, opacity: 0 }}
-        >
-          <img src={entering.src} alt={entering.name} className="w-full" />
-        </div>
-      )}
     </div>
   );
 }
