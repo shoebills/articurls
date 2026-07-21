@@ -151,7 +151,7 @@ function ArrowButton({ dir, onClick }: { dir: "left" | "right"; onClick: () => v
 
 function AppFrame({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_30px_90px_-48px_rgba(15,23,42,0.5)]">
+    <div className="w-full overflow-hidden rounded-2xl border border-border/70 bg-card shadow-[0_30px_90px_-48px_rgba(15,23,42,0.5)]">
       {children}
     </div>
   );
