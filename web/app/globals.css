@@ -514,9 +514,19 @@ body {
   transform: translateX(var(--enter-offset, 64px)) scale(0.97);
 }
 
+.customize-exiting {
+  opacity: 1;
+  transform: translateX(0) scale(1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .customize-entering {
     opacity: 1;
+    transform: none;
+  }
+
+  .customize-exiting {
+    opacity: 0;
     transform: none;
   }
 

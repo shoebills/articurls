@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
 const CUSTOMIZATIONS = [
@@ -14,10 +14,8 @@ export function CustomizeSection() {
   const sectionRef = useRef<HTMLElement | null>(null);
   const [shown, setShown] = useState(false);
   const [active, setActive] = useState(0);
-  const [entering, setEntering] = useState<number | null>(null);
+  const [exiting, setExiting] = useState<number | null>(null);
   const [dir, setDir] = useState<"left" | "right">("right");
-  const desktopStageRef = useRef<HTMLDivElement | null>(null);
-  const mobileStageRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const el = sectionRef.current;
@@ -37,81 +35,37 @@ export function CustomizeSection() {
     });
   }, []);
 
-  const cleanup = useCallback((stage: HTMLElement | null) => {
-    if (!stage) return;
-    const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
-    const enteringEl = stage.querySelector<HTMLElement>("[data-role='entering']");
-    enteringEl?.classList.remove("animate-customize-enter");
-    exiting?.classList.remove("animate-customize-exit");
-    exiting?.style.removeProperty("--exit-offset");
-    enteringEl?.style.removeProperty("--enter-offset");
-  }, []);
-
-  useLayoutEffect(() => {
-    if (entering === null) return;
-    const nextIndex = entering;
-
-    const stage =
-      desktopStageRef.current?.offsetParent
-        ? desktopStageRef.current
-        : mobileStageRef.current;
-    if (!stage) return;
-
-    const exiting = stage.querySelector<HTMLElement>("[data-role='exiting']");
-    const enteringEl = stage.querySelector<HTMLElement>("[data-role='entering']");
-    if (!exiting || !enteringEl) return;
-
-    const offset = 64;
-    const enterOffset = dir === "right" ? `${offset}px` : `-${offset}px`;
-    const exitOffset = dir === "right" ? `-${offset}px` : `${offset}px`;
-
-    enteringEl.style.setProperty("--enter-offset", enterOffset);
-    exiting.style.setProperty("--exit-offset", exitOffset);
-
-    enteringEl.classList.add("animate-customize-enter");
-    exiting.classList.add("animate-customize-exit");
-
-    let frame: number | null = null;
-    let finished = false;
-
-    function onAnimationEnd() {
-      if (finished) return;
-      finished = true;
-
-      // Commit the new image while the entering layer still covers the stage.
-      setActive(nextIndex);
-      frame = requestAnimationFrame(() => {
-        cleanup(stage);
-        setEntering(null);
-      });
-    }
-
-    enteringEl.addEventListener("animationend", onAnimationEnd);
-    return () => {
-      enteringEl.removeEventListener("animationend", onAnimationEnd);
-      if (frame !== null) cancelAnimationFrame(frame);
-    };
-  }, [entering, dir, cleanup]);
-
   function navigate(to: "prev" | "next") {
-    if (entering !== null) return;
+    if (exiting !== null) return;
     const d = to === "next" ? "right" : "left";
     const next =
       to === "next"
         ? (active + 1) % CUSTOMIZATIONS.length
         : (active - 1 + CUSTOMIZATIONS.length) % CUSTOMIZATIONS.length;
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setActive(next);
+      return;
+    }
+
     setDir(d);
-    setEntering(next);
+    setExiting(active);
+    setActive(next);
   }
 
   function jumpTo(i: number) {
-    if (entering !== null || i === active) return;
+    if (exiting !== null || i === active) return;
     const d = i > active ? "right" : "left";
-    setDir(d);
-    setEntering(i);
-  }
 
-  const current = CUSTOMIZATIONS[active];
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setActive(i);
+      return;
+    }
+
+    setDir(d);
+    setExiting(active);
+    setActive(i);
+  }
 
   return (
     <section
@@ -136,10 +90,10 @@ export function CustomizeSection() {
           <div className="min-w-0 flex-1">
             <AppFrame>
               <ImageStage
-                stageRef={desktopStageRef}
-                current={current}
-                entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
+                active={active}
+                exiting={exiting}
                 direction={dir}
+                onTransitionEnd={() => setExiting(null)}
               />
             </AppFrame>
           </div>
@@ -150,10 +104,10 @@ export function CustomizeSection() {
         <div className="mt-14 opacity-0 translate-y-4 transition-all delay-200 duration-500 ease-out lg:hidden flex flex-col items-center gap-5 w-full [[data-shown]_&]:translate-y-0 [[data-shown]_&]:opacity-100">
           <AppFrame>
             <ImageStage
-              stageRef={mobileStageRef}
-              current={current}
-              entering={entering !== null ? CUSTOMIZATIONS[entering] : null}
+              active={active}
+              exiting={exiting}
               direction={dir}
+              onTransitionEnd={() => setExiting(null)}
             />
           </AppFrame>
           <div className="flex justify-center gap-3">
@@ -204,33 +158,52 @@ function AppFrame({ children }: { children: React.ReactNode }) {
 }
 
 function ImageStage({
-  stageRef,
-  current,
-  entering,
+  active,
+  exiting,
   direction,
+  onTransitionEnd,
 }: {
-  stageRef: React.RefObject<HTMLDivElement | null>;
-  current: { name: string; src: string };
-  entering: { name: string; src: string } | null;
+  active: number;
+  exiting: number | null;
   direction: "left" | "right";
+  onTransitionEnd: () => void;
 }) {
   return (
-    <div ref={stageRef} className="relative overflow-hidden bg-muted/20">
-      <div data-role="exiting">
-        <img src={current.src} alt={current.name} className="w-full" />
-      </div>
+    <div className="relative aspect-[25/18] overflow-hidden bg-muted/20">
+      {CUSTOMIZATIONS.map((customization, index) => {
+        const isEntering = exiting !== null && index === active;
+        const isExiting = index === exiting;
+        const className = isEntering
+          ? "customize-entering z-10 animate-customize-enter"
+          : isExiting
+            ? "customize-exiting z-0 animate-customize-exit"
+            : index === active
+              ? "z-0 opacity-100"
+              : "opacity-0";
+        const enterOffset = direction === "right" ? "64px" : "-64px";
+        const exitOffset = direction === "right" ? "-64px" : "64px";
 
-      {entering && (
-        <div
-          data-role="entering"
-          className="customize-entering absolute inset-0"
-          style={{
-            "--enter-offset": direction === "right" ? "64px" : "-64px",
-          } as React.CSSProperties}
-        >
-          <img src={entering.src} alt={entering.name} className="w-full" />
-        </div>
-      )}
+        return (
+          <div
+            key={customization.src}
+            className={`absolute inset-0 ${className}`}
+            style={
+              isEntering
+                ? ({ "--enter-offset": enterOffset } as React.CSSProperties)
+                : isExiting
+                  ? ({ "--exit-offset": exitOffset } as React.CSSProperties)
+                  : undefined
+            }
+            onAnimationEnd={isEntering ? onTransitionEnd : undefined}
+          >
+            <img
+              src={customization.src}
+              alt={customization.name}
+              className="h-full w-full object-cover"
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }
