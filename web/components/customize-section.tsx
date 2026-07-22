@@ -8,6 +8,7 @@ const CUSTOMIZATIONS = [
   { name: "Example 2", src: "/images/example-2.webp" },
   { name: "Example 3", src: "/images/example-3.webp" },
   { name: "Example 4", src: "/images/example-4.webp" },
+  { name: "Example 5", src: "/images/example-5.webp" },
 ] as const;
 
 export function CustomizeSection() {
