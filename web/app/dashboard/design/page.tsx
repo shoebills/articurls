@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Link, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Link as LinkIcon, Plus, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -56,7 +56,7 @@ const SOCIAL_OPTIONS: Array<{
   icon: ReactNode;
   placeholder: string;
 }> = [
-  { key: "website_link", label: "Website", icon: <Link className="h-4 w-4" aria-hidden />, placeholder: "https://yoursite.com" },
+  { key: "website_link", label: "Website", icon: <LinkIcon className="h-4 w-4" aria-hidden />, placeholder: "https://yoursite.com" },
   { key: "contact_email", label: "Contact email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden />, placeholder: "hello@example.com" },
   { key: "instagram_link", label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden />, placeholder: "https://instagram.com/username" },
   { key: "x_link", label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },
@@ -916,13 +916,12 @@ export default function DesignDashboardPage() {
                       </SelectContent>
                     </Select>
                     <div className="flex items-center gap-2">
-                      <Button type="button" variant="outline" size="sm" onClick={addSocial} disabled={!socialToAdd}>
+                      <Button type="button" variant="default" onClick={addSocial} disabled={!socialToAdd}>
                         Add
                       </Button>
                       <Button
                         type="button"
-                        variant="ghost"
-                        size="sm"
+                        variant="outline"
                         onClick={() => {
                           setAddingSocial(false);
                           setSocialToAdd("");
