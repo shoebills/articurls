@@ -117,6 +117,7 @@ export function generatePersonSchema(user: PublicUser, profileUrl: string): Pers
   if (user.pinterest_link) socialLinks.push(user.pinterest_link);
   if (user.facebook_link) socialLinks.push(user.facebook_link);
   if (user.youtube_link) socialLinks.push(user.youtube_link);
+  if (user.website_link) socialLinks.push(user.website_link);
   
   return {
     "@type": "Person",

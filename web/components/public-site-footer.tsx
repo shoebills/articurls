@@ -4,7 +4,7 @@ import { getPublicPageUrl } from "@/lib/public-url";
 import { MdOutlineEmail } from "react-icons/md";
 import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX, SiYoutube } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
-import { Rss } from "lucide-react";
+import { Link, Rss } from "lucide-react";
 
 type PublicSiteFooterProps = {
   user: PublicUser;
@@ -24,6 +24,7 @@ function socialItems(user: PublicUser, useCustomDomain: boolean) {
     ? "/rss.xml"
     : `/${encodeURIComponent(user.user_name)}/rss.xml`;
   return [
+    { key: "website", href: user.website_link, label: "Website", icon: <Link className="h-4 w-4" aria-hidden /> },
     {
       key: "rss",
       href: showRss ? rssHref : null,

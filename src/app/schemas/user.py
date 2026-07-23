@@ -27,6 +27,7 @@ class UserSettings(BaseModel):
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
+    website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
     navbar_enabled: bool
@@ -67,6 +68,7 @@ class PublicUser(BaseModel):
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
+    website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
@@ -107,6 +109,7 @@ class UpdateUser(BaseModel):
     linkedin_link: Optional[str] = None
     github_link: Optional[str] = None
     youtube_link: Optional[str] = None
+    website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
 

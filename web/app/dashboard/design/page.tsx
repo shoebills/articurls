@@ -25,7 +25,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronDown, ChevronUp, Plus, X } from "lucide-react";
+import { ChevronDown, ChevronUp, Link, Plus, X } from "lucide-react";
 import {
   SiFacebook,
   SiGithub,
@@ -40,6 +40,7 @@ import { FaLinkedinIn } from "react-icons/fa6";
 type DesignSectionId = "header" | "body" | "footer";
 
 type SocialPlatform =
+  | "website_link"
   | "contact_email"
   | "instagram_link"
   | "x_link"
@@ -55,6 +56,7 @@ const SOCIAL_OPTIONS: Array<{
   icon: ReactNode;
   placeholder: string;
 }> = [
+  { key: "website_link", label: "Website", icon: <Link className="h-4 w-4" aria-hidden />, placeholder: "https://yoursite.com" },
   { key: "contact_email", label: "Contact email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden />, placeholder: "hello@example.com" },
   { key: "instagram_link", label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden />, placeholder: "https://instagram.com/username" },
   { key: "x_link", label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden />, placeholder: "https://x.com/username" },

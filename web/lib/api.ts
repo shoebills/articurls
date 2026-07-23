@@ -295,6 +295,7 @@ export async function patchMe(
       | "linkedin_link"
       | "github_link"
       | "youtube_link"
+      | "website_link"
       | "profile_image_url"
     >
   >
