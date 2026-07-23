@@ -383,7 +383,7 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+          <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
               <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -499,7 +499,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
 
-          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+          <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
               <Link
                 href={getPublicProfileUrl(username, { customDomain: true })}

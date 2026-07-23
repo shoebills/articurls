@@ -194,7 +194,7 @@ export default async function PublicBlogPage({ params }: Props) {
             </div>
           </header>
         ) : null}
-        <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+        <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
           <div className="flex items-center justify-between">
             <Link
               href={getPublicProfileUrl(username)}

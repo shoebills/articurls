@@ -186,7 +186,7 @@ export default async function PublicCustomPage({ params }: Props) {
         ) : null}
 
         <StructuredData data={page && user ? generateWebPageSchema(page, user, canonical) : null} />
-        <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+        <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
           <div className="flex items-center justify-between">
             <Link
               href={getPublicProfileUrl(username)}
