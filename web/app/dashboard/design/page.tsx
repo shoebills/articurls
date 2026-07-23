@@ -161,11 +161,12 @@ export default function DesignDashboardPage() {
   });
   // about_title read/written via design state (saved via saveDesign)
   const [socialLinks, setSocialLinks] = useState<Record<SocialPlatform, string>>(() => {
-    if (typeof window === "undefined") return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
+    if (typeof window === "undefined") return { website_link: "", contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
     const t = localStorage.getItem("articurls_token");
-    if (!t) return { contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
+    if (!t) return { website_link: "", contact_email: "", instagram_link: "", x_link: "", pinterest_link: "", facebook_link: "", linkedin_link: "", github_link: "", youtube_link: "" };
     const me = getCachedApiData<UserSettings>("/user/me", t);
     return {
+      website_link: me?.website_link || "",
       contact_email: me?.contact_email || "",
       instagram_link: me?.instagram_link || "",
       x_link: me?.x_link || "",
@@ -227,6 +228,7 @@ export default function DesignDashboardPage() {
       setFooterSelection(selectedFooter);
       // Load bio and social links from user settings
       const nextLinks: Record<SocialPlatform, string> = {
+        website_link: me.website_link || "",
         contact_email: me.contact_email || "",
         instagram_link: me.instagram_link || "",
         x_link: me.x_link || "",
@@ -301,6 +303,7 @@ export default function DesignDashboardPage() {
       const s = linksOverride ?? socialLinks;
       await patchMe(token, {
         bio,
+        website_link: s.website_link || null,
         contact_email: s.contact_email || null,
         instagram_link: s.instagram_link || null,
         x_link: s.x_link || null,
