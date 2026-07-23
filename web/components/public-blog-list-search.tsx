@@ -56,7 +56,7 @@ function BlogListItemRow({
               <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
                 {b.title}
               </h3>
-{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "" : "line-clamp-2"}`}>{b.excerpt}</p>}
+{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "max-sm:line-clamp-2" : "line-clamp-2"}`}>{b.excerpt}</p>}
             </div>
             {previewImage && showPreview ? (
               // eslint-disable-next-line @next/next/no-img-element
@@ -65,7 +65,7 @@ function BlogListItemRow({
                 alt=""
                 width={largeImage ? 224 : 96}
                 height={largeImage ? 149 : 64}
-                className={`aspect-[3/2] shrink-0 rounded-md border border-border/70 object-cover ${largeImage ? "w-36 sm:w-56" : "w-24 sm:w-36"}`}
+                className={`aspect-[3/2] shrink-0 rounded-md border border-border/70 object-cover w-24 sm:${largeImage ? "w-56" : "w-36"}`}
               />
             ) : null}
           </div>
