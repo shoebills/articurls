@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
 import {
@@ -56,7 +56,7 @@ export function PublicDesktopNav({
   useCustomDomain,
 }: PublicDesktopNavProps) {
   const size = normalizeNavBlogNameSize(nameSize);
-  const [inlineCount, setInlineCount] = useState(Math.min(links.length, 4));
+  const [inlineCount, setInlineCount] = useState<number | null>(null);
   const navSlotRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
 
@@ -94,24 +94,21 @@ export function PublicDesktopNav({
     setInlineCount(best);
   }, [links]);
 
-  useEffect(() => {
-    // Defer measurement to avoid forced reflow during initial render
-    const timer = requestAnimationFrame(() => {
-      recompute();
-    });
+  useLayoutEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    recompute();
 
     const slot = navSlotRef.current;
     if (!slot) return;
     const ro = new ResizeObserver(() => recompute());
     ro.observe(slot);
     return () => {
-      cancelAnimationFrame(timer);
       ro.disconnect();
     };
   }, [recompute]);
 
-  const inlineLinks = links.slice(0, inlineCount);
-  const overflowLinks = links.slice(inlineCount);
+  const inlineLinks = inlineCount === null ? [] : links.slice(0, inlineCount);
+  const overflowLinks = inlineCount === null ? [] : links.slice(inlineCount);
 
   return (
     <div className="relative flex w-full items-center gap-x-4 sm:gap-x-6">
@@ -146,31 +143,40 @@ export function PublicDesktopNav({
       </Link>
 
       <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-6 overflow-hidden">
-        {inlineLinks.map((l) => (
-          <Link prefetch={false} key={l.href} href={l.href} className={linkClass(l.active)}>
-            {l.label}
-          </Link>
-        ))}
-        {overflowLinks.length > 0 ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none"
-              >
-                More
-                <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="min-w-[10rem] bg-white origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
-              {overflowLinks.map((l) => (
-                <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
-                  <Link prefetch={false} href={l.href}>{l.label}</Link>
-                </DropdownMenuItem>
-              ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+        {inlineCount === null ? (
+          <span className="invisible text-sm" aria-hidden>
+            {/* reserve space so layout is stable before measurement */}
+            Placeholder
+          </span>
+        ) : (
+          <>
+            {inlineLinks.map((l) => (
+              <Link prefetch={false} key={l.href} href={l.href} className={linkClass(l.active)}>
+                {l.label}
+              </Link>
+            ))}
+            {overflowLinks.length > 0 ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none"
+                  >
+                    More
+                    <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="min-w-[10rem] bg-white origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
+                  {overflowLinks.map((l) => (
+                    <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
+                      <Link prefetch={false} href={l.href}>{l.label}</Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : null}
+          </>
+        )}
       </div>
 
       {userName ? (
