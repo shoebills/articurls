@@ -245,7 +245,7 @@ def update_design_settings(
 
     # Design settings affect public homepage chrome/content (header, featured
     # posts, about/footer), so purge the same homepage/listing cache tags used
-    # by public blog updates instead of requiring a manual Cloudflare purge.
+    # by public blog updates to revalidate the edge cache.
     schedule_homepage_purge(background_tasks, db_user)
 
     return db_user

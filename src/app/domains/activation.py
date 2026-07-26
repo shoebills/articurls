@@ -1,24 +1,20 @@
-"""
-Custom domain activation — Cloudflare Custom Hostnames + Vercel hostname registration.
-
-Fully active only when CF hostname + SSL are active AND Vercel has verified the hostname.
-"""
 from __future__ import annotations
 
 import logging
 from typing import List, Optional
 
 from .. import models
-from ..vercel.client import append_vercel_dns_instructions
-from .cf_dns import extract_dns_instructions, is_cloudflare_ready, merge_dns_instructions
+from ..vercel.client import VercelClient, vercel_verification_records
 from .schemas import DNSRecord, DomainVerifyOut
 
 logger = logging.getLogger(__name__)
 
 VERCEL_PENDING_MESSAGE = (
-    "Cloudflare is connected. Add the Vercel domain verification TXT record "
-    "at your registrar (shown below), then click Verify again."
+    "Add the Vercel domain verification TXT record at your registrar "
+    "(shown below), then click Verify again."
 )
+
+VERCEL_CNAME_TARGET = "cname.vercel-dns.com"
 
 
 def vercel_sync_required() -> bool:
@@ -30,16 +26,12 @@ def vercel_sync_required() -> bool:
 def is_vercel_verified(hostname: str) -> bool:
     if not vercel_sync_required():
         return True
-    from ..vercel.client import VercelClient
-
     return VercelClient().is_project_domain_verified_sync(hostname)
 
 
 def try_vercel_verify(hostname: str) -> bool:
     if not vercel_sync_required():
         return True
-    from ..vercel.client import VercelClient
-
     vc = VercelClient()
     vc.ensure_project_domain_sync(hostname)
     if vc.is_project_domain_verified_sync(hostname):
@@ -50,9 +42,21 @@ def try_vercel_verify(hostname: str) -> bool:
     return vc.is_project_domain_verified_sync(hostname)
 
 
-def build_dns_instructions(cf_result: dict, hostname: str) -> List[DNSRecord]:
-    base = extract_dns_instructions(cf_result, hostname)
-    return append_vercel_dns_instructions(base, hostname)
+def build_dns_instructions(hostname: str, vercel_domain_info: Optional[dict] = None) -> List[DNSRecord]:
+    instructions: List[DNSRecord] = [
+        DNSRecord(
+            type="CNAME",
+            name=hostname,
+            value=VERCEL_CNAME_TARGET,
+            purpose="routing",
+            verified=False,
+        )
+    ]
+    if vercel_domain_info:
+        extra = vercel_verification_records(vercel_domain_info, hostname)
+        if extra:
+            instructions.extend(DNSRecord(**row) for row in extra)
+    return instructions
 
 
 def mark_domain_active(db_user: models.User, hostname: str) -> None:
@@ -76,48 +80,61 @@ def mark_domain_active(db_user: models.User, hostname: str) -> None:
 
 def apply_domain_verification(
     db_user: models.User,
-    cf_result: dict,
+    vercel_domain: Optional[dict] = None,
     cached_instructions: Optional[List[DNSRecord]] = None,
 ) -> DomainVerifyOut:
     hostname = db_user.custom_domain or ""
 
-    if not is_cloudflare_ready(cf_result):
-        fresh = extract_dns_instructions(cf_result, hostname)
-        merged = merge_dns_instructions(fresh, cached_instructions)
-        instructions = append_vercel_dns_instructions(merged, hostname)
-        db_user.domain_status = models.DomainStatus.PENDING
-        db_user.is_domain_verified = False
-        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
+    if not vercel_sync_required():
+        mark_domain_active(db_user, hostname)
         return DomainVerifyOut(
-            verification_status="pending",
-            domain_status=db_user.domain_status,
-            dns_instructions=instructions,
+            verification_status="verified",
+            domain_status=models.DomainStatus.ACTIVE,
+            dns_instructions=None,
             message=None,
         )
 
-    if vercel_sync_required():
-        try_vercel_verify(hostname)
-        if not is_vercel_verified(hostname):
-            instructions = build_dns_instructions(cf_result, hostname)
-            if not any(r.purpose == "vercel" for r in instructions):
-                logger.warning(
-                    "Vercel domain %s unverified but no TXT challenge returned by API",
-                    hostname,
-                )
-            db_user.domain_status = models.DomainStatus.PENDING
-            db_user.is_domain_verified = False
-            db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
-            return DomainVerifyOut(
-                verification_status="pending",
-                domain_status=db_user.domain_status,
-                dns_instructions=instructions,
-                message=VERCEL_PENDING_MESSAGE,
-            )
+    try_vercel_verify(hostname)
+    if is_vercel_verified(hostname):
+        mark_domain_active(db_user, hostname)
+        return DomainVerifyOut(
+            verification_status="verified",
+            domain_status=models.DomainStatus.ACTIVE,
+            dns_instructions=None,
+            message=None,
+        )
 
-    mark_domain_active(db_user, hostname)
+    instructions = build_dns_instructions(hostname, vercel_domain)
+    merged = _merge_instructions(instructions, cached_instructions)
+    db_user.domain_status = models.DomainStatus.PENDING
+    db_user.is_domain_verified = False
+    db_user.domain_dns_instructions = [r.model_dump() for r in merged]
     return DomainVerifyOut(
-        verification_status="verified",
-        domain_status=models.DomainStatus.ACTIVE,
-        dns_instructions=None,
-        message=None,
+        verification_status="pending",
+        domain_status=db_user.domain_status,
+        dns_instructions=merged,
+        message=VERCEL_PENDING_MESSAGE,
     )
+
+
+def _merge_instructions(
+    fresh: List[DNSRecord],
+    cached: Optional[List[DNSRecord]],
+) -> List[DNSRecord]:
+    if not cached:
+        return fresh
+    fresh_keys = {(r.name, r.value) for r in fresh}
+    merged: List[DNSRecord] = list(fresh)
+    for cached_record in cached:
+        if (cached_record.name, cached_record.value) not in fresh_keys:
+            merged.append(
+                DNSRecord(
+                    type=cached_record.type,
+                    name=cached_record.name,
+                    value=cached_record.value,
+                    purpose=cached_record.purpose,
+                    verified=True,
+                )
+            )
+    merged.sort(key=lambda r: (r.purpose == "routing", r.verified))
+    return merged

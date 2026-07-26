@@ -6,8 +6,7 @@ from .text import normalize_email
 
 def _client_ip(request: Request) -> str:
     return (
-        request.headers.get("cf-connecting-ip")
-        or request.headers.get("x-forwarded-for", "").split(",")[0].strip()
+        request.headers.get("x-forwarded-for", "").split(",")[0].strip()
         or (request.client.host if request.client else None)
         or ""
     )

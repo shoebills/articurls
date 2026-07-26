@@ -21,7 +21,7 @@ import type { CustomDomain, DNSRecord } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 
-const FALLBACK_ORIGIN = "fallback.articurls.com";
+const VERCEL_CNAME_TARGET = "cname.vercel-dns.com";
 
 export default function CustomDomainSettings() {
   const router = useRouter();
@@ -357,8 +357,8 @@ export default function CustomDomainSettings() {
                 if (hasVercel) {
                   return (
                     <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                      Point your subdomain routing CNAME to <span className="font-mono">{FALLBACK_ORIGIN}</span>.
-                      After Cloudflare shows connected, add the Vercel domain verification TXT record if shown below — your domain stays pending until both steps complete.
+                      Point your subdomain routing CNAME to <span className="font-mono">{VERCEL_CNAME_TARGET}</span>.
+                      Add the Vercel domain verification TXT record shown below — your domain stays pending until both records are detected.
                     </p>
                   );
                 }
@@ -367,9 +367,6 @@ export default function CustomDomainSettings() {
 
               <p className="rounded-lg bg-muted/60 px-4 py-3 text-xs text-muted-foreground">
                 DNS changes typically propagate within minutes, but can take up to 48 hours.
-                {domain.hostname?.startsWith("www.") && (
-                  <> If your domain is on Cloudflare, make sure the <strong>www</strong> routing CNAME is set to <strong>DNS-only</strong> (grey cloud), not proxied.</>
-                )}
               </p>
 
               <Button onClick={handleVerifyDomain} disabled={verifying} className="w-full">

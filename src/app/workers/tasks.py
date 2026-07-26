@@ -208,54 +208,6 @@ def expired_pro_fallback():
         db.close()
 
 
-@celery.task(bind=True, max_retries=8)
-def poll_domain_ssl_records(self, user_id: int):
-    """
-    Poll Cloudflare until SSL records are ready and activation completes (CF + Vercel).
-    Retries: 3s, 6s, 12s, … up to ~21 min total.
-    """
-    from ..cloudflare.client import CloudflareClient
-    from ..domains.activation import apply_domain_verification, build_dns_instructions
-    from ..domains.cf_dns import is_cloudflare_ready
-
-    db = database.SessionLocal()
-    try:
-        db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-        if not db_user or not db_user.cloudflare_hostname_id:
-            return
-        if db_user.domain_status != models.DomainStatus.PENDING:
-            return
-
-        cf_client = CloudflareClient()
-        cf_result = cf_client.get_custom_hostname_sync(db_user.cloudflare_hostname_id)
-        if not cf_result:
-            raise self.retry(countdown=3 * (2 ** self.request.retries))
-
-        if is_cloudflare_ready(cf_result):
-            result = apply_domain_verification(db_user, cf_result)
-            db.commit()
-            if result.verification_status == "verified":
-                return
-            raise self.retry(countdown=3 * (2 ** self.request.retries))
-
-        ssl_info = cf_result.get("ssl") or {}
-        dcv_delegation = ssl_info.get("dcv_delegation_records") or []
-        validation_records = ssl_info.get("validation_records") or []
-        has_ssl_records = bool(dcv_delegation) or len(validation_records) >= 2
-
-        instructions = build_dns_instructions(cf_result, db_user.custom_domain or "")
-        db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
-        db.commit()
-
-        if not has_ssl_records:
-            raise self.retry(countdown=3 * (2 ** self.request.retries))
-
-    except self.MaxRetriesExceededError:
-        pass
-    finally:
-        db.close()
-
-
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
 def provision_umami_website(self, user_id: int):
     """Create an Umami website for a user if not already provisioned."""

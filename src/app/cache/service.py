@@ -1,301 +1,132 @@
-"""
-Cloudflare Cache Purge Service
-
-Provides granular cache invalidation for multi-tenant blog platform using
-Cache-Tags with automatic cascade purging.
-"""
-
 import asyncio
 import logging
 from typing import List, Optional
 
-import requests
+import httpx
 from fastapi import BackgroundTasks
 
 from ..config import settings
 
 logger = logging.getLogger(__name__)
 
-# Configuration — zone IDs are read lazily from settings so they can be
-# configured at runtime and gracefully degrade when empty.
-CLOUDFLARE_API_TOKEN = settings.cloudflare_api_token
-CLOUDFLARE_ZONE_ID = settings.cloudflare_zone_id
 
-
-async def purge_by_tags(zone_id: str, tags: List[str]) -> bool:
-    """
-    Purge Cloudflare cache by Cache-Tags.
-
-    Args:
-        zone_id: Cloudflare zone ID (for custom domains, each has separate zone)
-        tags: List of cache tags to purge (max 100 per request)
-
-    Returns:
-        True if purge successful, False otherwise
-    """
-    if not CLOUDFLARE_API_TOKEN or not zone_id:
-        logger.warning(
-            "Cloudflare API token or zone ID not configured, skipping cache purge"
-        )
-        return False
-
+async def _revalidate(tags: List[str]) -> bool:
     if not tags:
         return True
 
-    # Cloudflare limit: max 100 tags per request
-    if len(tags) > 100:
-        logger.warning(f"Too many tags ({len(tags)}), truncating to 100")
-        tags = tags[:100]
+    origin = (settings.marketing_origin or "").rstrip("/")
+    if not origin:
+        logger.warning("marketing_origin not configured, skipping revalidate")
+        return False
 
-    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache"
-    headers = {
-        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    payload = {"tags": tags}
+    secret = settings.internal_api_secret
+    if not secret:
+        logger.warning("internal_api_secret not configured, skipping revalidate")
+        return False
 
+    url = f"{origin}/api/revalidate"
     try:
-        response = await asyncio.to_thread(
-            requests.post, url, headers=headers, json=payload, timeout=10
-        )
-        data = response.json()
-
-        if data.get("success"):
-            logger.info(f"Cache purged for tags: {tags}")
-            return True
-        else:
-            errors = data.get("errors", [])
-            logger.error(f"Cache purge failed: {errors}")
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            response = await client.post(
+                url,
+                json={"tags": tags},
+                headers={
+                    "x-internal-secret": secret,
+                    "Content-Type": "application/json",
+                },
+            )
+            if response.status_code == 200:
+                logger.info("Revalidated tags: %s", tags)
+                return True
+            logger.warning(
+                "Revalidate failed with status %s: %s",
+                response.status_code,
+                response.text,
+            )
             return False
     except Exception as e:
-        logger.error(f"Error purging cache: {str(e)}")
+        logger.error("Error calling revalidate endpoint: %s", e)
         return False
 
 
-async def purge_by_hostnames(zone_id: str, hosts: List[str]) -> bool:
-    """
-    Purge cache by hostname (alternative to tags, works on all plans).
-
-    Args:
-        zone_id: Cloudflare zone ID
-        hosts: List of hostnames to purge (e.g., ["pabloo.io", "www.pabloo.io"])
-
-    Returns:
-        True if purge successful, False otherwise
-    """
-    if not CLOUDFLARE_API_TOKEN or not zone_id:
-        return False
-
-    url = f"https://api.cloudflare.com/client/v4/zones/{zone_id}/purge_cache"
-    headers = {
-        "Authorization": f"Bearer {CLOUDFLARE_API_TOKEN}",
-        "Content-Type": "application/json",
-    }
-    payload = {"hosts": hosts}
-
-    try:
-        response = await asyncio.to_thread(
-            requests.post, url, headers=headers, json=payload, timeout=10
-        )
-        data = response.json()
-        return data.get("success", False)
-    except Exception as e:
-        logger.error(f"Error purging cache by hostname: {str(e)}")
-        return False
-
-
-async def purge_blog_post(zone_id: str, tenant_host: str, slug: str) -> bool:
-    """
-    Purge a specific blog post and all listing pages that show it.
-
-    Cascade: post-{slug} + posts-list (home + categories)
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain or username path (e.g., "pabloo.io")
-        slug: Blog post slug
-
-    Returns:
-        True if purge successful
-    """
+async def purge_blog_post(tenant_host: str, slug: str) -> bool:
     tags = [
         f"tenant-{tenant_host}",
         f"post-{slug}",
-        "posts-list",  # Cascade: also purge home + category listings
+        "posts-list",
     ]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_custom_page(zone_id: str, tenant_host: str, slug: str) -> bool:
-    """
-    Purge a specific custom page.
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain
-        slug: Page slug
-
-    Returns:
-        True if purge successful
-    """
+async def purge_custom_page(tenant_host: str, slug: str) -> bool:
     tags = [
         f"tenant-{tenant_host}",
         f"page-{slug}",
     ]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_category(zone_id: str, tenant_host: str, slug: str) -> bool:
-    """
-    Purge a category page.
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain
-        slug: Category slug
-
-    Returns:
-        True if purge successful
-    """
+async def purge_category(tenant_host: str, slug: str) -> bool:
     tags = [
         f"tenant-{tenant_host}",
         f"category-{slug}",
-        "posts-list",  # Category is a listing page
+        "posts-list",
     ]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_homepage(zone_id: str, tenant_host: str) -> bool:
-    """
-    Purge the tenant's homepage/profile.
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain
-
-    Returns:
-        True if purge successful
-    """
+async def purge_homepage(tenant_host: str) -> bool:
     tags = [
         f"tenant-{tenant_host}",
         "home",
-        "posts-list",  # Home is a listing page
+        "posts-list",
     ]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_all_listings(zone_id: str, tenant_host: str) -> bool:
-    """
-    Purge all listing pages (home + categories) without purging individual posts.
-    Useful when a post is deleted or unpublished.
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain
-
-    Returns:
-        True if purge successful
-    """
+async def purge_all_listings(tenant_host: str) -> bool:
     tags = [
         f"tenant-{tenant_host}",
         "posts-list",
         "home",
     ]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_entire_tenant(zone_id: str, tenant_host: str) -> bool:
-    """
-    Nuclear option: Purge ALL cached content for a tenant.
-
-    Args:
-        zone_id: Cloudflare zone ID
-        tenant_host: Tenant's custom domain
-
-    Returns:
-        True if purge successful
-    """
+async def purge_entire_tenant(tenant_host: str) -> bool:
     tags = [f"tenant-{tenant_host}"]
-    return await purge_by_tags(zone_id, tags)
+    return await _revalidate(tags)
 
 
-async def purge_across_multiple_zones(
-    tenant_hosts: List[str], content_type: str, slug: str
-) -> dict:
-    """
-    Purge content across multiple zones (for tenants with custom domains).
+def _tenant_hosts(user) -> List[str]:
+    hosts = []
+    if user.custom_domain:
+        hosts.append(user.custom_domain)
+    if user.user_name:
+        hosts.append(f"articurls.site/{user.user_name}")
+    return hosts
 
-    Args:
-        tenant_hosts: List of tenant hosts (e.g., ["pabloo.io", "articurls.site/username"])
-        content_type: Type of content ("post", "page", "category")
-        slug: Content slug
-
-    Returns:
-        Dict with results per host
-    """
-    # Map of hostname -> zone_id (configure this based on your setup)
-    ZONE_MAP = {
-        "articurls.com": CLOUDFLARE_ZONE_ID,
-        "articurls.site": settings.cloudflare_ugs_zone_id,
-        # Add custom domain zones as needed:
-        # "pabloo.io": "zone-id-for-pabloo",
-    }
-
-    results = {}
-    for host in tenant_hosts:
-        zone_id = ZONE_MAP.get(host)
-        if not zone_id:
-            logger.warning(f"No zone ID configured for host: {host}")
-            results[host] = False
-            continue
-
-        if content_type == "post":
-            results[host] = await purge_blog_post(zone_id, host, slug)
-        elif content_type == "page":
-            results[host] = await purge_custom_page(zone_id, host, slug)
-        elif content_type == "category":
-            results[host] = await purge_category(zone_id, host, slug)
-        else:
-            results[host] = await purge_entire_tenant(zone_id, host)
-
-    return results
-
-
-# ---------------------------------------------------------------------------
-# Convenience helpers for routers — schedule purges across all relevant zones
-# (UGC domain + optional custom domain) in one call.
-# ---------------------------------------------------------------------------
 
 def schedule_post_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    if settings.cloudflare_ugs_zone_id:
-        background_tasks.add_task(purge_blog_post, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
-    if user.custom_domain and settings.cloudflare_zone_id:
-        background_tasks.add_task(purge_blog_post, settings.cloudflare_zone_id, user.custom_domain, slug)
+    for host in _tenant_hosts(user):
+        background_tasks.add_task(purge_blog_post, host, slug)
 
 
 def schedule_page_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    if settings.cloudflare_ugs_zone_id:
-        background_tasks.add_task(purge_custom_page, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
-    if user.custom_domain and settings.cloudflare_zone_id:
-        background_tasks.add_task(purge_custom_page, settings.cloudflare_zone_id, user.custom_domain, slug)
+    for host in _tenant_hosts(user):
+        background_tasks.add_task(purge_custom_page, host, slug)
 
 
 def schedule_category_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    if settings.cloudflare_ugs_zone_id:
-        background_tasks.add_task(purge_category, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}", slug)
-    if user.custom_domain and settings.cloudflare_zone_id:
-        background_tasks.add_task(purge_category, settings.cloudflare_zone_id, user.custom_domain, slug)
+    for host in _tenant_hosts(user):
+        background_tasks.add_task(purge_category, host, slug)
 
 
 def schedule_homepage_purge(background_tasks: BackgroundTasks, user) -> None:
-    if settings.cloudflare_ugs_zone_id:
-        background_tasks.add_task(purge_homepage, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}")
-    if user.custom_domain and settings.cloudflare_zone_id:
-        background_tasks.add_task(purge_homepage, settings.cloudflare_zone_id, user.custom_domain)
+    for host in _tenant_hosts(user):
+        background_tasks.add_task(purge_homepage, host)
 
 
 def schedule_tenant_purge(background_tasks: BackgroundTasks, user) -> None:
-    if settings.cloudflare_ugs_zone_id:
-        background_tasks.add_task(purge_entire_tenant, settings.cloudflare_ugs_zone_id, f"articurls.site/{user.user_name}")
-    if user.custom_domain and settings.cloudflare_zone_id:
-        background_tasks.add_task(purge_entire_tenant, settings.cloudflare_zone_id, user.custom_domain)
+    for host in _tenant_hosts(user):
+        background_tasks.add_task(purge_entire_tenant, host)

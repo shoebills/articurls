@@ -1,7 +1,6 @@
 """
-Vercel project domain API — register BYO hostnames for CF SSL for SaaS routing.
-
-Cloudflare terminates TLS; Vercel must have each customer hostname on the project.
+Vercel project domain API — register and verify customer hostnames.
+Vercel provisions TLS automatically via Let's Encrypt for all project domains.
 """
 from __future__ import annotations
 
@@ -100,7 +99,7 @@ class VercelClient:
         if not self.configured:
             return None
         url = (
-            f"{self.base_url}/v10/projects/{self.project}/domains/"
+            f"{self.base_url}/v9/projects/{self.project}/domains/"
             f"{name.lower().strip()}/verify"
         )
         try:
@@ -162,7 +161,7 @@ class VercelClient:
         if not self.configured:
             return None
         url = (
-            f"{self.base_url}/v10/projects/{self.project}/domains/"
+            f"{self.base_url}/v9/projects/{self.project}/domains/"
             f"{name.lower().strip()}/verify"
         )
         try:
@@ -212,7 +211,7 @@ def append_vercel_dns_instructions(
     instructions: list,
     hostname: str,
 ) -> list:
-    """Append Vercel TXT verification rows to Cloudflare DNS instructions."""
+    """Append Vercel TXT verification rows to DNS instructions."""
     from ..domains.schemas import DNSRecord
 
     if not settings.vercel_api_token or not settings.vercel_project_name:

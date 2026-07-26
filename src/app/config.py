@@ -50,11 +50,6 @@ class Settings(BaseSettings):
     
     internal_api_secret: str = ""
 
-    cloudflare_api_token: str = ""
-    cloudflare_zone_id: str = ""
-    cloudflare_ugs_zone_id: str = ""
-    cloudflare_fallback_origin: str = "fallback.articurls.com"
-
     vercel_api_token: str = ""
     vercel_project_name: str = ""
     vercel_team_id: str = ""

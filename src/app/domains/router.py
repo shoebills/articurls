@@ -9,12 +9,10 @@ from typing import List
 from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
-from ..utils import require_pro, is_pro_entitled
 from ..config import settings
-from ..cloudflare.client import CloudflareClient, CloudflareError
+from ..utils import require_pro, is_pro_entitled
 from ..redis_client import redis_client
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
-from .cf_dns import extract_dns_instructions
 from .activation import (
     apply_domain_verification,
     build_dns_instructions,
@@ -34,17 +32,6 @@ def _invalidate_domain_cache(hostname: str) -> None:
         redis_client.delete(f"domain_lookup:{hostname}")
     except Exception:
         pass
-
-
-def _cf_error_detail(exc: CloudflareError) -> str:
-    try:
-        body = json.loads(exc.body)
-        errors = body.get("errors", [])
-        if errors:
-            return errors[0].get("message", "Cloudflare error")
-        return "Cloudflare error"
-    except Exception:
-        return exc.body or "Cloudflare error"
 
 
 async def _register_vercel_domain(hostname: str) -> None:
@@ -74,19 +61,16 @@ def _cached_dns(db_user: models.User) -> List[DNSRecord] | None:
 
 
 async def _load_dns_instructions(db_user: models.User) -> List[DNSRecord] | None:
-    if not db_user.custom_domain or not db_user.cloudflare_hostname_id:
+    if not db_user.custom_domain:
         return None
 
     needs_vercel = vercel_sync_required() and not is_vercel_verified(db_user.custom_domain)
     if db_user.domain_status != models.DomainStatus.PENDING and not needs_vercel:
         return None
 
-    cf_client = CloudflareClient()
-    cf_result = await cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
-    if not cf_result:
-        return _cached_dns(db_user)
-
-    instructions = build_dns_instructions(cf_result, db_user.custom_domain)
+    vc = VercelClient()
+    vercel_domain = vc.get_project_domain_sync(db_user.custom_domain) if vc.configured else None
+    instructions = build_dns_instructions(db_user.custom_domain, vercel_domain)
     if instructions:
         db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
     return instructions or None
@@ -99,12 +83,6 @@ async def add_domain(
     current_user=Depends(get_current_user),
     _pro=Depends(require_pro),
 ):
-    if not settings.cloudflare_api_token or not settings.cloudflare_zone_id:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Custom domains are not configured. Please contact support.",
-        )
-
     hostname = normalize_hostname(body.hostname)
     validate_hostname(hostname)
 
@@ -122,27 +100,14 @@ async def add_domain(
             detail="This domain is already in use by another account.",
         )
 
-    cf_client = CloudflareClient()
-    try:
-        cf_result = await cf_client.create_custom_hostname(hostname)
-    except CloudflareError as e:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=f"Cloudflare: {_cf_error_detail(e)}",
-        )
-
-    if not cf_result:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Failed to create custom hostname in Cloudflare. Please try again.",
-        )
-
-    dns_instructions = build_dns_instructions(cf_result, hostname)
     await _register_vercel_domain(hostname)
+
+    vc = VercelClient()
+    vercel_domain = vc.get_project_domain_sync(hostname) if vc.configured else None
+    dns_instructions = build_dns_instructions(hostname, vercel_domain)
 
     db_user.custom_domain = hostname
     db_user.domain_status = models.DomainStatus.PENDING
-    db_user.cloudflare_hostname_id = cf_result.get("id")
     db_user.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
     db_user.is_domain_verified = False
     db_user.verified_at = None
@@ -153,17 +118,13 @@ async def add_domain(
         db.commit()
     except IntegrityError:
         db.rollback()
-        if cf_result.get("id"):
-            await cf_client.delete_custom_hostname(cf_result["id"])
+        await _remove_vercel_domain(hostname)
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail="This domain is already in use by another account.",
         )
 
     _invalidate_domain_cache(hostname)
-
-    from ..workers.tasks import poll_domain_ssl_records
-    poll_domain_ssl_records.apply_async(args=[db_user.user_id], countdown=3)
 
     return DomainAddResponse(
         hostname=hostname,
@@ -211,12 +172,6 @@ async def verify_domain(
     if not db_user.custom_domain:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="No custom domain configured.")
 
-    if not db_user.cloudflare_hostname_id:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Domain not registered with Cloudflare. Please add domain again.",
-        )
-
     if db_user.domain_status == models.DomainStatus.ACTIVE:
         if not vercel_sync_required() or is_vercel_verified(db_user.custom_domain):
             return DomainVerifyOut(
@@ -234,26 +189,11 @@ async def verify_domain(
                 detail="Please wait a few seconds before verifying again.",
             )
 
-    cf_client = CloudflareClient()
-    cf_result = None
-    try:
-        cf_result = await cf_client.force_recheck(db_user.cloudflare_hostname_id)
-    except Exception:
-        pass
-
-    if not cf_result:
-        cf_result = await cf_client.get_custom_hostname(db_user.cloudflare_hostname_id)
-
-    if not cf_result:
-        return DomainVerifyOut(
-            verification_status="pending",
-            domain_status=db_user.domain_status,
-            dns_instructions=_cached_dns(db_user),
-            message=None,
-        )
+    vc = VercelClient()
+    vercel_domain = vc.get_project_domain_sync(db_user.custom_domain) if vc.configured else None
 
     cached = _cached_dns(db_user)
-    result = apply_domain_verification(db_user, cf_result, cached)
+    result = apply_domain_verification(db_user, vercel_domain, cached)
     db.commit()
     return result
 
@@ -267,20 +207,12 @@ async def delete_domain(
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if db_user.cloudflare_hostname_id:
-        cf_client = CloudflareClient()
-        await cf_client.delete_custom_hostname(db_user.cloudflare_hostname_id)
-
     if old_domain := db_user.custom_domain:
         await _remove_vercel_domain(old_domain)
 
-    # Fully release the hostname. custom_domain is UNIQUE, so leaving it set
-    # would permanently reserve the domain and block any other account (and even
-    # this one) from re-adding it. Reset to a clean "no domain" state.
     db_user.custom_domain = None
     db_user.domain_status = models.DomainStatus.NONE
     db_user.is_domain_verified = False
-    db_user.cloudflare_hostname_id = None
     db_user.domain_dns_instructions = None
     db_user.verified_at = None
     db_user.grace_started_at = None
