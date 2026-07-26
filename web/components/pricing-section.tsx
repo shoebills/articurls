@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { appAuthHref } from "@/lib/env";
+import { useAuth } from "@/lib/auth-context";
 
 type Plan = {
   name: string;
@@ -21,7 +22,10 @@ type Plan = {
 };
 
 export function PricingSection() {
+  const { token } = useAuth();
   const signupUrl = appAuthHref("/signup");
+  const billingUrl = appAuthHref("/dashboard/billing");
+  const lifetimeHref = token ? `${billingUrl}?plan=lifetime` : `${signupUrl}?plan=lifetime`;
 
   const plans: Plan[] = [
     {
@@ -63,7 +67,7 @@ export function PricingSection() {
         "Yours for life",
       ],
       cta: "Get Lifetime",
-      href: `${signupUrl}?plan=lifetime`,
+      href: lifetimeHref,
       premium: true,
       note: "Limited time deal",
     },
@@ -147,7 +151,9 @@ function PlanCard({ plan }: { plan: Plan }) {
       {plan.note && (
         <p className={`mt-2 text-center text-xs ${mutedText}`}>{plan.note}</p>
       )}
-      <p className={`mt-2 text-center text-xs ${mutedText}`}>No credit card required</p>
+      {!plan.premium && (
+        <p className={`mt-2 text-center text-xs ${mutedText}`}>No credit card required</p>
+      )}
 
       <div className={`mt-6 border-t pt-6 ${plan.premium ? "border-background/15" : "border-border/60"}`}>
         <ul className="space-y-3">
