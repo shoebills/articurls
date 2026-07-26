@@ -20,7 +20,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, UGC_DOMAIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -36,6 +36,13 @@ const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
 async function resolveDomainInfo(
   host: string,
 ): Promise<{ username: string; domain_status: string } | null> {
+  if (host.endsWith(`.${UGC_DOMAIN}`)) {
+    const subdomain = host.split(".")[0];
+    const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
+    if (subdomain && !RESERVED.has(subdomain)) {
+      return { username: subdomain, domain_status: "active" };
+    }
+  }
   try {
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
