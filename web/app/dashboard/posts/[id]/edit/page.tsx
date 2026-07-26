@@ -37,7 +37,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UGS_ORIGIN, assetUrl } from "@/lib/env";
+import { UGC_DOMAIN, assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ChevronLeft } from "lucide-react";
@@ -560,7 +560,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     blog.status === "published" && user
       ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
         ? `https://${user.custom_domain}/blog/${encodeURIComponent(blog.slug)}`
-        : `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}/blog/${encodeURIComponent(blog.slug)}`
+        : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}/blog/${encodeURIComponent(blog.slug)}`
       : null;
 
   function getConfirmMeta(): { title: string; description?: string } {

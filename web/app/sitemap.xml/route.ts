@@ -271,31 +271,11 @@ async function marketingDomainSitemap(): Promise<Response> {
 // ── UGC domain sitemap ────────────────────────────────────────────────────────
 
 /**
- * Sitemap for articurls.site — user-generated content only.
- *
- * Returns a sitemap index pointing to user sitemaps.
+ * Sitemap for articurls.site — landing page only.
+ * User content is on subdomains ({username}.articurls.site/sitemap.xml).
  */
 async function ugcDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
-
-  try {
-    const sitemaps = [
-      {
-        loc: `${UGS_ORIGIN}/sitemaps/users.xml`,
-        lastmod: today,
-      },
-    ];
-
-    return new Response(buildSitemapIndex(sitemaps), {
-      headers: {
-        "Content-Type": "application/xml; charset=utf-8",
-        "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
-        "Vary": "Host",
-      },
-    });
-  } catch (error) {
-    console.error("Failed to generate UGC sitemap:", error);
-  }
 
   const entries = [
     { loc: `${UGS_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },

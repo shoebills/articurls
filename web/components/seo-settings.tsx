@@ -23,7 +23,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProGate } from "@/components/pro/pro-gate";
 import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
-import { UGS_ORIGIN } from "@/lib/env";
+import { UGC_DOMAIN, UGS_ORIGIN } from "@/lib/env";
 
 export default function SeoSettings() {
   const { token, refreshUser } = useAuth();
@@ -99,13 +99,13 @@ export default function SeoSettings() {
   const sitemapResourceUrl = seoResourcesEnabled && domain?.hostname
     ? `https://${domain.hostname}/sitemap.xml`
     : isPro && username
-      ? `${UGS_ORIGIN}/sitemaps/${encodeURIComponent(username)}/sitemap.xml`
+      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml`
       : undefined;
   const sitemapResourceEnabled = Boolean(sitemapResourceUrl);
   const rssResourceUrl = seoResourcesEnabled && domain?.hostname
     ? `https://${domain.hostname}/rss.xml`
     : isPro && username
-      ? `${UGS_ORIGIN}/${encodeURIComponent(username)}/rss.xml`
+      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/rss.xml`
       : undefined;
   const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
 
@@ -291,7 +291,7 @@ export default function SeoSettings() {
             <ProGate isPro={isPro}>
               <SeoResourceRow
                 label="Sitemap"
-                url={sitemapResourceUrl || (username ? `${UGS_ORIGIN}/sitemaps/${encodeURIComponent(username)}/sitemap.xml` : "#")}
+                url={sitemapResourceUrl || (username ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml` : "#")}
                 displayText="/sitemap.xml"
                 enabled={true}
                 unavailableText={
