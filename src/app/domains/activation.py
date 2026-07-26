@@ -15,6 +15,11 @@ VERCEL_PENDING_MESSAGE = (
 )
 
 VERCEL_CNAME_TARGET = "7ee24e1b6a5ccf21.vercel-dns-017.com"
+VERCEL_APEX_IP = "76.76.21.21"
+
+
+def _is_apex(hostname: str) -> bool:
+    return hostname.count(".") == 1
 
 
 def vercel_sync_required() -> bool:
@@ -43,15 +48,24 @@ def try_vercel_verify(hostname: str) -> bool:
 
 
 def build_dns_instructions(hostname: str, vercel_domain_info: Optional[dict] = None) -> List[DNSRecord]:
-    instructions: List[DNSRecord] = [
-        DNSRecord(
+    if _is_apex(hostname):
+        record = DNSRecord(
+            type="A",
+            name="@",
+            value=VERCEL_APEX_IP,
+            purpose="routing",
+            verified=False,
+        )
+    else:
+        sub = hostname.split(".", 1)[0]
+        record = DNSRecord(
             type="CNAME",
-            name=hostname,
+            name=sub,
             value=VERCEL_CNAME_TARGET,
             purpose="routing",
             verified=False,
         )
-    ]
+    instructions: List[DNSRecord] = [record]
     if vercel_domain_info:
         extra = vercel_verification_records(vercel_domain_info, hostname)
         if extra:

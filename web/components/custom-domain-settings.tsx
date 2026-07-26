@@ -21,8 +21,6 @@ import type { CustomDomain, DNSRecord } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 
-const VERCEL_CNAME_TARGET = "7ee24e1b6a5ccf21.vercel-dns-017.com";
-
 export default function CustomDomainSettings() {
   const router = useRouter();
   const { token } = useAuth();
@@ -320,7 +318,6 @@ export default function CustomDomainSettings() {
                     }
                     const nameDisplay =
                       record.purpose === "routing" &&
-                      record.type === "CNAME" &&
                       domain.hostname &&
                       domain.hostname.split(".").length < 3
                         ? "@"
@@ -354,14 +351,14 @@ export default function CustomDomainSettings() {
                     </p>
                   );
                 }
-                if (hasVercel) {
-                  return (
-                    <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
-                      Point your subdomain routing CNAME to <span className="font-mono">{VERCEL_CNAME_TARGET}</span>.
-                      Add the Vercel domain verification TXT record shown below — your domain stays pending until both records are detected.
-                    </p>
-                  );
-                }
+                  if (hasVercel) {
+                    return (
+                      <p className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2.5 text-xs text-blue-900">
+                        Add the Vercel domain verification TXT record shown below.
+                        Your domain stays pending until all records are detected.
+                      </p>
+                    );
+                  }
                 return null;
               })()}
 
