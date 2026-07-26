@@ -2,9 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  getCustomDomain,
   getMe,
+  getMetaSettings,
   getStorageUsage,
   patchMe,
+  patchMetaSettings,
   patchProMe,
   uploadProfileImage,
   uploadFavicon,
@@ -14,7 +17,7 @@ import {
   apiCacheHas,
   getCachedApiData,
 } from "@/lib/api";
-import type { StorageUsage, UserSettings } from "@/lib/types";
+import type { CustomDomain, MetaSettings, StorageUsage, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +29,7 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { assetUrl, UGS_ORIGIN } from "@/lib/env";
+import { assetUrl, UGC_DOMAIN, UGS_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProGate } from "@/components/pro/pro-gate";
 import CustomDomainSettings from "@/components/custom-domain-settings";
@@ -88,6 +91,18 @@ export default function SettingsPage() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
   });
+  const [rssEnabled, setRssEnabled] = useState(() => {
+    if (typeof window === "undefined") return false;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return false;
+    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    return cached ? cached.rss_enabled !== false : false;
+  });
+  const [domain, setDomain] = useState<CustomDomain | null>(() => {
+    if (typeof window === "undefined") return null;
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<CustomDomain>("/settings/domain", t) : null;
+  });
   const [lastUsernameChangeAt, setLastUsernameChangeAt] = useState<string | null>(() => {
     if (typeof window === "undefined") return null;
     const t = localStorage.getItem("articurls_token");
@@ -118,7 +133,12 @@ export default function SettingsPage() {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [u, usage] = await Promise.all([getMe(token), getStorageUsage(token)]);
+      const [u, usage, meta, domainData] = await Promise.all([
+        getMe(token),
+        getStorageUsage(token),
+        getMetaSettings(token),
+        getCustomDomain(token),
+      ]);
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
@@ -126,6 +146,8 @@ export default function SettingsPage() {
       setCollectSubscribers(isPro ? (u.subscriber_collection_enabled ?? false) : false);
       setLastUsernameChangeAt(u.last_username_change_at || null);
       setStorageUsage(usage);
+      setRssEnabled(meta.rss_enabled !== false);
+      setDomain(domainData);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
     } finally {
@@ -189,6 +211,25 @@ export default function SettingsPage() {
       setCollectSubscribers(prevCollect);
       setRemoveBranding(prevBranding);
       setErr(e instanceof ApiError ? e.message : "Save failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function saveRss(nextValue: boolean) {
+    if (!token) return;
+    const prev = rssEnabled;
+    setRssEnabled(nextValue);
+    setBusy(true);
+    setErr(null);
+    setSaved(null);
+    try {
+      await patchMetaSettings(token, { rss_enabled: nextValue });
+      await refreshUser();
+      setSaved("Saved");
+    } catch (e) {
+      setRssEnabled(prev);
+      setErr(e instanceof ApiError ? e.message : "Failed to update RSS setting");
     } finally {
       setBusy(false);
     }
@@ -261,6 +302,15 @@ export default function SettingsPage() {
   const usedBytes = storageUsage?.used_bytes ?? 0;
   const limitBytes = storageUsage?.limit_bytes ?? null;
   const isUnlimitedStorage = storageUsage?.is_unlimited ?? false;
+  const seoResourcesEnabled =
+    !!domain?.hostname &&
+    (domain.domain_status === "active" || domain.domain_status === "grace");
+  const rssResourceUrl = seoResourcesEnabled && domain?.hostname
+    ? `https://${domain.hostname}/rss.xml`
+    : isPro && user_name
+      ? `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/rss.xml`
+      : undefined;
+  const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
   const storagePct = !isUnlimitedStorage && limitBytes ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
 
   useEffect(() => {
@@ -361,7 +411,7 @@ export default function SettingsPage() {
         <Card id="pro-features">
           <CardHeader>
             <CardTitle className="text-xl">Pro features</CardTitle>
-            <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
+            <CardDescription>Manage your blog branding, favicon, subscriber collection, and RSS feed.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -384,6 +434,16 @@ export default function SettingsPage() {
                 <Skeleton className="h-3 w-56" />
               </div>
               <Skeleton className="h-6 w-10 rounded-full" />
+            </div>
+            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="h-6 w-10 rounded-full" />
+                <Skeleton className="h-8 w-14 rounded-md" />
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -590,7 +650,7 @@ export default function SettingsPage() {
       <Card id="pro-features">
         <CardHeader>
           <CardTitle className="text-xl">Pro features</CardTitle>
-          <CardDescription>Manage your blog branding, favicon, and subscriber collection.</CardDescription>
+          <CardDescription>Manage your blog branding, favicon, subscriber collection, and RSS feed.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
 
@@ -708,6 +768,37 @@ export default function SettingsPage() {
               </div>
               <p className="text-sm leading-relaxed text-muted-foreground">
                 Hide the "Made with Articurls" badge from your blog.
+              </p>
+            </div>
+          </ProGate>
+          <ProGate>
+            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+              <div className="flex items-center justify-between gap-4 sm:gap-6">
+                <p className="text-sm font-medium">RSS feed</p>
+                <div className="flex items-center gap-2 shrink-0">
+                  <Switch
+                    checked={rssEnabled}
+                    onCheckedChange={saveRss}
+                    disabled={busy}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0"
+                    disabled={!rssResourceEnabled}
+                    onClick={() => {
+                      if (rssResourceUrl) {
+                        window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
+                      }
+                    }}
+                  >
+                    View
+                  </Button>
+                </div>
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                When enabled, RSS icon appears in the footer.
               </p>
             </div>
           </ProGate>

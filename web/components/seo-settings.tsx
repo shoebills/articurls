@@ -18,12 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProGate } from "@/components/pro/pro-gate";
 import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
-import { UGC_DOMAIN, UGS_ORIGIN } from "@/lib/env";
+import { UGC_DOMAIN } from "@/lib/env";
 
 export default function SeoSettings() {
   const { token, refreshUser } = useAuth();
@@ -54,13 +54,6 @@ export default function SeoSettings() {
     if (!t) return "";
     const cached = getCachedApiData<MetaSettings>("/user/meta", t);
     return cached?.meta_description || "";
-  });
-  const [rssEnabled, setRssEnabled] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return false;
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
-    return cached ? cached.rss_enabled !== false : false;
   });
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -102,13 +95,6 @@ export default function SeoSettings() {
       ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml`
       : undefined;
   const sitemapResourceEnabled = Boolean(sitemapResourceUrl);
-  const rssResourceUrl = seoResourcesEnabled && domain?.hostname
-    ? `https://${domain.hostname}/rss.xml`
-    : isPro && username
-      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/rss.xml`
-      : undefined;
-  const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
-
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -123,7 +109,6 @@ export default function SeoSettings() {
         setMetaDescription(meta.meta_description || "");
         setOriginalMetaTitle(meta.meta_title || "");
         setOriginalMetaDescription(meta.meta_description || "");
-        setRssEnabled(meta.rss_enabled !== false);
         setDomain(domainData);
         setUsername(me.user_name || "");
         setIsPro(isProSubscription(subscription));
@@ -143,7 +128,6 @@ export default function SeoSettings() {
       await patchMetaSettings(token, {
         meta_title: metaTitle || null,
         meta_description: metaDescription || null,
-        rss_enabled: rssEnabled,
       });
       await refreshUser();
       setOriginalMetaTitle(metaTitle);
@@ -155,24 +139,6 @@ export default function SeoSettings() {
       setBusy(false);
     }
   }
-
-  async function onToggleRss(nextValue: boolean) {
-    if (!token) return;
-    const previous = rssEnabled;
-    setRssEnabled(nextValue);
-    setBusy(true);
-    setErr(null);
-    try {
-      await patchMetaSettings(token, { rss_enabled: nextValue });
-      await refreshUser();
-      setSavedMsg("Saved");
-    } catch (e) {
-      setRssEnabled(previous);
-      setErr(e instanceof ApiError ? e.message : "Failed to update RSS setting");
-    } finally {
-        setBusy(false);
-      }
-    }
 
   if (loading) {
     return (
@@ -191,29 +157,22 @@ export default function SeoSettings() {
             <Skeleton className="h-24 w-full" />
           </div>
           <Skeleton className="h-10 w-20" />
-          <div className="border-t pt-5 mt-2 space-y-3">
-            <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
-              <div className="space-y-0.5">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-3 w-48" />
+            <div className="border-t pt-5 mt-2 space-y-3">
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-16" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <Skeleton className="h-9 w-16" />
               </div>
-              <Skeleton className="h-6 w-10 rounded-full" />
-            </div>
-            <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
-              <div className="space-y-0.5">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-3 w-32" />
+              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+                <div className="space-y-0.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-3 w-48" />
+                </div>
+                <Skeleton className="h-9 w-16" />
               </div>
-              <Skeleton className="h-9 w-16" />
             </div>
-            <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
-              <div className="space-y-0.5">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <Skeleton className="h-9 w-16" />
-            </div>
-          </div>
         </CardContent>
       </Card>
     );
@@ -256,38 +215,6 @@ export default function SeoSettings() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <ProGate isPro={isPro}>
-              <div className="rounded-lg border bg-white px-4 py-3 space-y-1.5">
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm font-medium">RSS feed</p>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <Switch
-                      checked={rssEnabled}
-                      onCheckedChange={onToggleRss}
-                      disabled={busy}
-                      aria-label="Enable RSS feed"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-8 min-h-0"
-                      disabled={!rssResourceEnabled}
-                      onClick={() => {
-                        if (rssResourceUrl) {
-                          window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
-                        }
-                      }}
-                    >
-                      View
-                    </Button>
-                  </div>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  When enabled, RSS icon appears in the footer.
-                </p>
-              </div>
-            </ProGate>
             <ProGate isPro={isPro}>
               <SeoResourceRow
                 label="Sitemap"
