@@ -165,7 +165,24 @@ def expired_pro_fallback():
 
     try:
         now = datetime.now(timezone.utc)
-        
+
+        # ── Expired trials ──────────────────────────────────────────────────
+        expired_trials = db.query(models.Subscriptions).filter(
+            models.Subscriptions.plan_type == "trial",
+            models.Subscriptions.status == "active",
+            models.Subscriptions.current_period_end.isnot(None),
+            models.Subscriptions.current_period_end < now,
+        ).all()
+
+        for sub in expired_trials:
+            db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
+            if db_user:
+                # Trial users get no grace — domain expires immediately
+                if db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
+                    expire_domain_access(db_user)
+            sub.status = "inactive"
+
+        # ── Expired Pro subscriptions ───────────────────────────────────────
         expired_subscriptions = db.query(models.Subscriptions).filter(
             models.Subscriptions.plan_type == "pro",
             models.Subscriptions.status != "active",
@@ -176,23 +193,18 @@ def expired_pro_fallback():
         for sub in expired_subscriptions:
             db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
             if db_user:
-                # Handle custom domain lifecycle when Pro lapses
                 if db_user.domain_status == models.DomainStatus.ACTIVE:
                     start_domain_grace_period(db_user, now=now)
 
                 elif db_user.domain_status == models.DomainStatus.GRACE:
-                    # Check if grace period has expired
                     if db_user.grace_expires_at and db_user.grace_expires_at < now:
                         expire_domain_access(db_user)
 
-            sub.plan_type = "free"
+            sub.plan_type = "lapsed"
             if sub.status != "cancelled":
                 sub.status = "inactive"
 
-        # Grace-period expiry is independent of the subscription row: the loop
-        # above demotes the subscription to "free" on the first tick, so a user
-        # already in GRACE would never be revisited via the query. Sweep them
-        # separately so GRACE reliably advances to EXPIRED after the window.
+        # ── Grace-period expiry sweep ───────────────────────────────────────
         grace_expired_users = db.query(models.User).filter(
             models.User.domain_status == models.DomainStatus.GRACE,
             models.User.grace_expires_at.isnot(None),

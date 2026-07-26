@@ -13,6 +13,8 @@ type AuthContextValue = {
   subscription: SubscriptionOut | null;
   isPro: boolean;
   wasPro: boolean;
+  isTrial: boolean;
+  daysRemaining: number | null;
   loading: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -20,6 +22,15 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
+
+function getDaysRemaining(sub: SubscriptionOut | null): number | null {
+  if (!sub || !sub.current_period_end) return null;
+  if (sub.plan_type === "lifetime") return null;
+  const end = new Date(sub.current_period_end);
+  const now = new Date();
+  const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  return days > 0 ? days : 0;
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -40,14 +51,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(me);
       setSubscription(sub);
     } catch (err: any) {
-      // Only clear token on auth errors (401), not network/server errors
       if (err?.status === 401 || err?.response?.status === 401) {
         localStorage.removeItem(TOKEN_KEY);
         setToken(null);
         setUser(null);
         setSubscription(null);
       }
-      // For other errors, keep token and let user retry
     }
   }, []);
 
@@ -103,7 +112,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const isPro = isProSubscription(subscription);
-  const wasPro = subscription?.plan_type === "pro" || subscription?.plan_type === "lifetime";
+  const wasPro = !!(subscription && ["trial", "pro", "lifetime"].includes(subscription.plan_type));
+  const isTrial = subscription?.plan_type === "trial";
+  const daysRemaining = getDaysRemaining(subscription);
 
   const value = useMemo(
     () => ({
@@ -112,12 +123,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       subscription,
       isPro,
       wasPro,
+      isTrial,
+      daysRemaining,
       loading,
       login,
       logout,
       refreshUser,
     }),
-    [token, user, subscription, isPro, wasPro, loading, login, logout, refreshUser]
+    [token, user, subscription, isPro, wasPro, isTrial, daysRemaining, loading, login, logout, refreshUser]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

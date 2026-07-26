@@ -112,8 +112,6 @@ import {
 } from "recharts";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AnalyticsPreview } from "@/components/pro/pro-analytics-preview";
-
 const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
@@ -1066,7 +1064,7 @@ function NativeAnalytics({ token }: { token: string }) {
 }
 
 export default function AnalyticsPage() {
-  const { token, isPro, loading } = useAuth();
+  const { token, loading } = useAuth();
 
   if (!token || loading) {
     return (
@@ -1086,10 +1084,6 @@ export default function AnalyticsPage() {
         </div>
       </div>
     );
-  }
-
-  if (!isPro) {
-    return <AnalyticsPreview />;
   }
 
   return <NativeAnalytics token={token} />;

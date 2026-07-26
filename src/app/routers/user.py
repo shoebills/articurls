@@ -14,13 +14,11 @@ from ..email.welcome import (
     sanitize_welcome_subject,
     validate_delay_minutes,
 )
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import (
-    FREE_STORAGE_LIMIT_BYTES,
     _verify_magic_bytes,
-    ensure_user_storage_quota,
     get_user_storage_usage_bytes,
     save_image_local,
 )
@@ -32,8 +30,6 @@ from ..utils import (
     apply_username_change_or_raise,
     claim_username_or_raise,
     normalize_email,
-    is_pro_entitled,
-    require_pro,
     user_by_email,
     user_by_username,
     validate_username_or_raise,
@@ -100,6 +96,17 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     )
     db.commit()
     db.refresh(new_user)
+
+    trial_start = datetime.now(timezone.utc)
+    trial_end = trial_start + timedelta(days=14)
+    db.add(models.Subscriptions(
+        user_id=new_user.user_id,
+        plan_type="trial",
+        status="active",
+        current_period_start=trial_start,
+        current_period_end=trial_end,
+    ))
+    db.commit()
 
     enqueue_umami_provision(new_user.user_id)
 
@@ -397,7 +404,6 @@ def admin_change_username(
 def get_welcome_email_settings(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
-    is_pro=Depends(require_pro),
 ):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
@@ -410,7 +416,6 @@ def update_welcome_email_settings(
     request: user.WelcomeEmailSettingsUpdate,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
-    is_pro=Depends(require_pro),
 ):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
@@ -447,7 +452,6 @@ def preview_welcome_email(
     request: user.WelcomeEmailPreviewIn,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
-    is_pro=Depends(require_pro),
 ):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
@@ -475,7 +479,7 @@ def preview_welcome_email(
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), is_pro = Depends(require_pro)):
+def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
     
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -526,7 +530,6 @@ async def upload_favicon(
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
-    is_pro=Depends(require_pro),
 ):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
@@ -550,7 +553,6 @@ async def upload_favicon(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="File content does not match the claimed image type",
         )
-    ensure_user_storage_quota(db, current_user.user_id, len(data))
 
     from uuid import uuid4
     from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
@@ -577,16 +579,11 @@ def get_storage_usage(
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),
 ):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    is_pro = is_pro_entitled(db_user, db)
     used_bytes = get_user_storage_usage_bytes(db, current_user.user_id)
     return {
         "used_bytes": used_bytes,
-        "limit_bytes": None if is_pro else FREE_STORAGE_LIMIT_BYTES,
-        "is_unlimited": bool(is_pro),
+        "limit_bytes": None,
+        "is_unlimited": True,
     }
 
 

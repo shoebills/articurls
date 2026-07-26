@@ -42,7 +42,6 @@ import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ChevronLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ProGate } from "@/components/pro/pro-gate";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -671,23 +670,21 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       />
 
       {/* Email Subscribers */}
-      <ProGate>
-        <div className="mt-6 space-y-2">
-          <div className="rounded-md border border-border bg-white p-3 space-y-1">
-            <div className="flex items-center justify-between gap-4">
-              <p className="text-sm font-medium">Email subscribers</p>
-              <Switch
-                className="shrink-0"
-                checked={notify}
-                onCheckedChange={(v) => {
-                  setNotify(v);
-                }}
-              />
-            </div>
-            <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
+      <div className="mt-6 space-y-2">
+        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+          <div className="flex items-center justify-between gap-4">
+            <p className="text-sm font-medium">Email subscribers</p>
+            <Switch
+              className="shrink-0"
+              checked={notify}
+              onCheckedChange={(v) => {
+                setNotify(v);
+              }}
+            />
           </div>
+          <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
         </div>
-      </ProGate>
+      </div>
 
       {/* Show in Featured Posts */}
       <div className="mt-6 space-y-2">

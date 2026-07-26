@@ -167,7 +167,7 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
         return False
 
     start_domain_grace_period(db_user)
-    db_sub.plan_type = "free"
+    db_sub.plan_type = "lapsed"
     db_sub.status = "inactive"
     db_sub.dodo_subscription_id = None
     db_sub.current_period_start = None

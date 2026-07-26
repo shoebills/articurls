@@ -31,7 +31,6 @@ import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "luc
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, UGC_DOMAIN, UGS_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ProGate } from "@/components/pro/pro-gate";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 import SeoSettings from "@/components/seo-settings";
 
@@ -72,19 +71,12 @@ export default function SettingsPage() {
       apiCacheHas("/user/storage", t)
     );
   });
-  const [removeBranding, setRemoveBranding] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return false;
-    const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return isPro ? (cached?.remove_branding ?? false) : false;
-  });
   const [collectSubscribers, setCollectSubscribers] = useState(() => {
     if (typeof window === "undefined") return false;
     const t = localStorage.getItem("articurls_token");
     if (!t) return false;
     const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return isPro ? (cached?.subscriber_collection_enabled ?? false) : false;
+    return cached?.subscriber_collection_enabled ?? false;
   });
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
     if (typeof window === "undefined") return null;
@@ -142,8 +134,7 @@ export default function SettingsPage() {
       setName(u.name);
       setUserName(u.user_name);
       setEmail(u.email);
-      setRemoveBranding(isPro ? (u.remove_branding ?? false) : false);
-      setCollectSubscribers(isPro ? (u.subscriber_collection_enabled ?? false) : false);
+      setCollectSubscribers(u.subscriber_collection_enabled ?? false);
       setLastUsernameChangeAt(u.last_username_change_at || null);
       setStorageUsage(usage);
       setRssEnabled(meta.rss_enabled !== false);
@@ -164,8 +155,7 @@ export default function SettingsPage() {
       setName(ctxUser.name);
       setUserName(ctxUser.user_name);
       setEmail(ctxUser.email);
-      setRemoveBranding(isPro ? (ctxUser.remove_branding ?? false) : false);
-      setCollectSubscribers(isPro ? (ctxUser.subscriber_collection_enabled ?? false) : false);
+      setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? false);
       setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
     }
   }, [ctxUser]);
@@ -191,25 +181,21 @@ export default function SettingsPage() {
     }
   }
 
-  async function savePro(collect?: boolean, branding?: boolean) {
-    if (!token || !isPro) return;
+  async function savePro(collect?: boolean) {
+    if (!token) return;
     const nextCollect = collect ?? collectSubscribers;
-    const nextBranding = branding ?? removeBranding;
     setBusy(true);
     setErr(null);
     setSaved(null);
     const prevCollect = collectSubscribers;
-    const prevBranding = removeBranding;
     try {
       await patchProMe(token, {
-        remove_branding: nextBranding,
         subscriber_collection_enabled: nextCollect,
       });
       await refreshUser();
       setSaved("Saved");
     } catch (e) {
       setCollectSubscribers(prevCollect);
-      setRemoveBranding(prevBranding);
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {
       setBusy(false);
@@ -300,8 +286,6 @@ export default function SettingsPage() {
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `https://${encodeURIComponent(normalizedPending)}.${UGC_DOMAIN}/`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
-  const limitBytes = storageUsage?.limit_bytes ?? null;
-  const isUnlimitedStorage = storageUsage?.is_unlimited ?? false;
   const seoResourcesEnabled =
     !!domain?.hostname &&
     (domain.domain_status === "active" || domain.domain_status === "grace");
@@ -311,7 +295,6 @@ export default function SettingsPage() {
       ? `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/rss.xml`
       : undefined;
   const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
-  const storagePct = !isUnlimitedStorage && limitBytes ? Math.min(100, Math.round((usedBytes / limitBytes) * 100)) : 0;
 
   useEffect(() => {
     if (!usernameDialogOpen || !token) return;
@@ -620,188 +603,152 @@ export default function SettingsPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-xl">Storage</CardTitle>
-          <CardDescription>
-            {isUnlimitedStorage
-              ? "Unlimited media storage on Pro plan."
-              : "Free plan includes up to 1 GB total media storage."}
-          </CardDescription>
+          <CardDescription>Unlimited media storage.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">Used storage</p>
             <p className="text-sm font-semibold tabular-nums">
-              {formatBytes(usedBytes)} / {isUnlimitedStorage ? "\u221e" : formatBytes(limitBytes || 0)}
+              {formatBytes(usedBytes)} / {"\u221e"}
             </p>
           </div>
-          <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/70">
-            {!isUnlimitedStorage && (
-              <div
-                className="h-full rounded-full bg-gradient-to-r from-zinc-400 to-zinc-600"
-                style={{ width: `${storagePct}%` }}
-              />
-            )}
-          </div>
-          {!isUnlimitedStorage && (
-            <p className="text-xs text-muted-foreground">{storagePct}% used</p>
-          )}
         </CardContent>
       </Card>
 
       <Card id="pro-features">
         <CardHeader>
           <CardTitle className="text-xl">Pro features</CardTitle>
-          <CardDescription>Manage your blog branding, favicon, subscriber collection, and RSS feed.</CardDescription>
+          <CardDescription>Manage your favicon, subscriber collection, and RSS feed.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
 
-          <ProGate>
-            <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
-              <div className="space-y-1.5">
-                <p className="text-sm font-medium">Blog favicon</p>
-                <p className="text-sm text-muted-foreground">
-                  Ideal 512×512px, max 256KB.
-                </p>
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Blog favicon</p>
+              <p className="text-sm text-muted-foreground">
+                Ideal 512×512px, max 256KB.
+              </p>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
+                {ctxUser?.favicon_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={assetUrl(ctxUser.favicon_url)}
+                    alt="Favicon"
+                    className="h-8 w-8 object-contain"
+                  />
+                ) : (
+                  <Globe className="h-6 w-6 text-muted-foreground/50" />
+                )}
               </div>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
-                  {ctxUser?.favicon_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={assetUrl(ctxUser.favicon_url)}
-                      alt="Favicon"
-                      className="h-8 w-8 object-contain"
-                    />
-                  ) : (
-                    <Globe className="h-6 w-6 text-muted-foreground/50" />
-                  )}
-                </div>
-                <input
-                  ref={faviconInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
-                  className="sr-only"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !token) return;
-                    if (file.size > 256 * 1024) {
-                      setErr("Favicon too large (max 256KB)");
-                      e.target.value = "";
-                      return;
-                    }
-                    setFaviconBusy(true);
-                    setErr(null);
-                    try {
-                      await uploadFavicon(token, file);
-                      await refreshUser();
-                    } catch (ex) {
-                      setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
-                    } finally {
-                      setFaviconBusy(false);
-                      e.target.value = "";
-                    }
-                  }}
+              <input
+                ref={faviconInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !token) return;
+                  if (file.size > 256 * 1024) {
+                    setErr("Favicon too large (max 256KB)");
+                    e.target.value = "";
+                    return;
+                  }
+                  setFaviconBusy(true);
+                  setErr(null);
+                  try {
+                    await uploadFavicon(token, file);
+                    await refreshUser();
+                  } catch (ex) {
+                    setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
+                  } finally {
+                    setFaviconBusy(false);
+                    e.target.value = "";
+                  }
+                }}
+                disabled={faviconBusy}
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
                   disabled={faviconBusy}
-                />
-                <div className="flex items-center gap-2">
+                  onClick={() => faviconInputRef.current?.click()}
+                  title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
+                >
+                  {faviconBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pencil className="h-4 w-4" />
+                  )}
+                </Button>
+                {ctxUser?.favicon_url ? (
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-10 w-10 shrink-0"
+                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
                     disabled={faviconBusy}
-                    onClick={() => faviconInputRef.current?.click()}
-                    title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
+                    onClick={() => setFaviconDeleteOpen(true)}
+                    title="Remove favicon"
                   >
-                    {faviconBusy ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Pencil className="h-4 w-4" />
-                    )}
+                    <Trash2 className="h-4 w-4" />
                   </Button>
-                  {ctxUser?.favicon_url ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="icon"
-                      className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
-                      disabled={faviconBusy}
-                      onClick={() => setFaviconDeleteOpen(true)}
-                      title="Remove favicon"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  ) : null}
-                </div>
+                ) : null}
               </div>
             </div>
-          </ProGate>
-          <ProGate>
-            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
-              <div className="flex items-center justify-between gap-4 sm:gap-6">
-                <p className="text-sm font-medium">Collect subscribers</p>
+          </div>
+
+          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+            <div className="flex items-center justify-between gap-4 sm:gap-6">
+              <p className="text-sm font-medium">Collect subscribers</p>
+              <Switch
+                checked={collectSubscribers}
+                onCheckedChange={(v) => {
+                  setCollectSubscribers(v);
+                  void savePro(v);
+                }}
+                disabled={busy}
+              />
+            </div>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              Show the subscribe button in your blog menu and below blog posts.
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+            <div className="flex items-center justify-between gap-4 sm:gap-6">
+              <p className="text-sm font-medium">RSS feed</p>
+              <div className="flex items-center gap-2 shrink-0">
                 <Switch
-                  checked={collectSubscribers}
-                  onCheckedChange={(v) => {
-                    setCollectSubscribers(v);
-                    void savePro(v, removeBranding);
-                  }}
+                  checked={rssEnabled}
+                  onCheckedChange={saveRss}
                   disabled={busy}
                 />
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Show the subscribe button in your blog menu and below blog posts.
-              </p>
-            </div>
-          </ProGate>
-          <ProGate>
-            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
-              <div className="flex items-center justify-between gap-4 sm:gap-6">
-                <p className="text-sm font-medium">Remove branding</p>
-                <Switch
-                  checked={removeBranding}
-                  onCheckedChange={(v) => {
-                    setRemoveBranding(v);
-                    void savePro(collectSubscribers, v);
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0"
+                  disabled={!rssResourceEnabled}
+                  onClick={() => {
+                    if (rssResourceUrl) {
+                      window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
+                    }
                   }}
-                  disabled={busy}
-                />
+                >
+                  View
+                </Button>
               </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Hide the "Made with Articurls" badge from your blog.
-              </p>
             </div>
-          </ProGate>
-          <ProGate>
-            <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
-              <div className="flex items-center justify-between gap-4 sm:gap-6">
-                <p className="text-sm font-medium">RSS feed</p>
-                <div className="flex items-center gap-2 shrink-0">
-                  <Switch
-                    checked={rssEnabled}
-                    onCheckedChange={saveRss}
-                    disabled={busy}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 min-h-0"
-                    disabled={!rssResourceEnabled}
-                    onClick={() => {
-                      if (rssResourceUrl) {
-                        window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
-                      }
-                    }}
-                  >
-                    View
-                  </Button>
-                </div>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                When enabled, RSS icon appears in the footer.
-              </p>
-            </div>
-          </ProGate>
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              When enabled, RSS icon appears in the footer.
+            </p>
+          </div>
+
         </CardContent>
       </Card>
 

@@ -18,8 +18,6 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ProGate } from "@/components/pro/pro-gate";
-
 const DELAY_OPTIONS = [
   { value: "0", label: "Immediately after confirm" },
   { value: "30", label: "30 minutes" },
@@ -35,7 +33,7 @@ function isEmptyBody(html: string): boolean {
 }
 
 export default function AudienceEmailsPage() {
-  const { token, isPro, user, loading: authLoading } = useAuth();
+  const { token, user, loading: authLoading } = useAuth();
   const blogName = (user?.name || "").trim() || "My Blog";
   const defaultSubject = welcomeEmailSubjectDisplay(blogName);
 
@@ -65,7 +63,7 @@ export default function AudienceEmailsPage() {
   });
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(() => {
-    if (!token || !isPro) return false;
+    if (!token) return false;
     return !apiCacheHas("/user/welcome-email", token);
   });
   const [err, setErr] = useState<string | null>(null);
@@ -88,7 +86,7 @@ export default function AudienceEmailsPage() {
   }, [defaultSubject, subjectUsesDefault]);
 
   const load = useCallback(async () => {
-    if (!token || !isPro) {
+    if (!token) {
       setLoading(false);
       return;
     }
@@ -122,7 +120,7 @@ export default function AudienceEmailsPage() {
     } finally {
       setLoading(false);
     }
-  }, [token, isPro, blogName]);
+  }, [token, blogName]);
 
   const dirty =
     initial !== null &&
@@ -136,7 +134,7 @@ export default function AudienceEmailsPage() {
   }, [load]);
 
   async function onSave() {
-    if (!token || !isPro) return;
+    if (!token) return;
     setBusy(true);
     setErr(null);
     try {
@@ -163,7 +161,7 @@ export default function AudienceEmailsPage() {
   }
 
   async function onToggleWelcome(nextValue: boolean) {
-    if (!token || !isPro) return;
+    if (!token) return;
     const previous = enabled;
     setEnabled(nextValue);
     setBusy(true);
@@ -219,75 +217,73 @@ export default function AudienceEmailsPage() {
     <>
       <div className="space-y-6">
 
-        <ProGate>
-          <Card>
-            <CardHeader>
-              <div className="flex w-full items-center justify-between gap-4">
-                <CardTitle>Welcome email automation</CardTitle>
-                <Switch
-                  checked={enabled}
-                  onCheckedChange={onToggleWelcome}
-                  disabled={busy}
-                  aria-label="Enable welcome email"
-                />
-              </div>
-              <CardDescription>
-                Send a welcome email to new subscribers.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="welcome-delay">Send delay</Label>
-                <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
-                  <SelectTrigger id="welcome-delay" className="mt-2 max-w-sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {DELAY_OPTIONS.map((opt) => (
-                      <SelectItem key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+        <Card>
+          <CardHeader>
+            <div className="flex w-full items-center justify-between gap-4">
+              <CardTitle>Welcome email automation</CardTitle>
+              <Switch
+                checked={enabled}
+                onCheckedChange={onToggleWelcome}
+                disabled={busy}
+                aria-label="Enable welcome email"
+              />
+            </div>
+            <CardDescription>
+              Send a welcome email to new subscribers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="welcome-delay">Send delay</Label>
+              <Select value={delayMinutes} onValueChange={setDelayMinutes} disabled={!enabled || busy}>
+                <SelectTrigger id="welcome-delay" className="mt-2 max-w-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DELAY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="welcome-subject">Subject</Label>
-                <Input
-                  id="welcome-subject"
-                  className="mt-2"
-                  value={subject}
-                  onChange={(e) => {
-                    setSubject(e.target.value);
-                    setSubjectUsesDefault(false);
-                  }}
-                  disabled={!enabled || busy}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Body</Label>
-                <WelcomeEmailEditor
+            <div className="space-y-2">
+              <Label htmlFor="welcome-subject">Subject</Label>
+              <Input
+                id="welcome-subject"
                 className="mt-2"
-                content={bodyHtml}
-                onChange={(html) => {
-                  if (justLoadedRef.current) {
-                    justLoadedRef.current = false;
-                    setInitial((prev) => prev ? { ...prev, bodyHtml: html } : null);
-                  }
-                  setBodyHtml(html);
+                value={subject}
+                onChange={(e) => {
+                  setSubject(e.target.value);
+                  setSubjectUsesDefault(false);
                 }}
                 disabled={!enabled || busy}
-                />
-              </div>
+              />
+            </div>
 
-              <Button onClick={onSave} disabled={busy || !dirty}>
-                {busy ? "Saving…" : "Save"}
-              </Button>
-            </CardContent>
-          </Card>
-        </ProGate>
+            <div className="space-y-2">
+              <Label>Body</Label>
+              <WelcomeEmailEditor
+              className="mt-2"
+              content={bodyHtml}
+              onChange={(html) => {
+                if (justLoadedRef.current) {
+                  justLoadedRef.current = false;
+                  setInitial((prev) => prev ? { ...prev, bodyHtml: html } : null);
+                }
+                setBodyHtml(html);
+              }}
+              disabled={!enabled || busy}
+              />
+            </div>
+
+            <Button onClick={onSave} disabled={busy || !dirty}>
+              {busy ? "Saving…" : "Save"}
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
       <FloatingErrorToast

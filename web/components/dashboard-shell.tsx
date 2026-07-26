@@ -2,18 +2,17 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Menu, Zap } from "lucide-react";
+import { Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
-import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
+import { TrialExpiredOverlay } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
-  const { user, isPro } = useAuth();
+  const { user, isPro, subscription, loading } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
   const publicBlogHref =
@@ -22,6 +21,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
       : user?.user_name
         ? `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`
         : null;
+
+  const isLocked = !isPro && !!subscription && !loading;
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -46,6 +47,10 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [open, close]);
 
+  if (isLocked) {
+    return <TrialExpiredOverlay />;
+  }
+
   return (
     <div className="flex min-h-dvh w-full bg-white md:justify-center">
       <div className="flex w-full max-w-[1200px]">
@@ -53,12 +58,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
-            {!isPro && (
-              <Button size="sm" className="h-8 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)}>
-                <Zap className="h-3.5 w-3.5" />
-                Upgrade
-              </Button>
-            )}
             {publicBlogHref ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
                 <Link href={publicBlogHref}>
@@ -100,11 +99,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     Articurls
                   </Link>
                 </div>
-                {!isPro && (
-                  <Button size="icon" className="h-8 min-h-0 w-8 shrink-0 rounded-md bg-foreground text-background hover:bg-foreground/90" onClick={() => setUpgradeOpen(true)} aria-label="Upgrade to Pro">
-                    <Zap className="h-3.5 w-3.5" />
-                  </Button>
-                )}
                 {publicBlogHref ? (
                   <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
                     <Link href={publicBlogHref}>
@@ -121,7 +115,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
               <div
                 id={mobileMenuId}
                 className={cn(
-                  // Row→border and border→tray both use --mobile-nav-rail-gap (same as padding under row)
                   "absolute left-0 top-full z-50 mt-[calc(var(--mobile-nav-rail-gap)+1px+var(--mobile-nav-rail-gap))] w-[80%] min-w-0 max-w-full transition-opacity duration-200 ease-out",
                   open ? "opacity-100" : "pointer-events-none opacity-0"
                 )}
@@ -154,7 +147,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </main>
       </div>
     </div>
-    <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
-  </div>
+    </div>
   );
 }

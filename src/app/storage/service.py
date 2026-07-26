@@ -6,11 +6,8 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ..config import settings
 from .. import models
-from ..utils.entitlements import is_pro_entitled
-
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
 MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
-FREE_STORAGE_LIMIT_BYTES = 1024 * 1024 * 1024  # 1GB
 
 _MAGIC_BYTES: dict[str, tuple[bytes, ...]] = {
     "image/jpeg": (b"\xff\xd8\xff",),
@@ -149,22 +146,6 @@ def get_user_storage_usage_bytes(db: Session, user_id: int) -> int:
     return int(blogs_total) + int(pages_total)
 
 
-def ensure_user_storage_quota(db: Session, user_id: int, incoming_size_bytes: int) -> None:
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    if is_pro_entitled(db_user, db):
-        return
-
-    used = get_user_storage_usage_bytes(db, user_id)
-    if used + incoming_size_bytes > FREE_STORAGE_LIMIT_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Free plan storage limit reached (1GB). Upgrade to Pro for unlimited storage.",
-        )
-
-
 async def save_media(
     file: UploadFile,
     category: str,
@@ -174,8 +155,6 @@ async def save_media(
 ) -> StoredMedia:
     data = await file.read()
     _validate_image_upload(file, data)
-    if db is not None:
-        ensure_user_storage_quota(db, user_id, len(data))
 
     ext = _ext_from_content_type(file.content_type or "")
     filename = f"{uuid4().hex}{ext}"

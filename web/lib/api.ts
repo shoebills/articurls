@@ -315,7 +315,6 @@ export async function patchProMe(
     nav_blog_name?: string | null;
     nav_menu_enabled?: boolean;
     subscriber_collection_enabled?: boolean;
-    remove_branding?: boolean;
   }
 ): Promise<UserSettings> {
   return apiFetch("/user/pro/me", {
@@ -708,6 +707,9 @@ export async function getCustomerPortalLink(token: string): Promise<{ url: strin
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
   if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;
+  if (sub.plan_type === "trial") {
+    return sub.status === "active" && !!sub.current_period_end && new Date(sub.current_period_end) >= new Date();
+  }
   if (sub.plan_type !== "pro") return false;
   if (!["active", "past_due", "cancelled"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;

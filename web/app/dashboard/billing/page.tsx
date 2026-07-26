@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays, Check, Flame } from "lucide-react";
+import { CalendarDays, Check, Flame, Timer } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -170,7 +170,12 @@ export default function BillingPage() {
         </CardHeader>
         <CardContent className="space-y-5 pt-2">
           <div className="flex flex-wrap items-center gap-3">
-            {isLifetime ? (
+            {sub?.plan_type === "trial" && pro ? (
+              <div className="inline-flex items-center gap-2 rounded-lg border border-blue-500/25 bg-blue-500/[0.06] px-3 py-2 text-sm font-medium text-blue-800">
+                <Timer className="h-4 w-4 shrink-0" aria-hidden />
+                Trial
+              </div>
+            ) : isLifetime ? (
               <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-2 text-sm font-medium text-amber-800">
                 <Flame className="h-4 w-4 shrink-0" aria-hidden />
                 Lifetime plan
@@ -192,12 +197,7 @@ export default function BillingPage() {
                   Pro plan
                 </div>
               )
-            ) : (
-              <div className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-muted/40 px-3 py-2 text-sm font-medium text-muted-foreground">
-                <span className="h-2 w-2 shrink-0 rounded-full bg-muted-foreground/50 ring-2 ring-muted-foreground/20" aria-hidden />
-                Free plan
-              </div>
-             )}
+            ) : null}
           </div>
           {sub?.current_period_end && pro && !isLifetime ? (
             <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2 text-sm text-foreground/90">
@@ -243,7 +243,6 @@ export default function BillingPage() {
                   "Publish emails to subscribers",
                   "Views & subscribers analytics",
                   "RSS, sitemap & robots.txt",
-                  "Remove Articurls branding",
                   "Custom favicon",
                   "Unlimited media storage",
                 ].map((x) => (

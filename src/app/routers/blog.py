@@ -69,9 +69,6 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     candidate_slug = utils.unique_blog_slug(db, current_user.user_id, base_slug)
 
-    if request.notify_subscribers:
-        utils.assert_pro(db, current_user.user_id)
-
     new_blog = models.Blog(
         title=request.title,
         content=sanitize_html(request.content),
@@ -266,9 +263,6 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
                     status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                     detail="Content cannot be empty.",
                 )
-
-    if update_data.get("notify_subscribers") is True:
-        utils.assert_pro(db, current_user.user_id)
 
     slug_in = update_data.pop("slug", None)
     if slug_in is not None:

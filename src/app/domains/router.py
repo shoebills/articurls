@@ -10,7 +10,7 @@ from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
 from ..config import settings
-from ..utils import require_pro, is_pro_entitled
+from ..utils import is_pro_entitled
 from ..redis_client import redis_client
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
 from .activation import (
@@ -81,7 +81,6 @@ async def add_domain(
     body: DomainIn,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
 ):
     hostname = normalize_hostname(body.hostname)
     validate_hostname(hostname)
@@ -163,7 +162,6 @@ async def get_domain(
 async def verify_domain(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
 ):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:

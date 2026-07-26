@@ -26,8 +26,6 @@ import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { TrendingDown, TrendingUp, Users2 } from "lucide-react";
-import { SubscriberAnalyticsPreview } from "@/components/pro/pro-subscriber-analytics-preview";
-
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
@@ -61,7 +59,7 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
 }
 
 export function SubscribersAnalyticsPanel() {
-  const { token, isPro, loading: authLoading } = useAuth();
+  const { token, loading: authLoading } = useAuth();
   const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
     if (typeof window === "undefined") return null;
@@ -91,7 +89,6 @@ export function SubscribersAnalyticsPanel() {
 
   useEffect(() => {
     if (!token) return;
-    if (!isPro) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -116,7 +113,7 @@ export function SubscribersAnalyticsPanel() {
     return () => {
       cancelled = true;
     };
-  }, [token, isPro, sPeriod]);
+  }, [token, sPeriod]);
 
   async function exportCsv() {
     if (!token) return;
@@ -186,10 +183,6 @@ export function SubscribersAnalyticsPanel() {
         </Card>
       </div>
     );
-  }
-
-  if (!isPro) {
-    return <SubscriberAnalyticsPreview />;
   }
 
   if (loading) {

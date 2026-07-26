@@ -4,7 +4,6 @@ from sqlalchemy import func
 from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
-from ..utils.entitlements import require_pro
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Literal
 from fastapi.responses import StreamingResponse
@@ -277,7 +276,7 @@ def get_umami_overview(
     period: str = "7d",
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
@@ -338,7 +337,7 @@ def get_umami_timeseries(
     period: str = "7d",
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps, get_umami_period_unit
@@ -404,7 +403,7 @@ def get_umami_pages(
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
@@ -591,7 +590,7 @@ def get_umami_sources(
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps, umami_internal_domains
@@ -661,7 +660,7 @@ def get_umami_geo(
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
@@ -708,7 +707,7 @@ def get_umami_tech(
     limit: int = 20,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
@@ -773,7 +772,7 @@ def get_umami_tech(
 def get_umami_realtime(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
-    _pro=Depends(require_pro),
+
 ):
     from ..umami.client import UmamiClient, UmamiError
 

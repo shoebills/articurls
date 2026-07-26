@@ -42,7 +42,6 @@ class UserSettings(BaseModel):
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
     subscriber_collection_enabled: bool = True
-    remove_branding: bool = True
     custom_domain: Optional[str] = None
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
@@ -76,7 +75,6 @@ class PublicUser(BaseModel):
     nav_menu_enabled: bool
     show_about_section: bool
     site_footer_enabled: bool = True
-    show_articurls_watermark: bool = True
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []
@@ -119,7 +117,6 @@ class UpdateProUser(BaseModel):
     nav_menu_enabled: Optional[bool] = None
     favicon_url: Optional[str] = None
     subscriber_collection_enabled: Optional[bool] = None
-    remove_branding: Optional[bool] = None
 
 
 class AdminUsernameChange(BaseModel):

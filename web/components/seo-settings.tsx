@@ -21,7 +21,6 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ProGate } from "@/components/pro/pro-gate";
 import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
 import { UGC_DOMAIN } from "@/lib/env";
 
@@ -215,27 +214,23 @@ export default function SeoSettings() {
             </Button>
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
-            <ProGate isPro={isPro}>
-              <SeoResourceRow
-                label="Sitemap"
-                url={sitemapResourceUrl || (username ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml` : "#")}
-                displayText="/sitemap.xml"
-                enabled={true}
-                unavailableText={
-                  isPro && !sitemapResourceEnabled
-                    ? "Sitemap URL unavailable."
-                    : undefined
-                }
-              />
-            </ProGate>
-            <ProGate isPro={isPro}>
-              <SeoResourceRow
-                label="Robots.txt"
-                url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}
-                displayText="/robots.txt"
-                enabled={true}
-              />
-            </ProGate>
+            <SeoResourceRow
+              label="Sitemap"
+              url={sitemapResourceUrl || (username ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml` : "#")}
+              displayText="/sitemap.xml"
+              enabled={true}
+              unavailableText={
+                !sitemapResourceEnabled
+                  ? "Sitemap URL unavailable."
+                  : undefined
+              }
+            />
+            <SeoResourceRow
+              label="Robots.txt"
+              url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}
+              displayText="/robots.txt"
+              enabled={true}
+            />
           </div>
         </CardContent>
       </Card>

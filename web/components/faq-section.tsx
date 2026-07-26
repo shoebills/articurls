@@ -33,12 +33,12 @@ const FAQS = [
     a: "Yes. Collect email subscribers from your posts and notify them automatically whenever you publish something new.",
   },
   {
-    q: "What's included in the free plan?",
-    a: "Unlimited posts, unlimited pages, categories, scheduling, built-in SEO, and media uploads. Everything you need to start writing.",
+    q: "What's included in the 14-day free trial?",
+    a: "Everything. You get full Pro access during the trial — custom domains, analytics, subscriber collection, and all features. No credit card required.",
   },
   {
     q: "Can I upgrade anytime?",
-    a: "Yes. Start free and upgrade to Pro whenever you're ready. There are no annual contracts and you can cancel anytime.",
+    a: "Yes. Upgrade to Pro whenever you're ready. There are no annual contracts and you can cancel anytime.",
   },
   {
     q: "Do I need any technical knowledge to use Articurls?",

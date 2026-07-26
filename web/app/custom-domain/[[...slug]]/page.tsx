@@ -438,15 +438,6 @@ export default async function CustomDomainPage({ params }: Props) {
           </div>
           <PublicSiteFooter user={author} pages={pages} useCustomDomain />
         </main>
-        {author.show_articurls_watermark !== false ? (
-          <a
-            href={MARKETING_ORIGIN}
-            className="fixed bottom-4 z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
-            style={{ right: `max(1rem, calc((100vw - ${maxWidth === "max-w-6xl" ? 72 : 48}rem) / 2 + 1rem))` }}
-          >
-            Made with <span className="font-semibold">Articurls</span>
-          </a>
-        ) : null}
       </article>
     );
   }
@@ -538,15 +529,7 @@ export default async function CustomDomainPage({ params }: Props) {
           </div>
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
-        {user.show_articurls_watermark !== false ? (
-          <a
-            href={MARKETING_ORIGIN}
-            className="fixed bottom-4 z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
-            style={{ right: `max(1rem, calc((100vw - ${maxWidth === "max-w-6xl" ? 72 : 48}rem) / 2 + 1rem))` }}
-          >
-            Made with <span className="font-semibold">Articurls</span>
-          </a>
-        ) : null}
+
       </div>
     );
   }
@@ -654,15 +637,7 @@ export default async function CustomDomainPage({ params }: Props) {
             )}
             <PublicSiteFooter user={user} pages={pages} useCustomDomain />
         </main>
-        {user.show_articurls_watermark !== false ? (
-          <a
-            href={MARKETING_ORIGIN}
-            className="fixed bottom-4 z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
-            style={{ right: `max(1rem, calc((100vw - ${maxWidth === "max-w-6xl" ? 72 : 48}rem) / 2 + 1rem))` }}
-          >
-            Made with <span className="font-semibold">Articurls</span>
-          </a>
-        ) : null}
+
       </div>
     );
   }
@@ -753,14 +728,6 @@ export default async function CustomDomainPage({ params }: Props) {
           />
           <PublicSiteFooter user={user} pages={pages} useCustomDomain />
       </main>
-      {user.show_articurls_watermark !== false ? (
-        <a
-          href={MARKETING_ORIGIN}
-          className="fixed bottom-4 right-[max(1rem,calc((100vw-56rem)/2+1rem))] z-20 rounded-lg border border-border/80 bg-white/95 px-3 py-1.5 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur supports-[backdrop-filter]:bg-white/80"
-        >
-          Made with <span className="font-semibold">Articurls</span>
-        </a>
-      ) : null}
       </div>
   );
 }

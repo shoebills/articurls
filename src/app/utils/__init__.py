@@ -1,4 +1,4 @@
-from .entitlements import assert_pro, is_pro_entitled, require_pro
+from .entitlements import is_pro_entitled
 from .admin import assert_admin_email, is_admin_email
 from .serialization import public_user_out
 from .slugs import (
@@ -32,7 +32,6 @@ from .usernames import (
 __all__ = [
     "DRAFT_SLUG_RE",
     "assert_admin_email",
-    "assert_pro",
     "is_admin_email",
     "html_to_plain_text",
     "is_pro_entitled",
@@ -51,7 +50,6 @@ __all__ = [
     "apply_username_change_or_raise",
     "claim_username_or_raise",
     "permanent_username_redirect",
-    "require_pro",
     "resolve_username_to_current",
     "unique_blog_slug",
     "unique_page_slug",

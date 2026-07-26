@@ -19,8 +19,6 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import type { CustomDomain, DNSRecord } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
-
 export default function CustomDomainSettings() {
   const router = useRouter();
   const { token } = useAuth();
@@ -37,9 +35,7 @@ export default function CustomDomainSettings() {
   const [info, setInfo] = useState("");
   const [success, setSuccess] = useState("");
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const [isPro, setIsPro] = useState<boolean | null>(null); // null = not checked yet
-  const [wasPro, setWasPro] = useState(false);
-  const [upgradeOpen, setUpgradeOpen] = useState(false);
+  const [isPro, setIsPro] = useState<boolean | null>(null);
 
   const loadDomain = useCallback(async (tok: string) => {
     try {
@@ -61,11 +57,7 @@ export default function CustomDomainSettings() {
 
     getSubscription(token)
       .then((sub) => {
-        const pro = isProSubscription(sub);
-        setIsPro(pro);
-        setWasPro(sub?.plan_type === "pro" || sub?.plan_type === "lifetime");
-        // Always load the domain: during a grace period the user is no longer
-        // Pro but the domain is still serving and must remain visible/manageable.
+        setIsPro(isProSubscription(sub));
         loadDomain(token);
       })
       .catch(() => {
@@ -184,17 +176,14 @@ export default function CustomDomainSettings() {
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-primary/10">
             <Globe className="h-7 w-7 text-primary" />
           </div>
-          <h2 className="text-xl font-semibold">{wasPro ? "Reactivate Pro" : "Pro plan required"}</h2>
+          <h2 className="text-xl font-semibold">Pro plan required</h2>
           <p className="text-sm text-muted-foreground">
-            {wasPro
-              ? "Reactivate your Pro plan to restore your custom domain."
-              : "Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog."}
+            Custom domains are available on the Pro plan. Upgrade to connect your own domain to your blog.
           </p>
-          <Button onClick={() => setUpgradeOpen(true)} className="mt-2">
-            {wasPro ? "Reactivate Pro" : "Upgrade to Pro"}
+          <Button asChild className="mt-2">
+            <a href="/dashboard/billing">View plans</a>
           </Button>
         </div>
-        <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       </Card>
     );
   }
@@ -202,7 +191,6 @@ export default function CustomDomainSettings() {
   // ── Main UI ────────────────────────────────────────────────────────────────
   return (
     <div className="space-y-4">
-      <ProUpgradeDialog open={upgradeOpen} onOpenChange={setUpgradeOpen} />
       {info && (
         <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600" />
@@ -401,7 +389,7 @@ export default function CustomDomainSettings() {
                   </>
                 )}
               </p>
-              <Button size="sm" onClick={() => setUpgradeOpen(true)}>
+              <Button size="sm" onClick={() => router.push("/dashboard/billing")}>
                 Renew Pro
               </Button>
             </div>
@@ -414,7 +402,7 @@ export default function CustomDomainSettings() {
                 This domain has expired and is no longer serving your blog.{" "}
                 <button
                   type="button"
-                  onClick={() => setUpgradeOpen(true)}
+                  onClick={() => router.push("/dashboard/billing")}
                   className="font-medium text-foreground underline underline-offset-4"
                 >
                   Upgrade to Pro

@@ -7,7 +7,7 @@ from ..schemas import subscribers
 from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
 from ..email.service import send_sub_confirmation_email
 from ..email.scheduling import schedule_welcome_email_after_confirm
-from ..utils import normalize_email, is_pro_entitled
+from ..utils import normalize_email
 from ..utils.rate_limit import check_rate_limit_ip_and_email
 
 
@@ -39,7 +39,7 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                           detail=f"User with username {user_name} doesn't exist")
 
-    if not is_pro_entitled(db_user, db) or not db_user.subscriber_collection_enabled:
+    if not db_user.subscriber_collection_enabled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Subscriptions are unavailable for this blog",

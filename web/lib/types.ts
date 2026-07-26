@@ -73,9 +73,6 @@ export interface PublicUser {
   nav_menu_enabled: boolean;
   show_about_section: boolean;
   site_footer_enabled: boolean;
-  /** False for active Pro — hide "Made with Articurls" on public pages. */
-  show_articurls_watermark?: boolean;
-  /** Custom favicon URL — only set for Pro users. */
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
@@ -84,10 +81,8 @@ export interface PublicUser {
   show_preview_in_lists?: boolean;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
-  remove_branding: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
-  /** Controls RSS feed publishing and discovery. */
   rss_enabled?: boolean;
   /** Umami website UUID for first-party analytics (Step 6 tracker). */
   umami_website_id?: string | null;
@@ -128,7 +123,6 @@ export interface UserSettings {
   show_preview_in_lists?: boolean;
   about_title?: string | null;
   subscriber_collection_enabled: boolean;
-  remove_branding: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled: boolean;

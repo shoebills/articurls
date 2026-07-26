@@ -25,39 +25,21 @@ export function PricingSection() {
 
   const plans: Plan[] = [
     {
-      name: "Free",
-      tagline: "Start writing",
-      price: "$0",
-      unit: "/mo",
-      desc: "Everything you need to publish your first posts.",
-      features: [
-        "Unlimited posts",
-        "Unlimited pages",
-        "Assign categories",
-        "Post scheduling",
-        "Basic SEO",
-        "Media upload up to 1GB",
-        "Customize blog design",
-      ],
-      cta: "Get started",
-      href: signupUrl,
-    },
-    {
       name: "Pro",
       tagline: "Grow audience",
       price: "$9",
       unit: "/mo",
       desc: "Reach readers on your own domain.",
       features: [
-        "Everything in Free",
         "Custom domain & automatic SSL",
         "Collect email subscribers",
         "Publish emails to subscribers",
         "Views & subscribers analytics",
         "RSS, sitemap & robots.txt",
-        "Remove Articurls branding",
         "Custom favicon",
         "Unlimited media storage",
+        "Unlimited posts & pages",
+        "Post scheduling & categories",
       ],
       cta: "Start Pro",
       href: `${signupUrl}?plan=pro`,
@@ -92,14 +74,14 @@ export function PricingSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Pricing</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            Start free. Upgrade when it counts.
+            Start with a 14-day free trial.
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
             No annual contracts. Cancel anytime.
           </p>
         </div>
 
-        <div className="mt-14 grid items-start gap-5 lg:grid-cols-3">
+        <div className="mt-14 grid items-start gap-5 md:grid-cols-2">
           {plans.map((plan) => (
             <PlanCard key={plan.name} plan={plan} />
           ))}
