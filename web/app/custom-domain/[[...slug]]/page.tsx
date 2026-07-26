@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -75,11 +76,11 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
   }
 }
 
-async function loadUser(username: string): Promise<PublicUser | null> {
+const loadUser = cache(async (username: string): Promise<PublicUser | null> => {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, { cache: "no-store" });
   if (!res.ok) return null;
   return res.json();
-}
+});
 
 async function loadBlogs(username: string): Promise<PublicBlog[]> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, { cache: "no-store" });
@@ -321,7 +322,18 @@ export default async function CustomDomainPage({ params }: Props) {
 
   const username = domainInfo.username;
   const { slug: segments = [] } = await params;
+  const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
   const siteOrigin = `https://${host}`;
+
+  // If on a UGC subdomain and user has an active custom domain, redirect there
+  // to consolidate ranking signals and avoid duplicate content.
+  const ugcHost = new URL(UGS_ORIGIN).hostname;
+  if (host.endsWith(`.${ugcHost}`)) {
+    const user = await loadUser(username);
+    if (user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")) {
+      permanentRedirect(`https://${user.custom_domain}${pathname}`);
+    }
+  }
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
   if (segments[0] === "blog") {
