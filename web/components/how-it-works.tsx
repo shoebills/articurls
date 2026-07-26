@@ -6,7 +6,7 @@ import { AtSign, BarChart3, Check, PenLine } from "lucide-react";
 const STEPS = [
   {
     n: "01",
-    title: "Claim your username",
+    title: "Claim your subdomain",
     body: "Pick your handle and your blog is live in seconds, on your own domain when you're ready.",
     icon: AtSign,
     visual: <ClaimVisual />,

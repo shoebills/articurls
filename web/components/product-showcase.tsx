@@ -40,7 +40,7 @@ const PANELS = [
     key: "seo",
     kicker: "Get found",
     title: "SEO handled for you",
-    body: "Image optimization, meta tags, Open Graph, JSON-LD structured data, sitemaps, and RSS — everything search engines need.",
+    body: "Image optimization, meta tags, Open Graph, JSON-LD structured data, and sitemaps — everything search engines need.",
     visual: <SeoPanel />,
   },
   {
@@ -338,32 +338,24 @@ function SeoPanel() {
           </div>
           <div className="space-y-1.5">
             <p className="text-xs font-medium text-muted-foreground">Meta description</p>
-            <div className="rounded-lg border border-input bg-white px-3 py-2 text-sm text-muted-foreground">
+            <div className="rounded-lg border border-input bg-white px-3 py-2 text-sm text-foreground">
               Notes on shipping, growth, and the craft of writing online.
             </div>
           </div>
         </div>
         <div className="mt-5 space-y-2.5 border-t border-border/60 pt-5">
           {[
-            { label: "RSS feed", meta: "/rss.xml", toggle: true },
             { label: "Sitemap", meta: "/sitemap.xml" },
-            { label: "Robots control", meta: "/robots.txt" },
+            { label: "Robots.txt", meta: "/robots.txt" },
           ].map((row) => (
             <div key={row.label} className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
               <div>
                 <p className="text-sm font-medium">{row.label}</p>
                 <p className="font-mono text-xs text-muted-foreground">{row.meta}</p>
               </div>
-              <div className="flex items-center gap-2">
-                {row.toggle && (
-                  <span className="relative inline-flex h-5 w-9 items-center rounded-full bg-primary px-0.5">
-                    <span className="ml-auto h-4 w-4 rounded-full bg-white shadow" />
-                  </span>
-                )}
-                <span className="inline-flex h-8 items-center rounded-lg border border-input bg-white px-3 text-xs font-medium">
-                  View
-                </span>
-              </div>
+              <span className="inline-flex h-8 items-center rounded-lg border border-input bg-white px-3 text-xs font-medium">
+                View
+              </span>
             </div>
           ))}
         </div>
