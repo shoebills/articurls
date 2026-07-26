@@ -90,12 +90,23 @@ function withCacheHeaders(
     tags.push("posts-list");
   }
 
-  // Set cache tags for targeted purging via backend.
-  response.headers.set("Cache-Tag", tags.join(","));
+  // Set cache tags for targeted purging via backend (Vercel API + Next.js revalidateTag).
+  response.headers.set("Vercel-Cache-Tag", tags.join(","));
 
-  // Hard-disable edge caching of HTML. Even if upstream headers get lost,
-  // this keeps category/home/blog pages from serving stale content.
-  response.headers.set("Cache-Control", "no-store, must-revalidate");
+  // Cache public blog content at the edge; purge via revalidateTag on content change.
+  if (
+    pathname === "/" ||
+    pathname.startsWith("/blog/") ||
+    pathname.startsWith("/page/") ||
+    pathname.startsWith("/category/")
+  ) {
+    response.headers.set(
+      "Cache-Control",
+      "public, max-age=14400, stale-while-revalidate=3600",
+    );
+  } else {
+    response.headers.set("Cache-Control", "no-store, must-revalidate");
+  }
 
   return response;
 }

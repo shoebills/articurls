@@ -330,7 +330,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
     return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
     check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -343,6 +343,8 @@ def delete_blog(id: int, db: Session = Depends(get_db), current_user = Depends(g
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
+
+    schedule_post_purge(background_tasks, current_user, db_blog.slug)
     
     # Delete media objects from storage (R2/local) before DB rows are removed.
     media_rows = (

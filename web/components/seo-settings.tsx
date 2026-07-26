@@ -224,7 +224,6 @@ export default function SeoSettings() {
       <Card>
         <CardHeader className="pb-4 sm:pb-4">
           <CardTitle className="text-xl">Search Engine Optimization</CardTitle>
-          <CardDescription>Manage your meta title, description, and SEO resources.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2.5">
