@@ -1,3 +1,5 @@
+from urllib.parse import urlparse
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from typing import Optional
 
@@ -46,6 +48,12 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     app_base_url: str = "http://localhost:3000"
+
+    @property
+    def ugc_domain(self) -> str:
+        parsed = urlparse(self.ugc_origin)
+        return parsed.hostname or ""
+
     admin_emails: str = ""
     
     internal_api_secret: str = ""

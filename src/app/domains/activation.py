@@ -14,7 +14,7 @@ VERCEL_PENDING_MESSAGE = (
     "(shown below), then click Verify again."
 )
 
-VERCEL_CNAME_TARGET = "cname.vercel-dns.com"
+VERCEL_CNAME_TARGET = "7ee24e1b6a5ccf21.vercel-dns-017.com"
 
 
 def vercel_sync_required() -> bool:

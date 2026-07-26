@@ -103,7 +103,7 @@ def _tenant_hosts(user) -> List[str]:
     if user.custom_domain:
         hosts.append(user.custom_domain)
     if user.user_name:
-        hosts.append(f"articurls.site/{user.user_name}")
+        hosts.append(f"{user.user_name}.{settings.ugc_domain}")
     return hosts
 
 

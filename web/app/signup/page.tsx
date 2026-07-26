@@ -12,7 +12,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { API_URL } from "@/lib/env";
+import { API_URL, UGC_DOMAIN } from "@/lib/env";
 
 /** Label → control spacing; same for text inputs. */
 const FIELD_GROUP = "flex flex-col gap-2";
@@ -247,7 +247,7 @@ function SignupForm() {
                 title="Letters, numbers, underscore, hyphen"
               />
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Your public URL: articurls.site/{user_name || "username"}
+                Your public URL: {user_name || "username"}.{UGC_DOMAIN}
               </p>
             </div>
             <div className={FIELD_GROUP}>

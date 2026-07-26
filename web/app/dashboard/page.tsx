@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiCacheHas, getCachedApiData } from "@/lib/api";
 import type { BlogListItem } from "@/lib/types";
-import { UGS_ORIGIN } from "@/lib/env";
+import { UGS_ORIGIN, UGC_DOMAIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
@@ -174,7 +174,7 @@ export default function DashboardPage() {
     const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
     const base = hasCustomDomain
       ? `https://${user.custom_domain}`
-      : `${UGS_ORIGIN}/${encodeURIComponent(user.user_name)}`;
+      : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`;
     const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
     try {
       await navigator.clipboard.writeText(url);

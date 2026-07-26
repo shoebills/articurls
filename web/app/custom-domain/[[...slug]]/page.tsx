@@ -50,11 +50,15 @@ function resolvePageDescription(page: UserPage): string | undefined {
 }
 
 async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
+  const ugcHost = new URL(UGS_ORIGIN).hostname;
+  const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
+  if (host.endsWith(`.${ugcHost}`)) {
+    const subdomain = host.split(".")[0];
+    if (subdomain && !RESERVED.has(subdomain)) {
+      return { username: subdomain, domain_status: "active" };
+    }
+  }
   try {
-    // Domain status drives routing decisions (redirect vs serve vs 404),
-    // so it must always be fresh.  The backend already caches the DB
-    // lookup in Redis (300 s TTL with explicit invalidation on status
-    // change), so "no-store" here is cheap — it hits Redis, not the DB.
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
@@ -297,7 +301,8 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "expired") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    const redirectUrl = `${UGS_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`;
+    const ugcHost = new URL(UGS_ORIGIN).hostname;
+    const redirectUrl = `https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`;
     permanentRedirect(redirectUrl);
   }
 
@@ -305,7 +310,8 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "pending") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    redirect(`${UGS_ORIGIN}/${encodeURIComponent(domainInfo.username)}${pathname}`);
+    const ugcHost = new URL(UGS_ORIGIN).hostname;
+    redirect(`https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`);
   }
 
   // Any other unrecognised status (none, etc.) — 404

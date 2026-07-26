@@ -245,6 +245,19 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
 
     db_user = db.query(models.User).filter(models.User.custom_domain == normalized).first()
     if not db_user:
+        ugc_domain = settings.ugc_domain
+        if ugc_domain and normalized.endswith(f".{ugc_domain}"):
+            subdomain = normalized[: -len(f".{ugc_domain}")]
+            RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support"}
+            if subdomain and subdomain not in RESERVED_SUBDOMAINS:
+                db_user = db.query(models.User).filter(models.User.user_name == subdomain).first()
+                if db_user:
+                    result = {"username": db_user.user_name, "domain_status": "active"}
+                    try:
+                        redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
+                    except Exception:
+                        pass
+                    return result
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
     if db_user.domain_status not in (

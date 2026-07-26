@@ -11,6 +11,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { UGC_DOMAIN } from "@/lib/env";
 
 /** Label → control spacing; same for text inputs. */
 const FIELD_GROUP = "flex flex-col gap-2";
@@ -143,11 +144,11 @@ function OnboardingForm() {
               />
               {user_name ? (
                 <p className="text-sm leading-relaxed text-foreground font-medium">
-                  articurls.site/<span className="text-primary">{user_name}</span>
+                  <span className="text-primary">{user_name}</span>.{UGC_DOMAIN}
                 </p>
               ) : (
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Your blog will live at articurls.site/username
+                  Your blog will live at username.{UGC_DOMAIN}
                 </p>
               )}
             </div>

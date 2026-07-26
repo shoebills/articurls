@@ -55,7 +55,7 @@ def _primary_umami_domain(user: models.User) -> str:
     )
     if user.custom_domain and domain_status in ("active", "grace"):
         return user.custom_domain.lower().strip()
-    return umami_ugc_domain()
+    return f"{user.user_name}.{umami_ugc_domain()}"
 
 
 def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:

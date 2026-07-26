@@ -21,7 +21,7 @@ import type { CustomDomain, DNSRecord } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ProUpgradeDialog } from "@/components/pro/pro-upgrade-dialog";
 
-const VERCEL_CNAME_TARGET = "cname.vercel-dns.com";
+const VERCEL_CNAME_TARGET = "7ee24e1b6a5ccf21.vercel-dns-017.com";
 
 export default function CustomDomainSettings() {
   const router = useRouter();

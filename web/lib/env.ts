@@ -11,6 +11,9 @@ export const UGS_ORIGIN =
   process.env.NEXT_PUBLIC_UGS_ORIGIN?.replace(/\/$/, "") ||
   "https://articurls.site";
 
+/** UGC domain hostname (e.g. "articurls.site") */
+export const UGC_DOMAIN = new URL(UGS_ORIGIN).hostname;
+
 /** App origin (login, dashboard) */
 export const APP_ORIGIN =
   process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "") ||
