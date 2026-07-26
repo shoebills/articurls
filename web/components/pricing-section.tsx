@@ -31,15 +31,19 @@ export function PricingSection() {
       unit: "/mo",
       desc: "Reach readers on your own domain.",
       features: [
-        "Custom domain & automatic SSL",
-        "Collect email subscribers",
-        "Publish emails to subscribers",
-        "Views & subscribers analytics",
-        "RSS, sitemap & robots.txt",
-        "Custom favicon",
-        "Unlimited media storage",
         "Unlimited posts & pages",
-        "Post scheduling & categories",
+        "Unlimited media storage",
+        "Custom domain with automatic SSL",
+        "Collect email subscribers",
+        "Send posts via email to subscribers",
+        "Automated welcome emails",
+        "Pageviews & visitor analytics",
+        "Subscriber analytics with trends",
+        "RSS feed, sitemap & robots.txt",
+        "Custom favicon",
+        "Post scheduling",
+        "Assign categories",
+        "Search engine optimization",
       ],
       cta: "Start Pro",
       href: `${signupUrl}?plan=pro`,
@@ -77,11 +81,11 @@ export function PricingSection() {
             Start with a 14-day free trial.
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
-            No annual contracts. Cancel anytime.
+            No credit card required. No annual contracts. Cancel anytime.
           </p>
         </div>
 
-        <div className="mt-14 grid items-start gap-5 md:grid-cols-2">
+        <div className="mx-auto mt-14 grid max-w-3xl items-start gap-5 md:grid-cols-2">
           {plans.map((plan) => (
             <PlanCard key={plan.name} plan={plan} />
           ))}
@@ -143,6 +147,7 @@ function PlanCard({ plan }: { plan: Plan }) {
       {plan.note && (
         <p className={`mt-2 text-center text-xs ${mutedText}`}>{plan.note}</p>
       )}
+      <p className={`mt-2 text-center text-xs ${mutedText}`}>No credit card required</p>
 
       <div className={`mt-6 border-t pt-6 ${plan.premium ? "border-background/15" : "border-border/60"}`}>
         <ul className="space-y-3">
@@ -182,11 +187,11 @@ function StickyCta({ href }: { href: string }) {
       >
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-tight">Start free today</p>
-            <p className="truncate text-xs text-muted-foreground">Upgrade to Pro anytime, $9/mo</p>
+            <p className="text-sm font-medium leading-tight">Start with a 14-day free trial</p>
+            <p className="truncate text-xs text-muted-foreground">No credit card required</p>
           </div>
           <Button className="h-11 shrink-0 px-5 shadow-md shadow-primary/20" asChild>
-            <a href={href}>Start Free</a>
+            <a href={href}>Start trial</a>
           </Button>
         </div>
       </div>
