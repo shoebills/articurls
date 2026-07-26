@@ -7,7 +7,6 @@
 
 const STATIC_INTERNAL_DOMAINS = new Set([
   "articurls.com",
-  "articurls.site",
   "app.articurls.com",
   "api.articurls.com",
 ]);
