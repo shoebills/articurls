@@ -153,12 +153,13 @@ function ClaimVisual() {
       <div className="space-y-3 p-5">
         <p className="text-xs font-medium text-muted-foreground">Your address</p>
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
-          <span className="flex h-11 items-center bg-muted/60 pl-3 pr-2 text-sm text-muted-foreground">
-            yourname.
-          </span>
-          <span className="flex h-11 flex-1 items-center pr-3 text-sm font-medium text-foreground">
-            articurls.site
+          <span className="flex h-11 items-center bg-muted/60 pl-3 pr-1 text-sm font-medium text-foreground">
+            yourname
             <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-px bg-primary group-hover:animate-pulse" />
+            .
+          </span>
+          <span className="flex h-11 flex-1 items-center pr-3 text-sm text-muted-foreground">
+            articurls.site
           </span>
         </div>
         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">

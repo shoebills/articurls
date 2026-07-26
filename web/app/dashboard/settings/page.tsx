@@ -298,7 +298,7 @@ export default function SettingsPage() {
   const cooldownRemainingDays = Math.ceil(cooldownRemainingMs / 86400000);
   const canChange = cooldownRemainingMs <= 0;
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
-  const liveProfileUrl = `${UGS_ORIGIN}/${encodeURIComponent(normalizedPending)}`;
+  const liveProfileUrl = `https://${encodeURIComponent(normalizedPending)}.${UGC_DOMAIN}/`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
   const limitBytes = storageUsage?.limit_bytes ?? null;
   const isUnlimitedStorage = storageUsage?.is_unlimited ?? false;

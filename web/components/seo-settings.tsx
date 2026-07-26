@@ -230,7 +230,7 @@ export default function SeoSettings() {
             </ProGate>
             <ProGate isPro={isPro}>
               <SeoResourceRow
-                label="Robots control"
+                label="Robots.txt"
                 url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}
                 displayText="/robots.txt"
                 enabled={true}
