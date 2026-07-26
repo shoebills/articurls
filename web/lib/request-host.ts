@@ -10,8 +10,6 @@ const STATIC_INTERNAL_DOMAINS = new Set([
   "articurls.site",
   "app.articurls.com",
   "api.articurls.com",
-  "blogs.articurls.com",
-  "fallback.articurls.com",
 ]);
 
 export function firstHeaderHost(raw: string | null): string {
