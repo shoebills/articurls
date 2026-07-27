@@ -82,6 +82,17 @@ async function customDomainRobots(host: string): Promise<Response> {
     });
   }
 
+  // Host is not canonical — prevent crawl budget waste.
+  if (domainInfo.redirect_to) {
+    return new Response(DISALLOW_ALL, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "Vary": "x-original-host",
+      },
+    });
+  }
+
   const user = await loadUser(username);
 
   if (!user) {

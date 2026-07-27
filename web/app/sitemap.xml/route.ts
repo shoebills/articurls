@@ -137,6 +137,10 @@ async function customDomainSitemap(host: string): Promise<Response> {
     return new NextResponse(null, { status: 404 });
   }
 
+  if (domainInfo.redirect_to) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const { username } = domainInfo;
   const user = await loadUser(username);
 
