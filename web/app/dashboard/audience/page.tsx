@@ -1,14 +1,5 @@
-"use client";
+import { SubscribersAnalyticsPanel } from "@/components/dashboard/subscribers-analytics-panel";
 
-import { useEffect } from "react";
-import { useRouter } from "next/navigation";
-
-export default function AudienceRedirect() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace("/dashboard/audience/analytics");
-  }, [router]);
-
-  return null;
+export default function AudienceAnalyticsPage() {
+  return <SubscribersAnalyticsPanel />;
 }
