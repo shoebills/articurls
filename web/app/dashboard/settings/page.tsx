@@ -29,7 +29,6 @@ import { assetUrl, UGC_DOMAIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 import SeoSettings from "@/components/seo-settings";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
@@ -88,6 +87,7 @@ export default function SettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
+  const [selectedTab, setSelectedTab] = useState<"general" | "domains" | "seo">("general");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -243,98 +243,6 @@ export default function SettingsPage() {
       <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
         <Skeleton className="h-9 w-80 rounded-lg" />
-        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-3 w-40" />
-          </div>
-          <Skeleton className="h-14 w-14 rounded-lg" />
-        </div>
-        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="h-3 w-64" />
-          </div>
-          <Skeleton className="h-6 w-10 rounded-full" />
-        </div>
-        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-3 w-56" />
-          </div>
-          <Skeleton className="h-6 w-10 rounded-full" />
-        </div>
-        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <Skeleton className="h-4 w-16" />
-            <Skeleton className="h-3 w-48" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-6 w-10 rounded-full" />
-            <Skeleton className="h-8 w-14 rounded-md" />
-          </div>
-        </div>
-        <Card>
-          <CardHeader className="pb-4 sm:pb-4">
-            <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-4 w-64 mt-2" />
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div>
-              <Skeleton className="h-4 w-20 mb-2" />
-              <Skeleton className="h-3 w-64 mb-3" />
-              <Skeleton className="h-12 w-full rounded-lg" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-4 sm:pb-4">
-            <Skeleton className="h-6 w-32" />
-            <Skeleton className="h-4 w-64 mt-2" />
-          </CardHeader>
-          <CardContent>
-            <Skeleton className="h-40 w-full rounded-md" />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <Skeleton className="h-6 w-48" />
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2.5">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-2.5">
-              <Skeleton className="h-4 w-28" />
-              <Skeleton className="h-24 w-full" />
-            </div>
-            <Skeleton className="h-10 w-20" />
-            <div className="border-t pt-5 mt-2 space-y-3">
-              <div className="flex items-start justify-between gap-4 rounded-lg border bg-white px-4 py-3">
-                <div className="space-y-0.5">
-                  <Skeleton className="h-4 w-20" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-                <Skeleton className="h-6 w-10 rounded-full" />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
-                <div className="space-y-0.5">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-                <Skeleton className="h-9 w-16" />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
-                <div className="space-y-0.5">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-                <Skeleton className="h-9 w-16" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     );
   }
@@ -343,14 +251,25 @@ export default function SettingsPage() {
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
 
-      <Tabs defaultValue="general">
-        <TabsList className="w-full sm:w-auto">
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="domains">Domains</TabsTrigger>
-          <TabsTrigger value="seo">SEO</TabsTrigger>
-        </TabsList>
+      <nav className="overflow-x-auto pb-1">
+        <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
+          {([["general", "General"], ["domains", "Domains"], ["seo", "SEO"]] as const).map(([value, label]) => (
+            <Button
+              key={value}
+              type="button"
+              variant={selectedTab === value ? "default" : "ghost"}
+              size="sm"
+              className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm sm:flex-initial"
+              onClick={() => setSelectedTab(value)}
+            >
+              {label}
+            </Button>
+          ))}
+        </div>
+      </nav>
 
-        <TabsContent value="general" className="space-y-6 sm:space-y-8 mt-6">
+      {selectedTab === "general" && (
+        <div className="space-y-6 sm:space-y-8">
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
@@ -477,9 +396,11 @@ export default function SettingsPage() {
               When enabled, RSS icon appears in the footer.
             </p>
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="domains" className="space-y-6 sm:space-y-8 mt-6">
+      {selectedTab === "domains" && (
+        <div className="space-y-6 sm:space-y-8">
           <Card>
             <CardHeader className="pb-4 sm:pb-4">
               <CardTitle className="text-xl">Subdomain</CardTitle>
@@ -585,12 +506,10 @@ export default function SettingsPage() {
               <CustomDomainSettings />
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="seo" className="mt-6">
-          <SeoSettings />
-        </TabsContent>
-      </Tabs>
+      {selectedTab === "seo" && <SeoSettings />}
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
