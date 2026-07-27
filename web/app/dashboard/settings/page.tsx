@@ -385,7 +385,7 @@ export default function SettingsPage() {
         <Card>
           <CardHeader className="pb-4 sm:pb-4">
             <Skeleton className="h-6 w-24" />
-            <Skeleton className="h-4 w-72 mt-2" />
+            <Skeleton className="h-4 w-64 mt-2" />
           </CardHeader>
           <CardContent className="space-y-6">
             <div>
@@ -393,7 +393,14 @@ export default function SettingsPage() {
               <Skeleton className="h-3 w-64 mb-3" />
               <Skeleton className="h-12 w-full rounded-lg" />
             </div>
-            <Skeleton className="h-px w-full" />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-4 sm:pb-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-4 w-64 mt-2" />
+          </CardHeader>
+          <CardContent>
             <Skeleton className="h-40 w-full rounded-md" />
           </CardContent>
         </Card>
@@ -669,8 +676,8 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader className="pb-4 sm:pb-4">
-          <CardTitle className="text-xl">Domains</CardTitle>
-          <CardDescription>Manage your blog's subdomain and custom domain.</CardDescription>
+          <CardTitle className="text-xl">Subdomain</CardTitle>
+          <CardDescription>Manage your blog's subdomain.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
 
@@ -775,10 +782,16 @@ export default function SettingsPage() {
             )}
           </div>
 
-          <Separator />
+        </CardContent>
+      </Card>
 
+      <Card>
+        <CardHeader className="pb-4 sm:pb-4">
+          <CardTitle className="text-xl">Custom Domain</CardTitle>
+          <CardDescription>Use your own domain for your blog.</CardDescription>
+        </CardHeader>
+        <CardContent>
           <CustomDomainSettings />
-
         </CardContent>
       </Card>
 
