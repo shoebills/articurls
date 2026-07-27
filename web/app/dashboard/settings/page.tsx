@@ -687,7 +687,7 @@ export default function SettingsPage() {
                 <Input
                   value={encodeURIComponent(user_name)}
                   readOnly
-                  className="rounded-r-none bg-white"
+                  className="rounded-r-none bg-white focus-visible:ring-0 focus-visible:ring-offset-0"
                 />
                 <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
                   .{UGC_DOMAIN}
@@ -698,7 +698,6 @@ export default function SettingsPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    size="sm"
                     onClick={() => {
                       setPendingUsername(user_name);
                       setUsernameAvailability({ state: "idle", message: "" });
@@ -751,6 +750,9 @@ export default function SettingsPage() {
                   Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
                 </p>
               )}
+              <p className="text-xs text-muted-foreground">
+                You can change your subdomain once every 7 days.
+              </p>
               <div className="flex gap-2">
                 <Button
                   onClick={saveUsername}
