@@ -55,6 +55,14 @@ async function resolveDomainInfo(host: string): Promise<{
   domain_status: string;
   redirect_to: string | null;
 } | null> {
+  const ugcHost = new URL(UGS_ORIGIN).hostname;
+  const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
+  if (host.endsWith(`.${ugcHost}`)) {
+    const subdomain = host.split(".")[0];
+    if (subdomain && !RESERVED.has(subdomain)) {
+      return { username: subdomain, domain_status: "active", redirect_to: null };
+    }
+  }
   try {
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
