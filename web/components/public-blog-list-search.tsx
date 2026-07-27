@@ -15,7 +15,6 @@ type PublicBlogListSearchProps = {
   username: string;
   user?: PublicUser;
   hideFeatured?: boolean;
-  useCustomDomain?: boolean;
   siteOrigin?: string;
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
@@ -24,15 +23,14 @@ type PublicBlogListSearchProps = {
 
 const POSTS_PER_PAGE = 12;
 
-function publicBlogPostUrl(userName: string, slug: string, useCustomDomain = false, siteOrigin?: string) {
-  const path = getPublicPostUrl(userName, slug, { customDomain: useCustomDomain });
+function publicBlogPostUrl(userName: string, slug: string, siteOrigin?: string) {
+  const path = getPublicPostUrl(userName, slug);
   return `${siteOrigin || UGS_ORIGIN}${path}`;
 }
 
 function BlogListItemRow({
   blog: b,
   username,
-  useCustomDomain = false,
   siteOrigin,
   inGrid = false,
   largeImage = false,
@@ -40,7 +38,6 @@ function BlogListItemRow({
 }: {
   blog: PublicBlog;
   username: string;
-  useCustomDomain?: boolean;
   siteOrigin?: string;
   inGrid?: boolean;
   largeImage?: boolean;
@@ -50,7 +47,7 @@ function BlogListItemRow({
   return (
     <li className={inGrid ? "" : "py-5 first:pt-0"}>
       <div className="rounded-xl py-1">
-        <Link href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })} className="group block transition-colors hover:bg-muted/30">
+        <Link href={getPublicPostUrl(username, b.slug)} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="min-w-0 truncate text-lg font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 sm:text-xl">
@@ -83,7 +80,7 @@ function BlogListItemRow({
             <span className="text-xs text-muted-foreground" aria-hidden />
           )}
           <BlogPostShareMenu
-            url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
+            url={publicBlogPostUrl(username, b.slug, siteOrigin)}
             title={b.title}
           />
         </div>
@@ -95,13 +92,11 @@ function BlogListItemRow({
 function BlogListAboveTitleItem({
   blog: b,
   username,
-  useCustomDomain = false,
   siteOrigin,
   showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
-  useCustomDomain?: boolean;
   siteOrigin?: string;
   showPreview?: boolean;
 }) {
@@ -110,7 +105,7 @@ function BlogListAboveTitleItem({
   return (
     <li className="py-5 first:pt-0">
       <Link
-        href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
+        href={getPublicPostUrl(username, b.slug)}
         className="group block"
       >
         {showImage ? (
@@ -143,7 +138,7 @@ function BlogListAboveTitleItem({
           <span className="text-xs text-muted-foreground" aria-hidden />
         )}
         <BlogPostShareMenu
-          url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
+          url={publicBlogPostUrl(username, b.slug, siteOrigin)}
           title={b.title}
         />
       </div>
@@ -154,13 +149,11 @@ function BlogListAboveTitleItem({
 function BlogCardGridItem({
   blog: b,
   username,
-  useCustomDomain = false,
   siteOrigin,
   showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
-  useCustomDomain?: boolean;
   siteOrigin?: string;
   showPreview?: boolean;
 }) {
@@ -169,7 +162,7 @@ function BlogCardGridItem({
   return (
     <li className="break-inside-avoid">
       <Link
-        href={getPublicPostUrl(username, b.slug, { customDomain: useCustomDomain })}
+        href={getPublicPostUrl(username, b.slug)}
         className="group block"
       >
         {showImage || showPreview ? (
@@ -213,7 +206,7 @@ function BlogCardGridItem({
           <span className="text-xs text-muted-foreground" aria-hidden />
         )}
         <BlogPostShareMenu
-          url={publicBlogPostUrl(username, b.slug, useCustomDomain, siteOrigin)}
+          url={publicBlogPostUrl(username, b.slug, siteOrigin)}
           title={b.title}
         />
       </div>
@@ -226,7 +219,6 @@ export function PublicBlogListSearch({
   username,
   user,
   hideFeatured,
-  useCustomDomain = false,
   siteOrigin,
   content_width = "wide",
   list_image_position = "above_title",
@@ -302,7 +294,6 @@ export function PublicBlogListSearch({
                   key={`featured-${b.blog_id}`}
                   blog={b}
                   username={username}
-                  useCustomDomain={useCustomDomain}
                   siteOrigin={siteOrigin}
                   showPreview={show_preview_in_lists}
                 />
@@ -319,7 +310,6 @@ export function PublicBlogListSearch({
             key={b.blog_id}
             blog={b}
             username={username}
-            useCustomDomain={useCustomDomain}
             siteOrigin={siteOrigin}
             showPreview={show_preview_in_lists}
           />

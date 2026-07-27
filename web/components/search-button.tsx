@@ -16,12 +16,10 @@ export function SearchButton({
   iconClassName,
   trayClassName,
   userName,
-  useCustomDomain,
 }: {
   iconClassName?: string;
   trayClassName?: string;
   userName: string;
-  useCustomDomain?: boolean;
 }) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PublicBlog[]>([]);
@@ -208,9 +206,7 @@ export function SearchButton({
                     {results.map((blog) => (
                       <li key={blog.blog_id}>
                         <Link
-                          href={getPublicPostUrl(userName, blog.slug, {
-                            customDomain: useCustomDomain,
-                          })}
+                          href={getPublicPostUrl(userName, blog.slug)}
                           onClick={() => setOpen(false)}
                           className="block px-4 py-2.5 text-sm hover:bg-muted/50"
                         >

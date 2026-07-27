@@ -43,7 +43,7 @@ cd web && npm run lint
 - **Module alias** `@/*` in `web/tsconfig.json` maps to `web/*`. Not available in Python code.
 - **No trailing slash** anywhere — enforced at both Next.js config (`trailingSlash: false` with 308 redirect) and middleware.
 - **Query params on public content are stripped** with a 301 redirect (middleware). Non-public paths (dashboard, login, api, \_next, etc.) keep query params.
-- **Custom-domain multi-tenant routing**: Middleware rewrites custom-domain requests to `/custom-domain/[[...slug]]` and forwards `x-original-host` header. Legacy Cloudflare Worker path uses `x-original-host`; Cloudflare SSL for SaaS preserves the `Host` header directly.
+- **Custom-domain multi-tenant routing**: Middleware rewrites custom-domain requests to `/custom-domain/[[...slug]]` and forwards `x-original-host` header.
 - **Backend database URL** is assembled in `src/app/database.py`, not in `alembic.ini`. Alembic env.py reads it via Pydantic `settings`.
 - **Alembic target metadata** is `src.app.models.Base`.
 - **Storage backend**: defaults to `local` (uploads/ directory). Set `STORAGE_BACKEND=r2` for Cloudflare R2.
@@ -76,12 +76,11 @@ src/                    # FastAPI backend
     routers/            # API route modules (blog, user, auth, billing, etc.)
     security/           # Password hashing + OAuth2 JWT
     workers/            # Celery app + tasks (email, scheduling, Pro expiry)
-    domains/            # Custom domain management (Cloudflare + Vercel APIs)
+    domains/            # Custom domain management (Vercel APIs)
     storage/            # Local + R2 storage backends
     email/              # Email send logic (Resend/SMTP + templates)
     umami/              # Umami analytics integration
     payments/           # DodoPayments webhook + checkout
-    cloudflare/         # Cloudflare API client
     vercel/             # Vercel API client
     cache/              # Redis cache utilities
     redis_client.py     # Redis connection
@@ -112,7 +111,7 @@ deploy/umami/           # Docker Compose for self-hosted Umami
 | Email | Resend (default) or SMTP |
 | Analytics | Umami (self-hosted) |
 | Storage | Local filesystem or Cloudflare R2 |
-| Custom domains | Cloudflare SSL for SaaS + Vercel domain API |
+| Custom domains | Vercel domain API |
 | Auth | JWT (access + refresh tokens), Google OAuth |
 | Charts | Recharts |
 | Container | Docker Compose (dev + prod) |

@@ -30,12 +30,11 @@ export type PublicNavDesktopLink = {
 type PublicDesktopNavProps = {
   title: string;
   titleHref: string;
-  nameSize?: NavBlogNameSize | string | null;
-  links: PublicNavDesktopLink[];
+  nameSize: NameSize;
+  links: CatLink[];
   showSubscribe: boolean;
-  userName?: string;
-  authorName?: string;
-  useCustomDomain?: boolean;
+  userName: string;
+  authorName: string;
 };
 
 function linkClass(active?: boolean) {
@@ -53,7 +52,6 @@ export function PublicDesktopNav({
   showSubscribe,
   userName,
   authorName,
-  useCustomDomain,
 }: PublicDesktopNavProps) {
   const size = normalizeNavBlogNameSize(nameSize);
   const [inlineCount, setInlineCount] = useState<number | null>(null);
@@ -183,7 +181,6 @@ export function PublicDesktopNav({
         <SearchButton
           iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
           userName={userName}
-          useCustomDomain={useCustomDomain}
         />
       ) : null}
       {showSubscribe && userName ? (

@@ -358,7 +358,7 @@ export default async function CustomDomainPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
     // On custom domain, nav links are relative (no /username prefix)
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+      href: getPublicCategoryUrl(username, c.slug),
       label: c.name,
     }));
     const showSubscriberCollection = author.subscriber_collection_enabled === true;
@@ -377,33 +377,31 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={author.user_name}
                   authorName={author.name}
-                  useCustomDomain
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={author.nav_menu_enabled ? catLinks : []}
                   userName={author.user_name}
                   authorName={author.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-                  useCustomDomain
                 />
               </div>
             </header>
           ) : null}
           <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
-              <Link href={getPublicProfileUrl(username, { customDomain: true })} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <Link href={getPublicProfileUrl(username)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
                 <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
                 Back
               </Link>
@@ -415,7 +413,7 @@ export default async function CustomDomainPage({ params }: Props) {
               </h1>
               <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
                 <Link
-                  href={getPublicProfileUrl(username, { customDomain: true })}
+                  href={getPublicProfileUrl(username)}
                   className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                 >
                   <span className="truncate">{author.name}</span>
@@ -436,7 +434,7 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             ) : null}
           </div>
-          <PublicSiteFooter user={author} pages={pages} useCustomDomain />
+          <PublicSiteFooter user={author} pages={pages} />
         </main>
       </article>
     );
@@ -464,7 +462,7 @@ export default async function CustomDomainPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+      href: getPublicCategoryUrl(username, c.slug),
       label: c.name,
     }));
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
@@ -483,26 +481,26 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
-                  useCustomDomain
+
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-                  useCustomDomain
+
                 />
               </div>
             </header>
@@ -511,7 +509,7 @@ export default async function CustomDomainPage({ params }: Props) {
           <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
               <Link
-                href={getPublicProfileUrl(username, { customDomain: true })}
+                href={getPublicProfileUrl(username)}
                 className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -527,7 +525,7 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
             </article>
           </div>
-          <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+          <PublicSiteFooter user={user} pages={pages} />
         </main>
 
       </div>
@@ -557,13 +555,13 @@ export default async function CustomDomainPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+      href: getPublicCategoryUrl(username, c.slug),
       label: c.name,
     }));
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
     const desktopLinks = user.nav_menu_enabled
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+          href: getPublicCategoryUrl(username, c.slug),
           label: c.name,
           active: c.slug === categorySlug,
         }))
@@ -582,26 +580,26 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
-                  useCustomDomain
+
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-                  useCustomDomain
+
                 />
               </div>
             </header>
@@ -609,7 +607,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
           <div className="mb-6 flex items-center gap-3">
               <Link
-                href={getPublicProfileUrl(username, { customDomain: true })}
+                href={getPublicProfileUrl(username)}
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
                 ← All posts
@@ -624,7 +622,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 username={username}
                 user={user}
                 hideFeatured
-                useCustomDomain
+
                 siteOrigin={siteOrigin}
                 content_width={user.content_width || "wide"}
                 list_image_position={user.list_image_position || "above_title"}
@@ -635,7 +633,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
               </div>
             )}
-            <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+            <PublicSiteFooter user={user} pages={pages} />
         </main>
 
       </div>
@@ -664,7 +662,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
   // On custom domain, nav links are relative
   const catLinks = categories.map((c) => ({
-    href: getPublicCategoryUrl(username, c.slug, { customDomain: true }),
+    href: getPublicCategoryUrl(username, c.slug),
     label: c.name,
   }));
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
@@ -686,26 +684,26 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
-                  useCustomDomain
+
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username, { customDomain: true })}
+                  titleHref={getPublicProfileUrl(username)}
                   nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-                  useCustomDomain
+
                 />
               </div>
             </header>
@@ -720,13 +718,13 @@ export default async function CustomDomainPage({ params }: Props) {
             blogs={blogsWithRelativeHrefs}
             username={username}
             user={user}
-            useCustomDomain
+
             siteOrigin={siteOrigin}
             content_width={user.content_width || "wide"}
             list_image_position={user.list_image_position || "above_title"}
             show_preview_in_lists={user.show_preview_in_lists ?? true}
           />
-          <PublicSiteFooter user={user} pages={pages} useCustomDomain />
+          <PublicSiteFooter user={user} pages={pages} />
       </main>
       </div>
   );

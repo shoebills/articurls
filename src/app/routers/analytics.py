@@ -470,8 +470,6 @@ def get_umami_pages(
 
         SYSTEM_PATHS = {"/", "/rss.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe"}
 
-        username_lower = current_user.user_name.lower()
-
         def resolve_path_status(path: str) -> str:
             p = path.strip().rstrip("/") or "/"
             if p in SYSTEM_PATHS:
@@ -493,39 +491,12 @@ def get_umami_pages(
                 return "deleted"
             if p.startswith("/category/"):
                 return "live"
-            parts = p.lstrip("/").split("/")
-            # shared domain: /{username} — profile homepage
-            if len(parts) == 1 and parts[0].lower() == username_lower:
-                return "live"
-            # shared domain: /{username}/blog/{slug} or /{username}/page/{slug}
-            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "blog":
-                slug = "/".join(parts[2:])
-                if slug in published_blog_slugs:
-                    return "live"
-                if slug in archived_blog_slugs:
-                    return "archived"
-                return "deleted"
-            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "page":
-                slug = "/".join(parts[2:])
-                if slug in published_page_slugs:
-                    return "live"
-                if slug in archived_page_slugs:
-                    return "archived"
-                return "deleted"
-            # shared domain: /{username}/category/* — always live (category pages)
-            if len(parts) >= 3 and parts[0].lower() == username_lower and parts[1] == "category":
-                return "live"
             return "deleted"
 
         enriched = [
             {"x": row["x"], "y": row["y"], "status": resolve_path_status(row["x"])}
             for row in pages
         ]
-
-        domain_is_active = current_user.domain_status in (
-            models.DomainStatus.ACTIVE,
-            models.DomainStatus.GRACE,
-        )
 
         def extract_content_key(x: str) -> tuple | None:
             p = x.strip().rstrip("/") or "/"
@@ -537,12 +508,6 @@ def get_umami_pages(
                 return ("page", p[len("/page/"):])
             if p.startswith("/category/"):
                 return ("category", p[len("/category/"):])
-            parts = p.lstrip("/").split("/")
-            if len(parts) == 1 and parts[0].lower() == username_lower:
-                return ("home",)
-            if len(parts) >= 3 and parts[0].lower() == username_lower:
-                if parts[1] in ("blog", "page", "category"):
-                    return (parts[1], "/".join(parts[2:]))
             return None
 
         merged: dict = {}
@@ -561,10 +526,10 @@ def get_umami_pages(
         for key, row in merged.items():
             if isinstance(key, tuple):
                 if key[0] == "home":
-                    row["x"] = "/" if domain_is_active else f"/{username_lower}"
+                    row["x"] = "/"
                 else:
                     type_, slug = key
-                    row["x"] = f"/{type_}/{slug}" if domain_is_active else f"/{username_lower}/{type_}/{slug}"
+                    row["x"] = f"/{type_}/{slug}"
 
         live_and_archived = [
             r for k, r in merged.items()

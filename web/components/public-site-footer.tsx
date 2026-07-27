@@ -9,7 +9,6 @@ import { Link as LinkIcon, Rss } from "lucide-react";
 type PublicSiteFooterProps = {
   user: PublicUser;
   pages: UserPage[];
-  useCustomDomain?: boolean;
 };
 
 function normalizePublicLink(link: string): string {
@@ -18,11 +17,9 @@ function normalizePublicLink(link: string): string {
   return `https://${link}`;
 }
 
-function socialItems(user: PublicUser, useCustomDomain: boolean) {
+function socialItems(user: PublicUser) {
   const showRss = Boolean(user.rss_enabled);
-  const rssHref = useCustomDomain
-    ? "/rss.xml"
-    : `/${encodeURIComponent(user.user_name)}/rss.xml`;
+  const rssHref = "/rss.xml";
   return [
     { key: "website", href: user.website_link, label: "Website", icon: <LinkIcon className="h-4 w-4" aria-hidden /> },
     {
@@ -42,13 +39,13 @@ function socialItems(user: PublicUser, useCustomDomain: boolean) {
   ].filter((item) => item.href && item.href.trim() !== "");
 }
 
-export function PublicSiteFooter({ user, pages, useCustomDomain = false }: PublicSiteFooterProps) {
+export function PublicSiteFooter({ user, pages }: PublicSiteFooterProps) {
   if (!user.site_footer_enabled) return null;
 
   const footerPages = [...pages]
     .filter((p) => p.show_in_footer)
     .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999));
-  const socials = socialItems(user, useCustomDomain);
+  const socials = socialItems(user);
 
   if (footerPages.length === 0 && socials.length === 0) return null;
 
@@ -60,7 +57,7 @@ export function PublicSiteFooter({ user, pages, useCustomDomain = false }: Publi
             {footerPages.map((page) => (
               <li key={page.page_id} className="w-1/3 px-1 text-center sm:w-1/5 sm:px-2">
                 <Link
-                  href={getPublicPageUrl(user.user_name, page.slug, { customDomain: useCustomDomain })}
+                  href={getPublicPageUrl(user.user_name, page.slug)}
                   className="text-muted-foreground hover:text-foreground hover:underline"
                 >
                   {page.title}
