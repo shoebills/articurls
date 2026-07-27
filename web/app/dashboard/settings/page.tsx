@@ -26,7 +26,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Camera, Check, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
+import { Camera, Check, Copy, Globe, Loader2, Pencil, Trash2, UserRound, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, UGC_DOMAIN, UGS_ORIGIN } from "@/lib/env";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -95,7 +95,7 @@ export default function SettingsPage() {
     const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.last_username_change_at || null;
   });
-  const [usernameDialogOpen, setUsernameDialogOpen] = useState(false);
+  const [editingUsername, setEditingUsername] = useState(false);
   const [pendingUsername, setPendingUsername] = useState("");
   const [usernameAvailability, setUsernameAvailability] = useState<{
     state: "idle" | "checking" | "available" | "taken" | "invalid";
@@ -276,7 +276,7 @@ export default function SettingsPage() {
   const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
 
   useEffect(() => {
-    if (!usernameDialogOpen || !token) return;
+    if (!editingUsername || !token) return;
     const next = pendingUsername.trim().toLowerCase();
     if (!next) {
       setUsernameAvailability({ state: "idle", message: "" });
@@ -298,7 +298,7 @@ export default function SettingsPage() {
       }
     }, 250);
     return () => clearTimeout(timer);
-  }, [pendingUsername, token, usernameDialogOpen]);
+  }, [pendingUsername, token, editingUsername]);
 
   async function saveUsername() {
     if (!token) return;
@@ -313,7 +313,7 @@ export default function SettingsPage() {
       await patchMe(token, { user_name: pendingUsername.trim().toLowerCase() });
       await refreshUser();
       setUserName(pendingUsername.trim().toLowerCase());
-      setUsernameDialogOpen(false);
+      setEditingUsername(false);
       setSaved("Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Could not update username");
@@ -344,13 +344,9 @@ export default function SettingsPage() {
                 <Skeleton className="h-10 w-full" />
               </div>
               <div className="space-y-2.5">
-                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-4 w-10" />
                 <Skeleton className="h-10 w-full" />
               </div>
-            </div>
-            <div className="space-y-2.5">
-              <Skeleton className="h-4 w-10" />
-              <Skeleton className="h-10 w-full" />
             </div>
             <Skeleton className="h-11 w-24" />
           </CardContent>
@@ -388,10 +384,16 @@ export default function SettingsPage() {
         </div>
         <Card>
           <CardHeader className="pb-4 sm:pb-4">
-            <CardTitle className="text-xl">Custom Domain</CardTitle>
-            <CardDescription>Use your own domain for your blog.</CardDescription>
+            <Skeleton className="h-6 w-24" />
+            <Skeleton className="h-4 w-72 mt-2" />
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            <div>
+              <Skeleton className="h-4 w-20 mb-2" />
+              <Skeleton className="h-3 w-64 mb-3" />
+              <Skeleton className="h-12 w-full rounded-lg" />
+            </div>
+            <Skeleton className="h-px w-full" />
             <Skeleton className="h-40 w-full rounded-md" />
           </CardContent>
         </Card>
@@ -524,29 +526,9 @@ export default function SettingsPage() {
               <Input id="name" className="mt-2" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="user_name">Username</Label>
-              <div className="mt-2 flex items-center gap-2">
-                <Input id="user_name" className="h-10 min-h-10 bg-muted/30 sm:h-10 sm:min-h-10" value={user_name} readOnly />
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-10 min-h-10 w-10 shrink-0 rounded-xl p-0 sm:h-10 sm:min-h-10 sm:w-auto sm:px-3.5"
-                  onClick={() => {
-                    setPendingUsername(user_name);
-                    setUsernameAvailability({ state: "idle", message: "" });
-                    setUsernameDialogOpen(true);
-                  }}
-                  aria-label="Edit username"
-                >
-                  <Pencil className="h-4 w-4" />
-                  <span className="ml-2 hidden sm:inline">Edit</span>
-                </Button>
-              </div>
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
-          </div>
-          <div className="space-y-2.5">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" className="mt-2" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
           </div>
           <div className="pt-2">
             <Button size="lg" onClick={saveBase} disabled={busy || !profileDirty}>
@@ -687,11 +669,116 @@ export default function SettingsPage() {
 
       <Card>
         <CardHeader className="pb-4 sm:pb-4">
-          <CardTitle className="text-xl">Custom Domain</CardTitle>
-          <CardDescription>Use your own domain for your blog.</CardDescription>
+          <CardTitle className="text-xl">Domains</CardTitle>
+          <CardDescription>Manage your blog's subdomain and custom domain.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+
+          <div>
+            <p className="text-sm font-medium">Subdomain</p>
+            <p className="text-sm text-muted-foreground mb-3">
+              Your blog URL:{" "}
+              <span className="font-mono">{encodeURIComponent(user_name)}.{UGC_DOMAIN}</span>
+            </p>
+
+            {!editingUsername ? (
+              <div className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
+                <Globe className="h-5 w-5 shrink-0 text-muted-foreground" />
+                <span className="flex-1 truncate text-sm font-mono">
+                  {encodeURIComponent(user_name)}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(
+                      `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/`,
+                    );
+                    setSaved("Copied");
+                  }}
+                  className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  title="Copy URL"
+                >
+                  <Copy className="h-4 w-4" />
+                </button>
+                {canChange ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    onClick={() => {
+                      setPendingUsername(user_name);
+                      setUsernameAvailability({ state: "idle", message: "" });
+                      setEditingUsername(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                ) : (
+                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                    Available in {cooldownRemainingDays}d
+                  </span>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3 rounded-lg border bg-white px-4 py-3">
+                <Input
+                  value={pendingUsername}
+                  onChange={(e) =>
+                    setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())
+                  }
+                  placeholder="yourusername"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                />
+                <div className="flex items-center justify-between gap-4">
+                  <p className="min-w-0 break-all text-xs text-muted-foreground">
+                    https://{encodeURIComponent(pendingUsername || user_name)}.{UGC_DOMAIN}/
+                  </p>
+                  <div className="shrink-0 text-sm">
+                    {usernameAvailability.state === "checking" ? (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
+                      </span>
+                    ) : usernameAvailability.state === "available" ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-600">
+                        <Check className="h-3.5 w-3.5" /> Available
+                      </span>
+                    ) : usernameAvailability.state === "taken" || usernameAvailability.state === "invalid" ? (
+                      <span className="text-destructive">{usernameAvailability.message}</span>
+                    ) : null}
+                  </div>
+                </div>
+                {!canChange && (
+                  <p className="text-xs text-muted-foreground">
+                    Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <Button
+                    onClick={saveUsername}
+                    disabled={
+                      busy ||
+                      !canChange ||
+                      usernameAvailability.state === "checking" ||
+                      usernameAvailability.state === "taken" ||
+                      usernameAvailability.state === "invalid"
+                    }
+                  >
+                    Save
+                  </Button>
+                  <Button variant="outline" onClick={() => setEditingUsername(false)} disabled={busy}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <Separator />
+
           <CustomDomainSettings />
+
         </CardContent>
       </Card>
 
@@ -726,76 +813,7 @@ export default function SettingsPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={usernameDialogOpen} onOpenChange={setUsernameDialogOpen}>
-        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
-          <DialogHeader>
-            <DialogTitle>Change username</DialogTitle>
-            <DialogDescription>
-              {canChange
-                ? "You can change your username once every 7 days."
-                : `Please wait ${cooldownRemainingDays} day${cooldownRemainingDays === 1 ? "" : "s"} before changing again.`}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-3">
-            <div className="space-y-2">
-              <Label htmlFor="username-dialog">Username</Label>
-              <Input
-                id="username-dialog"
-                className="mt-2"
-                value={pendingUsername}
-                onChange={(e) => setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
-                placeholder="yourusername"
-                autoCapitalize="none"
-                autoCorrect="off"
-              />
-            </div>
-            <p className="text-xs text-muted-foreground break-all">
-              {liveProfileUrl}
-            </p>
-            <div className="min-h-5 text-sm">
-              {usernameAvailability.state === "checking" ? (
-                <span className="inline-flex items-center gap-1 text-muted-foreground">
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
-                </span>
-              ) : usernameAvailability.state === "available" ? (
-                <span className="inline-flex items-center gap-1 text-emerald-600">
-                  <Check className="h-3.5 w-3.5" /> Available
-                </span>
-              ) : usernameAvailability.message ? (
-                <span className="text-destructive">{usernameAvailability.message}</span>
-              ) : null}
-            </div>
-            {!canChange && (
-              <p className="text-xs text-muted-foreground">
-                Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
-              </p>
-            )}
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Links with previous username will be redirected to new links.
-            </p>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => setUsernameDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={saveUsername}
-              disabled={
-                busy ||
-                !canChange ||
-                usernameAvailability.state === "checking" ||
-                usernameAvailability.state === "taken" ||
-                usernameAvailability.state === "invalid"
-              }
-            >
-              {!canChange
-                ? `Available in ${cooldownRemainingDays}d`
-                : "Save username"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
     </div>
   );
 }
