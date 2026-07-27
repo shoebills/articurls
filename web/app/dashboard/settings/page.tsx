@@ -286,12 +286,9 @@ export default function SettingsPage() {
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `https://${encodeURIComponent(normalizedPending)}.${UGC_DOMAIN}/`;
   const usedBytes = storageUsage?.used_bytes ?? 0;
-  const seoResourcesEnabled =
-    !!domain?.hostname &&
-    (domain.domain_status === "active" || domain.domain_status === "grace");
-  const rssResourceUrl = seoResourcesEnabled && domain?.hostname
+  const rssResourceUrl = domain?.hostname
     ? `https://${domain.hostname}/rss.xml`
-    : isPro && user_name
+    : user_name
       ? `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/rss.xml`
       : undefined;
   const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);

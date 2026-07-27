@@ -10,7 +10,6 @@ from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
 from ..config import settings
-from ..utils import is_pro_entitled
 from ..redis_client import redis_client
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
 from .activation import (
@@ -287,14 +286,13 @@ def sitemap_users(request: Request, db: Session = Depends(get_db)):
     rows = (
         db.query(models.User)
         .filter(~models.User.domain_status.in_((models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)))
+        .order_by(models.User.user_name.asc().nulls_last())
         .all()
     )
-    indexable_users = [row for row in rows if is_pro_entitled(row, db)]
-    indexable_users.sort(key=lambda row: (row.user_name or "").lower())
 
     return [
         {"username": u.user_name, "updated_at": u.updated_at.isoformat() if u.updated_at else None}
-        for u in indexable_users
+        for u in rows
     ]
 
 
@@ -308,6 +306,5 @@ def user_seo_eligibility(username: str, request: Request, db: Session = Depends(
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    is_pro = is_pro_entitled(db_user, db)
     has_active_custom_domain = db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
-    return {"is_pro": is_pro, "can_index_on_ugc": bool(is_pro and not has_active_custom_domain)}
+    return {"can_index_on_ugc": bool(not has_active_custom_domain)}

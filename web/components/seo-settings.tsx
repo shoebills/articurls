@@ -8,8 +8,6 @@ import {
   getCustomDomain,
   getMe,
   getMetaSettings,
-  getSubscription,
-  isProSubscription,
   patchMetaSettings,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
@@ -21,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import type { CustomDomain, MetaSettings, UserSettings, SubscriptionOut } from "@/lib/types";
+import type { CustomDomain, MetaSettings, UserSettings } from "@/lib/types";
 import { UGC_DOMAIN } from "@/lib/env";
 
 export default function SeoSettings() {
@@ -71,13 +69,6 @@ export default function SeoSettings() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<CustomDomain>("/settings/domain", t) : null;
   });
-  const [isPro, setIsPro] = useState(() => {
-    if (typeof window === "undefined") return false;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return false;
-    const cached = getCachedApiData<SubscriptionOut>("/billing/subscription", t);
-    return cached ? isProSubscription(cached) : false;
-  }  );
   const [username, setUsername] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
@@ -85,24 +76,19 @@ export default function SeoSettings() {
     const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.user_name || "";
   });
-  const seoResourcesEnabled =
-    !!domain?.hostname &&
-    (domain.domain_status === "active" || domain.domain_status === "grace");
-  const sitemapResourceUrl = seoResourcesEnabled && domain?.hostname
+  const sitemapResourceUrl = domain?.hostname
     ? `https://${domain.hostname}/sitemap.xml`
-    : isPro && username
+    : username
       ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml`
       : undefined;
-  const sitemapResourceEnabled = Boolean(sitemapResourceUrl);
   useEffect(() => {
     if (!token) return;
     (async () => {
       try {
-        const [meta, domainData, me, subscription] = await Promise.all([
+        const [meta, domainData, me] = await Promise.all([
           getMetaSettings(token),
           getCustomDomain(token),
           getMe(token),
-          getSubscription(token),
         ]);
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
@@ -110,7 +96,6 @@ export default function SeoSettings() {
         setOriginalMetaDescription(meta.meta_description || "");
         setDomain(domainData);
         setUsername(me.user_name || "");
-        setIsPro(isProSubscription(subscription));
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       } finally {
@@ -216,14 +201,9 @@ export default function SeoSettings() {
           <div className="border-t pt-5 mt-2 space-y-3">
             <SeoResourceRow
               label="Sitemap"
-              url={sitemapResourceUrl || (username ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml` : "#")}
+              url={sitemapResourceUrl ?? "#"}
               displayText="/sitemap.xml"
-              enabled={true}
-              unavailableText={
-                !sitemapResourceEnabled
-                  ? "Sitemap URL unavailable."
-                  : undefined
-              }
+              enabled={!!sitemapResourceUrl}
             />
             <SeoResourceRow
               label="Robots.txt"

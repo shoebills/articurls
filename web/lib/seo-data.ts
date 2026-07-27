@@ -79,35 +79,6 @@ export async function fetchCategories(username: string): Promise<Category[]> {
   }
 }
 
-// ── Internal SEO eligibility ──────────────────────────────────────────────────
-
-export interface SeoEligibility {
-  is_pro: boolean;
-  can_index_on_ugc: boolean;
-}
-
-/**
- * Fetch server-side SEO eligibility for a user.
- * This endpoint is internal and requires INTERNAL_API_SECRET.
- */
-export async function fetchSeoEligibility(
-  username: string
-): Promise<SeoEligibility | null> {
-  try {
-    const res = await fetch(
-      `${API_URL}/internal/user-seo-eligibility?username=${encodeURIComponent(username)}`,
-      {
-        cache: "no-store",
-        headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "" },
-      }
-    );
-    if (!res.ok) return null;
-    return (await res.json()) as SeoEligibility;
-  } catch {
-    return null;
-  }
-}
-
 function escapeXml(value: string): string {
   return value
     .replaceAll("&", "&amp;")
