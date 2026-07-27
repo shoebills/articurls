@@ -682,8 +682,8 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
 
           {!editingUsername ? (
-            <div className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
-              <span className="flex-1 truncate text-sm font-mono tabular-nums">
+            <div className={`space-y-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
+              <span className="block truncate text-sm font-mono tabular-nums">
                 <span>{encodeURIComponent(user_name)}</span>
                 <span className="text-muted-foreground/50">.{UGC_DOMAIN}</span>
               </span>
@@ -692,7 +692,6 @@ export default function SettingsPage() {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="shrink-0"
                   onClick={() => {
                     setPendingUsername(user_name);
                     setUsernameAvailability({ state: "idle", message: "" });
@@ -702,7 +701,7 @@ export default function SettingsPage() {
                   Edit
                 </Button>
               ) : (
-                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   Available in {cooldownRemainingDays}d
                 </span>
               )}
