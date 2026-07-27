@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, Bug, CircleHelp, Users, Tags } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, User, CircleHelp, Users, Tags } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
@@ -65,23 +65,14 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
       )}
     >
       <div className="mb-2 flex flex-col gap-1.5">
-        <div className="group relative">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            asChild
-            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-          >
-            <a href={`mailto:bugs@articurls.com?subject=${encodeURIComponent(`[Bug] Report from ${user?.user_name || user?.email || ""}`)}`}>
-              <Bug className="h-4 w-4" />
-              Report a bug
-            </a>
-          </Button>
-          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-            bugs@articurls.com
-          </span>
-        </div>
+        <Link
+          href="/dashboard/profile"
+          onClick={() => onNavigate?.()}
+          className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-[background-color,color] duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+        >
+          <User className="h-4 w-4 shrink-0 opacity-80" />
+          Profile
+        </Link>
         <div className="group relative">
           <Button
             type="button"
