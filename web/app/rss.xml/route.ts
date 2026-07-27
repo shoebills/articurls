@@ -7,6 +7,7 @@ import {
   isInternalHost,
   resolveTenantHostFromRequest,
 } from "@/lib/request-host";
+import { resolveDomainForSeo } from "@/lib/seo-domain";
 
 export const dynamic = "force-dynamic";
 
@@ -16,24 +17,6 @@ function toTimestamp(value: string | null | undefined): number {
   if (!value) return 0;
   const t = new Date(value).getTime();
   return Number.isNaN(t) ? 0 : t;
-}
-
-async function resolveDomainInfo(
-  host: string,
-): Promise<{ username: string; domain_status: string } | null> {
-  try {
-    const res = await fetch(
-      `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
-      {
-        cache: "no-store",
-        headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "" },
-      },
-    );
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
 }
 
 async function loadUser(username: string): Promise<PublicUser | null> {
@@ -56,10 +39,14 @@ export async function GET(req: NextRequest): Promise<Response> {
     return new NextResponse(null, { status: 404 });
   }
 
-  const domainInfo = await resolveDomainInfo(effectiveHost);
+  const domainInfo = await resolveDomainForSeo(effectiveHost);
   if (!domainInfo) return new NextResponse(null, { status: 404 });
 
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
+    return new NextResponse(null, { status: 404 });
+  }
+
+  if (domainInfo.redirect_to) {
     return new NextResponse(null, { status: 404 });
   }
 
