@@ -681,106 +681,88 @@ export default function SettingsPage() {
         </CardHeader>
         <CardContent className="space-y-6">
 
-          <div>
-            <p className="text-sm font-medium">Subdomain</p>
-            <p className="text-sm text-muted-foreground mb-3">
-              Your blog URL:{" "}
-              <span className="font-mono">{encodeURIComponent(user_name)}.{UGC_DOMAIN}</span>
-            </p>
-
-            {!editingUsername ? (
-              <div className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
-                <Globe className="h-5 w-5 shrink-0 text-muted-foreground" />
-                <span className="flex-1 truncate text-sm font-mono">
-                  {encodeURIComponent(user_name)}
-                </span>
-                <button
+          {!editingUsername ? (
+            <div className={`flex items-center gap-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
+              <span className="flex-1 truncate text-sm font-mono tabular-nums">
+                <span>{encodeURIComponent(user_name)}</span>
+                <span className="text-muted-foreground/50">.{UGC_DOMAIN}</span>
+              </span>
+              {canChange ? (
+                <Button
                   type="button"
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0"
                   onClick={() => {
-                    navigator.clipboard.writeText(
-                      `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/`,
-                    );
-                    setSaved("Copied");
+                    setPendingUsername(user_name);
+                    setUsernameAvailability({ state: "idle", message: "" });
+                    setEditingUsername(true);
                   }}
-                  className="shrink-0 rounded-md p-1.5 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                  title="Copy URL"
                 >
-                  <Copy className="h-4 w-4" />
-                </button>
-                {canChange ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="shrink-0"
-                    onClick={() => {
-                      setPendingUsername(user_name);
-                      setUsernameAvailability({ state: "idle", message: "" });
-                      setEditingUsername(true);
-                    }}
-                  >
-                    Edit
-                  </Button>
-                ) : (
-                  <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
-                    Available in {cooldownRemainingDays}d
-                  </span>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3 rounded-lg border bg-white px-4 py-3">
+                  Edit
+                </Button>
+              ) : (
+                <span className="shrink-0 whitespace-nowrap text-xs text-muted-foreground">
+                  Available in {cooldownRemainingDays}d
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3 rounded-lg border bg-white px-4 py-3">
+              <div className="flex">
                 <Input
                   value={pendingUsername}
                   onChange={(e) =>
                     setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())
                   }
                   placeholder="yourusername"
+                  className="rounded-r-none"
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
-                <div className="flex items-center justify-between gap-4">
-                  <p className="min-w-0 break-all text-xs text-muted-foreground">
-                    https://{encodeURIComponent(pendingUsername || user_name)}.{UGC_DOMAIN}/
-                  </p>
-                  <div className="shrink-0 text-sm">
-                    {usernameAvailability.state === "checking" ? (
-                      <span className="inline-flex items-center gap-1 text-muted-foreground">
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
-                      </span>
-                    ) : usernameAvailability.state === "available" ? (
-                      <span className="inline-flex items-center gap-1 text-emerald-600">
-                        <Check className="h-3.5 w-3.5" /> Available
-                      </span>
-                    ) : usernameAvailability.state === "taken" || usernameAvailability.state === "invalid" ? (
-                      <span className="text-destructive">{usernameAvailability.message}</span>
-                    ) : null}
-                  </div>
-                </div>
-                {!canChange && (
-                  <p className="text-xs text-muted-foreground">
-                    Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
-                  </p>
-                )}
-                <div className="flex gap-2">
-                  <Button
-                    onClick={saveUsername}
-                    disabled={
-                      busy ||
-                      !canChange ||
-                      usernameAvailability.state === "checking" ||
-                      usernameAvailability.state === "taken" ||
-                      usernameAvailability.state === "invalid"
-                    }
-                  >
-                    Save
-                  </Button>
-                  <Button variant="outline" onClick={() => setEditingUsername(false)} disabled={busy}>
-                    Cancel
-                  </Button>
+                <div className="flex items-center rounded-r-md border border-l-0 bg-muted/30 px-3 text-sm text-muted-foreground/60 font-mono">
+                  .{UGC_DOMAIN}
                 </div>
               </div>
-            )}
-          </div>
+              <div className="flex items-center justify-between gap-4">
+                <div className="shrink-0 text-sm">
+                  {usernameAvailability.state === "checking" ? (
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
+                    </span>
+                  ) : usernameAvailability.state === "available" ? (
+                    <span className="inline-flex items-center gap-1 text-emerald-600">
+                      <Check className="h-3.5 w-3.5" /> Available
+                    </span>
+                  ) : usernameAvailability.state === "taken" || usernameAvailability.state === "invalid" ? (
+                    <span className="text-destructive">{usernameAvailability.message}</span>
+                  ) : null}
+                </div>
+              </div>
+              {!canChange && (
+                <p className="text-xs text-muted-foreground">
+                  Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
+                </p>
+              )}
+              <div className="flex gap-2">
+                <Button
+                  onClick={saveUsername}
+                  disabled={
+                    busy ||
+                    !canChange ||
+                    usernameAvailability.state === "checking" ||
+                    usernameAvailability.state === "taken" ||
+                    usernameAvailability.state === "invalid"
+                  }
+                >
+                  Save
+                </Button>
+                <Button variant="outline" onClick={() => setEditingUsername(false)} disabled={busy}>
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
 
         </CardContent>
       </Card>
