@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, UGS_ORIGIN, assetUrl } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -50,15 +50,11 @@ function resolvePageDescription(page: UserPage): string | undefined {
   return contentDescription || undefined;
 }
 
-async function resolveDomainInfo(host: string): Promise<{ username: string; domain_status: string } | null> {
-  const ugcHost = new URL(UGS_ORIGIN).hostname;
-  const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
-  if (host.endsWith(`.${ugcHost}`)) {
-    const subdomain = host.split(".")[0];
-    if (subdomain && !RESERVED.has(subdomain)) {
-      return { username: subdomain, domain_status: "active" };
-    }
-  }
+async function resolveDomainInfo(host: string): Promise<{
+  username: string;
+  domain_status: string;
+  redirect_to: string | null;
+} | null> {
   try {
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
@@ -70,7 +66,11 @@ async function resolveDomainInfo(host: string): Promise<{ username: string; doma
     );
     if (!res.ok) return null;
     const data = await res.json();
-    return { username: data.username, domain_status: data.domain_status };
+    return {
+      username: data.username,
+      domain_status: data.domain_status,
+      redirect_to: data.redirect_to ?? null,
+    };
   } catch {
     return null;
   }
@@ -325,14 +325,10 @@ export default async function CustomDomainPage({ params }: Props) {
   const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
   const siteOrigin = `https://${host}`;
 
-  // If on a UGC subdomain and user has an active custom domain, redirect there
-  // to consolidate ranking signals and avoid duplicate content.
-  const ugcHost = new URL(UGS_ORIGIN).hostname;
-  if (host.endsWith(`.${ugcHost}`)) {
-    const user = await loadUser(username);
-    if (user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")) {
-      permanentRedirect(`https://${user.custom_domain}${pathname}`);
-    }
+  // If the backend determined this hostname is not the canonical URL,
+  // redirect to the canonical origin in one hop, preserving the path.
+  if (domainInfo.redirect_to) {
+    permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
   }
 
   // ── Blog post: /blog/[slug] ────────────────────────────────────────────────

@@ -33,6 +33,21 @@ def _invalidate_domain_cache(hostname: str) -> None:
         pass
 
 
+def _canonical_url_for_subdomain(
+    db_user: models.User, requested_hostname: str
+) -> Optional[str]:
+    if db_user.custom_domain and db_user.domain_status in (
+        models.DomainStatus.ACTIVE,
+        models.DomainStatus.GRACE,
+    ):
+        return f"https://{db_user.custom_domain}"
+    ugc_domain = settings.ugc_domain
+    expected = f"{db_user.user_name}.{ugc_domain}"
+    if requested_hostname != expected:
+        return f"https://{expected}"
+    return None
+
+
 async def _register_vercel_domain(hostname: str) -> Optional[Dict[str, Any]]:
     if not vercel_sync_required():
         return None
@@ -250,8 +265,20 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
             RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support"}
             if subdomain and subdomain not in RESERVED_SUBDOMAINS:
                 db_user = db.query(models.User).filter(models.User.user_name == subdomain).first()
+                if not db_user:
+                    claim = db.query(models.UsernameClaim).filter(
+                        models.UsernameClaim.username == subdomain
+                    ).first()
+                    if claim:
+                        db_user = db.query(models.User).filter(
+                            models.User.user_id == claim.user_id
+                        ).first()
                 if db_user:
-                    result = {"username": db_user.user_name, "domain_status": "active"}
+                    result = {
+                        "username": db_user.user_name,
+                        "domain_status": "active",
+                        "redirect_to": _canonical_url_for_subdomain(db_user, normalized),
+                    }
                     try:
                         redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
                     except Exception:
@@ -269,6 +296,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     result = {
         "username": db_user.user_name,
         "domain_status": db_user.domain_status.value if hasattr(db_user.domain_status, "value") else db_user.domain_status,
+        "redirect_to": None,
     }
 
     try:

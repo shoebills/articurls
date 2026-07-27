@@ -12,6 +12,7 @@ export interface DomainLookupResult {
   username: string;
   domain_status: string;
   custom_domain: string | null;
+  redirect_to: string | null;
 }
 
 /** True when host is a customer domain, not articurls platform infrastructure. */
@@ -42,12 +43,17 @@ export async function resolveDomainForSeo(
 
     if (!res.ok) return null;
 
-    const data: { username: string; domain_status: string } = await res.json();
+    const data: {
+      username: string;
+      domain_status: string;
+      redirect_to?: string | null;
+    } = await res.json();
 
     return {
       username: data.username,
       domain_status: data.domain_status,
       custom_domain: host,
+      redirect_to: data.redirect_to ?? null,
     };
   } catch {
     return null;

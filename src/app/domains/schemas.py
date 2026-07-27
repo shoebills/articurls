@@ -42,3 +42,4 @@ class DomainVerifyOut(BaseModel):
 class DomainLookupOut(BaseModel):
     username: str
     domain_status: str
+    redirect_to: Optional[str] = None

@@ -20,43 +20,17 @@
  */
 
 import { NextRequest } from "next/server";
-import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN, UGC_DOMAIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
   resolveTenantHostFromRequest,
 } from "@/lib/request-host";
+import { resolveDomainForSeo } from "@/lib/seo-domain";
 
 export const dynamic = "force-dynamic";
 
 const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
-
-// ── Domain lookup ─────────────────────────────────────────────────────────────
-
-async function resolveDomainInfo(
-  host: string,
-): Promise<{ username: string; domain_status: string } | null> {
-  if (host.endsWith(`.${UGC_DOMAIN}`)) {
-    const subdomain = host.split(".")[0];
-    const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
-    if (subdomain && !RESERVED.has(subdomain)) {
-      return { username: subdomain, domain_status: "active" };
-    }
-  }
-  try {
-    const res = await fetch(
-      `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
-      {
-        cache: "no-store",
-        headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET ?? "" },
-      },
-    );
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
 
 async function loadUser(username: string) {
   try {
@@ -70,10 +44,11 @@ async function loadUser(username: string) {
   }
 }
 
+
 // ── Custom domain robots.txt ──────────────────────────────────────────────────
 
 async function customDomainRobots(host: string): Promise<Response> {
-  const domainInfo = await resolveDomainInfo(host);
+  const domainInfo = await resolveDomainForSeo(host);
 
   if (!domainInfo) {
     return new Response(DISALLOW_ALL, {
