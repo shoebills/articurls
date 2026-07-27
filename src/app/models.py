@@ -68,7 +68,6 @@ class User(Base):
     welcome_email_subject = Column(Text, nullable=True)
     welcome_email_body_html = Column(Text, nullable=True)
     welcome_email_delay_minutes = Column(Integer, nullable=False, default=0)
-    remove_branding = Column(Boolean, nullable=False, default=True)
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
     umami_share_url = Column(String(512), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
@@ -196,7 +195,7 @@ class Subscriptions(Base):
     subscription_id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), index=True, unique=True, nullable=False)
     dodo_subscription_id = Column(String, unique=True, nullable=True)
-    plan_type = Column(String, nullable=False, default="free")  # "free", "pro"
+    plan_type = Column(String, nullable=False, default="trial")  # "trial", "pro", "lifetime"
     status = Column(String, nullable=False, default="inactive")  # "active", "inactive", "cancelled", "past_due"
     current_period_start = Column(DateTime(timezone=True), nullable=True)
     current_period_end = Column(DateTime(timezone=True), nullable=True)

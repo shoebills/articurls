@@ -140,7 +140,7 @@ export interface AdminUserListItem {
   user_name: string;
   email: string;
   created_at: string | null;
-  plan: "free" | "pro";
+  plan: "inactive" | "pro";
 }
 
 export interface AdminPaymentListItem {

@@ -162,7 +162,7 @@ export default function BillingPage() {
       <Card className="overflow-hidden border-border/70 shadow-sm shadow-black/[0.04] ring-1 ring-black/[0.03]">
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle className="text-xl font-semibold tracking-tight sm:text-2xl">Current plan</CardTitle>
-          {sub && sub.plan_type !== "free" ? (
+          {sub && sub.plan_type !== "trial" && sub.plan_type !== "lapsed" ? (
             <Button size="sm" className="h-10 rounded-md" onClick={manageSubscription} disabled={busyPortal}>
               {busyPortal ? "Redirecting…" : "Manage subscription"}
             </Button>

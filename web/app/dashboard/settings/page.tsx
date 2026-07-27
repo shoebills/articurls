@@ -394,7 +394,7 @@ export default function SettingsPage() {
         <Card id="pro-features">
           <CardHeader>
             <CardTitle className="text-xl">Pro features</CardTitle>
-            <CardDescription>Manage your blog branding, favicon, subscriber collection, and RSS feed.</CardDescription>
+            <CardDescription>Manage your favicon, subscriber collection, and RSS feed.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">

@@ -718,7 +718,7 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
 
 export async function adminListUsers(
   token: string,
-  params: { q?: string; plan?: "all" | "free" | "pro"; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
+  params: { q?: string; plan?: "all" | "inactive" | "pro"; sort?: "latest" | "oldest"; limit?: number; offset?: number } = {}
 ): Promise<AdminUserListItem[]> {
   const query = new URLSearchParams();
   if (params.q) query.set("q", params.q);

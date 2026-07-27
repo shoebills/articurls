@@ -19,7 +19,7 @@ export default function InternalAdminPage() {
   const [section, setSection] = useState<AdminSection>("users");
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"latest" | "oldest">("latest");
-  const [plan, setPlan] = useState<"all" | "free" | "pro">("all");
+  const [plan, setPlan] = useState<"all" | "inactive" | "pro">("all");
   const [users, setUsers] = useState<AdminUserListItem[]>([]);
   const [payments, setPayments] = useState<AdminPaymentListItem[]>([]);
   const [err, setErr] = useState<string | null>(null);
@@ -64,13 +64,13 @@ export default function InternalAdminPage() {
                 className="sm:max-w-md"
               />
               {section === "users" ? (
-                <Select value={plan} onValueChange={(v: "all" | "free" | "pro") => setPlan(v)}>
+                <Select value={plan} onValueChange={(v: "all" | "inactive" | "pro") => setPlan(v)}>
                   <SelectTrigger className="w-36">
                     <SelectValue placeholder="Plan" />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="inactive">Inactive</SelectItem>
                     <SelectItem value="pro">Pro</SelectItem>
                   </SelectContent>
                 </Select>

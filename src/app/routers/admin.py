@@ -25,7 +25,7 @@ def _require_admin(current_user=Depends(get_current_user)):
 @router.get("/users", status_code=status.HTTP_200_OK)
 def list_users(
     q: str = Query("", description="Search by username/email/name"),
-    plan: str = Query("all", description="all|free|pro"),
+    plan: str = Query("all", description="all|inactive|pro"),
     sort: str = Query("latest", description="latest|oldest"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -51,7 +51,7 @@ def list_users(
                 models.Subscriptions.status.in_(["active", "past_due"]),
             )
         )
-    elif plan == "free":
+    elif plan == "inactive":
         query = query.filter(
             or_(
                 models.Subscriptions.subscription_id.is_(None),
@@ -76,7 +76,7 @@ def list_users(
                 "user_name": db_user.user_name,
                 "email": db_user.email,
                 "created_at": db_user.created_at,
-                "plan": "pro" if is_pro else "free",
+                "plan": "pro" if is_pro else "inactive",
             }
         )
     return output
