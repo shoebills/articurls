@@ -5,8 +5,7 @@ from .celery_app import celery
 from .. import database, models
 from ..config import settings
 from ..domains.utils import expire_domain_access, start_domain_grace_period
-from ..email.service import send_new_post_email, send_welcome_email as deliver_welcome_email
-from ..email.welcome import render_welcome_email
+from ..email.service import send_new_post_email
 from ..security.oauth2 import create_unsubscribe_token
 from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_blog_home_url, public_post_url
 
@@ -83,54 +82,6 @@ def send_post_emails(blog_id: int):
 
     finally:
         db.close()
-
-@celery.task
-def send_welcome_email(subscriber_id: int):
-    db = database.SessionLocal()
-    try:
-        db_subscriber = (
-            db.query(models.Subscriber)
-            .filter(models.Subscriber.subscriber_id == subscriber_id)
-            .first()
-        )
-        if not db_subscriber:
-            return
-        if db_subscriber.unsubscribed_at is not None:
-            return
-        if not db_subscriber.is_confirmed:
-            return
-        if db_subscriber.welcome_sent_at is not None:
-            return
-
-        db_user = db.query(models.User).filter(models.User.user_id == db_subscriber.user_id).first()
-        if not db_user:
-            return
-        if not is_pro_entitled(db_user, db):
-            return
-        if not db_user.welcome_email_enabled:
-            return
-
-        unsubscribe_token = create_unsubscribe_token(db_subscriber.subscriber_id, db_user.user_id)
-        unsubscribe_url = f"{settings.app_base_url.rstrip('/')}/unsubscribe?token={unsubscribe_token}"
-        blog_url = public_blog_home_url(db_user)
-        blog_name = db_user.name
-
-        subject, html = render_welcome_email(
-            blog_name=blog_name,
-            blog_url=blog_url,
-            unsubscribe_url=unsubscribe_url,
-            custom_subject=db_user.welcome_email_subject,
-            custom_body_html=db_user.welcome_email_body_html,
-        )
-
-        deliver_welcome_email(db_subscriber.email, subject, html)
-        db_subscriber.welcome_sent_at = func.now()
-        db.commit()
-    except Exception:
-        logger.exception("Failed to send welcome email for subscriber %s", subscriber_id)
-    finally:
-        db.close()
-
 
 @celery.task
 def publish_scheduled_blogs():

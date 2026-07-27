@@ -144,30 +144,3 @@ class StorageUsage(BaseModel):
     limit_bytes: Optional[int] = None
     is_unlimited: bool = False
 
-
-class WelcomeEmailSettings(BaseModel):
-    welcome_email_enabled: bool = False
-    welcome_email_subject: Optional[str] = None
-    welcome_email_body_html: Optional[str] = None
-    welcome_email_delay_minutes: int = 0
-
-    class Config:
-        from_attributes = True
-
-
-class WelcomeEmailSettingsUpdate(BaseModel):
-    welcome_email_enabled: Optional[bool] = None
-    welcome_email_subject: Optional[str] = None
-    welcome_email_body_html: Optional[str] = None
-    welcome_email_delay_minutes: Optional[int] = None
-
-
-class WelcomeEmailPreviewIn(BaseModel):
-    welcome_email_subject: Optional[str] = None
-    welcome_email_body_html: Optional[str] = None
-    use_default_body: bool = False
-
-
-class WelcomeEmailPreviewOut(BaseModel):
-    subject: str
-    html: str

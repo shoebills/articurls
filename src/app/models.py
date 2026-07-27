@@ -64,10 +64,6 @@ class User(Base):
     show_preview_in_lists = Column(Boolean, nullable=False, default=True)
     about_title = Column(String(40), nullable=True)
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
-    welcome_email_enabled = Column(Boolean, nullable=False, default=False)
-    welcome_email_subject = Column(Text, nullable=True)
-    welcome_email_body_html = Column(Text, nullable=True)
-    welcome_email_delay_minutes = Column(Integer, nullable=False, default=0)
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
     umami_share_url = Column(String(512), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
@@ -160,7 +156,6 @@ class Subscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
     is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
-    welcome_sent_at = Column(DateTime(timezone=True), nullable=True)
 
 class EmailLogs(Base):
     __tablename__ = "email_logs"

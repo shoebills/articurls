@@ -63,10 +63,6 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
 
     send_email(to_email, subject, html)
 
-def send_welcome_email(to_email: str, subject: str, html: str):
-    send_email(to_email, subject, html)
-
-
 def send_password_reset(to_email: str, reset_token: str):
 
     html = (TEMPLATE_DIR / "reset_password.html").read_text()

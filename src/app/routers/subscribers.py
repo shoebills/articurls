@@ -6,7 +6,6 @@ from .. import models
 from ..schemas import subscribers
 from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
 from ..email.service import send_sub_confirmation_email
-from ..email.scheduling import schedule_welcome_email_after_confirm
 from ..utils import normalize_email
 from ..utils.rate_limit import check_rate_limit_ip_and_email
 
@@ -57,10 +56,8 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
     # resubscribe
     if db_subscriber and db_subscriber.unsubscribed_at:
         db_subscriber.unsubscribed_at = None
-        db_subscriber.welcome_sent_at = None
         db.commit()
         db.refresh(db_subscriber)
-        schedule_welcome_email_after_confirm(db, db_subscriber)
         return {"message": "Subscribed again"}
     
     new_subscriber = models.Subscriber(email=email, 
@@ -96,7 +93,6 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
 
     db.commit()
     db.refresh(db_subscriber)
-    schedule_welcome_email_after_confirm(db, db_subscriber)
 
     return {"message": "Email verified successfully"}
 
