@@ -682,37 +682,41 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
 
           {!editingUsername ? (
-            <div className={`space-y-3 rounded-lg border bg-white px-4 py-2 ${!canChange ? "opacity-60" : ""}`}>
-              <div className="flex">
-                <div className="flex flex-1 items-center rounded-l-md border bg-white px-3 py-1.5 text-sm font-mono tabular-nums">
-                  {encodeURIComponent(user_name)}
-                </div>
+            <div className="space-y-3">
+              <div className="flex max-w-[30ch]">
+                <Input
+                  value={encodeURIComponent(user_name)}
+                  readOnly
+                  className="rounded-r-none bg-white"
+                />
                 <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
                   .{UGC_DOMAIN}
                 </div>
               </div>
-              {canChange ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setPendingUsername(user_name);
-                    setUsernameAvailability({ state: "idle", message: "" });
-                    setEditingUsername(true);
-                  }}
-                >
-                  Edit
-                </Button>
-              ) : (
-                <span className="text-xs text-muted-foreground">
-                  Available in {cooldownRemainingDays}d
-                </span>
-              )}
+              <div className={`flex gap-2 ${!canChange ? "opacity-60" : ""}`}>
+                {canChange ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setPendingUsername(user_name);
+                      setUsernameAvailability({ state: "idle", message: "" });
+                      setEditingUsername(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                ) : (
+                  <span className="text-xs text-muted-foreground">
+                    Available in {cooldownRemainingDays}d
+                  </span>
+                )}
+              </div>
             </div>
           ) : (
-            <div className="space-y-3 rounded-lg border bg-white px-4 py-2">
-              <div className="flex">
+            <div className="space-y-3">
+              <div className="flex max-w-[30ch]">
                 <Input
                   value={pendingUsername}
                   onChange={(e) =>
