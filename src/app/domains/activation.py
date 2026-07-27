@@ -34,11 +34,12 @@ def is_vercel_verified(hostname: str) -> bool:
     return VercelClient().is_project_domain_verified_sync(hostname)
 
 
-def try_vercel_verify(hostname: str) -> bool:
+def try_vercel_verify(hostname: str, vercel_domain: Optional[dict] = None) -> bool:
     if not vercel_sync_required():
         return True
     vc = VercelClient()
-    vc.ensure_project_domain_sync(hostname)
+    if vercel_domain is None:
+        vc.ensure_project_domain_sync(hostname)
     if vc.is_project_domain_verified_sync(hostname):
         return True
     result = vc.verify_project_domain_sync(hostname)
@@ -108,7 +109,7 @@ def apply_domain_verification(
             message=None,
         )
 
-    try_vercel_verify(hostname)
+    try_vercel_verify(hostname, vercel_domain)
     if is_vercel_verified(hostname):
         mark_domain_active(db_user, hostname)
         return DomainVerifyOut(

@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 import json
 import logging
 from datetime import datetime, timezone
-from typing import List
+from typing import Any, Dict, List, Optional
 
 from ..database import get_db
 from .. import models
@@ -33,14 +33,15 @@ def _invalidate_domain_cache(hostname: str) -> None:
         pass
 
 
-async def _register_vercel_domain(hostname: str) -> None:
+async def _register_vercel_domain(hostname: str) -> Optional[Dict[str, Any]]:
     if not vercel_sync_required():
-        return
+        return None
     vc = VercelClient()
     try:
-        await vc.add_project_domain(hostname)
+        return await vc.add_project_domain(hostname)
     except VercelError as exc:
         logger.warning("Vercel add domain failed for %s: %s", hostname, exc.body)
+        return None
 
 
 async def _remove_vercel_domain(hostname: str) -> None:
@@ -63,12 +64,13 @@ async def _load_dns_instructions(db_user: models.User) -> List[DNSRecord] | None
     if not db_user.custom_domain:
         return None
 
-    needs_vercel = vercel_sync_required() and not is_vercel_verified(db_user.custom_domain)
-    if db_user.domain_status != models.DomainStatus.PENDING and not needs_vercel:
-        return None
-
     vc = VercelClient()
     vercel_domain = vc.get_project_domain_sync(db_user.custom_domain) if vc.configured else None
+
+    vercel_unverified = vercel_sync_required() and not (vercel_domain and vercel_domain.get("verified"))
+    if db_user.domain_status != models.DomainStatus.PENDING and not vercel_unverified:
+        return None
+
     instructions = build_dns_instructions(db_user.custom_domain, vercel_domain)
     if instructions:
         db_user.domain_dns_instructions = [r.model_dump() for r in instructions]
@@ -98,10 +100,10 @@ async def add_domain(
             detail="This domain is already in use by another account.",
         )
 
-    await _register_vercel_domain(hostname)
-
-    vc = VercelClient()
-    vercel_domain = vc.get_project_domain_sync(hostname) if vc.configured else None
+    vercel_domain = await _register_vercel_domain(hostname)
+    if not vercel_domain:
+        vc = VercelClient()
+        vercel_domain = vc.get_project_domain_sync(hostname) if vc.configured else None
     dns_instructions = build_dns_instructions(hostname, vercel_domain)
 
     db_user.custom_domain = hostname

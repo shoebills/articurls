@@ -30,8 +30,8 @@ export type PublicNavDesktopLink = {
 type PublicDesktopNavProps = {
   title: string;
   titleHref: string;
-  nameSize: NameSize;
-  links: CatLink[];
+  nameSize: NavBlogNameSize;
+  links: PublicNavDesktopLink[];
   showSubscribe: boolean;
   userName: string;
   authorName: string;
