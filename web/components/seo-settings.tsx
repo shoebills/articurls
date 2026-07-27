@@ -81,6 +81,11 @@ export default function SeoSettings() {
     : username
       ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml`
       : undefined;
+  const robotsResourceUrl = domain?.hostname
+    ? `https://${domain.hostname}/robots.txt`
+    : username
+      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/robots.txt`
+      : undefined;
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -207,9 +212,9 @@ export default function SeoSettings() {
             />
             <SeoResourceRow
               label="Robots.txt"
-              url={domain?.hostname ? `https://${domain.hostname}/robots.txt` : "#"}
+              url={robotsResourceUrl ?? "#"}
               displayText="/robots.txt"
-              enabled={true}
+              enabled={!!robotsResourceUrl}
             />
           </div>
         </CardContent>

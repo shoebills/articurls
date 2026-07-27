@@ -5,7 +5,6 @@ import {
   getCustomDomain,
   getMe,
   getMetaSettings,
-  getStorageUsage,
   patchMe,
   patchMetaSettings,
   patchProMe,
@@ -17,7 +16,7 @@ import {
   apiCacheHas,
   getCachedApiData,
 } from "@/lib/api";
-import type { CustomDomain, MetaSettings, StorageUsage, UserSettings } from "@/lib/types";
+import type { CustomDomain, MetaSettings, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,8 +66,7 @@ export default function SettingsPage() {
     const t = localStorage.getItem("articurls_token");
     if (!t) return true;
     return !(
-      apiCacheHas("/user/me", t) &&
-      apiCacheHas("/user/storage", t)
+      apiCacheHas("/user/me", t)
     );
   });
   const [collectSubscribers, setCollectSubscribers] = useState(() => {
@@ -77,11 +75,6 @@ export default function SettingsPage() {
     if (!t) return false;
     const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.subscriber_collection_enabled ?? false;
-  });
-  const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
   });
   const [rssEnabled, setRssEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -114,20 +107,11 @@ export default function SettingsPage() {
   const [pfpDeleteOpen, setPfpDeleteOpen] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
 
-  function formatBytes(bytes: number): string {
-    if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-    const units = ["B", "KB", "MB", "GB", "TB"];
-    const exp = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-    const value = bytes / 1024 ** exp;
-    return `${value >= 10 || exp === 0 ? value.toFixed(0) : value.toFixed(1)} ${units[exp]}`;
-  }
-
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [u, usage, meta, domainData] = await Promise.all([
+      const [u, meta, domainData] = await Promise.all([
         getMe(token),
-        getStorageUsage(token),
         getMetaSettings(token),
         getCustomDomain(token),
       ]);
@@ -136,7 +120,6 @@ export default function SettingsPage() {
       setEmail(u.email);
       setCollectSubscribers(u.subscriber_collection_enabled ?? false);
       setLastUsernameChangeAt(u.last_username_change_at || null);
-      setStorageUsage(usage);
       setRssEnabled(meta.rss_enabled !== false);
       setDomain(domainData);
     } catch (e) {
@@ -285,7 +268,6 @@ export default function SettingsPage() {
   const canChange = cooldownRemainingMs <= 0;
   const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
   const liveProfileUrl = `https://${encodeURIComponent(normalizedPending)}.${UGC_DOMAIN}/`;
-  const usedBytes = storageUsage?.used_bytes ?? 0;
   const rssResourceUrl = domain?.hostname
     ? `https://${domain.hostname}/rss.xml`
     : user_name
@@ -373,60 +355,37 @@ export default function SettingsPage() {
             <Skeleton className="h-11 w-24" />
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">Storage</CardTitle>
-            <CardDescription>
-              <Skeleton className="h-4 w-72" />
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <Skeleton className="h-4 w-20" />
-              <Skeleton className="h-4 w-24" />
-            </div>
-            <Skeleton className="h-2.5 w-full rounded-full" />
-          </CardContent>
-        </Card>
-        <Card id="pro-features">
-          <CardHeader>
-            <CardTitle className="text-xl">Pro features</CardTitle>
-            <CardDescription>Manage your favicon, subscriber collection, and RSS feed.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1.5">
-                <Skeleton className="h-4 w-20" />
-                <Skeleton className="h-3 w-40" />
-              </div>
-              <Skeleton className="h-14 w-14 rounded-lg" />
-            </div>
-            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-64" />
-              </div>
-              <Skeleton className="h-6 w-10 rounded-full" />
-            </div>
-            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-3 w-56" />
-              </div>
-              <Skeleton className="h-6 w-10 rounded-full" />
-            </div>
-            <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-              <div className="space-y-1">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="h-3 w-48" />
-              </div>
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-6 w-10 rounded-full" />
-                <Skeleton className="h-8 w-14 rounded-md" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1.5">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-3 w-40" />
+          </div>
+          <Skeleton className="h-14 w-14 rounded-lg" />
+        </div>
+        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-32" />
+            <Skeleton className="h-3 w-64" />
+          </div>
+          <Skeleton className="h-6 w-10 rounded-full" />
+        </div>
+        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-28" />
+            <Skeleton className="h-3 w-56" />
+          </div>
+          <Skeleton className="h-6 w-10 rounded-full" />
+        </div>
+        <div className="flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <Skeleton className="h-4 w-16" />
+            <Skeleton className="h-3 w-48" />
+          </div>
+          <div className="flex items-center gap-2">
+            <Skeleton className="h-6 w-10 rounded-full" />
+            <Skeleton className="h-8 w-14 rounded-md" />
+          </div>
+        </div>
         <Card>
           <CardHeader className="pb-4 sm:pb-4">
             <CardTitle className="text-xl">Custom Domain</CardTitle>
@@ -597,29 +556,7 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-xl">Storage</CardTitle>
-          <CardDescription>Unlimited media storage.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm text-muted-foreground">Used storage</p>
-            <p className="text-sm font-semibold tabular-nums">
-              {formatBytes(usedBytes)} / {"\u221e"}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card id="pro-features">
-        <CardHeader>
-          <CardTitle className="text-xl">Pro features</CardTitle>
-          <CardDescription>Manage your favicon, subscriber collection, and RSS feed.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+      <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
               <p className="text-sm text-muted-foreground">
@@ -746,8 +683,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
-        </CardContent>
-      </Card>
+
 
       <Card>
         <CardHeader className="pb-4 sm:pb-4">
