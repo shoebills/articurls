@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
-import { CalendarDays, Check, Flame, Timer } from "lucide-react";
+import { CalendarDays, Flame, Timer } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
@@ -212,91 +212,6 @@ export default function BillingPage() {
           ) : null}
         </CardContent>
       </Card>
-
-      {!pro && !isLifetime ? (
-        <div className="mx-auto max-w-[880px] space-y-6">
-          <h2 className="text-xl font-semibold tracking-tight sm:text-2xl">Choose a plan</h2>
-          <div className="grid items-start gap-5 md:grid-cols-2">
-          {/* Pro — highlighted */}
-          <div className="relative flex flex-col rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 shadow-xl shadow-primary/10 ring-1 ring-primary/20 sm:p-7">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">Grow audience</p>
-            <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Pro</h3>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-4xl font-semibold tracking-tight">$9</span>
-              <span className="text-base font-normal text-muted-foreground">/mo</span>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              Reach readers on your own domain.
-            </p>
-            <Button
-              className="mt-6 h-12 w-full touch-manipulation bg-background text-foreground hover:bg-background/90"
-              onClick={upgrade}
-              disabled={busy}
-            >
-              {busy ? "Redirecting…" : "Start Pro — $9/mo"}
-            </Button>
-            <div className="mt-6 border-t border-border/60 pt-6">
-              <ul className="space-y-3">
-                {[
-                  "Custom domain & automatic SSL",
-                  "Collect email subscribers",
-                  "Publish emails to subscribers",
-                  "Views & subscribers analytics",
-                  "RSS, sitemap & robots.txt",
-                  "Custom favicon",
-                  "Unlimited media storage",
-                ].map((x) => (
-                  <li key={x} className="flex items-start gap-2.5 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                    <span className="text-foreground/80">{x}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-
-          {/* Lifetime — exclusive dark card */}
-          <div className="relative flex flex-col rounded-2xl border border-transparent bg-foreground p-6 text-background shadow-2xl shadow-black/20 sm:p-7">
-            <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
-              10 seats left
-            </span>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-background/60">Own forever</p>
-            <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Lifetime</h3>
-            <div className="mt-4 flex items-baseline gap-1.5">
-              <span className="text-4xl font-semibold tracking-tight">$99</span>
-              <span className="text-base font-normal text-background/60"> once</span>
-              <span className="ml-1 text-sm text-background/60 line-through">$149</span>
-            </div>
-            <p className="mt-3 text-sm leading-relaxed text-background/60">
-              Pay one time. Keep Pro for lifetime.
-            </p>
-            <Button
-              className="mt-6 h-12 w-full touch-manipulation shadow-md shadow-primary/20"
-              onClick={upgradeLifetime}
-              disabled={busyLifetime}
-            >
-              {busyLifetime ? "Redirecting…" : "Get Lifetime — $99 once"}
-            </Button>
-            <p className="mt-2 text-center text-xs text-background/60">Limited time deal</p>
-            <div className="mt-6 border-t border-background/15 pt-6">
-              <ul className="space-y-3">
-                {[
-                  "Everything in Pro",
-                  "No recurring charges, ever",
-                  "Future Pro features included",
-                  "Yours for life",
-                ].map((x) => (
-                  <li key={x} className="flex items-start gap-2.5 text-sm">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-background/70" aria-hidden />
-                    <span className="text-background/90">{x}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-          </div>
-        </div>
-      ) : null}
 
       <Card>
         <CardHeader>
