@@ -682,11 +682,15 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
 
           {!editingUsername ? (
-            <div className={`space-y-3 rounded-lg border bg-white px-4 py-3 ${!canChange ? "opacity-60" : ""}`}>
-              <span className="block truncate text-sm font-mono tabular-nums">
-                <span>{encodeURIComponent(user_name)}</span>
-                <span className="text-muted-foreground/50">.{UGC_DOMAIN}</span>
-              </span>
+            <div className={`space-y-3 rounded-lg border bg-white px-4 py-2 ${!canChange ? "opacity-60" : ""}`}>
+              <div className="flex">
+                <div className="flex flex-1 items-center rounded-l-md border bg-white px-3 py-1.5 text-sm font-mono tabular-nums">
+                  {encodeURIComponent(user_name)}
+                </div>
+                <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
+                  .{UGC_DOMAIN}
+                </div>
+              </div>
               {canChange ? (
                 <Button
                   type="button"
@@ -707,7 +711,7 @@ export default function SettingsPage() {
               )}
             </div>
           ) : (
-            <div className="space-y-3 rounded-lg border bg-white px-4 py-3">
+            <div className="space-y-3 rounded-lg border bg-white px-4 py-2">
               <div className="flex">
                 <Input
                   value={pendingUsername}
@@ -719,7 +723,7 @@ export default function SettingsPage() {
                   autoCapitalize="none"
                   autoCorrect="off"
                 />
-                <div className="flex items-center rounded-r-md border border-l-0 bg-muted/30 px-3 text-sm text-muted-foreground/60 font-mono">
+                <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
                   .{UGC_DOMAIN}
                 </div>
               </div>
