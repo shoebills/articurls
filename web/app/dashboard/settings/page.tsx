@@ -707,9 +707,10 @@ export default function SettingsPage() {
                     Edit
                   </Button>
                 ) : (
-                  <span className="text-xs text-muted-foreground">
-                    Available in {cooldownRemainingDays}d
-                  </span>
+                  <p className="text-xs text-muted-foreground">
+                    Subdomain changed recently. You can change it again in{" "}
+                    {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
+                  </p>
                 )}
               </div>
             </div>
@@ -745,11 +746,6 @@ export default function SettingsPage() {
                   ) : null}
                 </div>
               </div>
-              {!canChange && (
-                <p className="text-xs text-muted-foreground">
-                  Available in {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
-                </p>
-              )}
               <p className="text-xs text-muted-foreground">
                 You can change your subdomain once every 7 days.
               </p>

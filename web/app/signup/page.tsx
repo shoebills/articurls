@@ -236,12 +236,12 @@ function SignupForm() {
               />
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="user_name">Username</Label>
+              <Label htmlFor="user_name">Subdomain</Label>
               <Input
                 id="user_name"
                 value={user_name}
                 onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
-                placeholder="johndoe"
+                placeholder="yourname"
                 required
                 pattern="[a-zA-Z0-9_-]+"
                 title="Letters, numbers, underscore, hyphen"
