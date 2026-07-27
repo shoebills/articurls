@@ -25,7 +25,7 @@ import {
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingDown, TrendingUp, Users2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp, Users2 } from "lucide-react";
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
@@ -266,7 +266,7 @@ export function SubscribersAnalyticsPanel() {
             Export CSV
           </Button>
         </div>
-        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-3 sm:p-4 lg:p-5">
               <div className="flex items-start justify-between gap-2 sm:gap-3">
@@ -314,6 +314,29 @@ export function SubscribersAnalyticsPanel() {
                 </div>
                 <div className="shrink-0 mt-0.5">
                   <Users2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-3 sm:p-4 lg:p-5">
+              <div className="flex items-start justify-between gap-2 sm:gap-3">
+                <div className="flex-1 min-w-0">
+                  <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
+                    Net growth
+                  </p>
+                  <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
+                    {subs ? (subs.subscribed - subs.unsubscribed > 0 ? "+" : "") + (subs.subscribed - subs.unsubscribed) : "—"}
+                  </p>
+                </div>
+                <div className="shrink-0 mt-0.5">
+                  {subs && subs.subscribed - subs.unsubscribed > 0 ? (
+                    <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-500" />
+                  ) : subs && subs.subscribed - subs.unsubscribed < 0 ? (
+                    <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-red-500" />
+                  ) : (
+                    <Minus className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
+                  )}
                 </div>
               </div>
             </CardContent>
