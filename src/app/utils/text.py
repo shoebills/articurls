@@ -33,7 +33,15 @@ def user_by_username(db: Session, user_name: str) -> models.User | None:
     return db.query(models.User).filter(func.lower(models.User.user_name) == norm).first()
 
 
+_NORM_PUNCT_RE = re.compile(r"[^\w\s]", re.UNICODE)
 HTML_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def normalize_search_text(text: str) -> str:
+    text = text.lower()
+    text = _NORM_PUNCT_RE.sub("", text)
+    text = text.replace("_", "")
+    return " ".join(text.split())
 
 
 def html_to_plain_text(s: str) -> str:

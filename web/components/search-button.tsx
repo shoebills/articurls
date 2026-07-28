@@ -29,7 +29,9 @@ export function SearchButton({
   const [mounted, setMounted] = useState(false);
   const [visible, setVisible] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
   const resultsRef = useRef<HTMLUListElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offsetRef = useRef(0);
@@ -40,6 +42,7 @@ export function SearchButton({
     setResults([]);
     setHasMore(false);
     setHighlightedIndex(-1);
+    setError(null);
     offsetRef.current = 0;
   }, []);
 
@@ -56,6 +59,7 @@ export function SearchButton({
     }
 
     setLoading(true);
+    setError(null);
     offsetRef.current = 0;
     setHighlightedIndex(-1);
     const rid = ++requestIdRef.current;
@@ -69,6 +73,7 @@ export function SearchButton({
         if (requestIdRef.current !== rid) return;
         setResults([]);
         setHasMore(false);
+        setError("Unable to search right now.");
       } finally {
         if (requestIdRef.current === rid) {
           setLoading(false);
@@ -104,6 +109,7 @@ export function SearchButton({
     setResults([]);
     setHasMore(false);
     setHighlightedIndex(-1);
+    setError(null);
     offsetRef.current = 0;
     inputRef.current?.focus();
   }, []);
@@ -119,6 +125,7 @@ export function SearchButton({
 
   const closeSearch = useCallback(() => {
     setVisible(false);
+    triggerRef.current?.focus();
     setTimeout(() => {
       setMounted(false);
       resetState();
@@ -129,6 +136,7 @@ export function SearchButton({
     setMounted(false);
     setVisible(false);
     resetState();
+    triggerRef.current?.focus();
   }, [resetState]);
 
   const handleKeyDown = useCallback(
@@ -172,11 +180,21 @@ export function SearchButton({
     }
   }, [mounted]);
 
+  useEffect(() => {
+    if (!mounted) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") closeSearch();
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mounted, closeSearch]);
+
   const trimmed = query.trim();
 
   return (
     <>
       <button
+        ref={triggerRef}
         type="button"
         aria-label="Search posts"
         onClick={openSearch}
@@ -233,7 +251,13 @@ export function SearchButton({
               </div>
             </div>
 
-            {!trimmed ? (
+            {error ? (
+              <div className="max-h-72 overflow-y-auto overscroll-contain">
+                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                  {error}
+                </div>
+              </div>
+            ) : !trimmed ? (
               <div className="max-h-72 overflow-y-auto overscroll-contain">
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                   Search posts by title or content

@@ -54,16 +54,26 @@ export function scoreSearch(item: PrecomputedSearchItem, query: string): number 
   if (terms.length === 0) return 0;
 
   let score = 0;
+  let titleTermMatches = 0;
+
   for (const term of terms) {
-    const titleCount = countOccurrences(item.normalizedTitle, term);
-    const contentCount = countOccurrences(item.normalizedContent, term);
-    score += titleCount * 12;
-    score += contentCount * 3;
-    if (item.normalizedTitle.startsWith(term)) score += 8;
+    if (term === item.normalizedTitle) {
+      score += 50;
+      titleTermMatches++;
+    } else if (item.normalizedTitle.startsWith(term)) {
+      score += 30;
+      titleTermMatches++;
+    } else if (item.normalizedTitle.includes(term)) {
+      score += 10;
+      titleTermMatches++;
+    }
+
+    score += countOccurrences(item.normalizedContent, term);
   }
 
-  if (item.normalizedTitle.includes(normalizedQuery)) score += 10;
-  if (item.normalizedContent.includes(normalizedQuery)) score += 4;
+  if (terms.length > 1 && titleTermMatches >= terms.length) {
+    score += 100;
+  }
 
   return score;
 }

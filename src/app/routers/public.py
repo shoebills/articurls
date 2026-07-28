@@ -17,7 +17,7 @@ router = APIRouter(
 def search_blogs(
     user_name: str,
     request: Request,
-    q: str = Query(..., min_length=2, description="Search query (minimum 2 characters)"),
+    q: str = Query(..., min_length=2, max_length=200, description="Search query"),
     limit: int = Query(5, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -27,8 +27,6 @@ def search_blogs(
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    q_lower = q.lower().strip()
 
     # Load all published blogs for this user
     all_blogs = (
@@ -53,34 +51,44 @@ def search_blogs(
     )
     blog_categories: dict[int, list[str]] = {}
     for bid, cname in cat_rows:
-        blog_categories.setdefault(bid, []).append(cname.lower())
+        blog_categories.setdefault(bid, []).append(utils.normalize_search_text(cname))
+
+    q_norm = utils.normalize_search_text(q)
+    terms = [t for t in q_norm.split() if len(t) >= 2]
+    if not terms:
+        return []
 
     # Score each blog in Python
     scored: list[dict] = []
     for db_blog in all_blogs:
         plain_text = utils.html_to_plain_text(db_blog.content)
-        title_lower = db_blog.title.lower()
-        body_lower = plain_text.lower()
+        title_norm = utils.normalize_search_text(db_blog.title)
+        body_norm = utils.normalize_search_text(plain_text)
 
         score = 0
+        title_term_matches = 0
 
-        # Title match (highest priority)
-        if q_lower == title_lower:
-            score += 1000
-        elif title_lower.startswith(q_lower):
-            score += 100
-        elif q_lower in title_lower:
-            score += 10
+        for term in terms:
+            if term == title_norm:
+                score += 1000
+                title_term_matches += 1
+            elif title_norm.startswith(term):
+                score += 100
+                title_term_matches += 1
+            elif term in title_norm:
+                score += 10
+                title_term_matches += 1
 
-        # Category name match (medium priority)
-        for cat_name in blog_categories.get(db_blog.blog_id, []):
-            if q_lower in cat_name:
-                score += 5
-                break
+            for cat_name in blog_categories.get(db_blog.blog_id, []):
+                if term in cat_name:
+                    score += 5
+                    break
 
-        # Body text match (lowest priority)
-        if q_lower in body_lower:
-            score += 1
+            if term in body_norm:
+                score += 1
+
+        if len(terms) > 1 and title_term_matches >= len(terms):
+            score += 500
 
         if score == 0:
             continue
