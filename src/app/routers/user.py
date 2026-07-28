@@ -252,17 +252,17 @@ def update_design_settings(
     return db_user
 
 
-@router.get("/meta", response_model=user.MetaSettings, status_code=status.HTTP_200_OK)
-def get_meta_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+@router.get("/seo", response_model=user.SeoSettings, status_code=status.HTTP_200_OK)
+def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return db_user
 
 
-@router.patch("/meta", response_model=user.MetaSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_meta_settings(
-    request: user.MetaSettingsUpdate,
+@router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_seo_settings(
+    request: user.SeoSettingsUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(oauth2.get_current_user),

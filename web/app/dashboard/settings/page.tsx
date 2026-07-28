@@ -4,9 +4,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getCustomDomain,
   getMe,
-  getMetaSettings,
+  getSeoSettings,
   patchMe,
-  patchMetaSettings,
+  patchSeoSettings,
   patchProMe,
   uploadFavicon,
   deleteFavicon,
@@ -95,7 +95,7 @@ export default function SettingsPage() {
     try {
       const [u, _, domainData] = await Promise.all([
         getMe(token),
-        getMetaSettings(token),
+        getSeoSettings(token),
         getCustomDomain(token),
       ]);
       setUserName(u.user_name);
@@ -151,7 +151,7 @@ export default function SettingsPage() {
     setErr(null);
     setSaved(null);
     try {
-      await patchMetaSettings(token, { rss_enabled: nextValue });
+      await patchSeoSettings(token, { rss_enabled: nextValue });
       await refreshUser();
       setSaved("Saved");
     } catch (e) {

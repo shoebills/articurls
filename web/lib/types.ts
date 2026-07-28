@@ -186,7 +186,7 @@ export interface DesignSettings {
   about_title?: string | null;
 }
 
-export interface MetaSettings {
+export interface SeoSettings {
   meta_title: string | null;
   meta_description: string | null;
   rss_enabled: boolean;

@@ -124,7 +124,7 @@ class AdminUsernameChange(BaseModel):
     reason: Optional[str] = None
 
 
-class MetaSettings(BaseModel):
+class SeoSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     rss_enabled: bool = False
@@ -133,7 +133,7 @@ class MetaSettings(BaseModel):
         from_attributes = True
 
 
-class MetaSettingsUpdate(BaseModel):
+class SeoSettingsUpdate(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     rss_enabled: Optional[bool] = None

@@ -9,7 +9,7 @@ import type {
   DNSRecord,
   DomainAddResponse,
   DomainVerifyResponse,
-  MetaSettings,
+  SeoSettings,
   PublicBlog,
   PublicCategoryBlogsResponse,
   UserPage,
@@ -327,15 +327,15 @@ export async function getDesignSettings(token: string): Promise<DesignSettings> 
   return apiFetch("/user/design", { token });
 }
 
-export async function getMetaSettings(token: string): Promise<MetaSettings> {
-  return apiFetch("/user/meta", { token });
+export async function getSeoSettings(token: string): Promise<SeoSettings> {
+  return apiFetch("/user/seo", { token });
 }
 
-export async function patchMetaSettings(
+export async function patchSeoSettings(
   token: string,
-  body: Partial<MetaSettings>
-): Promise<MetaSettings> {
-  return apiFetch("/user/meta", {
+  body: Partial<SeoSettings>
+): Promise<SeoSettings> {
+  return apiFetch("/user/seo", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },

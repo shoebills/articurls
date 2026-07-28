@@ -7,8 +7,8 @@ import {
   getCachedApiData,
   getCustomDomain,
   getMe,
-  getMetaSettings,
-  patchMetaSettings,
+  getSeoSettings,
+  patchSeoSettings,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -19,7 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import type { CustomDomain, MetaSettings, UserSettings } from "@/lib/types";
+import type { CustomDomain, SeoSettings, UserSettings } from "@/lib/types";
 import { UGC_DOMAIN } from "@/lib/env";
 
 export default function SeoSettings() {
@@ -28,28 +28,28 @@ export default function SeoSettings() {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    const cached = getCachedApiData<SeoSettings>("/user/seo", t);
     return cached?.meta_title || "";
   });
   const [metaDescription, setMetaDescription] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    const cached = getCachedApiData<SeoSettings>("/user/seo", t);
     return cached?.meta_description || "";
   });
   const [originalMetaTitle, setOriginalMetaTitle] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    const cached = getCachedApiData<SeoSettings>("/user/seo", t);
     return cached?.meta_title || "";
   });
   const [originalMetaDescription, setOriginalMetaDescription] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    const cached = getCachedApiData<SeoSettings>("/user/seo", t);
     return cached?.meta_description || "";
   });
   const [loading, setLoading] = useState(() => {
@@ -57,7 +57,7 @@ export default function SeoSettings() {
     const t = localStorage.getItem("articurls_token");
     if (!t) return true;
     return !(
-      apiCacheHas("/user/meta", t) &&
+      apiCacheHas("/user/seo", t) &&
       apiCacheHas("/user/me", t)
     );
   });
@@ -91,7 +91,7 @@ export default function SeoSettings() {
     (async () => {
       try {
         const [meta, domainData, me] = await Promise.all([
-          getMetaSettings(token),
+          getSeoSettings(token),
           getCustomDomain(token),
           getMe(token),
         ]);
@@ -114,7 +114,7 @@ export default function SeoSettings() {
     setBusy(true);
     setErr(null);
     try {
-      await patchMetaSettings(token, {
+      await patchSeoSettings(token, {
         meta_title: metaTitle || null,
         meta_description: metaDescription || null,
       });
