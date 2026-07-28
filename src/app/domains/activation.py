@@ -80,7 +80,6 @@ def mark_domain_active(db_user: models.User, hostname: str) -> None:
     from ..redis_client import redis_client
 
     db_user.domain_status = models.DomainStatus.ACTIVE
-    db_user.is_domain_verified = True
     db_user.verified_at = datetime.now(timezone.utc)
     db_user.domain_dns_instructions = None
     try:
@@ -122,7 +121,6 @@ def apply_domain_verification(
     instructions = build_dns_instructions(hostname, vercel_domain)
     merged = _merge_instructions(instructions, cached_instructions)
     db_user.domain_status = models.DomainStatus.PENDING
-    db_user.is_domain_verified = False
     db_user.domain_dns_instructions = [r.model_dump() for r in merged]
     return DomainVerifyOut(
         verification_status="pending",

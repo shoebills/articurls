@@ -124,7 +124,6 @@ async def add_domain(
     db_user.custom_domain = hostname
     db_user.domain_status = models.DomainStatus.PENDING
     db_user.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
-    db_user.is_domain_verified = False
     db_user.verified_at = None
     db_user.grace_started_at = None
     db_user.grace_expires_at = None
@@ -226,7 +225,6 @@ async def delete_domain(
 
     db_user.custom_domain = None
     db_user.domain_status = models.DomainStatus.NONE
-    db_user.is_domain_verified = False
     db_user.domain_dns_instructions = None
     db_user.verified_at = None
     db_user.grace_started_at = None

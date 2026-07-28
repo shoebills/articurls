@@ -52,7 +52,7 @@ def invalidate_domain_lookup_cache(custom_domain: str | None) -> None:
 def restore_domain_access(user) -> None:
     if user.domain_status not in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
         return
-    if not user.custom_domain or not user.is_domain_verified:
+    if not user.custom_domain:
         return
 
     user.domain_status = models.DomainStatus.ACTIVE

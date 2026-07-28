@@ -43,7 +43,6 @@ class User(Base):
     token_version = Column(Integer, nullable=False, default=0)
 
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
-    is_domain_verified = Column(Boolean, nullable=False, default=False)
     domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
     domain_dns_instructions = Column(JSON, nullable=True, default=None)  # cached DNS records
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -66,7 +65,6 @@ class User(Base):
     about_title = Column(String(40), nullable=True)
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
-    umami_share_url = Column(String(512), nullable=True, default=None)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
