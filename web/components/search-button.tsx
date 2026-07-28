@@ -13,20 +13,6 @@ const DEBOUNCE_MS = 250;
 const PAGE_SIZE = 5;
 const MIN_QUERY_LENGTH = 2;
 
-function formatDate(dateStr: string | null): string {
-  if (!dateStr) return "";
-  try {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  } catch {
-    return "";
-  }
-}
-
 export function SearchButton({
   iconClassName,
   userName,
@@ -247,69 +233,74 @@ export function SearchButton({
               </div>
             </div>
 
-            <div className="max-h-72 overflow-y-auto overscroll-contain">
-              {!trimmed ? (
+            {!trimmed ? (
+              <div className="max-h-72 overflow-y-auto overscroll-contain">
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                   Search posts by title or content
                 </div>
-              ) : trimmed.length < MIN_QUERY_LENGTH ? (
+              </div>
+            ) : trimmed.length < MIN_QUERY_LENGTH ? (
+              <div className="max-h-72 overflow-y-auto overscroll-contain">
                 <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                   Type at least 2 characters
                 </div>
-              ) : loading ? (
+              </div>
+            ) : loading ? (
+              <div className="max-h-72 overflow-y-auto overscroll-contain">
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
                 </div>
-              ) : results.length > 0 ? (
-                <>
-                  <ul ref={resultsRef} className="py-1">
-                    {results.map((blog, i) => (
-                      <li key={blog.blog_id}>
-                        <Link
-                          href={getPublicPostUrl(userName, blog.slug)}
-                          onClick={selectResult}
-                          onMouseEnter={() => setHighlightedIndex(i)}
-                          className={`block px-4 py-3 text-sm transition-colors ${
-                            i === highlightedIndex ? "bg-muted/50" : ""
-                          }`}
-                        >
-                          <span className="line-clamp-1 font-medium">
+              </div>
+            ) : (
+              <>
+                <div className="max-h-72 overflow-y-auto overscroll-contain">
+                  {results.length > 0 ? (
+                    <ul ref={resultsRef} className="py-1">
+                      {results.map((blog, i) => (
+                        <li key={blog.blog_id}>
+                          <Link
+                            href={getPublicPostUrl(userName, blog.slug)}
+                            onClick={selectResult}
+                            onMouseEnter={() => setHighlightedIndex(i)}
+                            className={`block px-4 py-3 text-sm transition-colors ${
+                              i === highlightedIndex ? "bg-muted/50" : ""
+                            }`}
+                          >
+                          <span className="line-clamp-1 font-medium text-base">
                             {blog.title}
                           </span>
-                          <span className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                            {formatDate(blog.published_at)}
-                            {blog.excerpt ? (
-                              <> &middot; {blog.excerpt}</>
-                            ) : null}
+                          <span className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                            {blog.excerpt}
                           </span>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                  {hasMore && !loading ? (
-                    <div className="border-t border-border/70 px-4 py-2">
-                      {loadingMore ? (
-                        <div className="flex items-center justify-center py-1">
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleShowMore}
-                          className="w-full rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        >
-                          Show more
-                        </button>
-                      )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+                      No posts match your search
                     </div>
-                  ) : null}
-                </>
-              ) : (
-                <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                  No posts match your search
+                  )}
                 </div>
-              )}
-            </div>
+                {results.length > 0 && hasMore ? (
+                  <div className="border-t border-border/70 px-4 py-2">
+                    {loadingMore ? (
+                      <div className="flex items-center justify-center py-1">
+                        <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={handleShowMore}
+                        className="w-full rounded-md py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                      >
+                        Show more
+                      </button>
+                    )}
+                  </div>
+                ) : null}
+              </>
+            )}
           </div>
         </>
       ) : null}
