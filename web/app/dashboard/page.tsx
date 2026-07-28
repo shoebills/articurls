@@ -28,11 +28,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Share2, Trash2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { PromptDialog } from "@/components/prompt-dialog";
-import { scoreByTitleAndContent } from "@/lib/search";
+import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 import { resolveBlogContentThumbnail } from "@/lib/blog-images";
 
 const POSTS_PER_PAGE = 10;
@@ -63,6 +63,8 @@ export default function DashboardPage() {
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [menuOpenBlogId, setMenuOpenBlogId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
@@ -115,6 +117,17 @@ export default function DashboardPage() {
   useEffect(() => {
     load();
   }, [load]);
+
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedQuery(query);
+      debounceRef.current = null;
+    }, 250);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
 
   async function confirmDelete() {
     if (!token || deleteId == null) return;
@@ -186,6 +199,14 @@ export default function DashboardPage() {
     }
   }
 
+  const searchIndex = useMemo(() => {
+    const map = new Map<number, ReturnType<typeof precomputeSearchItem>>();
+    for (const blog of blogs) {
+      map.set(blog.blog_id, precomputeSearchItem(blog.title || "", blog.content || ""));
+    }
+    return map;
+  }, [blogs]);
+
   const filteredBlogs = useMemo(() => {
     const compareBySort = (a: BlogListItem, b: BlogListItem) => {
       if (sortBy === "oldest") {
@@ -202,28 +223,29 @@ export default function DashboardPage() {
             return blog.status === statusFilter;
           });
 
-    const trimmed = query.trim();
-    if (!trimmed) {
+    const trimmed = debouncedQuery.trim();
+    if (trimmed.length < 2) {
       const rows = [...byStatus];
       rows.sort(compareBySort);
       return rows;
     }
     return byStatus
-      .map((blog) => ({
-        blog,
-        score: scoreByTitleAndContent(blog.title || "", `${blog.content || ""} ${blog.excerpt || ""}`, trimmed),
-      }))
+      .map((blog) => {
+        const pre = searchIndex.get(blog.blog_id);
+        if (!pre) return { blog, score: 0 };
+        return { blog, score: scoreSearch(pre, trimmed) };
+      })
       .filter((row) => row.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return compareBySort(a.blog, b.blog);
       })
       .map((row) => row.blog);
-  }, [blogs, query, sortBy, statusFilter]);
+  }, [blogs, debouncedQuery, sortBy, statusFilter, searchIndex]);
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, sortBy]);
+  }, [debouncedQuery, statusFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredBlogs.length / POSTS_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -264,8 +286,18 @@ export default function DashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search posts"
-            className="h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
+            className={`h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
           />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => { setQuery(""); setDebouncedQuery(""); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <DropdownMenu>

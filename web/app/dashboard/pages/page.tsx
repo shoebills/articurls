@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ApiError, archivePage, deletePage, listPages, publishPage, apiCacheHas, getCachedApiData } from "@/lib/api";
@@ -29,9 +29,9 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, FileText, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2 } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, FileText, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { scoreByTitleAndContent } from "@/lib/search";
+import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 
 export default function PagesDashboardPage() {
   const { token, user } = useAuth();
@@ -57,6 +57,8 @@ export default function PagesDashboardPage() {
   const [shareUrl, setShareUrl] = useState("");
   const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
@@ -80,6 +82,25 @@ export default function PagesDashboardPage() {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedQuery(query);
+      debounceRef.current = null;
+    }, 250);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query]);
+
+  const searchIndex = useMemo(() => {
+    const map = new Map<number, ReturnType<typeof precomputeSearchItem>>();
+    for (const p of pages) {
+      map.set(p.page_id, precomputeSearchItem(p.title || "", p.content || ""));
+    }
+    return map;
+  }, [pages]);
+
   const filteredPages = useMemo(() => {
     const compareBySort = (a: UserPage, b: UserPage) => {
       if (sortBy === "oldest") {
@@ -93,28 +114,29 @@ export default function PagesDashboardPage() {
         ? pages
         : pages.filter((p) => p.status === statusFilter);
 
-    const trimmed = query.trim();
-    if (!trimmed) {
+    const trimmed = debouncedQuery.trim();
+    if (trimmed.length < 2) {
       const rows = [...byStatus];
       rows.sort(compareBySort);
       return rows;
     }
     return byStatus
-      .map((p) => ({
-        page: p,
-        score: scoreByTitleAndContent(p.title || "", p.content || "", trimmed),
-      }))
+      .map((p) => {
+        const pre = searchIndex.get(p.page_id);
+        if (!pre) return { page: p, score: 0 };
+        return { page: p, score: scoreSearch(pre, trimmed) };
+      })
       .filter((row) => row.score > 0)
       .sort((a, b) => {
         if (b.score !== a.score) return b.score - a.score;
         return compareBySort(a.page, b.page);
       })
       .map((row) => row.page);
-  }, [pages, query, sortBy, statusFilter]);
+  }, [pages, debouncedQuery, sortBy, statusFilter, searchIndex]);
 
   useEffect(() => {
     setPage(1);
-  }, [query, statusFilter, sortBy]);
+  }, [debouncedQuery, statusFilter, sortBy]);
 
   const totalPages = Math.max(1, Math.ceil(filteredPages.length / PAGES_PER_PAGE));
   const currentPage = Math.min(page, totalPages);
@@ -224,8 +246,18 @@ export default function PagesDashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search pages"
-            className="h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11"
+            className={`h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
           />
+          {query.length > 0 && (
+            <button
+              type="button"
+              onClick={() => { setQuery(""); setDebouncedQuery(""); }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </div>
 
         <DropdownMenu>

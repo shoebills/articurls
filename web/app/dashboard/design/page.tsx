@@ -560,7 +560,7 @@ export default function DesignDashboardPage() {
                 onChange={(e) => setDesign((prev) => ({ ...prev, about_title: e.target.value.slice(0, 40) || null }))}
                 onBlur={() => saveDesign({ ...design, about_title: (design.about_title || "").trim() || null })}
                 maxLength={40}
-                placeholder="Eg: Hi! I'm John Doe"
+                placeholder="Hey! I'm John Doe"
               />
               <p className="text-xs text-muted-foreground">{(design.about_title || "").length}/40 characters</p>
             </div>
