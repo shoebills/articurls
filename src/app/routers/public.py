@@ -1,6 +1,5 @@
-from datetime import datetime, timezone
 from fastapi import Depends, APIRouter, HTTPException, Request, Query, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
 from typing import List
 from ..database import get_db
@@ -58,9 +57,9 @@ def search_blogs(
 
     # Score each blog in Python
     scored: list[dict] = []
-    for blog in all_blogs:
-        plain_text = utils.html_to_plain_text(blog.content)
-        title_lower = blog.title.lower()
+    for db_blog in all_blogs:
+        plain_text = utils.html_to_plain_text(db_blog.content)
+        title_lower = db_blog.title.lower()
         body_lower = plain_text.lower()
 
         score = 0
@@ -74,7 +73,7 @@ def search_blogs(
             score += 10
 
         # Category name match (medium priority)
-        for cat_name in blog_categories.get(blog.blog_id, []):
+        for cat_name in blog_categories.get(db_blog.blog_id, []):
             if q_lower in cat_name:
                 score += 5
                 break
@@ -91,11 +90,11 @@ def search_blogs(
             excerpt = excerpt.rstrip() + "..."
 
         scored.append({
-            "blog_id": blog.blog_id,
-            "title": blog.title,
-            "slug": blog.slug,
+            "blog_id": db_blog.blog_id,
+            "title": db_blog.title,
+            "slug": db_blog.slug,
             "excerpt": excerpt,
-            "published_at": blog.published_at,
+            "published_at": db_blog.published_at,
             "score": score,
         })
 
