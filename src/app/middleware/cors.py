@@ -53,6 +53,11 @@ def _is_origin_allowed(origin: str) -> bool:
         if hostname == allowed_host:
             return True
 
+    # Allow any subdomain of the UGC domain (e.g. absk.articurls.site)
+    ugc_domain = settings.ugc_domain
+    if ugc_domain and (hostname == ugc_domain or hostname.endswith(f".{ugc_domain}")):
+        return True
+
     if parsed.scheme == "http":
         return False
 
