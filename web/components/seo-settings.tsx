@@ -170,10 +170,7 @@ export default function SeoSettings() {
   return (
     <>
       <Card>
-        <CardHeader className="pb-4 sm:pb-4">
-          <CardTitle className="text-xl">Search Engine Optimization</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 pt-6">
           <div className="space-y-2.5">
             <Label htmlFor="seo_meta_title">Meta title</Label>
             <Input

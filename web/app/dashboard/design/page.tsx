@@ -511,11 +511,6 @@ export default function DesignDashboardPage() {
               </div>
               <p className="text-sm text-muted-foreground">Show categories in the header.</p>
             </div>
-            {design.nav_menu_enabled ? (
-              <Button variant="outline" size="sm" asChild>
-                <Link href="/dashboard/categories">Manage Categories</Link>
-              </Button>
-            ) : null}
           </>
         ) : null}
 
