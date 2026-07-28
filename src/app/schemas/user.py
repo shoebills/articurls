@@ -69,6 +69,7 @@ class PublicUser(BaseModel):
     youtube_link: Optional[str] = None
     website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
@@ -127,6 +128,7 @@ class AdminUsernameChange(BaseModel):
 class SeoSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    og_image_url: Optional[str] = None
     rss_enabled: bool = False
 
     class Config:
@@ -136,6 +138,7 @@ class SeoSettings(BaseModel):
 class SeoSettingsUpdate(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    og_image_url: Optional[str] = None
     rss_enabled: Optional[bool] = None
 
 

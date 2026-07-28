@@ -277,6 +277,8 @@ def update_seo_settings(
         db_user.meta_title = (update_data["meta_title"] or "").strip() or None
     if "meta_description" in update_data:
         db_user.meta_description = (update_data["meta_description"] or "").strip() or None
+    if "og_image_url" in update_data:
+        db_user.og_image_url = update_data["og_image_url"]
     rss_changed = "rss_enabled" in update_data
     if rss_changed:
         db_user.rss_enabled = bool(update_data["rss_enabled"])
@@ -520,3 +522,43 @@ async def delete_favicon(
     schedule_tenant_purge(background_tasks, db_user)
 
     return {"favicon_url": None}
+
+
+@router.post("/seo/og-image", status_code=status.HTTP_200_OK)
+async def upload_og_image(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    og_image_url = await save_image_local(file=file, category="og-images", user_id=current_user.user_id, db=db)
+    db_user.og_image_url = og_image_url
+    db.commit()
+    db.refresh(db_user)
+
+    schedule_tenant_purge(background_tasks, db_user)
+
+    return {"og_image_url": db_user.og_image_url}
+
+
+@router.delete("/seo/og-image", status_code=status.HTTP_200_OK)
+async def delete_og_image(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+):
+    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    db_user.og_image_url = None
+    db.commit()
+    db.refresh(db_user)
+
+    schedule_tenant_purge(background_tasks, db_user)
+
+    return {"og_image_url": None}

@@ -18,6 +18,7 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages } from "@/lib/image-transform";
+import { transformImageUrl } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
@@ -38,6 +39,7 @@ function resolveUserSiteName(user: PublicUser | null | undefined): string {
 }
 
 function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
+  if (user?.og_image_url) return transformImageUrl(assetUrl(user.og_image_url), { width: 1200, height: 630, fit: "cover" });
   const profileImage = assetUrl(user?.profile_image_url);
   if (profileImage) return profileImage;
   return undefined;

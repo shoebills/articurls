@@ -67,6 +67,7 @@ export interface PublicUser {
   youtube_link: string | null;
   website_link: string | null;
   profile_image_url: string | null;
+  og_image_url?: string | null;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_blog_name_size?: NavBlogNameSize;
@@ -189,6 +190,7 @@ export interface DesignSettings {
 export interface SeoSettings {
   meta_title: string | null;
   meta_description: string | null;
+  og_image_url: string | null;
   rss_enabled: boolean;
 }
 

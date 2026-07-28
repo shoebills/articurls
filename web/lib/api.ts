@@ -430,6 +430,16 @@ export async function deleteFavicon(token: string): Promise<{ favicon_url: null 
   return apiFetch("/user/me/favicon", { method: "DELETE", token });
 }
 
+export async function uploadOgImage(token: string, file: File): Promise<{ og_image_url: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch("/user/seo/og-image", { method: "POST", token, body: fd });
+}
+
+export async function deleteOgImage(token: string): Promise<{ og_image_url: null }> {
+  return apiFetch("/user/seo/og-image", { method: "DELETE", token });
+}
+
 export async function uploadPageMedia(
   token: string,
   pageId: number,

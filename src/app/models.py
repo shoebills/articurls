@@ -38,6 +38,7 @@ class User(Base):
     website_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
     favicon_url = Column(String, nullable=True)
+    og_image_url = Column(String, nullable=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     token_version = Column(Integer, nullable=False, default=0)
 

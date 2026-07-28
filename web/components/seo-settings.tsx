@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ApiError,
   apiCacheHas,
@@ -9,6 +9,8 @@ import {
   getMe,
   getSeoSettings,
   patchSeoSettings,
+  uploadOgImage,
+  deleteOgImage,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -20,7 +22,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import type { CustomDomain, SeoSettings, UserSettings } from "@/lib/types";
-import { UGC_DOMAIN } from "@/lib/env";
+import { UGC_DOMAIN, assetUrl } from "@/lib/env";
+import { transformImageUrl } from "@/lib/image-transform";
+import { Loader2 } from "lucide-react";
 
 export default function SeoSettings() {
   const { token, refreshUser } = useAuth();
@@ -76,6 +80,15 @@ export default function SeoSettings() {
     const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached?.user_name || "";
   });
+  const ogInputRef = useRef<HTMLInputElement>(null);
+  const [ogImageUrl, setOgImageUrl] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return "";
+    const cached = getCachedApiData<SeoSettings>("/user/seo", t);
+    return cached?.og_image_url || "";
+  });
+  const [ogImageBusy, setOgImageBusy] = useState(false);
   const sitemapResourceUrl = domain?.hostname
     ? `https://${domain.hostname}/sitemap.xml`
     : username
@@ -97,6 +110,7 @@ export default function SeoSettings() {
         ]);
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
+        setOgImageUrl(meta.og_image_url || "");
         setOriginalMetaTitle(meta.meta_title || "");
         setOriginalMetaDescription(meta.meta_description || "");
         setDomain(domainData);
@@ -126,6 +140,36 @@ export default function SeoSettings() {
       setErr(e instanceof ApiError ? e.message : "Failed to save SEO settings");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleUploadOgImage(file: File) {
+    if (!token) return;
+    setOgImageBusy(true);
+    setErr(null);
+    try {
+      const { og_image_url } = await uploadOgImage(token, file);
+      setOgImageUrl(og_image_url);
+      setSavedMsg("Saved");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "OG image upload failed");
+    } finally {
+      setOgImageBusy(false);
+    }
+  }
+
+  async function handleRemoveOgImage() {
+    if (!token) return;
+    setOgImageBusy(true);
+    setErr(null);
+    try {
+      await deleteOgImage(token);
+      setOgImageUrl("");
+      setSavedMsg("Saved");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to remove OG image");
+    } finally {
+      setOgImageBusy(false);
     }
   }
 
@@ -170,7 +214,7 @@ export default function SeoSettings() {
   return (
     <>
       <Card>
-        <CardContent className="space-y-4 pt-6">
+        <CardContent className="space-y-4 pt-6 sm:pt-6">
           <div className="space-y-2.5">
             <Label htmlFor="seo_meta_title">Meta title</Label>
             <Input
@@ -199,6 +243,56 @@ export default function SeoSettings() {
             >
               Save
             </Button>
+          </div>
+          <div className="space-y-2">
+            <Label>Open Graph image</Label>
+            <p className="text-xs text-muted-foreground pt-1">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
+            <input
+              ref={ogInputRef}
+              type="file"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) void handleUploadOgImage(f);
+                e.currentTarget.value = "";
+              }}
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                type="button"
+                variant="default"
+                onClick={() => ogInputRef.current?.click()}
+                disabled={ogImageBusy}
+              >
+                {ogImageBusy ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Uploading...
+                  </>
+                ) : (
+                  "Upload"
+                )}
+              </Button>
+              {ogImageUrl ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleRemoveOgImage}
+                  disabled={ogImageBusy}
+                >
+                  Remove
+                </Button>
+              ) : null}
+            </div>
+            {ogImageUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
+                alt=""
+                className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+              />
+            ) : null}
           </div>
           <div className="border-t pt-5 mt-2 space-y-3">
             <SeoResourceRow

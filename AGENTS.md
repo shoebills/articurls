@@ -49,6 +49,7 @@ cd web && npm run lint
 - **Storage backend**: defaults to `local` (uploads/ directory). Set `STORAGE_BACKEND=r2` for Cloudflare R2.
 - **Email provider**: defaults to `resend`. Set `EMAIL_PROVIDER=smtp` for SMTP.
 - **Celery beat** publishes scheduled blogs every minute and runs Pro expiry check hourly.
+- **migration** dont autogenerate migrations cause you cant run commands in server, write it instead
 
 ## Multi-Tenant Domain Routing
 

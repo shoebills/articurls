@@ -16,7 +16,7 @@ const links = [
   { href: "/dashboard/design", label: "Design", icon: Palette },
   { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
-  { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard/billing", label: "Billing & Plans", icon: CreditCard },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
