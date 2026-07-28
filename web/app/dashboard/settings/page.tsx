@@ -15,7 +15,7 @@ import {
   apiCacheHas,
   getCachedApiData,
 } from "@/lib/api";
-import type { CustomDomain, MetaSettings, UserSettings } from "@/lib/types";
+import type { CustomDomain, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -64,7 +64,7 @@ export default function SettingsPage() {
     if (typeof window === "undefined") return false;
     const t = localStorage.getItem("articurls_token");
     if (!t) return false;
-    const cached = getCachedApiData<MetaSettings>("/user/meta", t);
+    const cached = getCachedApiData<UserSettings>("/user/me", t);
     return cached ? cached.rss_enabled !== false : false;
   });
   const [domain, setDomain] = useState<CustomDomain | null>(() => {
@@ -93,7 +93,7 @@ export default function SettingsPage() {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [u, meta, domainData] = await Promise.all([
+      const [u, _, domainData] = await Promise.all([
         getMe(token),
         getMetaSettings(token),
         getCustomDomain(token),
@@ -101,7 +101,6 @@ export default function SettingsPage() {
       setUserName(u.user_name);
       setCollectSubscribers(u.subscriber_collection_enabled ?? false);
       setLastUsernameChangeAt(u.last_username_change_at || null);
-      setRssEnabled(meta.rss_enabled !== false);
       setDomain(domainData);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -119,6 +118,7 @@ export default function SettingsPage() {
       setUserName(ctxUser.user_name);
       setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? false);
       setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
+      setRssEnabled(ctxUser.rss_enabled ?? false);
     }
   }, [ctxUser]);
 
