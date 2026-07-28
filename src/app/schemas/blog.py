@@ -70,6 +70,17 @@ class PublicBlogs(PublicBlog):
     excerpt: Optional[str] = None
 
 
+class PublicBlogSearchResult(BaseModel):
+    blog_id: int
+    title: str
+    slug: str
+    excerpt: Optional[str] = None
+    published_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
 class UpdateBlog(BaseModel):
     title: Optional[str] = Field(None, max_length=300)
     content: Optional[str] = Field(None, max_length=500_000)

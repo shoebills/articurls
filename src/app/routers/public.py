@@ -1,5 +1,6 @@
+from datetime import datetime, timezone
 from fastapi import Depends, APIRouter, HTTPException, Request, Query, status
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func, or_
 from typing import List
 from ..database import get_db
@@ -13,11 +14,11 @@ router = APIRouter(
 )
 
 
-@router.get("/{user_name}/blogs/search", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
+@router.get("/{user_name}/blogs/search", response_model=List[blog.PublicBlogSearchResult], status_code=status.HTTP_200_OK)
 def search_blogs(
     user_name: str,
     request: Request,
-    q: str = Query(..., min_length=1, description="Search query"),
+    q: str = Query(..., min_length=2, description="Search query (minimum 2 characters)"),
     limit: int = Query(5, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
@@ -28,31 +29,92 @@ def search_blogs(
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    term = f"%{q}%"
-    results = (
+    q_lower = q.lower().strip()
+
+    # Load all published blogs for this user
+    all_blogs = (
         db.query(models.Blog)
         .filter(
             models.Blog.user_id == db_user.user_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
-            or_(
-                models.Blog.title.ilike(term),
-                models.Blog.content.ilike(term),
-                models.Blog.meta_title.ilike(term),
-                models.Blog.meta_description.ilike(term),
-            ),
         )
-        .order_by(models.Blog.published_at.desc())
-        .offset(offset)
-        .limit(limit)
         .all()
     )
 
-    blogs = []
-    for db_blog in results:
-        db_blog.excerpt = utils.make_excerpt(db_blog.content)
-        blogs.append(db_blog)
+    if not all_blogs:
+        return []
 
-    return blogs
+    # Load category names for all blogs
+    blog_ids = [b.blog_id for b in all_blogs]
+    cat_rows = (
+        db.query(models.BlogCategory.blog_id, models.Category.name)
+        .join(models.Category, models.BlogCategory.category_id == models.Category.category_id)
+        .filter(models.BlogCategory.blog_id.in_(blog_ids))
+        .all()
+    )
+    blog_categories: dict[int, list[str]] = {}
+    for bid, cname in cat_rows:
+        blog_categories.setdefault(bid, []).append(cname.lower())
+
+    # Score each blog in Python
+    scored: list[dict] = []
+    for blog in all_blogs:
+        plain_text = utils.html_to_plain_text(blog.content)
+        title_lower = blog.title.lower()
+        body_lower = plain_text.lower()
+
+        score = 0
+
+        # Title match (highest priority)
+        if q_lower == title_lower:
+            score += 1000
+        elif title_lower.startswith(q_lower):
+            score += 100
+        elif q_lower in title_lower:
+            score += 10
+
+        # Category name match (medium priority)
+        for cat_name in blog_categories.get(blog.blog_id, []):
+            if q_lower in cat_name:
+                score += 5
+                break
+
+        # Body text match (lowest priority)
+        if q_lower in body_lower:
+            score += 1
+
+        if score == 0:
+            continue
+
+        excerpt = plain_text[:240]
+        if len(plain_text) > 240:
+            excerpt = excerpt.rstrip() + "..."
+
+        scored.append({
+            "blog_id": blog.blog_id,
+            "title": blog.title,
+            "slug": blog.slug,
+            "excerpt": excerpt,
+            "published_at": blog.published_at,
+            "score": score,
+        })
+
+    # Sort by score descending, then published_at descending
+    def sort_key(item: dict):
+        pub_ts = 0
+        if item["published_at"] is not None:
+            pub_ts = item["published_at"].timestamp()
+        return (-item["score"], -pub_ts)
+
+    scored.sort(key=sort_key)
+
+    # Paginate
+    paged = scored[offset:offset + limit]
+
+    return [
+        blog.PublicBlogSearchResult(**item)
+        for item in paged
+    ]
 
 
 @router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)

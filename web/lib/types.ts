@@ -47,6 +47,14 @@ export interface PublicBlog {
   category_ids?: number[];
 }
 
+export interface PublicBlogSearchResult {
+  blog_id: number;
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  published_at: string | null;
+}
+
 export type NavBlogNameSize = "small" | "medium" | "large";
 export type ContentWidth = "narrow" | "wide";
 export type ListImagePosition = "above_title" | "next_to_title";

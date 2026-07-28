@@ -1,16 +1,32 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Loader2, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
-import type { PublicBlog } from "@/lib/types";
+import type { PublicBlogSearchResult } from "@/lib/types";
 import { searchPublicBlogs } from "@/lib/api";
 import { getPublicPostUrl } from "@/lib/public-url";
 
 const TRAY_GAP_PX = 8;
 const DEBOUNCE_MS = 300;
 const PAGE_SIZE = 5;
+const MIN_QUERY_LENGTH = 2;
+
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return "";
+  }
+}
 
 export function SearchButton({
   iconClassName,
@@ -21,13 +37,15 @@ export function SearchButton({
   trayClassName?: string;
   userName: string;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<PublicBlog[]>([]);
+  const [results, setResults] = useState<PublicBlogSearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offsetRef = useRef(0);
   const requestIdRef = useRef(0);
@@ -41,7 +59,7 @@ export function SearchButton({
     if (debounceRef.current) clearTimeout(debounceRef.current);
 
     const trimmed = query.trim();
-    if (!trimmed) {
+    if (!trimmed || trimmed.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setHasMore(false);
       offsetRef.current = 0;
@@ -92,6 +110,24 @@ export function SearchButton({
     }
   }, [userName, query]);
 
+  const handleClear = useCallback(() => {
+    setQuery("");
+    setResults([]);
+    setHasMore(false);
+    offsetRef.current = 0;
+    inputRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "Enter" && results.length > 0) {
+        setOpen(false);
+        router.push(getPublicPostUrl(userName, results[0].slug));
+      }
+    },
+    [results, userName, router]
+  );
+
   const measure = useCallback(() => {
     const root = rootRef.current;
     if (!root || !open) return;
@@ -133,7 +169,9 @@ export function SearchButton({
     }
 
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") setOpen(false);
+      if (event.key === "Escape") {
+        setOpen(false);
+      }
     }
 
     document.addEventListener("mousedown", onPointerDown);
@@ -145,6 +183,8 @@ export function SearchButton({
       document.removeEventListener("keydown", onKeyDown);
     };
   }, [open]);
+
+  const trimmed = query.trim();
 
   return (
     <div ref={rootRef} className="relative shrink-0">
@@ -184,17 +224,37 @@ export function SearchButton({
                 aria-hidden
               />
               <Input
+                ref={inputRef}
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="Search posts"
                 aria-label="Search posts"
-                className="h-10 min-h-10 rounded-lg border-border/80 !bg-white pl-9"
+                className="h-10 min-h-10 rounded-lg border-border/80 !bg-white pl-9 pr-9"
                 autoFocus
               />
+              {query ? (
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  aria-label="Clear search"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              ) : null}
             </div>
           </div>
 
-          {query.trim() ? (
+          {!trimmed ? (
+            <div className="border-t border-border/70 px-4 py-6 text-center text-sm text-muted-foreground">
+              Search posts by title or topic...
+            </div>
+          ) : trimmed.length < MIN_QUERY_LENGTH ? (
+            <div className="border-t border-border/70 px-4 py-6 text-center text-sm text-muted-foreground">
+              Type at least 2 characters
+            </div>
+          ) : (
             <>
               <div className="border-t border-border/70">
                 {loading ? (
@@ -210,7 +270,15 @@ export function SearchButton({
                           onClick={() => setOpen(false)}
                           className="block px-4 py-2.5 text-sm hover:bg-muted/50"
                         >
-                          <span className="line-clamp-1">{blog.title}</span>
+                          <span className="line-clamp-1 font-medium">
+                            {blog.title}
+                          </span>
+                          <span className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
+                            {formatDate(blog.published_at)}
+                            {blog.excerpt ? (
+                              <> &middot; {blog.excerpt}</>
+                            ) : null}
+                          </span>
                         </Link>
                       </li>
                     ))}
@@ -239,7 +307,7 @@ export function SearchButton({
                 </div>
               ) : null}
             </>
-          ) : null}
+          )}
         </div>
       ) : null}
     </div>
