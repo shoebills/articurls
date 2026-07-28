@@ -390,13 +390,13 @@ export default function SettingsPage() {
             <CardContent className="space-y-6">
               {!editingUsername ? (
                 <div className="space-y-3">
-                  <div className="flex max-w-[30ch]">
+                  <div className="flex max-w-[30ch] rounded-lg border bg-muted/40">
                     <Input
                       value={encodeURIComponent(user_name)}
                       readOnly
-                      className="rounded-r-none bg-white focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="rounded-none border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
-                    <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
+                    <div className="flex shrink-0 items-center px-3 text-sm font-mono text-muted-foreground">
                       .{UGC_DOMAIN}
                     </div>
                   </div>
@@ -423,18 +423,18 @@ export default function SettingsPage() {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  <div className="flex max-w-[30ch]">
+                  <div className="flex max-w-[30ch] rounded-lg border bg-muted/40">
                     <Input
                       value={pendingUsername}
                       onChange={(e) =>
                         setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())
                       }
                       placeholder="yourusername"
-                      className="rounded-r-none"
+                      className="rounded-none border-0 bg-transparent"
                       autoCapitalize="none"
                       autoCorrect="off"
                     />
-                    <div className="flex items-center rounded-r-md border border-l-0 bg-muted px-3 text-sm font-mono text-muted-foreground">
+                    <div className="flex shrink-0 items-center px-3 text-sm font-mono text-muted-foreground">
                       .{UGC_DOMAIN}
                     </div>
                   </div>
