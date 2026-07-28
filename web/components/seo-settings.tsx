@@ -244,9 +244,11 @@ export default function SeoSettings() {
               Save
             </Button>
           </div>
-          <div className="space-y-2">
-            <Label>Open Graph image</Label>
-            <p className="text-xs text-muted-foreground pt-1">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
+          <div className="border-t pt-5 mt-2 space-y-4">
+            <div>
+              <p className="text-sm font-medium">Open Graph image</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
+            </div>
             <input
               ref={ogInputRef}
               type="file"
@@ -290,7 +292,7 @@ export default function SeoSettings() {
               <img
                 src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
                 alt=""
-                className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                className="aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
               />
             ) : null}
           </div>
