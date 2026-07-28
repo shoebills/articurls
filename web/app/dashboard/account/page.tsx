@@ -134,7 +134,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Profile</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Account</h1>
         <Card>
           <CardHeader>
             <Skeleton className="h-6 w-20" />
@@ -166,7 +166,7 @@ export default function ProfilePage() {
 
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
-      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Profile</h1>
+      <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Account</h1>
 
       <Card>
         <CardHeader>

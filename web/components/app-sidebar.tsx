@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, User, CircleHelp, Users, Tags } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, CircleUser, CircleHelp, Users, Tags } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
@@ -66,12 +66,12 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
     >
       <div className="mb-2 flex flex-col gap-1.5">
         <Link
-          href="/dashboard/profile"
+          href="/dashboard/account"
           onClick={() => onNavigate?.()}
           className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-[background-color,color] duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
         >
-          <User className="h-4 w-4 shrink-0 opacity-80" />
-          Profile
+          <CircleUser className="h-4 w-4 shrink-0 opacity-80" />
+          Account
         </Link>
         <div className="group relative">
           <Button
