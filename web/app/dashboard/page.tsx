@@ -28,10 +28,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Share2, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
-import { PromptDialog } from "@/components/prompt-dialog";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 import { resolveBlogContentThumbnail } from "@/lib/blog-images";
 
@@ -68,11 +67,6 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
-
-  // Share dialog state
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
 
   const exchangedOAuth = useRef(false);
 
@@ -182,21 +176,14 @@ export default function DashboardPage() {
     router.push(`/dashboard/posts/${blogId}/edit`);
   }
 
-  async function handleShare(blog: BlogListItem) {
+  function handleViewPost(blog: BlogListItem) {
     if (!user) return;
     const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
     const base = hasCustomDomain
       ? `https://${user.custom_domain}`
       : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`;
     const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedMsg("Link copied");
-      setMenuOpenBlogId(null);
-    } catch {
-      setShareUrl(url);
-      setShareDialogOpen(true);
-    }
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   const searchIndex = useMemo(() => {
@@ -453,10 +440,10 @@ export default function DashboardPage() {
                             Edit
                           </Link>
                         </DropdownMenuItem>
-                        {(b.status === "published" || b.status === "archived") && (
-                          <DropdownMenuItem data-card-action="true" onClick={() => void handleShare(b)}>
-                            <Share2 className="h-4 w-4" />
-                            Copy link
+                        {(b.status === "published") && (
+                          <DropdownMenuItem data-card-action="true" onClick={() => handleViewPost(b)}>
+                            <ExternalLink className="h-4 w-4" />
+                            View post
                           </DropdownMenuItem>
                         )}
                         {b.status === "published" && (
@@ -590,19 +577,6 @@ export default function DashboardPage() {
         </DialogContent>
       </Dialog>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-
-      <FloatingErrorToast message={copiedMsg} onDismiss={() => setCopiedMsg(null)} variant="success" autoDismissMs={1500} />
-
-      {/* Share Link Dialog */}
-      <PromptDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        title="Share Link"
-        description="Copy this link to share your post."
-        defaultValue={shareUrl}
-        onConfirm={() => {}}
-        readOnly
-      />
     </div>
   );
 }

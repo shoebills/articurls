@@ -58,11 +58,11 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
           <div className="flex items-center gap-2">
-            {publicBlogHref ? (
+              {publicBlogHref ? (
               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
-                <Link href={publicBlogHref}>
+                <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
                   Visit blog
-                </Link>
+                </a>
               </Button>
             ) : (
               <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
@@ -101,9 +101,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 </div>
                 {publicBlogHref ? (
                   <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
-                    <Link href={publicBlogHref}>
+                    <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
                       Visit blog
-                    </Link>
+                    </a>
                   </Button>
                 ) : (
                   <Button type="button" variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-600">

@@ -26,10 +26,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { PromptDialog } from "@/components/prompt-dialog";
 import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, FileText, Filter, MoreVertical, Pencil, Plus, Search, Share2, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, FileText, Filter, MoreVertical, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 
@@ -53,9 +52,6 @@ export default function PagesDashboardPage() {
   const [rowBusyId, setRowBusyId] = useState<number | null>(null);
   const [menuOpenPageId, setMenuOpenPageId] = useState<number | null>(null);
   const [err, setErr] = useState<string | null>(null);
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [shareUrl, setShareUrl] = useState("");
-  const [copiedMsg, setCopiedMsg] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -194,21 +190,14 @@ export default function PagesDashboardPage() {
     setUnarchiveId(pageId);
   }
 
-  async function onShare(page: UserPage) {
+  function onViewPost(page: UserPage) {
     if (!token || !user) return;
     const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
     const base = hasCustomDomain
       ? `https://${user.custom_domain}`
       : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`;
     const url = `${base}/page/${encodeURIComponent(page.slug)}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      setCopiedMsg("Link copied");
-      setMenuOpenPageId(null);
-    } catch {
-      setShareUrl(url);
-      setShareDialogOpen(true);
-    }
+    window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (
@@ -400,14 +389,14 @@ export default function PagesDashboardPage() {
                                   Edit
                                 </Link>
                               </DropdownMenuItem>
-                              {(p.status === "published" || p.status === "archived") && (
+                              {p.status === "published" && (
                                 <DropdownMenuItem
                                   data-card-action="true"
-                                  onClick={() => void onShare(p)}
+                                  onClick={() => onViewPost(p)}
                                   disabled={rowBusyId === p.page_id}
                                 >
-                                  <Share2 className="h-4 w-4" />
-                                  Copy link
+                                  <ExternalLink className="h-4 w-4" />
+                                  View post
                                 </DropdownMenuItem>
                               )}
                               {p.status === "published" && (
@@ -524,19 +513,6 @@ export default function PagesDashboardPage() {
       </Dialog>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-
-      <FloatingErrorToast message={copiedMsg} onDismiss={() => setCopiedMsg(null)} variant="success" autoDismissMs={1500} />
-
-      {/* Share Link Dialog */}
-      <PromptDialog
-        open={shareDialogOpen}
-        onOpenChange={setShareDialogOpen}
-        title="Share Link"
-        description="Copy this link to share your page."
-        defaultValue={shareUrl}
-        onConfirm={() => {}}
-        readOnly
-      />
     </div>
   );
 }
