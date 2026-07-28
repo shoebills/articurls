@@ -228,7 +228,7 @@ export default function CustomDomainSettings() {
           {/* Header row */}
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <p className="min-w-0 truncate rounded-lg border border-border/70 bg-muted/30 px-3 py-1.5 text-base font-semibold tracking-tight">{domain.hostname}</p>
+              <p className="min-w-0 truncate rounded-lg bg-muted/40 px-3 py-2.5 text-sm font-mono">{domain.hostname}</p>
               {confirmDelete ? (
                 <div className="ml-auto flex shrink-0 items-center gap-2">
                   <Button
@@ -498,10 +498,6 @@ function DnsRecordCard({
   return (
     <div className="rounded-xl border bg-white p-5 space-y-4">
       <div className="flex items-center gap-2">
-        <span
-          className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
-          title={record.verified ? "Detected" : "Not yet detected"}
-        />
         <span className="text-sm font-semibold">DNS Record</span>
         {!isRouting && (
           <span className="ml-auto text-xs text-muted-foreground">
