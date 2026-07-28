@@ -239,15 +239,6 @@ export default function SettingsPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
-        <Skeleton className="h-9 w-80 rounded-lg" />
-      </div>
-    );
-  }
-
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
@@ -269,7 +260,15 @@ export default function SettingsPage() {
         </div>
       </nav>
 
-      <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "general" && "hidden")}>
+      {loading ? (
+        <div className="space-y-6 sm:space-y-8">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+      ) : (
+        <>
+          <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "general" && "hidden")}>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
@@ -509,7 +508,8 @@ export default function SettingsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
+        </>
+      )}
 
     </div>
   );
