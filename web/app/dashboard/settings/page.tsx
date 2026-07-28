@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Check, Copy, Globe, Loader2, Pencil, Trash2, X } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, UGC_DOMAIN } from "@/lib/env";
+import { cn } from "@/lib/utils";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 import SeoSettings from "@/components/seo-settings";
@@ -268,8 +269,7 @@ export default function SettingsPage() {
         </div>
       </nav>
 
-      {selectedTab === "general" && (
-        <div className="space-y-6 sm:space-y-8">
+      <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "general" && "hidden")}>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
@@ -397,10 +397,8 @@ export default function SettingsPage() {
             </p>
           </div>
         </div>
-      )}
 
-      {selectedTab === "domains" && (
-        <div className="space-y-6 sm:space-y-8">
+      <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "domains" && "hidden")}>
           <Card>
             <CardHeader className="pb-4 sm:pb-4">
               <CardTitle className="text-xl">Subdomain</CardTitle>
@@ -507,9 +505,10 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
         </div>
-      )}
 
-      {selectedTab === "seo" && <SeoSettings />}
+      <div className={cn(selectedTab !== "seo" && "hidden")}>
+        <SeoSettings />
+      </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
       {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
