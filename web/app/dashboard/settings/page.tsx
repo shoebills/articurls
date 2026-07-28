@@ -371,7 +371,10 @@ export default function SettingsPage() {
               <p className="text-sm font-medium">RSS feed</p>
               <Switch
                 checked={rssEnabled}
-                onCheckedChange={saveRss}
+                onCheckedChange={(v) => {
+                  setRssEnabled(v);
+                  void saveRss(v);
+                }}
                 disabled={busy}
               />
             </div>

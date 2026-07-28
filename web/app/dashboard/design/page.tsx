@@ -444,8 +444,11 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Enable header</p>
             <Switch
               checked={design.navbar_enabled}
-              onCheckedChange={(v) => saveDesign({ ...design, navbar_enabled: v })}
-              disabled={busy}
+              onCheckedChange={(v) => {
+                const next = { ...design, navbar_enabled: v };
+                setDesign(next);
+                void saveDesign(next);
+              }}
             />
           </div>
           <p className="text-sm text-muted-foreground">If disabled, public view shows only blogs.</p>
@@ -505,8 +508,11 @@ export default function DesignDashboardPage() {
                 <p className="font-medium">Show category menu</p>
                 <Switch
                   checked={design.nav_menu_enabled}
-                  onCheckedChange={(v) => saveDesign({ ...design, nav_menu_enabled: v })}
-                  disabled={busy}
+                  onCheckedChange={(v) => {
+                    const next = { ...design, nav_menu_enabled: v };
+                    setDesign(next);
+                    void saveDesign(next);
+                  }}
                 />
               </div>
               <p className="text-sm text-muted-foreground">Show categories in the header.</p>
@@ -531,8 +537,11 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Enable about section</p>
             <Switch
               checked={design.show_about_section}
-              onCheckedChange={(v) => saveDesign({ ...design, show_about_section: v })}
-              disabled={busy}
+              onCheckedChange={(v) => {
+                const next = { ...design, show_about_section: v };
+                setDesign(next);
+                void saveDesign(next);
+              }}
             />
           </div>
           <p className="text-sm text-muted-foreground">
@@ -602,8 +611,11 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Show preview images</p>
             <Switch
               checked={design.show_preview_in_lists}
-              onCheckedChange={(v) => saveDesign({ ...design, show_preview_in_lists: v })}
-              disabled={busy}
+              onCheckedChange={(v) => {
+                const next = { ...design, show_preview_in_lists: v };
+                setDesign(next);
+                void saveDesign(next);
+              }}
             />
           </div>
           <p className="text-sm text-muted-foreground">Show featured or first image as a preview on the blog homepage and category pages.</p>
@@ -640,8 +652,11 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Enable featured blogs</p>
             <Switch
               checked={design.featured_blogs_enabled}
-              onCheckedChange={(v) => saveDesign({ ...design, featured_blogs_enabled: v })}
-              disabled={busy}
+              onCheckedChange={(v) => {
+                const next = { ...design, featured_blogs_enabled: v };
+                setDesign(next);
+                void saveDesign(next);
+              }}
             />
           </div>
           <p className="text-sm text-muted-foreground">Show a featured section at the top of the blog list.</p>
@@ -757,8 +772,11 @@ export default function DesignDashboardPage() {
             <p className="font-medium">Enable footer</p>
             <Switch
               checked={design.site_footer_enabled}
-              onCheckedChange={(v) => saveDesign({ ...design, site_footer_enabled: v })}
-              disabled={busy}
+              onCheckedChange={(v) => {
+                const next = { ...design, site_footer_enabled: v };
+                setDesign(next);
+                void saveDesign(next);
+              }}
             />
           </div>
           <p className="text-sm text-muted-foreground">
