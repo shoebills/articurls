@@ -12,7 +12,7 @@ function decodeHtmlEntities(text: string): string {
 function normalizeText(value: string): string {
   return value
     .toLowerCase()
-    .replace(/[^\p{L}\p{N}\s]/gu, " ")
+    .replace(/[^\p{L}\p{N}\s]/gu, "")
     .replace(/\s+/g, " ")
     .trim();
 }
