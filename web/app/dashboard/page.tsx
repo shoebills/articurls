@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiCacheHas, getCachedApiData } from "@/lib/api";
 import type { BlogListItem } from "@/lib/types";
-import { UGS_ORIGIN, UGC_DOMAIN } from "@/lib/env";
+import { UGC_ORIGIN, UGC_DOMAIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {

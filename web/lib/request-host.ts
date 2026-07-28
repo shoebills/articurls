@@ -35,7 +35,7 @@ export function buildRuntimeHostsFromEnv(): string[] {
   const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "") || "";
   const hosts = buildRuntimeHosts(appOrigin, marketingOrigin);
 
-  const ugcOrigin = process.env.NEXT_PUBLIC_UGS_ORIGIN?.replace(/\/$/, "");
+  const ugcOrigin = process.env.NEXT_PUBLIC_UGC_ORIGIN?.replace(/\/$/, "");
   if (ugcOrigin) {
     try {
       const host = new URL(ugcOrigin).hostname.toLowerCase();

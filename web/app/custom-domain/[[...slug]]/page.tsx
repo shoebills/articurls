@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
-import { API_URL, UGS_ORIGIN, assetUrl } from "@/lib/env";
+import { API_URL, UGC_ORIGIN, assetUrl } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -57,7 +57,7 @@ async function resolveDomainInfo(host: string): Promise<{
   domain_status: string;
   redirect_to: string | null;
 } | null> {
-  const ugcHost = new URL(UGS_ORIGIN).hostname;
+  const ugcHost = new URL(UGC_ORIGIN).hostname;
   const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
   if (host.endsWith(`.${ugcHost}`)) {
     const subdomain = host.split(".")[0];
@@ -312,7 +312,7 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "expired") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    const ugcHost = new URL(UGS_ORIGIN).hostname;
+    const ugcHost = new URL(UGC_ORIGIN).hostname;
     const redirectUrl = `https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`;
     permanentRedirect(redirectUrl);
   }
@@ -321,7 +321,7 @@ export default async function CustomDomainPage({ params }: Props) {
   if (domainInfo.domain_status === "pending") {
     const { slug: segments = [] } = await params;
     const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-    const ugcHost = new URL(UGS_ORIGIN).hostname;
+    const ugcHost = new URL(UGC_ORIGIN).hostname;
     redirect(`https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`);
   }
 

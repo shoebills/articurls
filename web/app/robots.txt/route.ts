@@ -20,7 +20,7 @@
  */
 
 import { NextRequest } from "next/server";
-import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGC_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -185,7 +185,7 @@ Disallow: /
 User-agent: PetalBot
 Disallow: /
 
-Sitemap: ${UGS_ORIGIN}/sitemap.xml
+Sitemap: ${UGC_ORIGIN}/sitemap.xml
 `;
 
   return new Response(body, {

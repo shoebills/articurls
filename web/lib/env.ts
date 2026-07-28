@@ -7,12 +7,12 @@ export const MARKETING_ORIGIN =
   "https://articurls.com";
 
 /** UGC (user-generated content) origin — where user blogs live (e.g. https://articurls.site) */
-export const UGS_ORIGIN =
-  process.env.NEXT_PUBLIC_UGS_ORIGIN?.replace(/\/$/, "") ||
+export const UGC_ORIGIN =
+  process.env.NEXT_PUBLIC_UGC_ORIGIN?.replace(/\/$/, "") ||
   "https://articurls.site";
 
 /** UGC domain hostname (e.g. "articurls.site") */
-export const UGC_DOMAIN = new URL(UGS_ORIGIN).hostname;
+export const UGC_DOMAIN = new URL(UGC_ORIGIN).hostname;
 
 /** App origin (login, dashboard) */
 export const APP_ORIGIN =

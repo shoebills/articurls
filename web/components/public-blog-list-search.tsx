@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { PublicBlog, PublicUser, ContentWidth, ListImagePosition } from "@/lib/types";
-import { UGS_ORIGIN } from "@/lib/env";
+import { UGC_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
@@ -25,7 +25,7 @@ const POSTS_PER_PAGE = 12;
 
 function publicBlogPostUrl(userName: string, slug: string, siteOrigin?: string) {
   const path = getPublicPostUrl(userName, slug);
-  return `${siteOrigin || UGS_ORIGIN}${path}`;
+  return `${siteOrigin || UGC_ORIGIN}${path}`;
 }
 
 function BlogListItemRow({

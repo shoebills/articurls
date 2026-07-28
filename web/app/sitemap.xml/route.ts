@@ -17,7 +17,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { API_URL, MARKETING_ORIGIN, UGS_ORIGIN } from "@/lib/env";
+import { API_URL, MARKETING_ORIGIN, UGC_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -256,7 +256,7 @@ async function ugcDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
   const entries = [
-    { loc: `${UGS_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },
+    { loc: `${UGC_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },
   ];
 
   return new Response(buildXml(entries), {
