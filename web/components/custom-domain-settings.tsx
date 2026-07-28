@@ -490,29 +490,29 @@ function DnsRecordCard({
   const purposeLabel: Record<string, string> = {
     ownership: "Ownership verification",
     ssl: "SSL certificate",
-    routing: "Traffic routing",
     vercel: "Vercel domain verification",
   };
 
+  const isRouting = record.purpose === "routing";
+
   return (
-    <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <span
-            className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
-            title={record.verified ? "Detected" : "Not yet detected"}
-          />
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="rounded-xl border bg-white p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <span
+          className={`h-2 w-2 shrink-0 rounded-full ${record.verified ? "bg-green-500" : "bg-muted-foreground/30"}`}
+          title={record.verified ? "Detected" : "Not yet detected"}
+        />
+        <span className="text-sm font-semibold">DNS Record</span>
+        {!isRouting && (
+          <span className="ml-auto text-xs text-muted-foreground">
             {overrideLabel ?? purposeLabel[record.purpose] ?? record.purpose}
           </span>
-        </div>
-        <span className="rounded bg-background px-2 py-0.5 text-xs font-mono font-medium border">
-          {record.type}
-        </span>
+        )}
       </div>
 
-      <CopyRow label="Name" value={record.name} displayValue={nameDisplay} fieldKey={`name-${idx}`} copiedField={copiedField} onCopy={onCopy} />
-      <CopyRow label="Value" value={record.value} fieldKey={`value-${idx}`} copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label="Type" value={record.type} fieldKey={`type-${idx}`} copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label={isRouting ? "Host" : "Name"} value={record.name} displayValue={isRouting ? nameDisplay : undefined} fieldKey={`name-${idx}`} copiedField={copiedField} onCopy={onCopy} />
+      <CopyRow label={isRouting ? "Points to" : "Value"} value={record.value} fieldKey={`value-${idx}`} copiedField={copiedField} onCopy={onCopy} />
     </div>
   );
 }
@@ -534,21 +534,21 @@ function CopyRow({
 }) {
   const copied = copiedField === fieldKey;
   return (
-    <div>
-      <p className="mb-1 text-xs text-muted-foreground">{label}</p>
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
       <div className="flex items-center gap-2">
-        <code className="min-w-0 flex-1 truncate rounded bg-background px-3 py-1.5 text-xs font-mono border">
+        <code className="min-w-0 flex-1 truncate rounded-lg bg-muted/40 px-3 py-2.5 text-sm font-mono">
           {displayValue ?? value}
         </code>
         <Button
           type="button"
-          variant="outline"
+          variant="ghost"
           size="icon"
-          className="h-10 w-10 shrink-0"
+          className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
           onClick={() => onCopy(value, fieldKey)}
           aria-label={`Copy ${label}`}
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
         </Button>
       </div>
     </div>
