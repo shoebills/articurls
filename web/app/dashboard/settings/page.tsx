@@ -370,30 +370,14 @@ export default function SettingsPage() {
           <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
             <div className="flex items-center justify-between gap-4 sm:gap-6">
               <p className="text-sm font-medium">RSS feed</p>
-              <div className="flex items-center gap-2 shrink-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0"
-                  disabled={!rssResourceEnabled}
-                  onClick={() => {
-                    if (rssResourceUrl) {
-                      window.open(rssResourceUrl, "_blank", "noopener,noreferrer");
-                    }
-                  }}
-                >
-                  View
-                </Button>
-                <Switch
-                  checked={rssEnabled}
-                  onCheckedChange={saveRss}
-                  disabled={busy}
-                />
-              </div>
+              <Switch
+                checked={rssEnabled}
+                onCheckedChange={saveRss}
+                disabled={busy}
+              />
             </div>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              When enabled, RSS icon appears in the footer.
+              When enabled, RSS icon appears in the blog footer.
             </p>
           </div>
         </div>
@@ -471,7 +455,7 @@ export default function SettingsPage() {
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    You can change your subdomain once every 7 days.
+                    You can change your subdomain once every {USERNAME_CHANGE_COOLDOWN_DAYS} days.
                   </p>
                   <div className="flex gap-2">
                     <Button

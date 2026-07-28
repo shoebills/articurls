@@ -215,7 +215,8 @@ export default function CustomDomainSettings() {
             />
             <Button type="submit" disabled={loading} className="shrink-0">
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Add Domain
+              <span className="hidden sm:inline">Add Domain</span>
+              <span className="sm:hidden">Add</span>
             </Button>
           </form>
         </div>
