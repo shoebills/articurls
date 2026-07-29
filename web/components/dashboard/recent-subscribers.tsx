@@ -85,12 +85,12 @@ export function RecentSubscribers() {
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Email</th>
-                    <th className="px-3 py-2 font-medium">Subscribed</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Email</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Subscribed</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -116,12 +116,12 @@ export function RecentSubscribers() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                    <th className="px-3 py-2 font-medium">Email</th>
-                    <th className="px-3 py-2 font-medium">Subscribed</th>
-                    <th className="px-3 py-2 font-medium">Status</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Email</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Subscribed</th>
+                    <th className="w-1/3 px-3 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
