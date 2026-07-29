@@ -84,19 +84,25 @@ export function RecentSubscribers() {
         </CardHeader>
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
-            <div className="space-y-2">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between gap-2 rounded-md border px-3 py-2"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <Skeleton className="h-4 w-36" />
-                    <Skeleton className="h-3 w-24" />
-                  </div>
-                  <Skeleton className="h-5 w-16 rounded-full" />
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                    <th className="px-3 py-2 font-medium">Email</th>
+                    <th className="px-3 py-2 font-medium">Subscribed</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <tr key={i} className="border-b last:border-0">
+                      <td className="px-3 py-2.5"><Skeleton className="h-4 w-36" /></td>
+                      <td className="px-3 py-2.5"><Skeleton className="h-4 w-24" /></td>
+                      <td className="px-3 py-2.5"><Skeleton className="h-5 w-16 rounded-full" /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ) : subscribers.length === 0 ? (
             <div className="flex min-h-[160px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-10 text-center">
@@ -109,21 +115,27 @@ export function RecentSubscribers() {
               </p>
             </div>
           ) : (
-            <div className="space-y-2">
-              {subscribers.map((sub) => (
-                <div
-                  key={sub.email}
-                  className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0"
-                >
-                  <div className="flex items-center gap-3 min-w-0">
-                    <span className="truncate text-sm font-medium min-w-0">{sub.email}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">
-                      {formatDate(sub.subscribed_at)}
-                    </span>
-                  </div>
-                  <StatusBadge sub={sub} />
-                </div>
-              ))}
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                    <th className="px-3 py-2 font-medium">Email</th>
+                    <th className="px-3 py-2 font-medium">Subscribed</th>
+                    <th className="px-3 py-2 font-medium">Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {subscribers.map((sub) => (
+                    <tr key={sub.email} className="border-b last:border-0">
+                      <td className="px-3 py-2.5 text-sm truncate max-w-0">{sub.email}</td>
+                      <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
+                        {formatDate(sub.subscribed_at)}
+                      </td>
+                      <td className="px-3 py-2.5"><StatusBadge sub={sub} /></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </CardContent>
