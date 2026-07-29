@@ -52,6 +52,7 @@ import {
   MoreVertical,
   Pencil,
   Plus,
+  Tags,
   Trash2,
   X,
 } from "lucide-react";
@@ -300,23 +301,6 @@ export default function CategoriesDashboardPage() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="mx-auto max-w-[1100px] space-y-6">
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Categories
-        </h1>
-        <div className="rounded-xl border border-border/80 bg-card text-card-foreground shadow-sm">
-          <div className="p-5 sm:p-6 space-y-3">
-            {[1, 2, 3, 4].map((i) => (
-              <Skeleton key={i} className="h-14 w-full rounded-md" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
       <div className="flex items-start justify-between gap-4">
@@ -331,26 +315,38 @@ export default function CategoriesDashboardPage() {
         <Button
           onClick={() => setCreateDialogOpen(true)}
           disabled={busy}
-          className="shrink-0"
+          className="h-11 shrink-0 gap-2 bg-slate-900 text-white hover:bg-slate-800"
         >
           <Plus className="h-4 w-4" />
-          New Category
+          New
         </Button>
       </div>
 
-      {categories.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-lg border border-dashed px-6 py-12 text-center">
-          <p className="text-sm font-medium text-muted-foreground">
-            No categories yet.
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
+              <div className="flex items-center gap-3">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-3 w-16" />
+              </div>
+              <Skeleton className="h-8 w-8 rounded-md" />
+            </div>
+          ))}
+        </div>
+      ) : categories.length === 0 ? (
+        <div
+          className="flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center"
+          role="status"
+          aria-label="No categories yet"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <Tags className="h-5 w-5" aria-hidden />
+          </div>
+          <p className="text-base font-medium text-foreground">No categories yet</p>
+          <p className="max-w-sm text-sm text-muted-foreground">
+            Create your first category to organize your posts.
           </p>
-          <Button
-            className="mt-3"
-            onClick={() => setCreateDialogOpen(true)}
-            disabled={busy}
-          >
-            <Plus className="h-4 w-4" />
-            Create your first category
-          </Button>
         </div>
       ) : (
         <div className="space-y-2">
@@ -359,16 +355,15 @@ export default function CategoriesDashboardPage() {
               key={cat.category_id}
               className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0"
             >
-              <div className="flex items-center gap-3 min-w-0">
-                <span className="truncate text-sm font-medium">
-                  {cat.name}
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
+              <span className="truncate text-sm font-medium min-w-0">
+                {cat.name}
+              </span>
+              <div className="flex items-center gap-3 shrink-0">
+                <span className="text-xs text-muted-foreground">
                   {cat.blog_count ?? 0}{" "}
                   {cat.blog_count === 1 ? "post" : "posts"}
                 </span>
-              </div>
-              <DropdownMenu
+                <DropdownMenu
                 open={menuOpenCatId === cat.category_id}
                 onOpenChange={(open) => {
                   if (!open) setMenuOpenCatId(null);
@@ -408,8 +403,8 @@ export default function CategoriesDashboardPage() {
                       <Plus className="h-4 w-4" />
                     )}
                     {cat.show_in_menu
-                      ? "Remove from Navigation"
-                      : "Show in Navigation"}
+                      ? "Remove from Menu"
+                      : "Show in Menu"}
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
@@ -424,6 +419,7 @@ export default function CategoriesDashboardPage() {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            </div>
             </div>
           ))}
         </div>
