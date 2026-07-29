@@ -70,7 +70,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [featuredBusy, setFeaturedBusy] = useState(false);
   const [featuredIds, setFeaturedIds] = useState<number[]>([]);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
@@ -203,6 +202,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const catDirty =
       savedCatIdsRef.current.length !== selectedCatIds.length ||
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
+    const featuredChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
     return (
       blog.title !== title.trim() ||
       (blog.content || "") !== (content || "") ||
@@ -211,9 +211,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc ||
       (blog.featured_image_url || null) !== nextFeatured ||
-      catDirty
+      catDirty ||
+      featuredChanged
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl, featuredIds, user]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -317,6 +318,24 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         setSelectedCatIds(nextPendingCatIds);
         setPendingCatIds(nextPendingCatIds);
       }
+
+      const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
+      if (featuredIdsChanged && user) {
+        await patchDesignSettings(token, {
+          navbar_enabled: user.navbar_enabled,
+          nav_blog_name: user.nav_blog_name,
+          nav_blog_name_size: user.nav_blog_name_size ?? "medium",
+          nav_menu_enabled: user.nav_menu_enabled,
+          show_about_section: user.show_about_section,
+          site_footer_enabled: user.site_footer_enabled,
+          featured_blogs_enabled: user.featured_blogs_enabled,
+          featured_blog_ids: featuredIds,
+          content_width: user.content_width ?? "wide",
+          list_image_position: user.list_image_position ?? "above_title",
+          show_preview_in_lists: user.show_preview_in_lists ?? true,
+        });
+      }
+
       await refreshUser();
       clearManualDraft();
       setSaveStatus("saved");
@@ -694,36 +713,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <Switch
               className="shrink-0"
               checked={featuredIds.includes(blogId)}
-              disabled={!user || !token || featuredBusy}
-              onCheckedChange={async (v) => {
-                if (!user || !token || featuredBusy) return;
-                const prev = featuredIds;
-                const next = v
-                  ? [...featuredIds, blogId]
-                  : featuredIds.filter((id) => id !== blogId);
-                setFeaturedIds(next);
-                setFeaturedBusy(true);
-                try {
-                  await patchDesignSettings(token, {
-                    navbar_enabled: user.navbar_enabled,
-                    nav_blog_name: user.nav_blog_name,
-                    nav_blog_name_size: user.nav_blog_name_size ?? "medium",
-                    nav_menu_enabled: user.nav_menu_enabled,
-                    show_about_section: user.show_about_section,
-                    site_footer_enabled: user.site_footer_enabled,
-                    featured_blogs_enabled: user.featured_blogs_enabled,
-                    featured_blog_ids: next,
-                    content_width: user.content_width ?? "wide",
-                    list_image_position: user.list_image_position ?? "above_title",
-                    show_preview_in_lists: user.show_preview_in_lists ?? true,
-                  });
-                  await refreshUser();
-                } catch {
-                  setFeaturedIds(prev);
-                  setErr("Failed to update featured status");
-                } finally {
-                  setFeaturedBusy(false);
-                }
+              onCheckedChange={(v) => {
+                setFeaturedIds(v ? [...featuredIds, blogId] : featuredIds.filter((id) => id !== blogId));
               }}
             />
           </div>

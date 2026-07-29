@@ -316,7 +316,7 @@ export default function PagesDashboardPage() {
           </div>
           <p className="text-base font-medium text-foreground">No pages yet</p>
           <p className="max-w-md text-sm text-muted-foreground">
-            Create pages e.g. About, Contact, etc. and add it in the footer from Design or Editor.
+            Create pages (About, Contact, etc.) and add them to your footer from Design or Editor.
           </p>
         </div>
       ) : (
@@ -396,7 +396,7 @@ export default function PagesDashboardPage() {
                                   disabled={rowBusyId === p.page_id}
                                 >
                                   <ExternalLink className="h-4 w-4" />
-                                  View post
+                                  View page
                                 </DropdownMenuItem>
                               )}
                               {p.status === "published" && (
