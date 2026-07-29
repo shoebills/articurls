@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, CircleUser, CircleHelp, Users, Tags } from "lucide-react";
 
 const links = [
-  { href: "/dashboard", label: "Posts", icon: LayoutDashboard },
+  { href: "/dashboard/posts", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },
   { href: "/dashboard/design", label: "Design", icon: Palette },
@@ -35,10 +35,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   const { logout, user, loading } = useAuth();
 
   const linkItems = links.map(({ href, label, icon: Icon }) => {
-    const active =
-      href === "/dashboard"
-        ? pathname === "/dashboard" || pathname.startsWith("/dashboard/posts")
-        : pathname === href || pathname.startsWith(`${href}/`);
+    const active = pathname === href || pathname.startsWith(`${href}/`);
     return (
       <Link
         key={href}
