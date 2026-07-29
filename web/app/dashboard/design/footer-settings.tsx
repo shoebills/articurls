@@ -129,7 +129,7 @@ export function FooterSettings({
 
       {design.site_footer_enabled ? (
         <>
-          <div className="space-y-3">
+          <div className="space-y-5">
             <p className="font-medium">Footer Pages</p>
 
             {selectedFooterPages.length > 0 ? (
@@ -187,11 +187,11 @@ export function FooterSettings({
             />
           </div>
 
-          <div className="border-t border-border/60 pt-5">
+          <div className="border-t border-border/60 pt-7">
             <p className="font-medium mb-4">Social links</p>
 
             {enabledSocials.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-5">
                 {enabledSocials.map((platformKey) => {
                   const option = SOCIAL_OPTIONS.find((s) => s.key === platformKey);
                   if (!option) return null;

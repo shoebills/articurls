@@ -33,7 +33,7 @@ export function SectionPanel({
           <p className="mt-1 text-sm text-muted-foreground">{description}</p>
         </div>
       </div>
-      <div className="border-t p-5 sm:p-6 space-y-5">{children}</div>
+      <div className="border-t p-5 sm:p-6 space-y-7">{children}</div>
     </section>
   );
 }

@@ -32,7 +32,7 @@ export function HeaderSettings({
 
       {design.navbar_enabled ? (
         <>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:gap-6">
+          <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:gap-8">
             <div className="min-w-0 flex-1 space-y-2">
               <Label htmlFor="blogName">Blog name</Label>
               <Input

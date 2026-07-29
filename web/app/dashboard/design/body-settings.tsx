@@ -87,7 +87,7 @@ export function BodySettings({
       {/* About */}
       <div>
         <p className="text-base font-semibold tracking-tight">About</p>
-        <div className="mt-4 space-y-5">
+        <div className="mt-6 space-y-7">
           <SettingRow
             label="Enable about section"
             description="Shows title and bio at the top of the blog list."
@@ -101,7 +101,7 @@ export function BodySettings({
 
           {design.show_about_section ? (
             <>
-              <div className="space-y-3">
+              <div className="space-y-5">
                 <Label htmlFor="about-title">Title</Label>
                 <Input
                   id="about-title"
@@ -114,11 +114,11 @@ export function BodySettings({
                 />
                 <p className="text-xs text-muted-foreground">{(design.about_title || "").length}/40 characters</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-5">
                 <Label htmlFor="bio">Bio</Label>
                 <Textarea
                   id="bio"
-                  className="mt-2 min-h-[120px]"
+                  className="mt-2 min-h-[60px]"
                   value={bio}
                   onChange={(e) => onBioChange(e.target.value)}
                   onBlur={() => saveBioSocials()}
@@ -137,7 +137,7 @@ export function BodySettings({
       {/* Content Layout */}
       <div>
         <p className="text-base font-semibold tracking-tight">Content Layout</p>
-        <div className="mt-4 space-y-5">
+        <div className="mt-6 space-y-7">
           <div>
             <div className="space-y-1">
               <p className="font-medium">Content width</p>
@@ -200,7 +200,7 @@ export function BodySettings({
       {/* Featured Posts */}
       <div>
         <p className="text-base font-semibold tracking-tight">Featured Posts</p>
-        <div className="mt-4 space-y-5">
+        <div className="mt-6 space-y-7">
           <SettingRow
             label="Enable featured blogs"
             description="Show a featured section at the top of the blog list."
