@@ -303,11 +303,22 @@ export default function CategoriesDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Categories
-          </h1>
+      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <div className="flex items-center justify-between gap-3 sm:block">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+              Categories
+            </h1>
+            <Button
+              size="icon"
+              className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+              aria-label="Create new category"
+              onClick={() => setCreateDialogOpen(true)}
+              disabled={busy}
+            >
+              <span className="text-xl leading-none">+</span>
+            </Button>
+          </div>
           <p className="mt-1 text-sm text-muted-foreground">
             Manage the categories used across your blog.
           </p>
@@ -315,10 +326,10 @@ export default function CategoriesDashboardPage() {
         <Button
           onClick={() => setCreateDialogOpen(true)}
           disabled={busy}
-          className="h-11 shrink-0 gap-2 bg-slate-900 text-white hover:bg-slate-800"
+          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
         >
           <Plus className="h-4 w-4" />
-          New
+          New category
         </Button>
       </div>
 
