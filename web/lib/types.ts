@@ -241,6 +241,13 @@ export interface SubscribersAnalytics {
   series: SubscribersAnalyticsSeriesPoint[];
 }
 
+export interface RecentSubscriber {
+  email: string;
+  subscribed_at: string;
+  is_confirmed: boolean;
+  unsubscribed_at: string | null;
+}
+
 export interface Category {
   category_id: number;
   user_id: number;

@@ -240,7 +240,7 @@ export function SubscribersAnalyticsPanel() {
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Unsubscribes
+                        Unsubscribed
                       </p>
                       <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
                         {subs?.unsubscribed ?? "—"}
@@ -280,7 +280,7 @@ export function SubscribersAnalyticsPanel() {
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Current
+                        Current subscribers
                       </p>
                       <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
                         {subs?.current_subscribers ?? "—"}

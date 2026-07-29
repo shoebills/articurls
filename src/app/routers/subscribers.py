@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..schemas import subscribers
-from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token
+from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token, get_current_user
 from ..email.service import send_sub_confirmation_email
 from ..utils import normalize_email
 from ..utils.rate_limit import check_rate_limit_ip_and_email
@@ -147,3 +147,20 @@ def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Successfully unsubscribed"}
+
+@router.get("/recent", status_code=status.HTTP_200_OK)
+def recent_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+
+    db_subscribers = db.query(models.Subscriber).filter(
+        models.Subscriber.user_id == current_user.user_id
+    ).order_by(models.Subscriber.subscribed_at.desc()).limit(10).all()
+
+    return [
+        {
+            "email": sub.email,
+            "subscribed_at": sub.subscribed_at.isoformat() if sub.subscribed_at else None,
+            "is_confirmed": sub.is_confirmed,
+            "unsubscribed_at": sub.unsubscribed_at.isoformat() if sub.unsubscribed_at else None,
+        }
+        for sub in db_subscribers
+    ]
