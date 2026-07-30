@@ -3,10 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, exchangeOAuthCode } from "@/lib/api";
+import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
-import { apiCacheHas, getCachedApiData } from "@/lib/api";
 import type { BlogListItem } from "@/lib/types";
 import { UGC_ORIGIN, UGC_DOMAIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
@@ -67,32 +66,6 @@ export default function PostsPage() {
   const [statusFilter, setStatusFilter] = useState<"all" | "published" | "archived" | "draft" | "scheduled">("all");
   const [sortBy, setSortBy] = useState<"latest" | "oldest">("latest");
   const [page, setPage] = useState(1);
-
-  const exchangedOAuth = useRef(false);
-
-  useEffect(() => {
-    if (exchangedOAuth.current) return;
-    const params = new URLSearchParams(window.location.search);
-    const oauthCode = params.get("code");
-    
-    if (oauthCode) {
-      exchangedOAuth.current = true;
-      const url = new URL(window.location.href);
-      url.searchParams.delete("code");
-      window.history.replaceState({}, "", url.toString());
-      exchangeOAuthCode(oauthCode).then(() => {
-        const plan = localStorage.getItem("pendingPlan");
-        localStorage.removeItem("pendingPlan");
-        if (plan === "pro" || plan === "lifetime") {
-          window.location.replace(`/dashboard/billing?plan=${plan}`);
-        } else {
-          window.location.reload();
-        }
-      }).catch(() => {
-        router.replace("/login?error=oauth_failed");
-      });
-    }
-  }, []);
 
   const load = useCallback(async () => {
     if (!token) return;
