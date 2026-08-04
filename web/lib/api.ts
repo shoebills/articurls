@@ -329,6 +329,18 @@ export async function getDesignSettings(token: string): Promise<DesignSettings> 
   return apiFetch("/user/design", { token });
 }
 
+export async function submitSupportMessage(
+  token: string,
+  body: { category: string; subject: string; message: string }
+): Promise<{ ok: boolean }> {
+  return apiFetch("/support/contact", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
 export async function getSeoSettings(token: string): Promise<SeoSettings> {
   return apiFetch("/user/seo", { token });
 }

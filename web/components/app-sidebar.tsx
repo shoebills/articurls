@@ -17,6 +17,7 @@ const links = [
   { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/billing", label: "Billing & Plans", icon: CreditCard },
+  { href: "/dashboard/support", label: "Support", icon: CircleHelp },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,23 +71,6 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
           <CircleUser className="h-4 w-4 shrink-0 opacity-80" />
           Account
         </Link>
-        <div className="group relative">
-          <Button
-            type="button"
-            variant="ghost"
-            size="sm"
-            asChild
-            className="min-h-10 w-full justify-start gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
-          >
-            <a href={`mailto:support@articurls.com?subject=${encodeURIComponent(`[Support] ${user?.user_name || user?.email || ""}`)}`}>
-              <CircleHelp className="h-4 w-4" />
-              Support
-            </a>
-          </Button>
-          <span className="pointer-events-none absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs font-medium text-background opacity-0 transition-opacity duration-150 group-hover:opacity-100">
-            support@articurls.com
-          </span>
-        </div>
       </div>
       {loading ? (
         <Skeleton className="mb-0.5 h-3 w-32" />

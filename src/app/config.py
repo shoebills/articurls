@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     smtp_port: int = 587
     resend_api_key: str = ""
     from_email: str = ""
+    support_email: str = "support@articurls.com"
 
     dodopayments_api_key: str
     dodopayments_webhook_key: str
