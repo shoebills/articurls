@@ -17,7 +17,6 @@ const links = [
   { href: "/dashboard/audience", label: "Audience", icon: Users },
   { href: "/dashboard/analytics", label: "Analytics", icon: LineChart },
   { href: "/dashboard/billing", label: "Billing & Plans", icon: CreditCard },
-  { href: "/dashboard/support", label: "Support", icon: CircleHelp },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -70,6 +69,14 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
         >
           <CircleUser className="h-4 w-4 shrink-0 opacity-80" />
           Account
+        </Link>
+        <Link
+          href="/dashboard/support"
+          onClick={() => onNavigate?.()}
+          className="flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-[background-color,color] duration-200 hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
+        >
+          <CircleHelp className="h-4 w-4 shrink-0 opacity-80" />
+          Support
         </Link>
       </div>
       {loading ? (
