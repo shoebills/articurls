@@ -30,7 +30,7 @@ export default function DashboardPage() {
         router.replace("/login?error=oauth_failed");
       });
     } else {
-      router.replace("/dashboard/posts");
+      router.replace("/dashboard/home");
     }
   }, [router]);
 

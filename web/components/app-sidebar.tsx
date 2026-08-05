@@ -7,9 +7,10 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, CircleUser, CircleHelp, Users, Tags } from "lucide-react";
+import { LayoutDashboard, LineChart, CreditCard, Settings, LogOut, Files, Palette, CircleUser, CircleHelp, Users, Tags, Home } from "lucide-react";
 
 const links = [
+  { href: "/dashboard/home", label: "Home", icon: Home },
   { href: "/dashboard/posts", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },
