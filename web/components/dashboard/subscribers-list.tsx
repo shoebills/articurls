@@ -134,7 +134,7 @@ export function SubscriberList() {
                   <tbody>
                     {subscribers.map((sub) => (
                       <tr key={sub.email} className="border-b last:border-0">
-                        <td className="px-3 py-2.5 text-sm truncate max-w-0">{sub.email}</td>
+                        <td className="px-3 py-2.5 text-sm truncate">{sub.email}</td>
                         <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
                           {formatDate(sub.subscribed_at)}
                         </td>
