@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, Request, status
+from fastapi import Depends, APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ..database import get_db
@@ -148,19 +148,38 @@ def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
 
     return {"message": "Successfully unsubscribed"}
 
-@router.get("/recent", status_code=status.HTTP_200_OK)
-def recent_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+@router.get("/list", status_code=status.HTTP_200_OK)
+def list_subscribers(
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=50),
+    db: Session = Depends(get_db),
+    current_user = Depends(get_current_user),
+):
 
-    db_subscribers = db.query(models.Subscriber).filter(
+    base_query = db.query(models.Subscriber).filter(
         models.Subscriber.user_id == current_user.user_id
-    ).order_by(models.Subscriber.subscribed_at.desc()).limit(10).all()
+    )
 
-    return [
-        {
-            "email": sub.email,
-            "subscribed_at": sub.subscribed_at.isoformat() if sub.subscribed_at else None,
-            "is_confirmed": sub.is_confirmed,
-            "unsubscribed_at": sub.unsubscribed_at.isoformat() if sub.unsubscribed_at else None,
-        }
-        for sub in db_subscribers
-    ]
+    total = base_query.count()
+
+    db_subscribers = (
+        base_query.order_by(models.Subscriber.subscribed_at.desc())
+        .offset((page - 1) * limit)
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "items": [
+            {
+                "email": sub.email,
+                "subscribed_at": sub.subscribed_at.isoformat() if sub.subscribed_at else None,
+                "is_confirmed": sub.is_confirmed,
+                "unsubscribed_at": sub.unsubscribed_at.isoformat() if sub.unsubscribed_at else None,
+            }
+            for sub in db_subscribers
+        ],
+        "total": total,
+        "page": page,
+        "total_pages": max(1, -(-total // limit)),
+    }

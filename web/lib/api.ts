@@ -15,8 +15,8 @@ import type {
   PublicCategoryBlogsResponse,
   UserPage,
   PublicUser,
-  RecentSubscriber,
   SubscribersAnalytics,
+  SubscriberListResponse,
   SubscriptionOut,
   StorageUsage,
   AdminUserListItem,
@@ -652,8 +652,8 @@ export async function getPublicCategoryBlogs(userName: string, slug: string): Pr
   return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
 }
 
-export async function getRecentSubscribers(token: string): Promise<RecentSubscriber[]> {
-  return apiFetch("/recent", { token });
+export async function listSubscribers(token: string, page = 1, limit = 10): Promise<SubscriberListResponse> {
+  return apiFetch(`/list?page=${page}&limit=${limit}`, { token });
 }
 
 export async function subscribersAnalytics(token: string, period?: string): Promise<SubscribersAnalytics> {

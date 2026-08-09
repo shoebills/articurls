@@ -248,6 +248,13 @@ export interface RecentSubscriber {
   unsubscribed_at: string | null;
 }
 
+export interface SubscriberListResponse {
+  items: RecentSubscriber[];
+  total: number;
+  page: number;
+  total_pages: number;
+}
+
 export interface Category {
   category_id: number;
   user_id: number;

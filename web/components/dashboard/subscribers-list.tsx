@@ -1,13 +1,16 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getRecentSubscribers, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { listSubscribers, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Users2 } from "lucide-react";
-import type { RecentSubscriber } from "@/lib/types";
+import type { SubscriberListResponse } from "@/lib/types";
+
+const SUBSCRIBERS_PER_PAGE = 10;
 
 function formatDate(dateStr: string): string {
   const date = new Date(dateStr);
@@ -18,7 +21,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function StatusBadge({ sub }: { sub: RecentSubscriber }) {
+function StatusBadge({ sub }: { sub: SubscriberListResponse["items"][number] }) {
   if (sub.unsubscribed_at) {
     return (
       <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-500">
@@ -40,19 +43,21 @@ function StatusBadge({ sub }: { sub: RecentSubscriber }) {
   );
 }
 
-export function RecentSubscribers() {
+export function SubscriberList() {
   const { token, loading: authLoading } = useAuth();
-  const [subscribers, setSubscribers] = useState<RecentSubscriber[]>(() => {
+  const [subscribers, setSubscribers] = useState<SubscriberListResponse["items"]>(() => {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<RecentSubscriber[]>("/recent", t) ?? [] : [];
+    return t ? getCachedApiData<SubscriberListResponse>(`/list?page=1&limit=${SUBSCRIBERS_PER_PAGE}`, t)?.items ?? [] : [];
   });
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;
     const t = localStorage.getItem("articurls_token");
     if (!t) return true;
-    return !apiCacheHas("/recent", t);
+    return !apiCacheHas(`/list?page=1&limit=${SUBSCRIBERS_PER_PAGE}`, t);
   });
 
   useEffect(() => {
@@ -62,11 +67,12 @@ export function RecentSubscribers() {
       setLoading(true);
       setErr(null);
       try {
-        const data = await getRecentSubscribers(token);
+        const data = await listSubscribers(token, page, SUBSCRIBERS_PER_PAGE);
         if (cancelled) return;
-        setSubscribers(data);
+        setSubscribers(data.items);
+        setTotalPages(data.total_pages);
       } catch (e) {
-        if (!cancelled) setErr(e instanceof ApiError ? e.message : "Failed to load recent subscribers");
+        if (!cancelled) setErr(e instanceof ApiError ? e.message : "Failed to load subscribers");
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -74,13 +80,13 @@ export function RecentSubscribers() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, page]);
 
   return (
     <>
       <Card>
         <CardHeader className="px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
-          <CardTitle className="text-base sm:text-lg">Recent subscribers</CardTitle>
+          <CardTitle className="text-base sm:text-lg">Subscribers list</CardTitle>
         </CardHeader>
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
@@ -115,28 +121,47 @@ export function RecentSubscribers() {
               </p>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full table-fixed">
-                <thead>
-                  <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                    <th className="w-1/3 px-3 py-2 font-medium">Email</th>
-                    <th className="w-1/3 px-3 py-2 font-medium">Subscribed</th>
-                    <th className="w-1/3 px-3 py-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {subscribers.map((sub) => (
-                    <tr key={sub.email} className="border-b last:border-0">
-                      <td className="px-3 py-2.5 text-sm truncate max-w-0">{sub.email}</td>
-                      <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
-                        {formatDate(sub.subscribed_at)}
-                      </td>
-                      <td className="px-3 py-2.5"><StatusBadge sub={sub} /></td>
+            <>
+              <div className="overflow-x-auto">
+                <table className="w-full table-fixed">
+                  <thead>
+                    <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                      <th className="w-1/3 px-3 py-2 font-medium">Email</th>
+                      <th className="w-1/3 px-3 py-2 font-medium">Subscribed</th>
+                      <th className="w-1/3 px-3 py-2 font-medium">Status</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {subscribers.map((sub) => (
+                      <tr key={sub.email} className="border-b last:border-0">
+                        <td className="px-3 py-2.5 text-sm truncate max-w-0">{sub.email}</td>
+                        <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
+                          {formatDate(sub.subscribed_at)}
+                        </td>
+                        <td className="px-3 py-2.5"><StatusBadge sub={sub} /></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-5 flex items-center justify-between">
+                <Button variant="outline" size="sm" className="h-8 min-h-0 px-3 py-1.5" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
+                  Prev
+                </Button>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Page {page} of {totalPages}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 py-1.5"
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={page >= totalPages}
+                >
+                  Next
+                </Button>
+              </div>
+            </>
           )}
         </CardContent>
       </Card>
