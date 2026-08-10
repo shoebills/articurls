@@ -31,7 +31,6 @@ import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, More
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
-import { resolveBlogContentThumbnail } from "@/lib/blog-images";
 
 const POSTS_PER_PAGE = 10;
 
@@ -301,13 +300,8 @@ export default function PostsPage() {
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
                 <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <Skeleton className="h-6 w-3/4" />
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                    <Skeleton className="aspect-[3/2] w-24 shrink-0 rounded-md sm:w-36" />
+                  <div className="min-w-0 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2">
                     <Skeleton className="h-5 w-16 rounded-full" />
@@ -346,23 +340,10 @@ export default function PostsPage() {
                 className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="min-w-0 flex-1 space-y-1">
-                      <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
-                        {b.title || "Untitled"}
-                      </h2>
-                      <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                        {b.excerpt?.trim() ? b.excerpt : "No preview yet — open the editor to add content."}
-                      </p>
-                    </div>
-                    {resolveBlogContentThumbnail(b) ? (
-                      // eslint-disable-next-line @next/next/no-img-element
-                      <img
-                        src={resolveBlogContentThumbnail(b)}
-                        alt=""
-                        className="aspect-[3/2] w-24 shrink-0 rounded-md border border-border/70 object-cover sm:w-36"
-                      />
-                    ) : null}
+                  <div className="min-w-0 space-y-1">
+                    <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                      {b.title || "Untitled"}
+                    </h2>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
                     {b.status === "scheduled" && b.scheduled_at ? (

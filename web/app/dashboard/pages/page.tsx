@@ -26,7 +26,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { getContentExcerpt } from "@/lib/utils";
 import { format } from "date-fns";
 import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, FileText, Filter, MoreVertical, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -345,15 +344,10 @@ export default function PagesDashboardPage() {
                       className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <CardContent className="space-y-4 p-5 sm:p-6">
-                        <div className="flex items-start gap-3">
-                          <div className="min-w-0 flex-1 text-left space-y-1">
-                            <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
-                              {p.title || "Untitled"}
-                            </p>
-                            <p className="line-clamp-2 text-sm leading-relaxed text-slate-500">
-                              {getContentExcerpt(p.content).trim() ? getContentExcerpt(p.content) : "No preview yet — open the editor to add content."}
-                            </p>
-                          </div>
+                        <div className="min-w-0 text-left space-y-1">
+                          <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                            {p.title || "Untitled"}
+                          </p>
                         </div>
 
                         <div className="flex items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
