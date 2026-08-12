@@ -28,7 +28,10 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#f4f5f8",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
+  ],
 };
 
 export const metadata: Metadata = {
@@ -57,8 +60,8 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} ${geist.variable} min-h-dvh antialiased`}
-      data-theme="light"
       data-scroll-behavior="smooth"
+      suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col overflow-x-clip">
         <Providers>{children}</Providers>
