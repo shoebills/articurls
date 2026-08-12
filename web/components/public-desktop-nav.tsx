@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { SearchButton } from "@/components/search-button";
+import { BlogThemeToggle } from "@/components/blog-theme-toggle";
 import {
   normalizeNavBlogNameSize,
   publicNavDesktopBlogTitleClassName,
@@ -177,6 +178,7 @@ export function PublicDesktopNav({
         )}
       </div>
 
+      <BlogThemeToggle />
       {userName ? (
         <SearchButton
           iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"

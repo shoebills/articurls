@@ -63,12 +63,10 @@
   color-scheme: dark;
 }
 
-.dark mark {
-  background-color: oklch(0.55 0.12 95 / 0.35);
-}
-
+.dark mark,
 .dark .prose-blog mark {
-  background: oklch(0.55 0.12 95 / 0.35);
+  background-color: oklch(0.55 0.12 95 / 0.35);
+  color: inherit;
 }
 
 /* Highlight / mark tag fallback styling for Tiptap content */

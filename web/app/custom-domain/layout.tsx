@@ -3,7 +3,6 @@ import { resolveTenantHostFromHeaders } from "@/lib/request-host";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { loadPublicUser } from "@/lib/public-user";
 import { UmamiTracker } from "@/components/umami-tracker";
-import { BlogThemeToggle } from "@/components/blog-theme-toggle";
 
 const FOUCE_SCRIPT = `(function(){try{if(localStorage.getItem('blog-theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}})();`;
 
@@ -33,7 +32,6 @@ export default async function CustomDomainLayout({ children }: Props) {
       <script dangerouslySetInnerHTML={{ __html: FOUCE_SCRIPT }} />
       <UmamiTracker user={user} />
       {children}
-      <BlogThemeToggle />
     </>
   );
 }
