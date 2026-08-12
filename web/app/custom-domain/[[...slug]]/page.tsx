@@ -360,7 +360,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
     const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
-    const maxWidth = author.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+    const maxWidth = author.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const containerSpacing = author.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -505,7 +505,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-    const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+    const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const contentWidth = user.content_width === "wide" ? "max-w-3xl" : "";
     const mainSpacing = user.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
@@ -599,7 +599,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
   const mainSpacing = user.navbar_enabled
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -705,7 +705,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+  const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const mainSpacing = user.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
