@@ -468,7 +468,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
           {author.content_width === "wide" ? (
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,16rem)]">
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center">
               <div className="max-w-3xl">
                 <div className="mb-5 sm:mb-6 lg:hidden">
                   <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
