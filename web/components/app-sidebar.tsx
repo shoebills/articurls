@@ -58,7 +58,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   const footer = (
     <div
       className={cn(
-        "shrink-0 border-t border-sidebar-border/70 bg-white p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
+        "shrink-0 border-t border-sidebar-border/70 bg-background p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]",
         mobileTrayLayout && "mt-[20px] -mx-2.5"
       )}
     >
@@ -103,7 +103,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       {showBrand ? (
-          <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-white px-3">
+          <div className="flex h-14 shrink-0 items-center border-b border-sidebar-border/70 bg-background px-3">
           <BrandLogo
             href="/dashboard"
             className="min-w-0"
@@ -130,7 +130,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col bg-white md:sticky md:top-0 md:self-start md:flex">
+    <aside className="hidden h-dvh max-h-dvh w-[14.25rem] shrink-0 flex-col bg-background md:sticky md:top-0 md:self-start md:flex">
       <DashboardSidebarPanel />
     </aside>
   );

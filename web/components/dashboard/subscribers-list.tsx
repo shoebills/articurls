@@ -24,7 +24,7 @@ function formatDate(dateStr: string): string {
 function StatusBadge({ sub }: { sub: SubscriberListResponse["items"][number] }) {
   if (sub.unsubscribed_at) {
     return (
-      <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-[11px] font-medium text-gray-500">
+      <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
         Unsubscribed
       </span>
     );
@@ -111,8 +111,8 @@ export function SubscriberList() {
               </table>
             </div>
           ) : subscribers.length === 0 ? (
-            <div className="flex min-h-[160px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-10 text-center">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <div className="flex min-h-[160px] flex-col items-center justify-center gap-4 rounded-2xl border-2 border-dotted border-border bg-background px-6 py-10 text-center">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border/60">
                 <Users2 className="h-5 w-5" />
               </div>
               <p className="text-sm font-medium text-foreground">No subscribers yet</p>

@@ -191,14 +191,14 @@ export default function SeoSettings() {
           </div>
           <Skeleton className="h-10 w-20" />
             <div className="border-t pt-5 mt-2 space-y-3">
-              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
                 <div className="space-y-0.5">
                   <Skeleton className="h-4 w-16" />
                   <Skeleton className="h-3 w-32" />
                 </div>
                 <Skeleton className="h-9 w-16" />
               </div>
-              <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+              <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
                 <div className="space-y-0.5">
                   <Skeleton className="h-4 w-28" />
                   <Skeleton className="h-3 w-48" />
@@ -337,7 +337,7 @@ function SeoResourceRow({
   displayText?: string;
 }) {
   return (
-    <div className="flex items-center justify-between rounded-lg border bg-white px-4 py-3">
+    <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{label}</p>
         <p className="text-xs text-muted-foreground">

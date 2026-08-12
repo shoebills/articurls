@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { Bell, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
-import { BlogThemeToggle } from "@/components/blog-theme-toggle";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
@@ -109,7 +109,7 @@ export function PublicMobileNavMenu({
 
         {showMenuButton ? (
           <div className="flex items-center gap-2">
-            <BlogThemeToggle />
+            <ThemeToggle />
             {userName ? (
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"

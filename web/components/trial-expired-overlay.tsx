@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 
 export function TrialExpiredOverlay() {
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/95 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/95 backdrop-blur-sm">
       <div className="mx-auto max-w-sm px-6 text-center">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 ring-1 ring-amber-200/50">
           <TimerOff className="h-7 w-7 text-amber-600" />

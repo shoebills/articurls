@@ -311,7 +311,7 @@ export default function CategoriesDashboardPage() {
             </h1>
             <Button
               size="icon"
-              className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+              className="h-10 w-10 shrink-0 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90 sm:hidden"
               aria-label="Create new category"
               onClick={() => setCreateDialogOpen(true)}
               disabled={busy}
@@ -326,7 +326,7 @@ export default function CategoriesDashboardPage() {
         <Button
           onClick={() => setCreateDialogOpen(true)}
           disabled={busy}
-          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
+          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
         >
           <Plus className="h-4 w-4" />
           New category
@@ -347,11 +347,11 @@ export default function CategoriesDashboardPage() {
         </div>
       ) : categories.length === 0 ? (
         <div
-          className="flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center"
+          className="flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-border bg-background px-6 py-14 text-center"
           role="status"
           aria-label="No categories yet"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border/60">
             <Tags className="h-5 w-5" aria-hidden />
           </div>
           <p className="text-base font-medium text-foreground">No categories yet</p>

@@ -634,7 +634,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           )}
         </div>
       </div>
-      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">
         {blog.status === "scheduled" && blog.scheduled_at ? (
           <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-xs font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
             <span className="relative flex h-2 w-2">
@@ -648,7 +648,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         )}
         {blog.status !== "scheduled" && (
           <>
-            <span className="text-slate-300 select-none" aria-hidden>
+            <span className="text-muted-foreground/50 select-none" aria-hidden>
               ·
             </span>
             {blog.status === "published" && blog.published_at ? (
@@ -690,7 +690,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Email Subscribers */}
       <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+        <div className="rounded-md border border-border bg-background p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium">Email subscribers</p>
             <Switch
@@ -707,7 +707,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       {/* Show in Featured Posts */}
       <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+        <div className="rounded-md border border-border bg-background p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium">Show in Featured Posts</p>
             <Switch
@@ -722,7 +722,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-white">
+      <div className="mt-6 rounded-lg border border-border bg-background">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
@@ -861,7 +861,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <button
                   ref={catTriggerRef}
                   type="button"
-                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-white px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => {
                     if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                     setCatDropdownOpen(!catDropdownOpen);

@@ -244,7 +244,7 @@ export default function DesignDashboardPage() {
           aria-label="Design sections"
           className="overflow-x-auto pb-1"
         >
-          <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
+          <div className="inline-flex min-w-full rounded-xl border bg-background p-1 sm:min-w-0">
             {sectionTabs.map((section, i) => (
               <Button
                 key={section.id}
@@ -302,7 +302,7 @@ export default function DesignDashboardPage() {
         aria-label="Design sections"
         className="overflow-x-auto pb-1"
       >
-        <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
+        <div className="inline-flex min-w-full rounded-xl border bg-background p-1 sm:min-w-0">
           {sectionTabs.map((section) => (
             <Button
               key={section.id}

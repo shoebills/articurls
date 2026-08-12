@@ -444,9 +444,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           )}
         </div>
       </div>
-      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-slate-500">
+      <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">
         <BlogStatusBadge status={page.status} />
-        <span className="text-slate-300 select-none" aria-hidden>
+        <span className="text-muted-foreground/50 select-none" aria-hidden>
           ·
         </span>
         {page.status === "published" && page.published_at ? (
@@ -479,7 +479,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
       <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-white p-3 space-y-1">
+        <div className="rounded-md border border-border bg-background p-3 space-y-1">
           <div className="flex items-center justify-between gap-4">
             <p className="text-sm font-medium">Show in Footer</p>
             <Switch
@@ -492,7 +492,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-white">
+      <div className="mt-6 rounded-lg border border-border bg-background">
         <button
           type="button"
           className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"

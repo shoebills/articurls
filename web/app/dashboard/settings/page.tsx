@@ -244,7 +244,7 @@ export default function SettingsPage() {
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
 
       <nav className="overflow-x-auto pb-1">
-        <div className="inline-flex min-w-full rounded-xl border bg-white p-1 sm:min-w-0">
+        <div className="inline-flex min-w-full rounded-xl border bg-background p-1 sm:min-w-0">
           {([["general", "General"], ["domains", "Domains"], ["seo", "SEO"]] as const).map(([value, label]) => (
             <Button
               key={value}
@@ -269,7 +269,7 @@ export default function SettingsPage() {
       ) : (
         <>
           <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "general" && "hidden")}>
-          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-white p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
+          <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">
               <p className="text-sm font-medium">Blog favicon</p>
               <p className="text-sm text-muted-foreground">
@@ -277,7 +277,7 @@ export default function SettingsPage() {
               </p>
             </div>
             <div className="flex items-center justify-between gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-white">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
                 {ctxUser?.favicon_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
@@ -349,7 +349,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+          <div className="rounded-xl border border-border/80 bg-background p-4 sm:p-5 space-y-1">
             <div className="flex items-center justify-between gap-4 sm:gap-6">
               <p className="text-sm font-medium">Collect subscribers</p>
               <Switch
@@ -366,7 +366,7 @@ export default function SettingsPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-border/80 bg-white p-4 sm:p-5 space-y-1">
+          <div className="rounded-xl border border-border/80 bg-background p-4 sm:p-5 space-y-1">
             <div className="flex items-center justify-between gap-4 sm:gap-6">
               <p className="text-sm font-medium">RSS feed</p>
               <Switch
@@ -397,7 +397,7 @@ export default function SettingsPage() {
                     <Input
                       value={encodeURIComponent(user_name)}
                       readOnly
-                      className="rounded-l-lg rounded-r-none border border-r-0 bg-white focus-visible:ring-0 focus-visible:ring-offset-0"
+                      className="rounded-l-lg rounded-r-none border border-r-0 bg-background focus-visible:ring-0 focus-visible:ring-offset-0"
                     />
                     <div className="flex shrink-0 items-center rounded-r-lg border bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
                       .{UGC_DOMAIN}

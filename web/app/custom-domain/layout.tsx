@@ -4,8 +4,6 @@ import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { loadPublicUser } from "@/lib/public-user";
 import { UmamiTracker } from "@/components/umami-tracker";
 
-const FOUCE_SCRIPT = `(function(){try{if(localStorage.getItem('blog-theme')==='dark'){document.documentElement.classList.add('dark')}}catch(e){}})();`;
-
 type Props = {
   children: React.ReactNode;
 };
@@ -29,7 +27,6 @@ export default async function CustomDomainLayout({ children }: Props) {
 
   return (
     <>
-      <script dangerouslySetInnerHTML={{ __html: FOUCE_SCRIPT }} />
       <UmamiTracker user={user} />
       {children}
     </>

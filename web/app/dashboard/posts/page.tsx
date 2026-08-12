@@ -221,7 +221,7 @@ export default function PostsPage() {
           <Button
             asChild
             size="icon"
-            className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+            className="h-10 w-10 shrink-0 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90 sm:hidden"
             aria-label="Create new post"
           >
             <Link href="/dashboard/posts/new">
@@ -229,7 +229,7 @@ export default function PostsPage() {
             </Link>
           </Button>
         </div>
-        <Button asChild className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex">
+        <Button asChild className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex">
           <Link href="/dashboard/posts/new">
             <Plus className="h-4 w-4" />
             New Post
@@ -245,7 +245,7 @@ export default function PostsPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search posts"
-            className={`h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
+            className={`h-10 min-h-10 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
           />
           {query.length > 0 && (
             <button
@@ -299,7 +299,7 @@ export default function PostsPage() {
         <ul className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
-                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                <div className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
                   <div className="min-w-0 space-y-2">
                     <Skeleton className="h-6 w-3/4" />
                   </div>
@@ -337,15 +337,15 @@ export default function PostsPage() {
                     openEditor(b.blog_id);
                   }
                 }}
-                className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="cursor-pointer rounded-xl border border-border bg-background transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="min-w-0 space-y-1">
-                    <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                    <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-foreground">
                       {b.title || "Untitled"}
                     </h2>
                   </div>
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-muted-foreground">
                     {b.status === "scheduled" && b.scheduled_at ? (
                       <>
                         <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 text-[0.625rem] sm:text-xs font-semibold tracking-tight text-amber-700 shadow-sm shrink-0">
@@ -361,7 +361,7 @@ export default function PostsPage() {
                     )}
                     {b.status !== "scheduled" && (
                       <>
-                        <span className="text-slate-300 select-none" aria-hidden>
+                        <span className="text-muted-foreground/50 select-none" aria-hidden>
                           ·
                         </span>
                         {b.status === "published" && b.published_at ? (
@@ -378,7 +378,7 @@ export default function PostsPage() {
                             data-card-action="true"
                             variant="ghost"
                             size="icon"
-                            className="h-10 w-10 shrink-0 text-slate-500 hover:text-slate-700"
+                            className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
                             aria-label={`Actions for ${b.title || "Untitled"}`}
                           disabled={rowBusyId === b.blog_id}
                           onPointerDown={(e) => e.preventDefault()}
@@ -458,17 +458,17 @@ export default function PostsPage() {
             </div>
           </>
         ) : (
-          <div className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
+          <div className="rounded-xl border border-border/70 bg-background px-4 py-3 text-sm text-muted-foreground">
             No posts match your search.
           </div>
         )
       ) : (
         <div
-          className="mt-10 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200 sm:min-h-[260px]"
+          className="mt-10 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-border bg-background px-6 py-14 text-center transition-colors duration-200 sm:min-h-[260px]"
           role="status"
           aria-label="No posts yet"
         >
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border/60">
             <PenLine className="h-5 w-5" aria-hidden />
           </div>
           <div className="space-y-1.5">

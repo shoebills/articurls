@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialExpiredOverlay } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
@@ -52,28 +53,29 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="flex min-h-dvh w-full bg-white md:justify-center">
+    <div className="flex min-h-dvh w-full bg-background md:justify-center">
       <div className="flex w-full max-w-[1200px]">
         <AppSidebar />
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-white px-8 md:flex">
+        <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background px-8 md:flex">
           <div className="flex items-center gap-2">
-              {publicBlogHref ? (
-              <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-slate-700">
-                <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
-                  Visit blog
-                </a>
-              </Button>
-            ) : (
-              <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-slate-600">
-                Visit blog
-              </Button>
-            )}
+            <ThemeToggle className="h-8 w-8" />
+               {publicBlogHref ? (
+               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-foreground">
+                 <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
+                   Visit blog
+                 </a>
+               </Button>
+             ) : (
+               <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-muted-foreground">
+                 Visit blog
+               </Button>
+             )}
           </div>
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-white pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
         >
           <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">
@@ -83,7 +85,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-10 w-10 min-h-10 min-w-10 shrink-0 border-border/70 bg-white text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-white hover:text-foreground"
+                    className="h-10 w-10 min-h-10 min-w-10 shrink-0 border-border/70 bg-background text-muted-foreground shadow-md shadow-black/10 touch-manipulation hover:bg-muted hover:text-foreground"
                     aria-label="Open menu"
                     aria-expanded={open}
                     aria-controls={mobileMenuId}
@@ -99,17 +101,20 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                     Articurls
                   </Link>
                 </div>
-                {publicBlogHref ? (
-                  <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-700">
+                <div className="flex shrink-0 items-center gap-2">
+                  <ThemeToggle className="h-8 w-8" />
+                  {publicBlogHref ? (
+                  <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-foreground">
                     <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
                       Visit blog
                     </a>
                   </Button>
                 ) : (
-                  <Button type="button" variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-slate-600">
+                  <Button type="button" variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-muted-foreground">
                     Visit blog
                   </Button>
                 )}
+                </div>
               </div>
 
               <div
@@ -120,7 +125,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 )}
                 aria-hidden={!open}
               >
-                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-white">
+                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-background">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     showBrand={false}
@@ -142,7 +147,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="flex-1 touch-pan-y bg-white px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
+        <main className="flex-1 touch-pan-y bg-background px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
           {children}
         </main>
       </div>

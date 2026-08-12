@@ -207,7 +207,7 @@ export default function PagesDashboardPage() {
           <Button
             asChild
             size="icon"
-            className="h-10 w-10 shrink-0 touch-manipulation bg-slate-900 text-white hover:bg-slate-800 sm:hidden"
+            className="h-10 w-10 shrink-0 touch-manipulation bg-primary text-primary-foreground hover:bg-primary/90 sm:hidden"
             aria-label="Create new page"
           >
             <Link href="/dashboard/pages/new">
@@ -217,7 +217,7 @@ export default function PagesDashboardPage() {
         </div>
         <Button
           asChild
-          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-slate-900 text-white hover:bg-slate-800 sm:inline-flex"
+          className="hidden h-11 shrink-0 touch-manipulation gap-2 bg-primary text-primary-foreground hover:bg-primary/90 sm:inline-flex"
         >
           <Link href="/dashboard/pages/new">
             <Plus className="h-4 w-4" />
@@ -234,7 +234,7 @@ export default function PagesDashboardPage() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search"
             aria-label="Search pages"
-            className={`h-10 min-h-10 rounded-xl border-border/80 bg-white pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
+            className={`h-10 min-h-10 rounded-xl border-border/80 bg-background pl-10 sm:h-11 sm:min-h-11 ${query.length > 0 ? "pr-10" : "pr-4"}`}
           />
           {query.length > 0 && (
             <button
@@ -287,7 +287,7 @@ export default function PagesDashboardPage() {
         <ul className="space-y-4">
             {Array.from({ length: 5 }).map((_, i) => (
               <li key={i}>
-                <div className="rounded-xl border border-[#e5e7eb] bg-white p-5 sm:p-6 space-y-4">
+                <div className="rounded-xl border border-border bg-background p-5 sm:p-6 space-y-4">
                   <div className="flex items-start gap-3">
                     <div className="min-w-0 flex-1 space-y-2">
                       <Skeleton className="h-6 w-3/4" />
@@ -306,11 +306,11 @@ export default function PagesDashboardPage() {
           </ul>
       ) : pages.length === 0 ? (
         <div
-          className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-[#e5e7eb] bg-white px-6 py-14 text-center transition-colors duration-200"
+          className="mt-2 flex min-h-[220px] flex-col items-center justify-center gap-5 rounded-2xl border-2 border-dotted border-border bg-background px-6 py-14 text-center transition-colors duration-200"
           role="status"
           aria-label="No pages yet"
         >
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-muted-foreground shadow-sm ring-1 ring-border/60">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm ring-1 ring-border/60">
             <FileText className="h-5 w-5" aria-hidden />
           </div>
           <p className="text-base font-medium text-foreground">No pages yet</p>
@@ -341,18 +341,18 @@ export default function PagesDashboardPage() {
                           router.push(`/dashboard/pages/${p.page_id}/edit`);
                         }
                       }}
-                      className="cursor-pointer rounded-xl border border-[#e5e7eb] bg-white transition-[box-shadow,border-color] duration-200 hover:border-slate-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="cursor-pointer rounded-xl border border-border bg-background transition-[box-shadow,border-color] duration-200 hover:border-border hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                     >
                       <CardContent className="space-y-4 p-5 sm:p-6">
                         <div className="min-w-0 text-left space-y-1">
-                          <p className="truncate text-lg font-medium leading-snug tracking-tight text-slate-900">
+                          <p className="truncate text-lg font-medium leading-snug tracking-tight text-foreground">
                             {p.title || "Untitled"}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-slate-500">
+                        <div className="flex items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-muted-foreground">
                           <BlogStatusBadge status={p.status} className="shrink-0 !text-[0.625rem] sm:!text-xs" />
-                          <span className="text-slate-300 select-none" aria-hidden>
+                          <span className="text-muted-foreground/50 select-none" aria-hidden>
                             ·
                           </span>
                           {p.status === "published" && p.published_at ? (
@@ -367,7 +367,7 @@ export default function PagesDashboardPage() {
                                   data-card-action="true"
                                   variant="ghost"
                                   size="icon"
-                                  className="h-10 w-10 shrink-0 text-slate-500 hover:text-slate-700"
+                                  className="h-10 w-10 shrink-0 text-muted-foreground hover:text-foreground"
                                   aria-label={`Actions for ${p.title || "Untitled"}`}
                                 disabled={rowBusyId === p.page_id}
                                 onPointerDown={(e) => e.preventDefault()}
@@ -450,7 +450,7 @@ export default function PagesDashboardPage() {
               </div>
             </>
           ) : (
-            <div className="rounded-xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border/70 bg-background px-4 py-3 text-sm text-muted-foreground">
               No pages match your search.
             </div>
           )}

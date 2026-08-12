@@ -496,7 +496,7 @@ function DnsRecordCard({
   const isRouting = record.purpose === "routing";
 
   return (
-    <div className="rounded-xl border bg-white p-5 space-y-4">
+    <div className="rounded-xl border bg-background p-5 space-y-4">
       <div className="flex items-center gap-2">
         <span className="text-sm font-semibold">DNS Record</span>
         {!isRouting && (

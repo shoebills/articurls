@@ -56,7 +56,7 @@ function StatCard({
   loading: boolean;
 }) {
   return (
-    <Card className="rounded-xl border-[#e5e7eb]">
+    <Card className="rounded-xl border-border">
       <CardContent className="p-5">
         <div className="flex items-center gap-2 text-muted-foreground">
           <Icon className="h-4 w-4" />
@@ -185,7 +185,7 @@ export default function DashboardHomePage() {
               </Link>
             </Button>
           ) : null}
-          <Button asChild className="h-11 shrink-0 gap-2 bg-slate-900 text-white hover:bg-slate-800">
+          <Button asChild className="h-11 shrink-0 gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
             <Link href="/dashboard/posts/new">
               <Plus className="h-4 w-4" />
               New Post
@@ -226,7 +226,7 @@ export default function DashboardHomePage() {
       </div>
 
       <div className="mt-4 grid gap-4 sm:mt-6 sm:gap-6 lg:grid-cols-3">
-        <Card className="rounded-xl border-[#e5e7eb] lg:col-span-2">
+        <Card className="rounded-xl border-border lg:col-span-2">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 p-5 sm:p-6">
             <CardTitle className="text-base font-semibold">Recent posts</CardTitle>
             <Button asChild variant="ghost" size="sm" className="gap-1 text-sm text-muted-foreground hover:text-foreground">
@@ -277,7 +277,7 @@ export default function DashboardHomePage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border-[#e5e7eb]">
+        <Card className="rounded-xl border-border">
           <CardHeader className="p-5 sm:p-6">
             <CardTitle className="text-base font-semibold">Quick actions</CardTitle>
           </CardHeader>
