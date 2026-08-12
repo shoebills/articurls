@@ -17,8 +17,7 @@ import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
-import { transformHtmlImages } from "@/lib/image-transform";
-import { transformImageUrl } from "@/lib/image-transform";
+import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
@@ -374,6 +373,11 @@ export default async function CustomDomainPage({ params }: Props) {
       (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
     const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
+    const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
+    const featuredImageUrl = featuredBaseUrl
+      ? transformImageUrl(featuredBaseUrl, { width: 1200, fit: "cover" })
+      : null;
+    const featuredImageSrcSet = featuredBaseUrl ? generateSrcSet(featuredBaseUrl, [400, 800, 1200]) : null;
     const { html: blogHtmlWithIds, headings: tocHeadings } = injectHeadingIds(
       transformHtmlImages(sanitizeHtml(blog.content))
     );
@@ -405,7 +409,21 @@ export default async function CustomDomainPage({ params }: Props) {
             )}
           </div>
         </header>
-        <div className="mt-12">
+        {featuredImageUrl ? (
+          <figure className="mt-6 sm:mt-8">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={featuredImageUrl}
+              srcSet={featuredImageSrcSet ?? undefined}
+              sizes="(max-width: 1024px) 100vw, 768px"
+              alt={blog.title}
+              loading="eager"
+              decoding="async"
+              className="block h-auto w-full rounded-2xl"
+            />
+          </figure>
+        ) : null}
+        <div className={featuredImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
           <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
         </div>
         {showSubscriberCollection ? (
