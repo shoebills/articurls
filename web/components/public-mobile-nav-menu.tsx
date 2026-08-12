@@ -110,7 +110,7 @@ export function PublicMobileNavMenu({
           <div className="flex items-center gap-2">
             {userName ? (
               <SearchButton
-                iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+                iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
                 userName={userName}
               />
             ) : null}
@@ -121,7 +121,7 @@ export function PublicMobileNavMenu({
                 aria-expanded={open}
                 aria-controls={menuId}
                 onClick={() => setOpen((prev) => !prev)}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
               >
                 {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
@@ -142,7 +142,7 @@ export function PublicMobileNavMenu({
         <div
           id={menuId}
           className={cn(
-            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-white shadow-lg origin-top transition-all duration-250 ease-out",
+            "fixed z-50 max-h-[min(72dvh,28rem)] overflow-y-auto overflow-x-hidden rounded-xl border border-border/80 bg-popover shadow-lg origin-top transition-all duration-250 ease-out",
             open && trayLayout
               ? "translate-y-0 opacity-100"
               : "pointer-events-none -translate-y-1.5 opacity-0"

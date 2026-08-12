@@ -67,7 +67,7 @@ export function BlogPostShareMenu({ url, title }: { url: string; title: string }
             <Share2 className="h-4 w-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-52 bg-white">
+        <DropdownMenuContent align="end" className="w-52">
           <DropdownMenuItem onClick={copyLink}>
             <Link2 className="h-4 w-4" /> Copy link
           </DropdownMenuItem>

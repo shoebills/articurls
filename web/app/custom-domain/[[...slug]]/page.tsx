@@ -375,7 +375,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
 
     return (
-      <article className="min-h-screen bg-white">
+      <article className="min-h-screen bg-background">
         <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
           {author.navbar_enabled ? (
@@ -479,7 +479,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const currentUrl = `https://${host}/page/${encodeURIComponent(pageSlug)}`;
 
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-background">
         <main className={mainSpacing}>
           <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
@@ -578,7 +578,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const currentUrl = `https://${host}/category/${encodeURIComponent(categorySlug)}`;
 
     return (
-      <div className="min-h-screen bg-white">
+      <div className="min-h-screen bg-background">
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
@@ -635,7 +635,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 show_preview_in_lists={user.show_preview_in_lists ?? true}
               />
             ) : (
-              <div className="rounded-xl border border-border/70 bg-white px-4 py-8 text-center">
+              <div className="rounded-xl border border-border/70 bg-background px-4 py-8 text-center">
                 <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
               </div>
             )}
@@ -682,7 +682,7 @@ export default async function CustomDomainPage({ params }: Props) {
   const currentUrl = `https://${host}`;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-background">
         <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
           {user.navbar_enabled ? (

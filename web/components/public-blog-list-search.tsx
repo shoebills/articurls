@@ -278,7 +278,7 @@ export function PublicBlogListSearch({
   if (blogs.length === 0) {
     return (
       <section className="mt-5 sm:mt-6">
-        <p className="rounded-xl border border-dashed border-border/80 bg-white px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">No published posts yet.</p>
+        <p className="rounded-xl border border-dashed border-border/80 bg-background px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">No published posts yet.</p>
       </section>
     );
   }
@@ -321,7 +321,7 @@ export function PublicBlogListSearch({
           <Button
             variant="outline"
             size="sm"
-            className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+            className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={currentPage <= 1}
           >
@@ -333,7 +333,7 @@ export function PublicBlogListSearch({
           <Button
             variant="outline"
             size="sm"
-            className="border-border/80 bg-white shadow-sm hover:bg-white hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+            className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={currentPage >= totalPages}
           >

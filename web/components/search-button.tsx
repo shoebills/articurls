@@ -200,7 +200,7 @@ export function SearchButton({
         onClick={openSearch}
         className={
           iconClassName ??
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
         }
       >
         <Search className="h-4 w-4" />
@@ -209,15 +209,14 @@ export function SearchButton({
       {mounted ? (
         <>
           <div
-            className={`fixed inset-0 z-40 transition-opacity duration-150 ease-out ${
+            className={`fixed inset-0 z-40 bg-black/10 transition-opacity duration-150 ease-out dark:bg-black/40 ${
               visible ? "opacity-100" : "opacity-0"
             }`}
-            style={{ backgroundColor: "rgba(0,0,0,0.1)" }}
             onClick={closeSearch}
           />
 
           <div
-            className={`fixed left-1/2 top-20 z-50 w-[32rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border/80 bg-white shadow-xl transition-all duration-150 ease-out ${
+            className={`fixed left-1/2 top-20 z-50 w-[32rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border/80 bg-background shadow-xl transition-all duration-150 ease-out ${
               visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
             }`}
             role="dialog"
@@ -236,7 +235,7 @@ export function SearchButton({
                   onKeyDown={handleKeyDown}
                   placeholder="Search posts..."
                   aria-label="Search posts"
-                  className="h-11 min-h-11 rounded-xl border-border/80 !bg-white pl-9 pr-9"
+                  className="h-11 min-h-11 rounded-xl border-border/80 !bg-background pl-9 pr-9"
                 />
                 {query ? (
                   <button

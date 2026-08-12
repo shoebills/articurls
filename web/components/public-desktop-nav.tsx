@@ -164,7 +164,7 @@ export function PublicDesktopNav({
                     <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[10rem] bg-white origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
+                <DropdownMenuContent align="end" className="min-w-[10rem] origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
                   {overflowLinks.map((l) => (
                     <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
                       <Link prefetch={false} href={l.href}>{l.label}</Link>
@@ -179,7 +179,7 @@ export function PublicDesktopNav({
 
       {userName ? (
         <SearchButton
-          iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-white text-muted-foreground shadow-sm transition-all duration-200 hover:bg-white hover:text-foreground"
+          iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
           userName={userName}
         />
       ) : null}
