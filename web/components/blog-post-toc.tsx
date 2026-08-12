@@ -70,26 +70,26 @@ export function BlogPostToc({ headings, collapsible = false, defaultCollapsed = 
               aria-hidden
             />
           </button>
-          <div
-            id="toc-collapse"
-            className={cn(
-              "overflow-hidden transition-all duration-200 ease-out",
-              isOpen ? "max-h-[60vh] pb-3" : "max-h-0"
-            )}
-          >
-            <ul className="space-y-1 px-4">
-              {headings.map((heading) => (
-                <TocItem key={heading.id} heading={heading} activeId={activeId} />
-              ))}
-            </ul>
-          </div>
+            <div
+              id="toc-collapse"
+              className={cn(
+                "transition-all duration-200 ease-out",
+                isOpen ? "max-h-[70vh] overflow-y-auto pb-3" : "max-h-0 overflow-hidden"
+              )}
+            >
+              <ul className="space-y-1 border-l border-border pl-3">
+                {headings.map((heading) => (
+                  <TocItem key={heading.id} heading={heading} activeId={activeId} />
+                ))}
+              </ul>
+            </div>
         </div>
       ) : (
-        <div className="sticky top-8">
+        <div className="sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto pr-2">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             On this page
           </p>
-          <ul className="space-y-1">
+          <ul className="space-y-1 border-l border-border pl-3">
             {headings.map((heading) => (
               <TocItem key={heading.id} heading={heading} activeId={activeId} />
             ))}
@@ -109,9 +109,7 @@ function TocItem({ heading, activeId }: { heading: TocHeading; activeId: string 
         className={cn(
           "block rounded-md py-1 pr-2 text-sm transition-colors hover:text-foreground",
           heading.level === 3 && "pl-3",
-          isActive
-            ? "border-l-2 border-primary pl-3 font-medium text-foreground"
-            : "border-l-2 border-transparent pl-3 text-muted-foreground"
+          isActive ? "font-medium text-foreground" : "text-muted-foreground"
         )}
         aria-current={isActive ? "location" : undefined}
       >
