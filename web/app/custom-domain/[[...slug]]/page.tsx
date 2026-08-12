@@ -475,7 +475,7 @@ export default async function CustomDomainPage({ params }: Props) {
                 </div>
                 {blogPostContent}
               </div>
-              <aside className="hidden lg:block">
+              <aside className="hidden lg:block sticky top-24 self-start z-30">
                 <BlogPostToc headings={tocHeadings} />
               </aside>
             </div>

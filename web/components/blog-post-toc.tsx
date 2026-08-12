@@ -54,13 +54,13 @@ export function BlogPostToc({ headings, collapsible = false, defaultCollapsed = 
   if (headings.length === 0) return null;
 
   return (
-    <nav aria-label="Table of contents" className="bg-background">
+    <nav aria-label="Table of contents">
       {collapsible ? (
-        <div className="border-l border-border pl-3">
+        <div className="rounded-xl border border-border/80 bg-background shadow-sm">
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}
-            className="flex w-full items-center justify-between gap-2 py-3 pr-2 text-left text-sm font-medium"
+            className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left text-sm font-medium"
             aria-expanded={isOpen}
             aria-controls="toc-collapse"
           >
@@ -77,7 +77,7 @@ export function BlogPostToc({ headings, collapsible = false, defaultCollapsed = 
               isOpen ? "max-h-[70vh] overflow-y-auto pb-3" : "max-h-0 overflow-hidden"
             )}
           >
-            <ul className="space-y-1">
+            <ul className="space-y-1 px-4">
               {headings.map((heading) => (
                 <TocItem key={heading.id} heading={heading} activeId={activeId} />
               ))}
@@ -85,7 +85,7 @@ export function BlogPostToc({ headings, collapsible = false, defaultCollapsed = 
           </div>
         </div>
       ) : (
-        <div className="sticky top-24 z-30 max-h-[calc(100vh-7rem)] overflow-y-auto pr-2">
+        <div className="max-h-[calc(100vh-7rem)] overflow-y-auto pr-2">
           <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             On this page
           </p>
