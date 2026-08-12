@@ -27,6 +27,8 @@ import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
 import { ChevronLeft } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
+import { BlogPostToc } from "@/components/blog-post-toc";
+import { injectHeadingIds } from "@/lib/toc";
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -358,7 +360,6 @@ export default async function CustomDomainPage({ params }: Props) {
     const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
     const maxWidth = author.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
-    const contentWidth = author.content_width === "wide" ? "max-w-3xl" : "";
     const containerSpacing = author.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
@@ -373,6 +374,47 @@ export default async function CustomDomainPage({ params }: Props) {
       (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
     const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
+    const { html: blogHtmlWithIds, headings: tocHeadings } = injectHeadingIds(
+      transformHtmlImages(sanitizeHtml(blog.content))
+    );
+
+    const blogPostContent = (
+      <>
+        <div className="flex items-center justify-between">
+          <Link href={getPublicProfileUrl(username)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+            Back
+          </Link>
+          <BlogPostShareMenu url={currentUrl} title={blog.title} />
+        </div>
+        <header className="mt-6 sm:mt-8">
+          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+            {blog.title}
+          </h1>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+            <Link
+              href={getPublicProfileUrl(username)}
+              className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            >
+              <span className="truncate">{author.name}</span>
+            </Link>
+            {blog.published_at && (
+              <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
+                {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+              </time>
+            )}
+          </div>
+        </header>
+        <div className="mt-12">
+          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
+        </div>
+        {showSubscriberCollection ? (
+          <div className="mt-14">
+            <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
+          </div>
+        ) : null}
+      </>
+    );
 
     return (
       <article className="min-h-screen bg-background">
@@ -405,41 +447,24 @@ export default async function CustomDomainPage({ params }: Props) {
               </div>
             </header>
           ) : null}
-          <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
-            <div className="flex items-center justify-between">
-              <Link href={getPublicProfileUrl(username)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Back
-              </Link>
-              <BlogPostShareMenu url={currentUrl} title={blog.title} />
-            </div>
-            <header className="mt-6 sm:mt-8">
-              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
-                {blog.title}
-              </h1>
-              <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-                <Link
-                  href={getPublicProfileUrl(username)}
-                  className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  <span className="truncate">{author.name}</span>
-                </Link>
-                {blog.published_at && (
-                  <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
-                    {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
-                  </time>
-                )}
+          {author.content_width === "wide" ? (
+            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,16rem)_minmax(0,1fr)]">
+              <aside className="hidden lg:block">
+                <BlogPostToc headings={tocHeadings} />
+              </aside>
+              <div className="ml-auto max-w-3xl">
+                <div className="lg:hidden">
+                  <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
+                </div>
+                {blogPostContent}
               </div>
-            </header>
-            <div className="mt-12">
-              <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(blog.content)) }} />
             </div>
-            {showSubscriberCollection ? (
-              <div className="mt-14">
-                <SubscribeToAuthor userName={author.user_name} authorName={author.name} />
-              </div>
-            ) : null}
-          </div>
+          ) : (
+            <div>
+              <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
+              {blogPostContent}
+            </div>
+          )}
           <PublicSiteFooter user={author} pages={pages} />
         </main>
       </article>

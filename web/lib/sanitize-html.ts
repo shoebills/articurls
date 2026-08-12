@@ -49,6 +49,7 @@ const ALLOWED_ATTR = [
   "width",
   "height",
   "class",
+  "id",
   "srcset",
   "sizes",
   "loading",
