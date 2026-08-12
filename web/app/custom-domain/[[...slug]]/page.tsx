@@ -29,6 +29,8 @@ import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
 
+const publicNavHeaderClass = "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+
 type Props = { params: Promise<{ slug?: string[] }> };
 
 export const dynamic = "force-dynamic";
@@ -360,7 +362,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
     const maxWidth = author.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
     const containerSpacing = author.navbar_enabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
     // On custom domain, nav links are relative (no /username prefix)
     const catLinks = categories.map((c) => ({
@@ -439,7 +441,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
           {author.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className={publicNavHeaderClass} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -468,7 +470,7 @@ export default async function CustomDomainPage({ params }: Props) {
           {author.content_width === "wide" ? (
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,16rem)]">
               <div className="max-w-3xl">
-                <div className="mb-5 sm:mb-6 lg:hidden">
+                <div className="sticky top-24 z-30 mb-5 sm:mb-6 lg:hidden">
                   <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
                 </div>
                 {blogPostContent}
@@ -478,7 +480,7 @@ export default async function CustomDomainPage({ params }: Props) {
               </aside>
             </div>
           ) : (
-            <div className="mb-5 sm:mb-6">
+            <div className="sticky top-24 z-30 mb-5 sm:mb-6">
               <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
             </div>
           )}
@@ -525,7 +527,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <main className={mainSpacing}>
           <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className={publicNavHeaderClass} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -597,10 +599,10 @@ export default async function CustomDomainPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-    const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
-    const mainSpacing = user.navbar_enabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+  const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
+  const mainSpacing = user.navbar_enabled
+    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
       href: getPublicCategoryUrl(username, c.slug),
@@ -624,7 +626,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className={publicNavHeaderClass} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -704,9 +706,9 @@ export default async function CustomDomainPage({ params }: Props) {
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
   const maxWidth = user.content_width === "wide" ? "max-w-6xl" : "max-w-3xl";
-  const mainSpacing = user.navbar_enabled
-    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
-    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+    const mainSpacing = user.navbar_enabled
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
   // On custom domain, nav links are relative
   const catLinks = categories.map((c) => ({
@@ -728,7 +730,7 @@ export default async function CustomDomainPage({ params }: Props) {
         <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
           {user.navbar_enabled ? (
-            <header className="mb-8 border-b border-border/70 pb-4 sm:mb-10 sm:pb-5" data-public-nav>
+            <header className={publicNavHeaderClass} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
