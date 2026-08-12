@@ -453,16 +453,15 @@ export default async function CustomDomainPage({ params }: Props) {
                 <BlogPostToc headings={tocHeadings} />
               </aside>
               <div className="ml-auto max-w-3xl">
-                <div className="lg:hidden">
+                <div className="mb-5 sm:mb-6 lg:hidden">
                   <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
                 </div>
                 {blogPostContent}
               </div>
             </div>
           ) : (
-            <div>
+            <div className="mb-5 sm:mb-6">
               <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
-              {blogPostContent}
             </div>
           )}
           <PublicSiteFooter user={author} pages={pages} />
