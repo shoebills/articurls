@@ -24,7 +24,7 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
-import { ChevronLeft } from "lucide-react";
+import { Calendar, ChevronLeft } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
@@ -394,7 +394,7 @@ export default async function CustomDomainPage({ params }: Props) {
           <BlogPostShareMenu url={currentUrl} title={blog.title} />
         </div>
         <header className="mt-6 sm:mt-8">
-          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-4xl md:text-5xl">
+          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
             {blog.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
@@ -405,7 +405,8 @@ export default async function CustomDomainPage({ params }: Props) {
               <span className="truncate">{author.name}</span>
             </Link>
             {blog.published_at && (
-              <time className="text-sm text-muted-foreground" dateTime={blog.published_at}>
+              <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
+                <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
               </time>
             )}
@@ -556,7 +557,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </header>
           ) : null}
 
-          <div className={contentWidth ? `ml-auto ${contentWidth}` : ""}>
+          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
               <Link
                 href={getPublicProfileUrl(username)}
@@ -569,7 +570,7 @@ export default async function CustomDomainPage({ params }: Props) {
             </div>
 
             <header className="mt-6 sm:mt-8">
-              <h1 className="text-3xl font-bold tracking-tight">{page.title}</h1>
+              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
             </header>
             <article className="mt-12">
               <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />

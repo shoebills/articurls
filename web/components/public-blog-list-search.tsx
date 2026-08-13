@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
-import { Image } from "lucide-react";
+import { Calendar, Image } from "lucide-react";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -69,7 +69,8 @@ function BlogListItemRow({
         </Link>
         <div className="mt-3 flex items-center justify-between gap-2">
           {b.published_at ? (
-            <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+            <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
+              <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
               {new Date(b.published_at).toLocaleDateString("en-US", {
                 year: "numeric",
                 month: "short",
@@ -127,7 +128,8 @@ function BlogListAboveTitleItem({
       </Link>
       <div className="mt-3 flex items-center justify-between gap-2">
         {b.published_at ? (
-          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+          <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
+            <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
             {new Date(b.published_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
@@ -195,7 +197,8 @@ function BlogCardGridItem({
       </Link>
       <div className="flex items-center justify-between gap-2 pb-1">
         {b.published_at ? (
-          <time className="text-xs text-muted-foreground" dateTime={b.published_at}>
+          <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
+            <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
             {new Date(b.published_at).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
