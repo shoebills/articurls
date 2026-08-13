@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { subscribersAnalytics, exportSubscribersCsv, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { subscribersAnalytics, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -115,25 +114,11 @@ export function SubscribersAnalyticsPanel() {
     };
   }, [token, sPeriod]);
 
-  async function exportCsv() {
-    if (!token) return;
-    try {
-      const blob = await exportSubscribersCsv(token);
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "subscribers.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Export failed");
-    }
-  }
-
   return (
     <>
       <div className="space-y-6">
-        <div className="flex flex-row flex-wrap items-end justify-between gap-4">
+        <div className="flex items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Audience</h1>
           <div className="w-auto shrink-0">
             <Select value={sPeriod} onValueChange={(v) => setSPeriod(v as (typeof PERIODS)[number])}>
               <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Subscribers time range">
@@ -148,13 +133,6 @@ export function SubscribersAnalyticsPanel() {
               </SelectContent>
             </Select>
           </div>
-          <Button
-            variant="outline"
-            className="h-10 w-auto shrink-0 touch-manipulation sm:h-auto sm:min-h-9"
-            onClick={exportCsv}
-          >
-            Export CSV
-          </Button>
         </div>
 
         {authLoading || loading ? (

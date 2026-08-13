@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { listSubscribers, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { listSubscribers, exportSubscribersCsv, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,11 +82,33 @@ export function SubscriberList() {
     };
   }, [token, page]);
 
+  async function exportCsv() {
+    if (!token) return;
+    try {
+      const blob = await exportSubscribersCsv(token);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "subscribers.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Export failed");
+    }
+  }
+
   return (
     <>
       <Card>
-        <CardHeader className="px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
+        <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
           <CardTitle className="text-base sm:text-lg">Subscribers list</CardTitle>
+          <Button
+            variant="outline"
+            className="h-9 w-auto shrink-0 touch-manipulation"
+            onClick={exportCsv}
+          >
+            Export CSV
+          </Button>
         </CardHeader>
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
