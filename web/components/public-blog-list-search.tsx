@@ -3,11 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import type { PublicBlog, PublicUser, ContentWidth, ListImagePosition } from "@/lib/types";
-import { UGC_ORIGIN } from "@/lib/env";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
-import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { Calendar, Image } from "lucide-react";
 
 type PublicBlogListSearchProps = {
@@ -23,22 +21,17 @@ type PublicBlogListSearchProps = {
 
 const POSTS_PER_PAGE = 12;
 
-function publicBlogPostUrl(userName: string, slug: string, siteOrigin?: string) {
-  const path = getPublicPostUrl(userName, slug);
-  return `${siteOrigin || UGC_ORIGIN}${path}`;
-}
-
 function BlogListItemRow({
   blog: b,
   username,
-  siteOrigin,
+  authorName,
   inGrid = false,
   largeImage = false,
   showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
-  siteOrigin?: string;
+  authorName?: string;
   inGrid?: boolean;
   largeImage?: boolean;
   showPreview?: boolean;
@@ -68,6 +61,7 @@ function BlogListItemRow({
           </div>
         </Link>
         <div className="mt-3 flex items-center justify-between gap-2">
+          <span className="truncate text-xs text-muted-foreground">{authorName}</span>
           {b.published_at ? (
             <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
               <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -80,10 +74,6 @@ function BlogListItemRow({
           ) : (
             <span className="text-xs text-muted-foreground" aria-hidden />
           )}
-          <BlogPostShareMenu
-            url={publicBlogPostUrl(username, b.slug, siteOrigin)}
-            title={b.title}
-          />
         </div>
       </div>
     </li>
@@ -93,12 +83,12 @@ function BlogListItemRow({
 function BlogListAboveTitleItem({
   blog: b,
   username,
-  siteOrigin,
+  authorName,
   showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
-  siteOrigin?: string;
+  authorName?: string;
   showPreview?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
@@ -127,6 +117,7 @@ function BlogListAboveTitleItem({
         {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
       </Link>
       <div className="mt-3 flex items-center justify-between gap-2">
+        <span className="truncate text-xs text-muted-foreground">{authorName}</span>
         {b.published_at ? (
           <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
             <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -139,10 +130,6 @@ function BlogListAboveTitleItem({
         ) : (
           <span className="text-xs text-muted-foreground" aria-hidden />
         )}
-        <BlogPostShareMenu
-          url={publicBlogPostUrl(username, b.slug, siteOrigin)}
-          title={b.title}
-        />
       </div>
     </li>
   );
@@ -151,12 +138,12 @@ function BlogListAboveTitleItem({
 function BlogCardGridItem({
   blog: b,
   username,
-  siteOrigin,
+  authorName,
   showPreview = true,
 }: {
   blog: PublicBlog;
   username: string;
-  siteOrigin?: string;
+  authorName?: string;
   showPreview?: boolean;
 }) {
   const previewImage = resolveBlogCoverImage(b);
@@ -196,6 +183,7 @@ function BlogCardGridItem({
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 pb-1">
+        <span className="truncate text-xs text-muted-foreground">{authorName}</span>
         {b.published_at ? (
           <time className="inline-flex items-center gap-1 text-xs text-muted-foreground" dateTime={b.published_at}>
             <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
@@ -208,10 +196,6 @@ function BlogCardGridItem({
         ) : (
           <span className="text-xs text-muted-foreground" aria-hidden />
         )}
-        <BlogPostShareMenu
-          url={publicBlogPostUrl(username, b.slug, siteOrigin)}
-          title={b.title}
-        />
       </div>
     </li>
   );
@@ -222,7 +206,6 @@ export function PublicBlogListSearch({
   username,
   user,
   hideFeatured,
-  siteOrigin,
   content_width = "wide",
   list_image_position = "above_title",
   show_preview_in_lists = true,
@@ -297,7 +280,7 @@ export function PublicBlogListSearch({
                   key={`featured-${b.blog_id}`}
                   blog={b}
                   username={username}
-                  siteOrigin={siteOrigin}
+                  authorName={user?.name}
                   showPreview={show_preview_in_lists}
                 />
             ))}
@@ -313,7 +296,7 @@ export function PublicBlogListSearch({
             key={b.blog_id}
             blog={b}
             username={username}
-            siteOrigin={siteOrigin}
+            authorName={user?.name}
             showPreview={show_preview_in_lists}
           />
         ))}
