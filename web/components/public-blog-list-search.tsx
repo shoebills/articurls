@@ -61,9 +61,9 @@ function BlogListItemRow({
           </div>
         </Link>
         <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="truncate text-muted-foreground">{authorName}</span>
+          <span className="truncate text-sm text-muted-foreground">{authorName}</span>
           {b.published_at ? (
-            <time className="inline-flex items-center gap-1 text-muted-foreground" dateTime={b.published_at}>
+            <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
               <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
               {new Date(b.published_at).toLocaleDateString("en-US", {
                 year: "numeric",
@@ -72,7 +72,7 @@ function BlogListItemRow({
               })}
             </time>
           ) : (
-            <span className="text-muted-foreground" aria-hidden />
+            <span className="text-sm text-muted-foreground" aria-hidden />
           )}
         </div>
       </div>
@@ -117,9 +117,9 @@ function BlogListAboveTitleItem({
         {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
       </Link>
       <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="truncate text-muted-foreground">{authorName}</span>
+        <span className="truncate text-sm text-muted-foreground">{authorName}</span>
         {b.published_at ? (
-          <time className="inline-flex items-center gap-1 text-muted-foreground" dateTime={b.published_at}>
+          <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
             <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
             {new Date(b.published_at).toLocaleDateString("en-US", {
               year: "numeric",
@@ -128,7 +128,7 @@ function BlogListAboveTitleItem({
             })}
           </time>
         ) : (
-          <span className="text-muted-foreground" aria-hidden />
+          <span className="text-sm text-muted-foreground" aria-hidden />
         )}
       </div>
     </li>
@@ -183,9 +183,9 @@ function BlogCardGridItem({
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 pb-1">
-        <span className="truncate text-muted-foreground">{authorName}</span>
+        <span className="truncate text-sm text-muted-foreground">{authorName}</span>
         {b.published_at ? (
-          <time className="inline-flex items-center gap-1 text-muted-foreground" dateTime={b.published_at}>
+          <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
             <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
             {new Date(b.published_at).toLocaleDateString("en-US", {
               year: "numeric",
@@ -194,7 +194,7 @@ function BlogCardGridItem({
             })}
           </time>
         ) : (
-          <span className="text-muted-foreground" aria-hidden />
+          <span className="text-sm text-muted-foreground" aria-hidden />
         )}
       </div>
     </li>
