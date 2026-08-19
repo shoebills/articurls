@@ -9,7 +9,7 @@ import {
   isInternalHost,
   resolveTenantHostFromHeaders,
 } from "@/lib/request-host";
-import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse } from "@/lib/types";
+import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -35,7 +35,7 @@ type Props = { params: Promise<{ slug?: string[] }> };
 
 export const dynamic = "force-dynamic";
 
-// ── Data loaders ─────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
   return (user?.nav_blog_name || "").trim() || "My Blog";
@@ -55,17 +55,34 @@ function resolvePageDescription(page: UserPage): string | undefined {
   return contentDescription || undefined;
 }
 
-async function resolveDomainInfo(host: string): Promise<{
-  username: string;
-  domain_status: string;
-  redirect_to: string | null;
-} | null> {
+function resolveRoutingSegments(
+  rawSegments: string[],
+  customSubpath?: string | null,
+  headerBasepath?: string | null
+): { segments: string[]; basePath: string } {
+  const base = (customSubpath || headerBasepath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  if (!base) {
+    return { segments: rawSegments, basePath: "" };
+  }
+
+  const baseParts = base.split("/");
+  const matches = baseParts.every((part, idx) => rawSegments[idx] === part);
+  if (matches) {
+    return {
+      segments: rawSegments.slice(baseParts.length),
+      basePath: `/${base}`,
+    };
+  }
+  return { segments: rawSegments, basePath: `/${base}` };
+}
+
+async function resolveDomainInfo(host: string): Promise<DomainLookupResponse | null> {
   const ugcHost = new URL(UGC_ORIGIN).hostname;
   const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
   if (host.endsWith(`.${ugcHost}`)) {
     const subdomain = host.split(".")[0];
     if (subdomain && !RESERVED.has(subdomain)) {
-      return { username: subdomain, domain_status: "active", redirect_to: null };
+      return { username: subdomain, domain_status: "active", redirect_to: null, custom_subpath: null };
     }
   }
   try {
@@ -83,6 +100,7 @@ async function resolveDomainInfo(host: string): Promise<{
       username: data.username,
       domain_status: data.domain_status,
       redirect_to: data.redirect_to ?? null,
+      custom_subpath: data.custom_subpath ?? null,
     };
   } catch {
     return null;
@@ -157,16 +175,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const username = domainInfo.username;
 
   const { slug: rawSegments = [] } = await params;
-  const segments = rawSegments;
-  const canonical = `https://${host}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
+  const headerBasepath = h.get("x-articurls-basepath");
+  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath, headerBasepath);
+
+  const canonical = `https://${host}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
   const alternatesWithOptionalRss = (rssEnabled: boolean) =>
     rssEnabled
-      ? { canonical, types: { "application/rss+xml": `https://${host}/rss.xml` } }
+      ? { canonical, types: { "application/rss+xml": `https://${host}${basePath}/rss.xml` } }
       : { canonical };
 
-  // Blog post: /blog/[slug]
+  // Blog post: /blog/[slug] or direct [slug] under subpath
+  let postSlug: string | null = null;
   if (segments[0] === "blog" && segments[1]) {
-    const postSlug = segments[1];
+    postSlug = segments[1];
+  } else if (segments.length === 1 && segments[0] !== "category" && segments[0] !== "page" && basePath) {
+    postSlug = segments[0];
+  }
+
+  if (postSlug) {
     const [blog, author] = await Promise.all([loadBlog(username, postSlug), loadUser(username)]);
     if (!blog) return { title: "Not found" };
     const title = blog.meta_title || blog.title;
@@ -256,7 +282,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  // Profile page
+  // Profile / Homepage
   const user = await loadUser(username);
   if (!user) return { title: "Not found" };
   const title = user.meta_title || `${user.name} — Articurls`;
@@ -285,7 +311,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-// Preconnect to image CDN for faster mobile image loading
 export const viewport = {
   themeColor: "#f4f5f8",
   other: {
@@ -296,59 +321,59 @@ export const viewport = {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
-export default async function CustomDomainPage({ params }: Props) {
-  // Current URL for structured data
+export default async function SitePublicationPage({ params }: Props) {
   const h = await headers();
   const runtimeHosts = buildRuntimeHostsFromEnv();
   const host = resolveTenantHostFromHeaders(h, runtimeHosts);
 
   if (isInternalHost(host, runtimeHosts)) notFound();
 
-  // Check domain status and handle lifecycle
   const domainInfo = await resolveDomainInfo(host);
   
   if (!domainInfo) {
     notFound();
   }
 
-  // Handle expired domains with permanent redirect back to articurls
   if (domainInfo.domain_status === "expired") {
-    const { slug: segments = [] } = await params;
-    const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
+    const { slug: rawSegments = [] } = await params;
+    const pathname = rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`;
     const ugcHost = new URL(UGC_ORIGIN).hostname;
     const redirectUrl = `https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`;
     permanentRedirect(redirectUrl);
   }
 
-  // Do not serve content before verification — redirect to articurls
   if (domainInfo.domain_status === "pending") {
-    const { slug: segments = [] } = await params;
-    const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
+    const { slug: rawSegments = [] } = await params;
+    const pathname = rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`;
     const ugcHost = new URL(UGC_ORIGIN).hostname;
     redirect(`https://${encodeURIComponent(domainInfo.username)}.${ugcHost}${pathname}`);
   }
 
-  // Any other unrecognised status (none, etc.) — 404
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
     notFound();
   }
 
   const username = domainInfo.username;
-  const { slug: segments = [] } = await params;
-  const pathname = segments.length === 0 ? "" : `/${segments.join("/")}`;
-  const siteOrigin = `https://${host}`;
+  const { slug: rawSegments = [] } = await params;
+  const headerBasepath = h.get("x-articurls-basepath");
+  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath, headerBasepath);
 
-  // If the backend determined this hostname is not the canonical URL,
-  // redirect to the canonical origin in one hop, preserving the path.
+  const pathname = `${basePath}${segments.length === 0 ? "" : `/${segments.join("/")}`}`;
+  const siteOrigin = `https://${host}${basePath}`;
+
   if (domainInfo.redirect_to) {
     permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
   }
 
-  // ── Blog post: /blog/[slug] ────────────────────────────────────────────────
-  if (segments[0] === "blog") {
-    if (!segments[1]) notFound();
-    const postSlug = segments[1];
+  // ── Blog post: /blog/[slug] or direct [slug] under subpath ────────────────
+  let postSlug: string | null = null;
+  if (segments[0] === "blog" && segments[1]) {
+    postSlug = segments[1];
+  } else if (segments.length === 1 && segments[0] !== "category" && segments[0] !== "page" && basePath) {
+    postSlug = segments[0];
+  }
 
+  if (postSlug) {
     const [blog, author, pages, categories] = await Promise.all([
       loadBlog(username, postSlug),
       loadUser(username),
@@ -364,9 +389,9 @@ export default async function CustomDomainPage({ params }: Props) {
     const containerSpacing = author.navbar_enabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-    // On custom domain, nav links are relative (no /username prefix)
+    
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug),
+      href: getPublicCategoryUrl(username, c.slug, basePath),
       label: c.name,
     }));
     const showSubscriberCollection = author.subscriber_collection_enabled === true;
@@ -374,7 +399,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
-    const currentUrl = `https://${host}/blog/${encodeURIComponent(postSlug)}`;
+    const currentUrl = `https://${host}${basePath}/blog/${encodeURIComponent(postSlug)}`;
     const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
     const featuredImageUrl = featuredBaseUrl
       ? transformImageUrl(featuredBaseUrl, { width: 1200, fit: "cover" })
@@ -387,7 +412,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const blogPostContent = (
       <>
         <div className="flex items-center justify-between">
-          <Link href={getPublicProfileUrl(username)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+          <Link href={getPublicProfileUrl(username, basePath)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
             Back
           </Link>
@@ -399,7 +424,7 @@ export default async function CustomDomainPage({ params }: Props) {
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
             <Link
-              href={getPublicProfileUrl(username)}
+              href={getPublicProfileUrl(username, basePath)}
               className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
             >
               <span className="truncate">{author.name}</span>
@@ -446,7 +471,7 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
@@ -457,7 +482,7 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={author.nav_menu_enabled ? catLinks : []}
                   userName={author.user_name}
@@ -513,7 +538,7 @@ export default async function CustomDomainPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug),
+      href: getPublicCategoryUrl(username, c.slug, basePath),
       label: c.name,
     }));
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
@@ -521,7 +546,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
 
-    const currentUrl = `https://${host}/page/${encodeURIComponent(pageSlug)}`;
+    const currentUrl = `https://${host}${basePath}/page/${encodeURIComponent(pageSlug)}`;
 
     return (
       <div className="min-h-screen bg-background">
@@ -532,26 +557,24 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
-
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-
                 />
               </div>
             </header>
@@ -560,7 +583,7 @@ export default async function CustomDomainPage({ params }: Props) {
           <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
             <div className="flex items-center justify-between">
               <Link
-                href={getPublicProfileUrl(username)}
+                href={getPublicProfileUrl(username, basePath)}
                 className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >
                 <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
@@ -578,7 +601,6 @@ export default async function CustomDomainPage({ params }: Props) {
           </div>
           <PublicSiteFooter user={user} pages={pages} />
         </main>
-
       </div>
     );
   }
@@ -600,19 +622,19 @@ export default async function CustomDomainPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-  const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-  const mainSpacing = user.navbar_enabled
-    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+    const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const mainSpacing = user.navbar_enabled
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug),
+      href: getPublicCategoryUrl(username, c.slug, basePath),
       label: c.name,
     }));
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
     const desktopLinks = user.nav_menu_enabled
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(username, c.slug),
+          href: getPublicCategoryUrl(username, c.slug, basePath),
           label: c.name,
           active: c.slug === categorySlug,
         }))
@@ -620,7 +642,7 @@ export default async function CustomDomainPage({ params }: Props) {
     const hasMobileNav =
       (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
 
-    const currentUrl = `https://${host}/category/${encodeURIComponent(categorySlug)}`;
+    const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
 
     return (
       <div className="min-h-screen bg-background">
@@ -631,26 +653,24 @@ export default async function CustomDomainPage({ params }: Props) {
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={desktopLinks}
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
-
                 />
               </div>
               <div className="sm:hidden">
                 <PublicMobileNavMenu
                   title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
+                  titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
                   links={user.nav_menu_enabled ? catLinks : []}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
-
                 />
               </div>
             </header>
@@ -658,7 +678,7 @@ export default async function CustomDomainPage({ params }: Props) {
 
           <div className="mb-6 flex items-center gap-3">
               <Link
-                href={getPublicProfileUrl(username)}
+                href={getPublicProfileUrl(username, basePath)}
                 className="text-sm text-muted-foreground hover:text-foreground"
               >
                 ← All posts
@@ -673,7 +693,6 @@ export default async function CustomDomainPage({ params }: Props) {
                 username={username}
                 user={user}
                 hideFeatured
-
                 siteOrigin={siteOrigin}
                 content_width={user.content_width || "wide"}
                 list_image_position={user.list_image_position || "above_title"}
@@ -686,13 +705,11 @@ export default async function CustomDomainPage({ params }: Props) {
             )}
             <PublicSiteFooter user={user} pages={pages} />
         </main>
-
       </div>
     );
   }
 
   // ── Profile / home ────────────────────────────────────────────────────────
-  // Only render homepage for the root path — any other unrecognised segment is a 404
   if (segments.length > 0) notFound();
 
   const [user, blogs, pages, categories] = await Promise.all([
@@ -707,13 +724,12 @@ export default async function CustomDomainPage({ params }: Props) {
   const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
   const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const mainSpacing = user.navbar_enabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+  const mainSpacing = user.navbar_enabled
+    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
-  // On custom domain, nav links are relative
   const catLinks = categories.map((c) => ({
-    href: getPublicCategoryUrl(username, c.slug),
+    href: getPublicCategoryUrl(username, c.slug, basePath),
     label: c.name,
   }));
   const showSubscriberCollection = user.subscriber_collection_enabled === true;
@@ -721,62 +737,56 @@ export default async function CustomDomainPage({ params }: Props) {
   const hasMobileNav =
     (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
 
-  // Rewrite blog hrefs to be relative for custom domain
-  const blogsWithRelativeHrefs = blogs;
-
-  const currentUrl = `https://${host}`;
+  const currentUrl = `https://${host}${basePath}`;
 
   return (
     <div className="min-h-screen bg-background">
-        <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
+      <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
       <main className={mainSpacing}>
-          {user.navbar_enabled ? (
-            <header className={publicNavHeaderClass} data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  userName={user.user_name}
-                  authorName={user.name}
-
-                />
-              </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(username)}
-                  nameSize={blogNameSize}
-                  links={user.nav_menu_enabled ? catLinks : []}
-                  userName={user.user_name}
-                  authorName={user.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showMenuButton={hasMobileNav}
-
-                />
-              </div>
-            </header>
-          ) : null}
-          {user.show_about_section && (user.about_title || user.bio) ? (
-            <div className="mb-20 mt-20 text-center md:w-1/2 md:mx-auto">
-              <h1 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">{user.about_title || "About the author"}</h1>
-              {user.bio ? <p className="whitespace-pre-line text-lg text-muted-foreground">{user.bio}</p> : null}
+        {user.navbar_enabled ? (
+          <header className={publicNavHeaderClass} data-public-nav>
+            <div className="hidden w-full sm:block">
+              <PublicDesktopNav
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username, basePath)}
+                nameSize={blogNameSize}
+                links={desktopLinks}
+                showSubscribe={showSubscriberCollection}
+                userName={user.user_name}
+                authorName={user.name}
+              />
             </div>
-          ) : null}
-          <PublicBlogListSearch
-            blogs={blogsWithRelativeHrefs}
-            username={username}
-            user={user}
-
-            siteOrigin={siteOrigin}
-            content_width={user.content_width || "wide"}
-            list_image_position={user.list_image_position || "above_title"}
-            show_preview_in_lists={user.show_preview_in_lists ?? true}
-          />
-          <PublicSiteFooter user={user} pages={pages} />
+            <div className="sm:hidden">
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(username, basePath)}
+                nameSize={blogNameSize}
+                links={user.nav_menu_enabled ? catLinks : []}
+                userName={user.user_name}
+                authorName={user.name}
+                showSubscribeAction={showSubscriberCollection}
+                showMenuButton={hasMobileNav}
+              />
+            </div>
+          </header>
+        ) : null}
+        {user.show_about_section && (user.about_title || user.bio) ? (
+          <div className="mb-20 mt-20 text-center md:w-1/2 md:mx-auto">
+            <h1 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">{user.about_title || "About the author"}</h1>
+            {user.bio ? <p className="whitespace-pre-line text-lg text-muted-foreground">{user.bio}</p> : null}
+          </div>
+        ) : null}
+        <PublicBlogListSearch
+          blogs={blogs}
+          username={username}
+          user={user}
+          siteOrigin={siteOrigin}
+          content_width={user.content_width || "wide"}
+          list_image_position={user.list_image_position || "above_title"}
+          show_preview_in_lists={user.show_preview_in_lists ?? true}
+        />
+        <PublicSiteFooter user={user} pages={pages} />
       </main>
-      </div>
+    </div>
   );
 }

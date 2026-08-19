@@ -33,6 +33,8 @@ import type {
   UmamiTechResponse,
   UmamiRealtimeResponse,
   UserSettings,
+  SubfolderSettings,
+  SubfolderSnippets,
 } from "./types";
 
 export type {
@@ -835,4 +837,38 @@ export async function getUmamiRealtime(
   token: string,
 ): Promise<UmamiRealtimeResponse> {
   return apiFetch("/analytics/umami/realtime", { token });
+}
+
+// ── Subfolder / Cloudflare API ───────────────────────────────────────────────
+
+export async function getSubfolderSettings(token: string): Promise<SubfolderSettings> {
+  return apiFetch("/settings/subfolder", { token, disableCache: true });
+}
+
+export async function updateSubfolderSettings(
+  token: string,
+  body: { custom_domain: string; custom_subpath: string }
+): Promise<SubfolderSettings> {
+  return apiFetch("/settings/subfolder", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteSubfolderSettings(token: string): Promise<{ message: string }> {
+  return apiFetch("/settings/subfolder", { method: "DELETE", token });
+}
+
+export async function getCloudflareConnectUrl(token: string): Promise<{ auth_url: string }> {
+  return apiFetch("/auth/cloudflare/connect", { token });
+}
+
+export async function disconnectCloudflare(token: string): Promise<{ message: string }> {
+  return apiFetch("/settings/subfolder/cloudflare", { method: "DELETE", token });
+}
+
+export async function getSubfolderSnippets(token: string): Promise<SubfolderSnippets> {
+  return apiFetch("/settings/subfolder/snippets", { token, disableCache: true });
 }

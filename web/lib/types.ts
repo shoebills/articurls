@@ -303,6 +303,27 @@ export interface DomainVerifyResponse {
   message?: string | null;
 }
 
+export interface SubfolderSettings {
+  custom_domain: string | null;
+  custom_subpath: string | null;
+  cf_connected: boolean;
+  is_active: boolean;
+}
+
+export interface SubfolderSnippets {
+  cloudflare_worker: string;
+  nextjs: string;
+  nginx: string;
+  caddy: string;
+}
+
+export interface DomainLookupResponse {
+  username: string;
+  domain_status: string;
+  redirect_to: string | null;
+  custom_subpath?: string | null;
+}
+
 export interface UmamiMetricsRow {
   x: string;
   y: number;

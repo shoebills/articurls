@@ -67,6 +67,10 @@ class Settings(BaseSettings):
     google_client_secret: str = ""
     google_redirect_uri: str = ""
 
+    cloudflare_client_id: str = ""
+    cloudflare_client_secret: str = ""
+    cloudflare_redirect_uri: str = ""
+
     umami_api_url: str = ""
     umami_api_username: str = ""
     umami_api_password: str = ""

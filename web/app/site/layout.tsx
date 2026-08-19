@@ -8,7 +8,7 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default async function CustomDomainLayout({ children }: Props) {
+export default async function SiteLayout({ children }: Props) {
   const host = resolveTenantHostFromHeaders(await headers());
   const domainInfo = await resolveDomainForSeo(host);
 

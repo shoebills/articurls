@@ -29,6 +29,7 @@ import { assetUrl, UGC_DOMAIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import CustomDomainSettings from "@/components/custom-domain-settings";
+import SubfolderSettings from "@/components/subfolder-settings";
 import SeoSettings from "@/components/seo-settings";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
@@ -483,13 +484,15 @@ export default function SettingsPage() {
 
           <Card>
             <CardHeader className="pb-4 sm:pb-4">
-              <CardTitle className="text-xl">Custom Domain</CardTitle>
-              <CardDescription>Use your own domain for your blog.</CardDescription>
+              <CardTitle className="text-xl">Custom Domain (Subdomain)</CardTitle>
+              <CardDescription>Point a standalone custom domain or subdomain (e.g. blog.yourcompany.com) to your blog.</CardDescription>
             </CardHeader>
             <CardContent>
               <CustomDomainSettings />
             </CardContent>
           </Card>
+
+          <SubfolderSettings />
         </div>
 
       <div className={cn(selectedTab !== "seo" && "hidden")}>

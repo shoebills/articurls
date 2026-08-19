@@ -41,6 +41,9 @@ class Site(Base):
     
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
     custom_subpath = Column(String, nullable=True, default=None)
+    cf_zone_id = Column(String, nullable=True, default=None)
+    cf_route_id = Column(String, nullable=True, default=None)
+    cf_connected = Column(Boolean, nullable=False, default=False)
     domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
     domain_dns_instructions = Column(JSON, nullable=True, default=None)
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)

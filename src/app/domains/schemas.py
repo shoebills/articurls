@@ -43,3 +43,16 @@ class DomainLookupOut(BaseModel):
     username: str
     domain_status: str
     redirect_to: Optional[str] = None
+    custom_subpath: Optional[str] = None
+
+
+class SubfolderIn(BaseModel):
+    custom_domain: str
+    custom_subpath: str
+
+
+class SubfolderOut(BaseModel):
+    custom_domain: Optional[str] = None
+    custom_subpath: Optional[str] = None
+    cf_connected: bool = False
+    is_active: bool = False

@@ -90,7 +90,7 @@ export function resolveTenantHostFromRequest(
   return resolveTenantHost(req.headers, req.nextUrl.hostname, runtimeHosts);
 }
 
-/** For Next.js server components (custom-domain page). */
+/** For Next.js server components (site publication page). */
 export function resolveTenantHostFromHeaders(
   headers: Headers,
   runtimeHosts: string[] = buildRuntimeHostsFromEnv(),
@@ -98,12 +98,16 @@ export function resolveTenantHostFromHeaders(
   return resolveTenantHost(headers, "", runtimeHosts);
 }
 
-/** Normalize middleware downstream headers for custom-domain routes. */
+/** Normalize middleware downstream headers for site publication routes. */
 export function withTenantHostHeader(
   requestHeaders: Headers,
   tenantHost: string,
 ): Headers {
   const headers = new Headers(requestHeaders);
   headers.set("x-original-host", tenantHost);
+  const basepath = requestHeaders.get("x-articurls-basepath");
+  if (basepath) {
+    headers.set("x-articurls-basepath", basepath);
+  }
   return headers;
 }

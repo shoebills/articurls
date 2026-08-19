@@ -35,13 +35,16 @@ def _invalidate_domain_cache(hostname: str) -> None:
 
 
 def _canonical_url_for_subdomain(
-    db_site: models.User, requested_hostname: str
+    db_site: models.Site, requested_hostname: str
 ) -> Optional[str]:
     if db_site.custom_domain and db_site.domain_status in (
         models.DomainStatus.ACTIVE,
         models.DomainStatus.GRACE,
     ):
-        return f"https://{db_site.custom_domain}"
+        base = f"https://{db_site.custom_domain}"
+        if db_site.custom_subpath:
+            base += db_site.custom_subpath
+        return base
     ugc_domain = settings.ugc_domain
     expected = f"{db_site.user_name}.{ugc_domain}"
     if requested_hostname != expected:
@@ -274,6 +277,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
                         "username": db_site.subdomain,
                         "domain_status": "active",
                         "redirect_to": _canonical_url_for_subdomain(db_site, normalized),
+                        "custom_subpath": db_site.custom_subpath,
                     }
                     try:
                         redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
@@ -293,6 +297,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         "username": db_site.subdomain,
         "domain_status": db_site.domain_status.value if hasattr(db_site.domain_status, "value") else db_site.domain_status,
         "redirect_to": None,
+        "custom_subpath": db_site.custom_subpath,
     }
 
     try:
