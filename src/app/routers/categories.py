@@ -17,13 +17,13 @@ router = APIRouter(
 )
 
 
-def _unique_category_slug(db: Session, user_id: int, name: str) -> str:
+def _unique_category_slug(db: Session, site_id: int, name: str) -> str:
     base = slugify(name) or "category"
     candidate = base
     idx = 2
     while (
         db.query(models.Category)
-        .filter(models.Category.user_id == user_id, models.Category.slug == candidate)
+        .filter(models.Category.site_id == site_id, models.Category.slug == candidate)
         .first()
         is not None
     ):
@@ -40,7 +40,8 @@ def _category_out(db: Session, cat: models.Category) -> dict:
     ) or 0
     return {
         "category_id": cat.category_id,
-        "user_id": cat.user_id,
+        "site_id": cat.site_id,
+        "user_id": cat.site_id,
         "name": cat.name,
         "slug": cat.slug,
         "blog_count": blog_count,
@@ -57,7 +58,7 @@ def list_categories(
 ):
     cats = (
         db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
+        .filter(models.Category.site_id == current_site.site_id)
         .order_by(models.Category.created_at.asc())
         .all()
     )
@@ -79,15 +80,15 @@ def create_category(
         )
 
     new_cat = models.Category(
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
         name=name,
-        slug=_unique_category_slug(db, current_user.user_id, name),
+        slug=_unique_category_slug(db, current_site.site_id, name),
     )
     db.add(new_cat)
     db.commit()
     db.refresh(new_cat)
 
-    schedule_tenant_purge(background_tasks, current_user)
+    schedule_tenant_purge(background_tasks, current_site)
     return _category_out(db, new_cat)
 
 
@@ -119,7 +120,7 @@ def update_menu_categories(
 
     cats = (
         db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
+        .filter(models.Category.site_id == current_site.site_id)
         .order_by(models.Category.created_at.asc())
         .all()
     )
@@ -140,11 +141,11 @@ def update_menu_categories(
 
     db.commit()
 
-    schedule_tenant_purge(background_tasks, current_user)
+    schedule_tenant_purge(background_tasks, current_site)
 
     cats = (
         db.query(models.Category)
-        .filter(models.Category.user_id == current_user.user_id)
+        .filter(models.Category.site_id == current_site.site_id)
         .order_by(models.Category.created_at.asc())
         .all()
     )
@@ -163,7 +164,7 @@ def update_category(
         db.query(models.Category)
         .filter(
             models.Category.category_id == category_id,
-            models.Category.user_id == current_user.user_id,
+            models.Category.site_id == current_site.site_id,
         )
         .first()
     )
@@ -181,13 +182,13 @@ def update_category(
             )
         if name != db_cat.name:
             db_cat.name = name
-            db_cat.slug = _unique_category_slug(db, current_user.user_id, name)
+            db_cat.slug = _unique_category_slug(db, current_site.site_id, name)
 
     db.commit()
     db.refresh(db_cat)
 
-    schedule_category_purge(background_tasks, current_user, old_slug)
-    schedule_category_purge(background_tasks, current_user, db_cat.slug)
+    schedule_category_purge(background_tasks, current_site, old_slug)
+    schedule_category_purge(background_tasks, current_site, db_cat.slug)
 
     return _category_out(db, db_cat)
 
@@ -203,7 +204,7 @@ def delete_category(
         db.query(models.Category)
         .filter(
             models.Category.category_id == category_id,
-            models.Category.user_id == current_user.user_id,
+            models.Category.site_id == current_site.site_id,
         )
         .first()
     )
@@ -212,8 +213,8 @@ def delete_category(
     db.delete(db_cat)
     db.commit()
 
-    schedule_category_purge(background_tasks, current_user, db_cat.slug)
-    schedule_tenant_purge(background_tasks, current_user)
+    schedule_category_purge(background_tasks, current_site, db_cat.slug)
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"message": "Category deleted"}
 
@@ -228,7 +229,7 @@ def get_category_blogs(
         db.query(models.Category)
         .filter(
             models.Category.category_id == category_id,
-            models.Category.user_id == current_user.user_id,
+            models.Category.site_id == current_site.site_id,
         )
         .first()
     )
@@ -240,7 +241,7 @@ def get_category_blogs(
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)
         .filter(
             models.BlogCategory.category_id == category_id,
-            models.Blog.user_id == current_user.user_id,
+            models.Blog.site_id == current_site.site_id,
         )
         .all()
     )
@@ -270,7 +271,7 @@ def set_category_blogs(
         db.query(models.Category)
         .filter(
             models.Category.category_id == category_id,
-            models.Category.user_id == current_user.user_id,
+            models.Category.site_id == current_site.site_id,
         )
         .first()
     )
@@ -291,7 +292,7 @@ def set_category_blogs(
     if blog_ids:
         valid = (
             db.query(models.Blog.blog_id)
-            .filter(models.Blog.user_id == current_user.user_id, models.Blog.blog_id.in_(blog_ids))
+            .filter(models.Blog.site_id == current_site.site_id, models.Blog.blog_id.in_(blog_ids))
             .all()
         )
         valid_ids = {row[0] for row in valid}
@@ -309,6 +310,6 @@ def set_category_blogs(
     db.commit()
     db.refresh(db_cat)
 
-    schedule_category_purge(background_tasks, current_user, db_cat.slug)
+    schedule_category_purge(background_tasks, current_site, db_cat.slug)
 
     return _category_out(db, db_cat)

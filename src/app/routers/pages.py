@@ -34,7 +34,7 @@ async def upload_page_media(
 
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -43,7 +43,7 @@ async def upload_page_media(
     stored = await save_media(
         file=file,
         category="pages",
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
         blog_id=db_page.page_id,
         db=db,
     )
@@ -57,7 +57,7 @@ async def upload_page_media(
 
     new_media = models.PageMedia(
         page_id=db_page.page_id,
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
         url=stored.url,
         storage_key=stored.storage_key,
         mime_type=stored.mime_type,
@@ -79,7 +79,7 @@ def delete_page_media(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -90,7 +90,7 @@ def delete_page_media(
         .filter(
             models.PageMedia.media_id == media_id,
             models.PageMedia.page_id == db_page.page_id,
-            models.PageMedia.user_id == current_user.user_id,
+            models.PageMedia.site_id == current_site.site_id,
         )
         .first()
     )
@@ -112,7 +112,7 @@ def delete_page_media_by_url(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -122,7 +122,7 @@ def delete_page_media_by_url(
         db.query(models.PageMedia)
         .filter(
             models.PageMedia.page_id == db_page.page_id,
-            models.PageMedia.user_id == current_user.user_id,
+            models.PageMedia.site_id == current_site.site_id,
         )
         .all()
     )
@@ -166,7 +166,7 @@ def list_pages(
 ):
     return (
         db.query(models.UserPage)
-        .filter(models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.site_id == current_site.site_id)
         .order_by(models.UserPage.created_at.asc())
         .all()
     )
@@ -180,7 +180,7 @@ def get_page(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -206,10 +206,10 @@ def create_page(
         base_slug = f"draft-{secrets.token_hex(6)}"
 
     new_page = models.UserPage(
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
         title=title,
         content=content,
-        slug=unique_page_slug(db, current_user.user_id, base_slug),
+        slug=unique_page_slug(db, current_site.site_id, base_slug),
         status=models.PageStatus.DRAFT,
     )
     db.add(new_page)
@@ -226,7 +226,7 @@ def delete_page(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -236,7 +236,7 @@ def delete_page(
         db.query(models.PageMedia)
         .filter(
             models.PageMedia.page_id == db_page.page_id,
-            models.PageMedia.user_id == current_user.user_id,
+            models.PageMedia.site_id == current_site.site_id,
         )
         .all()
     )
@@ -261,7 +261,7 @@ def update_page(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -298,7 +298,7 @@ def update_page(
 
         if not slug_locked and wants_different_slug:
             db_page.slug = unique_page_slug(
-                db, current_user.user_id, new_slug, exclude_page_id=page_id
+                db, current_site.site_id, new_slug, exclude_page_id=page_id
             )
 
     if "content" in update_data:
@@ -331,7 +331,7 @@ def update_page(
     db.commit()
     db.refresh(db_page)
 
-    schedule_page_purge(background_tasks, current_user, db_page.slug)
+    schedule_page_purge(background_tasks, current_site, db_page.slug)
 
     return db_page
 
@@ -345,7 +345,7 @@ def publish_page(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -373,7 +373,7 @@ def publish_page(
     db.commit()
     db.refresh(db_page)
 
-    schedule_page_purge(background_tasks, current_user, db_page.slug)
+    schedule_page_purge(background_tasks, current_site, db_page.slug)
 
     return db_page
 
@@ -387,7 +387,7 @@ def archive_page(
 ):
     db_page = (
         db.query(models.UserPage)
-        .filter(models.UserPage.page_id == page_id, models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
         .first()
     )
     if not db_page:
@@ -404,7 +404,7 @@ def archive_page(
     db.commit()
     db.refresh(db_page)
 
-    schedule_page_purge(background_tasks, current_user, db_page.slug)
+    schedule_page_purge(background_tasks, current_site, db_page.slug)
 
     return db_page
 
@@ -437,7 +437,7 @@ def update_footer_pages(
 
     pages = (
         db.query(models.UserPage)
-        .filter(models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.site_id == current_site.site_id)
         .order_by(models.UserPage.created_at.asc())
         .all()
     )
@@ -458,11 +458,11 @@ def update_footer_pages(
 
     db.commit()
 
-    schedule_tenant_purge(background_tasks, current_user)
+    schedule_tenant_purge(background_tasks, current_site)
 
     return (
         db.query(models.UserPage)
-        .filter(models.UserPage.user_id == current_user.user_id)
+        .filter(models.UserPage.site_id == current_site.site_id)
         .order_by(models.UserPage.created_at.asc())
         .all()
     )

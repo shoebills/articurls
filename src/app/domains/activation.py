@@ -74,14 +74,14 @@ def build_dns_instructions(hostname: str, vercel_domain_info: Optional[dict] = N
     return instructions
 
 
-def mark_domain_active(db_user: models.User, hostname: str) -> None:
+def mark_domain_active(db_site: models.Site, hostname: str) -> None:
     from datetime import datetime, timezone
 
     from ..redis_client import redis_client
 
-    db_user.domain_status = models.DomainStatus.ACTIVE
-    db_user.verified_at = datetime.now(timezone.utc)
-    db_user.domain_dns_instructions = None
+    db_site.domain_status = models.DomainStatus.ACTIVE
+    db_site.verified_at = datetime.now(timezone.utc)
+    db_site.domain_dns_instructions = None
     try:
         redis_client.delete(f"domain_lookup:{hostname}")
     except Exception:
@@ -89,18 +89,18 @@ def mark_domain_active(db_user: models.User, hostname: str) -> None:
 
     from ..umami.service import enqueue_umami_domain_sync
 
-    enqueue_umami_domain_sync(db_user.user_id)
+    enqueue_umami_domain_sync(db_site.user_id)
 
 
 def apply_domain_verification(
-    db_user: models.User,
+    db_site: models.Site,
     vercel_domain: Optional[dict] = None,
     cached_instructions: Optional[List[DNSRecord]] = None,
 ) -> DomainVerifyOut:
-    hostname = db_user.custom_domain or ""
+    hostname = db_site.custom_domain or ""
 
     if not vercel_sync_required():
-        mark_domain_active(db_user, hostname)
+        mark_domain_active(db_site, hostname)
         return DomainVerifyOut(
             verification_status="verified",
             domain_status=models.DomainStatus.ACTIVE,
@@ -110,7 +110,7 @@ def apply_domain_verification(
 
     try_vercel_verify(hostname, vercel_domain)
     if is_vercel_verified(hostname):
-        mark_domain_active(db_user, hostname)
+        mark_domain_active(db_site, hostname)
         return DomainVerifyOut(
             verification_status="verified",
             domain_status=models.DomainStatus.ACTIVE,
@@ -120,11 +120,11 @@ def apply_domain_verification(
 
     instructions = build_dns_instructions(hostname, vercel_domain)
     merged = _merge_instructions(instructions, cached_instructions)
-    db_user.domain_status = models.DomainStatus.PENDING
-    db_user.domain_dns_instructions = [r.model_dump() for r in merged]
+    db_site.domain_status = models.DomainStatus.PENDING
+    db_site.domain_dns_instructions = [r.model_dump() for r in merged]
     return DomainVerifyOut(
         verification_status="pending",
-        domain_status=db_user.domain_status,
+        domain_status=db_site.domain_status,
         dns_instructions=merged,
         message=VERCEL_PENDING_MESSAGE,
     )

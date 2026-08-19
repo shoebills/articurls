@@ -4,6 +4,7 @@ from sqlalchemy import func
 from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
+from ..security.oauth2 import get_current_site
 from datetime import datetime, timedelta, timezone
 from typing import Optional, Literal
 from fastapi.responses import StreamingResponse
@@ -127,13 +128,13 @@ def _generate_series_slots(start: datetime, unit: str, end: datetime, period: Op
 
 def _build_series(
     db: Session,
-    user_id: int,
+    site_id: int,
     unit: str,
     slots: list[datetime],
     since: datetime,
 ) -> list[dict]:
     sub_query = db.query(models.Subscriber).filter(
-        models.Subscriber.user_id == user_id,
+        models.Subscriber.site_id == site_id,
         models.Subscriber.is_confirmed == True,
     )
 
@@ -181,15 +182,15 @@ def _build_series(
 
 
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
-def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).scalar()
+    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.site_id == current_site.site_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).scalar()
 
     unit = _time_unit(period)
     now = datetime.now(timezone.utc)
     since = get_since(period, now)
 
-    sub_query = db.query(models.Subscriber).filter(models.Subscriber.user_id == current_user.user_id, models.Subscriber.is_confirmed == True)
+    sub_query = db.query(models.Subscriber).filter(models.Subscriber.site_id == current_site.site_id, models.Subscriber.is_confirmed == True)
 
     if since:
         until = None
@@ -230,7 +231,7 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         slot_end = since.replace(month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
 
     slots = _generate_series_slots(since, unit, slot_end, period)
-    series = _build_series(db, current_user.user_id, unit, slots, since)
+    series = _build_series(db, current_site.site_id, unit, slots, since)
 
     return {
         "period": period,
@@ -242,10 +243,10 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 
 
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
-def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     db_subscribers = db.query(models.Subscriber).filter(
-        models.Subscriber.user_id == current_user.user_id, 
+        models.Subscriber.site_id == current_site.site_id, 
         models.Subscriber.unsubscribed_at.is_(None), 
         models.Subscriber.is_confirmed.is_(True)
         ).order_by(models.Subscriber.subscribed_at.desc()).all()
@@ -275,13 +276,13 @@ def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get
 def get_umami_overview(
     period: str = "7d",
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -297,7 +298,7 @@ def get_umami_overview(
     try:
         start_at, end_at = get_umami_period_timestamps(period)
         stats = client.get_website_stats_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
         )
@@ -336,13 +337,13 @@ def get_umami_overview(
 def get_umami_timeseries(
     period: str = "7d",
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps, get_umami_period_unit
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -366,7 +367,7 @@ def get_umami_timeseries(
         unit = get_umami_period_unit(period)
 
         pageviews_data = client.get_website_pageviews_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             unit=unit,
@@ -402,13 +403,13 @@ def get_umami_pages(
     period: str = "7d",
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -424,7 +425,7 @@ def get_umami_pages(
     try:
         start_at, end_at = get_umami_period_timestamps(period)
         pages = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="path",
@@ -435,7 +436,7 @@ def get_umami_pages(
             row[0]
             for row in db.query(models.Blog.slug)
             .filter(
-                models.Blog.user_id == current_user.user_id,
+                models.Blog.site_id == current_site.site_id,
                 models.Blog.status == models.BlogStatus.PUBLISHED,
             )
             .all()
@@ -444,7 +445,7 @@ def get_umami_pages(
             row[0]
             for row in db.query(models.Blog.slug)
             .filter(
-                models.Blog.user_id == current_user.user_id,
+                models.Blog.site_id == current_site.site_id,
                 models.Blog.status == models.BlogStatus.ARCHIVED,
             )
             .all()
@@ -453,7 +454,7 @@ def get_umami_pages(
             row[0]
             for row in db.query(models.UserPage.slug)
             .filter(
-                models.UserPage.user_id == current_user.user_id,
+                models.UserPage.site_id == current_site.site_id,
                 models.UserPage.status == models.PageStatus.PUBLISHED,
             )
             .all()
@@ -462,7 +463,7 @@ def get_umami_pages(
             row[0]
             for row in db.query(models.UserPage.slug)
             .filter(
-                models.UserPage.user_id == current_user.user_id,
+                models.UserPage.site_id == current_site.site_id,
                 models.UserPage.status == models.PageStatus.ARCHIVED,
             )
             .all()
@@ -554,13 +555,13 @@ def get_umami_sources(
     period: str = "7d",
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps, umami_internal_domains
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -576,7 +577,7 @@ def get_umami_sources(
     try:
         start_at, end_at = get_umami_period_timestamps(period)
         referrers = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="referrer",
@@ -590,7 +591,7 @@ def get_umami_sources(
 
         try:
             stats = client.get_website_stats_sync(
-                current_user.umami_website_id,
+                current_site.umami_website_id,
                 start_at=start_at,
                 end_at=end_at,
             )
@@ -624,13 +625,13 @@ def get_umami_geo(
     period: str = "7d",
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -646,7 +647,7 @@ def get_umami_geo(
     try:
         start_at, end_at = get_umami_period_timestamps(period)
         countries = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="country",
@@ -671,13 +672,13 @@ def get_umami_tech(
     period: str = "7d",
     limit: int = 20,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -694,21 +695,21 @@ def get_umami_tech(
         start_at, end_at = get_umami_period_timestamps(period)
 
         browsers = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="browser",
             limit=limit,
         )
         os_list = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="os",
             limit=limit,
         )
         devices = client.get_website_metrics_sync(
-            current_user.umami_website_id,
+            current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
             type="device",
@@ -736,12 +737,12 @@ def get_umami_tech(
 @router.get("/umami/realtime", status_code=status.HTTP_200_OK)
 def get_umami_realtime(
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
     from ..umami.client import UmamiClient, UmamiError
 
-    if not current_user.umami_website_id:
+    if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Umami website not provisioned yet.",
@@ -755,7 +756,7 @@ def get_umami_realtime(
         )
 
     try:
-        realtime = client.get_realtime_sync(current_user.umami_website_id)
+        realtime = client.get_realtime_sync(current_site.umami_website_id)
 
         return {
             "active_visitors": realtime.get("totals", {}).get("visitors", 0),

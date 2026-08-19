@@ -45,42 +45,52 @@ def umami_internal_domains() -> set[str]:
     return expanded
 
 
-def umami_website_name(user: models.User) -> str:
-    return f"{user.user_name} — Articurls"
+def umami_website_name(site: models.Site) -> str:
+    return f"{site.subdomain} — Articurls"
 
 
-def _primary_umami_domain(user: models.User) -> str:
+def _primary_umami_domain(site: models.Site) -> str:
     domain_status = str(
-        user.domain_status.value if hasattr(user.domain_status, "value") else user.domain_status
+        site.domain_status.value if hasattr(site.domain_status, "value") else site.domain_status
     )
-    if user.custom_domain and domain_status in ("active", "grace"):
-        return user.custom_domain.lower().strip()
-    return f"{user.user_name}.{umami_ugc_domain()}"
+    if site.custom_domain and domain_status in ("active", "grace"):
+        return site.custom_domain.lower().strip()
+    return f"{site.subdomain}.{umami_ugc_domain()}"
 
 
-def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:
+def provision_umami_website_for_site(db: Session, site_id: int) -> str | None:
     client = UmamiClient()
     if not client.configured:
         return None
 
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not user:
+    site = db.query(models.Site).filter(models.Site.site_id == site_id).first()
+    if not site:
         return None
-    if user.umami_website_id:
-        return user.umami_website_id
+    if site.umami_website_id:
+        return site.umami_website_id
 
-    name = umami_website_name(user)
-    domain = _primary_umami_domain(user)
+    name = umami_website_name(site)
+    domain = _primary_umami_domain(site)
     result = client.create_website_sync(name=name, domain=domain)
     website_id = result.get("id")
     if not website_id:
         raise UmamiError(500, "Missing website id in Umami create response")
 
-    user.umami_website_id = website_id
+    site.umami_website_id = website_id
     db.commit()
-    db.refresh(user)
-    logger.info("Provisioned Umami website %s for user_id=%s", website_id, user_id)
+    db.refresh(site)
+    logger.info("Provisioned Umami website %s for site_id=%s", website_id, site_id)
     return website_id
+
+
+def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:
+    sites = db.query(models.Site).filter(models.Site.user_id == user_id).all()
+    first_id = None
+    for site in sites:
+        res = provision_umami_website_for_site(db, site.site_id)
+        if not first_id:
+            first_id = res
+    return first_id
 
 
 def sync_umami_website_domain_for_user(db: Session, user_id: int) -> None:
@@ -88,18 +98,18 @@ def sync_umami_website_domain_for_user(db: Session, user_id: int) -> None:
     if not client.configured:
         return
 
-    user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not user or not user.umami_website_id:
-        return
-
-    domain = _primary_umami_domain(user)
-    client.update_website_sync(user.umami_website_id, domain=domain)
-    logger.info(
-        "Updated Umami website %s domain to %s for user_id=%s",
-        user.umami_website_id,
-        domain,
-        user_id,
-    )
+    sites = db.query(models.Site).filter(models.Site.user_id == user_id).all()
+    for site in sites:
+        if not site.umami_website_id:
+            continue
+        domain = _primary_umami_domain(site)
+        client.update_website_sync(site.umami_website_id, domain=domain)
+        logger.info(
+            "Updated Umami website %s domain to %s for site_id=%s",
+            site.umami_website_id,
+            domain,
+            site.site_id,
+        )
 
 
 def enqueue_umami_provision(user_id: int) -> None:

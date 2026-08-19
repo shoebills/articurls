@@ -12,6 +12,7 @@ from ..utils import (
     apply_username_change_or_raise,
     assert_admin_email,
 )
+from ..utils.serialization import user_settings_out
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -33,14 +34,16 @@ def list_users(
     current_user=Depends(_require_admin),
 ):
     needle = q.strip().lower()
-    query = db.query(models.User, models.Subscriptions).outerjoin(
-        models.Subscriptions, models.Subscriptions.user_id == models.User.user_id
+    query = (
+        db.query(models.User, models.Subscriptions, models.Site)
+        .outerjoin(models.Subscriptions, models.Subscriptions.user_id == models.User.user_id)
+        .outerjoin(models.Site, models.Site.user_id == models.User.user_id)
     )
     if needle:
         query = query.filter(
             or_(
                 func.lower(models.User.email).contains(needle),
-                func.lower(models.User.user_name).contains(needle),
+                func.lower(models.Site.subdomain).contains(needle),
                 func.lower(models.User.name).contains(needle),
             )
         )
@@ -67,13 +70,13 @@ def list_users(
 
     rows = query.offset(offset).limit(limit).all()
     output = []
-    for db_user, sub in rows:
+    for db_user, sub, site in rows:
         is_pro = bool(sub and sub.plan_type in ("pro", "lifetime") and sub.status in {"active", "past_due"})
         output.append(
             {
                 "user_id": db_user.user_id,
                 "name": db_user.name,
-                "user_name": db_user.user_name,
+                "user_name": site.subdomain if site else "",
                 "email": db_user.email,
                 "created_at": db_user.created_at,
                 "plan": "pro" if is_pro else "inactive",
@@ -92,9 +95,14 @@ def admin_override_username(
     db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    db_site = db.query(models.Site).filter(models.Site.user_id == user_id).order_by(models.Site.site_id.asc()).first()
+    if not db_site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found for user")
+
     apply_username_change_or_raise(
         db,
-        db_user=db_user,
+        db_site=db_site,
         new_username_raw=request.user_name,
         actor_user_id=current_user.user_id,
         actor_email=current_user.email,
@@ -104,8 +112,8 @@ def admin_override_username(
     )
     db.commit()
     db.refresh(db_user)
-    setattr(db_user, "is_admin", True)
-    return db_user
+    db.refresh(db_site)
+    return user_settings_out(db, db_user, db_site)
 
 
 @router.get("/payments", status_code=status.HTTP_200_OK)
@@ -118,15 +126,16 @@ def admin_list_payments(
     current_user=Depends(_require_admin),
 ):
     query = (
-        db.query(models.Transactions, models.User)
+        db.query(models.Transactions, models.User, models.Site)
         .join(models.User, models.User.user_id == models.Transactions.user_id)
+        .outerjoin(models.Site, models.Site.user_id == models.User.user_id)
         .filter(models.Transactions.status.notin_(["pending", "failed"]))
     )
     needle = q.strip().lower()
     if needle:
         query = query.filter(
             or_(
-                func.lower(models.User.user_name).contains(needle),
+                func.lower(models.Site.subdomain).contains(needle),
                 func.lower(models.User.email).contains(needle),
                 func.lower(models.Transactions.dodo_payment_id).contains(needle),
             )
@@ -140,7 +149,7 @@ def admin_list_payments(
         {
             "transaction_id": tx.transaction_id,
             "user_id": usr.user_id,
-            "user_name": usr.user_name,
+            "user_name": site.subdomain if site else "",
             "email": usr.email,
             "amount": tx.amount,
             "currency": tx.currency,
@@ -148,7 +157,7 @@ def admin_list_payments(
             "dodo_payment_id": tx.dodo_payment_id,
             "created_at": tx.created_at,
         }
-        for tx, usr in rows
+        for tx, usr, site in rows
     ]
 
 
@@ -187,41 +196,44 @@ def admin_list_domains(
     current_user=Depends(_require_admin),
 ):
     """List all custom domains with their status for admin management."""
-    query = db.query(models.User).filter(models.User.custom_domain.isnot(None))
+    query = (
+        db.query(models.Site, models.User)
+        .join(models.User, models.User.user_id == models.Site.user_id)
+        .filter(models.Site.custom_domain.isnot(None))
+    )
     
     needle = q.strip().lower()
     if needle:
         query = query.filter(
             or_(
-                func.lower(models.User.user_name).contains(needle),
+                func.lower(models.Site.subdomain).contains(needle),
                 func.lower(models.User.email).contains(needle),
-                func.lower(models.User.custom_domain).contains(needle),
+                func.lower(models.Site.custom_domain).contains(needle),
             )
         )
     
     if status_filter in {"active", "grace", "expired", "pending", "none"}:
-        query = query.filter(models.User.domain_status == status_filter)
+        query = query.filter(models.Site.domain_status == status_filter)
     
     if sort == "oldest":
-        query = query.order_by(models.User.created_at.asc().nulls_last())
+        query = query.order_by(models.Site.created_at.asc().nulls_last())
     else:
-        query = query.order_by(models.User.created_at.desc().nulls_last())
+        query = query.order_by(models.Site.created_at.desc().nulls_last())
     
     rows = query.offset(offset).limit(limit).all()
     
     return [
         {
             "user_id": user.user_id,
-            "user_name": user.user_name,
+            "site_id": site.site_id,
+            "user_name": site.subdomain,
             "email": user.email,
-            "custom_domain": user.custom_domain,
-            "domain_status": user.domain_status,
-            "verified_at": user.verified_at,
-            "grace_started_at": user.grace_started_at,
-            "grace_expires_at": user.grace_expires_at,
-            "created_at": user.created_at,
+            "custom_domain": site.custom_domain,
+            "domain_status": site.domain_status,
+            "verified_at": site.verified_at,
+            "grace_started_at": site.grace_started_at,
+            "grace_expires_at": site.grace_expires_at,
+            "created_at": site.created_at,
         }
-        for user in rows
+        for site, user in rows
     ]
-
-

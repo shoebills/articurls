@@ -24,24 +24,33 @@ def send_post_emails(blog_id: int):
         if not db_blog:
             return
         
-        db_user = db.query(models.User).filter(models.User.user_id == db_blog.user_id).first()
+        db_site = db.query(models.Site).filter(models.Site.site_id == db_blog.site_id).first()
+        if not db_site:
+            return
 
+        db_user = db.query(models.User).filter(models.User.user_id == db_site.user_id).first()
         if not db_user:
             return
         
         if not db_blog.notify_subscribers:
             return
 
-        if not is_pro_entitled(db_user, db):
+        if not is_pro_entitled(db_user.user_id, db):
             return
 
-        existing_log = db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id, 
-                                                         models.EmailLogs.user_id == db_user.user_id).first()
+        existing_log = db.query(models.EmailLogs).filter(
+            models.EmailLogs.blog_id == db_blog.blog_id, 
+            models.EmailLogs.site_id == db_site.site_id
+        ).first()
 
         if existing_log and existing_log.status == "sent":
             return
 
-        db_subscribers = db.query(models.Subscriber).filter(models.Subscriber.user_id == db_user.user_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).all()
+        db_subscribers = db.query(models.Subscriber).filter(
+            models.Subscriber.site_id == db_site.site_id, 
+            models.Subscriber.unsubscribed_at.is_(None), 
+            models.Subscriber.is_confirmed == True
+        ).all()
         
         if not db_subscribers:
             return
@@ -52,19 +61,22 @@ def send_post_emails(blog_id: int):
             new_log.status = "pending"
             new_log.sent_at = None
         else:
-            new_log = models.EmailLogs(blog_id=db_blog.blog_id,
-                                       user_id=db_user.user_id,
-                                       total_recipients=len(db_subscribers),
-                                       status="pending")
+            new_log = models.EmailLogs(
+                blog_id=db_blog.blog_id,
+                site_id=db_site.site_id,
+                total_recipients=len(db_subscribers),
+                status="pending"
+            )
             db.add(new_log)
         db.commit()
         
-        blog_url = public_post_url(db_user, db_blog, db)
+        blog_url = public_post_url(db_site, db_blog, db)
+        author_name = db_site.authors[0].name if db_site.authors else db_user.name
 
         for sub in db_subscribers:
             try:
-                unsubscribe_token = create_unsubscribe_token(sub.subscriber_id, db_user.user_id)
-                send_new_post_email(sub.email, db_blog.title, blog_url, db_user.name, unsubscribe_token)
+                unsubscribe_token = create_unsubscribe_token(sub.subscriber_id, db_site.site_id)
+                send_new_post_email(sub.email, db_blog.title, blog_url, author_name, unsubscribe_token)
             except Exception:
                 pass
 
@@ -126,11 +138,11 @@ def expired_pro_fallback():
         ).all()
 
         for sub in expired_trials:
-            db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
-            if db_user:
+            db_sites = db.query(models.Site).filter(models.Site.user_id == sub.user_id).all()
+            for db_site in db_sites:
                 # Trial users get no grace — domain expires immediately
-                if db_user.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
-                    expire_domain_access(db_user)
+                if db_site.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
+                    expire_domain_access(db_site)
             sub.status = "inactive"
 
         # ── Expired Pro subscriptions ───────────────────────────────────────
@@ -142,28 +154,27 @@ def expired_pro_fallback():
         ).all()
         
         for sub in expired_subscriptions:
-            db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
-            if db_user:
-                if db_user.domain_status == models.DomainStatus.ACTIVE:
-                    start_domain_grace_period(db_user, now=now)
-
-                elif db_user.domain_status == models.DomainStatus.GRACE:
-                    if db_user.grace_expires_at and db_user.grace_expires_at < now:
-                        expire_domain_access(db_user)
+            db_sites = db.query(models.Site).filter(models.Site.user_id == sub.user_id).all()
+            for db_site in db_sites:
+                if db_site.domain_status == models.DomainStatus.ACTIVE:
+                    start_domain_grace_period(db_site, now=now)
+                elif db_site.domain_status == models.DomainStatus.GRACE:
+                    if db_site.grace_expires_at and db_site.grace_expires_at < now:
+                        expire_domain_access(db_site)
 
             sub.plan_type = "lapsed"
             if sub.status != "cancelled":
                 sub.status = "inactive"
 
         # ── Grace-period expiry sweep ───────────────────────────────────────
-        grace_expired_users = db.query(models.User).filter(
-            models.User.domain_status == models.DomainStatus.GRACE,
-            models.User.grace_expires_at.isnot(None),
-            models.User.grace_expires_at < now,
+        grace_expired_sites = db.query(models.Site).filter(
+            models.Site.domain_status == models.DomainStatus.GRACE,
+            models.Site.grace_expires_at.isnot(None),
+            models.Site.grace_expires_at < now,
         ).all()
 
-        for db_user in grace_expired_users:
-            expire_domain_access(db_user)
+        for db_site in grace_expired_sites:
+            expire_domain_access(db_site)
 
         db.commit()
 
@@ -173,7 +184,7 @@ def expired_pro_fallback():
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
 def provision_umami_website(self, user_id: int):
-    """Create an Umami website for a user if not already provisioned."""
+    """Create an Umami website for a user/site if not already provisioned."""
     from ..umami.client import UmamiClient
     from ..umami.service import provision_umami_website_for_user
 
@@ -205,7 +216,7 @@ def sync_umami_website_domain(self, user_id: int):
 
 @celery.task
 def backfill_umami_websites():
-    """Enqueue Umami provisioning for all users missing umami_website_id."""
+    """Enqueue Umami provisioning for all sites missing umami_website_id."""
     from ..umami.client import UmamiClient
 
     if not UmamiClient().configured:
@@ -214,8 +225,8 @@ def backfill_umami_websites():
     db = database.SessionLocal()
     try:
         rows = (
-            db.query(models.User.user_id)
-            .filter(models.User.umami_website_id.is_(None))
+            db.query(models.Site.user_id)
+            .filter(models.Site.umami_website_id.is_(None))
             .all()
         )
         for (user_id,) in rows:

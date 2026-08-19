@@ -13,7 +13,8 @@ class CategoryUpdate(BaseModel):
 
 class CategoryOut(BaseModel):
     category_id: int
-    user_id: int
+    site_id: Optional[int] = None
+    user_id: Optional[int] = None
     name: str
     slug: str
     blog_count: int = 0

@@ -94,7 +94,7 @@ def audit_username_change(
 def apply_username_change_or_raise(
     db: Session,
     *,
-    db_user: models.User,
+    db_site: models.Site,
     new_username_raw: str,
     actor_user_id: Optional[int],
     actor_email: Optional[str],
@@ -103,12 +103,12 @@ def apply_username_change_or_raise(
     reason: Optional[str] = None,
 ) -> str:
     new_username = validate_username_or_raise(new_username_raw)
-    old_username = normalize_username(db_user.user_name)
+    old_username = normalize_username(db_site.subdomain)
     if new_username == old_username:
         return old_username
 
-    if db_user.last_username_change_at and not is_admin_override:
-        elapsed = datetime.now(timezone.utc) - db_user.last_username_change_at
+    if db_site.last_username_change_at and not is_admin_override:
+        elapsed = datetime.now(timezone.utc) - db_site.last_username_change_at
         if elapsed < timedelta(days=USERNAME_CHANGE_COOLDOWN_DAYS):
             remaining_days = USERNAME_CHANGE_COOLDOWN_DAYS - elapsed.days
             raise HTTPException(
@@ -116,13 +116,13 @@ def apply_username_change_or_raise(
                 detail=f"Please wait {remaining_days} day(s) before changing again.",
             )
 
-    claim_username_or_raise(db, db_user.user_id, new_username)
-    db_user.user_name = new_username
-    db_user.last_username_change_at = datetime.now(timezone.utc)
+    claim_username_or_raise(db, db_site.user_id, new_username)
+    db_site.subdomain = new_username
+    db_site.last_username_change_at = datetime.now(timezone.utc)
 
     audit_username_change(
         db,
-        user_id=db_user.user_id,
+        user_id=db_site.user_id,
         old_username=old_username,
         new_username=new_username,
         actor_user_id=actor_user_id,
@@ -134,22 +134,17 @@ def apply_username_change_or_raise(
     return new_username
 
 
-def resolve_username_to_current(db: Session, requested_username_raw: str) -> tuple[models.User | None, str]:
+def resolve_username_to_current(db: Session, requested_username_raw: str) -> tuple[models.Site | None, str]:
     requested = normalize_username(requested_username_raw)
     if not requested:
         return None, ""
 
-    db_user = db.query(models.User).filter(models.User.user_name == requested).first()
-    if db_user:
-        return db_user, normalize_username(db_user.user_name)
+    db_site = db.query(models.Site).filter(models.Site.subdomain == requested).first()
+    if db_site:
+        return db_site, normalize_username(db_site.subdomain)
 
-    claim = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == requested).first()
-    if not claim:
-        return None, requested
-    db_user = db.query(models.User).filter(models.User.user_id == claim.user_id).first()
-    if not db_user:
-        return None, requested
-    return db_user, normalize_username(db_user.user_name)
+    # For now, if not found, we don't do claim-based redirect to avoid multiple site ambiguity
+    return None, requested
 
 
 def permanent_username_redirect(path: str, canonical_username: str, query_string: str = "") -> RedirectResponse:

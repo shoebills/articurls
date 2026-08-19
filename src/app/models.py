@@ -19,13 +19,75 @@ class User(Base):
 
     user_id = Column(Integer, primary_key=True)
     name = Column(String, nullable=False)
-    user_name = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     google_id = Column(String, nullable=True, unique=True, index=True)
     dodo_customer_id = Column(String, nullable=True, unique=True, index=True)
+    email_verified = Column(Boolean, nullable=False, default=False)
+    token_version = Column(Integer, nullable=False, default=0)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    sites = relationship("Site", back_populates="user", cascade="all, delete-orphan")
+
+
+class Site(Base):
+    __tablename__ = "sites"
+
+    site_id = Column(Integer, primary_key=True)
+    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    subdomain = Column(String, unique=True, nullable=False, index=True)
+    
+    custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
+    custom_subpath = Column(String, nullable=True, default=None)
+    domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
+    domain_dns_instructions = Column(JSON, nullable=True, default=None)
+    verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
+    last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
+
+    # Design / Theme
+    theme_id = Column(String(32), nullable=False, default="editorial")
+    navbar_enabled = Column(Boolean, nullable=False, default=True)
+    nav_blog_name = Column(String, nullable=True)
+    nav_blog_name_size = Column(String(16), nullable=False, default="medium")
+    nav_menu_enabled = Column(Boolean, nullable=False, default=True)
+    show_about_section = Column(Boolean, nullable=False, default=False)
+    site_footer_enabled = Column(Boolean, nullable=False, default=True)
+    content_width = Column(String(8), nullable=False, default="wide")
+    list_image_position = Column(String(16), nullable=False, default="above_title")
+    show_preview_in_lists = Column(Boolean, nullable=False, default=True)
+    about_title = Column(String(40), nullable=True)
+    
+    # Features
+    rss_enabled = Column(Boolean, nullable=False, default=False)
+    featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
+    featured_blog_ids = Column(JSON, nullable=True, default=[])
+    subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
+    umami_website_id = Column(String(36), nullable=True, default=None, index=True)
+
+    # SEO
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
+    favicon_url = Column(String, nullable=True)
+    og_image_url = Column(String, nullable=True)
+    
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    user = relationship("User", back_populates="sites")
+    authors = relationship("Author", back_populates="site", cascade="all, delete-orphan")
+
+
+class Author(Base):
+    __tablename__ = "authors"
+
+    author_id = Column(Integer, primary_key=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    name = Column(String, nullable=False)
+    slug = Column(String, nullable=False, index=True)
     bio = Column(Text, nullable=True)
     contact_email = Column(String, nullable=True)
     instagram_link = Column(String, nullable=True)
@@ -37,36 +99,11 @@ class User(Base):
     youtube_link = Column(String, nullable=True)
     website_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
-    favicon_url = Column(String, nullable=True)
-    og_image_url = Column(String, nullable=True)
-    email_verified = Column(Boolean, nullable=False, default=False)
-    token_version = Column(Integer, nullable=False, default=0)
 
-    custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
-    domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
-    domain_dns_instructions = Column(JSON, nullable=True, default=None)  # cached DNS records
-    verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
-
-    navbar_enabled = Column(Boolean, nullable=False, default=True)
-    nav_blog_name = Column(String, nullable=True)
-    nav_blog_name_size = Column(String(16), nullable=False, default="medium")
-    nav_menu_enabled = Column(Boolean, nullable=False, default=True)
-    show_about_section = Column(Boolean, nullable=False, default=False)
-    site_footer_enabled = Column(Boolean, nullable=False, default=True)
-    rss_enabled = Column(Boolean, nullable=False, default=False)
-    last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
-    featured_blog_ids = Column(JSON, nullable=True, default=[])
-    content_width = Column(String(8), nullable=False, default="wide")
-    list_image_position = Column(String(16), nullable=False, default="above_title")
-    show_preview_in_lists = Column(Boolean, nullable=False, default=True)
-    about_title = Column(String(40), nullable=True)
-    subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
-    umami_website_id = Column(String(36), nullable=True, default=None, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
+
+    site = relationship("Site", back_populates="authors")
 
 
 class UsernameClaim(Base):
@@ -109,12 +146,13 @@ class PageStatus(str, enum.Enum):
 class Blog(Base):
     __tablename__ = "blogs"
     __table_args__ = (
-        UniqueConstraint("user_id", "slug", name="uq_blogs_user_slug"),
+        UniqueConstraint("site_id", "slug", name="uq_blogs_site_slug"),
         Index("ix_blogs_status_scheduled_at", "status", "scheduled_at"),
     )
 
     blog_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    author_id = Column(ForeignKey("authors.author_id"), nullable=True, index=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String, index=True, nullable=False)
@@ -127,6 +165,7 @@ class Blog(Base):
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
     media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
 
 class BlogMedia(Base):
@@ -134,23 +173,24 @@ class BlogMedia(Base):
 
     media_id = Column(Integer, primary_key=True)
     blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)
     sort_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
     blog = relationship("Blog", back_populates="media")
 
 class Subscriber(Base):
     __tablename__ = "subscribers"
     __table_args__ = (
-        UniqueConstraint("user_id", "email", name="uq_subscribers_user_email"),
+        UniqueConstraint("site_id", "email", name="uq_subscribers_site_email"),
     )
 
     subscriber_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
+    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
     email = Column(String, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
@@ -159,11 +199,11 @@ class Subscriber(Base):
 class EmailLogs(Base):
     __tablename__ = "email_logs"
     __table_args__ = (
-        UniqueConstraint("user_id", "blog_id", name="uq_email_logs_user_blog"),
+        UniqueConstraint("site_id", "blog_id", name="uq_email_logs_site_blog"),
     )
 
     log_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
+    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
     blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
     total_recipients = Column(Integer, default=0, nullable=False)
     status = Column(String, default="pending", nullable=False)
@@ -173,12 +213,12 @@ class EmailLogs(Base):
 class Views(Base):
     __tablename__ = "views"
     __table_args__ = (
-        Index("ix_views_user_visited_at", "user_id", "visited_at"),
+        Index("ix_views_site_visited_at", "site_id", "visited_at"),
         Index("ix_views_blog_visitor_hash", "blog_id", "visitor_hash"),
     )
 
     view_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), index=True, nullable=False)
+    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
     blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
     visitor_hash = Column(String, nullable=False)
     visited_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
@@ -221,11 +261,11 @@ class PaymentWebhooks(Base):
 class UserPage(Base):
     __tablename__ = "user_pages"
     __table_args__ = (
-        UniqueConstraint("user_id", "slug", name="uq_user_pages_user_slug"),
+        UniqueConstraint("site_id", "slug", name="uq_user_pages_site_slug"),
     )
 
     page_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     content = Column(Text, nullable=False, default="")
@@ -237,6 +277,7 @@ class UserPage(Base):
     footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
+    
     media = relationship("PageMedia", back_populates="page", cascade="all, delete-orphan", order_by=lambda: PageMedia.sort_order)
 
 
@@ -245,25 +286,26 @@ class PageMedia(Base):
 
     media_id = Column(Integer, primary_key=True)
     page_id = Column(ForeignKey("user_pages.page_id"), nullable=False, index=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
     size_bytes = Column(Integer, nullable=False)
     sort_order = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
     page = relationship("UserPage", back_populates="media")
 
 
 class Category(Base):
     __tablename__ = "categories"
     __table_args__ = (
-        UniqueConstraint("user_id", "slug", name="uq_categories_user_slug"),
-        Index("ix_categories_user_menu_order", "user_id", "menu_order"),
+        UniqueConstraint("site_id", "slug", name="uq_categories_site_slug"),
+        Index("ix_categories_site_menu_order", "site_id", "menu_order"),
     )
 
     category_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     show_in_menu = Column(Boolean, nullable=False, default=True)

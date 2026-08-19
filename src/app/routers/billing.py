@@ -10,6 +10,7 @@ from ..database import get_db
 from ..utils import user_by_email
 from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
+from ..security.oauth2 import get_current_site
 from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CustomerPortalResponse
 from ..payments.client import client as dodo_client
 from ..config import settings
@@ -179,7 +180,7 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
 def create_checkout(
     plan: str = Body("monthly", embed=True),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
 
     check_rate_limit_user("checkout", current_user.user_id, 5, 60)
@@ -660,7 +661,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail="temporary failure")
 
 @router.get("/subscription", response_model=SubscriptionOut)
-def get_my_subscription(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_my_subscription(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
 
@@ -670,7 +671,7 @@ def get_my_subscription(db: Session = Depends(get_db), current_user = Depends(ge
     return db_sub
 
 @router.get("/transactions", response_model=List[TransactionOut])
-def get_my_transactions(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_my_transactions(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     transactions = db.query(models.Transactions).filter(models.Transactions.user_id == current_user.user_id).order_by(models.Transactions.created_at.desc()).all()
 
@@ -680,7 +681,7 @@ def get_my_transactions(db: Session = Depends(get_db), current_user = Depends(ge
 @router.get("/customer-portal", response_model=CustomerPortalResponse)
 def get_customer_portal(
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     if not current_user.dodo_customer_id:
         raise HTTPException(status_code=404, detail="Customer record not found")

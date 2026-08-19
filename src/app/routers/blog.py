@@ -8,6 +8,7 @@ from ..utils.html_sanitizer import sanitize_html
 from ..schemas import blog
 from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
+from ..security.oauth2 import get_current_site
 from ..workers import tasks
 from ..storage.service import save_media, delete_media
 from ..cache.service import schedule_post_purge
@@ -44,7 +45,7 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
-def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-create", current_user.user_id, _BLOG_CREATE_LIMIT, _BLOG_RATE_WINDOW)
 
     # Meta
@@ -67,12 +68,13 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     if not base_slug:
         base_slug = f"draft-{secrets.token_hex(6)}"
 
-    candidate_slug = utils.unique_blog_slug(db, current_user.user_id, base_slug)
+    candidate_slug = utils.unique_blog_slug(db, current_site.site_id, base_slug)
 
     new_blog = models.Blog(
         title=request.title,
         content=sanitize_html(request.content),
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
+        author_id=current_site.authors[0].author_id if current_site.authors else None,
         slug=candidate_slug,
         meta_title=candidate_meta_title,
         meta_description=candidate_meta_description,
@@ -88,10 +90,10 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     return new_blog
 
 @router.get("/", response_model=List[blog.GetAll], status_code=status.HTTP_200_OK)
-def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     results = db.query(models.Blog).filter(
-        models.Blog.user_id == current_user.user_id
+        models.Blog.site_id == current_site.site_id
     ).all()
 
     blogs = []
@@ -103,9 +105,9 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     return blogs
 
 @router.get("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id).first()
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id).first()
 
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
@@ -115,12 +117,12 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
 
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
-async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
-        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .filter(models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id)
         .first()
     )
 
@@ -130,7 +132,8 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
     stored = await save_media(
         file=file,
         category="blogs",
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
+        author_id=current_site.authors[0].author_id if current_site.authors else None,
         blog_id=db_blog.blog_id,
         db=db,
     )
@@ -144,7 +147,8 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
 
     new_media = models.BlogMedia(
         blog_id=db_blog.blog_id,
-        user_id=current_user.user_id,
+        site_id=current_site.site_id,
+        author_id=current_site.authors[0].author_id if current_site.authors else None,
         url=stored.url,
         storage_key=stored.storage_key,
         mime_type=stored.mime_type,
@@ -159,12 +163,12 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
 
 
 @router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
-def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user=Depends(get_current_user)):
+def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
-        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .filter(models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id)
         .first()
     )
     
@@ -176,7 +180,7 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
         .filter(
             models.BlogMedia.media_id == media_id,
             models.BlogMedia.blog_id == db_blog.blog_id,
-            models.BlogMedia.user_id == current_user.user_id,
+            models.BlogMedia.site_id == current_site.site_id,
         )
         .first()
     )
@@ -195,13 +199,13 @@ def delete_blog_media_by_url(
     id: int,
     url: str = Query(..., description="URL of the media to delete"),
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
         db.query(models.Blog)
-        .filter(models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id)
+        .filter(models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id)
         .first()
     )
     if not db_blog:
@@ -212,7 +216,7 @@ def delete_blog_media_by_url(
         db.query(models.BlogMedia)
         .filter(
             models.BlogMedia.blog_id == db_blog.blog_id,
-            models.BlogMedia.user_id == current_user.user_id,
+            models.BlogMedia.site_id == current_site.site_id,
         )
         .all()
     )
@@ -233,7 +237,7 @@ def delete_blog_media_by_url(
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -241,7 +245,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
@@ -279,7 +283,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
         if not slug_locked and wants_different_slug:
             # Get a unique slug (may append -1, -2, etc. if needed)
             resolved = utils.unique_blog_slug(
-                db, current_user.user_id, new_slug, exclude_blog_id=db_blog.blog_id
+                db, current_site.site_id, new_slug, exclude_blog_id=db_blog.blog_id
             )
             # Use the resolved unique slug
             db_blog.slug = resolved
@@ -319,12 +323,12 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
 
     # Purge cache for this blog post and all listing pages (home + categories)
     # Use FastAPI BackgroundTasks for reliable async execution in sync routes
-    schedule_post_purge(background_tasks, current_user, db_blog.slug)
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
 
     return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -332,20 +336,20 @@ def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depend
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
     
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
     )
 
-    schedule_post_purge(background_tasks, current_user, db_blog.slug)
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
     
     # Delete media objects from storage (R2/local) before DB rows are removed.
     media_rows = (
         db.query(models.BlogMedia)
         .filter(
             models.BlogMedia.blog_id == db_blog.blog_id,
-            models.BlogMedia.user_id == current_user.user_id,
+            models.BlogMedia.site_id == current_site.site_id,
         )
         .all()
     )
@@ -364,7 +368,7 @@ def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depend
     return {"message": "Blog deleted"}
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -372,7 +376,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
 
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
@@ -420,7 +424,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    schedule_post_purge(background_tasks, current_user, db_blog.slug)
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
 
     db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
 
@@ -433,7 +437,7 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -441,7 +445,7 @@ def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
 
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
         detail="Not authorized to perform this action"
@@ -465,13 +469,13 @@ def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    schedule_post_purge(background_tasks, current_user, db_blog.slug)
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
 
     return db_blog
 
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -482,7 +486,7 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
             detail=f"Blog with id: {id} not found"
     )
     
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform this action"
@@ -541,7 +545,7 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
     return db_blog
 
 @router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
-def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user)):
+def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -551,7 +555,7 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
             detail=f"Blog with id: {id} not found"
     )
     
-    if db_blog.user_id != current_user.user_id:
+    if db_blog.site_id != current_site.site_id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Not authorized to perform this action"
@@ -582,12 +586,12 @@ def assign_blog_categories(
     request: cat_schema.BlogCategoryAssign,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(
-        models.Blog.blog_id == id, models.Blog.user_id == current_user.user_id
+        models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id
     ).first()
     if not db_blog:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
@@ -597,7 +601,7 @@ def assign_blog_categories(
         valid_cats = (
             db.query(models.Category.category_id)
             .filter(
-                models.Category.user_id == current_user.user_id,
+                models.Category.site_id == current_site.site_id,
                 models.Category.category_id.in_(request.category_ids),
             )
             .all()
@@ -645,6 +649,6 @@ def assign_blog_categories(
     db.refresh(db_blog)
     _attach_category_ids(db, db_blog)
 
-    schedule_post_purge(background_tasks, current_user, db_blog.slug)
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
 
     return db_blog

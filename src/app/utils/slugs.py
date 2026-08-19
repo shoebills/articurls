@@ -9,13 +9,13 @@ from .. import models
 DRAFT_SLUG_RE = re.compile(r"^draft-[a-f0-9]{12}$")
 
 
-def unique_blog_slug(db: Session, user_id: int, base_slug: str, exclude_blog_id: int | None = None) -> str:
+def unique_blog_slug(db: Session, site_id: int, base_slug: str, exclude_blog_id: int | None = None) -> str:
 
     candidate = base_slug
     counter = 1
 
     while True:
-        q = db.query(models.Blog).filter(models.Blog.user_id == user_id, models.Blog.slug == candidate)
+        q = db.query(models.Blog).filter(models.Blog.site_id == site_id, models.Blog.slug == candidate)
 
         if exclude_blog_id is not None:
             q = q.filter(models.Blog.blog_id != exclude_blog_id)
@@ -40,11 +40,11 @@ def maybe_replace_placeholder_slug_on_publish(db: Session, blog: models.Blog) ->
     if base == "":
         base = "post"
 
-    blog.slug = unique_blog_slug(db, blog.user_id, base, exclude_blog_id=blog.blog_id)
+    blog.slug = unique_blog_slug(db, blog.site_id, base, exclude_blog_id=blog.blog_id)
 
 
 def unique_page_slug(
-    db: Session, user_id: int, base_slug: str, exclude_page_id: int | None = None
+    db: Session, site_id: int, base_slug: str, exclude_page_id: int | None = None
 ) -> str:
     base = slugify(base_slug) or "page"
     candidate = base
@@ -52,7 +52,7 @@ def unique_page_slug(
 
     while True:
         q = db.query(models.UserPage).filter(
-            models.UserPage.user_id == user_id, models.UserPage.slug == candidate
+            models.UserPage.site_id == site_id, models.UserPage.slug == candidate
         )
         if exclude_page_id is not None:
             q = q.filter(models.UserPage.page_id != exclude_page_id)
@@ -75,4 +75,4 @@ def maybe_replace_placeholder_page_slug_on_publish(db: Session, page: models.Use
     if base == "":
         base = "page"
 
-    page.slug = unique_page_slug(db, page.user_id, base, exclude_page_id=page.page_id)
+    page.slug = unique_page_slug(db, page.site_id, base, exclude_page_id=page.page_id)

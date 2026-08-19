@@ -1,10 +1,11 @@
 import jwt
 import uuid
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone, timedelta
 from ..config import settings
 from ..database import get_db
+from .. import models
 from fastapi.security import OAuth2PasswordBearer
 
 SECRET_KEY = settings.secret_key
@@ -66,6 +67,30 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         )
 
     return db_user
+
+
+def get_current_site(
+    request: Request,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+) -> models.Site:
+    site_id = request.headers.get("X-Site-ID")
+    if site_id and site_id.isdigit():
+        site = db.query(models.Site).filter(
+            models.Site.site_id == int(site_id),
+            models.Site.user_id == current_user.user_id
+        ).first()
+        if not site:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
+        return site
+    else:
+        # Fallback for backward compatibility during transition
+        site = db.query(models.Site).filter(
+            models.Site.user_id == current_user.user_id
+        ).order_by(models.Site.site_id.asc()).first()
+        if not site:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sites found for user")
+        return site
 
 def create_refresh_token(email: str):
     from ..redis_client import redis_client
@@ -143,12 +168,13 @@ def verify_new_user_token(token: str):
     
     return payload
 
-def create_unsubscribe_token(subscriber_id: int, user_id: int):
+def create_unsubscribe_token(subscriber_id: int, site_id: int):
     expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
         "subscriber_id": subscriber_id,
-        "user_id": user_id,
+        "site_id": site_id,
+        "user_id": site_id,  # fallback for backward compatibility
         "purpose": "unsubscribe",
         "exp": expire,
         }
@@ -166,12 +192,13 @@ def verify_unsubscribe_token(token: str):
     
     return payload
 
-def create_sub_confirm_token(subscriber_id: int, user_id: int):
+def create_sub_confirm_token(subscriber_id: int, site_id: int):
     expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
         "subscriber_id": subscriber_id,
-        "user_id": user_id,
+        "site_id": site_id,
+        "user_id": site_id,  # fallback for backward compatibility
         "purpose": "confirm-subscription",
         "exp": expire,
         }

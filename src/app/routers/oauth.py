@@ -184,11 +184,11 @@ async def google_callback(
                 # Safe to link: Link Google account to existing email user
                 existing_user_by_email.google_id = google_id
                 
-                # Update profile picture if not set
-                if not existing_user_by_email.profile_image_url or \
-                   existing_user_by_email.profile_image_url == settings.default_profile_image_url:
-                    if picture:
-                        existing_user_by_email.profile_image_url = picture
+                # Update profile picture on primary author if not set
+                if picture and existing_user_by_email.sites:
+                    site = existing_user_by_email.sites[0]
+                    if site.authors and not site.authors[0].profile_image_url:
+                        site.authors[0].profile_image_url = picture
                 
                 db.commit()
                 db.refresh(existing_user_by_email)
@@ -281,8 +281,8 @@ async def complete_google_signup(
     user_name = validate_username_or_raise(request.user_name)
     
     # Check if username is taken
-    existing_username = db.query(models.User).filter(
-        models.User.user_name == user_name
+    existing_username = db.query(models.Site).filter(
+        models.Site.subdomain == user_name
     ).first()
     
     if existing_username:
@@ -317,17 +317,33 @@ async def complete_google_signup(
     # Create new user
     new_user = models.User(
         name=name,
-        user_name=user_name,
         email=email,
         password=hashed_password,
         google_id=google_id,
         email_verified=True,  # Google verified the email
-        meta_title=f"{name}'s Blog",
-        meta_description=f"Explore all the blogs published by {name}.",
-        profile_image_url=picture or settings.default_profile_image_url,
     )
     
     db.add(new_user)
+    db.flush()
+    
+    # Create default Site
+    new_site = models.Site(
+        user_id=new_user.user_id,
+        subdomain=user_name,
+        meta_title=f"{name}'s Blog",
+        meta_description=f"Explore all the blogs published by {name}.",
+    )
+    db.add(new_site)
+    db.flush()
+
+    # Create default Author
+    new_author = models.Author(
+        site_id=new_site.site_id,
+        name=name,
+        slug=user_name,
+        profile_image_url=picture or settings.default_profile_image_url,
+    )
+    db.add(new_author)
     db.flush()
     
     # Claim username

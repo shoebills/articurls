@@ -55,7 +55,8 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
     
-    db_user_name = user_by_username(db, user_name)
+    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
+    db_user_name = db_site
     
     if db_user_name:
         raise HTTPException(
@@ -64,30 +65,31 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     
     hashed_password = hashing.get_password_hash(request.password)
     
-    new_user = models.User(name=request.name, 
-                           user_name=user_name, 
-                           email=email, 
-                           password=hashed_password, 
-                           meta_title=f"{request.name}'s Blog",
-                           meta_description=f"Explore all the blogs published by {request.name}.",
-                           profile_image_url=settings.default_profile_image_url)
-
+    new_user = models.User(
+        name=request.name,
+        email=request.email,
+        password=hashed_password
+    )
     db.add(new_user)
     db.flush()
-    claim_username_or_raise(db, new_user.user_id, user_name)
-    db.add(
-        models.UsernameChangeAudit(
-            user_id=new_user.user_id,
-            old_username=user_name,
-            new_username=user_name,
-            actor_user_id=new_user.user_id,
-            actor_email=email,
-            is_admin_override=False,
-            reason="account_created",
-            request_ip=req.client.host if req.client else None,
-            user_agent=req.headers.get("user-agent"),
-        )
+    
+    new_site = models.Site(
+        user_id=new_user.user_id,
+        subdomain=user_name,
     )
+    db.add(new_site)
+    db.flush()
+    
+    new_author = models.Author(
+        site_id=new_site.site_id,
+        name=request.name,
+        slug=user_name,
+    )
+    db.add(new_author)
+    db.flush()
+    
+    utils.claim_username_or_raise(db, new_user.user_id, user_name)
+    
     db.commit()
     db.refresh(new_user)
 
@@ -134,8 +136,7 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     db_user = user_by_email(db, payload.get("email"))
 
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
 
     if db_user.email_verified:
         access_token = oauth2.create_access_token(
@@ -151,7 +152,7 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     db_user.email_verified = True
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
     access_token = oauth2.create_access_token(
         data={"sub": db_user.email},
@@ -164,12 +165,11 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
         }
 
 @router.get("/me", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
-def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
+def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    
 
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
     
     setattr(db_user, "is_admin", is_admin_email(db_user.email))
     return db_user
@@ -179,7 +179,7 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
 def username_availability(
     user_name: str,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     try:
         normalized = validate_username_or_raise(user_name)
@@ -198,166 +198,86 @@ def username_availability(
 
 
 @router.get("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_200_OK)
-def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return db_user
+def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    return current_site
 
 
 @router.patch("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_design_settings(
-    request: page_schema.DesignSettings,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    db_user.navbar_enabled = request.navbar_enabled
-    db_user.nav_blog_name = (request.nav_blog_name or "").strip() or None
-    db_user.nav_blog_name_size = request.nav_blog_name_size
-    db_user.nav_menu_enabled = request.nav_menu_enabled
-    db_user.show_about_section = request.show_about_section
-    db_user.site_footer_enabled = request.site_footer_enabled
-    db_user.featured_blogs_enabled = request.featured_blogs_enabled
-    db_user.content_width = request.content_width
-    db_user.list_image_position = request.list_image_position
-    db_user.show_preview_in_lists = request.show_preview_in_lists
-    db_user.about_title = request.about_title
-    
-    blog_ids = request.featured_blog_ids or []
-    if len(blog_ids) > 12:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Maximum 12 featured blogs allowed")
-    
-    if blog_ids:
-        owned_ids = {b[0] for b in db.query(models.Blog.blog_id).filter(
-            models.Blog.user_id == current_user.user_id,
-            models.Blog.blog_id.in_(blog_ids),
-        ).all()}
-        db_user.featured_blog_ids = [bid for bid in blog_ids if bid in owned_ids]
-    else:
-        db_user.featured_blog_ids = []
-        
-    db.commit()
-    db.refresh(db_user)
-
-    # Design settings affect public homepage chrome/content (header, featured
-    # posts, about/footer), so purge the same homepage/listing cache tags used
-    # by public blog updates to revalidate the edge cache.
-    schedule_homepage_purge(background_tasks, db_user)
-
-    return db_user
+def update_design_settings(request: page_schema.DesignSettings, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    update_data = request.model_dump(exclude_unset=True)
+    if update_data:
+        for key, value in update_data.items():
+            setattr(current_site, key, value)
+        db.commit()
+        db.refresh(current_site)
+        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    return current_site
 
 
 @router.get("/seo", response_model=user.SeoSettings, status_code=status.HTTP_200_OK)
-def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    return db_user
+def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    return current_site
 
 
 @router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_seo_settings(
-    request: user.SeoSettingsUpdate,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
+def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
     update_data = request.model_dump(exclude_unset=True)
-
-    if "meta_title" in update_data:
-        db_user.meta_title = (update_data["meta_title"] or "").strip() or None
-    if "meta_description" in update_data:
-        db_user.meta_description = (update_data["meta_description"] or "").strip() or None
-    if "og_image_url" in update_data:
-        db_user.og_image_url = update_data["og_image_url"]
-    rss_changed = "rss_enabled" in update_data
-    if rss_changed:
-        db_user.rss_enabled = bool(update_data["rss_enabled"])
-
-    db.commit()
-    db.refresh(db_user)
-
-    if rss_changed:
-        schedule_tenant_purge(background_tasks, db_user)
-
-    return db_user
+    if update_data:
+        for key, value in update_data.items():
+            setattr(current_site, key, value)
+        db.commit()
+        db.refresh(current_site)
+        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    return current_site
 
 
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_user(
-    request: user.UpdateUser,
-    req: Request,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
-):
-    
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
+def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
     update_data = request.model_dump(exclude_unset=True)
+    if not update_data:
+        return user_settings_out(db, current_user, current_site)
 
-    if "email" in update_data and update_data["email"] is not None:
-        update_data["email"] = normalize_email(str(update_data["email"]))
+    user_fields = ["name", "email"]
+    site_fields = ["meta_title", "meta_description"]
+    author_fields = ["bio", "contact_email", "instagram_link", "x_link", "pinterest_link", "facebook_link", "linkedin_link", "github_link", "youtube_link", "website_link", "profile_image_url"]
 
-    if "contact_email" in update_data and update_data["contact_email"] is not None:
-        update_data["contact_email"] = normalize_email(str(update_data["contact_email"]))
-
-    name_changed = "name" in update_data and update_data["name"] != db_user.name
     username_changed = "user_name" in update_data and update_data["user_name"] is not None
-    pfp_changed = "profile_image_url" in update_data
 
-    if "user_name" in update_data and update_data["user_name"] is not None:
-        apply_username_change_or_raise(
+    if username_changed:
+        from ..utils.usernames import apply_username_change_or_raise
+        utils.apply_username_change_or_raise(
             db,
-            db_user=db_user,
+            db_site=current_site,
             new_username_raw=update_data.pop("user_name"),
             actor_user_id=current_user.user_id,
             actor_email=current_user.email,
-            request_context=RequestContext(
-                ip=req.client.host if req.client else None,
-                user_agent=req.headers.get("user-agent"),
-            ),
+            request_context=None,
             is_admin_override=False,
-            reason="self_service",
+            reason="User self-initiated change",
         )
-
-    if "bio" in update_data and update_data["bio"] is not None:
-        word_count = len(update_data["bio"].split())
-        if word_count > 200:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail="Bio must be 50 words or fewer",
-            )
-
+        
+    author = current_site.authors[0] if current_site.authors else None
+    
     for key, value in update_data.items():
-        if key == "profile_image_url" and value is None:
-            # Keep a default avatar instead of leaving profile photo empty.
-            value = settings.default_profile_image_url
-        setattr(db_user, key, value)
+        if key in user_fields:
+            setattr(current_user, key, value)
+        elif key in site_fields:
+            setattr(current_site, key, value)
+        elif key in author_fields and author:
+            setattr(author, key, value)
+            if key == "name":
+                setattr(author, "name", current_user.name)
 
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
-    db.refresh(db_user)
+    # Sync author name to user name if user name changed and author name was not explicitly set
+    if "name" in update_data and "name" not in author_fields and author:
+        author.name = current_user.name
 
-    if name_changed or username_changed or pfp_changed:
-        schedule_tenant_purge(background_tasks, db_user)
-
-    return db_user
+    db.commit()
+    db.refresh(current_user)
+    db.refresh(current_site)
+    if author: db.refresh(author)
+    
+    return user_settings_out(db, current_user, current_site)
 
 
 @router.patch("/admin/{target_user_id}/username", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
@@ -366,19 +286,18 @@ def admin_change_username(
     request: user.AdminUsernameChange,
     req: Request,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     assert_admin_email(current_user.email)
 
     db_user = db.query(models.User).filter(models.User.user_id == target_user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
 
     apply_username_change_or_raise(
         db,
         db_user=db_user,
         new_username_raw=request.user_name,
-        actor_user_id=current_user.user_id,
+        actor_site_id=current_site.site_id,
         actor_email=current_user.email,
         request_context=RequestContext(
             ip=req.client.host if req.client else None,
@@ -392,47 +311,42 @@ def admin_change_username(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
-    db.refresh(db_user)
+    db.refresh(current_site)
     return db_user
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user)):
-    
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    if not utils.is_pro_entitled(current_user.user_id, db):
+        raise HTTPException(status_code=403, detail="Pro subscription required")
 
     update_data = request.model_dump(exclude_unset=True)
-
-    for key, value in update_data.items():
-        setattr(db_user, key, value)
-
-    db.commit()
-    db.refresh(db_user)
-
-    schedule_tenant_purge(background_tasks, db_user)
-
-    return db_user
+    if update_data:
+        for key, value in update_data.items():
+            setattr(current_site, key, value)
+        db.commit()
+        db.refresh(current_site)
+        
+        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    
+    return user_settings_out(db, current_user, current_site)
 
 
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
-async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user)):
+async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
+    
 
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
 
-    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
-    db_user.profile_image_url = image_url
+    image_url = await save_image_local(file=file, category="users", site_id=current_site.site_id, db=db)
+    if current_site.authors: current_site.authors[0].profile_image_url = image_url
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
-    schedule_tenant_purge(background_tasks, db_user)
+    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
 
-    return {"profile_image_url": db_user.profile_image_url}
+    return {"profile_image_url": current_site.authors[0].profile_image_url if current_site.authors else None}
 
 
 
@@ -447,11 +361,10 @@ async def upload_favicon(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    
 
     data = await file.read()
     content_type = file.content_type or ""
@@ -483,19 +396,19 @@ async def upload_favicon(
     provider = _get_storage_provider()
     stored = provider.save(data=data, storage_key=storage_key)
 
-    db_user.favicon_url = stored.url
+    current_site.favicon_url = stored.url
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
-    schedule_tenant_purge(background_tasks, db_user)
+    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
 
-    return {"favicon_url": db_user.favicon_url}
+    return {"favicon_url": current_site.favicon_url}
 
 
 @router.get("/storage", response_model=user.StorageUsage, status_code=status.HTTP_200_OK)
 def get_storage_usage(
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
     used_bytes = get_user_storage_usage_bytes(db, current_user.user_id)
     return {
@@ -509,17 +422,16 @@ def get_storage_usage(
 async def delete_favicon(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    
 
-    db_user.favicon_url = None
+    current_site.favicon_url = None
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
-    schedule_tenant_purge(background_tasks, db_user)
+    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
 
     return {"favicon_url": None}
 
@@ -529,36 +441,34 @@ async def upload_og_image(
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    
 
-    og_image_url = await save_image_local(file=file, category="og-images", user_id=current_user.user_id, db=db)
-    db_user.og_image_url = og_image_url
+    og_image_url = await save_image_local(file=file, category="og-images", site_id=current_site.site_id, db=db)
+    current_site.og_image_url = og_image_url
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
-    schedule_tenant_purge(background_tasks, db_user)
+    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
 
-    return {"og_image_url": db_user.og_image_url}
+    return {"og_image_url": current_site.og_image_url}
 
 
 @router.delete("/seo/og-image", status_code=status.HTTP_200_OK)
 async def delete_og_image(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    
+    
 
-    db_user.og_image_url = None
+    current_site.og_image_url = None
     db.commit()
-    db.refresh(db_user)
+    db.refresh(current_site)
 
-    schedule_tenant_purge(background_tasks, db_user)
+    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
 
     return {"og_image_url": None}

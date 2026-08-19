@@ -98,35 +98,35 @@ async def purge_entire_tenant(tenant_host: str) -> bool:
     return await _revalidate(tags)
 
 
-def _tenant_hosts(user) -> List[str]:
+def _tenant_hosts(site) -> List[str]:
     hosts = []
-    if user.custom_domain:
-        hosts.append(user.custom_domain)
-    if user.user_name:
-        hosts.append(f"{user.user_name}.{settings.ugc_domain}")
+    if site.custom_domain:
+        hosts.append(site.custom_domain)
+    if site.subdomain:
+        hosts.append(f"{site.subdomain}.{settings.ugc_domain}")
     return hosts
 
 
-def schedule_post_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    for host in _tenant_hosts(user):
+def schedule_post_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
+    for host in _tenant_hosts(site):
         background_tasks.add_task(purge_blog_post, host, slug)
 
 
-def schedule_page_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    for host in _tenant_hosts(user):
+def schedule_page_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
+    for host in _tenant_hosts(site):
         background_tasks.add_task(purge_custom_page, host, slug)
 
 
-def schedule_category_purge(background_tasks: BackgroundTasks, user, slug: str) -> None:
-    for host in _tenant_hosts(user):
+def schedule_category_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
+    for host in _tenant_hosts(site):
         background_tasks.add_task(purge_category, host, slug)
 
 
-def schedule_homepage_purge(background_tasks: BackgroundTasks, user) -> None:
-    for host in _tenant_hosts(user):
+def schedule_homepage_purge(background_tasks: BackgroundTasks, site) -> None:
+    for host in _tenant_hosts(site):
         background_tasks.add_task(purge_homepage, host)
 
 
-def schedule_tenant_purge(background_tasks: BackgroundTasks, user) -> None:
-    for host in _tenant_hosts(user):
+def schedule_tenant_purge(background_tasks: BackgroundTasks, site) -> None:
+    for host in _tenant_hosts(site):
         background_tasks.add_task(purge_entire_tenant, host)

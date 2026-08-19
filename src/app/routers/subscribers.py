@@ -32,19 +32,19 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
         _SUBSCRIBE_EMAIL_LIMIT, _SUBSCRIBE_EMAIL_WINDOW,
     )
 
-    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
 
-    if not db_user:
+    if not db_site:
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                           detail=f"User with username {user_name} doesn't exist")
 
-    if not db_user.subscriber_collection_enabled:
+    if not db_site.subscriber_collection_enabled:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Subscriptions are unavailable for this blog",
         )
      
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.email == email, models.Subscriber.user_id == db_user.user_id).first()
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.email == email, models.Subscriber.site_id == db_site.site_id).first()
 
     # already active subscriber
     if db_subscriber and db_subscriber.unsubscribed_at is None:
@@ -61,14 +61,14 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
         return {"message": "Subscribed again"}
     
     new_subscriber = models.Subscriber(email=email, 
-                                       user_id=db_user.user_id)
+                                       site_id=db_site.site_id)
 
     db.add(new_subscriber)
     db.commit()
     db.refresh(new_subscriber)
 
-    token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.user_id)
-    send_sub_confirmation_email(new_subscriber.email, db_user.name, token)
+    token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.site_id)
+    send_sub_confirmation_email(new_subscriber.email, db_site.authors[0].name if db_site.authors else "Author", token)
 
     return {"message": "Please check your email to confirm subscription"}
 
@@ -81,7 +81,8 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired confirmation link")
     
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.user_id == payload["user_id"]).first()
+    target_site_id = payload.get("site_id") or payload.get("user_id")
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.site_id == target_site_id).first()
 
     if not db_subscriber:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
@@ -99,15 +100,15 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
 @router.post("/unsubscribe/{user_name}", status_code=status.HTTP_200_OK)
 def unsubscribe_blog(user_name: str, request: subscribers.Unsubscribe, db: Session = Depends(get_db)):
 
-    db_user = db.query(models.User).filter(models.User.user_name == user_name).first()
+    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
 
-    if not db_user:
+    if not db_site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"User with username: {user_name} doesn't exist"
         )
 
-    db_subscriber = (db.query(models.Subscriber).filter(models.Subscriber.email == request.email, models.Subscriber.user_id == db_user.user_id).first())
+    db_subscriber = (db.query(models.Subscriber).filter(models.Subscriber.email == request.email, models.Subscriber.site_id == db_site.site_id).first())
 
     if not db_subscriber:
         raise HTTPException(
@@ -135,7 +136,8 @@ def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
     except Exception:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired unsubscriber link")
     
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.user_id == payload["user_id"]).first()
+    target_site_id = payload.get("site_id") or payload.get("user_id")
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.site_id == target_site_id).first()
 
     if not db_subscriber:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subcriber not found")
@@ -153,11 +155,11 @@ def list_subscribers(
     page: int = Query(1, ge=1),
     limit: int = Query(10, ge=1, le=50),
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user),
+    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
 
     base_query = db.query(models.Subscriber).filter(
-        models.Subscriber.user_id == current_user.user_id
+        models.Subscriber.site_id == current_site.site_id
     )
 
     total = base_query.count()

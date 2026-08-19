@@ -22,17 +22,17 @@ def search_blogs(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # Load all published blogs for this user
     all_blogs = (
         db.query(models.Blog)
         .filter(
-            models.Blog.user_id == db_user.user_id,
+            models.Blog.site_id == db_site.site_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
         .all()
@@ -127,16 +127,16 @@ def search_blogs(
 @router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
 def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
 
     results = (
         db.query(models.Blog)
-        .filter(models.Blog.user_id == db_user.user_id, models.Blog.status == models.BlogStatus.PUBLISHED)
+        .filter(models.Blog.site_id == db_site.site_id, models.Blog.status == models.BlogStatus.PUBLISHED)
         .all()
     )
 
@@ -150,16 +150,16 @@ def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
 @router.get("/{user_name}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
 def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     db_blog = (
         db.query(models.Blog)
-        .filter(models.Blog.slug == slug, models.Blog.user_id == db_user.user_id)
+        .filter(models.Blog.slug == slug, models.Blog.site_id == db_site.site_id)
         .first()
     )
     if not db_blog:
@@ -174,27 +174,27 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
 @router.get("/{user_name}", response_model=user.PublicUser)
 def get_user(user_name: str, request: Request, db: Session = Depends(get_db)):
 
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
 
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    return utils.public_user_out(db, db_user)
+    return utils.public_user_out(db, db_site)
 
 
 @router.get("/{user_name}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
 def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return (
         db.query(models.UserPage)
         .filter(
-            models.UserPage.user_id == db_user.user_id,
+            models.UserPage.site_id == db_site.site_id,
             models.UserPage.show_in_footer.is_(True),
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
@@ -205,15 +205,15 @@ def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{user_name}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     db_page = (
         db.query(models.UserPage)
         .filter(
-            models.UserPage.user_id == db_user.user_id,
+            models.UserPage.site_id == db_site.site_id,
             models.UserPage.slug == slug,
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
@@ -226,16 +226,16 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
 
 @router.get("/{user_name}/categories", status_code=status.HTTP_200_OK)
 def get_public_categories(user_name: str, request: Request, db: Session = Depends(get_db)):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     cats = (
         db.query(models.Category)
         .filter(
-            models.Category.user_id == db_user.user_id,
+            models.Category.site_id == db_site.site_id,
             models.Category.show_in_menu.is_(True),
         )
         .order_by(models.Category.menu_order.asc(), models.Category.created_at.asc())
@@ -251,7 +251,7 @@ def get_public_categories(user_name: str, request: Request, db: Session = Depend
         ) or 0
         result.append({
             "category_id": c.category_id,
-            "user_id": c.user_id,
+            "site_id": c.site_id,
             "name": c.name,
             "slug": c.slug,
             "blog_count": blog_count,
@@ -264,15 +264,15 @@ def get_public_categories(user_name: str, request: Request, db: Session = Depend
 
 @router.get("/{user_name}/category/{slug}", status_code=status.HTTP_200_OK)
 def get_public_category_blogs(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_user, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_user and canonical_username != utils.normalize_username(user_name):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
-    if not db_user:
+    if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     db_cat = (
         db.query(models.Category)
-        .filter(models.Category.user_id == db_user.user_id, models.Category.slug == slug)
+        .filter(models.Category.site_id == db_site.site_id, models.Category.slug == slug)
         .first()
     )
     if not db_cat:
@@ -283,7 +283,7 @@ def get_public_category_blogs(user_name: str, slug: str, request: Request, db: S
         .join(models.BlogCategory, models.Blog.blog_id == models.BlogCategory.blog_id)
         .filter(
             models.BlogCategory.category_id == db_cat.category_id,
-            models.Blog.user_id == db_user.user_id,
+            models.Blog.site_id == db_site.site_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
         .all()
