@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..schemas import subscribers
-from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token, get_current_user
+from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token, get_current_user, get_current_site
 from ..email.service import send_sub_confirmation_email
 from ..utils import normalize_email
 from ..utils.rate_limit import check_rate_limit_ip_and_email

@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 from ..database import get_db
 from .. import models
 from ..security import hashing, oauth2
+from ..security.oauth2 import get_current_site
+from ..utils.serialization import user_settings_out
 from ..schemas import user
 from ..schemas import page as page_schema
 from ..email.service import send_verify_new_user
