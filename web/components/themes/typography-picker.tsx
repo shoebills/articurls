@@ -14,72 +14,105 @@ export function TypographyPicker({
   const button = settings.button_style || "rounded";
 
   return (
-    <div className="space-y-8 mt-10 border-t border-border/60 pt-8">
+    <div className="space-y-6">
       {/* Font Family */}
-      <div>
-        <h3 className="text-sm font-semibold">4. Font Family</h3>
-        <p className="text-xs text-muted-foreground mt-1 mb-4">
-          Typography pairings for headings and body text.
-        </p>
-        
-        <div className="grid grid-cols-1 gap-3">
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm font-medium text-foreground">Typography Pairing</label>
+          <p className="text-xs text-muted-foreground">
+            Curated font families engineered for reading comfort and aesthetic balance.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {(
             [
-              { id: "sans", label: "Modern Sans", desc: "Clean & standard", className: "font-sans" },
-              { id: "serif", label: "Editorial Serif", desc: "Literary & elegant", className: "font-serif" },
-              { id: "mono", label: "Technical Mono", desc: "Developer focused", className: "font-mono" },
-              { id: "jakarta", label: "Geometric SaaS", desc: "Bold & tight", className: "font-sans tracking-tight" },
+              { id: "sans", label: "Modern Sans", desc: "Inter & system sans — clean, versatile, legible", sample: "Aa Bb Gg" },
+              { id: "serif", label: "Editorial Serif", desc: "Lora / Merriweather — literary and classic", sample: "Aa Bb Gg" },
+              { id: "mono", label: "Technical Mono", desc: "JetBrains Mono / Fira — code & dev focused", sample: "Aa Bb Gg" },
+              { id: "jakarta", label: "Geometric SaaS", desc: "Plus Jakarta Sans — modern startup aesthetic", sample: "Aa Bb Gg" },
             ] as const
-          ).map((f) => (
-            <button
-              key={f.id}
-              onClick={() => onChange({ font_family: f.id })}
-              className={`flex items-center justify-between rounded-xl border p-3 transition-all ${
-                font === f.id
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "border-border/60 hover:border-foreground/30 hover:bg-muted/30"
-              }`}
-            >
-              <div className="flex flex-col text-left">
-                <span className={`text-base font-semibold ${f.className} ${font === f.id ? "text-primary" : "text-foreground"}`}>
-                  {f.label}
-                </span>
-                <span className="text-[11px] text-muted-foreground">{f.desc}</span>
-              </div>
-              {font === f.id && <Check className="h-4 w-4 text-primary" />}
-            </button>
-          ))}
+          ).map((f) => {
+            const isSelected = font === f.id;
+            return (
+              <button
+                type="button"
+                key={f.id}
+                onClick={() => onChange({ font_family: f.id })}
+                className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/[0.03] ring-1 ring-primary/20 shadow-2xs"
+                    : "border-border/70 hover:border-border hover:bg-muted/30"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <span className={`text-xl font-bold tracking-tight ${
+                    f.id === "serif" ? "font-serif" : f.id === "mono" ? "font-mono" : "font-sans"
+                  }`}>
+                    {f.sample}
+                  </span>
+                  {isSelected && (
+                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                      <Check className="h-3.5 w-3.5" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">{f.label}</h4>
+                  <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
+                </div>
+              </button>
+            );
+          })}
         </div>
       </div>
 
+      <hr className="border-border/60" />
+
       {/* Button Style */}
-      <div>
-        <h3 className="text-sm font-semibold">5. Button Style</h3>
-        <p className="text-xs text-muted-foreground mt-1 mb-4">
-          The shape of call-to-actions and interactive elements.
-        </p>
-        
-        <div className="flex flex-wrap gap-3">
+      <div className="space-y-3">
+        <div>
+          <label className="text-sm font-medium text-foreground">Button & UI Corner Style</label>
+          <p className="text-xs text-muted-foreground">
+            Defines the border radius for buttons, badges, and interactive inputs.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
           {(
             [
-              { id: "pill", label: "Pill", radius: "9999px" },
-              { id: "rounded", label: "Rounded", radius: "0.75rem" },
-              { id: "square", label: "Square", radius: "0px" },
+              { id: "pill", label: "Pill", radius: "9999px", preview: "rounded-full" },
+              { id: "rounded", label: "Rounded", radius: "0.5rem", preview: "rounded-lg" },
+              { id: "square", label: "Sharp", radius: "0px", preview: "rounded-none" },
             ] as const
-          ).map((b) => (
-            <button
-              key={b.id}
-              onClick={() => onChange({ button_style: b.id })}
-              className={`flex h-10 items-center justify-center border px-6 text-sm font-medium transition-all ${
-                button === b.id
-                  ? "border-primary bg-primary text-primary-foreground"
-                  : "border-border/60 bg-background text-foreground hover:bg-muted"
-              }`}
-              style={{ borderRadius: b.radius }}
-            >
-              {b.label}
-            </button>
-          ))}
+          ).map((b) => {
+            const isSelected = button === b.id;
+            return (
+              <button
+                type="button"
+                key={b.id}
+                onClick={() => onChange({ button_style: b.id })}
+                className={`flex flex-col items-center justify-center gap-3 rounded-xl border p-4 text-center transition-all ${
+                  isSelected
+                    ? "border-primary bg-primary/[0.03] ring-1 ring-primary/20 shadow-2xs"
+                    : "border-border/70 hover:border-border hover:bg-muted/30"
+                }`}
+              >
+                <div
+                  className={`flex h-8 w-20 items-center justify-center border text-xs font-semibold ${b.preview} ${
+                    isSelected
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-muted/60 text-muted-foreground"
+                  }`}
+                >
+                  Preview
+                </div>
+                <span className={`text-xs font-medium ${isSelected ? "text-foreground font-semibold" : "text-muted-foreground"}`}>
+                  {b.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>

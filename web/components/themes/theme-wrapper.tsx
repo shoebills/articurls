@@ -87,20 +87,22 @@ export function ThemeStyleWrapper({
   user: PublicUser;
   children: React.ReactNode;
 }) {
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const siteMode = user.site_mode || "system";
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    if (typeof window === "undefined") return siteMode === "dark";
+    if (siteMode === "dark") return true;
+    if (siteMode === "light") return false;
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
 
   useEffect(() => {
     if (siteMode === "dark") {
-      setIsDarkMode(true);
       document.documentElement.classList.add("dark");
     } else if (siteMode === "light") {
-      setIsDarkMode(false);
       document.documentElement.classList.remove("dark");
     } else {
       // System
       const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-      setIsDarkMode(mediaQuery.matches);
       if (mediaQuery.matches) {
         document.documentElement.classList.add("dark");
       } else {

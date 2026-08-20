@@ -76,7 +76,7 @@ function StatCard({
 const quickActions = [
   { href: "/dashboard/posts/new", label: "Write a new post", icon: PenLine },
   { href: "/dashboard/categories", label: "Manage categories", icon: Tags },
-  { href: "/dashboard/design", label: "Design your blog", icon: Palette },
+  { href: "/dashboard/themes", label: "Customize themes", icon: Palette },
   { href: "/dashboard/analytics", label: "View analytics", icon: LineChart },
 ];
 

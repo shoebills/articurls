@@ -168,13 +168,7 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
 @router.get("/me", response_model=user.UserSettings, status_code=status.HTTP_200_OK)
 def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site)):
-
-    
-
-    
-    
-    setattr(db_user, "is_admin", is_admin_email(db_user.email))
-    return db_user
+    return user_settings_out(db, current_user, current_site)
 
 
 @router.get("/username-availability", status_code=status.HTTP_200_OK)
@@ -293,13 +287,18 @@ def admin_change_username(
     assert_admin_email(current_user.email)
 
     db_user = db.query(models.User).filter(models.User.user_id == target_user_id).first()
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     
+    target_site = db.query(models.Site).filter(models.Site.user_id == target_user_id).order_by(models.Site.site_id.asc()).first()
+    if not target_site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found for user")
 
     apply_username_change_or_raise(
         db,
-        db_user=db_user,
+        db_site=target_site,
         new_username_raw=request.user_name,
-        actor_site_id=current_site.site_id,
+        actor_user_id=current_user.user_id,
         actor_email=current_user.email,
         request_context=RequestContext(
             ip=req.client.host if req.client else None,
@@ -313,8 +312,9 @@ def admin_change_username(
     except IntegrityError:
         db.rollback()
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
-    db.refresh(current_site)
-    return db_user
+    db.refresh(db_user)
+    db.refresh(target_site)
+    return user_settings_out(db, db_user, target_site)
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
