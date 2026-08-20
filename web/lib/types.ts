@@ -183,6 +183,9 @@ export interface PublicUser {
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled?: boolean;
+  custom_head_code?: string | null;
+  custom_body_code?: string | null;
+  custom_css?: string | null;
   /** Umami website UUID for first-party analytics (Step 6 tracker). */
   umami_website_id?: string | null;
 }
@@ -239,6 +242,44 @@ export interface UserSettings {
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled: boolean;
+  custom_head_code?: string | null;
+  custom_body_code?: string | null;
+  custom_css?: string | null;
+}
+
+export interface SiteSummary {
+  site_id: number;
+  subdomain: string;
+  custom_domain?: string | null;
+  custom_subpath?: string | null;
+  domain_status: DomainStatus;
+  nav_blog_name?: string | null;
+  template_id: string;
+  created_at?: string | null;
+  post_count: number;
+  subscriber_count: number;
+}
+
+export interface CodeInjectionSettings {
+  custom_head_code?: string | null;
+  custom_body_code?: string | null;
+  custom_css?: string | null;
+}
+
+export interface SiteUsageItem {
+  site_id: number;
+  subdomain: string;
+  nav_blog_name?: string | null;
+  pageviews: number;
+}
+
+export interface AccountUsage {
+  total_pageviews: number;
+  tier_limit: number;
+  plan_type: string;
+  tier_price_usd: number;
+  usage_percentage: number;
+  sites: SiteUsageItem[];
 }
 
 export interface StorageUsage {

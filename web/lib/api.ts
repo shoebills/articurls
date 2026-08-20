@@ -2,6 +2,9 @@ import { API_URL } from "./env";
 import type {
   Author,
   PublicAuthorDetail,
+  SiteSummary,
+  CodeInjectionSettings,
+  AccountUsage,
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
@@ -139,6 +142,14 @@ export async function apiFetch<T>(
 
   const headers = new Headers(h);
   if (effectiveToken) headers.set("Authorization", `Bearer ${effectiveToken}`);
+  
+  if (typeof window !== "undefined") {
+    const activeSiteId = localStorage.getItem("articurls_site_id");
+    if (activeSiteId && !headers.has("X-Site-ID")) {
+      headers.set("X-Site-ID", activeSiteId);
+    }
+  }
+
   const url = path.startsWith("http") ? path : `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   
   const fetchOptions: RequestInit = { ...rest, headers, credentials: "include" };
@@ -724,6 +735,52 @@ export async function getPublicAuthors(userName: string): Promise<Author[]> {
 
 export async function getPublicAuthorBlogs(userName: string, slug: string): Promise<PublicAuthorDetail> {
   return apiFetch(`/${encodeURIComponent(userName)}/author/${encodeURIComponent(slug)}`);
+}
+
+// ── Sites ─────────────────────────────────────────────────────────────
+
+export async function listSites(token: string): Promise<SiteSummary[]> {
+  return apiFetch("/sites/", { token });
+}
+
+export async function createSite(
+  token: string,
+  body: { subdomain: string; nav_blog_name?: string }
+): Promise<SiteSummary> {
+  return apiFetch("/sites/", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getSite(token: string, siteId: number): Promise<SiteSummary> {
+  return apiFetch(`/sites/${siteId}`, { token });
+}
+
+export async function deleteSite(token: string, siteId: number): Promise<void> {
+  await apiFetch(`/sites/${siteId}`, { method: "DELETE", token });
+}
+
+export async function getCodeInjection(token: string): Promise<CodeInjectionSettings> {
+  return apiFetch("/sites/code-injection", { token });
+}
+
+export async function updateCodeInjection(
+  token: string,
+  body: CodeInjectionSettings
+): Promise<CodeInjectionSettings> {
+  return apiFetch("/sites/code-injection", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getAccountUsage(token: string): Promise<AccountUsage> {
+  return apiFetch("/billing/usage", { token });
 }
 
 export async function listSubscribers(token: string, page = 1, limit = 10): Promise<SubscriberListResponse> {

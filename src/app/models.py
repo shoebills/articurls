@@ -89,6 +89,11 @@ class Site(Base):
     meta_description = Column(String, nullable=True)
     favicon_url = Column(String, nullable=True)
     og_image_url = Column(String, nullable=True)
+
+    # Code Injection
+    custom_head_code = Column(Text, nullable=True, default=None)
+    custom_body_code = Column(Text, nullable=True, default=None)
+    custom_css = Column(Text, nullable=True, default=None)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)

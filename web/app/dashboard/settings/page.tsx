@@ -31,6 +31,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import CustomDomainSettings from "@/components/custom-domain-settings";
 import SubfolderSettings from "@/components/subfolder-settings";
 import SeoSettings from "@/components/seo-settings";
+import { CodeInjectionSettings } from "@/components/code-injection-settings";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
@@ -89,7 +90,7 @@ export default function SettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<"general" | "domains" | "seo">("general");
+  const [selectedTab, setSelectedTab] = useState<"general" | "domains" | "seo" | "code">("general");
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -246,7 +247,7 @@ export default function SettingsPage() {
 
       <nav className="overflow-x-auto pb-1">
         <div className="inline-flex min-w-full rounded-xl border bg-background p-1 sm:min-w-0">
-          {([["general", "General"], ["domains", "Domains"], ["seo", "SEO"]] as const).map(([value, label]) => (
+          {([["general", "General"], ["domains", "Domains"], ["seo", "SEO"], ["code", "Code Injection"]] as const).map(([value, label]) => (
             <Button
               key={value}
               type="button"
@@ -497,6 +498,10 @@ export default function SettingsPage() {
 
       <div className={cn(selectedTab !== "seo" && "hidden")}>
         <SeoSettings />
+      </div>
+
+      <div className={cn(selectedTab !== "code" && "hidden")}>
+        <CodeInjectionSettings />
       </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

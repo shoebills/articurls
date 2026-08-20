@@ -44,6 +44,9 @@ def public_user_out(db: Session, db_site: models.Site):
         "domain_status": db_site.domain_status,
         "rss_enabled": db_site.rss_enabled,
         "umami_website_id": db_site.umami_website_id,
+        "custom_head_code": db_site.custom_head_code,
+        "custom_body_code": db_site.custom_body_code,
+        "custom_css": db_site.custom_css,
         
         # Fallback values for author fields
         "name": author.name if author else "",
@@ -115,6 +118,9 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "show_preview_in_lists": db_site.show_preview_in_lists,
         "domain_status": db_site.domain_status,
         "rss_enabled": db_site.rss_enabled,
+        "custom_head_code": db_site.custom_head_code,
+        "custom_body_code": db_site.custom_body_code,
+        "custom_css": db_site.custom_css,
     }
     
     # check if user is admin

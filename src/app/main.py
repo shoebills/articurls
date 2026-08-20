@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 from .config import settings
-from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages, admin, categories, authors, oauth, umami, support, cloudflare
+from .routers import blog, user, authentication, subscribers, public, analytics, billing, pages, admin, categories, authors, sites, oauth, umami, support, cloudflare
 from .domains.router import router as domains_router
 from .middleware.cors import DynamicCORSMiddleware
 
@@ -19,6 +19,7 @@ app.include_router(authentication.router)
 app.include_router(oauth.router)
 app.include_router(blog.router)
 app.include_router(user.router)
+app.include_router(sites.router)
 app.include_router(authors.router)
 app.include_router(subscribers.router)
 app.include_router(analytics.router)

@@ -32,3 +32,19 @@ class CheckoutResponse(BaseModel):
 
 class CustomerPortalResponse(BaseModel):
     url: str
+
+
+class SiteUsageItem(BaseModel):
+    site_id: int
+    subdomain: str
+    nav_blog_name: Optional[str] = None
+    pageviews: int = 0
+
+
+class AccountUsage(BaseModel):
+    total_pageviews: int = 0
+    tier_limit: int = 10000
+    plan_type: str = "trial"
+    tier_price_usd: int = 9
+    usage_percentage: float = 0.0
+    sites: list[SiteUsageItem] = []

@@ -159,7 +159,16 @@ export function ThemeStyleWrapper({
         color: "var(--foreground)",
       } as React.CSSProperties}
     >
+      {user.custom_css ? (
+        <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: user.custom_css }} />
+      ) : null}
+      {user.custom_head_code ? (
+        <div id="articurls-custom-head" dangerouslySetInnerHTML={{ __html: user.custom_head_code }} style={{ display: "none" }} />
+      ) : null}
       {children}
+      {user.custom_body_code ? (
+        <div id="articurls-custom-body" dangerouslySetInnerHTML={{ __html: user.custom_body_code }} style={{ display: "none" }} />
+      ) : null}
     </div>
   );
 }

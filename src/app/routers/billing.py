@@ -11,7 +11,7 @@ from ..utils import user_by_email
 from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
-from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CustomerPortalResponse
+from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CustomerPortalResponse, AccountUsage
 from ..payments.client import client as dodo_client
 from ..config import settings
 from ..domains.utils import restore_domain_access, start_domain_grace_period
@@ -694,3 +694,71 @@ def get_customer_portal(
         raise HTTPException(status_code=502, detail="Failed to create customer portal session")
 
     return {"url": session.link}
+
+
+@router.get("/usage", response_model=AccountUsage)
+def get_account_usage(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    from ..umami.client import UmamiClient
+    from ..umami.service import get_umami_period_timestamps
+    from sqlalchemy import func
+    
+    db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
+    plan_type = db_sub.plan_type if db_sub else "trial"
+
+    TIERS = {
+        "trial": {"limit": 10000, "price": 9},
+        "pro": {"limit": 10000, "price": 9},
+        "pro_10k": {"limit": 10000, "price": 9},
+        "pro_50k": {"limit": 50000, "price": 29},
+        "pro_100k": {"limit": 100000, "price": 49},
+        "pro_250k": {"limit": 250000, "price": 79},
+        "pro_500k": {"limit": 500000, "price": 99},
+        "pro_1m": {"limit": 1000000, "price": 149},
+        "lifetime": {"limit": 100000, "price": 199},
+    }
+    tier_info = TIERS.get(plan_type, {"limit": 10000, "price": 9})
+
+    umami_client = UmamiClient()
+
+    sites = db.query(models.Site).filter(models.Site.user_id == current_user.user_id).all()
+    site_items = []
+    total_views = 0
+
+    for site in sites:
+        views = 0
+        if site.umami_website_id and umami_client.configured:
+            try:
+                start_at, end_at = get_umami_period_timestamps("30d")
+                stats = umami_client.get_website_stats_sync(site.umami_website_id, start_at=start_at, end_at=end_at)
+                views = stats.get("pageviews", 0)
+            except Exception:
+                views = 0
+        
+        if views == 0:
+            views = (
+                db.query(func.count(models.Views.view_id))
+                .filter(models.Views.site_id == site.site_id)
+                .scalar()
+            ) or 0
+
+        total_views += views
+        site_items.append({
+            "site_id": site.site_id,
+            "subdomain": site.subdomain,
+            "nav_blog_name": site.nav_blog_name or site.subdomain,
+            "pageviews": views,
+        })
+
+    usage_pct = min(100.0, round((total_views / tier_info["limit"] * 100), 1)) if tier_info["limit"] > 0 else 0.0
+
+    return {
+        "total_pageviews": total_views,
+        "tier_limit": tier_info["limit"],
+        "plan_type": plan_type,
+        "tier_price_usd": tier_info["price"],
+        "usage_percentage": usage_pct,
+        "sites": site_items,
+    }

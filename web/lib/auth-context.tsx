@@ -2,14 +2,17 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SubscriptionOut, UserSettings } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout } from "@/lib/api";
+import type { SubscriptionOut, UserSettings, SiteSummary } from "@/lib/types";
+import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
+const SITE_KEY = "articurls_site_id";
 
 type AuthContextValue = {
   token: string | null;
   user: UserSettings | null;
+  sites: SiteSummary[];
+  activeSite: SiteSummary | null;
   subscription: SubscriptionOut | null;
   isPro: boolean;
   wasPro: boolean;
@@ -19,6 +22,8 @@ type AuthContextValue = {
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  refreshSites: () => Promise<void>;
+  switchSite: (siteId: number) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -36,29 +41,79 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserSettings | null>(null);
+  const [sites, setSites] = useState<SiteSummary[]>([]);
+  const [activeSite, setActiveSite] = useState<SiteSummary | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionOut | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const refreshSites = useCallback(async () => {
+    const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+    if (!t) {
+      setSites([]);
+      setActiveSite(null);
+      return;
+    }
+    try {
+      const siteList = await listSites(t);
+      setSites(siteList);
+      const storedSiteId = localStorage.getItem(SITE_KEY);
+      const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
+      if (current) {
+        localStorage.setItem(SITE_KEY, String(current.site_id));
+        setActiveSite(current);
+      }
+    } catch {
+      // Ignore
+    }
+  }, []);
 
   const refreshUser = useCallback(async () => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     if (!t) {
       setUser(null);
       setSubscription(null);
+      setSites([]);
+      setActiveSite(null);
       return;
     }
     try {
-      const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
+      const [me, sub, siteList] = await Promise.all([
+        getMe(t),
+        getSubscription(t),
+        listSites(t).catch(() => [] as SiteSummary[]),
+      ]);
       setUser(me);
       setSubscription(sub);
-    } catch (err: any) {
-      if (err?.status === 401 || err?.response?.status === 401) {
+      setSites(siteList);
+
+      const storedSiteId = localStorage.getItem(SITE_KEY);
+      const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
+      if (current) {
+        localStorage.setItem(SITE_KEY, String(current.site_id));
+        setActiveSite(current);
+      }
+    } catch (err: unknown) {
+      const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401) {
         localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(SITE_KEY);
         setToken(null);
         setUser(null);
         setSubscription(null);
+        setSites([]);
+        setActiveSite(null);
       }
     }
   }, []);
+
+  const switchSite = useCallback(async (siteId: number) => {
+    localStorage.setItem(SITE_KEY, String(siteId));
+    const target = sites.find((s) => s.site_id === siteId) || null;
+    if (target) setActiveSite(target);
+    await refreshUser();
+    // Clear page-specific caches by reloading route state
+    router.refresh();
+  }, [sites, refreshUser, router]);
 
   useEffect(() => {
     const t = localStorage.getItem(TOKEN_KEY);
@@ -69,12 +124,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     (async () => {
       try {
-        const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
+        const [me, sub, siteList] = await Promise.all([
+          getMe(t),
+          getSubscription(t),
+          listSites(t).catch(() => [] as SiteSummary[]),
+        ]);
         setUser(me);
         setSubscription(sub);
-      } catch (err: any) {
-        if (err?.status === 401 || err?.response?.status === 401) {
+        setSites(siteList);
+
+        const storedSiteId = localStorage.getItem(SITE_KEY);
+        const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
+        if (current) {
+          localStorage.setItem(SITE_KEY, String(current.site_id));
+          setActiveSite(current);
+        }
+      } catch (err: unknown) {
+        const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) {
           localStorage.removeItem(TOKEN_KEY);
+          localStorage.removeItem(SITE_KEY);
           setToken(null);
         }
       } finally {
@@ -120,6 +189,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       token,
       user,
+      sites,
+      activeSite,
       subscription,
       isPro,
       wasPro,
@@ -129,8 +200,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       refreshUser,
+      refreshSites,
+      switchSite,
     }),
-    [token, user, subscription, isPro, wasPro, isTrial, daysRemaining, loading, login, logout, refreshUser]
+    [token, user, sites, activeSite, subscription, isPro, wasPro, isTrial, daysRemaining, loading, login, logout, refreshUser, refreshSites, switchSite]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

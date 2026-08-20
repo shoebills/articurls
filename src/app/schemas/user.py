@@ -63,6 +63,9 @@ class UserSettings(BaseModel):
     show_preview_in_lists: bool = True
     domain_status: Optional[str] = None
     rss_enabled: bool = False
+    custom_head_code: Optional[str] = None
+    custom_body_code: Optional[str] = None
+    custom_css: Optional[str] = None
 
     class Config:
         from_attributes = True
@@ -117,6 +120,9 @@ class PublicUser(BaseModel):
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
     rss_enabled: bool = False
+    custom_head_code: Optional[str] = None
+    custom_body_code: Optional[str] = None
+    custom_css: Optional[str] = None
     umami_website_id: Optional[str] = None
 
     class Config:
