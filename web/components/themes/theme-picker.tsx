@@ -84,8 +84,7 @@ export function ThemePicker({
           </p>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Ideal for: Thought leadership, newsletters</span>
+        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end">
           <a
             href={editorialDemoUrl}
             target="_blank"
@@ -166,8 +165,7 @@ export function ThemePicker({
           </p>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">Ideal for: Startups, resource centers</span>
+        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end">
           <a
             href={saasDemoUrl}
             target="_blank"

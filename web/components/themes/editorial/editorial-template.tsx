@@ -6,8 +6,9 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
-import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { resolveBlogCoverImage } from "@/lib/blog-images";
 
 type EditorialTemplateProps = {
   site: PublicUser;
@@ -86,36 +87,64 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
         ) : null}
 
         {/* Linear Editorial Feed */}
-        <div className="mt-12 space-y-16 lg:space-y-24">
-          {blogs.map((b) => (
-             <article key={b.blog_id} className="group relative flex flex-col items-start justify-between">
-                <div className="flex items-center gap-x-4 text-xs">
-                  {b.published_at && (
-                    <time dateTime={b.published_at} className="text-muted-foreground">
-                      {new Date(b.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
-                    </time>
-                  )}
-                  {/* Find first category for badge */}
-                  {b.category_ids && b.category_ids.length > 0 && categories.find(c => c.category_id === b.category_ids![0]) && (
-                    <span className="relative z-10 rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary hover:bg-primary/20 transition-colors">
-                      {categories.find(c => c.category_id === b.category_ids![0])?.name}
-                    </span>
-                  )}
-                </div>
-                <div className="group relative">
-                  <h3 className="mt-3 text-2xl font-bold leading-tight group-hover:text-primary transition-colors">
-                    <Link href={`/blog/${b.slug}`}>
-                      <span className="absolute inset-0" />
-                      {b.title}
+        {blogs.length === 0 ? (
+          <div className="py-24 text-center">
+            <p className="text-base text-muted-foreground">No posts published yet.</p>
+          </div>
+        ) : (
+          <div className="mt-12 space-y-16 lg:space-y-20">
+            {blogs.map((b) => {
+              const postHref = getPublicPostUrl(site.user_name, b.slug, basePath);
+              const coverImg = resolveBlogCoverImage(b);
+              const firstCat = b.category_ids && b.category_ids.length > 0
+                ? categories.find(c => c.category_id === b.category_ids![0])
+                : null;
+
+              return (
+                <article key={b.blog_id} className="group relative flex flex-col items-start justify-between">
+                  {coverImg ? (
+                    <Link href={postHref} className="mb-6 block w-full overflow-hidden rounded-2xl">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={coverImg}
+                        alt={b.title}
+                        className="aspect-[16/9] w-full object-cover transition-transform duration-300 group-hover:scale-102"
+                        loading="lazy"
+                      />
                     </Link>
-                  </h3>
-                  <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
-                    {b.excerpt}
-                  </p>
-                </div>
-             </article>
-          ))}
-        </div>
+                  ) : null}
+
+                  <div className="flex items-center gap-x-4 text-xs">
+                    {b.published_at && (
+                      <time dateTime={b.published_at} className="text-muted-foreground">
+                        {new Date(b.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                      </time>
+                    )}
+                    {firstCat && (
+                      <Link
+                        href={getPublicCategoryUrl(site.user_name, firstCat.slug, basePath)}
+                        className="relative z-10 rounded-full bg-primary/10 px-3 py-1 font-medium text-primary hover:bg-primary/20 transition-colors"
+                      >
+                        {firstCat.name}
+                      </Link>
+                    )}
+                  </div>
+                  <div className="group relative">
+                    <h3 className="mt-3 text-2xl sm:text-3xl font-bold leading-tight group-hover:text-primary transition-colors">
+                      <Link href={postHref}>
+                        <span className="absolute inset-0" />
+                        {b.title}
+                      </Link>
+                    </h3>
+                    <p className="mt-4 line-clamp-3 text-sm sm:text-base leading-relaxed text-muted-foreground">
+                      {b.excerpt}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
 
         <PublicSiteFooter user={site} pages={pages} />
       </main>

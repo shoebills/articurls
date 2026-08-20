@@ -18,11 +18,10 @@ import { ThemePicker } from "@/components/themes/theme-picker";
 import { ColorPicker } from "@/components/themes/color-picker";
 import { TypographyPicker } from "@/components/themes/typography-picker";
 import { NavbarPicker } from "@/components/themes/navbar-picker";
-import { ExternalLink, Loader2 } from "lucide-react";
-import { UGC_DOMAIN } from "@/lib/env";
+import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
-  const { token, refreshUser, user } = useAuth();
+  const { token, refreshUser } = useAuth();
 
   const [design, setDesign] = useState<DesignSettings>(() => {
     if (typeof window === "undefined") {
@@ -129,13 +128,6 @@ export default function ThemesDashboardPage() {
     }
   };
 
-  const publicSiteUrl =
-    user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-      ? `https://${user.custom_domain}`
-      : user?.user_name
-        ? `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`
-        : null;
-
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Header */}
@@ -146,15 +138,7 @@ export default function ThemesDashboardPage() {
             Customize your publication layout, typography, color scheme, and header styling.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {publicSiteUrl ? (
-            <Button variant="outline" asChild className="gap-1.5 text-xs sm:text-sm">
-              <a href={publicSiteUrl} target="_blank" rel="noopener noreferrer">
-                <span>View My Site</span>
-                <ExternalLink className="h-3.5 w-3.5" />
-              </a>
-            </Button>
-          ) : null}
+        <div>
           <Button
             onClick={handleSave}
             disabled={saving || loading}
@@ -177,7 +161,7 @@ export default function ThemesDashboardPage() {
           {/* Section 1: Template */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">1. Blog Template</CardTitle>
+              <CardTitle className="text-lg font-semibold">Blog Template</CardTitle>
               <CardDescription>
                 Choose the overarching visual layout and post architecture for your blog.
               </CardDescription>
@@ -190,7 +174,7 @@ export default function ThemesDashboardPage() {
           {/* Section 2: Colors & Appearance */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">2. Colors & Appearance</CardTitle>
+              <CardTitle className="text-lg font-semibold">Colors & Appearance</CardTitle>
               <CardDescription>
                 Configure the light/dark site mode and brand accent color personality.
               </CardDescription>
@@ -203,7 +187,7 @@ export default function ThemesDashboardPage() {
           {/* Section 3: Typography & UI Shape */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">3. Typography & UI Style</CardTitle>
+              <CardTitle className="text-lg font-semibold">Typography & UI Style</CardTitle>
               <CardDescription>
                 Set font family pairings and button corner styling.
               </CardDescription>
@@ -216,7 +200,7 @@ export default function ThemesDashboardPage() {
           {/* Section 4: Header & Navigation */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">4. Header & Navigation</CardTitle>
+              <CardTitle className="text-lg font-semibold">Header & Navigation</CardTitle>
               <CardDescription>
                 Customize how your logo and navigation bar are arranged.
               </CardDescription>

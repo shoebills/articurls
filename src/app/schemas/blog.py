@@ -27,16 +27,18 @@ class GetBlog(BaseModel):
     title: str
     content: str
     slug: str
-    meta_title: Optional[str]
-    meta_description: Optional[str]
-    featured_image_url: Optional[str]
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
     notify_subscribers: bool
     status: BlogStatus
-    scheduled_at: Optional[datetime]
-    published_at: Optional[datetime]
+    scheduled_at: Optional[datetime] = None
+    published_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    user_id: int
+    site_id: Optional[int] = None
+    author_id: Optional[int] = None
+    user_id: Optional[int] = None
     media: list[BlogMediaOut] = []
     category_ids: List[int] = []
 
@@ -53,12 +55,14 @@ class PublicBlog(BaseModel):
     title: str
     content: str
     slug: str
-    meta_title: Optional[str]
-    meta_description: Optional[str]
-    featured_image_url: Optional[str]
-    published_at: Optional[datetime]
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    published_at: Optional[datetime] = None
     updated_at: datetime
-    user_id: int
+    site_id: Optional[int] = None
+    author_id: Optional[int] = None
+    user_id: Optional[int] = None
     media: list[BlogMediaOut] = []
     category_ids: List[int] = []
 
