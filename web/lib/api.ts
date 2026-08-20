@@ -857,12 +857,20 @@ export async function updateSubfolderSettings(
   });
 }
 
-export async function deleteSubfolderSettings(token: string): Promise<{ message: string }> {
-  return apiFetch("/settings/subfolder", { method: "DELETE", token });
+export async function deployCloudflareSubfolder(
+  token: string,
+  body: { cf_token: string; custom_domain: string; custom_subpath: string }
+): Promise<SubfolderSettings> {
+  return apiFetch("/settings/subfolder/deploy", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
 }
 
-export async function getCloudflareConnectUrl(token: string): Promise<{ auth_url: string }> {
-  return apiFetch("/auth/cloudflare/connect", { token });
+export async function deleteSubfolderSettings(token: string): Promise<{ message: string }> {
+  return apiFetch("/settings/subfolder", { method: "DELETE", token });
 }
 
 export async function disconnectCloudflare(token: string): Promise<{ message: string }> {
