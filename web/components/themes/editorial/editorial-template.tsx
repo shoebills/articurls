@@ -19,10 +19,11 @@ type EditorialTemplateProps = {
 };
 
 export function EditorialTemplate({ site, blogs, pages, categories, basePath }: EditorialTemplateProps) {
-  const navBlogName = (site.nav_blog_name || "").trim() || "My Blog";
+  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.user_name || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
   const maxWidth = site.content_width === "wide" ? "max-w-5xl" : "max-w-3xl";
-  const mainSpacing = site.navbar_enabled
+  const isNavEnabled = site.navbar_enabled !== false;
+  const mainSpacing = isNavEnabled
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
@@ -35,7 +36,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
         is_cta: item.is_cta,
         open_in_new_tab: item.open_in_new_tab,
       }))
-    : site.nav_menu_enabled
+    : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
           href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
           label: c.name,
@@ -49,7 +50,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
         is_cta: item.is_cta,
         open_in_new_tab: item.open_in_new_tab,
       }))
-    : site.nav_menu_enabled
+    : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
           href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
           label: c.name,
@@ -59,12 +60,16 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
   const showSubscriberCollection = site.subscriber_collection_enabled === true;
   const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
 
-  const publicNavHeaderClass = "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
+  const publicNavHeaderClass = site.navbar_style === "floating"
+    ? "sticky top-4 z-40 mb-12 rounded-full border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
+    : site.navbar_style === "minimal"
+      ? "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6"
+      : "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className={mainSpacing}>
-        {site.navbar_enabled ? (
+        {isNavEnabled ? (
           <header className={publicNavHeaderClass} data-public-nav>
             <div className="hidden w-full sm:block">
               <PublicDesktopNav

@@ -32,7 +32,15 @@ import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
 import { EditorialTemplate } from "@/components/themes/editorial/editorial-template";
 import { SaasTemplate } from "@/components/themes/saas/saas-template";
 
-const publicNavHeaderClass = "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+function getPublicNavHeaderClass(navbarStyle?: string) {
+  if (navbarStyle === "floating") {
+    return "sticky top-4 z-40 mb-8 rounded-full border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm";
+  }
+  if (navbarStyle === "minimal") {
+    return "sticky top-0 z-40 mb-8 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+  }
+  return "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+}
 
 type Props = { params: Promise<{ slug?: string[] }> };
 
@@ -41,7 +49,7 @@ export const dynamic = "force-dynamic";
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveUserSiteName(user: PublicUser | null | undefined): string {
-  return (user?.nav_blog_name || "").trim() || "My Blog";
+  return (user?.nav_blog_name || "").trim() || user?.name || user?.user_name || "My Blog";
 }
 
 function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
@@ -89,7 +97,7 @@ function resolveNavLinks(user: PublicUser, categories: Category[], basePath: str
       open_in_new_tab: item.open_in_new_tab,
     }));
   }
-  if (!user.nav_menu_enabled) return [];
+  if (user.nav_menu_enabled === false) return [];
   return categories.map((c) => ({
     href: getPublicCategoryUrl(user.user_name, c.slug, basePath),
     label: c.name,
@@ -483,10 +491,11 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!blog || !author) notFound();
 
-    const navBlogName = (author.nav_blog_name || "").trim() || "My Blog";
+    const navBlogName = (author.nav_blog_name || "").trim() || author.name || author.user_name || "My Blog";
     const blogNameSize = normalizeNavBlogNameSize(author.nav_blog_name_size);
     const maxWidth = author.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const containerSpacing = author.navbar_enabled
+    const isNavEnabled = author.navbar_enabled !== false;
+    const containerSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
     
@@ -579,8 +588,8 @@ export default async function SitePublicationPage({ params }: Props) {
         <article className="min-h-screen bg-background">
         <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
-          {author.navbar_enabled ? (
-            <header className={publicNavHeaderClass} data-public-nav>
+          {isNavEnabled ? (
+            <header className={getPublicNavHeaderClass(author.navbar_style)} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -644,11 +653,12 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!user || !page) notFound();
 
-    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const navBlogName = resolveUserSiteName(user);
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const contentWidth = user.content_width === "wide" ? "max-w-3xl" : "";
-    const mainSpacing = user.navbar_enabled
+    const isNavEnabled = user.navbar_enabled !== false;
+    const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
@@ -663,8 +673,8 @@ export default async function SitePublicationPage({ params }: Props) {
       <div className="min-h-screen bg-background text-foreground">
         <main className={mainSpacing}>
           <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
-          {user.navbar_enabled ? (
-            <header className={publicNavHeaderClass} data-public-nav>
+          {isNavEnabled ? (
+            <header className={getPublicNavHeaderClass(user.navbar_style)} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -733,10 +743,11 @@ export default async function SitePublicationPage({ params }: Props) {
 
     const blogs = data.blogs;
     const categoryName = data.category.name;
-    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const navBlogName = resolveUserSiteName(user);
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const mainSpacing = user.navbar_enabled
+    const isNavEnabled = user.navbar_enabled !== false;
+    const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
@@ -751,8 +762,8 @@ export default async function SitePublicationPage({ params }: Props) {
       <div className="min-h-screen bg-background text-foreground">
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
-          {user.navbar_enabled ? (
-            <header className={publicNavHeaderClass} data-public-nav>
+          {isNavEnabled ? (
+            <header className={getPublicNavHeaderClass(user.navbar_style)} data-public-nav>
               <div className="hidden w-full sm:block">
                 <PublicDesktopNav
                   title={navBlogName}
@@ -829,10 +840,11 @@ export default async function SitePublicationPage({ params }: Props) {
 
     const author = authorData.author;
     const blogs = authorData.blogs;
-    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const navBlogName = resolveUserSiteName(user);
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const mainSpacing = user.navbar_enabled
+    const isNavEnabled = user.navbar_enabled !== false;
+    const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
@@ -848,8 +860,8 @@ export default async function SitePublicationPage({ params }: Props) {
         <div className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateAuthorProfileSchema(author, user, currentUrl, siteUrl)} />
           <main className={mainSpacing}>
-            {user.navbar_enabled ? (
-              <header className={publicNavHeaderClass} data-public-nav>
+            {isNavEnabled ? (
+              <header className={getPublicNavHeaderClass(user.navbar_style)} data-public-nav>
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
@@ -1006,10 +1018,11 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!user) notFound();
 
-    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const navBlogName = resolveUserSiteName(user);
     const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
     const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const mainSpacing = user.navbar_enabled
+    const isNavEnabled = user.navbar_enabled !== false;
+    const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
@@ -1021,8 +1034,8 @@ export default async function SitePublicationPage({ params }: Props) {
       <ThemeStyleWrapper user={user}>
         <div className="min-h-screen bg-background text-foreground">
           <main className={mainSpacing}>
-            {user.navbar_enabled ? (
-              <header className={publicNavHeaderClass} data-public-nav>
+            {isNavEnabled ? (
+              <header className={getPublicNavHeaderClass(user.navbar_style)} data-public-nav>
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
