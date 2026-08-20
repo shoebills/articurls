@@ -206,7 +206,7 @@ def update_design_settings(request: page_schema.DesignSettings, background_tasks
             setattr(current_site, key, value)
         db.commit()
         db.refresh(current_site)
-        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+        schedule_tenant_purge(background_tasks, current_site)
     return current_site
 
 
@@ -223,7 +223,7 @@ def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: Backg
             setattr(current_site, key, value)
         db.commit()
         db.refresh(current_site)
-        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+        schedule_tenant_purge(background_tasks, current_site)
     return current_site
 
 
@@ -329,7 +329,7 @@ def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTas
         db.commit()
         db.refresh(current_site)
         
-        background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+        schedule_tenant_purge(background_tasks, current_site)
     
     return user_settings_out(db, current_user, current_site)
 
@@ -346,7 +346,7 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
     db.commit()
     db.refresh(current_site)
 
-    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"profile_image_url": current_site.authors[0].profile_image_url if current_site.authors else None}
 
@@ -402,7 +402,7 @@ async def upload_favicon(
     db.commit()
     db.refresh(current_site)
 
-    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"favicon_url": current_site.favicon_url}
 
@@ -433,7 +433,7 @@ async def delete_favicon(
     db.commit()
     db.refresh(current_site)
 
-    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"favicon_url": None}
 
@@ -453,7 +453,7 @@ async def upload_og_image(
     db.commit()
     db.refresh(current_site)
 
-    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"og_image_url": current_site.og_image_url}
 
@@ -471,6 +471,6 @@ async def delete_og_image(
     db.commit()
     db.refresh(current_site)
 
-    background_tasks.add_task(tasks.purge_cache_tags, [f"tenant-{current_site.custom_domain or current_site.subdomain}"])
+    schedule_tenant_purge(background_tasks, current_site)
 
     return {"og_image_url": None}
