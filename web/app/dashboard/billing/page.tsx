@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   createCheckout,
   getSubscription,
@@ -22,20 +23,21 @@ import {
   Timer,
   Check,
   Zap,
-  Globe,
   ArrowUpRight,
   Activity,
-  Layers,
+  Sparkles,
+  Mail,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
-const USAGE_TIERS = [
-  { id: "starter", name: "Starter", price: 9, views: 10_000, description: "For emerging creators & niche blogs" },
-  { id: "growth", name: "Growth", price: 29, views: 50_000, description: "For fast-growing publications" },
-  { id: "pro", name: "Pro", price: 49, views: 100_000, description: "For established blogs & startups", popular: true },
-  { id: "scale", name: "Scale", price: 79, views: 250_000, description: "For scaling content teams & agencies" },
-  { id: "business", name: "Business", price: 99, views: 500_000, description: "For high-traffic multi-site networks" },
-  { id: "enterprise", name: "Enterprise", price: 149, views: 1_000_000, description: "For media brands & high-volume SaaS" },
+const VIEW_TIERS = [
+  { id: "10k", label: "Up to 10k views", price: 9, views: 10_000 },
+  { id: "50k", label: "Up to 50k views", price: 29, views: 50_000 },
+  { id: "100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
+  { id: "250k", label: "Up to 250k views", price: 79, views: 250_000 },
+  { id: "500k", label: "Up to 500k views", price: 99, views: 500_000 },
+  { id: "1m", label: "Up to 1M views", price: 149, views: 1_000_000 },
+  { id: "custom", label: "1M+ views (Custom)", price: null, views: null },
 ];
 
 export default function BillingPage() {
@@ -43,6 +45,7 @@ export default function BillingPage() {
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [usage, setUsage] = useState<AccountUsage | null>(null);
+  const [selectedTierIndex, setSelectedTierIndex] = useState(0);
   const [err, setErr] = useState<string | null>(null);
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
   const [busyPortal, setBusyPortal] = useState(false);
@@ -65,6 +68,13 @@ export default function BillingPage() {
       setTx(t);
       setSub(s);
       setUsage(u);
+
+      if (u) {
+        const matchingIdx = VIEW_TIERS.findIndex((tier) => tier.views === u.tier_limit);
+        if (matchingIdx !== -1) {
+          setSelectedTierIndex(matchingIdx);
+        }
+      }
     } catch {
       setErr("Failed to load billing info");
     } finally {
@@ -128,6 +138,10 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
   const isLifetime = sub?.plan_type === "lifetime";
   const subStatus = sub?.status?.toLowerCase() ?? "";
+
+  const selectedTier = VIEW_TIERS[selectedTierIndex];
+  const isCustomTier = selectedTier.id === "custom";
+  const isCurrentActiveTier = usage?.tier_limit === selectedTier.views && pro;
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
@@ -308,74 +322,139 @@ export default function BillingPage() {
             </CardContent>
           </Card>
 
-          {/* Usage Tiers Grid */}
+          {/* Unified Pricing Card with Views Selector */}
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold tracking-tight">Usage Tiers & Upgrades</h2>
+              <h2 className="text-xl font-bold tracking-tight">Articurls Pro Plan</h2>
               <p className="text-sm text-muted-foreground">
-                All plans include unlimited publications, custom domains, RSS feeds, themes, and SEO automation.
+                All features included on every tier. Simply choose the traffic volume your publications need.
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {USAGE_TIERS.map((tier) => {
-                const isCurrent = usage?.tier_limit === tier.views && pro;
-                return (
-                  <div
-                    key={tier.id}
-                    className={`relative flex flex-col justify-between rounded-2xl border p-6 shadow-2xs transition-all ${
-                      tier.popular
-                        ? "border-primary/60 bg-primary/[0.02] shadow-sm"
-                        : "border-border/70 bg-card"
-                    }`}
-                  >
-                    {tier.popular && (
-                      <span className="absolute -top-3 right-6 rounded-full bg-primary px-3 py-0.5 text-[11px] font-semibold text-primary-foreground shadow-xs">
-                        Popular
-                      </span>
-                    )}
+            <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm">
+              <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
+              </div>
 
-                    <div>
-                      <h3 className="font-bold text-lg text-foreground">{tier.name}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">{tier.description}</p>
-
-                      <div className="mt-4 flex items-baseline gap-1">
-                        <span className="text-3xl font-extrabold tracking-tight">${tier.price}</span>
-                        <span className="text-xs text-muted-foreground">/ month</span>
-                      </div>
-
-                      <div className="mt-6 space-y-2.5 text-xs">
-                        <div className="flex items-center gap-2 text-foreground font-medium">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          <span>{tier.views.toLocaleString()} monthly views</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          <span>Unlimited publications / sites</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          <span>Custom domains + CF subfolder</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
-                          <span>Full CMS, SEO & RSS/Atom feeds</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Button
-                      className="mt-6 w-full"
-                      variant={isCurrent ? "outline" : tier.popular ? "default" : "secondary"}
-                      disabled={isCurrent || busyPlan === tier.id}
-                      onClick={() => handleUpgrade(tier.id)}
-                    >
-                      {isCurrent ? "Current Tier" : busyPlan === tier.id ? "Redirecting..." : `Select ${tier.name}`}
-                    </Button>
+              <CardContent className="p-6 sm:p-8 space-y-8">
+                {/* Views Selector Header */}
+                <div className="space-y-3">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Select Traffic Volume
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {VIEW_TIERS.map((tier, idx) => {
+                      const isSelected = selectedTierIndex === idx;
+                      return (
+                        <button
+                          key={tier.id}
+                          type="button"
+                          onClick={() => setSelectedTierIndex(idx)}
+                          className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                            isSelected
+                              ? "bg-primary text-primary-foreground shadow-xs font-semibold"
+                              : "border border-border/80 bg-background text-foreground/80 hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          {tier.label}
+                        </button>
+                      );
+                    })}
                   </div>
-                );
-              })}
-            </div>
+                </div>
+
+                {/* Price Display */}
+                <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 p-5 rounded-2xl bg-muted/40 border border-border/70">
+                  <div>
+                    <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">
+                      {isCustomTier ? "Enterprise Volume" : `Tier: ${selectedTier.label}`}
+                    </span>
+                    <div className="flex items-baseline gap-1.5">
+                      {isCustomTier ? (
+                        <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                          Custom Pricing
+                        </span>
+                      ) : (
+                        <>
+                          <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                            ${selectedTier.price}
+                          </span>
+                          <span className="text-sm text-muted-foreground font-medium">/ month</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {isCustomTier ? (
+                    <Button asChild className="h-11 px-6 gap-2">
+                      <Link href="/dashboard/support">
+                        <Mail className="h-4 w-4" />
+                        Contact Us for Enterprise
+                      </Link>
+                    </Button>
+                  ) : (
+                    <Button
+                      size="lg"
+                      className="h-11 px-8 text-sm font-semibold"
+                      variant={isCurrentActiveTier ? "outline" : "default"}
+                      disabled={isCurrentActiveTier || busyPlan === selectedTier.id}
+                      onClick={() => handleUpgrade(selectedTier.id)}
+                    >
+                      {isCurrentActiveTier
+                        ? "Current Active Tier"
+                        : busyPlan === selectedTier.id
+                          ? "Redirecting..."
+                          : `Upgrade to Pro ($${selectedTier.price}/mo)`}
+                    </Button>
+                  )}
+                </div>
+
+                {/* Included Features Grid */}
+                <div className="space-y-3 pt-2">
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Everything Included In Every Plan
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                    <div className="flex items-center gap-2 text-foreground font-medium">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>{isCustomTier ? "1,000,000+ monthly views" : `${selectedTier.views?.toLocaleString()} monthly pageviews`}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Unlimited sites & publications</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Custom domains + Cloudflare Subfolder</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Editorial & SaaS modern themes</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Multi-author management & bylines</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Category discovery & badge placement</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Automated XML sitemaps & RSS/Atom</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>SEO automation & zero-config fallbacks</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-foreground">
+                      <Check className="h-4 w-4 text-primary shrink-0" />
+                      <span>Custom code injection (&lt;head&gt;, &lt;body&gt;, CSS)</span>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Payment History */}

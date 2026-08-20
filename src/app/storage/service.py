@@ -133,14 +133,23 @@ def _get_storage_provider():
 
 
 def get_user_storage_usage_bytes(db: Session, user_id: int) -> int:
+    user_site_ids = [
+        row[0]
+        for row in db.query(models.Site.site_id)
+        .filter(models.Site.user_id == user_id)
+        .all()
+    ]
+    if not user_site_ids:
+        return 0
+
     blogs_total = (
         db.query(func.coalesce(func.sum(models.BlogMedia.size_bytes), 0))
-        .filter(models.BlogMedia.user_id == user_id)
+        .filter(models.BlogMedia.site_id.in_(user_site_ids))
         .scalar()
     ) or 0
     pages_total = (
         db.query(func.coalesce(func.sum(models.PageMedia.size_bytes), 0))
-        .filter(models.PageMedia.user_id == user_id)
+        .filter(models.PageMedia.site_id.in_(user_site_ids))
         .scalar()
     ) or 0
     return int(blogs_total) + int(pages_total)

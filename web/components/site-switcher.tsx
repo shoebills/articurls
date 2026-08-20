@@ -73,17 +73,17 @@ export function SiteSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
-              className="flex h-11 w-full items-center justify-between gap-2 border-sidebar-border/70 bg-background px-3 py-2 text-left shadow-2xs hover:bg-sidebar-accent/50"
+              className="flex h-12 w-full items-center justify-between gap-2 border-sidebar-border/70 bg-background px-3 py-2 text-left shadow-2xs hover:bg-sidebar-accent/50"
             >
               <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xs">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-sm">
                   {currentDisplayName.slice(0, 1).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-xs font-semibold text-foreground leading-tight">
+                  <p className="truncate text-sm font-semibold text-foreground leading-tight">
                     {currentDisplayName}
                   </p>
-                  <p className="truncate text-[11px] text-muted-foreground leading-tight">
+                  <p className="truncate text-xs text-muted-foreground leading-tight">
                     {activeSite?.custom_domain || `${activeSite?.subdomain || ""}.articurls.site`}
                   </p>
                 </div>
@@ -93,7 +93,7 @@ export function SiteSwitcher({ onNavigate }: { onNavigate?: () => void }) {
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-56 p-1.5 shadow-lg">
             <DropdownMenuLabel className="px-2 py-1.5 text-xs text-muted-foreground font-medium">
-              Publications ({sites.length})
+              Sites ({sites.length})
             </DropdownMenuLabel>
             {sites.map((site) => {
               const isSelected = activeSite?.site_id === site.site_id;
@@ -107,28 +107,28 @@ export function SiteSwitcher({ onNavigate }: { onNavigate?: () => void }) {
                       onNavigate?.();
                     }
                   }}
-                  className="flex items-center justify-between gap-2 px-2 py-2 cursor-pointer"
+                  className="flex items-center justify-between gap-2 px-2.5 py-2 cursor-pointer"
                 >
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Globe className="h-3.5 w-3.5 shrink-0 opacity-70" />
+                  <div className="flex min-w-0 items-center gap-2.5">
+                    <Globe className="h-4 w-4 shrink-0 opacity-70" />
                     <div className="min-w-0">
-                      <p className="truncate text-xs font-medium">{name}</p>
-                      <p className="truncate text-[10px] text-muted-foreground">
+                      <p className="truncate text-sm font-medium">{name}</p>
+                      <p className="truncate text-xs text-muted-foreground">
                         {site.custom_domain || `${site.subdomain}.articurls.site`}
                       </p>
                     </div>
                   </div>
-                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                  {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
                 </DropdownMenuItem>
               );
             })}
             <DropdownMenuSeparator />
             <DropdownMenuItem
               onClick={() => setCreateOpen(true)}
-              className="flex items-center gap-2 px-2 py-2 text-xs font-medium cursor-pointer text-primary focus:text-primary"
+              className="flex items-center gap-2 px-2.5 py-2 text-sm font-medium cursor-pointer text-primary focus:text-primary"
             >
               <Plus className="h-4 w-4" />
-              + Create New Site
+              Create New Site
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

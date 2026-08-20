@@ -39,17 +39,17 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
-            className="flex h-11 w-full items-center justify-between gap-2.5 rounded-lg px-2.5 hover:bg-sidebar-accent/50 text-left"
+            className="flex h-12 w-full items-center justify-between gap-2.5 rounded-lg px-2.5 hover:bg-sidebar-accent/50 text-left"
           >
             <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-xs">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
                 {userInitial}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-xs font-semibold text-foreground leading-tight">
+                <p className="truncate text-sm font-semibold text-foreground leading-tight">
                   {displayName}
                 </p>
-                <p className="truncate text-[11px] text-muted-foreground leading-tight">
+                <p className="truncate text-xs text-muted-foreground leading-tight">
                   {user?.email}
                 </p>
               </div>
@@ -60,12 +60,12 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
         <DropdownMenuContent align="end" side="top" className="w-56 p-1.5 shadow-lg">
           <DropdownMenuItem asChild>
             <Link
-              href="/dashboard/account"
+              href="/dashboard/profile"
               onClick={() => onNavigate?.()}
-              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-xs font-medium"
+              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-sm font-medium"
             >
               <CircleUser className="h-4 w-4 shrink-0 opacity-80" />
-              Profile / Account
+              Profile
             </Link>
           </DropdownMenuItem>
 
@@ -73,7 +73,7 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
             <Link
               href="/dashboard/billing"
               onClick={() => onNavigate?.()}
-              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-xs font-medium"
+              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-sm font-medium"
             >
               <CreditCard className="h-4 w-4 shrink-0 opacity-80" />
               Billings and Plans
@@ -84,7 +84,7 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
             <Link
               href="/dashboard/support"
               onClick={() => onNavigate?.()}
-              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-xs font-medium"
+              className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-sm font-medium"
             >
               <CircleHelp className="h-4 w-4 shrink-0 opacity-80" />
               Support
@@ -98,7 +98,7 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
               onNavigate?.();
               logout();
             }}
-            className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-xs font-medium text-destructive focus:text-destructive"
+            className="flex items-center gap-2.5 px-2.5 py-2 cursor-pointer text-sm font-medium text-destructive focus:text-destructive"
           >
             <LogOut className="h-4 w-4 shrink-0" />
             Log out
