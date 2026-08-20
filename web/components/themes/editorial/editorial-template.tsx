@@ -6,7 +6,7 @@ import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu, PublicMobileNavLink } from "@/components/public-mobile-nav-menu";
-import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
@@ -140,7 +140,15 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
                     </Link>
                   ) : null}
 
-                  <div className="flex items-center gap-x-4 text-xs">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
+                    {b.author ? (
+                      <Link
+                        href={getPublicAuthorUrl(site.user_name, b.author.slug, basePath)}
+                        className="relative z-10 font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {b.author.name}
+                      </Link>
+                    ) : null}
                     {b.published_at && (
                       <time dateTime={b.published_at} className="text-muted-foreground">
                         {new Date(b.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}

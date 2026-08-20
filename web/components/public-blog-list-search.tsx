@@ -280,7 +280,7 @@ export function PublicBlogListSearch({
                   key={`featured-${b.blog_id}`}
                   blog={b}
                   username={username}
-                  authorName={user?.name}
+                  authorName={b.author?.name || user?.name}
                   showPreview={show_preview_in_lists}
                 />
             ))}
@@ -296,7 +296,7 @@ export function PublicBlogListSearch({
             key={b.blog_id}
             blog={b}
             username={username}
-            authorName={user?.name}
+            authorName={b.author?.name || user?.name}
             showPreview={show_preview_in_lists}
           />
         ))}

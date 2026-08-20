@@ -193,7 +193,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                     </p>
 
                     <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-4 border-t border-border/40">
-                      <span>{site.name}</span>
+                      <span>{b.author ? b.author.name : site.name}</span>
                       {b.published_at && (
                         <time dateTime={b.published_at}>
                           {new Date(b.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}

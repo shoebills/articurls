@@ -1,4 +1,4 @@
-import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
+import type { PublicBlog, PublicUser, UserPage, Category, Author, PublicAuthorSummary } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 
@@ -36,6 +36,18 @@ export interface BlogPosting {
     name: string;
   };
   publisher?: Person;
+  breadcrumb?: BreadcrumbList;
+}
+
+export interface ProfilePage {
+  "@context": "https://schema.org";
+  "@type": "ProfilePage";
+  mainEntity: Person;
+  isPartOf?: {
+    "@type": "WebSite";
+    "@id": string;
+    name: string;
+  };
   breadcrumb?: BreadcrumbList;
 }
 
@@ -92,7 +104,7 @@ export interface BreadcrumbList {
   numberOfItems: number;
 }
 
-export type StructuredData = BlogPosting | WebSite | CollectionPage | WebPage | BreadcrumbList;
+export type StructuredData = BlogPosting | ProfilePage | WebSite | CollectionPage | WebPage | BreadcrumbList;
 
 export function getImageObject(url: string | null, width?: number, height?: number): ImageObject | null {
   if (!url) return null;
@@ -130,6 +142,51 @@ export function generatePersonSchema(user: PublicUser, profileUrl: string): Pers
   };
 }
 
+export function generateAuthorPersonSchema(author: Author | PublicAuthorSummary, profileUrl: string): Person {
+  const socialLinks: string[] = [];
+  if (author.x_link) socialLinks.push(author.x_link);
+  if (author.linkedin_link) socialLinks.push(author.linkedin_link);
+  if (author.github_link) socialLinks.push(author.github_link);
+  if (author.instagram_link) socialLinks.push(author.instagram_link);
+  if (author.pinterest_link) socialLinks.push(author.pinterest_link);
+  if (author.facebook_link) socialLinks.push(author.facebook_link);
+  if (author.youtube_link) socialLinks.push(author.youtube_link);
+  if (author.website_link) socialLinks.push(author.website_link);
+  
+  return {
+    "@type": "Person",
+    "@id": profileUrl,
+    name: author.name,
+    url: profileUrl,
+    sameAs: socialLinks.length > 0 ? socialLinks : undefined,
+    image: author.profile_image_url ? (getImageObject(author.profile_image_url, 200, 200) || undefined) : undefined,
+    jobTitle: "Author",
+  };
+}
+
+export function generateAuthorProfileSchema(
+  author: Author,
+  user: PublicUser,
+  canonicalUrl: string,
+  siteUrl: string
+): ProfilePage {
+  const authorPerson = generateAuthorPersonSchema(author, canonicalUrl);
+  return {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: authorPerson,
+    isPartOf: {
+      "@type": "WebSite",
+      "@id": siteUrl,
+      name: user.nav_blog_name || "My Blog",
+    },
+    breadcrumb: generateBreadcrumbList([
+      { name: user.nav_blog_name || "Home", url: siteUrl },
+      { name: author.name, url: canonicalUrl },
+    ]),
+  };
+}
+
 export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSite {
   const siteName = (user.nav_blog_name || "").trim() || "My Blog";
   const description = user.meta_description || user.bio || undefined;
@@ -152,7 +209,11 @@ export function generateBlogPostingSchema(
 ): BlogPosting {
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || undefined;
-  const authorPerson = generatePersonSchema(author, `${canonicalUrl.split('/blog/')[0]}`);
+  const siteUrl = canonicalUrl.split('/blog/')[0];
+  const authorPerson = blog.author
+    ? generateAuthorPersonSchema(blog.author, `${siteUrl}/author/${encodeURIComponent(blog.author.slug)}`)
+    : generatePersonSchema(author, siteUrl);
+  const publisherPerson = generatePersonSchema(author, siteUrl);
   
   // Generate multiple image sizes for better SEO
   const images: ImageObject[] = [];
@@ -178,12 +239,12 @@ export function generateBlogPostingSchema(
     url: canonicalUrl,
     isPartOf: {
       "@type": "Blog",
-      "@id": canonicalUrl.split('/blog')[0],
+      "@id": siteUrl,
       name: author.nav_blog_name || "My Blog",
     },
-    publisher: authorPerson,
+    publisher: publisherPerson,
     breadcrumb: generateBreadcrumbList([
-      { name: author.nav_blog_name || "Home", url: canonicalUrl.split('/blog')[0] },
+      { name: author.nav_blog_name || "Home", url: siteUrl },
       { name: title, url: canonicalUrl },
     ]),
   };

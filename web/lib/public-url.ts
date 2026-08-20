@@ -18,6 +18,18 @@ export function getPublicCategoryUrl(_username: string, slug: string, basePath =
   return formatWithBasePath(`/category/${encodeURIComponent(slug)}`, basePath);
 }
 
+export function getPublicCategoriesUrl(_username: string, basePath = ""): string {
+  return formatWithBasePath("/categories", basePath);
+}
+
+export function getPublicAuthorUrl(_username: string, slug: string, basePath = ""): string {
+  return formatWithBasePath(`/author/${encodeURIComponent(slug)}`, basePath);
+}
+
+export function getPublicAuthorsUrl(_username: string, basePath = ""): string {
+  return formatWithBasePath("/authors", basePath);
+}
+
 export function getPublicPageUrl(_username: string, slug: string, basePath = ""): string {
   return formatWithBasePath(`/page/${encodeURIComponent(slug)}`, basePath);
 }

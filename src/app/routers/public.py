@@ -225,22 +225,18 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
 
 
 @router.get("/{user_name}/categories", status_code=status.HTTP_200_OK)
-def get_public_categories(user_name: str, request: Request, db: Session = Depends(get_db)):
+def get_public_categories(user_name: str, request: Request, all: bool = False, db: Session = Depends(get_db)):
     db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
     if db_site and canonical_username != utils.normalize_username(user_name):
         return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    cats = (
-        db.query(models.Category)
-        .filter(
-            models.Category.site_id == db_site.site_id,
-            models.Category.show_in_menu.is_(True),
-        )
-        .order_by(models.Category.menu_order.asc(), models.Category.created_at.asc())
-        .all()
-    )
+    query = db.query(models.Category).filter(models.Category.site_id == db_site.site_id)
+    if not all:
+        query = query.filter(models.Category.show_in_menu.is_(True))
+    cats = query.order_by(models.Category.menu_order.asc(), models.Category.created_at.asc()).all()
+
     from sqlalchemy import func as sa_func
     result = []
     for c in cats:
@@ -254,6 +250,7 @@ def get_public_categories(user_name: str, request: Request, db: Session = Depend
             "site_id": c.site_id,
             "name": c.name,
             "slug": c.slug,
+            "description": c.description,
             "blog_count": blog_count,
             "show_in_menu": c.show_in_menu,
             "menu_order": c.menu_order,
@@ -306,6 +303,116 @@ def get_public_category_blogs(user_name: str, slug: str, request: Request, db: S
             "category_id": db_cat.category_id,
             "name": db_cat.name,
             "slug": db_cat.slug,
+            "description": db_cat.description,
+        },
+        "blogs": blogs,
+    }
+
+
+@router.get("/{user_name}/authors", status_code=status.HTTP_200_OK)
+def get_public_authors(user_name: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    if not db_site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    authors = (
+        db.query(models.Author)
+        .filter(models.Author.site_id == db_site.site_id)
+        .order_by(models.Author.created_at.asc())
+        .all()
+    )
+    from sqlalchemy import func as sa_func
+    result = []
+    for a in authors:
+        blog_count = (
+            db.query(sa_func.count(models.Blog.blog_id))
+            .filter(
+                models.Blog.author_id == a.author_id,
+                models.Blog.site_id == db_site.site_id,
+                models.Blog.status == models.BlogStatus.PUBLISHED,
+            )
+            .scalar()
+        ) or 0
+        result.append({
+            "author_id": a.author_id,
+            "site_id": a.site_id,
+            "name": a.name,
+            "slug": a.slug,
+            "bio": a.bio,
+            "contact_email": a.contact_email,
+            "profile_image_url": a.profile_image_url,
+            "instagram_link": a.instagram_link,
+            "x_link": a.x_link,
+            "pinterest_link": a.pinterest_link,
+            "facebook_link": a.facebook_link,
+            "linkedin_link": a.linkedin_link,
+            "github_link": a.github_link,
+            "youtube_link": a.youtube_link,
+            "website_link": a.website_link,
+            "blog_count": blog_count,
+        })
+    return result
+
+
+@router.get("/{user_name}/author/{slug}", status_code=status.HTTP_200_OK)
+def get_public_author_blogs(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
+    if db_site and canonical_username != utils.normalize_username(user_name):
+        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    if not db_site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    author = (
+        db.query(models.Author)
+        .filter(models.Author.site_id == db_site.site_id, models.Author.slug == slug)
+        .first()
+    )
+    if not author:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
+
+    results = (
+        db.query(models.Blog)
+        .filter(
+            models.Blog.author_id == author.author_id,
+            models.Blog.site_id == db_site.site_id,
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+        .order_by(models.Blog.published_at.desc())
+        .all()
+    )
+
+    blogs = []
+    for db_blog in results:
+        db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        cat_ids = [
+            row[0]
+            for row in db.query(models.BlogCategory.category_id)
+            .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+            .all()
+        ]
+        db_blog.category_ids = cat_ids
+        blogs.append(db_blog)
+
+    return {
+        "author": {
+            "author_id": author.author_id,
+            "site_id": author.site_id,
+            "name": author.name,
+            "slug": author.slug,
+            "bio": author.bio,
+            "contact_email": author.contact_email,
+            "profile_image_url": author.profile_image_url,
+            "instagram_link": author.instagram_link,
+            "x_link": author.x_link,
+            "pinterest_link": author.pinterest_link,
+            "facebook_link": author.facebook_link,
+            "linkedin_link": author.linkedin_link,
+            "github_link": author.github_link,
+            "youtube_link": author.youtube_link,
+            "website_link": author.website_link,
+            "blog_count": len(blogs),
         },
         "blogs": blogs,
     }

@@ -124,7 +124,7 @@ const APP_ALLOWED_PREFIXES = [
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/script.js"];
+const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/atom.xml", "/feed.xml", "/feed.atom", "/script.js"];
 
 function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));

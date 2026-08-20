@@ -25,6 +25,7 @@ import {
 } from "@/lib/request-host";
 import type { PublicBlog, UserPage } from "@/lib/types";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
+import { fetchAuthors } from "@/lib/seo-data";
 
 export const dynamic = "force-dynamic";
 
@@ -72,9 +73,10 @@ interface Category {
   show_in_menu: boolean;
 }
 
-async function loadCategories(username: string): Promise<Category[]> {
+async function loadCategories(username: string, all = false): Promise<Category[]> {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories`, {
+    const q = all ? "?all=true" : "";
+    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories${q}`, {
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -146,20 +148,30 @@ async function customDomainSitemap(host: string): Promise<Response> {
 
   if (!user) return new NextResponse(null, { status: 404 });
 
-  // All URLs use the custom domain — NEVER articurls.com
-  const siteOrigin = `https://${host}`;
+  const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  const basePath = customSubpath ? `/${customSubpath}` : "";
+  const siteOrigin = `https://${host}${basePath}`;
   const today = new Date().toISOString().split("T")[0];
 
-  const [blogs, pages, categories] = await Promise.all([
+  const [blogs, pages, categories, authors] = await Promise.all([
     loadBlogs(username),
     loadPages(username),
-    loadCategories(username),
+    loadCategories(username, true),
+    fetchAuthors(username),
   ]);
 
   const entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [];
 
   // Profile / home — custom domain root, no username prefix
   entries.push({ loc: siteOrigin, lastmod: today, changefreq: "weekly", priority: "1.0" });
+
+  if (categories.length > 0) {
+    entries.push({
+      loc: `${siteOrigin}/categories`,
+      changefreq: "weekly",
+      priority: "0.6",
+    });
+  }
 
   for (const blog of blogs) {
     entries.push({
@@ -181,9 +193,16 @@ async function customDomainSitemap(host: string): Promise<Response> {
   }
 
   for (const cat of categories) {
-    if (!cat.show_in_menu) continue;
     entries.push({
       loc: `${siteOrigin}/category/${encodeURIComponent(cat.slug)}`,
+      changefreq: "weekly",
+      priority: "0.5",
+    });
+  }
+
+  for (const author of authors) {
+    entries.push({
+      loc: `${siteOrigin}/author/${encodeURIComponent(author.slug)}`,
       changefreq: "weekly",
       priority: "0.5",
     });

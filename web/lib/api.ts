@@ -1,12 +1,13 @@
 import { API_URL } from "./env";
 import type {
+  Author,
+  PublicAuthorDetail,
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
   Category,
   CustomDomain,
   DesignSettings,
-  DNSRecord,
   DomainAddResponse,
   DomainVerifyResponse,
   SeoSettings,
@@ -115,10 +116,11 @@ export async function apiFetch<T>(
   init: RequestInit & { token?: string | null; disableCache?: boolean } = {},
   isRetry = false
 ): Promise<T> {
-  let { token, disableCache, headers: h, ...rest } = init;
+  const { token, disableCache, headers: h, ...rest } = init;
+  let effectiveToken = token;
   
   const method = rest.method || "GET";
-  const cacheKey = `${method}:${path}:${token || ""}`;
+  const cacheKey = `${method}:${path}:${effectiveToken || ""}`;
 
   if (!disableCache && method === "GET" && typeof window !== "undefined") {
     const cached = apiCache.get(cacheKey);
@@ -132,11 +134,11 @@ export async function apiFetch<T>(
   }
   
   if (isRetry && typeof window !== "undefined") {
-      token = localStorage.getItem("articurls_token") || token;
+    effectiveToken = localStorage.getItem("articurls_token") || effectiveToken;
   }
 
   const headers = new Headers(h);
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (effectiveToken) headers.set("Authorization", `Bearer ${effectiveToken}`);
   const url = path.startsWith("http") ? path : `${API_URL}${path.startsWith("/") ? path : `/${path}`}`;
   
   const fetchOptions: RequestInit = { ...rest, headers, credentials: "include" };
@@ -505,6 +507,7 @@ export async function updateBlog(
     title?: string;
     content?: string;
     slug?: string;
+    author_id?: number | null;
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
@@ -606,7 +609,7 @@ export async function listCategories(token: string): Promise<Category[]> {
   return apiFetch("/categories/", { token });
 }
 
-export async function createCategory(token: string, body: { name: string }): Promise<Category> {
+export async function createCategory(token: string, body: { name: string; description?: string }): Promise<Category> {
   return apiFetch("/categories/", {
     method: "POST",
     token,
@@ -615,7 +618,7 @@ export async function createCategory(token: string, body: { name: string }): Pro
   });
 }
 
-export async function updateCategory(token: string, id: number, body: { name: string }): Promise<Category> {
+export async function updateCategory(token: string, id: number, body: { name?: string; description?: string }): Promise<Category> {
   return apiFetch(`/categories/${id}`, {
     method: "PATCH",
     token,
@@ -646,12 +649,81 @@ export async function updateMenuCategories(token: string, ordered_category_ids: 
   });
 }
 
-export async function getPublicCategories(userName: string): Promise<Category[]> {
-  return apiFetch(`/${encodeURIComponent(userName)}/categories`);
+export async function getPublicCategories(userName: string, all = false): Promise<Category[]> {
+  const q = all ? "?all=true" : "";
+  return apiFetch(`/${encodeURIComponent(userName)}/categories${q}`);
 }
 
 export async function getPublicCategoryBlogs(userName: string, slug: string): Promise<PublicCategoryBlogsResponse> {
   return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
+}
+
+// ── Authors ───────────────────────────────────────────────────────────
+
+export async function listAuthors(token: string): Promise<Author[]> {
+  return apiFetch("/authors/", { token });
+}
+
+export async function getAuthor(token: string, id: number): Promise<Author> {
+  return apiFetch(`/authors/${id}`, { token });
+}
+
+export async function createAuthor(
+  token: string,
+  body: Partial<Author> & { name: string }
+): Promise<Author> {
+  return apiFetch("/authors/", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateAuthor(
+  token: string,
+  id: number,
+  body: Partial<Author>
+): Promise<Author> {
+  return apiFetch(`/authors/${id}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteAuthor(token: string, id: number): Promise<void> {
+  await apiFetch(`/authors/${id}`, { method: "DELETE", token });
+}
+
+export async function uploadAuthorAvatar(
+  token: string,
+  id: number,
+  file: File
+): Promise<{ profile_image_url: string }> {
+  const formData = new FormData();
+  formData.append("file", file);
+  return apiFetch<{ profile_image_url: string }>(`/_upload/authors/${id}/avatar`, {
+    method: "POST",
+    token,
+    body: formData,
+  }).catch(() => {
+    // Direct endpoint fallback
+    return apiFetch<{ profile_image_url: string }>(`/authors/${id}/avatar`, {
+      method: "POST",
+      token,
+      body: formData,
+    });
+  });
+}
+
+export async function getPublicAuthors(userName: string): Promise<Author[]> {
+  return apiFetch(`/${encodeURIComponent(userName)}/authors`);
+}
+
+export async function getPublicAuthorBlogs(userName: string, slug: string): Promise<PublicAuthorDetail> {
+  return apiFetch(`/${encodeURIComponent(userName)}/author/${encodeURIComponent(slug)}`);
 }
 
 export async function listSubscribers(token: string, page = 1, limit = 10): Promise<SubscriberListResponse> {

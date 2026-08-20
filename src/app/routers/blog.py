@@ -70,11 +70,19 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
 
     candidate_slug = utils.unique_blog_slug(db, current_site.site_id, base_slug)
 
+    author_id = request.author_id
+    if author_id:
+        author_exists = db.query(models.Author).filter(models.Author.author_id == author_id, models.Author.site_id == current_site.site_id).first()
+        if not author_exists:
+            author_id = current_site.authors[0].author_id if current_site.authors else None
+    else:
+        author_id = current_site.authors[0].author_id if current_site.authors else None
+
     new_blog = models.Blog(
         title=request.title,
         content=sanitize_html(request.content),
         site_id=current_site.site_id,
-        author_id=current_site.authors[0].author_id if current_site.authors else None,
+        author_id=author_id,
         slug=candidate_slug,
         meta_title=candidate_meta_title,
         meta_description=candidate_meta_description,
@@ -304,10 +312,20 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
     elif "meta_description" in update_data:
         update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
 
+    if "author_id" in update_data:
+        author_id = update_data["author_id"]
+        if author_id is not None:
+            author_exists = db.query(models.Author).filter(
+                models.Author.author_id == author_id,
+                models.Author.site_id == current_site.site_id,
+            ).first()
+            if not author_exists:
+                raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid author_id for this site")
+
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
     MEANINGFUL_FIELDS = {
-        "title", "content", "meta_title", "meta_description", "featured_image_url",
+        "title", "content", "meta_title", "meta_description", "featured_image_url", "author_id",
     }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 

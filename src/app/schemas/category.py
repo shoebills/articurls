@@ -5,10 +5,12 @@ from typing import Optional, List, Union
 
 class CategoryCreate(BaseModel):
     name: str
+    description: Optional[str] = None
 
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
+    description: Optional[str] = None
 
 
 class CategoryOut(BaseModel):
@@ -17,6 +19,7 @@ class CategoryOut(BaseModel):
     user_id: Optional[int] = None
     name: str
     slug: str
+    description: Optional[str] = None
     blog_count: int = 0
     show_in_menu: bool
     menu_order: Optional[int] = None

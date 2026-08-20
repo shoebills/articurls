@@ -7,6 +7,7 @@ from ..database import get_db
 from ..schemas import category as cat_schema
 from ..schemas import blog as blog_schema
 from ..security import oauth2
+from ..security.oauth2 import get_current_user, get_current_site
 from ..utils import make_excerpt
 from ..cache.service import schedule_category_purge, schedule_tenant_purge
 from ..config import settings
@@ -44,6 +45,7 @@ def _category_out(db: Session, cat: models.Category) -> dict:
         "user_id": cat.site_id,
         "name": cat.name,
         "slug": cat.slug,
+        "description": cat.description,
         "blog_count": blog_count,
         "show_in_menu": cat.show_in_menu,
         "menu_order": cat.menu_order,
@@ -54,7 +56,8 @@ def _category_out(db: Session, cat: models.Category) -> dict:
 @router.get("/", response_model=list[cat_schema.CategoryOut], status_code=status.HTTP_200_OK)
 def list_categories(
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     cats = (
         db.query(models.Category)
@@ -70,7 +73,8 @@ def create_category(
     request: cat_schema.CategoryCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     name = request.name.strip()
     if not name:
@@ -83,6 +87,7 @@ def create_category(
         site_id=current_site.site_id,
         name=name,
         slug=_unique_category_slug(db, current_site.site_id, name),
+        description=request.description,
     )
     db.add(new_cat)
     db.commit()
@@ -97,7 +102,8 @@ def update_menu_categories(
     background_tasks: BackgroundTasks,
     payload: dict = Body(...),
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     raw_ids = payload.get("ordered_category_ids", [])
     if raw_ids is None:
@@ -158,7 +164,8 @@ def update_category(
     request: cat_schema.CategoryUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     db_cat = (
         db.query(models.Category)
@@ -184,6 +191,9 @@ def update_category(
             db_cat.name = name
             db_cat.slug = _unique_category_slug(db, current_site.site_id, name)
 
+    if request.description is not None:
+        db_cat.description = request.description
+
     db.commit()
     db.refresh(db_cat)
 
@@ -198,7 +208,8 @@ def delete_category(
     category_id: int,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     db_cat = (
         db.query(models.Category)
@@ -223,7 +234,8 @@ def delete_category(
 def get_category_blogs(
     category_id: int,
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     db_cat = (
         db.query(models.Category)
@@ -263,8 +275,10 @@ def get_category_blogs(
 def set_category_blogs(
     category_id: int,
     payload: dict = Body(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
-    current_user=Depends(oauth2.get_current_user),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     """Replace all blog assignments for this category with the given blog_ids."""
     db_cat = (

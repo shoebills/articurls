@@ -7,6 +7,49 @@ export interface BlogMediaOut {
   sort_order: number;
 }
 
+export interface Author {
+  author_id: number;
+  site_id?: number;
+  name: string;
+  slug: string;
+  bio?: string | null;
+  contact_email?: string | null;
+  profile_image_url?: string | null;
+  instagram_link?: string | null;
+  x_link?: string | null;
+  pinterest_link?: string | null;
+  facebook_link?: string | null;
+  linkedin_link?: string | null;
+  github_link?: string | null;
+  youtube_link?: string | null;
+  website_link?: string | null;
+  blog_count?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PublicAuthorSummary {
+  author_id: number;
+  name: string;
+  slug: string;
+  bio?: string | null;
+  contact_email?: string | null;
+  profile_image_url?: string | null;
+  instagram_link?: string | null;
+  x_link?: string | null;
+  pinterest_link?: string | null;
+  facebook_link?: string | null;
+  linkedin_link?: string | null;
+  github_link?: string | null;
+  youtube_link?: string | null;
+  website_link?: string | null;
+}
+
+export interface PublicAuthorDetail {
+  author: Author;
+  blogs: PublicBlog[];
+}
+
 export interface BlogListItem {
   blog_id: number;
   title: string;
@@ -21,7 +64,10 @@ export interface BlogListItem {
   published_at: string | null;
   created_at: string;
   updated_at: string;
-  user_id: number;
+  user_id?: number;
+  site_id?: number;
+  author_id?: number | null;
+  author?: PublicAuthorSummary | null;
   media: BlogMediaOut[];
   excerpt?: string | null;
   category_ids?: number[];
@@ -39,7 +85,10 @@ export interface PublicBlog {
   featured_image_url: string | null;
   published_at: string | null;
   updated_at: string;
-  user_id: number;
+  user_id?: number;
+  site_id?: number;
+  author_id?: number | null;
+  author?: PublicAuthorSummary | null;
   media: BlogMediaOut[];
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
@@ -327,9 +376,11 @@ export interface SubscriberListResponse {
 
 export interface Category {
   category_id: number;
-  user_id: number;
+  user_id?: number;
+  site_id?: number;
   name: string;
   slug: string;
+  description?: string | null;
   blog_count: number;
   show_in_menu: boolean;
   menu_order: number | null;
@@ -337,7 +388,7 @@ export interface Category {
 }
 
 export interface PublicCategoryBlogsResponse {
-  category: { category_id: number; name: string; slug: string };
+  category: { category_id: number; name: string; slug: string; description?: string | null };
   blogs: PublicBlog[];
 }
 

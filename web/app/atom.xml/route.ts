@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_URL, assetUrl } from "@/lib/env";
 import type { PublicUser } from "@/lib/types";
-import { buildRssXml, fetchPublishedPosts, fetchCategories, type RssItem } from "@/lib/seo-data";
+import { buildAtomXml, fetchPublishedPosts, fetchCategories, type RssItem } from "@/lib/seo-data";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
@@ -11,7 +11,7 @@ import { resolveDomainForSeo } from "@/lib/seo-domain";
 
 export const dynamic = "force-dynamic";
 
-const MAX_RSS_ITEMS = 100;
+const MAX_FEED_ITEMS = 100;
 
 function toTimestamp(value: string | null | undefined): number {
   if (!value) return 0;
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const basePath = customSubpath ? `/${customSubpath}` : "";
   const siteOrigin = `https://${effectiveHost}${basePath}`;
 
-  const items: RssItem[] = sorted.slice(0, MAX_RSS_ITEMS).map((post) => {
+  const items: RssItem[] = sorted.slice(0, MAX_FEED_ITEMS).map((post) => {
     const link = `${siteOrigin}/blog/${encodeURIComponent(post.slug)}`;
     const categoryNames = (post.category_ids || [])
       .map((id) => catMap.get(id))
@@ -87,17 +87,18 @@ export async function GET(req: NextRequest): Promise<Response> {
     };
   });
 
-  const xml = buildRssXml({
+  const xml = buildAtomXml({
     title: user.nav_blog_name || user.meta_title || `${user.name} — Articurls`,
     link: siteOrigin,
     description: user.meta_description || user.bio || `Latest posts by ${user.name}.`,
-    lastBuildDate: sorted[0]?.updated_at || sorted[0]?.published_at || null,
+    authorName: user.name,
+    updated: sorted[0]?.updated_at || sorted[0]?.published_at || null,
     items,
   });
 
   return new Response(xml, {
     headers: {
-      "Content-Type": "application/xml; charset=utf-8",
+      "Content-Type": "application/atom+xml; charset=utf-8",
       "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
       "Vary": "Host, x-original-host, x-forwarded-host",
     },

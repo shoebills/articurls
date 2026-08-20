@@ -2,6 +2,7 @@ from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
 from ..models import BlogStatus
+from .author import PublicAuthorSummary
 
 
 class BlogMediaOut(BaseModel):
@@ -17,6 +18,7 @@ class CreateBlog(BaseModel):
     title: str = Field(..., max_length=300)
     content: str = Field(..., max_length=500_000)
     slug: Optional[str] = None
+    author_id: Optional[int] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     notify_subscribers: bool = False
@@ -39,6 +41,7 @@ class GetBlog(BaseModel):
     site_id: Optional[int] = None
     author_id: Optional[int] = None
     user_id: Optional[int] = None
+    author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
     category_ids: List[int] = []
 
@@ -63,6 +66,7 @@ class PublicBlog(BaseModel):
     site_id: Optional[int] = None
     author_id: Optional[int] = None
     user_id: Optional[int] = None
+    author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
     category_ids: List[int] = []
 
@@ -89,6 +93,7 @@ class UpdateBlog(BaseModel):
     title: Optional[str] = Field(None, max_length=300)
     content: Optional[str] = Field(None, max_length=500_000)
     slug: Optional[str] = None
+    author_id: Optional[int] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None

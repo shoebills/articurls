@@ -9,7 +9,7 @@ import {
   isInternalHost,
   resolveTenantHostFromHeaders,
 } from "@/lib/request-host";
-import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse } from "@/lib/types";
+import type { PublicBlog, PublicUser, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -18,13 +18,13 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
-import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
-import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema } from "@/lib/structured-data";
-import { Calendar, ChevronLeft } from "lucide-react";
+import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema } from "@/lib/structured-data";
+import { Calendar, ChevronLeft, Globe, Mail } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
@@ -181,6 +181,25 @@ async function loadCategoryBlogs(username: string, slug: string): Promise<Public
   return res.json();
 }
 
+async function loadAuthorBlogs(username: string, slug: string): Promise<PublicAuthorDetail | null> {
+  const res = await fetch(
+    `${API_URL}/${encodeURIComponent(username)}/author/${encodeURIComponent(slug)}`,
+    { cache: "no-store" }
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) return null;
+  return res.json();
+}
+
+async function loadAllCategories(username: string): Promise<Category[]> {
+  const res = await fetch(
+    `${API_URL}/${encodeURIComponent(username)}/categories?all=true`,
+    { cache: "no-store" }
+  );
+  if (!res.ok) return [];
+  return res.json();
+}
+
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
@@ -298,6 +317,67 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image` }] : undefined,
+      },
+    };
+  }
+
+  if (segments[0] === "author" && segments[1]) {
+    const [user, data] = await Promise.all([loadUser(username), loadAuthorBlogs(username, segments[1])]);
+    if (!user || !data) return { title: "Not found" };
+    const author = data.author;
+    const siteName = resolveUserSiteName(user);
+    const title = `${author.name} — Author at ${siteName}`;
+    const description = author.bio || `Read articles and essays by ${author.name}.`;
+    const ogImage = author.profile_image_url
+      ? transformImageUrl(assetUrl(author.profile_image_url), { width: 1200, height: 630, fit: "cover" })
+      : resolveUserOgImage(user);
+    return {
+      title,
+      description,
+      alternates: alternatesWithOptionalRss(user?.rss_enabled !== false),
+      icons: faviconIcons(user),
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        type: "profile",
+        siteName,
+        images: ogImage ? [{ url: ogImage, alt: `${author.name} avatar`, width: 1200, height: 630 }] : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: ogImage ? [{ url: ogImage, alt: `${author.name} avatar` }] : undefined,
+      },
+    };
+  }
+
+  if (segments[0] === "categories") {
+    const user = await loadUser(username);
+    if (!user) return { title: "Not found" };
+    const siteName = resolveUserSiteName(user);
+    const title = `Categories — ${siteName}`;
+    const description = `Explore all topics and categories on ${siteName}.`;
+    const ogImage = resolveUserOgImage(user);
+    return {
+      title,
+      description,
+      alternates: alternatesWithOptionalRss(user?.rss_enabled !== false),
+      icons: faviconIcons(user),
+      openGraph: {
+        title,
+        description,
+        url: canonical,
+        type: "website",
+        siteName,
+        images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image`, width: 1200, height: 630 }] : undefined,
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image` }] : undefined,
       },
     };
   }
@@ -438,12 +518,29 @@ export default async function SitePublicationPage({ params }: Props) {
             {blog.title}
           </h1>
           <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            <Link
-              href={getPublicProfileUrl(username, basePath)}
-              className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-            >
-              <span className="truncate">{author.name}</span>
-            </Link>
+            {blog.author ? (
+              <Link
+                href={getPublicAuthorUrl(username, blog.author.slug, basePath)}
+                className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                {blog.author.profile_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={transformImageUrl(assetUrl(blog.author.profile_image_url), { width: 48, height: 48, fit: "cover" })}
+                    alt={blog.author.name}
+                    className="h-6 w-6 rounded-full object-cover"
+                  />
+                ) : null}
+                <span className="truncate font-medium">{blog.author.name}</span>
+              </Link>
+            ) : (
+              <Link
+                href={getPublicProfileUrl(username, basePath)}
+                className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+              >
+                <span className="truncate">{author.name}</span>
+              </Link>
+            )}
             {blog.published_at && (
               <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
                 <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
@@ -713,6 +810,297 @@ export default async function SitePublicationPage({ params }: Props) {
             <PublicSiteFooter user={user} pages={pages} basePath={basePath} />
         </main>
       </div>
+      </ThemeStyleWrapper>
+    );
+  }
+
+  // ── Author Profile page: /author/[slug] ──────────────────────────────────
+  if (segments[0] === "author") {
+    if (!segments[1]) notFound();
+    const authorSlug = segments[1];
+    const [user, pages, categories, authorData] = await Promise.all([
+      loadUser(username),
+      loadPages(username),
+      loadCategories(username),
+      loadAuthorBlogs(username, authorSlug),
+    ]);
+
+    if (!user || !authorData) notFound();
+
+    const author = authorData.author;
+    const blogs = authorData.blogs;
+    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+    const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const mainSpacing = user.navbar_enabled
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+
+    const desktopLinks = resolveNavLinks(user, categories, basePath);
+    const showSubscriberCollection = user.subscriber_collection_enabled === true;
+    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
+    const currentUrl = `https://${host}${basePath}/author/${encodeURIComponent(authorSlug)}`;
+    const siteUrl = `https://${host}${basePath}`;
+    const authorAvatar = author.profile_image_url ? assetUrl(author.profile_image_url) : null;
+
+    return (
+      <ThemeStyleWrapper user={user}>
+        <div className="min-h-screen bg-background text-foreground">
+          <StructuredData data={generateAuthorProfileSchema(author, user, currentUrl, siteUrl)} />
+          <main className={mainSpacing}>
+            {user.navbar_enabled ? (
+              <header className={publicNavHeaderClass} data-public-nav>
+                <div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    userName={user.user_name}
+                    authorName={user.name}
+                    alignment={user.navbar_alignment || "left"}
+                  />
+                </div>
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    userName={user.user_name}
+                    authorName={user.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showMenuButton={hasMobileNav}
+                  />
+                </div>
+              </header>
+            ) : null}
+
+            {/* Author Profile Header */}
+            <div className="mb-12 rounded-2xl border border-border/70 bg-card p-8 sm:p-10 shadow-xs">
+              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
+                {authorAvatar ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={transformImageUrl(authorAvatar, { width: 256, height: 256, fit: "cover" })}
+                    alt={author.name}
+                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-full object-cover border-2 border-border/80 shadow-xs shrink-0"
+                  />
+                ) : (
+                  <div className="flex h-24 w-24 sm:h-28 sm:w-28 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-3xl">
+                    {author.name.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{author.name}</h1>
+                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+                      {blogs.length} {blogs.length === 1 ? "article" : "articles"}
+                    </span>
+                  </div>
+                  {author.bio && (
+                    <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
+                      {author.bio}
+                    </p>
+                  )}
+                  {/* Social Links */}
+                  <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                    {author.website_link && (
+                      <a
+                        href={author.website_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Globe className="h-3.5 w-3.5" />
+                        Website
+                      </a>
+                    )}
+                    {author.x_link && (
+                      <a
+                        href={author.x_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        X
+                      </a>
+                    )}
+                    {author.github_link && (
+                      <a
+                        href={author.github_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        GitHub
+                      </a>
+                    )}
+                    {author.linkedin_link && (
+                      <a
+                        href={author.linkedin_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        LinkedIn
+                      </a>
+                    )}
+                    {author.contact_email && (
+                      <a
+                        href={`mailto:${author.contact_email}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        <Mail className="h-3.5 w-3.5" />
+                        Contact
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="mb-6 flex items-center gap-3">
+              <Link
+                href={getPublicProfileUrl(username, basePath)}
+                className="text-sm text-muted-foreground hover:text-foreground"
+              >
+                ← All posts
+              </Link>
+              <span className="select-none text-sm text-muted-foreground">·</span>
+              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Articles by {author.name}</h2>
+            </div>
+
+            {blogs.length > 0 ? (
+              <PublicBlogListSearch
+                blogs={blogs}
+                username={username}
+                user={user}
+                hideFeatured
+                siteOrigin={siteOrigin}
+                content_width={user.content_width || "wide"}
+                list_image_position={user.list_image_position || "above_title"}
+                show_preview_in_lists={user.show_preview_in_lists ?? true}
+              />
+            ) : (
+              <div className="rounded-xl border border-border/70 bg-background px-4 py-8 text-center">
+                <p className="text-sm text-muted-foreground">No posts by this author yet.</p>
+              </div>
+            )}
+            <PublicSiteFooter user={user} pages={pages} basePath={basePath} />
+          </main>
+        </div>
+      </ThemeStyleWrapper>
+    );
+  }
+
+  // ── Categories Hub page: /categories ──────────────────────────────────────
+  if (segments[0] === "categories") {
+    const [user, pages, categories, allCats] = await Promise.all([
+      loadUser(username),
+      loadPages(username),
+      loadCategories(username),
+      loadAllCategories(username),
+    ]);
+
+    if (!user) notFound();
+
+    const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
+    const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
+    const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const mainSpacing = user.navbar_enabled
+      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+
+    const desktopLinks = resolveNavLinks(user, categories, basePath);
+    const showSubscriberCollection = user.subscriber_collection_enabled === true;
+    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+
+    return (
+      <ThemeStyleWrapper user={user}>
+        <div className="min-h-screen bg-background text-foreground">
+          <main className={mainSpacing}>
+            {user.navbar_enabled ? (
+              <header className={publicNavHeaderClass} data-public-nav>
+                <div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    userName={user.user_name}
+                    authorName={user.name}
+                    alignment={user.navbar_alignment || "left"}
+                  />
+                </div>
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(username, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    userName={user.user_name}
+                    authorName={user.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showMenuButton={hasMobileNav}
+                  />
+                </div>
+              </header>
+            ) : null}
+
+            <div className="mb-8">
+              <Link
+                href={getPublicProfileUrl(username, basePath)}
+                className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mb-4"
+              >
+                ← Home
+              </Link>
+              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Categories</h1>
+              <p className="mt-2 text-base text-muted-foreground">
+                Browse all topics and articles published on {navBlogName}.
+              </p>
+            </div>
+
+            {allCats.length === 0 ? (
+              <div className="rounded-xl border border-border/70 bg-background px-4 py-12 text-center">
+                <p className="text-sm text-muted-foreground">No categories available.</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {allCats.map((cat) => (
+                  <Link
+                    key={cat.category_id}
+                    href={getPublicCategoryUrl(username, cat.slug, basePath)}
+                    className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-6 shadow-2xs hover:border-primary/50 hover:shadow-sm transition-all"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2">
+                        <h2 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
+                          {cat.name}
+                        </h2>
+                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                          {cat.blog_count ?? 0}
+                        </span>
+                      </div>
+                      {cat.description && (
+                        <p className="mt-3 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {cat.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground group-hover:text-foreground">
+                      <span>Explore topic</span>
+                      <span>→</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            <PublicSiteFooter user={user} pages={pages} basePath={basePath} />
+          </main>
+        </div>
       </ThemeStyleWrapper>
     );
   }

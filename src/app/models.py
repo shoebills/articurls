@@ -99,6 +99,9 @@ class Site(Base):
 
 class Author(Base):
     __tablename__ = "authors"
+    __table_args__ = (
+        UniqueConstraint("site_id", "slug", name="uq_authors_site_slug"),
+    )
 
     author_id = Column(Integer, primary_key=True)
     site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
@@ -182,6 +185,7 @@ class Blog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     
+    author = relationship("Author", lazy="joined")
     media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
 
 class BlogMedia(Base):
@@ -324,6 +328,7 @@ class Category(Base):
     site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
+    description = Column(Text, nullable=True, default=None)
     show_in_menu = Column(Boolean, nullable=False, default=True)
     menu_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

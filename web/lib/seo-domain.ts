@@ -13,6 +13,7 @@ export interface DomainLookupResult {
   domain_status: string;
   custom_domain: string | null;
   redirect_to: string | null;
+  custom_subpath?: string | null;
 }
 
 /** True when host is a customer domain, not articurls platform infrastructure. */
@@ -34,7 +35,7 @@ export async function resolveDomainForSeo(
   if (host.endsWith(`.${UGC_DOMAIN}`)) {
     const subdomain = host.split(".")[0];
     if (subdomain && !RESERVED.has(subdomain)) {
-      return { username: subdomain, domain_status: "active", custom_domain: host, redirect_to: null };
+      return { username: subdomain, domain_status: "active", custom_domain: host, redirect_to: null, custom_subpath: null };
     }
   }
   try {
@@ -54,6 +55,7 @@ export async function resolveDomainForSeo(
       username: string;
       domain_status: string;
       redirect_to?: string | null;
+      custom_subpath?: string | null;
     } = await res.json();
 
     return {
@@ -61,6 +63,7 @@ export async function resolveDomainForSeo(
       domain_status: data.domain_status,
       custom_domain: host,
       redirect_to: data.redirect_to ?? null,
+      custom_subpath: data.custom_subpath ?? null,
     };
   } catch {
     return null;

@@ -14,11 +14,12 @@ import {
   deleteBlogMediaByUrl,
   listCategories,
   assignBlogCategories,
+  listAuthors,
   patchDesignSettings,
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail, Category } from "@/lib/types";
+import type { BlogDetail, Category, Author } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { Button } from "@/components/ui/button";
@@ -40,7 +41,7 @@ import {
 import { UGC_DOMAIN, assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, ChevronUp, ExternalLink, Loader2, Check, ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronUp, Loader2, Check, ChevronLeft } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -96,6 +97,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const catDropdownRef = useRef<HTMLDivElement | null>(null);
   const catTriggerRef = useRef<HTMLButtonElement | null>(null);
 
+  // Author assignment state
+  const [allAuthors, setAllAuthors] = useState<Author[]>([]);
+  const [authorId, setAuthorId] = useState<number | null>(null);
+  const savedAuthorIdRef = useRef<number | null>(null);
+
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
     setTitle(b.title);
@@ -124,6 +130,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
     savedCatIdsRef.current = [...blogCatIds];
+    const bAuthorId = (b as unknown as { author_id?: number | null }).author_id ?? null;
+    setAuthorId(bAuthorId);
+    savedAuthorIdRef.current = bAuthorId;
   }, []);
 
   const load = useCallback(async () => {
@@ -139,10 +148,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }, [token, blogId, applyBlogToForm]);
 
-  // Load categories for the dropdown
+  // Load categories and authors for the dropdowns
   useEffect(() => {
     if (!token) return;
     listCategories(token).then(setAllCategories).catch(() => {});
+    listAuthors(token).then(setAllAuthors).catch(() => {});
   }, [token]);
 
   useEffect(() => {
@@ -202,6 +212,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const catDirty =
       savedCatIdsRef.current.length !== selectedCatIds.length ||
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
+    const authorChanged = savedAuthorIdRef.current !== authorId;
     const featuredChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
     return (
       blog.title !== title.trim() ||
@@ -212,9 +223,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       currentMetaDesc !== nextMetaDesc ||
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty ||
+      authorChanged ||
       featuredChanged
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, pendingCatIds, featuredImageUrl, featuredIds, user]);
+  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -230,9 +242,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextMetaDescDirty = metaDescDirty;
     const nextFeaturedImageUrl = featuredImageUrl;
     const nextPendingCatIds = pendingCatIds;
+    const nextAuthorId = authorId;
     const catDirty =
       savedCatIdsRef.current.length !== nextPendingCatIds.length ||
       savedCatIdsRef.current.some((id) => !nextPendingCatIds.includes(id));
+    const authorDirty = savedAuthorIdRef.current !== nextAuthorId;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -241,6 +255,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         title: nextTitle,
         content: nextContent,
         notify_subscribers: nextNotify,
+        author_id: nextAuthorId,
       };
 
       if (slugEditable) {
@@ -317,6 +332,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         savedCatIdsRef.current = [...nextPendingCatIds];
         setSelectedCatIds(nextPendingCatIds);
         setPendingCatIds(nextPendingCatIds);
+      }
+      if (authorDirty) {
+        savedAuthorIdRef.current = nextAuthorId;
       }
 
       const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
@@ -960,6 +978,36 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   })}
                 </div>
               )}
+            </div>
+
+            <Separator />
+
+            {/* Author */}
+            <div className="space-y-2">
+              <div className="space-y-2">
+                <Label>Post author</Label>
+                <p className="text-xs text-muted-foreground pt-1">
+                  Assign a writer byline. Manage team via{" "}
+                  <Link href="/dashboard/authors" className="underline underline-offset-2 hover:text-foreground transition-colors">Authors</Link>
+                </p>
+              </div>
+              <div className="relative">
+                <select
+                  value={authorId ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value ? Number(e.target.value) : null;
+                    setAuthorId(val);
+                  }}
+                  className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <option value="">Default (Primary Author)</option>
+                  {allAuthors.map((a) => (
+                    <option key={a.author_id} value={a.author_id}>
+                      {a.name} (/author/{a.slug})
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
           </div>
         )}
