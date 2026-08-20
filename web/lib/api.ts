@@ -97,16 +97,25 @@ const API_CACHE_TTL_MS = 60_000;
 
 const apiCache = new Map<string, { data: unknown; timestamp: number }>();
 
+export function clearApiCache(): void {
+  apiCache.clear();
+}
+
+function getSiteIdForCache(): string {
+  if (typeof window === "undefined") return "";
+  return localStorage.getItem("articurls_site_id") || "";
+}
+
 export function apiCacheHas(path: string, token?: string | null): boolean {
   if (typeof window === "undefined") return false;
-  const key = `GET:${path}:${token || ""}`;
+  const key = `GET:${path}:${token || ""}:${getSiteIdForCache()}`;
   const cached = apiCache.get(key);
   return !!(cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS);
 }
 
 export function getCachedApiData<T>(path: string, token?: string | null): T | null {
   if (typeof window === "undefined") return null;
-  const key = `GET:${path}:${token || ""}`;
+  const key = `GET:${path}:${token || ""}:${getSiteIdForCache()}`;
   const cached = apiCache.get(key);
   if (cached && Date.now() - cached.timestamp < API_CACHE_TTL_MS) {
     return cached.data as T;
@@ -123,7 +132,8 @@ export async function apiFetch<T>(
   let effectiveToken = token;
   
   const method = rest.method || "GET";
-  const cacheKey = `${method}:${path}:${effectiveToken || ""}`;
+  const siteId = getSiteIdForCache();
+  const cacheKey = `${method}:${path}:${effectiveToken || ""}:${siteId}`;
 
   if (!disableCache && method === "GET" && typeof window !== "undefined") {
     const cached = apiCache.get(cacheKey);

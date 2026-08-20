@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SubscriptionOut, UserSettings, SiteSummary } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites } from "@/lib/api";
+import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites, clearApiCache } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
 const SITE_KEY = "articurls_site_id";
@@ -108,12 +108,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const switchSite = useCallback(async (siteId: number) => {
     localStorage.setItem(SITE_KEY, String(siteId));
+    clearApiCache();
     const target = sites.find((s) => s.site_id === siteId) || null;
     if (target) setActiveSite(target);
     await refreshUser();
-    // Clear page-specific caches by reloading route state
-    router.refresh();
-  }, [sites, refreshUser, router]);
+    
+    // If currently on a site-specific edit/create subroute, redirect to the list view; otherwise reload current view
+    if (typeof window !== "undefined") {
+      const path = window.location.pathname;
+      if (path.includes("/edit") || path.includes("/new")) {
+        window.location.href = "/dashboard/posts";
+      } else {
+        window.location.reload();
+      }
+    }
+  }, [sites, refreshUser]);
 
   useEffect(() => {
     const t = localStorage.getItem(TOKEN_KEY);
