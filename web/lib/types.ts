@@ -76,6 +76,14 @@ export interface PublicUser {
   website_link: string | null;
   profile_image_url: string | null;
   og_image_url?: string | null;
+  template_id?: string;
+  site_mode?: string;
+  color_theme?: string;
+  custom_color?: string | null;
+  font_family?: string;
+  button_style?: string;
+  navbar_alignment?: string;
+  navbar_style?: string;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_blog_name_size?: NavBlogNameSize;
@@ -116,6 +124,14 @@ export interface UserSettings {
   youtube_link: string | null;
   website_link: string | null;
   profile_image_url: string | null;
+  template_id: string;
+  site_mode: string;
+  color_theme: string;
+  custom_color: string | null;
+  font_family: string;
+  button_style: string;
+  navbar_alignment: string;
+  navbar_style: string;
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_blog_name_size?: NavBlogNameSize;
@@ -181,6 +197,15 @@ export interface UserPage {
 }
 
 export interface DesignSettings {
+  template_id: string;
+  site_mode: string;
+  color_theme: string;
+  custom_color: string | null;
+  font_family: string;
+  button_style: string;
+  navbar_alignment: string;
+  navbar_style: string;
+  
   navbar_enabled: boolean;
   nav_blog_name: string | null;
   nav_blog_name_size: NavBlogNameSize;

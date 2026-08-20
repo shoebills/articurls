@@ -30,6 +30,15 @@ class UserSettings(BaseModel):
     website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
+    template_id: str = "editorial"
+    site_mode: str = "system"
+    color_theme: str = "base"
+    custom_color: Optional[str] = None
+    font_family: str = "sans"
+    button_style: str = "rounded"
+    navbar_alignment: str = "left"
+    navbar_style: str = "bordered"
+    
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
@@ -70,6 +79,15 @@ class PublicUser(BaseModel):
     website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
     og_image_url: Optional[str] = None
+    template_id: str = "editorial"
+    site_mode: str = "system"
+    color_theme: str = "base"
+    custom_color: Optional[str] = None
+    font_family: str = "sans"
+    button_style: str = "rounded"
+    navbar_alignment: str = "left"
+    navbar_style: str = "bordered"
+    
     navbar_enabled: bool
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"

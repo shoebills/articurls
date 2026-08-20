@@ -1,0 +1,124 @@
+"use client";
+
+import Link from "next/link";
+import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
+import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { PublicSiteFooter } from "@/components/public-site-footer";
+import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
+import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+
+type EditorialTemplateProps = {
+  site: PublicUser;
+  blogs: PublicBlog[];
+  pages: UserPage[];
+  categories: Category[];
+  basePath: string;
+};
+
+export function EditorialTemplate({ site, blogs, pages, categories, basePath }: EditorialTemplateProps) {
+  const navBlogName = (site.nav_blog_name || "").trim() || "My Blog";
+  const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+  const maxWidth = site.content_width === "wide" ? "max-w-5xl" : "max-w-3xl";
+  const mainSpacing = site.navbar_enabled
+    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+
+  const catLinks: PublicNavDesktopLink[] = categories.map((c) => ({
+    href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+    label: c.name,
+  }));
+  const showSubscriberCollection = site.subscriber_collection_enabled === true;
+  const desktopLinks = site.nav_menu_enabled ? catLinks : [];
+  const hasMobileNav = (site.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
+
+  const publicNavHeaderClass = "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
+
+  return (
+    <div className="min-h-screen bg-background text-foreground">
+      <main className={mainSpacing}>
+        {site.navbar_enabled ? (
+          <header className={publicNavHeaderClass} data-public-nav>
+            <div className="hidden w-full sm:block">
+              <PublicDesktopNav
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                nameSize={blogNameSize}
+                links={desktopLinks}
+                showSubscribe={showSubscriberCollection}
+                userName={site.user_name}
+                authorName={site.name}
+              />
+            </div>
+            <div className="sm:hidden">
+              <PublicMobileNavMenu
+                title={navBlogName}
+                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                nameSize={blogNameSize}
+                links={site.nav_menu_enabled ? catLinks : []}
+                userName={site.user_name}
+                authorName={site.name}
+                showSubscribeAction={showSubscriberCollection}
+                showMenuButton={hasMobileNav}
+              />
+            </div>
+          </header>
+        ) : null}
+
+        {/* Hero Section */}
+        {(site.about_title || site.bio) && site.show_about_section ? (
+          <div className="mb-20 mt-16 text-center max-w-2xl mx-auto flex flex-col items-center">
+            <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
+              {site.about_title || "About"}
+            </h1>
+            {site.bio ? (
+              <p className="text-lg text-muted-foreground leading-relaxed">
+                {site.bio}
+              </p>
+            ) : null}
+            {showSubscriberCollection && (
+              <div className="mt-8 w-full max-w-sm">
+                <SubscribeToAuthor userName={site.user_name} authorName={site.name} />
+              </div>
+            )}
+          </div>
+        ) : null}
+
+        {/* Linear Editorial Feed */}
+        <div className="mt-12 space-y-16 lg:space-y-24">
+          {blogs.map((b) => (
+             <article key={b.blog_id} className="group relative flex flex-col items-start justify-between">
+                <div className="flex items-center gap-x-4 text-xs">
+                  {b.published_at && (
+                    <time dateTime={b.published_at} className="text-muted-foreground">
+                      {new Date(b.published_at).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+                    </time>
+                  )}
+                  {/* Find first category for badge */}
+                  {b.category_ids && b.category_ids.length > 0 && categories.find(c => c.category_id === b.category_ids![0]) && (
+                    <span className="relative z-10 rounded-full bg-primary/10 px-3 py-1.5 font-medium text-primary hover:bg-primary/20 transition-colors">
+                      {categories.find(c => c.category_id === b.category_ids![0])?.name}
+                    </span>
+                  )}
+                </div>
+                <div className="group relative">
+                  <h3 className="mt-3 text-2xl font-bold leading-tight group-hover:text-primary transition-colors">
+                    <Link href={`/blog/${b.slug}`}>
+                      <span className="absolute inset-0" />
+                      {b.title}
+                    </Link>
+                  </h3>
+                  <p className="mt-4 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                    {b.excerpt}
+                  </p>
+                </div>
+             </article>
+          ))}
+        </div>
+
+        <PublicSiteFooter user={site} pages={pages} />
+      </main>
+    </div>
+  );
+}

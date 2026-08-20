@@ -52,7 +52,14 @@ class Site(Base):
     last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     # Design / Theme
-    theme_id = Column(String(32), nullable=False, default="editorial")
+    template_id = Column(String(32), nullable=False, default="editorial")
+    site_mode = Column(String(16), nullable=False, default="system")
+    color_theme = Column(String(32), nullable=False, default="base")
+    custom_color = Column(String(16), nullable=True, default=None)
+    font_family = Column(String(32), nullable=False, default="sans")
+    button_style = Column(String(16), nullable=False, default="rounded")
+    navbar_alignment = Column(String(16), nullable=False, default="left")
+    navbar_style = Column(String(16), nullable=False, default="bordered")
     navbar_enabled = Column(Boolean, nullable=False, default=True)
     nav_blog_name = Column(String, nullable=True)
     nav_blog_name_size = Column(String(16), nullable=False, default="medium")

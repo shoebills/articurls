@@ -322,6 +322,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
       if (featuredIdsChanged && user) {
         await patchDesignSettings(token, {
+          template_id: user.template_id ?? "editorial",
+          site_mode: user.site_mode ?? "system",
+          color_theme: user.color_theme ?? "base",
+          custom_color: user.custom_color ?? null,
+          font_family: user.font_family ?? "sans",
+          button_style: user.button_style ?? "rounded",
+          navbar_alignment: user.navbar_alignment ?? "left",
+          navbar_style: user.navbar_style ?? "bordered",
           navbar_enabled: user.navbar_enabled,
           nav_blog_name: user.nav_blog_name,
           nav_blog_name_size: user.nav_blog_name_size ?? "medium",

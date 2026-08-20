@@ -28,6 +28,9 @@ import { Calendar, ChevronLeft } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
+import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
+import { EditorialTemplate } from "@/components/themes/editorial/editorial-template";
+import { SaasTemplate } from "@/components/themes/saas/saas-template";
 
 const publicNavHeaderClass = "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
 
@@ -463,7 +466,8 @@ export default async function SitePublicationPage({ params }: Props) {
     );
 
     return (
-      <article className="min-h-screen bg-background">
+      <ThemeStyleWrapper user={author}>
+        <article className="min-h-screen bg-background">
         <StructuredData data={generateBlogPostingSchema(blog, author, currentUrl)} />
         <main className={containerSpacing}>
           {author.navbar_enabled ? (
@@ -513,6 +517,7 @@ export default async function SitePublicationPage({ params }: Props) {
           <PublicSiteFooter user={author} pages={pages} />
         </main>
       </article>
+      </ThemeStyleWrapper>
     );
   }
 
@@ -549,7 +554,8 @@ export default async function SitePublicationPage({ params }: Props) {
     const currentUrl = `https://${host}${basePath}/page/${encodeURIComponent(pageSlug)}`;
 
     return (
-      <div className="min-h-screen bg-background">
+      <ThemeStyleWrapper user={user}>
+      <div className="min-h-screen bg-background text-foreground">
         <main className={mainSpacing}>
           <StructuredData data={generateWebPageSchema(page, user, currentUrl)} />
           {user.navbar_enabled ? (
@@ -602,6 +608,7 @@ export default async function SitePublicationPage({ params }: Props) {
           <PublicSiteFooter user={user} pages={pages} />
         </main>
       </div>
+      </ThemeStyleWrapper>
     );
   }
 
@@ -645,7 +652,8 @@ export default async function SitePublicationPage({ params }: Props) {
     const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
 
     return (
-      <div className="min-h-screen bg-background">
+      <ThemeStyleWrapper user={user}>
+      <div className="min-h-screen bg-background text-foreground">
         <StructuredData data={generateCollectionPageSchema(data.category, user, currentUrl)} />
         <main className={mainSpacing}>
           {user.navbar_enabled ? (
@@ -706,6 +714,7 @@ export default async function SitePublicationPage({ params }: Props) {
             <PublicSiteFooter user={user} pages={pages} />
         </main>
       </div>
+      </ThemeStyleWrapper>
     );
   }
 
@@ -721,72 +730,16 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (!user) notFound();
 
-  const navBlogName = (user.nav_blog_name || "").trim() || "My Blog";
-  const blogNameSize = normalizeNavBlogNameSize(user.nav_blog_name_size);
-  const maxWidth = user.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-  const mainSpacing = user.navbar_enabled
-    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-  const catLinks = categories.map((c) => ({
-    href: getPublicCategoryUrl(username, c.slug, basePath),
-    label: c.name,
-  }));
-  const showSubscriberCollection = user.subscriber_collection_enabled === true;
-  const desktopLinks = user.nav_menu_enabled ? catLinks : [];
-  const hasMobileNav =
-    (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
-
   const currentUrl = `https://${host}${basePath}`;
 
   return (
-    <div className="min-h-screen bg-background">
+    <ThemeStyleWrapper user={user}>
       <StructuredData data={generateWebSiteSchema(user, currentUrl)} />
-      <main className={mainSpacing}>
-        {user.navbar_enabled ? (
-          <header className={publicNavHeaderClass} data-public-nav>
-            <div className="hidden w-full sm:block">
-              <PublicDesktopNav
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username, basePath)}
-                nameSize={blogNameSize}
-                links={desktopLinks}
-                showSubscribe={showSubscriberCollection}
-                userName={user.user_name}
-                authorName={user.name}
-              />
-            </div>
-            <div className="sm:hidden">
-              <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(username, basePath)}
-                nameSize={blogNameSize}
-                links={user.nav_menu_enabled ? catLinks : []}
-                userName={user.user_name}
-                authorName={user.name}
-                showSubscribeAction={showSubscriberCollection}
-                showMenuButton={hasMobileNav}
-              />
-            </div>
-          </header>
-        ) : null}
-        {user.show_about_section && (user.about_title || user.bio) ? (
-          <div className="mb-20 mt-20 text-center md:w-1/2 md:mx-auto">
-            <h1 className="mb-4 text-3xl font-semibold tracking-tight sm:text-4xl">{user.about_title || "About the author"}</h1>
-            {user.bio ? <p className="whitespace-pre-line text-lg text-muted-foreground">{user.bio}</p> : null}
-          </div>
-        ) : null}
-        <PublicBlogListSearch
-          blogs={blogs}
-          username={username}
-          user={user}
-          siteOrigin={siteOrigin}
-          content_width={user.content_width || "wide"}
-          list_image_position={user.list_image_position || "above_title"}
-          show_preview_in_lists={user.show_preview_in_lists ?? true}
-        />
-        <PublicSiteFooter user={user} pages={pages} />
-      </main>
-    </div>
+      {user.template_id === "saas" ? (
+        <SaasTemplate site={user} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+      ) : (
+        <EditorialTemplate site={user} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+      )}
+    </ThemeStyleWrapper>
   );
 }
