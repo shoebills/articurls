@@ -709,17 +709,17 @@ def get_account_usage(
     plan_type = db_sub.plan_type if db_sub else "trial"
 
     TIERS = {
-        "trial": {"limit": 10000, "price": 9},
-        "pro": {"limit": 10000, "price": 9},
-        "pro_10k": {"limit": 10000, "price": 9},
+        "trial": {"limit": 10000, "price": 19},
+        "pro": {"limit": 10000, "price": 19},
+        "pro_10k": {"limit": 10000, "price": 19},
         "pro_50k": {"limit": 50000, "price": 29},
         "pro_100k": {"limit": 100000, "price": 49},
-        "pro_250k": {"limit": 250000, "price": 79},
-        "pro_500k": {"limit": 500000, "price": 99},
-        "pro_1m": {"limit": 1000000, "price": 149},
+        "pro_250k": {"limit": 250000, "price": 99},
+        "pro_500k": {"limit": 500000, "price": 149},
+        "pro_1m": {"limit": 1000000, "price": 249},
         "lifetime": {"limit": 100000, "price": 199},
     }
-    tier_info = TIERS.get(plan_type, {"limit": 10000, "price": 9})
+    tier_info = TIERS.get(plan_type, {"limit": 10000, "price": 19})
 
     umami_client = UmamiClient()
 

@@ -31,7 +31,7 @@ export function PricingSection() {
     {
       name: "Pro",
       tagline: "Grow audience",
-      price: "$9",
+      price: "$19",
       unit: "/mo",
       desc: "Due today: $0",
       features: [

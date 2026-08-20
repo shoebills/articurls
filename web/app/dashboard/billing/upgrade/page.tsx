@@ -30,12 +30,12 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const VIEW_TIERS = [
-  { id: "10k", label: "Up to 10k views", price: 9, views: 10_000 },
+  { id: "10k", label: "Up to 10k views", price: 19, views: 10_000 },
   { id: "50k", label: "Up to 50k views", price: 29, views: 50_000 },
   { id: "100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
-  { id: "250k", label: "Up to 250k views", price: 79, views: 250_000 },
-  { id: "500k", label: "Up to 500k views", price: 99, views: 500_000 },
-  { id: "1m", label: "Up to 1M views", price: 149, views: 1_000_000 },
+  { id: "250k", label: "Up to 250k views", price: 99, views: 250_000 },
+  { id: "500k", label: "Up to 500k views", price: 149, views: 500_000 },
+  { id: "1m", label: "Up to 1M views", price: 249, views: 1_000_000 },
   { id: "custom", label: "1M+ views (Custom)", price: null, views: null },
 ];
 
