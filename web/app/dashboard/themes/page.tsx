@@ -17,7 +17,8 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ThemePicker } from "@/components/themes/theme-picker";
 import { ColorPicker } from "@/components/themes/color-picker";
 import { TypographyPicker } from "@/components/themes/typography-picker";
-import { NavbarPicker } from "@/components/themes/navbar-picker";
+import { NavBuilder } from "@/components/themes/nav-builder";
+import { FooterBuilder } from "@/components/themes/footer-builder";
 import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
@@ -34,12 +35,18 @@ export default function ThemesDashboardPage() {
         button_style: "rounded",
         navbar_alignment: "left",
         navbar_style: "bordered",
-        navbar_enabled: false,
+        navbar_enabled: true,
         nav_blog_name: null,
         nav_blog_name_size: "medium",
         nav_menu_enabled: true,
+        nav_items: [],
         show_about_section: false,
         site_footer_enabled: true,
+        footer_columns: [],
+        footer_copyright: null,
+        footer_socials_enabled: true,
+        footer_newsletter_enabled: true,
+        footer_system_links_enabled: true,
         featured_blogs_enabled: true,
         featured_blog_ids: [],
         content_width: "wide",
@@ -60,12 +67,18 @@ export default function ThemesDashboardPage() {
         button_style: "rounded",
         navbar_alignment: "left",
         navbar_style: "bordered",
-        navbar_enabled: false,
+        navbar_enabled: true,
         nav_blog_name: null,
         nav_blog_name_size: "medium",
         nav_menu_enabled: true,
+        nav_items: [],
         show_about_section: false,
         site_footer_enabled: true,
+        footer_columns: [],
+        footer_copyright: null,
+        footer_socials_enabled: true,
+        footer_newsletter_enabled: true,
+        footer_system_links_enabled: true,
         featured_blogs_enabled: true,
         featured_blog_ids: [],
         content_width: "wide",
@@ -116,7 +129,7 @@ export default function ThemesDashboardPage() {
       const updated = await patchDesignSettings(token, design);
       setDesign(updated);
       await refreshUser();
-      setSuccess("Theme settings saved successfully.");
+      setSuccess("Theme and navigation settings saved successfully.");
     } catch (e) {
       if (e instanceof ApiError) {
         setErr(e.message);
@@ -133,9 +146,9 @@ export default function ThemesDashboardPage() {
       {/* Header */}
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes & Design</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes & Navigation</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Customize your publication layout, typography, color scheme, and header styling.
+            Customize your publication layout, typography, navigation links, and modular footer architecture.
           </p>
         </div>
         <div>
@@ -197,16 +210,29 @@ export default function ThemesDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Section 4: Header & Navigation */}
+          {/* Section 4: Header & Dynamic Navigation */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg font-semibold">Header & Navigation</CardTitle>
               <CardDescription>
-                Customize how your logo and navigation bar are arranged.
+                Configure brand name, alignment, header styling, custom links, and CTA buttons.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <NavbarPicker settings={design} onChange={handleUpdate} />
+              <NavBuilder settings={design} onChange={handleUpdate} />
+            </CardContent>
+          </Card>
+
+          {/* Section 5: Modular Footer */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Modular Footer</CardTitle>
+              <CardDescription>
+                Build multi-column link groups, toggle newsletter subscription, and configure copyright notices.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <FooterBuilder settings={design} onChange={handleUpdate} />
             </CardContent>
           </Card>
         </div>

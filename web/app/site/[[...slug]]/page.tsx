@@ -79,6 +79,23 @@ function resolveRoutingSegments(
   return { segments: rawSegments, basePath: `/${base}` };
 }
 
+function resolveNavLinks(user: PublicUser, categories: Category[], basePath: string) {
+  const hasCustomNav = Array.isArray(user.nav_items) && user.nav_items.length > 0;
+  if (hasCustomNav) {
+    return user.nav_items!.map((item) => ({
+      href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
+      label: item.label,
+      is_cta: item.is_cta,
+      open_in_new_tab: item.open_in_new_tab,
+    }));
+  }
+  if (!user.nav_menu_enabled) return [];
+  return categories.map((c) => ({
+    href: getPublicCategoryUrl(user.user_name, c.slug, basePath),
+    label: c.name,
+  }));
+}
+
 async function resolveDomainInfo(host: string): Promise<DomainLookupResponse | null> {
   const ugcHost = new URL(UGC_ORIGIN).hostname;
   const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
@@ -393,14 +410,9 @@ export default async function SitePublicationPage({ params }: Props) {
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
     
-    const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, basePath),
-      label: c.name,
-    }));
+    const desktopLinks = resolveNavLinks(author, categories, basePath);
     const showSubscriberCollection = author.subscriber_collection_enabled === true;
-    const desktopLinks = author.nav_menu_enabled ? catLinks : [];
-    const hasMobileNav =
-      (author.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
+    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
 
     const currentUrl = `https://${host}${basePath}/blog/${encodeURIComponent(postSlug)}`;
     const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
@@ -481,6 +493,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   showSubscribe={showSubscriberCollection}
                   userName={author.user_name}
                   authorName={author.name}
+                  alignment={author.navbar_alignment || "left"}
                 />
               </div>
               <div className="sm:hidden">
@@ -488,7 +501,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
-                  links={author.nav_menu_enabled ? catLinks : []}
+                  links={desktopLinks}
                   userName={author.user_name}
                   authorName={author.name}
                   showSubscribeAction={showSubscriberCollection}
@@ -514,7 +527,7 @@ export default async function SitePublicationPage({ params }: Props) {
               <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
             </div>
           )}
-          <PublicSiteFooter user={author} pages={pages} />
+          <PublicSiteFooter user={author} pages={pages} basePath={basePath} />
         </main>
       </article>
       </ThemeStyleWrapper>
@@ -542,14 +555,9 @@ export default async function SitePublicationPage({ params }: Props) {
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
-    const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, basePath),
-      label: c.name,
-    }));
+    const desktopLinks = resolveNavLinks(user, categories, basePath);
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
-    const desktopLinks = user.nav_menu_enabled ? catLinks : [];
-    const hasMobileNav =
-      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection;
+    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
 
     const currentUrl = `https://${host}${basePath}/page/${encodeURIComponent(pageSlug)}`;
 
@@ -569,6 +577,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
+                  alignment={user.navbar_alignment || "left"}
                 />
               </div>
               <div className="sm:hidden">
@@ -576,7 +585,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
-                  links={user.nav_menu_enabled ? catLinks : []}
+                  links={desktopLinks}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
@@ -605,7 +614,7 @@ export default async function SitePublicationPage({ params }: Props) {
               <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
             </article>
           </div>
-          <PublicSiteFooter user={user} pages={pages} />
+          <PublicSiteFooter user={user} pages={pages} basePath={basePath} />
         </main>
       </div>
       </ThemeStyleWrapper>
@@ -634,20 +643,9 @@ export default async function SitePublicationPage({ params }: Props) {
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
-    const catLinks = categories.map((c) => ({
-      href: getPublicCategoryUrl(username, c.slug, basePath),
-      label: c.name,
-    }));
+    const desktopLinks = resolveNavLinks(user, categories, basePath);
     const showSubscriberCollection = user.subscriber_collection_enabled === true;
-    const desktopLinks = user.nav_menu_enabled
-      ? categories.map((c) => ({
-          href: getPublicCategoryUrl(username, c.slug, basePath),
-          label: c.name,
-          active: c.slug === categorySlug,
-        }))
-      : [];
-    const hasMobileNav =
-      (user.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
+    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
 
     const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
 
@@ -667,6 +665,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   showSubscribe={showSubscriberCollection}
                   userName={user.user_name}
                   authorName={user.name}
+                  alignment={user.navbar_alignment || "left"}
                 />
               </div>
               <div className="sm:hidden">
@@ -674,7 +673,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   title={navBlogName}
                   titleHref={getPublicProfileUrl(username, basePath)}
                   nameSize={blogNameSize}
-                  links={user.nav_menu_enabled ? catLinks : []}
+                  links={desktopLinks}
                   userName={user.user_name}
                   authorName={user.name}
                   showSubscribeAction={showSubscriberCollection}
@@ -711,7 +710,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
               </div>
             )}
-            <PublicSiteFooter user={user} pages={pages} />
+            <PublicSiteFooter user={user} pages={pages} basePath={basePath} />
         </main>
       </div>
       </ThemeStyleWrapper>

@@ -43,8 +43,14 @@ class UserSettings(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
+    nav_items: Optional[list[dict]] = None
     show_about_section: bool
     site_footer_enabled: bool = True
+    footer_columns: Optional[list[dict]] = None
+    footer_copyright: Optional[str] = None
+    footer_socials_enabled: bool = True
+    footer_newsletter_enabled: bool = True
+    footer_system_links_enabled: bool = True
     last_username_change_at: Optional[datetime] = None
     is_admin: bool = False
     favicon_url: Optional[str] = None
@@ -92,8 +98,14 @@ class PublicUser(BaseModel):
     nav_blog_name: Optional[str] = None
     nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
+    nav_items: Optional[list[dict]] = None
     show_about_section: bool
     site_footer_enabled: bool = True
+    footer_columns: Optional[list[dict]] = None
+    footer_copyright: Optional[str] = None
+    footer_socials_enabled: bool = True
+    footer_newsletter_enabled: bool = True
+    footer_system_links_enabled: bool = True
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[int] | None = []

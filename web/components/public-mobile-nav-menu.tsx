@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, Menu, X } from "lucide-react";
+import { Bell, ExternalLink, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -13,12 +13,18 @@ const TRAY_GAP_BELOW_NAVBAR_PX = 8;
 
 type TrayLayout = { top: number; left: number; width: number };
 
+export type PublicMobileNavLink = {
+  href: string;
+  label: string;
+  is_cta?: boolean;
+  open_in_new_tab?: boolean;
+};
+
 type PublicMobileNavMenuProps = {
   title: string;
   titleHref?: string;
-  /** Blog name size from design settings (default medium). */
   nameSize?: NavBlogNameSize | string | null;
-  links: Array<{ href: string; label: string }>;
+  links: PublicMobileNavLink[];
   userName?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
@@ -167,15 +173,25 @@ export function PublicMobileNavMenu({
                   prefetch={false}
                   key={item.href}
                   href={item.href}
+                  target={item.open_in_new_tab ? "_blank" : undefined}
+                  rel={item.open_in_new_tab ? "noopener noreferrer" : undefined}
                   onClick={() => setOpen(false)}
-                  className="block w-full rounded-lg px-3 py-2 text-center text-sm text-foreground/90 transition-colors hover:bg-muted hover:text-foreground"
+                  className={cn(
+                    "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                    item.is_cta
+                      ? "bg-primary text-primary-foreground hover:opacity-90 justify-center text-center"
+                      : "text-foreground/90 hover:bg-muted hover:text-foreground"
+                  )}
                 >
-                  {item.label}
+                  <span>{item.label}</span>
+                  {item.open_in_new_tab && !item.is_cta ? (
+                    <ExternalLink className="h-3.5 w-3.5 opacity-60 ml-2" />
+                  ) : null}
                 </Link>
               ))}
             </div>
           ) : !showSubscribeAction ? (
-            <p className="px-3 py-2 text-center text-sm text-muted-foreground">No categories</p>
+            <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
           ) : null}
 
           {showSubscribeAction && userName ? (
@@ -193,4 +209,3 @@ export function PublicMobileNavMenu({
     </div>
   );
 }
-

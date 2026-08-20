@@ -59,6 +59,33 @@ export type NavBlogNameSize = "small" | "medium" | "large";
 export type ContentWidth = "narrow" | "wide";
 export type ListImagePosition = "above_title" | "next_to_title";
 
+export type NavItemType = "custom" | "page" | "category";
+
+export interface NavItem {
+  id: string;
+  label: string;
+  url: string;
+  type: NavItemType;
+  is_cta?: boolean;
+  open_in_new_tab?: boolean;
+}
+
+export type FooterLinkType = "custom" | "page" | "category" | "system";
+
+export interface FooterLink {
+  id: string;
+  label: string;
+  url: string;
+  type: FooterLinkType;
+  open_in_new_tab?: boolean;
+}
+
+export interface FooterColumn {
+  id: string;
+  title: string;
+  links: FooterLink[];
+}
+
 export interface PublicUser {
   name: string;
   user_name: string;
@@ -88,8 +115,14 @@ export interface PublicUser {
   nav_blog_name: string | null;
   nav_blog_name_size?: NavBlogNameSize;
   nav_menu_enabled: boolean;
+  nav_items?: NavItem[] | null;
   show_about_section: boolean;
   site_footer_enabled: boolean;
+  footer_columns?: FooterColumn[] | null;
+  footer_copyright?: string | null;
+  footer_socials_enabled?: boolean;
+  footer_newsletter_enabled?: boolean;
+  footer_system_links_enabled?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
@@ -136,8 +169,14 @@ export interface UserSettings {
   nav_blog_name: string | null;
   nav_blog_name_size?: NavBlogNameSize;
   nav_menu_enabled: boolean;
+  nav_items?: NavItem[] | null;
   show_about_section: boolean;
   site_footer_enabled: boolean;
+  footer_columns?: FooterColumn[] | null;
+  footer_copyright?: string | null;
+  footer_socials_enabled?: boolean;
+  footer_newsletter_enabled?: boolean;
+  footer_system_links_enabled?: boolean;
   last_username_change_at: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
@@ -210,8 +249,14 @@ export interface DesignSettings {
   nav_blog_name: string | null;
   nav_blog_name_size: NavBlogNameSize;
   nav_menu_enabled: boolean;
+  nav_items?: NavItem[] | null;
   show_about_section: boolean;
   site_footer_enabled: boolean;
+  footer_columns?: FooterColumn[] | null;
+  footer_copyright?: string | null;
+  footer_socials_enabled?: boolean;
+  footer_newsletter_enabled?: boolean;
+  footer_system_links_enabled?: boolean;
   featured_blogs_enabled: boolean;
   featured_blog_ids: number[];
   content_width: ContentWidth;

@@ -2,7 +2,7 @@
 
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, ExternalLink } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,13 +19,14 @@ import {
 } from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
 
-/** Matches `gap-x-6` (1.5rem) for width math. */
 const LINK_GAP_PX = 24;
 
 export type PublicNavDesktopLink = {
   href: string;
   label: string;
   active?: boolean;
+  is_cta?: boolean;
+  open_in_new_tab?: boolean;
 };
 
 type PublicDesktopNavProps = {
@@ -36,12 +37,16 @@ type PublicDesktopNavProps = {
   showSubscribe: boolean;
   userName: string;
   authorName: string;
+  alignment?: "left" | "center" | "right" | string;
 };
 
-function linkClass(active?: boolean) {
+function linkClass(active?: boolean, isCta?: boolean) {
+  if (isCta) {
+    return "inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity";
+  }
   return cn(
     "whitespace-nowrap text-sm transition-colors",
-    active ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
+    active ? "font-medium text-foreground" : "text-muted-foreground hover:text-foreground"
   );
 }
 
@@ -53,6 +58,7 @@ export function PublicDesktopNav({
   showSubscribe,
   userName,
   authorName,
+  alignment = "left",
 }: PublicDesktopNavProps) {
   const size = normalizeNavBlogNameSize(nameSize);
   const [inlineCount, setInlineCount] = useState<number | null>(null);
@@ -94,9 +100,7 @@ export function PublicDesktopNav({
   }, [links]);
 
   useLayoutEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     recompute();
-
     const slot = navSlotRef.current;
     if (!slot) return;
     const ro = new ResizeObserver(() => recompute());
@@ -109,6 +113,13 @@ export function PublicDesktopNav({
   const inlineLinks = inlineCount === null ? [] : links.slice(0, inlineCount);
   const overflowLinks = inlineCount === null ? [] : links.slice(inlineCount);
 
+  const slotJustify =
+    alignment === "center"
+      ? "justify-center"
+      : alignment === "left"
+        ? "justify-start"
+        : "justify-end";
+
   return (
     <div className="relative flex w-full items-center gap-x-4 sm:gap-x-6">
       <div
@@ -117,7 +128,7 @@ export function PublicDesktopNav({
         aria-hidden
       >
         {links.map((l) => (
-          <span key={l.href} data-nav-link-measure className={linkClass(l.active)}>
+          <span key={l.href} data-nav-link-measure className={linkClass(l.active, l.is_cta)}>
             {l.label}
           </span>
         ))}
@@ -125,8 +136,8 @@ export function PublicDesktopNav({
           data-more-measure
           className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap text-sm text-muted-foreground"
         >
-            More
-            <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
+          More
+          <ChevronDown className="h-4 w-4 shrink-0 opacity-60" aria-hidden />
         </span>
       </div>
 
@@ -141,16 +152,22 @@ export function PublicDesktopNav({
         {title}
       </Link>
 
-      <div ref={navSlotRef} className="flex min-w-0 flex-1 items-center justify-end gap-x-6 overflow-hidden">
+      <div ref={navSlotRef} className={cn("flex min-w-0 flex-1 items-center gap-x-6 overflow-hidden", slotJustify)}>
         {inlineCount === null ? (
           <span className="invisible text-sm" aria-hidden>
-            {/* reserve space so layout is stable before measurement */}
             Placeholder
           </span>
         ) : (
           <>
             {inlineLinks.map((l) => (
-              <Link prefetch={false} key={l.href} href={l.href} className={linkClass(l.active)}>
+              <Link
+                prefetch={false}
+                key={l.href}
+                href={l.href}
+                target={l.open_in_new_tab ? "_blank" : undefined}
+                rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+                className={linkClass(l.active, l.is_cta)}
+              >
                 {l.label}
               </Link>
             ))}
@@ -165,10 +182,20 @@ export function PublicDesktopNav({
                     <ChevronDown className="h-4 w-4 opacity-60" aria-hidden />
                   </button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[10rem] origin-top data-[state=open]:animate-dropdown-in data-[state=closed]:animate-dropdown-out">
+                <DropdownMenuContent align="end" className="min-w-[10rem] origin-top">
                   {overflowLinks.map((l) => (
                     <DropdownMenuItem key={l.href} asChild className={cn(l.active && "font-medium")}>
-                      <Link prefetch={false} href={l.href}>{l.label}</Link>
+                      <Link
+                        prefetch={false}
+                        href={l.href}
+                        target={l.open_in_new_tab ? "_blank" : undefined}
+                        rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+                      >
+                        <span className="flex items-center justify-between w-full">
+                          {l.label}
+                          {l.open_in_new_tab ? <ExternalLink className="h-3 w-3 opacity-60 ml-2" /> : null}
+                        </span>
+                      </Link>
                     </DropdownMenuItem>
                   ))}
                 </DropdownMenuContent>
@@ -178,18 +205,20 @@ export function PublicDesktopNav({
         )}
       </div>
 
-      <ThemeToggle />
-      {userName ? (
-        <SearchButton
-          iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
-          userName={userName}
-        />
-      ) : null}
-      {showSubscribe && userName ? (
-        <div className="shrink-0">
-          <SubscribeToAuthor mode="dialog" userName={userName} authorName={authorName} />
-        </div>
-      ) : null}
+      <div className="flex items-center gap-2 shrink-0">
+        <ThemeToggle />
+        {userName ? (
+          <SearchButton
+            iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
+            userName={userName}
+          />
+        ) : null}
+        {showSubscribe && userName ? (
+          <div className="shrink-0">
+            <SubscribeToAuthor mode="dialog" userName={userName} authorName={authorName} />
+          </div>
+        ) : null}
+      </div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
-import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { PublicMobileNavMenu, PublicMobileNavLink } from "@/components/public-mobile-nav-menu";
 import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl } from "@/lib/public-url";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
@@ -26,13 +26,38 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
     ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
     : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
-  const catLinks: PublicNavDesktopLink[] = categories.map((c) => ({
-    href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
-    label: c.name,
-  }));
+  const hasCustomNav = Array.isArray(site.nav_items) && site.nav_items.length > 0;
+
+  const desktopLinks: PublicNavDesktopLink[] = hasCustomNav
+    ? site.nav_items!.map((item) => ({
+        href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
+        label: item.label,
+        is_cta: item.is_cta,
+        open_in_new_tab: item.open_in_new_tab,
+      }))
+    : site.nav_menu_enabled
+      ? categories.map((c) => ({
+          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          label: c.name,
+        }))
+      : [];
+
+  const mobileLinks: PublicMobileNavLink[] = hasCustomNav
+    ? site.nav_items!.map((item) => ({
+        href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
+        label: item.label,
+        is_cta: item.is_cta,
+        open_in_new_tab: item.open_in_new_tab,
+      }))
+    : site.nav_menu_enabled
+      ? categories.map((c) => ({
+          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          label: c.name,
+        }))
+      : [];
+
   const showSubscriberCollection = site.subscriber_collection_enabled === true;
-  const desktopLinks = site.nav_menu_enabled ? catLinks : [];
-  const hasMobileNav = (site.nav_menu_enabled && categories.length > 0) || showSubscriberCollection || blogs.length > 0;
+  const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
 
   const publicNavHeaderClass = "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
 
@@ -50,6 +75,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 showSubscribe={showSubscriberCollection}
                 userName={site.user_name}
                 authorName={site.name}
+                alignment={site.navbar_alignment || "left"}
               />
             </div>
             <div className="sm:hidden">
@@ -57,7 +83,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 title={navBlogName}
                 titleHref={getPublicProfileUrl(site.user_name, basePath)}
                 nameSize={blogNameSize}
-                links={site.nav_menu_enabled ? catLinks : []}
+                links={mobileLinks}
                 userName={site.user_name}
                 authorName={site.name}
                 showSubscribeAction={showSubscriberCollection}
@@ -181,7 +207,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           </div>
         )}
 
-        <PublicSiteFooter user={site} pages={pages} />
+        <PublicSiteFooter user={site} pages={pages} basePath={basePath} />
       </main>
     </div>
   );
