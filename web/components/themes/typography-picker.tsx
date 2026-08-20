@@ -1,7 +1,20 @@
 "use client";
 
 import { type DesignSettings } from "@/lib/types";
-import { Check } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const FONT_OPTIONS = [
+  { id: "sans", label: "Modern Sans", desc: "Inter & system sans — clean, versatile, legible", sample: "Aa", fontClass: "font-sans" },
+  { id: "serif", label: "Editorial Serif", desc: "Lora / Merriweather — literary and classic", sample: "Aa", fontClass: "font-serif" },
+  { id: "mono", label: "Technical Mono", desc: "JetBrains Mono / Fira — code & dev focused", sample: "Aa", fontClass: "font-mono" },
+  { id: "jakarta", label: "Geometric SaaS", desc: "Plus Jakarta Sans — modern startup aesthetic", sample: "Aa", fontClass: "font-sans" },
+] as const;
 
 export function TypographyPicker({
   settings,
@@ -15,55 +28,34 @@ export function TypographyPicker({
 
   return (
     <div className="space-y-6">
-      {/* Font Family */}
-      <div className="space-y-3">
-        <div>
-          <label className="text-sm font-medium text-foreground">Typography Pairing</label>
-          <p className="text-xs text-muted-foreground">
-            Curated font families engineered for reading comfort and aesthetic balance.
-          </p>
-        </div>
+      {/* Font Family Dropdown */}
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-foreground">Typography Pairing</label>
+        <p className="text-xs text-muted-foreground">
+          Curated font families engineered for reading comfort and aesthetic balance.
+        </p>
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          {(
-            [
-              { id: "sans", label: "Modern Sans", desc: "Inter & system sans — clean, versatile, legible", sample: "Aa Bb Gg" },
-              { id: "serif", label: "Editorial Serif", desc: "Lora / Merriweather — literary and classic", sample: "Aa Bb Gg" },
-              { id: "mono", label: "Technical Mono", desc: "JetBrains Mono / Fira — code & dev focused", sample: "Aa Bb Gg" },
-              { id: "jakarta", label: "Geometric SaaS", desc: "Plus Jakarta Sans — modern startup aesthetic", sample: "Aa Bb Gg" },
-            ] as const
-          ).map((f) => {
-            const isSelected = font === f.id;
-            return (
-              <button
-                type="button"
-                key={f.id}
-                onClick={() => onChange({ font_family: f.id })}
-                className={`flex flex-col justify-between rounded-xl border p-4 text-left transition-all ${
-                  isSelected
-                    ? "border-primary bg-primary/[0.03] ring-1 ring-primary/20 shadow-2xs"
-                    : "border-border/70 hover:border-border hover:bg-muted/30"
-                }`}
-              >
-                <div className="flex items-start justify-between gap-2 mb-2">
-                  <span className={`text-xl font-bold tracking-tight ${
-                    f.id === "serif" ? "font-serif" : f.id === "mono" ? "font-mono" : "font-sans"
-                  }`}>
-                    {f.sample}
-                  </span>
-                  {isSelected && (
-                    <div className="flex h-5 w-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="h-3.5 w-3.5" />
+        <div className="pt-1">
+          <Select value={font} onValueChange={(val) => onChange({ font_family: val })}>
+            <SelectTrigger className="w-full h-12 bg-background border-border/80 text-foreground">
+              <SelectValue placeholder="Select typography pairing" />
+            </SelectTrigger>
+            <SelectContent>
+              {FONT_OPTIONS.map((f) => (
+                <SelectItem key={f.id} value={f.id} className="py-2.5 cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted text-sm font-bold text-foreground ${f.fontClass}`}>
+                      {f.sample}
+                    </span>
+                    <div className="min-w-0">
+                      <div className="text-sm font-semibold text-foreground">{f.label}</div>
+                      <div className="text-xs text-muted-foreground truncate">{f.desc}</div>
                     </div>
-                  )}
-                </div>
-                <div>
-                  <h4 className="text-sm font-semibold text-foreground">{f.label}</h4>
-                  <p className="text-xs text-muted-foreground mt-0.5">{f.desc}</p>
-                </div>
-              </button>
-            );
-          })}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

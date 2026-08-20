@@ -16,6 +16,13 @@ import type { SubscriptionOut, TransactionOut, AccountUsage } from "@/lib/types"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import {
   CalendarDays,
@@ -338,29 +345,37 @@ export default function BillingPage() {
 
               <CardContent className="p-6 sm:p-8 space-y-8">
                 {/* Views Selector Header */}
-                <div className="space-y-3">
-                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                <div className="space-y-2">
+                  <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                     Select Traffic Volume
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {VIEW_TIERS.map((tier, idx) => {
-                      const isSelected = selectedTierIndex === idx;
-                      return (
-                        <button
-                          key={tier.id}
-                          type="button"
-                          onClick={() => setSelectedTierIndex(idx)}
-                          className={`px-3.5 py-2 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                            isSelected
-                              ? "bg-primary text-primary-foreground shadow-xs font-semibold"
-                              : "border border-border/80 bg-background text-foreground/80 hover:bg-muted hover:text-foreground"
-                          }`}
-                        >
-                          {tier.label}
-                        </button>
-                      );
-                    })}
-                  </div>
+                  </label>
+                  <Select
+                    value={String(selectedTierIndex)}
+                    onValueChange={(val) => setSelectedTierIndex(Number(val))}
+                  >
+                    <SelectTrigger className="w-full h-12 bg-background border-border/80 text-foreground">
+                      <SelectValue placeholder="Choose monthly traffic volume" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {VIEW_TIERS.map((tier, idx) => (
+                        <SelectItem key={tier.id} value={String(idx)} className="py-2.5 cursor-pointer">
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground text-sm">{tier.label}</span>
+                              {tier.popular ? (
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                  Popular
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {tier.price !== null ? `$${tier.price}/mo` : "Custom"}
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Price Display */}
