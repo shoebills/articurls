@@ -6,10 +6,11 @@ type BrandLogoProps = {
   className?: string;
   /** Size of the wordmark (mark scales with it) */
   size?: "default" | "sm";
+  showIcon?: boolean;
   onClick?: () => void;
 };
 
-export function BrandLogo({ href = "/", className, size = "default", onClick }: BrandLogoProps) {
+export function BrandLogo({ href = "/", className, size = "default", showIcon = true, onClick }: BrandLogoProps) {
   const sm = size === "sm";
   return (
     <Link
@@ -20,12 +21,14 @@ export function BrandLogo({ href = "/", className, size = "default", onClick }: 
         className
       )}
     >
-      <img
-        src="/articurls-logo.svg"
-        alt="Articurls"
-        className={cn("shrink-0", sm ? "h-8 w-8" : "h-9 w-9")}
-        aria-hidden
-      />
+      {showIcon ? (
+        <img
+          src="/articurls-logo.svg"
+          alt="Articurls"
+          className={cn("shrink-0", sm ? "h-8 w-8" : "h-9 w-9")}
+          aria-hidden
+        />
+      ) : null}
       <span className={cn("font-bold tracking-tight", sm ? "text-xl" : "text-2xl sm:text-3xl")}>Articurls</span>
     </Link>
   );
