@@ -129,11 +129,14 @@ def create_site(
         umami_client = UmamiClient()
         if umami_client.configured:
             domain = f"{cleaned_subdomain}.{settings.ugc_domain}"
-            website_id = umami_client.create_website_sync(
+            website_res = umami_client.create_website_sync(
                 name=f"{current_user.name} ({cleaned_subdomain})",
                 domain=domain,
             )
-            new_site.umami_website_id = website_id
+            if isinstance(website_res, dict):
+                new_site.umami_website_id = website_res.get("id")
+            elif website_res:
+                new_site.umami_website_id = str(website_res)
     except Exception:
         pass
 
