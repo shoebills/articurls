@@ -49,7 +49,7 @@ def _author_out(db: Session, author: models.Author) -> dict:
         "name": author.name,
         "slug": author.slug,
         "bio": author.bio,
-        "contact_email": author.contact_email,
+        "occupation": author.occupation,
         "instagram_link": author.instagram_link,
         "x_link": author.x_link,
         "pinterest_link": author.pinterest_link,
@@ -103,7 +103,7 @@ def create_author(
         name=name,
         slug=unique_slug,
         bio=request.bio,
-        contact_email=request.contact_email,
+        occupation=request.occupation,
         instagram_link=request.instagram_link,
         x_link=request.x_link,
         pinterest_link=request.pinterest_link,
@@ -175,7 +175,7 @@ def update_author(
 
     for field in [
         "bio",
-        "contact_email",
+        "occupation",
         "instagram_link",
         "x_link",
         "pinterest_link",

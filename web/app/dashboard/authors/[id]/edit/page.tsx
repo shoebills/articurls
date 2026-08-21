@@ -51,7 +51,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [bio, setBio] = useState("");
-  const [contactEmail, setContactEmail] = useState("");
+  const [occupation, setOccupation] = useState("");
   const [websiteLink, setWebsiteLink] = useState("");
   const [xLink, setXLink] = useState("");
   const [githubLink, setGithubLink] = useState("");
@@ -70,7 +70,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     setName(a.name || "");
     setSlug(a.slug || "");
     setBio(a.bio || "");
-    setContactEmail(a.contact_email || "");
+    setOccupation(a.occupation || "");
     setWebsiteLink(a.website_link || "");
     setXLink(a.x_link || "");
     setGithubLink(a.github_link || "");
@@ -140,7 +140,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     (name.trim() !== (author?.name || "") ||
       slug.trim() !== (author?.slug || "") ||
       bio.trim() !== (author?.bio || "") ||
-      contactEmail.trim() !== (author?.contact_email || "") ||
+      occupation.trim() !== (author?.occupation || "") ||
       websiteLink.trim() !== (author?.website_link || "") ||
       xLink.trim() !== (author?.x_link || "") ||
       githubLink.trim() !== (author?.github_link || "") ||
@@ -171,7 +171,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
         name: trimmedName,
         slug: finalSlug,
         bio: bio.trim() || null,
-        contact_email: contactEmail.trim() || null,
+        occupation: occupation.trim() || null,
         website_link: websiteLink.trim() || null,
         x_link: xLink.trim() || null,
         github_link: githubLink.trim() || null,
@@ -385,6 +385,18 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
               </div>
             </div>
 
+            {/* Occupation */}
+            <div className="space-y-2">
+              <Label htmlFor="occupation">Occupation</Label>
+              <Input
+                id="occupation"
+                placeholder="e.g. Software Engineer"
+                value={occupation}
+                onChange={(e) => setOccupation(e.target.value)}
+                disabled={submitting}
+              />
+            </div>
+
             {/* Bio */}
             <div className="space-y-2">
               <Label htmlFor="bio">Author Bio</Label>
@@ -394,19 +406,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 rows={4}
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
-                disabled={submitting}
-              />
-            </div>
-
-            {/* Email */}
-            <div className="space-y-2">
-              <Label htmlFor="email">Contact Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="jane@example.com"
-                value={contactEmail}
-                onChange={(e) => setContactEmail(e.target.value)}
                 disabled={submitting}
               />
             </div>

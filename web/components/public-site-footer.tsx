@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { PublicUser, UserPage } from "@/lib/types";
 import { getPublicPageUrl } from "@/lib/public-url";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { MdOutlineEmail } from "react-icons/md";
 import { SiFacebook, SiGithub, SiInstagram, SiPinterest, SiX, SiYoutube } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
 import { ExternalLink, Link as LinkIcon, Rss } from "lucide-react";
@@ -22,7 +21,6 @@ function normalizePublicLink(link: string): string {
 function socialItems(user: PublicUser) {
   return [
     { key: "website", href: user.website_link, label: "Website", icon: <LinkIcon className="h-4 w-4" aria-hidden /> },
-    { key: "contact_email", href: user.contact_email ? `mailto:${user.contact_email}` : null, label: "Email", icon: <MdOutlineEmail className="h-4 w-4" aria-hidden /> },
     { key: "instagram", href: user.instagram_link, label: "Instagram", icon: <SiInstagram className="h-4 w-4" aria-hidden /> },
     { key: "x", href: user.x_link, label: "X (Twitter)", icon: <SiX className="h-4 w-4" aria-hidden /> },
     { key: "pinterest", href: user.pinterest_link, label: "Pinterest", icon: <SiPinterest className="h-4 w-4" aria-hidden /> },

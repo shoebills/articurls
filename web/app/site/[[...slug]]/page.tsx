@@ -24,7 +24,7 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema } from "@/lib/structured-data";
-import { Calendar, ChevronLeft, Globe, Mail } from "lucide-react";
+import { Briefcase, Calendar, ChevronLeft, Globe } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
@@ -911,8 +911,14 @@ export default async function SitePublicationPage({ params }: Props) {
                       {blogs.length} {blogs.length === 1 ? "article" : "articles"}
                     </span>
                   </div>
+                  {author.occupation ? (
+                    <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
+                      <Briefcase className="h-4 w-4 shrink-0" />
+                      {author.occupation}
+                    </p>
+                  ) : null}
                   {author.bio && (
-                    <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">
+                    <p className={`${author.occupation ? "mt-2" : "mt-3"} text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl`}>
                       {author.bio}
                     </p>
                   )}
@@ -957,15 +963,6 @@ export default async function SitePublicationPage({ params }: Props) {
                         className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
                         LinkedIn
-                      </a>
-                    )}
-                    {author.contact_email && (
-                      <a
-                        href={`mailto:${author.contact_email}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
-                        Contact
                       </a>
                     )}
                   </div>

@@ -5,7 +5,13 @@ import { AuthProvider } from "@/lib/auth-context";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} storageKey="blog-theme" disableTransitionOnChange>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem={true}
+      storageKey="blog-theme"
+      disableTransitionOnChange
+    >
       <AuthProvider>{children}</AuthProvider>
     </ThemeProvider>
   );

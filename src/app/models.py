@@ -114,7 +114,7 @@ class Author(Base):
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False, index=True)
     bio = Column(Text, nullable=True)
-    contact_email = Column(String, nullable=True)
+    occupation = Column(String, nullable=True)
     instagram_link = Column(String, nullable=True)
     x_link = Column(String, nullable=True)
     pinterest_link = Column(String, nullable=True)

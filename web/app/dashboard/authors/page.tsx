@@ -35,7 +35,6 @@ import {
   Trash2,
   UserCheck,
   Globe,
-  Mail,
   BookOpen,
   Loader2,
 } from "lucide-react";
@@ -227,15 +226,6 @@ export default function AuthorsPage() {
                         title="Website"
                       >
                         <Globe className="h-3.5 w-3.5" />
-                      </a>
-                    )}
-                    {author.contact_email && (
-                      <a
-                        href={`mailto:${author.contact_email}`}
-                        className="hover:text-foreground transition-colors"
-                        title="Email"
-                      >
-                        <Mail className="h-3.5 w-3.5" />
                       </a>
                     )}
                   </div>

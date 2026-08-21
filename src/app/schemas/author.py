@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
 import uuid
@@ -8,7 +8,7 @@ class AuthorBase(BaseModel):
     name: str
     slug: Optional[str] = None
     bio: Optional[str] = None
-    contact_email: Optional[str] = None
+    occupation: Optional[str] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None
     pinterest_link: Optional[str] = None
@@ -28,7 +28,7 @@ class AuthorUpdate(BaseModel):
     name: Optional[str] = None
     slug: Optional[str] = None
     bio: Optional[str] = None
-    contact_email: Optional[str] = None
+    occupation: Optional[str] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None
     pinterest_link: Optional[str] = None
@@ -58,7 +58,7 @@ class PublicAuthorSummary(BaseModel):
     name: str
     slug: str
     bio: Optional[str] = None
-    contact_email: Optional[str] = None
+    occupation: Optional[str] = None
     profile_image_url: Optional[str] = None
     instagram_link: Optional[str] = None
     x_link: Optional[str] = None

@@ -236,7 +236,7 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
 
     user_fields = ["name", "email"]
     site_fields = ["meta_title", "meta_description"]
-    author_fields = ["bio", "contact_email", "instagram_link", "x_link", "pinterest_link", "facebook_link", "linkedin_link", "github_link", "youtube_link", "website_link", "profile_image_url"]
+    author_fields = ["bio", "occupation", "instagram_link", "x_link", "pinterest_link", "facebook_link", "linkedin_link", "github_link", "youtube_link", "website_link", "profile_image_url"]
 
     username_changed = "user_name" in update_data and update_data["user_name"] is not None
 

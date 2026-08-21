@@ -51,7 +51,7 @@ def public_user_out(db: Session, db_site: models.Site):
         # Fallback values for author fields
         "name": author.name if author else "",
         "bio": author.bio if author else None,
-        "contact_email": author.contact_email if author else None,
+        "occupation": author.occupation if author else None,
         "instagram_link": author.instagram_link if author else None,
         "x_link": author.x_link if author else None,
         "pinterest_link": author.pinterest_link if author else None,
@@ -76,7 +76,7 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "meta_title": db_site.meta_title,
         "meta_description": db_site.meta_description,
         "bio": author.bio if author else None,
-        "contact_email": author.contact_email if author else None,
+        "occupation": author.occupation if author else None,
         "instagram_link": author.instagram_link if author else None,
         "x_link": author.x_link if author else None,
         "pinterest_link": author.pinterest_link if author else None,

@@ -13,7 +13,7 @@ export interface Author {
   name: string;
   slug: string;
   bio?: string | null;
-  contact_email?: string | null;
+  occupation?: string | null;
   profile_image_url?: string | null;
   instagram_link?: string | null;
   x_link?: string | null;
@@ -33,7 +33,7 @@ export interface PublicAuthorSummary {
   name: string;
   slug: string;
   bio?: string | null;
-  contact_email?: string | null;
+  occupation?: string | null;
   profile_image_url?: string | null;
   instagram_link?: string | null;
   x_link?: string | null;
@@ -141,7 +141,7 @@ export interface PublicUser {
   meta_title: string;
   meta_description: string;
   bio: string | null;
-  contact_email: string | null;
+  occupation?: string | null;
   instagram_link: string | null;
   x_link: string | null;
   pinterest_link: string | null;
@@ -199,7 +199,6 @@ export interface UserSettings {
   meta_title: string | null;
   meta_description: string | null;
   bio: string | null;
-  contact_email: string | null;
   instagram_link: string | null;
   x_link: string | null;
   pinterest_link: string | null;
