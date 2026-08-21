@@ -37,6 +37,7 @@ import {
   Globe,
   BookOpen,
   Loader2,
+  BriefcaseBusiness,
 } from "lucide-react";
 
 export default function AuthorsPage() {
@@ -165,9 +166,14 @@ export default function AuthorsPage() {
                         <h3 className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                           {author.name}
                         </h3>
-                        <p className="text-xs text-muted-foreground truncate">
-                          /author/{author.slug}
-                        </p>
+                        {author.occupation ? (
+                          <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                            <BriefcaseBusiness className="h-3 w-3 shrink-0" />
+                            <span className="truncate">{author.occupation}</span>
+                          </p>
+                        ) : (
+                          <div className="h-[1rem]" aria-hidden />
+                        )}
                       </div>
                     </Link>
 

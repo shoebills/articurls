@@ -24,7 +24,7 @@ import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema } from "@/lib/structured-data";
-import { Briefcase, Calendar, ChevronLeft, Globe } from "lucide-react";
+import { BriefcaseBusiness, Calendar, ChevronLeft, Globe } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
@@ -913,7 +913,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   </div>
                   {author.occupation ? (
                     <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                      <Briefcase className="h-4 w-4 shrink-0" />
+                      <BriefcaseBusiness className="h-4 w-4 shrink-0" />
                       {author.occupation}
                     </p>
                   ) : null}
