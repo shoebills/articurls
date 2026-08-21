@@ -58,7 +58,7 @@ def _primary_umami_domain(site: models.Site) -> str:
     return f"{site.subdomain}.{umami_ugc_domain()}"
 
 
-def provision_umami_website_for_site(db: Session, site_id: int) -> str | None:
+def provision_umami_website_for_site(db: Session, site_id: Any) -> str | None:
     client = UmamiClient()
     if not client.configured:
         return None
@@ -83,7 +83,7 @@ def provision_umami_website_for_site(db: Session, site_id: int) -> str | None:
     return website_id
 
 
-def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:
+def provision_umami_website_for_user(db: Session, user_id: Any) -> str | None:
     sites = db.query(models.Site).filter(models.Site.user_id == user_id).all()
     first_id = None
     for site in sites:
@@ -93,7 +93,7 @@ def provision_umami_website_for_user(db: Session, user_id: int) -> str | None:
     return first_id
 
 
-def sync_umami_website_domain_for_user(db: Session, user_id: int) -> None:
+def sync_umami_website_domain_for_user(db: Session, user_id: Any) -> None:
     client = UmamiClient()
     if not client.configured:
         return
@@ -112,20 +112,20 @@ def sync_umami_website_domain_for_user(db: Session, user_id: int) -> None:
         )
 
 
-def enqueue_umami_provision(user_id: int) -> None:
+def enqueue_umami_provision(user_id: Any) -> None:
     if not UmamiClient().configured:
         return
     from ..workers.tasks import provision_umami_website
 
-    provision_umami_website.delay(user_id)
+    provision_umami_website.delay(str(user_id))
 
 
-def enqueue_umami_domain_sync(user_id: int) -> None:
+def enqueue_umami_domain_sync(user_id: Any) -> None:
     if not UmamiClient().configured:
         return
     from ..workers.tasks import sync_umami_website_domain
 
-    sync_umami_website_domain.delay(user_id)
+    sync_umami_website_domain.delay(str(user_id))
 
 
 def get_umami_period_timestamps(period: str, account_created_at: float | None = None) -> tuple[int, int]:

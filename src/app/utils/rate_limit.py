@@ -1,3 +1,4 @@
+from typing import Any
 import hashlib
 from fastapi import HTTPException, Request, status
 from ..redis_client import redis_client
@@ -41,8 +42,8 @@ def check_rate_limit_email(key_prefix: str, email: str, limit: int, window_secon
     check_rate_limit(key_prefix, f"email:{_email_key(normalize_email(email))}", limit, window_seconds)
 
 
-def check_rate_limit_user(key_prefix: str, user_id: int, limit: int, window_seconds: int) -> None:
-    check_rate_limit(key_prefix, f"user:{user_id}", limit, window_seconds)
+def check_rate_limit_user(key_prefix: str, user_id: Any, limit: int, window_seconds: int) -> None:
+    check_rate_limit(key_prefix, f"user:{str(user_id)}", limit, window_seconds)
 
 
 def check_rate_limit_ip_and_email(

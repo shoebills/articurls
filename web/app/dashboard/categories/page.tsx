@@ -62,7 +62,7 @@ function SortableNavItem({
   name,
   disabled,
 }: {
-  id: number;
+  id: string;
   name: string;
   disabled: boolean;
 }) {
@@ -122,13 +122,13 @@ export default function CategoriesDashboardPage() {
   const [createName, setCreateName] = useState("");
 
   const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renameId, setRenameId] = useState<number | null>(null);
+  const [renameId, setRenameId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState("");
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
-  const [menuOpenCatId, setMenuOpenCatId] = useState<number | null>(null);
+  const [menuOpenCatId, setMenuOpenCatId] = useState<string | null>(null);
 
   const sortedCategories = useMemo(
     () => [...categories].sort((a, b) => a.name.localeCompare(b.name)),
@@ -269,8 +269,8 @@ export default function CategoriesDashboardPage() {
     if (!over || active.id === over.id) return;
     if (!token) return;
 
-    const oldIndex = menuCategoryIds.indexOf(active.id as number);
-    const newIndex = menuCategoryIds.indexOf(over.id as number);
+    const oldIndex = menuCategoryIds.indexOf(active.id as string);
+    const newIndex = menuCategoryIds.indexOf(over.id as string);
     if (oldIndex === -1 || newIndex === -1) return;
 
     const newOrder = arrayMove(menuCategoryIds, oldIndex, newIndex);

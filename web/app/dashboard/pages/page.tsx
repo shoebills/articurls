@@ -45,11 +45,11 @@ export default function PagesDashboardPage() {
     if (!t) return true;
     return !apiCacheHas("/pages/", t);
   });
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [archiveId, setArchiveId] = useState<number | null>(null);
-  const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
-  const [rowBusyId, setRowBusyId] = useState<number | null>(null);
-  const [menuOpenPageId, setMenuOpenPageId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [unarchiveId, setUnarchiveId] = useState<string | null>(null);
+  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
+  const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
@@ -89,7 +89,7 @@ export default function PagesDashboardPage() {
   }, [query]);
 
   const searchIndex = useMemo(() => {
-    const map = new Map<number, ReturnType<typeof precomputeSearchItem>>();
+    const map = new Map<string, ReturnType<typeof precomputeSearchItem>>();
     for (const p of pages) {
       map.set(p.page_id, precomputeSearchItem(p.title || "", p.content || ""));
     }
@@ -181,11 +181,11 @@ export default function PagesDashboardPage() {
     }
   }
 
-  function onArchive(pageId: number) {
+  function onArchive(pageId: string) {
     setArchiveId(pageId);
   }
 
-  function onUnarchive(pageId: number) {
+  function onUnarchive(pageId: string) {
     setUnarchiveId(pageId);
   }
 

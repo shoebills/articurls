@@ -1,6 +1,7 @@
 import enum
+import uuid
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, String, Integer, BigInteger, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean
+from sqlalchemy import Column, String, Integer, BigInteger, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean, UUID
 
 
 class Base(DeclarativeBase):
@@ -17,7 +18,7 @@ class DomainStatus(str, enum.Enum):
 class User(Base):
     __tablename__ = "users"
 
-    user_id = Column(Integer, primary_key=True)
+    user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
@@ -35,8 +36,8 @@ class User(Base):
 class Site(Base):
     __tablename__ = "sites"
 
-    site_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
     subdomain = Column(String, unique=True, nullable=False, index=True)
     
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
@@ -108,8 +109,8 @@ class Author(Base):
         UniqueConstraint("site_id", "slug", name="uq_authors_site_slug"),
     )
 
-    author_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False, index=True)
     bio = Column(Text, nullable=True)
@@ -133,8 +134,8 @@ class Author(Base):
 class UsernameClaim(Base):
     __tablename__ = "username_claims"
 
-    claim_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    claim_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     claimed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -142,11 +143,11 @@ class UsernameClaim(Base):
 class UsernameChangeAudit(Base):
     __tablename__ = "username_change_audits"
 
-    audit_id = Column(Integer, primary_key=True)
-    user_id = Column(ForeignKey("users.user_id"), nullable=False, index=True)
+    audit_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
     old_username = Column(String, nullable=False)
     new_username = Column(String, nullable=False)
-    actor_user_id = Column(ForeignKey("users.user_id"), nullable=True, index=True)
+    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True, index=True)
     actor_email = Column(String, nullable=True)
     is_admin_override = Column(Boolean, nullable=False, default=False)
     reason = Column(String, nullable=True)
@@ -174,9 +175,9 @@ class Blog(Base):
         Index("ix_blogs_status_scheduled_at", "status", "scheduled_at"),
     )
 
-    blog_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
-    author_id = Column(ForeignKey("authors.author_id"), nullable=True, index=True)
+    blog_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("authors.author_id"), nullable=True, index=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
     slug = Column(String, index=True, nullable=False)
@@ -196,9 +197,9 @@ class Blog(Base):
 class BlogMedia(Base):
     __tablename__ = "blog_medias"
 
-    media_id = Column(Integer, primary_key=True)
-    blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
@@ -214,8 +215,8 @@ class Subscriber(Base):
         UniqueConstraint("site_id", "email", name="uq_subscribers_site_email"),
     )
 
-    subscriber_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
+    subscriber_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
     email = Column(String, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
@@ -227,9 +228,9 @@ class EmailLogs(Base):
         UniqueConstraint("site_id", "blog_id", name="uq_email_logs_site_blog"),
     )
 
-    log_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
-    blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
+    log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), index=True, nullable=False)
     total_recipients = Column(Integer, default=0, nullable=False)
     status = Column(String, default="pending", nullable=False)
     sent_at = Column(DateTime(timezone=True), nullable=True)
@@ -242,17 +243,17 @@ class Views(Base):
         Index("ix_views_blog_visitor_hash", "blog_id", "visitor_hash"),
     )
 
-    view_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), index=True, nullable=False)
-    blog_id = Column(ForeignKey("blogs.blog_id"), index=True, nullable=False)
+    view_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), index=True, nullable=False)
     visitor_hash = Column(String, nullable=False)
     visited_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
 
 class Subscriptions(Base):
     __tablename__ = "subscriptions"
 
-    subscription_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, unique=True, nullable=False)
+    subscription_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), index=True, unique=True, nullable=False)
     dodo_subscription_id = Column(String, unique=True, nullable=True)
     plan_type = Column(String, nullable=False, default="trial")  # "trial", "pro", "lifetime"
     status = Column(String, nullable=False, default="inactive")  # "active", "inactive", "cancelled", "past_due"
@@ -264,9 +265,9 @@ class Subscriptions(Base):
 class Transactions(Base):
     __tablename__ = "transactions"
 
-    transaction_id = Column(Integer, primary_key=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
-    subscription_id = Column(Integer, ForeignKey("subscriptions.subscription_id"), nullable=True)
+    transaction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), index=True, nullable=False)
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.subscription_id"), nullable=True)
     dodo_payment_id = Column(String, unique=True, nullable=True)
     amount = Column(Integer, nullable=False)
     currency = Column(String, nullable=False, default="USD")
@@ -276,7 +277,7 @@ class Transactions(Base):
 class PaymentWebhooks(Base):
     __tablename__ = "payment_webhooks"
 
-    webhook_id = Column(Integer, primary_key=True)
+    webhook_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     event_type = Column(String, nullable=False)
     dodo_event_id = Column(String, unique=True, nullable=False)
     payload = Column(JSON, nullable=False)
@@ -289,8 +290,8 @@ class UserPage(Base):
         UniqueConstraint("site_id", "slug", name="uq_user_pages_site_slug"),
     )
 
-    page_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    page_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
     title = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     content = Column(Text, nullable=False, default="")
@@ -309,9 +310,9 @@ class UserPage(Base):
 class PageMedia(Base):
     __tablename__ = "page_medias"
 
-    media_id = Column(Integer, primary_key=True)
-    page_id = Column(ForeignKey("user_pages.page_id"), nullable=False, index=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    page_id = Column(UUID(as_uuid=True), ForeignKey("user_pages.page_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
@@ -329,8 +330,8 @@ class Category(Base):
         Index("ix_categories_site_menu_order", "site_id", "menu_order"),
     )
 
-    category_id = Column(Integer, primary_key=True)
-    site_id = Column(ForeignKey("sites.site_id"), nullable=False, index=True)
+    category_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     description = Column(Text, nullable=True, default=None)
@@ -347,8 +348,8 @@ class BlogCategory(Base):
         UniqueConstraint("blog_id", "category_id", name="uq_blog_categories_blog_category"),
     )
 
-    blog_category_id = Column(Integer, primary_key=True)
-    blog_id = Column(ForeignKey("blogs.blog_id"), nullable=False, index=True)
-    category_id = Column(ForeignKey("categories.category_id"), nullable=False, index=True)
+    blog_category_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), nullable=False, index=True)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.category_id"), nullable=False, index=True)
 
     category = relationship("Category", back_populates="blog_links")

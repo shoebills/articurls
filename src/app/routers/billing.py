@@ -1,6 +1,8 @@
 import json
 import sys
 import traceback
+import uuid
+from typing import List, Any
 from datetime import datetime, timezone
 from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
@@ -90,7 +92,8 @@ def _resolve_user_from_metadata_or_customer(db: Session, metadata=None, customer
     metadata_user_id = _metadata_get(metadata, "user_id")
     if metadata_user_id is not None:
         try:
-            db_user = db.query(models.User).filter(models.User.user_id == int(metadata_user_id)).first()
+            uid = uuid.UUID(str(metadata_user_id))
+            db_user = db.query(models.User).filter(models.User.user_id == uid).first()
             if db_user:
                 return db_user
         except (TypeError, ValueError):
@@ -103,7 +106,7 @@ def _resolve_user_from_metadata_or_customer(db: Session, metadata=None, customer
     return None
 
 
-def _get_user_subscription(db: Session, user_id: int | None):
+def _get_user_subscription(db: Session, user_id: Any | None):
     if user_id is None:
         return None
     return db.query(models.Subscriptions).filter(models.Subscriptions.user_id == user_id).first()

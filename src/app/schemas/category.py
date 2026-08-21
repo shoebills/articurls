@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List, Union
+import uuid
 
 
 class CategoryCreate(BaseModel):
@@ -14,9 +15,9 @@ class CategoryUpdate(BaseModel):
 
 
 class CategoryOut(BaseModel):
-    category_id: int
-    site_id: Optional[int] = None
-    user_id: Optional[int] = None
+    category_id: uuid.UUID
+    site_id: Optional[uuid.UUID] = None
+    user_id: Optional[uuid.UUID] = None
     name: str
     slug: str
     description: Optional[str] = None
@@ -30,8 +31,8 @@ class CategoryOut(BaseModel):
 
 
 class CategoryMenuUpdate(BaseModel):
-    ordered_category_ids: List[Union[int, str]]
+    ordered_category_ids: List[Union[uuid.UUID, str]]
 
 
 class BlogCategoryAssign(BaseModel):
-    category_ids: List[int]
+    category_ids: List[uuid.UUID]

@@ -2,14 +2,14 @@ export type BlogStatus = "draft" | "published" | "archived" | "scheduled";
 export type PageStatus = "draft" | "published" | "archived";
 
 export interface BlogMediaOut {
-  media_id: number;
+  media_id: string;
   url: string;
   sort_order: number;
 }
 
 export interface Author {
-  author_id: number;
-  site_id?: number;
+  author_id: string;
+  site_id?: string;
   name: string;
   slug: string;
   bio?: string | null;
@@ -29,7 +29,7 @@ export interface Author {
 }
 
 export interface PublicAuthorSummary {
-  author_id: number;
+  author_id: string;
   name: string;
   slug: string;
   bio?: string | null;
@@ -51,7 +51,7 @@ export interface PublicAuthorDetail {
 }
 
 export interface BlogListItem {
-  blog_id: number;
+  blog_id: string;
   title: string;
   content: string;
   slug: string;
@@ -64,19 +64,19 @@ export interface BlogListItem {
   published_at: string | null;
   created_at: string;
   updated_at: string;
-  user_id?: number;
-  site_id?: number;
-  author_id?: number | null;
+  user_id?: string;
+  site_id?: string;
+  author_id?: string | null;
   author?: PublicAuthorSummary | null;
   media: BlogMediaOut[];
   excerpt?: string | null;
-  category_ids?: number[];
+  category_ids?: string[];
 }
 
 export type BlogDetail = Omit<BlogListItem, "excerpt">;
 
 export interface PublicBlog {
-  blog_id: number;
+  blog_id: string;
   title: string;
   content: string;
   slug: string;
@@ -85,19 +85,19 @@ export interface PublicBlog {
   featured_image_url: string | null;
   published_at: string | null;
   updated_at: string;
-  user_id?: number;
-  site_id?: number;
-  author_id?: number | null;
+  user_id?: string;
+  site_id?: string;
+  author_id?: string | null;
   author?: PublicAuthorSummary | null;
   media: BlogMediaOut[];
   /** Present on list endpoint (`/user/blogs`) */
   excerpt?: string | null;
   /** Optional aggregate from list endpoint when available. */
-  category_ids?: number[];
+  category_ids?: string[];
 }
 
 export interface PublicBlogSearchResult {
-  blog_id: number;
+  blog_id: string;
   title: string;
   slug: string;
   excerpt: string | null;
@@ -174,7 +174,7 @@ export interface PublicUser {
   footer_system_links_enabled?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
-  featured_blog_ids: number[];
+  featured_blog_ids: string[];
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
   show_preview_in_lists?: boolean;
@@ -191,7 +191,7 @@ export interface PublicUser {
 }
 
 export interface UserSettings {
-  user_id: number;
+  user_id: string;
   name: string;
   user_name: string;
   email: string;
@@ -233,7 +233,7 @@ export interface UserSettings {
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
-  featured_blog_ids: number[];
+  featured_blog_ids: string[];
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
   show_preview_in_lists?: boolean;
@@ -248,7 +248,7 @@ export interface UserSettings {
 }
 
 export interface SiteSummary {
-  site_id: number;
+  site_id: string;
   subdomain: string;
   custom_domain?: string | null;
   custom_subpath?: string | null;
@@ -267,7 +267,7 @@ export interface CodeInjectionSettings {
 }
 
 export interface SiteUsageItem {
-  site_id: number;
+  site_id: string;
   subdomain: string;
   nav_blog_name?: string | null;
   pageviews: number;
@@ -289,7 +289,7 @@ export interface StorageUsage {
 }
 
 export interface AdminUserListItem {
-  user_id: number;
+  user_id: string;
   name: string;
   user_name: string;
   email: string;
@@ -298,8 +298,8 @@ export interface AdminUserListItem {
 }
 
 export interface AdminPaymentListItem {
-  transaction_id: number;
-  user_id: number;
+  transaction_id: string;
+  user_id: string;
   user_name: string;
   email: string;
   amount: number;
@@ -310,8 +310,9 @@ export interface AdminPaymentListItem {
 }
 
 export interface UserPage {
-  page_id: number;
-  user_id: number;
+  page_id: string;
+  user_id?: string;
+  site_id?: string;
   title: string;
   slug: string;
   content: string;
@@ -348,7 +349,7 @@ export interface DesignSettings {
   footer_newsletter_enabled?: boolean;
   footer_system_links_enabled?: boolean;
   featured_blogs_enabled: boolean;
-  featured_blog_ids: number[];
+  featured_blog_ids: string[];
   content_width: ContentWidth;
   list_image_position: ListImagePosition;
   show_preview_in_lists: boolean;
@@ -365,7 +366,7 @@ export interface SeoSettings {
 
 
 export interface SubscriptionOut {
-  subscription_id: number;
+  subscription_id: string;
   plan_type: string;
   status: string;
   current_period_start: string | null;
@@ -374,7 +375,7 @@ export interface SubscriptionOut {
 }
 
 export interface TransactionOut {
-  transaction_id: number;
+  transaction_id: string;
   amount: number;
   currency: string;
   status: string;
@@ -416,9 +417,9 @@ export interface SubscriberListResponse {
 }
 
 export interface Category {
-  category_id: number;
-  user_id?: number;
-  site_id?: number;
+  category_id: string;
+  user_id?: string;
+  site_id?: string;
   name: string;
   slug: string;
   description?: string | null;
@@ -429,7 +430,7 @@ export interface Category {
 }
 
 export interface PublicCategoryBlogsResponse {
-  category: { category_id: number; name: string; slug: string; description?: string | null };
+  category: { category_id: string; name: string; slug: string; description?: string | null };
   blogs: PublicBlog[];
 }
 

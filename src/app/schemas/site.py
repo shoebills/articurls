@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional, List
+import uuid
 
 
 class SiteCreate(BaseModel):
@@ -16,7 +17,7 @@ class SiteUpdate(BaseModel):
 
 
 class SiteSummary(BaseModel):
-    site_id: int
+    site_id: uuid.UUID
     subdomain: str
     custom_domain: Optional[str] = None
     custom_subpath: Optional[str] = None

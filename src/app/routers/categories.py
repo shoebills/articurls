@@ -1,3 +1,5 @@
+from typing import Any
+import uuid
 from fastapi import APIRouter, Body, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -18,7 +20,7 @@ router = APIRouter(
 )
 
 
-def _unique_category_slug(db: Session, site_id: int, name: str) -> str:
+def _unique_category_slug(db: Session, site_id: Any, name: str) -> str:
     base = slugify(name) or "category"
     candidate = base
     idx = 2
@@ -114,10 +116,10 @@ def update_menu_categories(
             detail="ordered_category_ids must be a list",
         )
 
-    normalized_ids: list[int] = []
+    normalized_ids: list[uuid.UUID] = []
     for raw_id in raw_ids:
         try:
-            normalized_ids.append(int(raw_id))
+            normalized_ids.append(uuid.UUID(str(raw_id)))
         except (TypeError, ValueError):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -160,7 +162,7 @@ def update_menu_categories(
 
 @router.patch("/{category_id}", response_model=cat_schema.CategoryOut, status_code=status.HTTP_200_OK)
 def update_category(
-    category_id: int,
+    category_id: uuid.UUID,
     request: cat_schema.CategoryUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -205,7 +207,7 @@ def update_category(
 
 @router.delete("/{category_id}", status_code=status.HTTP_200_OK)
 def delete_category(
-    category_id: int,
+    category_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -232,7 +234,7 @@ def delete_category(
 
 @router.get("/{category_id}/blogs", response_model=list[blog_schema.GetAll], status_code=status.HTTP_200_OK)
 def get_category_blogs(
-    category_id: int,
+    category_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
@@ -273,7 +275,7 @@ def get_category_blogs(
 
 @router.put("/{category_id}/blogs", response_model=cat_schema.CategoryOut, status_code=status.HTTP_200_OK)
 def set_category_blogs(
-    category_id: int,
+    category_id: uuid.UUID,
     payload: dict = Body(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),
@@ -296,10 +298,10 @@ def set_category_blogs(
     if not isinstance(raw_ids, list):
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="blog_ids must be a list")
 
-    blog_ids: list[int] = []
+    blog_ids: list[uuid.UUID] = []
     for rid in raw_ids:
         try:
-            blog_ids.append(int(rid))
+            blog_ids.append(uuid.UUID(str(rid)))
         except (TypeError, ValueError):
             raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=f"Invalid blog id: {rid}") from None
 

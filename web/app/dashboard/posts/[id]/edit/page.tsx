@@ -50,7 +50,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const blogId = Number(id);
+  const blogId = id;
   const { token, refreshUser, user, activeSite } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
@@ -72,7 +72,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
   const [err, setErr] = useState<string | null>(null);
-  const [featuredIds, setFeaturedIds] = useState<number[]>([]);
+  const [featuredIds, setFeaturedIds] = useState<string[]>([]);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -88,20 +88,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const metaDescRef = useRef(metaDesc);
   const notifyRef = useRef(notify);
   const featuredImageUrlRef = useRef(featuredImageUrl);
-  const savedCatIdsRef = useRef<number[]>([]);
+  const savedCatIdsRef = useRef<string[]>([]);
 
   // Category assignment state
   const [allCategories, setAllCategories] = useState<Category[]>([]);
-  const [selectedCatIds, setSelectedCatIds] = useState<number[]>([]);
+  const [selectedCatIds, setSelectedCatIds] = useState<string[]>([]);
   const [catDropdownOpen, setCatDropdownOpen] = useState(false);
-  const [pendingCatIds, setPendingCatIds] = useState<number[]>([]);
+  const [pendingCatIds, setPendingCatIds] = useState<string[]>([]);
   const catDropdownRef = useRef<HTMLDivElement | null>(null);
   const catTriggerRef = useRef<HTMLButtonElement | null>(null);
 
   // Author assignment state
   const [allAuthors, setAllAuthors] = useState<Author[]>([]);
-  const [authorId, setAuthorId] = useState<number | null>(null);
-  const savedAuthorIdRef = useRef<number | null>(null);
+  const [authorId, setAuthorId] = useState<string | null>(null);
+  const savedAuthorIdRef = useRef<string | null>(null);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
@@ -127,17 +127,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setMetaDesc(descSynced ? "" : (b.meta_description || ""));
     setFeaturedImageUrl(b.featured_image_url || "");
     setNotify(b.notify_subscribers);
-    const blogCatIds = (b as unknown as { category_ids?: number[] }).category_ids || [];
+    const blogCatIds = (b as unknown as { category_ids?: string[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
     savedCatIdsRef.current = [...blogCatIds];
-    const bAuthorId = (b as unknown as { author_id?: number | null }).author_id ?? null;
+    const bAuthorId = (b as unknown as { author_id?: string | null }).author_id ?? null;
     setAuthorId(bAuthorId);
     savedAuthorIdRef.current = bAuthorId;
   }, []);
 
   const load = useCallback(async () => {
-    if (!token || Number.isNaN(blogId)) return;
+    if (!token || !blogId) return;
     setErr(null);
     try {
       const b = await getBlog(token, blogId);
@@ -994,7 +994,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <select
                   value={authorId ?? ""}
                   onChange={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : null;
+                    const val = e.target.value || null;
                     setAuthorId(val);
                   }}
                   className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"

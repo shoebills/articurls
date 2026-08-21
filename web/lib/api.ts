@@ -395,7 +395,7 @@ export async function listPages(token: string): Promise<UserPage[]> {
   return apiFetch("/pages/", { token });
 }
 
-export async function getPage(token: string, pageId: number): Promise<UserPage> {
+export async function getPage(token: string, pageId: string): Promise<UserPage> {
   return apiFetch(`/pages/${pageId}`, { token });
 }
 
@@ -411,13 +411,13 @@ export async function createPage(
   });
 }
 
-export async function deletePage(token: string, pageId: number): Promise<void> {
+export async function deletePage(token: string, pageId: string): Promise<void> {
   await apiFetch(`/pages/${pageId}`, { method: "DELETE", token });
 }
 
 export async function updatePage(
   token: string,
-  pageId: number,
+  pageId: string,
   body: { title?: string; content?: string; slug?: string; meta_title?: string | null; meta_description?: string | null; show_in_footer?: boolean }
 ): Promise<UserPage> {
   return apiFetch(`/pages/id/${pageId}`, {
@@ -428,15 +428,15 @@ export async function updatePage(
   });
 }
 
-export async function publishPage(token: string, pageId: number): Promise<UserPage> {
+export async function publishPage(token: string, pageId: string): Promise<UserPage> {
   return apiFetch(`/pages/${pageId}/publish`, { method: "POST", token });
 }
 
-export async function archivePage(token: string, pageId: number): Promise<UserPage> {
+export async function archivePage(token: string, pageId: string): Promise<UserPage> {
   return apiFetch(`/pages/${pageId}/archive`, { method: "POST", token });
 }
 
-export async function updateFooterPages(token: string, ordered_page_ids: number[]): Promise<UserPage[]> {
+export async function updateFooterPages(token: string, ordered_page_ids: string[]): Promise<UserPage[]> {
   return apiFetch("/pages/footer", {
     method: "PATCH",
     token,
@@ -481,7 +481,7 @@ export async function deleteOgImage(token: string): Promise<{ og_image_url: null
 
 export async function uploadPageMedia(
   token: string,
-  pageId: number,
+  pageId: string,
   file: File
 ): Promise<BlogMediaOut> {
   const fd = new FormData();
@@ -489,7 +489,7 @@ export async function uploadPageMedia(
   return apiFetch(`/pages/${pageId}/media`, { method: "POST", token, body: fd });
 }
 
-export async function deletePageMediaByUrl(token: string, pageId: number, url: string): Promise<void> {
+export async function deletePageMediaByUrl(token: string, pageId: string, url: string): Promise<void> {
   const q = new URLSearchParams({ url });
   await apiFetch(`/pages/${pageId}/media?${q.toString()}`, { method: "DELETE", token });
 }
@@ -498,7 +498,7 @@ export async function listBlogs(token: string): Promise<BlogListItem[]> {
   return apiFetch("/blog/", { token });
 }
 
-export async function getBlog(token: string, id: number): Promise<BlogDetail> {
+export async function getBlog(token: string, id: string): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}`, { token });
 }
 
@@ -523,12 +523,12 @@ export async function createBlog(
 
 export async function updateBlog(
   token: string,
-  id: number,
+  id: string,
   body: {
     title?: string;
     content?: string;
     slug?: string;
-    author_id?: number | null;
+    author_id?: string | null;
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
@@ -543,19 +543,19 @@ export async function updateBlog(
   });
 }
 
-export async function deleteBlog(token: string, id: number): Promise<void> {
+export async function deleteBlog(token: string, id: string): Promise<void> {
   await apiFetch(`/blog/${id}`, { method: "DELETE", token });
 }
 
-export async function publishBlog(token: string, id: number): Promise<BlogDetail> {
+export async function publishBlog(token: string, id: string): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}/publish`, { method: "POST", token });
 }
 
-export async function archiveBlog(token: string, id: number): Promise<BlogDetail> {
+export async function archiveBlog(token: string, id: string): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}/archive`, { method: "POST", token });
 }
 
-export async function scheduleBlog(token: string, id: number, scheduled_at: string): Promise<BlogDetail> {
+export async function scheduleBlog(token: string, id: string, scheduled_at: string): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}/schedule`, {
     method: "POST",
     token,
@@ -564,13 +564,13 @@ export async function scheduleBlog(token: string, id: number, scheduled_at: stri
   });
 }
 
-export async function unscheduleBlog(token: string, id: number): Promise<void> {
+export async function unscheduleBlog(token: string, id: string): Promise<void> {
   await apiFetch(`/blog/${id}/unschedule`, { method: "POST", token });
 }
 
 export async function uploadBlogMedia(
   token: string,
-  blogId: number,
+  blogId: string,
   file: File
 ): Promise<BlogMediaOut> {
   const fd = new FormData();
@@ -578,11 +578,11 @@ export async function uploadBlogMedia(
   return apiFetch(`/blog/${blogId}/media`, { method: "POST", token, body: fd });
 }
 
-export async function deleteBlogMedia(token: string, blogId: number, mediaId: number): Promise<void> {
+export async function deleteBlogMedia(token: string, blogId: string, mediaId: string): Promise<void> {
   await apiFetch(`/blog/${blogId}/media/${mediaId}`, { method: "DELETE", token });
 }
 
-export async function deleteBlogMediaByUrl(token: string, blogId: number, url: string): Promise<void> {
+export async function deleteBlogMediaByUrl(token: string, blogId: string, url: string): Promise<void> {
   const q = new URLSearchParams({ url });
   await apiFetch(`/blog/${blogId}/media?${q.toString()}`, { method: "DELETE", token });
 }
@@ -639,7 +639,7 @@ export async function createCategory(token: string, body: { name: string; descri
   });
 }
 
-export async function updateCategory(token: string, id: number, body: { name?: string; description?: string }): Promise<Category> {
+export async function updateCategory(token: string, id: string, body: { name?: string; description?: string }): Promise<Category> {
   return apiFetch(`/categories/${id}`, {
     method: "PATCH",
     token,
@@ -648,11 +648,11 @@ export async function updateCategory(token: string, id: number, body: { name?: s
   });
 }
 
-export async function deleteCategory(token: string, id: number): Promise<void> {
+export async function deleteCategory(token: string, id: string): Promise<void> {
   await apiFetch(`/categories/${id}`, { method: "DELETE", token });
 }
 
-export async function assignBlogCategories(token: string, blogId: number, category_ids: number[]): Promise<BlogDetail> {
+export async function assignBlogCategories(token: string, blogId: string, category_ids: string[]): Promise<BlogDetail> {
   return apiFetch(`/blog/${blogId}/categories`, {
     method: "PATCH",
     token,
@@ -661,7 +661,7 @@ export async function assignBlogCategories(token: string, blogId: number, catego
   });
 }
 
-export async function updateMenuCategories(token: string, ordered_category_ids: number[]): Promise<Category[]> {
+export async function updateMenuCategories(token: string, ordered_category_ids: string[]): Promise<Category[]> {
   return apiFetch("/categories/menu", {
     method: "PATCH",
     token,
@@ -685,7 +685,7 @@ export async function listAuthors(token: string): Promise<Author[]> {
   return apiFetch("/authors/", { token });
 }
 
-export async function getAuthor(token: string, id: number): Promise<Author> {
+export async function getAuthor(token: string, id: string): Promise<Author> {
   return apiFetch(`/authors/${id}`, { token });
 }
 
@@ -703,7 +703,7 @@ export async function createAuthor(
 
 export async function updateAuthor(
   token: string,
-  id: number,
+  id: string,
   body: Partial<Author>
 ): Promise<Author> {
   return apiFetch(`/authors/${id}`, {
@@ -714,13 +714,13 @@ export async function updateAuthor(
   });
 }
 
-export async function deleteAuthor(token: string, id: number): Promise<void> {
+export async function deleteAuthor(token: string, id: string): Promise<void> {
   await apiFetch(`/authors/${id}`, { method: "DELETE", token });
 }
 
 export async function uploadAuthorAvatar(
   token: string,
-  id: number,
+  id: string,
   file: File
 ): Promise<{ profile_image_url: string }> {
   const formData = new FormData();
@@ -765,11 +765,11 @@ export async function createSite(
   });
 }
 
-export async function getSite(token: string, siteId: number): Promise<SiteSummary> {
+export async function getSite(token: string, siteId: string): Promise<SiteSummary> {
   return apiFetch(`/sites/${siteId}`, { token });
 }
 
-export async function deleteSite(token: string, siteId: number): Promise<void> {
+export async function deleteSite(token: string, siteId: string): Promise<void> {
   await apiFetch(`/sites/${siteId}`, { method: "DELETE", token });
 }
 

@@ -1,10 +1,11 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
+import uuid
 
 
 class SubscriptionOut(BaseModel):
-    subscription_id: int
+    subscription_id: uuid.UUID
     plan_type: str
     status: str
     current_period_start: Optional[datetime]
@@ -16,7 +17,7 @@ class SubscriptionOut(BaseModel):
 
 
 class TransactionOut(BaseModel):
-    transaction_id: int
+    transaction_id: uuid.UUID
     amount: int
     currency: str
     status: str
@@ -35,7 +36,7 @@ class CustomerPortalResponse(BaseModel):
 
 
 class SiteUsageItem(BaseModel):
-    site_id: int
+    site_id: uuid.UUID
     subdomain: str
     nav_blog_name: Optional[str] = None
     pageviews: int = 0

@@ -74,14 +74,21 @@ def get_current_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ) -> models.Site:
-    site_id = request.headers.get("X-Site-ID")
-    if not site_id or not site_id.isdigit():
+    site_id_raw = request.headers.get("X-Site-ID")
+    if not site_id_raw:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="X-Site-ID header is required",
         )
+    try:
+        site_id = uuid.UUID(str(site_id_raw))
+    except (ValueError, TypeError):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid X-Site-ID format",
+        )
     site = db.query(models.Site).filter(
-        models.Site.site_id == int(site_id),
+        models.Site.site_id == site_id,
         models.Site.user_id == current_user.user_id
     ).first()
     if not site:
@@ -164,16 +171,16 @@ def verify_new_user_token(token: str):
     
     return payload
 
-def create_unsubscribe_token(subscriber_id: int, site_id: int):
+def create_unsubscribe_token(subscriber_id: uuid.UUID | str, site_id: uuid.UUID | str):
     expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
-        "subscriber_id": subscriber_id,
-        "site_id": site_id,
-        "user_id": site_id,  # fallback for backward compatibility
+        "subscriber_id": str(subscriber_id),
+        "site_id": str(site_id),
+        "user_id": str(site_id),  # fallback for backward compatibility
         "purpose": "unsubscribe",
         "exp": expire,
-        }
+    }
 
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     
@@ -188,16 +195,16 @@ def verify_unsubscribe_token(token: str):
     
     return payload
 
-def create_sub_confirm_token(subscriber_id: int, site_id: int):
+def create_sub_confirm_token(subscriber_id: uuid.UUID | str, site_id: uuid.UUID | str):
     expire = datetime.now(timezone.utc) + timedelta(days=30)
 
     payload = {
-        "subscriber_id": subscriber_id,
-        "site_id": site_id,
-        "user_id": site_id,  # fallback for backward compatibility
+        "subscriber_id": str(subscriber_id),
+        "site_id": str(site_id),
+        "user_id": str(site_id),  # fallback for backward compatibility
         "purpose": "confirm-subscription",
         "exp": expire,
-        }
+    }
 
     token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
     

@@ -41,7 +41,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
 
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const pageId = Number(id);
+  const pageId = id;
   const { token, activeSite, refreshUser } = useAuth();
 
   const [page, setPage] = useState<UserPage | null>(null);

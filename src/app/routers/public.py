@@ -1,7 +1,7 @@
 from fastapi import Depends, APIRouter, HTTPException, Request, Query, status
 from sqlalchemy.orm import Session
 from sqlalchemy import func, or_
-from typing import List
+from typing import List, Any
 from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, user
@@ -49,7 +49,7 @@ def search_blogs(
         .filter(models.BlogCategory.blog_id.in_(blog_ids))
         .all()
     )
-    blog_categories: dict[int, list[str]] = {}
+    blog_categories: dict[Any, list[str]] = {}
     for bid, cname in cat_rows:
         blog_categories.setdefault(bid, []).append(utils.normalize_search_text(cname))
 

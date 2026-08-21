@@ -1,8 +1,9 @@
+from typing import List, Optional, Any
+import uuid
 from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
-from typing import List
 
 from .. import models
 from ..database import get_db
@@ -18,7 +19,7 @@ router = APIRouter(
 )
 
 
-def _unique_author_slug(db: Session, site_id: int, name_or_slug: str, current_author_id: int | None = None) -> str:
+def _unique_author_slug(db: Session, site_id: Any, name_or_slug: str, current_author_id: Any | None = None) -> str:
     base = slugify(name_or_slug) or "author"
     candidate = base
     idx = 2
@@ -123,7 +124,7 @@ def create_author(
 
 @router.get("/{author_id}", response_model=author_schema.AuthorOut, status_code=status.HTTP_200_OK)
 def get_author(
-    author_id: int,
+    author_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
@@ -143,7 +144,7 @@ def get_author(
 
 @router.patch("/{author_id}", response_model=author_schema.AuthorOut, status_code=status.HTTP_200_OK)
 def update_author(
-    author_id: int,
+    author_id: uuid.UUID,
     request: author_schema.AuthorUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -197,7 +198,7 @@ def update_author(
 
 @router.delete("/{author_id}", status_code=status.HTTP_200_OK)
 def delete_author(
-    author_id: int,
+    author_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -249,7 +250,7 @@ def delete_author(
 
 @router.post("/{author_id}/avatar", status_code=status.HTTP_200_OK)
 async def upload_author_avatar(
-    author_id: int,
+    author_id: uuid.UUID,
     file: UploadFile = File(...),
     background_tasks: BackgroundTasks = BackgroundTasks(),
     db: Session = Depends(get_db),

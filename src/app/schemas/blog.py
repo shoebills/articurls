@@ -1,12 +1,13 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import List, Optional
+import uuid
 from ..models import BlogStatus
 from .author import PublicAuthorSummary
 
 
 class BlogMediaOut(BaseModel):
-    media_id: int
+    media_id: uuid.UUID
     url: str
     sort_order: int
 
@@ -18,14 +19,14 @@ class CreateBlog(BaseModel):
     title: str = Field(..., max_length=300)
     content: str = Field(..., max_length=500_000)
     slug: Optional[str] = None
-    author_id: Optional[int] = None
+    author_id: Optional[uuid.UUID] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     notify_subscribers: bool = False
 
 
 class GetBlog(BaseModel):
-    blog_id: int
+    blog_id: uuid.UUID
     title: str
     content: str
     slug: str
@@ -38,12 +39,12 @@ class GetBlog(BaseModel):
     published_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
-    site_id: Optional[int] = None
-    author_id: Optional[int] = None
-    user_id: Optional[int] = None
+    site_id: Optional[uuid.UUID] = None
+    author_id: Optional[uuid.UUID] = None
+    user_id: Optional[uuid.UUID] = None
     author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
-    category_ids: List[int] = []
+    category_ids: List[uuid.UUID] = []
 
     class Config:
         from_attributes = True
@@ -54,7 +55,7 @@ class GetAll(GetBlog):
         
 
 class PublicBlog(BaseModel):
-    blog_id: int
+    blog_id: uuid.UUID
     title: str
     content: str
     slug: str
@@ -63,12 +64,12 @@ class PublicBlog(BaseModel):
     featured_image_url: Optional[str] = None
     published_at: Optional[datetime] = None
     updated_at: datetime
-    site_id: Optional[int] = None
-    author_id: Optional[int] = None
-    user_id: Optional[int] = None
+    site_id: Optional[uuid.UUID] = None
+    author_id: Optional[uuid.UUID] = None
+    user_id: Optional[uuid.UUID] = None
     author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
-    category_ids: List[int] = []
+    category_ids: List[uuid.UUID] = []
 
     class Config:
         from_attributes = True
@@ -79,7 +80,7 @@ class PublicBlogs(PublicBlog):
 
 
 class PublicBlogSearchResult(BaseModel):
-    blog_id: int
+    blog_id: uuid.UUID
     title: str
     slug: str
     excerpt: Optional[str] = None
@@ -93,7 +94,7 @@ class UpdateBlog(BaseModel):
     title: Optional[str] = Field(None, max_length=300)
     content: Optional[str] = Field(None, max_length=500_000)
     slug: Optional[str] = None
-    author_id: Optional[int] = None
+    author_id: Optional[uuid.UUID] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None

@@ -180,8 +180,8 @@ type BlogEditorProps = {
   content: string;
   onChange: (html: string) => void;
   placeholder?: string;
-  blogId: number | null;
-  pageId?: number | null;
+  blogId: string | null;
+  pageId?: string | null;
   token: string | null;
   className?: string;
 };

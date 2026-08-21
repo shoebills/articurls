@@ -4,6 +4,7 @@ from sqlalchemy import func
 from slugify import slugify
 from typing import List
 import re
+import uuid
 
 from .. import models, utils
 from ..database import get_db
@@ -149,7 +150,7 @@ def create_site(
 
 @router.get("/{site_id}", response_model=site_schema.SiteSummary, status_code=status.HTTP_200_OK)
 def get_site(
-    site_id: int,
+    site_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
@@ -165,7 +166,7 @@ def get_site(
 
 @router.delete("/{site_id}", status_code=status.HTTP_200_OK)
 def delete_site(
-    site_id: int,
+    site_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),

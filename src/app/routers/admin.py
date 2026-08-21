@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
+import uuid
 
 from .. import models
 from ..database import get_db
@@ -87,7 +88,7 @@ def list_users(
 
 @router.patch("/users/{user_id}/username", response_model=user_schema.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def admin_override_username(
-    user_id: int,
+    user_id: uuid.UUID,
     request: user_schema.AdminUsernameChange,
     db: Session = Depends(get_db),
     current_user=Depends(_require_admin),
@@ -176,7 +177,7 @@ def admin_list_payment_webhooks(
 
 
 @router.post("/payments/webhooks/{webhook_id}/retry", status_code=status.HTTP_200_OK)
-def admin_retry_payment_webhook(webhook_id: int, db: Session = Depends(get_db), current_user=Depends(_require_admin)):
+def admin_retry_payment_webhook(webhook_id: uuid.UUID, db: Session = Depends(get_db), current_user=Depends(_require_admin)):
     row = db.query(models.PaymentWebhooks).filter(models.PaymentWebhooks.webhook_id == webhook_id).first()
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")

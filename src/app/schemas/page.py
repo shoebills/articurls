@@ -1,6 +1,7 @@
 from pydantic import BaseModel, field_validator
 from typing import List, Literal, Optional, Union
 from datetime import datetime
+import uuid
 from .. import models
 
 
@@ -23,7 +24,7 @@ class UserPageUpdate(BaseModel):
 
 
 class PageMediaOut(BaseModel):
-    media_id: int
+    media_id: uuid.UUID
     url: str
     sort_order: int
 
@@ -36,9 +37,9 @@ class UserPageStatusUpdate(BaseModel):
 
 
 class UserPageOut(UserPageBase):
-    page_id: int
-    site_id: Optional[int] = None
-    user_id: Optional[int] = None
+    page_id: uuid.UUID
+    site_id: Optional[uuid.UUID] = None
+    user_id: Optional[uuid.UUID] = None
     slug: str
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -54,7 +55,7 @@ class UserPageOut(UserPageBase):
 
 
 class UserPageMenuUpdate(BaseModel):
-    ordered_page_ids: List[Union[int, str]]
+    ordered_page_ids: List[Union[uuid.UUID, str]]
 
     @field_validator("ordered_page_ids", mode="before")
     @classmethod
@@ -88,7 +89,7 @@ class DesignSettings(BaseModel):
     footer_newsletter_enabled: bool = True
     footer_system_links_enabled: bool = True
     featured_blogs_enabled: bool = True
-    featured_blog_ids: list[int] | None = []
+    featured_blog_ids: list[str] | None = []
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
     show_preview_in_lists: bool = True

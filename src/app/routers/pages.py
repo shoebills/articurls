@@ -1,3 +1,5 @@
+from typing import List, Union
+import uuid
 from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -22,9 +24,9 @@ router = APIRouter(
 )
 
 
-@router.post("/{page_id:int}/media", response_model=page_schema.PageMediaOut, status_code=status.HTTP_201_CREATED)
+@router.post("/{page_id}/media", response_model=page_schema.PageMediaOut, status_code=status.HTTP_201_CREATED)
 async def upload_page_media(
-    page_id: int,
+    page_id: uuid.UUID,
     file: UploadFile = File(...),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -71,10 +73,10 @@ async def upload_page_media(
     return new_media
 
 
-@router.delete("/{page_id:int}/media/{media_id:int}", status_code=status.HTTP_200_OK)
+@router.delete("/{page_id}/media/{media_id}", status_code=status.HTTP_200_OK)
 def delete_page_media(
-    page_id: int,
-    media_id: int,
+    page_id: uuid.UUID,
+    media_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
@@ -105,9 +107,9 @@ def delete_page_media(
     return {"message": "Media deleted"}
 
 
-@router.delete("/{page_id:int}/media", status_code=status.HTTP_200_OK)
+@router.delete("/{page_id}/media", status_code=status.HTTP_200_OK)
 def delete_page_media_by_url(
-    page_id: int,
+    page_id: uuid.UUID,
     url: str = Query(...),
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -176,9 +178,9 @@ def list_pages(
     )
 
 
-@router.get("/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.get("/{page_id}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def get_page(
-    page_id: int,
+    page_id: uuid.UUID,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
@@ -224,9 +226,9 @@ def create_page(
     return new_page
 
 
-@router.delete("/{page_id:int}", status_code=status.HTTP_200_OK)
+@router.delete("/{page_id}", status_code=status.HTTP_200_OK)
 def delete_page(
-    page_id: int,
+    page_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -263,9 +265,9 @@ def delete_page(
     return {"message": "Page deleted"}
 
 
-@router.patch("/id/{page_id:int}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.patch("/id/{page_id}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def update_page(
-    page_id: int,
+    page_id: uuid.UUID,
     request: page_schema.UserPageUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -349,9 +351,9 @@ def update_page(
     return db_page
 
 
-@router.post("/{page_id:int}/publish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.post("/{page_id}/publish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def publish_page(
-    page_id: int,
+    page_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -392,9 +394,9 @@ def publish_page(
     return db_page
 
 
-@router.post("/{page_id:int}/archive", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+@router.post("/{page_id}/archive", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
 def archive_page(
-    page_id: int,
+    page_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
@@ -441,10 +443,10 @@ def update_footer_pages(
             detail="ordered_page_ids must be a list",
         )
 
-    normalized_ids: list[int] = []
+    normalized_ids: list[uuid.UUID] = []
     for raw_id in raw_ids:
         try:
-            normalized_ids.append(int(raw_id))
+            normalized_ids.append(uuid.UUID(str(raw_id)))
         except (TypeError, ValueError):
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,

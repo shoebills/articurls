@@ -56,7 +56,7 @@ def validate_username_or_raise(raw: str | None) -> str:
     return value
 
 
-def claim_username_or_raise(db: Session, user_id: int, username: str) -> None:
+def claim_username_or_raise(db: Session, user_id: Any, username: str) -> None:
     existing = db.query(models.UsernameClaim).filter(models.UsernameClaim.username == username).first()
     if existing and existing.user_id != user_id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
@@ -67,10 +67,10 @@ def claim_username_or_raise(db: Session, user_id: int, username: str) -> None:
 def audit_username_change(
     db: Session,
     *,
-    user_id: int,
+    user_id: Any,
     old_username: str,
     new_username: str,
-    actor_user_id: Optional[int],
+    actor_user_id: Optional[Any],
     actor_email: Optional[str],
     is_admin_override: bool,
     reason: Optional[str],
@@ -96,7 +96,7 @@ def apply_username_change_or_raise(
     *,
     db_site: models.Site,
     new_username_raw: str,
-    actor_user_id: Optional[int],
+    actor_user_id: Optional[Any],
     actor_email: Optional[str],
     request_context: Optional[RequestContext],
     is_admin_override: bool = False,

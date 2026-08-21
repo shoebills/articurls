@@ -1,4 +1,5 @@
 import jwt
+import uuid
 from fastapi import Depends, APIRouter, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -278,7 +279,7 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
 
 @router.patch("/admin/{target_user_id}/username", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def admin_change_username(
-    target_user_id: int,
+    target_user_id: uuid.UUID,
     request: user.AdminUsernameChange,
     req: Request,
     db: Session = Depends(get_db),

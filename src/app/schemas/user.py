@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from typing import Optional, Literal
+import uuid
 
 
 class CreateUser(BaseModel):
@@ -11,7 +12,7 @@ class CreateUser(BaseModel):
 
 
 class UserSettings(BaseModel):
-    user_id: int
+    user_id: uuid.UUID
     name: str
     user_name: str
     email: EmailStr
@@ -55,7 +56,7 @@ class UserSettings(BaseModel):
     is_admin: bool = False
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
-    featured_blog_ids: list[int] | None = []
+    featured_blog_ids: list[str] | None = []
     subscriber_collection_enabled: bool = True
     custom_domain: Optional[str] = None
     content_width: Literal["narrow", "wide"] = "wide"
@@ -111,7 +112,7 @@ class PublicUser(BaseModel):
     footer_system_links_enabled: bool = True
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
-    featured_blog_ids: list[int] | None = []
+    featured_blog_ids: list[str] | None = []
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
     show_preview_in_lists: bool = True

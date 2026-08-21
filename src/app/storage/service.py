@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Any
 from uuid import uuid4
 from dataclasses import dataclass
 from fastapi import UploadFile, HTTPException, status
@@ -132,7 +133,7 @@ def _get_storage_provider():
     return LocalStorageProvider()
 
 
-def get_user_storage_usage_bytes(db: Session, user_id: int) -> int:
+def get_user_storage_usage_bytes(db: Session, user_id: Any) -> int:
     user_site_ids = [
         row[0]
         for row in db.query(models.Site.site_id)
@@ -158,8 +159,8 @@ def get_user_storage_usage_bytes(db: Session, user_id: int) -> int:
 async def save_media(
     file: UploadFile,
     category: str,
-    user_id: int,
-    blog_id: int | None = None,
+    user_id: Any,
+    blog_id: Any | None = None,
     db: Session | None = None,
 ) -> StoredMedia:
     data = await file.read()
@@ -168,9 +169,9 @@ async def save_media(
     ext = _ext_from_content_type(file.content_type or "")
     filename = f"{uuid4().hex}{ext}"
     if blog_id is not None:
-        storage_key = f"{category}/{user_id}/{blog_id}/{filename}"
+        storage_key = f"{category}/{str(user_id)}/{str(blog_id)}/{filename}"
     else:
-        storage_key = f"{category}/{user_id}/{filename}"
+        storage_key = f"{category}/{str(user_id)}/{filename}"
 
     provider = _get_storage_provider()
     stored = provider.save(data=data, storage_key=storage_key)
@@ -183,6 +184,6 @@ def delete_media(storage_key: str) -> None:
     provider.delete(storage_key)
 
 
-async def save_image_local(file: UploadFile, category: str, user_id: int, db: Session | None = None) -> str:
+async def save_image_local(file: UploadFile, category: str, user_id: Any, db: Session | None = None) -> str:
     stored = await save_media(file=file, category=category, user_id=user_id, db=db)
     return stored.url

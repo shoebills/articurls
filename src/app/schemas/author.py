@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional, List
+import uuid
 
 
 class AuthorBase(BaseModel):
@@ -40,8 +41,8 @@ class AuthorUpdate(BaseModel):
 
 
 class AuthorOut(AuthorBase):
-    author_id: int
-    site_id: int
+    author_id: uuid.UUID
+    site_id: uuid.UUID
     name: str
     slug: str
     blog_count: int = 0
@@ -53,7 +54,7 @@ class AuthorOut(AuthorBase):
 
 
 class PublicAuthorSummary(BaseModel):
-    author_id: int
+    author_id: uuid.UUID
     name: str
     slug: str
     bio: Optional[str] = None

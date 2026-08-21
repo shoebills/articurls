@@ -23,7 +23,7 @@ type AuthContextValue = {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   refreshSites: () => Promise<void>;
-  switchSite: (siteId: number) => Promise<void>;
+  switchSite: (siteId: string) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -116,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [loadAuthData]);
 
-  const switchSite = useCallback(async (siteId: number) => {
+  const switchSite = useCallback(async (siteId: string) => {
     localStorage.setItem(SITE_KEY, String(siteId));
     clearApiCache();
     const target = sites.find((s) => s.site_id === siteId) || null;

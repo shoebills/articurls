@@ -34,7 +34,7 @@ import type { Author } from "@/lib/types";
 
 export default function EditAuthorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
-  const authorId = Number(id);
+  const authorId = id;
   const router = useRouter();
   const { token } = useAuth();
 

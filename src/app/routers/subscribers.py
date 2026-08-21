@@ -1,3 +1,4 @@
+import uuid
 from fastapi import Depends, APIRouter, HTTPException, Query, Request, status
 from sqlalchemy import func
 from sqlalchemy.orm import Session
@@ -82,7 +83,13 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired confirmation link")
     
     target_site_id = payload.get("site_id") or payload.get("user_id")
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.site_id == target_site_id).first()
+    try:
+        sub_id = uuid.UUID(str(payload["subscriber_id"]))
+        site_id = uuid.UUID(str(target_site_id))
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid confirmation link")
+
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == sub_id, models.Subscriber.site_id == site_id).first()
 
     if not db_subscriber:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
@@ -137,7 +144,13 @@ def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired unsubscriber link")
     
     target_site_id = payload.get("site_id") or payload.get("user_id")
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == payload["subscriber_id"], models.Subscriber.site_id == target_site_id).first()
+    try:
+        sub_id = uuid.UUID(str(payload["subscriber_id"]))
+        site_id = uuid.UUID(str(target_site_id))
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid unsubscriber link")
+
+    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == sub_id, models.Subscriber.site_id == site_id).first()
 
     if not db_subscriber:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subcriber not found")

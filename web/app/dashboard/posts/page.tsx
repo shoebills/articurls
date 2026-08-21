@@ -54,11 +54,11 @@ export default function PostsPage() {
     return !apiCacheHas("/blog/", t);
   });
   const [err, setErr] = useState<string | null>(null);
-  const [deleteId, setDeleteId] = useState<number | null>(null);
-  const [archiveId, setArchiveId] = useState<number | null>(null);
-  const [unarchiveId, setUnarchiveId] = useState<number | null>(null);
-  const [rowBusyId, setRowBusyId] = useState<number | null>(null);
-  const [menuOpenBlogId, setMenuOpenBlogId] = useState<number | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [archiveId, setArchiveId] = useState<string | null>(null);
+  const [unarchiveId, setUnarchiveId] = useState<string | null>(null);
+  const [rowBusyId, setRowBusyId] = useState<string | null>(null);
+  const [menuOpenBlogId, setMenuOpenBlogId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -136,15 +136,15 @@ export default function PostsPage() {
     }
   }
 
-  function handleArchive(id: number) {
+  function handleArchive(id: string) {
     setArchiveId(id);
   }
 
-  function handlePublishAgain(id: number) {
+  function handlePublishAgain(id: string) {
     setUnarchiveId(id);
   }
 
-  function openEditor(blogId: number) {
+  function openEditor(blogId: string) {
     router.push(`/dashboard/posts/${blogId}/edit`);
   }
 
@@ -155,7 +155,7 @@ export default function PostsPage() {
   }
 
   const searchIndex = useMemo(() => {
-    const map = new Map<number, ReturnType<typeof precomputeSearchItem>>();
+    const map = new Map<string, ReturnType<typeof precomputeSearchItem>>();
     for (const blog of blogs) {
       map.set(blog.blog_id, precomputeSearchItem(blog.title || "", blog.content || ""));
     }

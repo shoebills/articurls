@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Any
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from .. import models
@@ -25,7 +26,7 @@ PLANS: dict[str, dict] = {
 }
 
 
-def is_pro_entitled(user_id: int, db: Session) -> bool:
+def is_pro_entitled(user_id: Any, db: Session) -> bool:
 
     sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == user_id).first()
     if not sub:

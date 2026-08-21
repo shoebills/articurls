@@ -34,7 +34,7 @@ def public_user_out(db: Session, db_site: models.Site):
         "footer_system_links_enabled": db_site.footer_system_links_enabled,
         "favicon_url": db_site.favicon_url,
         "featured_blogs_enabled": db_site.featured_blogs_enabled,
-        "featured_blog_ids": db_site.featured_blog_ids,
+        "featured_blog_ids": [str(bid) for bid in (db_site.featured_blog_ids or [])],
         "content_width": db_site.content_width,
         "list_image_position": db_site.list_image_position,
         "show_preview_in_lists": db_site.show_preview_in_lists,
@@ -110,7 +110,7 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "is_admin": False,  # handled downstream if needed
         "favicon_url": db_site.favicon_url,
         "featured_blogs_enabled": db_site.featured_blogs_enabled,
-        "featured_blog_ids": db_site.featured_blog_ids,
+        "featured_blog_ids": [str(bid) for bid in (db_site.featured_blog_ids or [])],
         "subscriber_collection_enabled": db_site.subscriber_collection_enabled,
         "custom_domain": db_site.custom_domain,
         "content_width": db_site.content_width,

@@ -1,3 +1,9 @@
+from typing import List
+import re
+import secrets
+import uuid
+from datetime import datetime, timezone
+from slugify import slugify
 from fastapi import Depends, APIRouter, HTTPException, status, UploadFile, File, Query, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -14,11 +20,6 @@ from ..storage.service import save_media, delete_media
 from ..cache.service import schedule_post_purge
 from ..config import settings
 from ..utils.rate_limit import check_rate_limit_user
-from typing import List
-import secrets
-from slugify import slugify
-from datetime import datetime, timezone
-import re
 
 _BLOG_CREATE_LIMIT = 50
 _BLOG_UPLOAD_LIMIT = 120
@@ -113,7 +114,7 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
     return blogs
 
 @router.get("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def get_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id).first()
 
@@ -125,7 +126,7 @@ def get_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_
 
 
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
-async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+async def upload_blog_media(id: uuid.UUID, file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
@@ -169,7 +170,7 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
 
 
 @router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
-def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def delete_blog_media(id: uuid.UUID, media_id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = (
@@ -202,7 +203,7 @@ def delete_blog_media(id: int, media_id: int, db: Session = Depends(get_db), cur
 
 @router.delete("/{id}/media", status_code=status.HTTP_200_OK)
 def delete_blog_media_by_url(
-    id: int,
+    id: uuid.UUID,
     url: str = Query(..., description="URL of the media to delete"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
@@ -243,7 +244,7 @@ def delete_blog_media_by_url(
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -344,7 +345,7 @@ def update_blog(id: int, request: blog.UpdateBlog, background_tasks: BackgroundT
     return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def delete_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -384,7 +385,7 @@ def delete_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depend
     return {"message": "Blog deleted"}
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def publish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -448,12 +449,12 @@ def publish_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
         return db_blog
 
     if first_publish and db_blog.notify_subscribers:
-        tasks.send_post_emails.delay(db_blog.blog_id)
+        tasks.send_post_emails.delay(str(db_blog.blog_id))
 
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def archive_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -491,7 +492,7 @@ def archive_blog(id: int, background_tasks: BackgroundTasks, db: Session = Depen
 
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
@@ -561,7 +562,7 @@ def schedule_blog(id: int, request: blog.ScheduleBlog, db: Session = Depends(get
     return db_blog
 
 @router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
-def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+def unschedule_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -598,7 +599,7 @@ def unschedule_blog(id: int, db: Session = Depends(get_db), current_user = Depen
 
 @router.patch("/{id}/categories", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def assign_blog_categories(
-    id: int,
+    id: uuid.UUID,
     request: cat_schema.BlogCategoryAssign,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),

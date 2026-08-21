@@ -1,3 +1,4 @@
+from typing import Any
 import logging
 from datetime import datetime, timezone
 from sqlalchemy import func
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @celery.task
-def send_post_emails(blog_id: int):
+def send_post_emails(blog_id: Any):
 
     db = database.SessionLocal()
     new_log = None
@@ -116,7 +117,7 @@ def publish_scheduled_blogs():
         db.commit()
 
         for post in db_posts:
-            send_post_emails.delay(post.blog_id)
+            send_post_emails.delay(str(post.blog_id))
 
     finally:
         db.close()
@@ -183,7 +184,7 @@ def expired_pro_fallback():
 
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
-def provision_umami_website(self, user_id: int):
+def provision_umami_website(self, user_id: Any):
     """Create an Umami website for a user/site if not already provisioned."""
     from ..umami.client import UmamiClient
     from ..umami.service import provision_umami_website_for_user
@@ -199,7 +200,7 @@ def provision_umami_website(self, user_id: int):
 
 
 @celery.task(bind=True, autoretry_for=(Exception,), retry_backoff=True, max_retries=5)
-def sync_umami_website_domain(self, user_id: int):
+def sync_umami_website_domain(self, user_id: Any):
     """Update Umami website domain when custom domain becomes active."""
     from ..umami.client import UmamiClient
     from ..umami.service import sync_umami_website_domain_for_user
@@ -230,6 +231,6 @@ def backfill_umami_websites():
             .all()
         )
         for (user_id,) in rows:
-            provision_umami_website.delay(user_id)
+            provision_umami_website.delay(str(user_id))
     finally:
         db.close()
