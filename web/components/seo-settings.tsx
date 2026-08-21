@@ -5,8 +5,6 @@ import {
   ApiError,
   apiCacheHas,
   getCachedApiData,
-  getCustomDomain,
-  getMe,
   getSeoSettings,
   patchSeoSettings,
   uploadOgImage,
@@ -21,13 +19,14 @@ import { Textarea } from "@/components/ui/textarea";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import type { CustomDomain, SeoSettings, UserSettings } from "@/lib/types";
-import { UGC_DOMAIN, assetUrl } from "@/lib/env";
+import type { SeoSettings } from "@/lib/types";
+import { assetUrl } from "@/lib/env";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
 import { Loader2 } from "lucide-react";
 
 export default function SeoSettings() {
-  const { token, refreshUser } = useAuth();
+  const { token, refreshUser, activeSite } = useAuth();
   const [metaTitle, setMetaTitle] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
@@ -60,26 +59,11 @@ export default function SeoSettings() {
     if (typeof window === "undefined") return true;
     const t = localStorage.getItem("articurls_token");
     if (!t) return true;
-    return !(
-      apiCacheHas("/user/seo", t) &&
-      apiCacheHas("/user/me", t)
-    );
+    return !apiCacheHas("/user/seo", t);
   });
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [savedMsg, setSavedMsg] = useState<string | null>(null);
-  const [domain, setDomain] = useState<CustomDomain | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<CustomDomain>("/settings/domain", t) : null;
-  });
-  const [username, setUsername] = useState(() => {
-    if (typeof window === "undefined") return "";
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return "";
-    const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.user_name || "";
-  });
   const ogInputRef = useRef<HTMLInputElement>(null);
   const [ogImageUrl, setOgImageUrl] = useState(() => {
     if (typeof window === "undefined") return "";
@@ -89,32 +73,18 @@ export default function SeoSettings() {
     return cached?.og_image_url || "";
   });
   const [ogImageBusy, setOgImageBusy] = useState(false);
-  const sitemapResourceUrl = domain?.hostname
-    ? `https://${domain.hostname}/sitemap.xml`
-    : username
-      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/sitemap.xml`
-      : undefined;
-  const robotsResourceUrl = domain?.hostname
-    ? `https://${domain.hostname}/robots.txt`
-    : username
-      ? `https://${encodeURIComponent(username)}.${UGC_DOMAIN}/robots.txt`
-      : undefined;
+  const sitemapResourceUrl = getSitePublicUrl(activeSite, "/sitemap.xml") ?? undefined;
+  const robotsResourceUrl = getSitePublicUrl(activeSite, "/robots.txt") ?? undefined;
   useEffect(() => {
     if (!token) return;
     (async () => {
       try {
-        const [meta, domainData, me] = await Promise.all([
-          getSeoSettings(token),
-          getCustomDomain(token),
-          getMe(token),
-        ]);
+        const meta = await getSeoSettings(token);
         setMetaTitle(meta.meta_title || "");
         setMetaDescription(meta.meta_description || "");
         setOgImageUrl(meta.og_image_url || "");
         setOriginalMetaTitle(meta.meta_title || "");
         setOriginalMetaDescription(meta.meta_description || "");
-        setDomain(domainData);
-        setUsername(me.user_name || "");
       } catch (e) {
         setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
       } finally {

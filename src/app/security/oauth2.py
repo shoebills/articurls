@@ -75,22 +75,18 @@ def get_current_site(
     current_user: models.User = Depends(get_current_user)
 ) -> models.Site:
     site_id = request.headers.get("X-Site-ID")
-    if site_id and site_id.isdigit():
-        site = db.query(models.Site).filter(
-            models.Site.site_id == int(site_id),
-            models.Site.user_id == current_user.user_id
-        ).first()
-        if not site:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
-        return site
-    else:
-        # Fallback for backward compatibility during transition
-        site = db.query(models.Site).filter(
-            models.Site.user_id == current_user.user_id
-        ).order_by(models.Site.site_id.asc()).first()
-        if not site:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No sites found for user")
-        return site
+    if not site_id or not site_id.isdigit():
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="X-Site-ID header is required",
+        )
+    site = db.query(models.Site).filter(
+        models.Site.site_id == int(site_id),
+        models.Site.user_id == current_user.user_id
+    ).first()
+    if not site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
+    return site
 
 def create_refresh_token(email: str):
     from ..redis_client import redis_client

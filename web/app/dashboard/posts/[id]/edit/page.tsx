@@ -38,7 +38,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { UGC_DOMAIN, assetUrl } from "@/lib/env";
+import { assetUrl } from "@/lib/env";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
 import { ChevronDown, ChevronUp, Loader2, Check, ChevronLeft } from "lucide-react";
@@ -50,7 +51,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = Number(id);
-  const { token, refreshUser, user } = useAuth();
+  const { token, refreshUser, user, activeSite } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [title, setTitle] = useState("");
@@ -601,10 +602,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   const liveUrl =
-    blog.status === "published" && user
-      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-        ? `https://${user.custom_domain}/blog/${encodeURIComponent(blog.slug)}`
-        : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}/blog/${encodeURIComponent(blog.slug)}`
+    blog.status === "published" && activeSite
+      ? getSitePublicUrl(activeSite, `/blog/${encodeURIComponent(blog.slug)}`)
       : null;
 
   function getConfirmMeta(): { title: string; description?: string } {

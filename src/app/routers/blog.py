@@ -140,8 +140,7 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
     stored = await save_media(
         file=file,
         category="blogs",
-        site_id=current_site.site_id,
-        author_id=current_site.authors[0].author_id if current_site.authors else None,
+        user_id=current_user.user_id,
         blog_id=db_blog.blog_id,
         db=db,
     )
@@ -156,7 +155,6 @@ async def upload_blog_media(id: int, file: UploadFile = File(...), db: Session =
     new_media = models.BlogMedia(
         blog_id=db_blog.blog_id,
         site_id=current_site.site_id,
-        author_id=current_site.authors[0].author_id if current_site.authors else None,
         url=stored.url,
         storage_key=stored.storage_key,
         mime_type=stored.mime_type,

@@ -7,7 +7,7 @@ import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, apiCacheHas,
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BlogListItem } from "@/lib/types";
-import { UGC_ORIGIN, UGC_DOMAIN } from "@/lib/env";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { Button } from "@/components/ui/button";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
@@ -36,7 +36,7 @@ const POSTS_PER_PAGE = 10;
 
 export default function PostsPage() {
   const router = useRouter();
-  const { token, user } = useAuth();
+  const { token, activeSite } = useAuth();
   const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
@@ -149,13 +149,9 @@ export default function PostsPage() {
   }
 
   function handleViewPost(blog: BlogListItem) {
-    if (!user) return;
-    const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
-    const base = hasCustomDomain
-      ? `https://${user.custom_domain}`
-      : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`;
-    const url = `${base}/blog/${encodeURIComponent(blog.slug)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    if (!activeSite) return;
+    const url = getSitePublicUrl(activeSite, `/blog/${encodeURIComponent(blog.slug)}`);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
   const searchIndex = useMemo(() => {

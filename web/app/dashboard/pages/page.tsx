@@ -7,7 +7,7 @@ import { ApiError, archivePage, deletePage, listPages, publishPage, apiCacheHas,
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserPage } from "@/lib/types";
-import { UGC_DOMAIN } from "@/lib/env";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
   DropdownMenu,
@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 
 export default function PagesDashboardPage() {
-  const { token, user } = useAuth();
+  const { token, activeSite } = useAuth();
   const router = useRouter();
   const [pages, setPages] = useState<UserPage[]>(() => {
     if (typeof window === "undefined") return [];
@@ -190,13 +190,9 @@ export default function PagesDashboardPage() {
   }
 
   function onViewPost(page: UserPage) {
-    if (!token || !user) return;
-    const hasCustomDomain = !!(user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace"));
-    const base = hasCustomDomain
-      ? `https://${user.custom_domain}`
-      : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`;
-    const url = `${base}/page/${encodeURIComponent(page.slug)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
+    if (!token || !activeSite) return;
+    const url = getSitePublicUrl(activeSite, `/page/${encodeURIComponent(page.slug)}`);
+    if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 
   return (

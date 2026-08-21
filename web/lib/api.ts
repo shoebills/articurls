@@ -803,8 +803,12 @@ export async function subscribersAnalytics(token: string, period?: string): Prom
 }
 
 export async function exportSubscribersCsv(token: string): Promise<Blob> {
+  const siteId = typeof window !== "undefined" ? localStorage.getItem("articurls_site_id") : null;
   const res = await fetch(`${API_URL}/analytics/export-to-csv`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: {
+      Authorization: `Bearer ${token}`,
+      ...(siteId ? { "X-Site-ID": siteId } : {}),
+    },
   });
   if (!res.ok) throw new ApiError(await parseError(res), res.status);
   return res.blob();

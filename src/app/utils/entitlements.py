@@ -25,9 +25,9 @@ PLANS: dict[str, dict] = {
 }
 
 
-def is_pro_entitled(user: models.User, db: Session) -> bool:
+def is_pro_entitled(user_id: int, db: Session) -> bool:
 
-    sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == user.user_id).first()
+    sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == user_id).first()
     if not sub:
         return False
     plan = PLANS.get(sub.plan_type)

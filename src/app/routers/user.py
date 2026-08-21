@@ -154,7 +154,7 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     db_user.email_verified = True
     db.commit()
-    db.refresh(current_site)
+    db.refresh(db_user)
 
     access_token = oauth2.create_access_token(
         data={"sub": db_user.email},
@@ -341,7 +341,7 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
 
     
 
-    image_url = await save_image_local(file=file, category="users", site_id=current_site.site_id, db=db)
+    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
     if current_site.authors: current_site.authors[0].profile_image_url = image_url
     db.commit()
     db.refresh(current_site)
@@ -448,7 +448,7 @@ async def upload_og_image(
     
     
 
-    og_image_url = await save_image_local(file=file, category="og-images", site_id=current_site.site_id, db=db)
+    og_image_url = await save_image_local(file=file, category="og-images", user_id=current_user.user_id, db=db)
     current_site.og_image_url = og_image_url
     db.commit()
     db.refresh(current_site)

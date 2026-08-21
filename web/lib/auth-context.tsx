@@ -67,6 +67,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const loadAuthData = useCallback(async (t: string) => {
+    let siteList: SiteSummary[] = [];
+    try {
+      siteList = await listSites(t);
+    } catch (e) {
+      if (!localStorage.getItem(SITE_KEY)) throw e;
+    }
+    setSites(siteList);
+
+    const storedSiteId = localStorage.getItem(SITE_KEY);
+    const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
+    if (current) {
+      localStorage.setItem(SITE_KEY, String(current.site_id));
+      setActiveSite(current);
+    }
+    if (!current && !localStorage.getItem(SITE_KEY)) {
+      throw new Error("No site available");
+    }
+
+    const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
+    setUser(me);
+    setSubscription(sub);
+  }, []);
+
   const refreshUser = useCallback(async () => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     if (!t) {
@@ -77,21 +101,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return;
     }
     try {
-      const [me, sub, siteList] = await Promise.all([
-        getMe(t),
-        getSubscription(t),
-        listSites(t).catch(() => [] as SiteSummary[]),
-      ]);
-      setUser(me);
-      setSubscription(sub);
-      setSites(siteList);
-
-      const storedSiteId = localStorage.getItem(SITE_KEY);
-      const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
-      if (current) {
-        localStorage.setItem(SITE_KEY, String(current.site_id));
-        setActiveSite(current);
-      }
+      await loadAuthData(t);
     } catch (err: unknown) {
       const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
       if (status === 401) {
@@ -104,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setActiveSite(null);
       }
     }
-  }, []);
+  }, [loadAuthData]);
 
   const switchSite = useCallback(async (siteId: number) => {
     localStorage.setItem(SITE_KEY, String(siteId));
@@ -133,21 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     (async () => {
       try {
-        const [me, sub, siteList] = await Promise.all([
-          getMe(t),
-          getSubscription(t),
-          listSites(t).catch(() => [] as SiteSummary[]),
-        ]);
-        setUser(me);
-        setSubscription(sub);
-        setSites(siteList);
-
-        const storedSiteId = localStorage.getItem(SITE_KEY);
-        const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
-        if (current) {
-          localStorage.setItem(SITE_KEY, String(current.site_id));
-          setActiveSite(current);
-        }
+        await loadAuthData(t);
       } catch (err: unknown) {
         const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
         if (status === 401) {
@@ -159,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [loadAuthData]);
 
   const login = useCallback(
     async (email: string, password: string, redirectTo = "/dashboard") => {
@@ -182,9 +178,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = useCallback(async () => {
     localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(SITE_KEY);
     setToken(null);
     setUser(null);
     setSubscription(null);
+    setSites([]);
+    setActiveSite(null);
     await apiLogout();
     router.push("/login");
   }, [router]);

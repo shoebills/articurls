@@ -26,7 +26,7 @@ import { ChevronDown, ChevronUp, ExternalLink, ChevronLeft } from "lucide-react"
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
-import { UGC_DOMAIN } from "@/lib/env";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { getContentExcerpt } from "@/lib/utils";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -42,7 +42,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pageId = Number(id);
-  const { token, user, refreshUser } = useAuth();
+  const { token, activeSite, refreshUser } = useAuth();
 
   const [page, setPage] = useState<UserPage | null>(null);
   const [title, setTitle] = useState("");
@@ -387,10 +387,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }
 
   const liveUrl =
-    page.status === "published" && user
-      ? user.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
-        ? `https://${user.custom_domain}/page/${encodeURIComponent(page.slug)}`
-        : `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}/page/${encodeURIComponent(page.slug)}`
+    page.status === "published" && activeSite
+      ? getSitePublicUrl(activeSite, `/page/${encodeURIComponent(page.slug)}`)
       : null;
 
   const slugEditable = page.status === "draft";

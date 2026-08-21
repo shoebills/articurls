@@ -9,15 +9,17 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialExpiredOverlay } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
+import { getSitePublicRoot } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const { user, isPro, subscription, loading } = useAuth();
+  const { user, activeSite, isPro, subscription, loading } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
-  const publicBlogHref =
-    user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
+  const publicBlogHref = activeSite
+    ? getSitePublicRoot(activeSite)
+    : user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
       ? `https://${user.custom_domain}`
       : user?.user_name
         ? `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`
