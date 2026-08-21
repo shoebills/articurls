@@ -26,7 +26,6 @@ import {
   Tags,
   Palette,
   LineChart,
-  Activity,
   Sparkles,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -207,25 +206,11 @@ export default function DashboardHomePage() {
         {/* Modern Usage & Views Meter (2 Columns) */}
         <Card className="flex flex-col justify-between rounded-2xl border border-border/70 bg-card lg:col-span-2 shadow-2xs">
           <div>
-            <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 sm:p-6 pb-4 sm:pb-4 border-b border-border/40">
-              <div>
-                <div className="flex items-center gap-2">
-                  <CardTitle className="text-base sm:text-lg font-bold tracking-tight">Traffic & Account Usage</CardTitle>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                    <Activity className="h-3 w-3" />
-                    30-Day Cycle
-                  </span>
-                </div>
-                <CardDescription className="mt-1 text-xs sm:text-sm">
-                  Aggregate monthly pageview traffic combined across all your owned sites.
-                </CardDescription>
-              </div>
-              <Button asChild variant="outline" size="sm" className="h-8 shrink-0 gap-1.5 text-xs font-semibold">
-                <Link href="/dashboard/billing">
-                  Manage Plan
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Link>
-              </Button>
+            <CardHeader className="p-5 sm:p-6 pb-4 sm:pb-4 border-b border-border/40">
+              <CardTitle className="text-base sm:text-lg font-bold tracking-tight">Traffic & Account Usage</CardTitle>
+              <CardDescription className="mt-1 text-xs sm:text-sm">
+                Aggregate monthly pageview traffic combined across all your owned sites.
+              </CardDescription>
             </CardHeader>
 
             <CardContent className="p-5 sm:p-6 space-y-6">
@@ -276,6 +261,13 @@ export default function DashboardHomePage() {
                       />
                     </div>
                   </div>
+
+                  <Button asChild variant="outline" size="sm" className="h-8 w-full justify-center gap-1.5 text-xs font-semibold">
+                    <Link href="/dashboard/billing">
+                      Manage Plan
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
+                  </Button>
 
                   {/* Per-Site Breakdown */}
                   <div className="space-y-3 pt-1">
