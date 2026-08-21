@@ -320,7 +320,7 @@ export default function CategoriesDashboardPage() {
             </Button>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create and manage categories for your blog.
+            Categories are flexible topics used to organize, filter, and discover posts.
           </p>
         </div>
         <Button
