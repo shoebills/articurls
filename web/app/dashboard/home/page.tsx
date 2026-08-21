@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import {
   listBlogs,
-  getStorageUsage,
   subscribersAnalytics,
   getUmamiOverview,
   getAccountUsage,
@@ -21,7 +20,7 @@ import {
   FileText,
   Users,
   Eye,
-  HardDrive,
+  Globe,
   ArrowRight,
   PenLine,
   Tags,
@@ -29,17 +28,9 @@ import {
   LineChart,
   Activity,
   Sparkles,
-  Globe,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { BlogListItem, StorageUsage, SubscribersAnalytics, AccountUsage } from "@/lib/types";
-
-function formatBytes(bytes: number): string {
-  if (!bytes || bytes <= 0) return "0 MB";
-  const mb = bytes / (1024 * 1024);
-  if (mb < 1024) return `${mb < 10 ? mb.toFixed(1) : Math.round(mb)} MB`;
-  return `${(mb / 1024).toFixed(1)} GB`;
-}
+import type { BlogListItem, SubscribersAnalytics, AccountUsage } from "@/lib/types";
 
 function StatCard({
   icon: Icon,
@@ -97,11 +88,6 @@ export default function DashboardHomePage() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<BlogListItem[]>("/blog/", t) ?? [] : [];
   });
-  const [storage, setStorage] = useState<StorageUsage | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<StorageUsage>("/user/storage", t) : null;
-  });
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
     if (typeof window === "undefined") return null;
     const t = localStorage.getItem("articurls_token");
@@ -124,7 +110,6 @@ export default function DashboardHomePage() {
     if (!t) return true;
     return !(
       apiCacheHas("/blog/", t) &&
-      apiCacheHas("/user/storage", t) &&
       apiCacheHas("/analytics/subscribers?period=7d", t) &&
       apiCacheHas("/billing/usage", t)
     );
@@ -138,15 +123,13 @@ export default function DashboardHomePage() {
       setLoading(true);
       setErr(null);
       try {
-        const [blogsRes, storageRes, subsRes, usageRes] = await Promise.all([
+        const [blogsRes, subsRes, usageRes] = await Promise.all([
           listBlogs(token).catch(() => [] as BlogListItem[]),
-          getStorageUsage(token).catch(() => null),
           subscribersAnalytics(token, "7d").catch(() => null),
           getAccountUsage(token).catch(() => null),
         ]);
         if (cancelled) return;
         setBlogs(blogsRes);
-        setStorage(storageRes);
         setSubs(subsRes);
         setUsage(usageRes);
       } catch (e) {
@@ -181,9 +164,9 @@ export default function DashboardHomePage() {
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Home</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Welcome back, {user?.name ? user.name.split(" ")[0] : "Abhishek"}!</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}. Here&apos;s an overview of your publications and traffic.
+          Here&apos;s an overview of your active site and overall traffic.
         </p>
       </div>
 
@@ -198,23 +181,23 @@ export default function DashboardHomePage() {
         />
         <StatCard
           icon={Eye}
-          label="Pageviews (7d)"
+          label="Pageviews"
           value={views !== null && views !== undefined ? views.toLocaleString() : "—"}
-          hint="Across active site"
+          hint="Last 7 days"
           loading={loading}
         />
         <StatCard
           icon={Users}
           label="Subscribers"
           value={subs ? String(subs.current_subscribers) : "—"}
-          hint={subs ? `${subs.subscribed} joined last 7d` : undefined}
+          hint={subs ? "Last 7 days" : undefined}
           loading={loading}
         />
         <StatCard
-          icon={HardDrive}
-          label="Storage"
-          value={storage ? formatBytes(storage.used_bytes) : "—"}
-          hint={storage?.is_unlimited ? "Unlimited plan" : storage?.limit_bytes ? `of ${formatBytes(storage.limit_bytes)}` : undefined}
+          icon={Globe}
+          label="Sites"
+          value={usage ? String(usage.sites.length) : "—"}
+          hint={usage ? `${usage.sites.length === 1 ? "Active site" : "Active sites"}` : undefined}
           loading={loading}
         />
       </div>
