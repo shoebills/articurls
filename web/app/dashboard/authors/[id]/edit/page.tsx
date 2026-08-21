@@ -27,9 +27,8 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronLeft, ExternalLink, Loader2, Trash2, Upload, UserRound, X } from "lucide-react";
+import { ChevronLeft, Loader2, Trash2, Upload, UserRound, X } from "lucide-react";
 import { assetUrl } from "@/lib/env";
-import { getSitePublicUrl } from "@/lib/public-url";
 import slugify from "slugify";
 import type { Author } from "@/lib/types";
 
@@ -37,7 +36,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
   const { id } = use(params);
   const authorId = Number(id);
   const router = useRouter();
-  const { token, activeSite } = useAuth();
+  const { token } = useAuth();
 
   const [author, setAuthor] = useState<Author | null>(null);
   const [totalAuthorsCount, setTotalAuthorsCount] = useState<number>(1);
@@ -218,23 +217,15 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     }
   };
 
-  const publicAuthorUrl = author?.slug ? getSitePublicUrl(activeSite, `/author/${encodeURIComponent(author.slug)}`) : null;
-
   if (loading) {
     return (
       <div className="mx-auto max-w-[900px] space-y-6 sm:space-y-8">
         <div className="flex items-center gap-2">
           <Skeleton className="h-4 w-28" />
         </div>
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-72" />
-          </div>
-          <div className="flex gap-2">
-            <Skeleton className="h-10 w-20" />
-            <Skeleton className="h-10 w-28" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="h-5 w-16 rounded-full" />
         </div>
         <Skeleton className="h-[360px] w-full rounded-xl" />
         <Skeleton className="h-[280px] w-full rounded-xl" />
@@ -271,45 +262,14 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
       </div>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Edit Author</h1>
-            {author.blog_count !== undefined && (
-              <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                {author.blog_count} {author.blog_count === 1 ? "post" : "posts"}
-              </span>
-            )}
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Update byline information, photo, bio, and social profiles for {author.name}.
-          </p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5">
-          {publicAuthorUrl && (
-            <Button variant="outline" size="sm" asChild className="h-10 sm:h-9">
-              <a href={publicAuthorUrl} target="_blank" rel="noopener noreferrer" className="gap-1.5">
-                <ExternalLink className="h-4 w-4 text-muted-foreground" />
-                <span className="hidden sm:inline">View Profile</span>
-              </a>
-            </Button>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Edit Author</h1>
+          {author.blog_count !== undefined && (
+            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+              {author.blog_count} {author.blog_count === 1 ? "post" : "posts"}
+            </span>
           )}
-
-          <Button variant="outline" asChild disabled={submitting}>
-            <Link href="/dashboard/authors">Cancel</Link>
-          </Button>
-
-          <Button onClick={handleSubmit} disabled={submitting || !isDirty || !name.trim()}>
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save Changes"
-            )}
-          </Button>
         </div>
       </div>
 
@@ -422,9 +382,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                     disabled={submitting}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  The URL path where the author profile is accessible.
-                </p>
               </div>
             </div>
 
@@ -439,9 +396,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 onChange={(e) => setBio(e.target.value)}
                 disabled={submitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Displayed at the end of articles and on the author profile page.
-              </p>
             </div>
 
             {/* Email */}
@@ -455,9 +409,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 onChange={(e) => setContactEmail(e.target.value)}
                 disabled={submitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Optional email shown on the public author page.
-              </p>
             </div>
           </CardContent>
         </Card>

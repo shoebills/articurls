@@ -30,8 +30,7 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
     );
   }
 
-  const userInitial = user?.name ? user.name.slice(0, 1).toUpperCase() : user?.email?.slice(0, 1).toUpperCase() || "U";
-  const displayName = user?.name || user?.email || "User";
+  const displayName = user?.name || "Account";
 
   return (
     <div className="shrink-0 border-t border-sidebar-border/70 bg-background p-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
@@ -41,18 +40,15 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
             variant="ghost"
             className="flex h-12 w-full items-center justify-between gap-2.5 rounded-lg px-2.5 hover:bg-sidebar-accent/50 text-left"
           >
-            <div className="flex min-w-0 items-center gap-2.5">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-sm">
-                {userInitial}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-foreground leading-tight">
-                  {displayName}
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-semibold text-foreground leading-tight">
+                {displayName}
+              </p>
+              {user?.email ? (
+                <p className="truncate text-xs text-muted-foreground leading-tight mt-0.5">
+                  {user.email}
                 </p>
-                <p className="truncate text-xs text-muted-foreground leading-tight">
-                  {user?.email}
-                </p>
-              </div>
+              ) : null}
             </div>
             <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
           </Button>

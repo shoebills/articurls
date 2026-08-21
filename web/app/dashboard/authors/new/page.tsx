@@ -263,9 +263,6 @@ export default function NewAuthorPage() {
                     disabled={submitting}
                   />
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  The URL path where the author profile will be accessible.
-                </p>
               </div>
             </div>
 
@@ -280,9 +277,6 @@ export default function NewAuthorPage() {
                 onChange={(e) => setBio(e.target.value)}
                 disabled={submitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Displayed at the end of articles and on the author profile page.
-              </p>
             </div>
 
             {/* Email */}
@@ -296,9 +290,6 @@ export default function NewAuthorPage() {
                 onChange={(e) => setContactEmail(e.target.value)}
                 disabled={submitting}
               />
-              <p className="text-xs text-muted-foreground">
-                Optional email shown on the public author page.
-              </p>
             </div>
           </CardContent>
         </Card>
