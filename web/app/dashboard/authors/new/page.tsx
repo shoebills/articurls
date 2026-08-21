@@ -138,28 +138,9 @@ export default function NewAuthorPage() {
       </div>
 
       {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">New Author</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Create a new author profile to assign articles and bylines to.
-          </p>
-        </div>
-        <div className="flex items-center gap-2.5">
-          <Button variant="outline" asChild disabled={submitting}>
-            <Link href="/dashboard/authors">Cancel</Link>
-          </Button>
-          <Button onClick={handleSubmit} disabled={submitting || !name.trim()}>
-            {submitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating...
-              </>
-            ) : (
-              "Create Author"
-            )}
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">New Author</h1>
+        <p className="mt-1 text-sm text-muted-foreground">Create a new author profile to assign posts to.</p>
       </div>
 
       {error && <FloatingErrorToast message={error} onDismiss={() => setError(null)} />}
