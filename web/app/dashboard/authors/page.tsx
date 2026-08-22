@@ -190,8 +190,7 @@ export default function AuthorsPage() {
                             Edit Profile
                           </Link>
                         </DropdownMenuItem>
-                        {authors.length > 1 && (
-                          <>
+                        <>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem
                               onClick={() => {
@@ -204,7 +203,6 @@ export default function AuthorsPage() {
                               Delete Author
                             </DropdownMenuItem>
                           </>
-                        )}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
@@ -248,7 +246,7 @@ export default function AuthorsPage() {
           <DialogHeader>
             <DialogTitle>Delete Author</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{authorToDelete?.name}&quot;? Their articles ({authorToDelete?.blog_count ?? 0} {authorToDelete?.blog_count === 1 ? "post" : "posts"}) will automatically be reassigned to your primary author.
+              Are you sure you want to delete &quot;{authorToDelete?.name}&quot;? Their {authorToDelete?.blog_count ?? 0} {authorToDelete?.blog_count === 1 ? "post" : "posts"} {authors.length > 1 ? "will be reassigned to another author." : "will no longer show a byline."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

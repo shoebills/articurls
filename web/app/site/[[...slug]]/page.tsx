@@ -54,8 +54,6 @@ function resolveUserSiteName(user: PublicUser | null | undefined): string {
 
 function resolveUserOgImage(user: PublicUser | null | undefined): string | undefined {
   if (user?.og_image_url) return transformImageUrl(assetUrl(user.og_image_url), { width: 1200, height: 630, fit: "cover" });
-  const profileImage = assetUrl(user?.profile_image_url);
-  if (profileImage) return profileImage;
   return undefined;
 }
 
@@ -542,14 +540,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 ) : null}
                 <span className="truncate font-medium">{blog.author.name}</span>
               </Link>
-            ) : (
-              <Link
-                href={getPublicProfileUrl(username, basePath)}
-                className="inline-flex items-center rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                <span className="truncate">{author.name}</span>
-              </Link>
-            )}
+            ) : null}
             {blog.published_at && (
               <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
                 <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />

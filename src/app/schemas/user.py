@@ -19,16 +19,6 @@ class UserSettings(BaseModel):
     google_id: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    bio: Optional[str] = None
-    occupation: Optional[str] = None
-    instagram_link: Optional[str] = None
-    x_link: Optional[str] = None
-    pinterest_link: Optional[str] = None
-    facebook_link: Optional[str] = None
-    linkedin_link: Optional[str] = None
-    github_link: Optional[str] = None
-    youtube_link: Optional[str] = None
-    website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
     template_id: str = "editorial"
@@ -77,17 +67,6 @@ class PublicUser(BaseModel):
     user_name: str
     meta_title: str
     meta_description: str
-    bio: Optional[str] = None
-    occupation: Optional[str] = None
-    instagram_link: Optional[str] = None
-    x_link: Optional[str] = None
-    pinterest_link: Optional[str] = None
-    facebook_link: Optional[str] = None
-    linkedin_link: Optional[str] = None
-    github_link: Optional[str] = None
-    youtube_link: Optional[str] = None
-    website_link: Optional[str] = None
-    profile_image_url: Optional[str] = None
     og_image_url: Optional[str] = None
     template_id: str = "editorial"
     site_mode: str = "system"
@@ -136,15 +115,6 @@ class UpdateUser(BaseModel):
     email: Optional[EmailStr] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    bio: Optional[str] = None
-    instagram_link: Optional[str] = None
-    x_link: Optional[str] = None
-    pinterest_link: Optional[str] = None
-    facebook_link: Optional[str] = None
-    linkedin_link: Optional[str] = None
-    github_link: Optional[str] = None
-    youtube_link: Optional[str] = None
-    website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
 
 

@@ -236,7 +236,6 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
 
     user_fields = ["name", "email"]
     site_fields = ["meta_title", "meta_description"]
-    author_fields = ["bio", "occupation", "instagram_link", "x_link", "pinterest_link", "facebook_link", "linkedin_link", "github_link", "youtube_link", "website_link", "profile_image_url"]
 
     username_changed = "user_name" in update_data and update_data["user_name"] is not None
 
@@ -253,26 +252,17 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
             reason="User self-initiated change",
         )
         
-    author = current_site.authors[0] if current_site.authors else None
-    
     for key, value in update_data.items():
         if key in user_fields:
             setattr(current_user, key, value)
         elif key in site_fields:
             setattr(current_site, key, value)
-        elif key in author_fields and author:
-            setattr(author, key, value)
-            if key == "name":
-                setattr(author, "name", current_user.name)
-
-    # Sync author name to user name if user name changed and author name was not explicitly set
-    if "name" in update_data and "name" not in author_fields and author:
-        author.name = current_user.name
+        elif key == "profile_image_url":
+            setattr(current_user, key, value)
 
     db.commit()
     db.refresh(current_user)
     db.refresh(current_site)
-    if author: db.refresh(author)
     
     return user_settings_out(db, current_user, current_site)
 
@@ -338,18 +328,14 @@ def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTas
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
 async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    
-
-    
-
     image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
-    if current_site.authors: current_site.authors[0].profile_image_url = image_url
+    current_user.profile_image_url = image_url
     db.commit()
-    db.refresh(current_site)
+    db.refresh(current_user)
 
     schedule_tenant_purge(background_tasks, current_site)
 
-    return {"profile_image_url": current_site.authors[0].profile_image_url if current_site.authors else None}
+    return {"profile_image_url": current_user.profile_image_url}
 
 
 

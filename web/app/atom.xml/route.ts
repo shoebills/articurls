@@ -90,7 +90,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const xml = buildAtomXml({
     title: user.nav_blog_name || user.meta_title || `${user.name} — Articurls`,
     link: siteOrigin,
-    description: user.meta_description || user.bio || `Latest posts by ${user.name}.`,
+    description: user.meta_description || `Latest posts by ${user.name}.`,
     authorName: user.name,
     updated: sorted[0]?.updated_at || sorted[0]?.published_at || null,
     items,

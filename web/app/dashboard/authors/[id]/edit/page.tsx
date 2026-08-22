@@ -527,8 +527,8 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 <p className="text-sm font-medium text-foreground">Delete this author</p>
                 <p className="text-xs text-muted-foreground">
                   {totalAuthorsCount > 1
-                    ? `Their articles (${author.blog_count ?? 0} posts) will be reassigned to your primary author.`
-                    : "You must have at least one author in your publication. Create another author before deleting this one."}
+                    ? `Their ${author.blog_count ?? 0} ${author.blog_count === 1 ? "post" : "posts"} will be reassigned to another author.`
+                    : `Their ${author.blog_count ?? 0} ${author.blog_count === 1 ? "post" : "posts"} will no longer show a byline.`}
                 </p>
               </div>
 
@@ -536,7 +536,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 type="button"
                 variant="destructive"
                 onClick={() => setDeleteDialogOpen(true)}
-                disabled={totalAuthorsCount <= 1 || submitting || deleting}
+                disabled={submitting || deleting}
                 className="shrink-0 gap-2"
               >
                 <Trash2 className="h-4 w-4" />
@@ -570,7 +570,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
           <DialogHeader>
             <DialogTitle>Delete Author</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{author.name}&quot;? Their articles ({author.blog_count ?? 0} {author.blog_count === 1 ? "post" : "posts"}) will automatically be reassigned to your primary author.
+              Are you sure you want to delete &quot;{author.name}&quot;? Their {author.blog_count ?? 0} {author.blog_count === 1 ? "post" : "posts"} {totalAuthorsCount > 1 ? "will be reassigned to another author." : "will no longer show a byline."}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

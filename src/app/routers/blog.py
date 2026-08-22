@@ -75,9 +75,7 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
     if author_id:
         author_exists = db.query(models.Author).filter(models.Author.author_id == author_id, models.Author.site_id == current_site.site_id).first()
         if not author_exists:
-            author_id = current_site.authors[0].author_id if current_site.authors else None
-    else:
-        author_id = current_site.authors[0].author_id if current_site.authors else None
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid author_id for this site")
 
     new_blog = models.Blog(
         title=request.title,

@@ -311,15 +311,6 @@ export async function patchMe(
       | "email"
       | "meta_title"
       | "meta_description"
-      | "bio"
-      | "instagram_link"
-      | "x_link"
-      | "pinterest_link"
-      | "facebook_link"
-      | "linkedin_link"
-      | "github_link"
-      | "youtube_link"
-      | "website_link"
       | "profile_image_url"
     >
   >

@@ -99,16 +99,11 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
         ) : null}
 
         {/* Hero Section */}
-        {(site.about_title || site.bio) && site.show_about_section ? (
+        {site.about_title && site.show_about_section ? (
           <div className="mb-20 mt-16 text-center max-w-2xl mx-auto flex flex-col items-center">
             <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
-              {site.about_title || "About"}
+              {site.about_title}
             </h1>
-            {site.bio ? (
-              <p className="text-lg text-muted-foreground leading-relaxed">
-                {site.bio}
-              </p>
-            ) : null}
             {showSubscriberCollection && (
               <div className="mt-8 w-full max-w-sm">
                 <SubscribeToAuthor userName={site.user_name} authorName={site.name} />

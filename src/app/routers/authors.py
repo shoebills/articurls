@@ -204,17 +204,6 @@ def delete_author(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
-    total_authors = (
-        db.query(func.count(models.Author.author_id))
-        .filter(models.Author.site_id == current_site.site_id)
-        .scalar()
-    ) or 0
-    if total_authors <= 1:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Cannot delete the only author on your site.",
-        )
-
     author = (
         db.query(models.Author)
         .filter(
@@ -226,7 +215,7 @@ def delete_author(
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
-    # Reassign blogs to another author on the site
+    # Reassign blogs to another author on the site, or clear the byline if none remains
     fallback_author = (
         db.query(models.Author)
         .filter(
@@ -238,6 +227,11 @@ def delete_author(
     if fallback_author:
         db.query(models.Blog).filter(models.Blog.author_id == author_id).update(
             {models.Blog.author_id: fallback_author.author_id},
+            synchronize_session=False,
+        )
+    else:
+        db.query(models.Blog).filter(models.Blog.author_id == author_id).update(
+            {models.Blog.author_id: None},
             synchronize_session=False,
         )
 

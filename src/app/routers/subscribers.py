@@ -69,7 +69,7 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
     db.refresh(new_subscriber)
 
     token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.site_id)
-    send_sub_confirmation_email(new_subscriber.email, db_site.authors[0].name if db_site.authors else "Author", token)
+    send_sub_confirmation_email(new_subscriber.email, db_site.nav_blog_name or db_site.subdomain, token)
 
     return {"message": "Please check your email to confirm subscription"}
 

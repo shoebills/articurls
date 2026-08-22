@@ -58,7 +58,6 @@ export function FooterBuilder({
   const footerEnabled = settings.site_footer_enabled !== false;
   const footerColumns = settings.footer_columns || [];
   const copyright = settings.footer_copyright || "";
-  const socialsEnabled = settings.footer_socials_enabled !== false;
   const newsletterEnabled = settings.footer_newsletter_enabled !== false;
   const systemLinksEnabled = settings.footer_system_links_enabled !== false;
 
@@ -304,7 +303,7 @@ export function FooterBuilder({
           <div className="space-y-4">
             <label className="text-sm font-medium text-foreground">Footer Features & Integrations</label>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="flex items-center justify-between rounded-xl border p-3">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold">Newsletter Box</p>
@@ -313,17 +312,6 @@ export function FooterBuilder({
                 <Switch
                   checked={newsletterEnabled}
                   onCheckedChange={(checked) => onChange({ footer_newsletter_enabled: checked })}
-                />
-              </div>
-
-              <div className="flex items-center justify-between rounded-xl border p-3">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">Social Media Icons</p>
-                  <p className="text-[11px] text-muted-foreground">X, GitHub, LinkedIn...</p>
-                </div>
-                <Switch
-                  checked={socialsEnabled}
-                  onCheckedChange={(checked) => onChange({ footer_socials_enabled: checked })}
                 />
               </div>
 

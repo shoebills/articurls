@@ -99,16 +99,13 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
         ) : null}
 
         {/* SaaS Split Hero */}
-        {(site.about_title || site.bio) && site.show_about_section ? (
+        {site.about_title && site.show_about_section ? (
           <div className="mb-14 mt-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground">
-                <span className="text-primary block mb-2">{site.about_title || "Product Updates"}</span>
-                {site.bio ? site.bio.split("\n")[0] : "The latest news and resources."}
+                <span className="text-primary block mb-2">{site.about_title}</span>
+                The latest news and resources.
               </h1>
-              <p className="mt-4 text-lg text-muted-foreground">
-                {site.bio && site.bio.split("\n").length > 1 ? site.bio.split("\n").slice(1).join(" ") : ""}
-              </p>
               {showSubscriberCollection && (
                 <div className="mt-8">
                   <SubscribeToAuthor userName={site.user_name} authorName={site.name} />

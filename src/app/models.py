@@ -26,6 +26,7 @@ class User(Base):
     dodo_customer_id = Column(String, nullable=True, unique=True, index=True)
     email_verified = Column(Boolean, nullable=False, default=False)
     token_version = Column(Integer, nullable=False, default=0)
+    profile_image_url = Column(String, nullable=True)
     
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)

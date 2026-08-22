@@ -120,24 +120,11 @@ export function getImageObject(url: string | null, width?: number, height?: numb
 }
 
 export function generatePersonSchema(user: PublicUser, profileUrl: string): Person {
-  const socialLinks: string[] = [];
-  
-  if (user.x_link) socialLinks.push(user.x_link);
-  if (user.linkedin_link) socialLinks.push(user.linkedin_link);
-  if (user.github_link) socialLinks.push(user.github_link);
-  if (user.instagram_link) socialLinks.push(user.instagram_link);
-  if (user.pinterest_link) socialLinks.push(user.pinterest_link);
-  if (user.facebook_link) socialLinks.push(user.facebook_link);
-  if (user.youtube_link) socialLinks.push(user.youtube_link);
-  if (user.website_link) socialLinks.push(user.website_link);
-  
   return {
     "@type": "Person",
     "@id": profileUrl,
     name: user.name,
     url: profileUrl,
-    sameAs: socialLinks.length > 0 ? socialLinks : undefined,
-    image: user.profile_image_url ? (getImageObject(user.profile_image_url, 200, 200) || undefined) : undefined,
     jobTitle: "Blogger",
   };
 }
@@ -189,7 +176,7 @@ export function generateAuthorProfileSchema(
 
 export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSite {
   const siteName = (user.nav_blog_name || "").trim() || "My Blog";
-  const description = user.meta_description || user.bio || undefined;
+  const description = user.meta_description || undefined;
   
   return {
     "@context": "https://schema.org",
@@ -262,7 +249,7 @@ export function generateCollectionPageSchema(
     "@context": "https://schema.org",
     "@type": "CollectionPage",
     name: `${category.name} - ${author.name}`,
-    description: author.bio || undefined,
+    description: undefined,
     url: canonicalUrl,
     author: authorPerson,
     isPartOf: {

@@ -999,7 +999,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   }}
                   className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="">Default (Primary Author)</option>
+                  <option value="">No byline</option>
                   {allAuthors.map((a) => (
                     <option key={a.author_id} value={a.author_id}>
                       {a.name} (/author/{a.slug})

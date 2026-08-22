@@ -72,7 +72,7 @@ def send_post_emails(blog_id: Any):
         db.commit()
         
         blog_url = public_post_url(db_site, db_blog, db)
-        author_name = db_site.authors[0].name if db_site.authors else db_user.name
+        author_name = db_blog.author.name if db_blog.author else (db_site.nav_blog_name or db_user.name)
 
         for sub in db_subscribers:
             try:

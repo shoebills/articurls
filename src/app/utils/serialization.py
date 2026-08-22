@@ -4,11 +4,9 @@ from ..schemas import user
 
 
 def public_user_out(db: Session, db_site: models.Site):
-    # Get the default author for public profile
-    author = db_site.authors[0] if db_site.authors else None
-    
     data = {
         "user_name": db_site.subdomain,
+        "name": db_site.user.name if db_site.user else "",
         "meta_title": db_site.meta_title or "",
         "meta_description": db_site.meta_description or "",
         "og_image_url": db_site.og_image_url,
@@ -47,45 +45,19 @@ def public_user_out(db: Session, db_site: models.Site):
         "custom_head_code": db_site.custom_head_code,
         "custom_body_code": db_site.custom_body_code,
         "custom_css": db_site.custom_css,
-        
-        # Fallback values for author fields
-        "name": author.name if author else "",
-        "bio": author.bio if author else None,
-        "occupation": author.occupation if author else None,
-        "instagram_link": author.instagram_link if author else None,
-        "x_link": author.x_link if author else None,
-        "pinterest_link": author.pinterest_link if author else None,
-        "facebook_link": author.facebook_link if author else None,
-        "linkedin_link": author.linkedin_link if author else None,
-        "github_link": author.github_link if author else None,
-        "youtube_link": author.youtube_link if author else None,
-        "website_link": author.website_link if author else None,
-        "profile_image_url": author.profile_image_url if author else None,
     }
     return user.PublicUser(**data)
 
 def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
-    author = db_site.authors[0] if db_site.authors else None
-    
     data = {
         "user_id": db_user.user_id,
-        "name": author.name if author else db_user.name,
+        "name": db_user.name,
         "user_name": db_site.subdomain,
         "email": db_user.email,
         "google_id": db_user.google_id,
+        "profile_image_url": db_user.profile_image_url,
         "meta_title": db_site.meta_title,
         "meta_description": db_site.meta_description,
-        "bio": author.bio if author else None,
-        "occupation": author.occupation if author else None,
-        "instagram_link": author.instagram_link if author else None,
-        "x_link": author.x_link if author else None,
-        "pinterest_link": author.pinterest_link if author else None,
-        "facebook_link": author.facebook_link if author else None,
-        "linkedin_link": author.linkedin_link if author else None,
-        "github_link": author.github_link if author else None,
-        "youtube_link": author.youtube_link if author else None,
-        "website_link": author.website_link if author else None,
-        "profile_image_url": author.profile_image_url if author else None,
         "template_id": db_site.template_id,
         "site_mode": db_site.site_mode,
         "color_theme": db_site.color_theme,
