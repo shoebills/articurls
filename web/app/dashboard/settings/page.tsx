@@ -23,7 +23,21 @@ import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Check, Copy, Globe, Loader2, Pencil, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  ChevronRight,
+  Code2,
+  Copy,
+  Globe,
+  Loader2,
+  Pencil,
+  Search,
+  SlidersHorizontal,
+  Trash2,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl, UGC_DOMAIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
@@ -34,6 +48,89 @@ import SeoSettings from "@/components/seo-settings";
 import { CodeInjectionSettings } from "@/components/code-injection-settings";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
+
+type SettingTab = "general" | "domains" | "seo" | "code";
+
+interface SettingCardItem {
+  id: SettingTab;
+  title: string;
+  description: string;
+  icon: LucideIcon;
+}
+
+interface SettingsSection {
+  title: string;
+  description: string;
+  items: SettingCardItem[];
+}
+
+const SETTINGS_SECTIONS: SettingsSection[] = [
+  {
+    title: "Website",
+    description: "Manage your site's core configuration and domain settings.",
+    items: [
+      {
+        id: "general",
+        title: "General",
+        description: "Site identity, favicon, subscriber collection and RSS feed.",
+        icon: SlidersHorizontal,
+      },
+      {
+        id: "domains",
+        title: "Domains",
+        description: "Subdomain, custom domains and subfolder publishing.",
+        icon: Globe,
+      },
+    ],
+  },
+  {
+    title: "Growth & Discovery",
+    description: "Configure how your site is discovered and optimized for search.",
+    items: [
+      {
+        id: "seo",
+        title: "SEO",
+        description: "Search engine indexing, metadata and social previews.",
+        icon: Search,
+      },
+    ],
+  },
+  {
+    title: "Advanced",
+    description: "Manage technical configuration and custom code.",
+    items: [
+      {
+        id: "code",
+        title: "Code Injection",
+        description: "Add custom head/body scripts and CSS to your site.",
+        icon: Code2,
+      },
+    ],
+  },
+];
+
+function SettingsCard({ item, onSelect }: { item: SettingCardItem; onSelect: () => void }) {
+  const Icon = item.icon;
+  return (
+    <button
+      type="button"
+      onClick={onSelect}
+      className="group flex w-full items-center gap-4 rounded-xl border border-border/80 bg-background p-4 text-left shadow-xs transition-[border-color,box-shadow] duration-200 ease-out hover:border-border hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring motion-reduce:transition-none sm:p-5"
+    >
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
+        <Icon className="h-4 w-4" />
+      </span>
+      <span className="min-w-0 flex-1 space-y-0.5">
+        <span className="block text-sm font-medium">{item.title}</span>
+        <span className="block text-sm leading-relaxed text-muted-foreground">{item.description}</span>
+      </span>
+      <ChevronRight
+        aria-hidden="true"
+        className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
+      />
+    </button>
+  );
+}
 
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
@@ -90,7 +187,17 @@ export default function SettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<"general" | "domains" | "seo" | "code">("general");
+  const [selectedTab, setSelectedTab] = useState<SettingTab | null>(null);
+
+  function openSetting(tab: SettingTab) {
+    setSelectedTab(tab);
+    window.scrollTo({ top: 0 });
+  }
+
+  function closeSetting() {
+    setSelectedTab(null);
+    window.scrollTo({ top: 0 });
+  }
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -245,22 +352,37 @@ export default function SettingsPage() {
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
 
-      <nav className="overflow-x-auto pb-1">
-        <div className="inline-flex min-w-full rounded-xl border bg-background p-1 sm:min-w-0">
-          {([["general", "General"], ["domains", "Domains"], ["seo", "SEO"], ["code", "Code Injection"]] as const).map(([value, label]) => (
-            <Button
-              key={value}
-              type="button"
-              variant={selectedTab === value ? "default" : "ghost"}
-              size="sm"
-              className="h-10 flex-1 whitespace-nowrap rounded-lg px-4 text-sm sm:flex-initial"
-              onClick={() => setSelectedTab(value)}
-            >
-              {label}
-            </Button>
+      {selectedTab === null ? (
+        <div className="space-y-8 sm:space-y-10">
+          {SETTINGS_SECTIONS.map((section) => (
+            <section key={section.title} className="space-y-4">
+              <div className="space-y-1">
+                <h2 className="text-base font-semibold tracking-tight sm:text-lg">{section.title}</h2>
+                <p className="text-sm text-muted-foreground">{section.description}</p>
+              </div>
+              <div aria-hidden="true" className="h-px bg-border/70" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                {section.items.map((item) => (
+                  <SettingsCard key={item.id} item={item} onSelect={() => openSetting(item.id)} />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
-      </nav>
+      ) : (
+        <div>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="-ml-2 h-8 gap-1.5 rounded-lg px-2 text-sm text-muted-foreground hover:text-foreground"
+            onClick={closeSetting}
+          >
+            <ArrowLeft className="h-4 w-4" />
+            All settings
+          </Button>
+        </div>
+      )}
 
       {loading ? (
         <div className="space-y-6 sm:space-y-8">
