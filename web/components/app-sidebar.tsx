@@ -19,7 +19,7 @@ import { SiteSwitcher } from "@/components/site-switcher";
 import { SidebarAccountDropdown } from "@/components/sidebar-account-dropdown";
 
 const primaryLinks = [
-  { href: "/dashboard/home", label: "Home", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Home },
   { href: "/dashboard/posts", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },
@@ -48,7 +48,10 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
   const renderNavLinks = (items: typeof primaryLinks) =>
     items.map(({ href, label, icon: Icon }) => {
-      const active = pathname === href || pathname.startsWith(`${href}/`);
+      const active =
+        href === "/dashboard"
+          ? pathname === "/dashboard" || pathname === "/dashboard/"
+          : pathname === href || pathname.startsWith(`${href}/`);
       return (
         <Link
           key={href}
