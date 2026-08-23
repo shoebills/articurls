@@ -144,37 +144,25 @@ export default function ThemesDashboardPage() {
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Customize your publication template, colors, and typography.
-          </p>
-        </div>
-        <div>
-          <Button
-            onClick={handleSave}
-            disabled={saving || loading}
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-          >
-            {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Save Changes
-          </Button>
-        </div>
+      <div className="mb-5 sm:mb-6">
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Customize your publication template, colors, and typography.
+        </p>
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          <Skeleton className="h-72 w-full rounded-2xl lg:col-span-2" />
+        <div className="space-y-6">
+          <Skeleton className="h-72 w-full max-w-2xl rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-          {/* Blog Template — spans full width */}
-          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs lg:col-span-2">
+        <div className="space-y-6">
+          {/* Blog Template — small card, templates side by side */}
+          <Card className="max-w-2xl rounded-2xl border-border/70 bg-card shadow-2xs">
             <CardHeader>
               <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Blog Template</CardTitle>
               <CardDescription className="text-xs sm:text-sm">
@@ -239,6 +227,17 @@ export default function ThemesDashboardPage() {
           </Card>
         </div>
       )}
+
+      <div className="flex justify-end border-t border-border/60 pt-6">
+        <Button
+          onClick={handleSave}
+          disabled={saving || loading}
+          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+        >
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+          Save Changes
+        </Button>
+      </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} variant="error" />
       <FloatingErrorToast message={success} onDismiss={() => setSuccess(null)} variant="success" />

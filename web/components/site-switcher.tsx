@@ -23,10 +23,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown, Globe, Plus, Sparkles } from "lucide-react";
 import slugify from "slugify";
 
-export function SiteSwitcher({ onNavigate }: { onNavigate?: () => void }) {
+export function SiteSwitcher({
+  onNavigate,
+  className,
+}: {
+  onNavigate?: () => void;
+  className?: string;
+}) {
   const { token, sites, activeSite, switchSite, refreshSites } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const [subdomain, setSubdomain] = useState("");
@@ -68,7 +75,7 @@ export function SiteSwitcher({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="p-2.5 pb-1">
+      <div className={cn("p-2.5 pb-1", className)}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button

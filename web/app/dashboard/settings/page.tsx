@@ -149,6 +149,37 @@ function SettingsCard({ item, onSelect }: { item: SettingCardItem; onSelect: () 
   );
 }
 
+function SettingsOverviewSkeleton() {
+  return (
+    <div className="space-y-8 sm:space-y-10">
+      {SETTINGS_SECTIONS.map((section) => (
+        <div key={section.title} className="space-y-4">
+          <div className="space-y-1.5">
+            <Skeleton className="h-5 w-36" />
+            <Skeleton className="h-4 w-full max-w-md" />
+          </div>
+          <div aria-hidden="true" className="h-px bg-border/70" />
+          <div className="grid gap-3 sm:grid-cols-2">
+            {section.items.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-center gap-4 rounded-xl border border-border/80 bg-background p-4 sm:p-5"
+              >
+                <Skeleton className="h-10 w-10 shrink-0 rounded-lg" />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Skeleton className="h-4 w-28" />
+                  <Skeleton className="h-4 w-full max-w-60" />
+                </div>
+                <Skeleton className="h-4 w-4 shrink-0 rounded-sm" />
+              </div>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
   const [user_name, setUserName] = useState(() => {
@@ -369,24 +400,7 @@ export default function SettingsPage() {
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
       <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
 
-      {selectedTab === null ? (
-        <div className="space-y-8 sm:space-y-10">
-          {SETTINGS_SECTIONS.map((section) => (
-            <section key={section.title} className="space-y-4">
-              <div className="space-y-1">
-                <h2 className="text-base font-semibold tracking-tight sm:text-lg">{section.title}</h2>
-                <p className="text-sm text-muted-foreground">{section.description}</p>
-              </div>
-              <div aria-hidden="true" className="h-px bg-border/70" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                {section.items.map((item) => (
-                  <SettingsCard key={item.id} item={item} onSelect={() => openSetting(item.id)} />
-                ))}
-              </div>
-            </section>
-          ))}
-        </div>
-      ) : (
+      {selectedTab !== null && (
         <div>
           <Button
             type="button"
@@ -402,13 +416,31 @@ export default function SettingsPage() {
       )}
 
       {loading ? (
-        <div className="space-y-6 sm:space-y-8">
-          <Skeleton className="h-24 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-          <Skeleton className="h-20 w-full rounded-xl" />
-        </div>
+        selectedTab === null ? (
+          <SettingsOverviewSkeleton />
+        ) : (
+          <Skeleton className="h-64 w-full rounded-xl" />
+        )
       ) : (
         <>
+          {selectedTab === null && (
+            <div className="space-y-8 sm:space-y-10">
+              {SETTINGS_SECTIONS.map((section) => (
+                <section key={section.title} className="space-y-4">
+                  <div className="space-y-1">
+                    <h2 className="text-base font-semibold tracking-tight sm:text-lg">{section.title}</h2>
+                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                  </div>
+                  <div aria-hidden="true" className="h-px bg-border/70" />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {section.items.map((item) => (
+                      <SettingsCard key={item.id} item={item} onSelect={() => openSetting(item.id)} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+            </div>
+          )}
           <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "general" && "hidden")}>
           <div className="flex flex-col gap-4 rounded-xl border border-border/80 bg-background p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 sm:p-5">
             <div className="space-y-1.5">

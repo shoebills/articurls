@@ -130,7 +130,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-background">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
-                    showBrand={false}
                     mobileTrayLayout
                     onNavigate={close}
                     className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
