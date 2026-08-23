@@ -15,10 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ThemePicker } from "@/components/themes/theme-picker";
-import { ColorPicker } from "@/components/themes/color-picker";
-import { TypographyPicker } from "@/components/themes/typography-picker";
-import { NavBuilder } from "@/components/themes/nav-builder";
-import { FooterBuilder } from "@/components/themes/footer-builder";
+import { ColorModePicker } from "@/components/themes/color-mode-picker";
+import { ColorPalettePicker } from "@/components/themes/color-palette-picker";
+import { TypographyPairingPicker } from "@/components/themes/typography-pairing-picker";
+import { ButtonStylePicker } from "@/components/themes/button-style-picker";
 import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
@@ -129,7 +129,7 @@ export default function ThemesDashboardPage() {
       const updated = await patchDesignSettings(token, design);
       setDesign(updated);
       await refreshUser();
-      setSuccess("Theme and navigation settings saved successfully.");
+      setSuccess("Theme settings saved successfully.");
     } catch (e) {
       if (e instanceof ApiError) {
         setErr(e.message);
@@ -146,9 +146,9 @@ export default function ThemesDashboardPage() {
       {/* Header */}
       <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes & Navigation</h1>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Customize your publication layout, typography, navigation links, and modular footer architecture.
+            Customize your publication template, colors, and typography.
           </p>
         </div>
         <div>
@@ -164,18 +164,20 @@ export default function ThemesDashboardPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-6">
-          <Skeleton className="h-64 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
-          <Skeleton className="h-48 w-full rounded-xl" />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <Skeleton className="h-72 w-full rounded-2xl lg:col-span-2" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
+          <Skeleton className="h-40 w-full rounded-2xl" />
         </div>
       ) : (
-        <div className="space-y-6 sm:space-y-8">
-          {/* Section 1: Template */}
-          <Card>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          {/* Blog Template — spans full width */}
+          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs lg:col-span-2">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Blog Template</CardTitle>
-              <CardDescription>
+              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Blog Template</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Choose the overarching visual layout and post architecture for your blog.
               </CardDescription>
             </CardHeader>
@@ -184,55 +186,55 @@ export default function ThemesDashboardPage() {
             </CardContent>
           </Card>
 
-          {/* Section 2: Colors & Appearance */}
-          <Card>
+          {/* Color Mode */}
+          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Colors & Appearance</CardTitle>
-              <CardDescription>
-                Configure the light/dark site mode and brand accent color personality.
+              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Color Mode</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Choose whether your publication defaults to light, dark, or follows the reader&apos;s system preference.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <ColorPicker settings={design} onChange={handleUpdate} />
+              <ColorModePicker settings={design} onChange={handleUpdate} />
             </CardContent>
           </Card>
 
-          {/* Section 3: Typography & UI Shape */}
-          <Card>
+          {/* Color Palette */}
+          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Typography & UI Style</CardTitle>
-              <CardDescription>
-                Set font family pairings and button corner styling.
+              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Color Palette</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Select an accent color palette for buttons, links, and highlights.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <TypographyPicker settings={design} onChange={handleUpdate} />
+              <ColorPalettePicker settings={design} onChange={handleUpdate} />
             </CardContent>
           </Card>
 
-          {/* Section 4: Header & Dynamic Navigation */}
-          <Card>
+          {/* Typography Pairing */}
+          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Header & Navigation</CardTitle>
-              <CardDescription>
-                Configure brand name, alignment, header styling, custom links, and CTA buttons.
+              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Typography Pairing</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Curated font families engineered for reading comfort and aesthetic balance.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <NavBuilder settings={design} onChange={handleUpdate} />
+              <TypographyPairingPicker settings={design} onChange={handleUpdate} />
             </CardContent>
           </Card>
 
-          {/* Section 5: Modular Footer */}
-          <Card>
+          {/* Button Style */}
+          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
             <CardHeader>
-              <CardTitle className="text-lg font-semibold">Modular Footer</CardTitle>
-              <CardDescription>
-                Build multi-column link groups, toggle newsletter subscription, and configure copyright notices.
+              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Button Style</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
+                Defines the border radius for buttons, badges, and interactive inputs.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <FooterBuilder settings={design} onChange={handleUpdate} />
+              <ButtonStylePicker settings={design} onChange={handleUpdate} />
             </CardContent>
           </Card>
         </div>

@@ -31,6 +31,8 @@ import {
   Copy,
   Globe,
   Loader2,
+  PanelBottom,
+  PanelTop,
   Pencil,
   Search,
   SlidersHorizontal,
@@ -46,10 +48,13 @@ import CustomDomainSettings from "@/components/custom-domain-settings";
 import SubfolderSettings from "@/components/subfolder-settings";
 import SeoSettings from "@/components/seo-settings";
 import { CodeInjectionSettings } from "@/components/code-injection-settings";
+import { DesignSettingsPanel } from "@/components/design-settings-panel";
+import { NavBuilder } from "@/components/themes/nav-builder";
+import { FooterBuilder } from "@/components/themes/footer-builder";
 
 const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
-type SettingTab = "general" | "domains" | "seo" | "code";
+type SettingTab = "general" | "domains" | "seo" | "code" | "nav" | "footer";
 
 interface SettingCardItem {
   id: SettingTab;
@@ -80,6 +85,18 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         title: "Domains",
         description: "Subdomain, custom domains and subfolder publishing.",
         icon: Globe,
+      },
+      {
+        id: "nav",
+        title: "Header & Navigation",
+        description: "Brand name, header style, custom links and CTA buttons.",
+        icon: PanelTop,
+      },
+      {
+        id: "footer",
+        title: "Modular Footer",
+        description: "Multi-column link groups, newsletter and copyright.",
+        icon: PanelBottom,
       },
     ],
   },
@@ -624,6 +641,22 @@ export default function SettingsPage() {
 
       <div className={cn(selectedTab !== "code" && "hidden")}>
         <CodeInjectionSettings />
+      </div>
+
+      <div className={cn(selectedTab !== "nav" && "hidden")}>
+        <DesignSettingsPanel
+          title="Header & Navigation"
+          description="Configure brand name, alignment, header styling, custom links, and CTA buttons."
+          render={(design, onChange) => <NavBuilder settings={design} onChange={onChange} />}
+        />
+      </div>
+
+      <div className={cn(selectedTab !== "footer" && "hidden")}>
+        <DesignSettingsPanel
+          title="Modular Footer"
+          description="Build multi-column link groups, toggle newsletter subscription, and configure copyright notices."
+          render={(design, onChange) => <FooterBuilder settings={design} onChange={onChange} />}
+        />
       </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

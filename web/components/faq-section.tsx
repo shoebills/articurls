@@ -33,7 +33,7 @@ const FAQS = [
     a: "Yes. Collect email subscribers from your posts and notify them automatically whenever you publish something new.",
   },
   {
-    q: "What's included in the 14-day free trial?",
+    q: "What's included in the 7-day free trial?",
     a: "Everything. You get full Pro access during the trial — custom domains, analytics, subscriber collection, and all features. No credit card required.",
   },
   {

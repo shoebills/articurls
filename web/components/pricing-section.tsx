@@ -82,7 +82,7 @@ export function PricingSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Pricing</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            Start with a 14-day free trial.
+            Start with a 7-day free trial.
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
             No credit card required. No annual contracts. Cancel anytime.
@@ -193,7 +193,7 @@ function StickyCta({ href }: { href: string }) {
       >
         <div className="mx-auto flex max-w-md items-center gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-medium leading-tight">Start with a 14-day free trial</p>
+            <p className="text-sm font-medium leading-tight">Start with a 7-day free trial</p>
             <p className="truncate text-xs text-muted-foreground">No credit card required</p>
           </div>
           <Button className="h-11 shrink-0 px-5 shadow-md shadow-primary/20" asChild>

@@ -15,7 +15,7 @@ export function TrialExpiredOverlay() {
           Your trial has ended
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          Your 14-day free trial is over. Subscribe to keep using Articurls with all features including custom domains, analytics, subscriber collection, and more.
+          Your 7-day free trial is over. Subscribe to keep using Articurls with all features including custom domains, analytics, subscriber collection, and more.
         </p>
         <div className="mt-8 space-y-3">
           <Button asChild className="h-12 w-full gap-2 text-base shadow-md shadow-primary/20">

@@ -12,14 +12,14 @@ import {
   Palette,
   Users,
   Tags,
-  Home,
+  Gauge,
   UserCheck,
 } from "lucide-react";
 import { SiteSwitcher } from "@/components/site-switcher";
 import { SidebarAccountDropdown } from "@/components/sidebar-account-dropdown";
 
 const primaryLinks = [
-  { href: "/dashboard", label: "Dashboard", icon: Home },
+  { href: "/dashboard", label: "Dashboard", icon: Gauge },
   { href: "/dashboard/posts", label: "Posts", icon: LayoutDashboard },
   { href: "/dashboard/pages", label: "Pages", icon: Files },
   { href: "/dashboard/categories", label: "Categories", icon: Tags },

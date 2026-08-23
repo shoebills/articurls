@@ -141,7 +141,7 @@ export default function BillingPage() {
                 {sub?.plan_type === "trial" && pro ? (
                   <div className="inline-flex items-center gap-2 rounded-lg border border-blue-500/25 bg-blue-500/[0.06] px-3 py-1.5 text-xs font-medium text-blue-800">
                     <Timer className="h-3.5 w-3.5" />
-                    14-Day Free Trial
+                    7-Day Free Trial
                   </div>
                 ) : isLifetime ? (
                   <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-800">
