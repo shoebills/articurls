@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -36,11 +37,13 @@ type PanelProps = {
   /** Close mobile sheet after navigation */
   onNavigate?: () => void;
   className?: string;
+  /** Show brand title row (desktop sidebar); hide for compact mobile tray */
+  showBrand?: boolean;
   /** Merged nav+footer with 20px above divider (mobile tray only); desktop keeps pinned footer */
   mobileTrayLayout?: boolean;
 };
 
-export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout = false }: PanelProps) {
+export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
 
   const renderNavLinks = (items: typeof primaryLinks) =>
@@ -55,7 +58,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
           href={href}
           onClick={() => onNavigate?.()}
           className={cn(
-            "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[17.5px] font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
+            "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
             active
               ? "bg-sidebar-accent/80 text-sidebar-foreground font-semibold"
               : "text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
@@ -69,9 +72,22 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      {/* Site Switcher — top row, where the brand used to be */}
-      <div className="shrink-0 border-b border-sidebar-border/70 bg-background">
-        <SiteSwitcher onNavigate={onNavigate} className="p-2.5 pb-2.5" />
+      {showBrand ? (
+        <div className="flex h-14 shrink-0 items-center justify-center border-b border-sidebar-border/70 bg-background px-3">
+          <BrandLogo
+            href="/dashboard"
+            showIcon={false}
+            className="min-w-0"
+            onClick={() => onNavigate?.()}
+          />
+        </div>
+      ) : null}
+
+      {/* Site Switcher — detached card below the brand row */}
+      <div className="shrink-0 px-2.5 pb-2 pt-2.5">
+        <div className="rounded-xl border border-border/70 bg-muted/25 p-2 shadow-2xs">
+          <SiteSwitcher onNavigate={onNavigate} className="p-0" />
+        </div>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
