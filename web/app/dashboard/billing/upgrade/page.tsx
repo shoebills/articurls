@@ -31,7 +31,6 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const VIEW_TIERS = [
   { id: "10k", label: "Up to 10k views", price: 19, views: 10_000 },
-  { id: "50k", label: "Up to 50k views", price: 29, views: 50_000 },
   { id: "100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
   { id: "250k", label: "Up to 250k views", price: 99, views: 250_000 },
   { id: "500k", label: "Up to 500k views", price: 149, views: 500_000 },

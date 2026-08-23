@@ -715,7 +715,6 @@ def get_account_usage(
         "trial": {"limit": 10000, "price": 19},
         "pro": {"limit": 10000, "price": 19},
         "pro_10k": {"limit": 10000, "price": 19},
-        "pro_50k": {"limit": 50000, "price": 29},
         "pro_100k": {"limit": 100000, "price": 49},
         "pro_250k": {"limit": 250000, "price": 99},
         "pro_500k": {"limit": 500000, "price": 149},
