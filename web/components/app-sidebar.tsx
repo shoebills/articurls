@@ -73,7 +73,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       {showBrand ? (
-        <div className="flex h-14 shrink-0 items-center justify-center border-b border-sidebar-border/70 bg-background px-3">
+        <div className="flex h-14 shrink-0 items-center justify-start border-b border-sidebar-border/70 bg-background px-3">
           <BrandLogo
             href="/dashboard"
             showIcon={false}
@@ -83,12 +83,8 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
         </div>
       ) : null}
 
-      {/* Site Switcher — detached card below the brand row */}
-      <div className="shrink-0 px-2.5 pb-2 pt-2.5">
-        <div className="rounded-xl border border-border/70 bg-muted/25 p-2 shadow-2xs">
-          <SiteSwitcher onNavigate={onNavigate} className="p-0" />
-        </div>
-      </div>
+      {/* Site Switcher */}
+      <SiteSwitcher onNavigate={onNavigate} />
 
       <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
         <nav className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 min-h-0 gap-5">
