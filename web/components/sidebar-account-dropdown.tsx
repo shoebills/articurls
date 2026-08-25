@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ThemeModeSelector } from "@/components/theme-mode-selector";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -86,6 +87,8 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
               Support
             </Link>
           </DropdownMenuItem>
+
+          <ThemeModeSelector />
 
           <DropdownMenuSeparator />
 

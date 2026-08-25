@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialExpiredOverlay } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
@@ -61,7 +60,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background px-8 md:flex">
           <div className="flex items-center gap-2">
-            <ThemeToggle className="h-8 w-8" />
                {publicBlogHref ? (
                <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-foreground">
                  <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
@@ -104,7 +102,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   </Link>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
-                  <ThemeToggle className="h-8 w-8" />
                   {publicBlogHref ? (
                   <Button asChild variant="outline" size="sm" className="h-8 min-h-0 shrink-0 rounded-md text-foreground">
                     <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">

@@ -17,7 +17,7 @@ export function ThemePicker({
   const saasDemoUrl = `https://saas.${UGC_DOMAIN}`;
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+    <div className="grid grid-cols-1 gap-4 max-w-2xl md:grid-cols-2">
       {/* Editorial Template */}
       <div
         role="button"
@@ -29,7 +29,7 @@ export function ThemePicker({
             onChange({ template_id: "editorial" });
           }
         }}
-        className={`group relative flex flex-col justify-between rounded-xl border-2 p-5 text-left transition-all cursor-pointer ${
+        className={`group relative flex flex-col justify-between rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
           selectedTemplate === "editorial"
             ? "border-primary bg-primary/[0.03] shadow-sm ring-1 ring-primary/20"
             : "border-border/70 hover:border-border hover:bg-muted/30"
@@ -109,7 +109,7 @@ export function ThemePicker({
             onChange({ template_id: "saas" });
           }
         }}
-        className={`group relative flex flex-col justify-between rounded-xl border-2 p-5 text-left transition-all cursor-pointer ${
+        className={`group relative flex flex-col justify-between rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
           selectedTemplate === "saas"
             ? "border-primary bg-primary/[0.03] shadow-sm ring-1 ring-primary/20"
             : "border-border/70 hover:border-border hover:bg-muted/30"
