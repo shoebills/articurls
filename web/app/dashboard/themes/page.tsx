@@ -161,18 +161,16 @@ export default function ThemesDashboardPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Blog Template — small card, templates side by side */}
-          <Card className="max-w-2xl rounded-2xl border-border/70 bg-card shadow-2xs">
-            <CardHeader>
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Blog Template</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Choose the overarching visual layout and post architecture for your blog.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          {/* Blog Template — templates side by side */}
+          <div>
+            <h2 className="text-base font-bold tracking-tight sm:text-lg">Blog Template</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Choose the overarching visual layout and post architecture for your blog.
+            </p>
+            <div className="mt-4">
               <ThemePicker settings={design} onChange={handleUpdate} />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           {/* Color Mode */}
           <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">

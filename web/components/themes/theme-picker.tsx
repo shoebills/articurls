@@ -80,7 +80,7 @@ export function ThemePicker({
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Perfect for writers, personal blogs, and essays. Focuses on reader immersion with a linear feed and distraction-free layout.
+            Perfect for writers, personal blogs, and essays.
           </p>
         </div>
 
@@ -161,7 +161,7 @@ export function ThemePicker({
           </div>
 
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Built for modern companies and multi-category blogs. Features a prominent hero banner, category pills, and a structured card grid.
+            Built for modern companies and multi-category blogs.
           </p>
         </div>
 
