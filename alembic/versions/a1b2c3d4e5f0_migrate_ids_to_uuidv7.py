@@ -21,6 +21,12 @@ def upgrade() -> None:
     # 1. Ensure pgcrypto extension is present for UUID generation
     op.execute('CREATE EXTENSION IF NOT EXISTS "pgcrypto";')
 
+    # 'views' was dropped by b2c3d4e5f6a8 earlier in the graph; only migrate
+    # it when it still exists (older DBs that applied migrations out of order).
+    views_present = bool(
+        op.get_bind().execute(sa.text("SELECT to_regclass('views')")).scalar()
+    )
+
     # 2. Add temporary new UUID columns with default gen_random_uuid()
     op.execute("""
         ALTER TABLE users ADD COLUMN IF NOT EXISTS new_user_id UUID DEFAULT gen_random_uuid();
@@ -75,11 +81,14 @@ def upgrade() -> None:
         ALTER TABLE username_change_audits ADD COLUMN IF NOT EXISTS new_audit_id UUID DEFAULT gen_random_uuid();
         ALTER TABLE username_change_audits ADD COLUMN IF NOT EXISTS new_user_id UUID;
         ALTER TABLE username_change_audits ADD COLUMN IF NOT EXISTS new_actor_user_id UUID;
-
-        ALTER TABLE views ADD COLUMN IF NOT EXISTS new_view_id UUID DEFAULT gen_random_uuid();
-        ALTER TABLE views ADD COLUMN IF NOT EXISTS new_site_id UUID;
-        ALTER TABLE views ADD COLUMN IF NOT EXISTS new_blog_id UUID;
     """)
+
+    if views_present:
+        op.execute("""
+            ALTER TABLE views ADD COLUMN IF NOT EXISTS new_view_id UUID DEFAULT gen_random_uuid();
+            ALTER TABLE views ADD COLUMN IF NOT EXISTS new_site_id UUID;
+            ALTER TABLE views ADD COLUMN IF NOT EXISTS new_blog_id UUID;
+        """)
 
     # 3. Backfill Foreign Key UUID values by matching integer IDs
     op.execute("""
@@ -111,10 +120,13 @@ def upgrade() -> None:
         UPDATE username_claims SET new_user_id = u.new_user_id FROM users u WHERE username_claims.user_id = u.user_id;
         UPDATE username_change_audits SET new_user_id = u.new_user_id FROM users u WHERE username_change_audits.user_id = u.user_id;
         UPDATE username_change_audits SET new_actor_user_id = u.new_user_id FROM users u WHERE username_change_audits.actor_user_id = u.user_id;
-
-        UPDATE views SET new_site_id = s.new_site_id FROM sites s WHERE views.site_id = s.site_id;
-        UPDATE views SET new_blog_id = b.new_blog_id FROM blogs b WHERE views.blog_id = b.blog_id;
     """)
+
+    if views_present:
+        op.execute("""
+            UPDATE views SET new_site_id = s.new_site_id FROM sites s WHERE views.site_id = s.site_id;
+            UPDATE views SET new_blog_id = b.new_blog_id FROM blogs b WHERE views.blog_id = b.blog_id;
+        """)
 
     # 4. Drop existing constraints
     op.execute("""
@@ -139,8 +151,6 @@ def upgrade() -> None:
         ALTER TABLE username_claims DROP CONSTRAINT IF EXISTS username_claims_user_id_fkey;
         ALTER TABLE username_change_audits DROP CONSTRAINT IF EXISTS username_change_audits_user_id_fkey;
         ALTER TABLE username_change_audits DROP CONSTRAINT IF EXISTS username_change_audits_actor_user_id_fkey;
-        ALTER TABLE views DROP CONSTRAINT IF EXISTS views_site_id_fkey;
-        ALTER TABLE views DROP CONSTRAINT IF EXISTS views_blog_id_fkey;
 
         ALTER TABLE users DROP CONSTRAINT IF EXISTS users_pkey CASCADE;
         ALTER TABLE sites DROP CONSTRAINT IF EXISTS sites_pkey CASCADE;
@@ -158,8 +168,14 @@ def upgrade() -> None:
         ALTER TABLE email_logs DROP CONSTRAINT IF EXISTS email_logs_pkey CASCADE;
         ALTER TABLE username_claims DROP CONSTRAINT IF EXISTS username_claims_pkey CASCADE;
         ALTER TABLE username_change_audits DROP CONSTRAINT IF EXISTS username_change_audits_pkey CASCADE;
-        ALTER TABLE views DROP CONSTRAINT IF EXISTS views_pkey CASCADE;
     """)
+
+    if views_present:
+        op.execute("""
+            ALTER TABLE views DROP CONSTRAINT IF EXISTS views_site_id_fkey;
+            ALTER TABLE views DROP CONSTRAINT IF EXISTS views_blog_id_fkey;
+            ALTER TABLE views DROP CONSTRAINT IF EXISTS views_pkey CASCADE;
+        """)
 
     # 5. Swap columns to new UUIDs
     op.execute("""
@@ -268,15 +284,18 @@ def upgrade() -> None:
         ALTER TABLE username_change_audits RENAME COLUMN new_user_id TO user_id;
         ALTER TABLE username_change_audits RENAME COLUMN new_actor_user_id TO actor_user_id;
         ALTER TABLE username_change_audits ADD PRIMARY KEY (audit_id);
-
-        ALTER TABLE views DROP COLUMN IF EXISTS view_id;
-        ALTER TABLE views DROP COLUMN IF EXISTS site_id;
-        ALTER TABLE views DROP COLUMN IF EXISTS blog_id;
-        ALTER TABLE views RENAME COLUMN new_view_id TO view_id;
-        ALTER TABLE views RENAME COLUMN new_site_id TO site_id;
-        ALTER TABLE views RENAME COLUMN new_blog_id TO blog_id;
-        ALTER TABLE views ADD PRIMARY KEY (view_id);
     """)
+
+    if views_present:
+        op.execute("""
+            ALTER TABLE views DROP COLUMN IF EXISTS view_id;
+            ALTER TABLE views DROP COLUMN IF EXISTS site_id;
+            ALTER TABLE views DROP COLUMN IF EXISTS blog_id;
+            ALTER TABLE views RENAME COLUMN new_view_id TO view_id;
+            ALTER TABLE views RENAME COLUMN new_site_id TO site_id;
+            ALTER TABLE views RENAME COLUMN new_blog_id TO blog_id;
+            ALTER TABLE views ADD PRIMARY KEY (view_id);
+        """)
 
     # 6. Recreate foreign key constraints
     op.execute("""
@@ -301,9 +320,13 @@ def upgrade() -> None:
         ALTER TABLE username_claims ADD CONSTRAINT username_claims_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
         ALTER TABLE username_change_audits ADD CONSTRAINT username_change_audits_user_id_fkey FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE;
         ALTER TABLE username_change_audits ADD CONSTRAINT username_change_audits_actor_user_id_fkey FOREIGN KEY (actor_user_id) REFERENCES users(user_id) ON DELETE SET NULL;
-        ALTER TABLE views ADD CONSTRAINT views_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE CASCADE;
-        ALTER TABLE views ADD CONSTRAINT views_blog_id_fkey FOREIGN KEY (blog_id) REFERENCES blogs(blog_id) ON DELETE CASCADE;
     """)
+
+    if views_present:
+        op.execute("""
+            ALTER TABLE views ADD CONSTRAINT views_site_id_fkey FOREIGN KEY (site_id) REFERENCES sites(site_id) ON DELETE CASCADE;
+            ALTER TABLE views ADD CONSTRAINT views_blog_id_fkey FOREIGN KEY (blog_id) REFERENCES blogs(blog_id) ON DELETE CASCADE;
+        """)
 
     # 7. Recreate unique constraints and indexes
     op.execute("""
@@ -323,9 +346,13 @@ def upgrade() -> None:
         CREATE INDEX IF NOT EXISTS ix_categories_site_id ON categories (site_id);
         CREATE INDEX IF NOT EXISTS ix_categories_site_menu_order ON categories (site_id, menu_order);
         CREATE INDEX IF NOT EXISTS ix_blogs_status_scheduled_at ON blogs (status, scheduled_at);
-        CREATE INDEX IF NOT EXISTS ix_views_site_visited_at ON views (site_id, visited_at);
-        CREATE INDEX IF NOT EXISTS ix_views_blog_visitor_hash ON views (blog_id, visitor_hash);
     """)
+
+    if views_present:
+        op.execute("""
+            CREATE INDEX IF NOT EXISTS ix_views_site_visited_at ON views (site_id, visited_at);
+            CREATE INDEX IF NOT EXISTS ix_views_blog_visitor_hash ON views (blog_id, visitor_hash);
+        """)
 
 
 def downgrade() -> None:

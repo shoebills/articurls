@@ -171,8 +171,7 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
         return False
 
     start_domain_grace_period(db_user)
-    db_sub.plan_type = "lapsed"
-    db_sub.status = "inactive"
+    db_sub.status = "lapsed"
     db_sub.dodo_subscription_id = None
     db_sub.current_period_start = None
     db_sub.current_period_end = None
@@ -706,10 +705,10 @@ def get_account_usage(
 ):
     from ..umami.client import UmamiClient
     from ..umami.service import get_umami_period_timestamps
-    from sqlalchemy import func
     
     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
     plan_type = db_sub.plan_type if db_sub else "trial"
+    tier_key = (db_sub.tier if db_sub and db_sub.tier else plan_type)
 
     TIERS = {
         "trial": {"limit": 10000, "price": 19},
@@ -721,7 +720,7 @@ def get_account_usage(
         "pro_1m": {"limit": 1000000, "price": 249},
         "lifetime": {"limit": 100000, "price": 199},
     }
-    tier_info = TIERS.get(plan_type, {"limit": 10000, "price": 19})
+    tier_info = TIERS.get(tier_key, {"limit": 10000, "price": 19})
 
     umami_client = UmamiClient()
 
@@ -738,13 +737,6 @@ def get_account_usage(
                 views = stats.get("pageviews", 0)
             except Exception:
                 views = 0
-        
-        if views == 0:
-            views = (
-                db.query(func.count(models.Views.view_id))
-                .filter(models.Views.site_id == site.site_id)
-                .scalar()
-            ) or 0
 
         total_views += views
         site_items.append({

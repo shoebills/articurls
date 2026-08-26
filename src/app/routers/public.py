@@ -137,6 +137,7 @@ def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
     results = (
         db.query(models.Blog)
         .filter(models.Blog.site_id == db_site.site_id, models.Blog.status == models.BlogStatus.PUBLISHED)
+        .order_by(models.Blog.published_at.desc())
         .all()
     )
 

@@ -163,9 +163,8 @@ def expired_pro_fallback():
                     if db_site.grace_expires_at and db_site.grace_expires_at < now:
                         expire_domain_access(db_site)
 
-            sub.plan_type = "lapsed"
             if sub.status != "cancelled":
-                sub.status = "inactive"
+                sub.status = "lapsed"
 
         # ── Grace-period expiry sweep ───────────────────────────────────────
         grace_expired_sites = db.query(models.Site).filter(

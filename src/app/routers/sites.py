@@ -11,6 +11,7 @@ from ..database import get_db
 from ..schemas import site as site_schema
 from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge
+from ..storage.service import delete_media
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
 
@@ -191,6 +192,26 @@ def delete_site(
     if not site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
 
+    # Delete media objects from storage (R2/local) before DB rows disappear
+    # via the DB-level ON DELETE CASCADE foreign keys.
+    for media in db.query(models.BlogMedia).filter(models.BlogMedia.site_id == site.site_id).all():
+        try:
+            delete_media(media.storage_key)
+        except Exception:
+            pass
+    for media in db.query(models.PageMedia).filter(models.PageMedia.site_id == site.site_id).all():
+        try:
+            delete_media(media.storage_key)
+        except Exception:
+            pass
+
+    # Release the username claim so the subdomain becomes available again.
+    db.query(models.UsernameClaim).filter(
+        models.UsernameClaim.username == site.subdomain
+    ).delete(synchronize_session=False)
+
+    # Remaining children (blogs, pages, categories, blog_categories, media,
+    # subscribers, email_logs, authors) are removed by ON DELETE CASCADE.
     db.delete(site)
     db.commit()
 

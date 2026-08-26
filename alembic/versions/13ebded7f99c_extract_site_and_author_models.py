@@ -93,9 +93,16 @@ def upgrade() -> None:
     # 3. Add site_id / author_id to existing tables
     tables = [
         'blogs', 'blog_medias', 'user_pages', 'page_medias',
-        'categories', 'subscribers', 'email_logs', 'views'
+        'categories', 'subscribers', 'email_logs'
     ]
-    for table in tables:
+    # 'views' may already be gone: it was dropped by b2c3d4e5f6a8, which
+    # precedes this revision in the graph. Guard all views handling.
+    views_present = bool(
+        op.get_bind().execute(sa.text("SELECT to_regclass('views')")).scalar()
+    )
+    all_tables = tables + ['views'] if views_present else tables
+
+    for table in all_tables:
         op.add_column(table, sa.Column('site_id', sa.Integer(), nullable=True))
         
     op.add_column('blogs', sa.Column('author_id', sa.Integer(), nullable=True))
@@ -136,7 +143,7 @@ def upgrade() -> None:
         JOIN sites s ON s.user_id = u.user_id
     """)
 
-    for table in tables:
+    for table in all_tables:
         op.execute(f"""
             UPDATE {table} t
             SET site_id = s.site_id
@@ -152,7 +159,7 @@ def upgrade() -> None:
     """)
 
     # 5. Constraints & Indexes changes
-    for table in tables:
+    for table in all_tables:
         op.alter_column(table, 'site_id', existing_type=sa.Integer(), nullable=False)
         op.create_index(op.f(f'ix_{table}_site_id'), table, ['site_id'], unique=False)
         op.create_foreign_key(f'fk_{table}_site_id', table, 'sites', ['site_id'], ['site_id'])
@@ -178,10 +185,11 @@ def upgrade() -> None:
     op.drop_constraint('uq_email_logs_user_blog', 'email_logs', type_='unique')
     op.create_unique_constraint('uq_email_logs_site_blog', 'email_logs', ['site_id', 'blog_id'])
 
-    op.drop_index('ix_views_user_visited_at', table_name='views')
-    op.create_index('ix_views_site_visited_at', 'views', ['site_id', 'visited_at'])
+    if views_present:
+        op.drop_index('ix_views_user_visited_at', table_name='views')
+        op.create_index('ix_views_site_visited_at', 'views', ['site_id', 'visited_at'])
 
-    for table in tables:
+    for table in all_tables:
         op.drop_index(f'ix_{table}_user_id', table_name=table)
         op.drop_constraint(f'{table}_user_id_fkey', table, type_='foreignkey')
         op.drop_column(table, 'user_id')

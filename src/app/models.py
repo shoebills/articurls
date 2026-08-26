@@ -1,7 +1,7 @@
 import enum
 import uuid
 from sqlalchemy.orm import DeclarativeBase, relationship
-from sqlalchemy import Column, String, Integer, BigInteger, Enum, DateTime, Text, JSON, Index, UniqueConstraint, func, ForeignKey, Boolean, UUID
+from sqlalchemy import Column, String, Integer, BigInteger, Enum, DateTime, Text, JSON, Index, UniqueConstraint, CheckConstraint, func, ForeignKey, Boolean, UUID, text
 
 
 class Base(DeclarativeBase):
@@ -38,7 +38,7 @@ class Site(Base):
     __tablename__ = "sites"
 
     site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     subdomain = Column(String, unique=True, nullable=False, index=True)
     
     custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
@@ -111,9 +111,9 @@ class Author(Base):
     )
 
     author_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
-    slug = Column(String, nullable=False, index=True)
+    slug = Column(String, nullable=False)
     bio = Column(Text, nullable=True)
     occupation = Column(String, nullable=True)
     instagram_link = Column(String, nullable=True)
@@ -136,7 +136,7 @@ class UsernameClaim(Base):
     __tablename__ = "username_claims"
 
     claim_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     username = Column(String, unique=True, nullable=False, index=True)
     claimed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
@@ -145,10 +145,10 @@ class UsernameChangeAudit(Base):
     __tablename__ = "username_change_audits"
 
     audit_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=False, index=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     old_username = Column(String, nullable=False)
     new_username = Column(String, nullable=False)
-    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), nullable=True, index=True)
+    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True, index=True)
     actor_email = Column(String, nullable=True)
     is_admin_override = Column(Boolean, nullable=False, default=False)
     reason = Column(String, nullable=True)
@@ -169,19 +169,21 @@ class PageStatus(str, enum.Enum):
     PUBLISHED = "published"
     ARCHIVED = "archived"
 
+
 class Blog(Base):
     __tablename__ = "blogs"
     __table_args__ = (
         UniqueConstraint("site_id", "slug", name="uq_blogs_site_slug"),
         Index("ix_blogs_status_scheduled_at", "status", "scheduled_at"),
+        Index("ix_blogs_site_status_published_at", "site_id", "status", "published_at"),
     )
 
     blog_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
-    author_id = Column(UUID(as_uuid=True), ForeignKey("authors.author_id"), nullable=True, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
+    author_id = Column(UUID(as_uuid=True), ForeignKey("authors.author_id", ondelete="SET NULL"), nullable=True, index=True)
     title = Column(String, nullable=False)
     content = Column(Text, nullable=False)
-    slug = Column(String, index=True, nullable=False)
+    slug = Column(String, nullable=False)
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     featured_image_url = Column(String, nullable=True)
@@ -195,12 +197,16 @@ class Blog(Base):
     author = relationship("Author", lazy="joined")
     media = relationship("BlogMedia", back_populates="blog", cascade="all, delete-orphan", order_by=lambda: BlogMedia.sort_order)
 
+
 class BlogMedia(Base):
     __tablename__ = "blog_medias"
+    __table_args__ = (
+        CheckConstraint("size_bytes >= 0", name="ck_blog_medias_size_nonneg"),
+    )
 
     media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), nullable=False, index=True)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id", ondelete="CASCADE"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
@@ -210,70 +216,104 @@ class BlogMedia(Base):
     
     blog = relationship("Blog", back_populates="media")
 
+
 class Subscriber(Base):
     __tablename__ = "subscribers"
     __table_args__ = (
         UniqueConstraint("site_id", "email", name="uq_subscribers_site_email"),
+        Index("ix_subscribers_site_active", "site_id", postgresql_where=text("unsubscribed_at IS NULL AND is_confirmed")),
+        CheckConstraint("unsubscribed_at IS NULL OR subscribed_at IS NULL OR unsubscribed_at >= subscribed_at", name="ck_subscribers_unsub_after_sub"),
     )
 
     subscriber_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), index=True, nullable=False)
     email = Column(String, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
     is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
 
+
+class EmailLogStatus(str, enum.Enum):
+    PENDING = "pending"
+    SENT = "sent"
+    FAILED = "failed"
+
+
 class EmailLogs(Base):
     __tablename__ = "email_logs"
     __table_args__ = (
         UniqueConstraint("site_id", "blog_id", name="uq_email_logs_site_blog"),
+        CheckConstraint("total_recipients >= 0", name="ck_email_logs_recipients_nonneg"),
     )
 
     log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
-    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), index=True, nullable=False)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), index=True, nullable=False)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id", ondelete="CASCADE"), index=True, nullable=False)
     total_recipients = Column(Integer, default=0, nullable=False)
-    status = Column(String, default="pending", nullable=False)
+    status = Column(Enum(EmailLogStatus, name="email_log_status", values_callable=lambda x: [e.value for e in x]), default=EmailLogStatus.PENDING, nullable=False)
     sent_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-class Views(Base):
-    __tablename__ = "views"
-    __table_args__ = (
-        Index("ix_views_site_visited_at", "site_id", "visited_at"),
-        Index("ix_views_blog_visitor_hash", "blog_id", "visitor_hash"),
-    )
 
-    view_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), index=True, nullable=False)
-    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), index=True, nullable=False)
-    visitor_hash = Column(String, nullable=False)
-    visited_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
+class SubscriptionPlanType(str, enum.Enum):
+    TRIAL = "trial"
+    PRO = "pro"
+    LIFETIME = "lifetime"
+
+
+class SubscriptionStatus(str, enum.Enum):
+    ACTIVE = "active"
+    INACTIVE = "inactive"
+    CANCELLED = "cancelled"
+    PAST_DUE = "past_due"
+    LAPSED = "lapsed"
+
 
 class Subscriptions(Base):
     __tablename__ = "subscriptions"
+    __table_args__ = (
+        CheckConstraint(
+            "current_period_end IS NULL OR current_period_start IS NULL OR current_period_end >= current_period_start",
+            name="ck_subscriptions_period_order",
+        ),
+    )
 
     subscription_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), index=True, unique=True, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
     dodo_subscription_id = Column(String, unique=True, nullable=True)
-    plan_type = Column(String, nullable=False, default="trial")  # "trial", "pro", "lifetime"
-    status = Column(String, nullable=False, default="inactive")  # "active", "inactive", "cancelled", "past_due"
+    plan_type = Column(Enum(SubscriptionPlanType, name="subscription_plan_type", values_callable=lambda x: [e.value for e in x]), nullable=False, default=SubscriptionPlanType.TRIAL)
+    tier = Column(String, nullable=True, default=None)
+    status = Column(Enum(SubscriptionStatus, name="subscription_status", values_callable=lambda x: [e.value for e in x]), nullable=False, default=SubscriptionStatus.INACTIVE)
     current_period_start = Column(DateTime(timezone=True), nullable=True)
     current_period_end = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 
+
+class TransactionStatus(str, enum.Enum):
+    PENDING = "pending"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+    REFUNDED = "refunded"
+    PARTIALLY_REFUNDED = "partially_refunded"
+    REFUND_FAILED = "refund_failed"
+
+
 class Transactions(Base):
     __tablename__ = "transactions"
+    __table_args__ = (
+        CheckConstraint("amount >= 0", name="ck_transactions_amount_nonneg"),
+    )
 
     transaction_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id"), index=True, nullable=False)
-    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.subscription_id"), nullable=True)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), index=True, nullable=False)
+    subscription_id = Column(UUID(as_uuid=True), ForeignKey("subscriptions.subscription_id", ondelete="SET NULL"), nullable=True)
     dodo_payment_id = Column(String, unique=True, nullable=True)
     amount = Column(Integer, nullable=False)
     currency = Column(String, nullable=False, default="USD")
-    status = Column(String, nullable=False, default="pending")
+    status = Column(Enum(TransactionStatus, name="transaction_status", values_callable=lambda x: [e.value for e in x]), nullable=False, default=TransactionStatus.PENDING)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
 
 class PaymentWebhooks(Base):
     __tablename__ = "payment_webhooks"
@@ -285,14 +325,16 @@ class PaymentWebhooks(Base):
     processed = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+
 class UserPage(Base):
     __tablename__ = "user_pages"
     __table_args__ = (
         UniqueConstraint("site_id", "slug", name="uq_user_pages_site_slug"),
+        Index("ix_user_pages_site_status", "site_id", "status"),
     )
 
     page_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
     title = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     content = Column(Text, nullable=False, default="")
@@ -310,10 +352,13 @@ class UserPage(Base):
 
 class PageMedia(Base):
     __tablename__ = "page_medias"
+    __table_args__ = (
+        CheckConstraint("size_bytes >= 0", name="ck_page_medias_size_nonneg"),
+    )
 
     media_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    page_id = Column(UUID(as_uuid=True), ForeignKey("user_pages.page_id"), nullable=False, index=True)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    page_id = Column(UUID(as_uuid=True), ForeignKey("user_pages.page_id", ondelete="CASCADE"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
     url = Column(String, nullable=False)
     storage_key = Column(String, nullable=False)
     mime_type = Column(String, nullable=False)
@@ -332,7 +377,7 @@ class Category(Base):
     )
 
     category_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id"), nullable=False, index=True)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False, index=True)
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     description = Column(Text, nullable=True, default=None)
@@ -350,7 +395,7 @@ class BlogCategory(Base):
     )
 
     blog_category_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id"), nullable=False, index=True)
-    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.category_id"), nullable=False, index=True)
+    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id", ondelete="CASCADE"), nullable=False, index=True)
+    category_id = Column(UUID(as_uuid=True), ForeignKey("categories.category_id", ondelete="CASCADE"), nullable=False, index=True)
 
     category = relationship("Category", back_populates="blog_links")
