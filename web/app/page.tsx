@@ -8,8 +8,11 @@ import { MarketingNav } from "@/components/marketing-nav";
 import { ProblemSection } from "@/components/problem-section";
 import { PricingSection } from "@/components/pricing-section";
 import { ProductShowcase } from "@/components/product-showcase";
+import { StructuredData } from "@/components/structured-data";
 import { Button } from "@/components/ui/button";
-import { appAuthHref } from "@/lib/env";
+import { MARKETING_FAQS } from "@/lib/marketing-faqs";
+import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
+import { generateFaqPageSchema, generateOrganizationSchema } from "@/lib/structured-data";
 
 export default function MarketingPage() {
   const signupUrl = appAuthHref("/signup");
@@ -101,6 +104,8 @@ export default function MarketingPage() {
         </section>
       </main>
       <MarketingFooter />
+      <StructuredData data={generateFaqPageSchema(MARKETING_FAQS, MARKETING_ORIGIN)} />
+      <StructuredData data={generateOrganizationSchema("Articurls", MARKETING_ORIGIN, `${MARKETING_ORIGIN}/articurls-logo.svg`)} />
     </>
   );
 }

@@ -19,6 +19,30 @@ export interface Person {
   jobTitle?: string;
 }
 
+export interface Organization {
+  "@context": "https://schema.org";
+  "@type": "Organization";
+  "@id"?: string;
+  name: string;
+  url: string;
+  logo?: ImageObject;
+  sameAs?: string[];
+}
+
+export interface FaqPage {
+  "@context": "https://schema.org";
+  "@type": "FAQPage";
+  url?: string;
+  mainEntity: {
+    "@type": "Question";
+    name: string;
+    acceptedAnswer: {
+      "@type": "Answer";
+      text: string;
+    };
+  }[];
+}
+
 export interface BlogPosting {
   "@context": "https://schema.org";
   "@type": "BlogPosting";
@@ -35,7 +59,7 @@ export interface BlogPosting {
     "@id": string;
     name: string;
   };
-  publisher?: Person;
+  publisher?: Organization;
   breadcrumb?: BreadcrumbList;
 }
 
@@ -58,7 +82,7 @@ export interface WebSite {
   description?: string;
   url: string;
   author?: Person;
-  publisher?: Person;
+  publisher?: Organization;
 }
 
 export interface CollectionPage {
@@ -104,7 +128,7 @@ export interface BreadcrumbList {
   numberOfItems: number;
 }
 
-export type StructuredData = BlogPosting | ProfilePage | WebSite | CollectionPage | WebPage | BreadcrumbList;
+export type StructuredData = BlogPosting | ProfilePage | WebSite | CollectionPage | WebPage | BreadcrumbList | FaqPage | Organization;
 
 export function getImageObject(url: string | null, width?: number, height?: number): ImageObject | null {
   if (!url) return null;
@@ -174,6 +198,40 @@ export function generateAuthorProfileSchema(
   };
 }
 
+export function generateOrganizationSchema(
+  name: string,
+  url: string,
+  logoUrl?: string | null
+): Organization {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "@id": url,
+    name,
+    url,
+    logo: getImageObject(logoUrl ?? null) || undefined,
+  };
+}
+
+export function generateFaqPageSchema(
+  faqs: readonly { question: string; answer: string }[],
+  url: string
+): FaqPage {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    url,
+    mainEntity: faqs.map((faq) => ({
+      "@type": "Question",
+      name: faq.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: faq.answer,
+      },
+    })),
+  };
+}
+
 export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSite {
   const siteName = (user.nav_blog_name || "").trim() || "My Blog";
   const description = user.meta_description || undefined;
@@ -185,7 +243,7 @@ export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSit
     description,
     url: siteUrl,
     author: generatePersonSchema(user, siteUrl),
-    publisher: generatePersonSchema(user, siteUrl),
+    publisher: generateOrganizationSchema(siteName, siteUrl, user.favicon_url),
   };
 }
 
@@ -200,7 +258,7 @@ export function generateBlogPostingSchema(
   const authorPerson = blog.author
     ? generateAuthorPersonSchema(blog.author, `${siteUrl}/author/${encodeURIComponent(blog.author.slug)}`)
     : generatePersonSchema(author, siteUrl);
-  const publisherPerson = generatePersonSchema(author, siteUrl);
+  const siteName = author.nav_blog_name || "My Blog";
   
   // Generate multiple image sizes for better SEO
   const images: ImageObject[] = [];
@@ -227,9 +285,9 @@ export function generateBlogPostingSchema(
     isPartOf: {
       "@type": "Blog",
       "@id": siteUrl,
-      name: author.nav_blog_name || "My Blog",
+      name: siteName,
     },
-    publisher: publisherPerson,
+    publisher: generateOrganizationSchema(siteName, siteUrl, author.favicon_url),
     breadcrumb: generateBreadcrumbList([
       { name: author.nav_blog_name || "Home", url: siteUrl },
       { name: title, url: canonicalUrl },
