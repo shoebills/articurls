@@ -12,8 +12,6 @@ def _ugc_subdomain(target: Union[models.Site, models.User, str]) -> str:
         subdomain = target
     elif hasattr(target, "subdomain") and target.subdomain:
         subdomain = target.subdomain
-    elif hasattr(target, "user_name") and target.user_name:
-        subdomain = target.user_name
 
     parsed = urlparse(settings.ugc_origin)
     port = f":{parsed.port}" if parsed.port else ""

@@ -2,7 +2,7 @@
 
 import React, { useEffect } from "react";
 import { useTheme } from "next-themes";
-import type { PublicUser } from "@/lib/types";
+import type { PublicSite } from "@/lib/types";
 
 // The 5 curated presets with complete light and dark tokens
 export const COLOR_PALETTES = {
@@ -175,14 +175,14 @@ function getPaletteTokens(colorTheme?: string | null, customColor?: string | nul
 }
 
 export function ThemeStyleWrapper({
-  user,
+  site,
   children,
 }: {
-  user: PublicUser;
+  site: PublicSite;
   children: React.ReactNode;
 }) {
   const { setTheme } = useTheme();
-  const siteMode = user.site_mode || "system";
+  const siteMode = site.site_mode || "system";
 
   useEffect(() => {
     // If reader hasn't explicitly chosen a mode in localStorage, apply site's configured mode
@@ -192,9 +192,9 @@ export function ThemeStyleWrapper({
     }
   }, [siteMode, setTheme]);
 
-  const palette = getPaletteTokens(user.color_theme, user.custom_color);
-  const radius = RADIUS_VALUES[(user.button_style as keyof typeof RADIUS_VALUES) || "rounded"];
-  const fontClass = FONT_CLASSES[(user.font_family as keyof typeof FONT_CLASSES) || "sans"];
+  const palette = getPaletteTokens(site.color_theme, site.custom_color);
+  const radius = RADIUS_VALUES[(site.button_style as keyof typeof RADIUS_VALUES) || "rounded"];
+  const fontClass = FONT_CLASSES[(site.font_family as keyof typeof FONT_CLASSES) || "sans"];
 
   const cssContent = `
     :root, .articurls-theme-scope {
@@ -234,15 +234,15 @@ export function ThemeStyleWrapper({
   return (
     <div className={`articurls-theme-scope min-h-screen bg-background text-foreground ${fontClass}`}>
       <style id="articurls-theme-vars" dangerouslySetInnerHTML={{ __html: cssContent }} />
-      {user.custom_css ? (
-        <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: user.custom_css }} />
+      {site.custom_css ? (
+        <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: site.custom_css }} />
       ) : null}
-      {user.custom_head_code ? (
-        <div id="articurls-custom-head" dangerouslySetInnerHTML={{ __html: user.custom_head_code }} style={{ display: "none" }} />
+      {site.custom_head_code ? (
+        <div id="articurls-custom-head" dangerouslySetInnerHTML={{ __html: site.custom_head_code }} style={{ display: "none" }} />
       ) : null}
       {children}
-      {user.custom_body_code ? (
-        <div id="articurls-custom-body" dangerouslySetInnerHTML={{ __html: user.custom_body_code }} style={{ display: "none" }} />
+      {site.custom_body_code ? (
+        <div id="articurls-custom-body" dangerouslySetInnerHTML={{ __html: site.custom_body_code }} style={{ display: "none" }} />
       ) : null}
     </div>
   );

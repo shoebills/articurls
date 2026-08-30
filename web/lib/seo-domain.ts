@@ -9,7 +9,7 @@ import { API_URL, UGC_DOMAIN } from "@/lib/env";
 import { isCustomDomainHost, buildRuntimeHostsFromEnv } from "@/lib/request-host";
 
 export interface DomainLookupResult {
-  username: string;
+  subdomain: string;
   domain_status: string;
   custom_domain: string | null;
   redirect_to: string | null;
@@ -35,7 +35,7 @@ export async function resolveDomainForSeo(
   if (host.endsWith(`.${UGC_DOMAIN}`)) {
     const subdomain = host.split(".")[0];
     if (subdomain && !RESERVED.has(subdomain)) {
-      return { username: subdomain, domain_status: "active", custom_domain: host, redirect_to: null, custom_subpath: null };
+      return { subdomain: subdomain, domain_status: "active", custom_domain: host, redirect_to: null, custom_subpath: null };
     }
   }
   try {
@@ -52,14 +52,14 @@ export async function resolveDomainForSeo(
     if (!res.ok) return null;
 
     const data: {
-      username: string;
+      subdomain: string;
       domain_status: string;
       redirect_to?: string | null;
       custom_subpath?: string | null;
     } = await res.json();
 
     return {
-      username: data.username,
+      subdomain: data.subdomain,
       domain_status: data.domain_status,
       custom_domain: host,
       redirect_to: data.redirect_to ?? null,

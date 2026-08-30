@@ -35,7 +35,7 @@ type PublicDesktopNavProps = {
   nameSize: NavBlogNameSize;
   links: PublicNavDesktopLink[];
   showSubscribe: boolean;
-  userName: string;
+  subdomain: string;
   authorName: string;
   alignment?: "left" | "center" | "right" | string;
 };
@@ -56,7 +56,7 @@ export function PublicDesktopNav({
   nameSize,
   links,
   showSubscribe,
-  userName,
+  subdomain,
   authorName,
   alignment = "left",
 }: PublicDesktopNavProps) {
@@ -207,15 +207,15 @@ export function PublicDesktopNav({
 
       <div className="flex items-center gap-2 shrink-0">
         <ThemeToggle />
-        {userName ? (
+        {subdomain ? (
           <SearchButton
             iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
-            userName={userName}
+            subdomain={subdomain}
           />
         ) : null}
-        {showSubscribe && userName ? (
+        {showSubscribe && subdomain ? (
           <div className="shrink-0">
-            <SubscribeToAuthor mode="dialog" userName={userName} authorName={authorName} />
+            <SubscribeToAuthor mode="dialog" subdomain={subdomain} authorName={authorName} />
           </div>
         ) : null}
       </div>

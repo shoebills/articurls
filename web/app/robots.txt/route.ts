@@ -14,7 +14,7 @@
  *
  * ── Marketing domain request (no x-original-host, or internal hostname) ─────
  *   - Blocks dashboard, auth, and internal routes.
- *   - Allows all public user content.
+ *   - Allows all public site content.
  *   - Canonical tags + 301 redirects handle consolidation for custom domain
  *     users; no Disallow needed for their articurls URLs.
  */
@@ -32,9 +32,9 @@ export const dynamic = "force-dynamic";
 
 const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
 
-async function loadUser(username: string) {
+async function loadSite(subdomain: string) {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -59,7 +59,7 @@ async function customDomainRobots(host: string): Promise<Response> {
     });
   }
 
-  const { domain_status, username } = domainInfo;
+  const { domain_status, subdomain } = domainInfo;
 
   // pending → not verified, prevent indexing
   // expired → content redirects to articurls, prevent indexing here
@@ -93,9 +93,9 @@ async function customDomainRobots(host: string): Promise<Response> {
     });
   }
 
-  const user = await loadUser(username);
+  const site = await loadSite(subdomain);
 
-  if (!user) {
+  if (!site) {
     return new Response(DISALLOW_ALL, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",

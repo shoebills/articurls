@@ -1,11 +1,11 @@
 import Link from "next/link";
-import type { PublicUser, UserPage } from "@/lib/types";
+import type { PublicSite, UserPage } from "@/lib/types";
 import { getPublicPageUrl } from "@/lib/public-url";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { ExternalLink, Rss } from "lucide-react";
 
 type PublicSiteFooterProps = {
-  user: PublicUser;
+  site: PublicSite;
   pages: UserPage[];
   basePath?: string;
 };
@@ -16,14 +16,14 @@ function normalizePublicLink(link: string): string {
   return `https://${link}`;
 }
 
-export function PublicSiteFooter({ user, pages, basePath = "" }: PublicSiteFooterProps) {
-  if (user.site_footer_enabled === false) return null;
+export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFooterProps) {
+  if (site.site_footer_enabled === false) return null;
 
-  const hasModularColumns = Array.isArray(user.footer_columns) && user.footer_columns.length > 0;
-  const showNewsletter = user.footer_newsletter_enabled !== false && user.subscriber_collection_enabled;
-  const showSystemLinks = user.footer_system_links_enabled !== false;
+  const hasModularColumns = Array.isArray(site.footer_columns) && site.footer_columns.length > 0;
+  const showNewsletter = site.footer_newsletter_enabled !== false && site.subscriber_collection_enabled;
+  const showSystemLinks = site.footer_system_links_enabled !== false;
   const currentYear = new Date().getFullYear();
-  const copyrightText = user.footer_copyright || `© ${currentYear} ${user.name || user.user_name}. All rights reserved.`;
+  const copyrightText = site.footer_copyright || `© ${currentYear} ${site.name || site.subdomain}. All rights reserved.`;
 
   return (
     <footer className="mt-20 border-t border-border/80 pt-12 pb-16">
@@ -32,19 +32,19 @@ export function PublicSiteFooter({ user, pages, basePath = "" }: PublicSiteFoote
           {/* Brand & Newsletter Column */}
           <div className="space-y-4 lg:col-span-1">
             <h3 className="font-bold text-lg tracking-tight text-foreground">
-              {user.nav_blog_name || user.name || "My Blog"}
+              {site.nav_blog_name || site.name || "My Blog"}
             </h3>
 
             {showNewsletter ? (
               <div className="pt-2">
                 <p className="text-xs font-medium text-foreground mb-2">Subscribe to newsletter</p>
-                <SubscribeToAuthor userName={user.user_name} authorName={user.name} />
+                <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
               </div>
             ) : null}
           </div>
 
           {/* Dynamic Link Columns */}
-          {user.footer_columns!.map((col) => (
+          {site.footer_columns!.map((col) => (
             <div key={col.id} className="space-y-3">
               <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
                 {col.title}
@@ -84,7 +84,7 @@ export function PublicSiteFooter({ user, pages, basePath = "" }: PublicSiteFoote
                   .map((page) => (
                     <li key={page.page_id}>
                       <Link
-                        href={getPublicPageUrl(user.user_name, page.slug, basePath)}
+                        href={getPublicPageUrl(site.subdomain, page.slug, basePath)}
                         className="text-muted-foreground hover:text-foreground hover:underline transition-colors"
                       >
                         {page.title}
@@ -103,7 +103,7 @@ export function PublicSiteFooter({ user, pages, basePath = "" }: PublicSiteFoote
 
         {showSystemLinks ? (
           <div className="flex items-center gap-4">
-            {user.rss_enabled !== false ? (
+            {site.rss_enabled !== false ? (
               <Link href={`${basePath}/rss.xml`} className="inline-flex items-center gap-1 hover:text-foreground">
                 <Rss className="h-3 w-3" />
                 <span>RSS</span>

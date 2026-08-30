@@ -15,10 +15,10 @@ const MIN_QUERY_LENGTH = 2;
 
 export function SearchButton({
   iconClassName,
-  userName,
+  subdomain,
 }: {
   iconClassName?: string;
-  userName: string;
+  subdomain: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -65,7 +65,7 @@ export function SearchButton({
     const rid = ++requestIdRef.current;
     debounceRef.current = setTimeout(async () => {
       try {
-        const data = await searchPublicBlogs(userName, trimmed, 0);
+        const data = await searchPublicBlogs(subdomain, trimmed, 0);
         if (requestIdRef.current !== rid) return;
         setResults(data);
         setHasMore(data.length === PAGE_SIZE);
@@ -84,14 +84,14 @@ export function SearchButton({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [query, userName]);
+  }, [query, subdomain]);
 
   const handleShowMore = useCallback(async () => {
     const nextOffset = offsetRef.current + PAGE_SIZE;
     const rid = ++requestIdRef.current;
     setLoadingMore(true);
     try {
-      const data = await searchPublicBlogs(userName, query.trim(), nextOffset);
+      const data = await searchPublicBlogs(subdomain, query.trim(), nextOffset);
       if (requestIdRef.current !== rid) return;
       setResults((prev) => [...prev, ...data]);
       setHasMore(data.length === PAGE_SIZE);
@@ -102,7 +102,7 @@ export function SearchButton({
         setLoadingMore(false);
       }
     }
-  }, [userName, query]);
+  }, [subdomain, query]);
 
   const handleClear = useCallback(() => {
     setQuery("");
@@ -157,11 +157,11 @@ export function SearchButton({
         if (results[idx]) {
           const slug = results[idx].slug;
           selectResult();
-          router.push(getPublicPostUrl(userName, slug));
+          router.push(getPublicPostUrl(subdomain, slug));
         }
       }
     },
-    [results, highlightedIndex, userName, router, selectResult]
+    [results, highlightedIndex, subdomain, router, selectResult]
   );
 
   useEffect(() => {
@@ -282,7 +282,7 @@ export function SearchButton({
                       {results.map((blog, i) => (
                         <li key={blog.blog_id}>
                           <Link
-                            href={getPublicPostUrl(userName, blog.slug)}
+                            href={getPublicPostUrl(subdomain, blog.slug)}
                             onClick={selectResult}
                             onMouseEnter={() => setHighlightedIndex(i)}
                             className={`block px-4 py-3 text-sm transition-colors ${

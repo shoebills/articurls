@@ -1,10 +1,8 @@
 import jwt
-import uuid
 from fastapi import Depends, APIRouter, HTTPException, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
-from sqlalchemy.exc import IntegrityError
 from ..database import get_db
-from .. import models
+from .. import models, utils
 from ..security import hashing, oauth2
 from ..security.oauth2 import get_current_site
 from ..utils.serialization import user_settings_out
@@ -21,16 +19,9 @@ from ..storage.service import (
 )
 from ..umami.service import enqueue_umami_provision
 from ..utils import (
-    assert_admin_email,
-    is_admin_email,
-    RequestContext,
-    apply_username_change_or_raise,
-    claim_username_or_raise,
     normalize_email,
     user_by_email,
-    user_by_username,
-    validate_username_or_raise,
-    public_blog_home_url,
+    validate_subdomain_or_raise,
 )
 from ..cache.service import schedule_homepage_purge, schedule_tenant_purge
 from ..utils.rate_limit import check_rate_limit_ip
@@ -50,7 +41,7 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     check_rate_limit_ip(req, "signup", _SIGNUP_IP_LIMIT, _SIGNUP_IP_WINDOW)
 
     email = normalize_email(str(request.email))
-    user_name = validate_username_or_raise(request.user_name)
+    subdomain = validate_subdomain_or_raise(request.subdomain)
 
     db_email = user_by_email(db, email)
 
@@ -59,13 +50,13 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
     
-    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
-    db_user_name = db_site
+    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
+    db_subdomain = db_site
     
-    if db_user_name:
+    if db_subdomain:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already registered")
+            detail="Subdomain already registered")
     
     hashed_password = hashing.get_password_hash(request.password)
     
@@ -79,7 +70,7 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     
     new_site = models.Site(
         user_id=new_user.user_id,
-        subdomain=user_name,
+        subdomain=subdomain,
     )
     db.add(new_site)
     db.flush()
@@ -87,12 +78,10 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     new_author = models.Author(
         site_id=new_site.site_id,
         name=request.name,
-        slug=user_name,
+        slug=subdomain,
     )
     db.add(new_author)
     db.flush()
-    
-    utils.claim_username_or_raise(db, new_user.user_id, user_name)
     
     db.commit()
     db.refresh(new_user)
@@ -173,28 +162,6 @@ def get_user(db: Session = Depends(get_db), current_user = Depends(oauth2.get_cu
     return user_settings_out(db, current_user, current_site)
 
 
-@router.get("/username-availability", status_code=status.HTTP_200_OK)
-def username_availability(
-    user_name: str,
-    db: Session = Depends(get_db),
-    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
-):
-    try:
-        normalized = validate_username_or_raise(user_name)
-    except HTTPException as ex:
-        return {
-            "available": False,
-            "normalized": "",
-            "reason": ex.detail if isinstance(ex.detail, str) else "Invalid username",
-        }
-
-    existing_user = user_by_username(db, normalized)
-    if existing_user and existing_user.user_id != current_user.user_id:
-        return {"available": False, "normalized": normalized, "reason": "taken"}
-
-    return {"available": True, "normalized": normalized, "reason": None}
-
-
 @router.get("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_200_OK)
 def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
     return current_site
@@ -238,21 +205,6 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
     user_fields = ["name", "email"]
     site_fields = ["meta_title", "meta_description"]
 
-    username_changed = "user_name" in update_data and update_data["user_name"] is not None
-
-    if username_changed:
-        from ..utils.usernames import apply_username_change_or_raise
-        utils.apply_username_change_or_raise(
-            db,
-            db_site=current_site,
-            new_username_raw=update_data.pop("user_name"),
-            actor_user_id=current_user.user_id,
-            actor_email=current_user.email,
-            request_context=None,
-            is_admin_override=False,
-            reason="User self-initiated change",
-        )
-        
     for key, value in update_data.items():
         if key in user_fields:
             setattr(current_user, key, value)
@@ -266,47 +218,6 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
     db.refresh(current_site)
     
     return user_settings_out(db, current_user, current_site)
-
-
-@router.patch("/admin/{target_user_id}/username", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def admin_change_username(
-    target_user_id: uuid.UUID,
-    request: user.AdminUsernameChange,
-    req: Request,
-    db: Session = Depends(get_db),
-    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
-):
-    assert_admin_email(current_user.email)
-
-    db_user = db.query(models.User).filter(models.User.user_id == target_user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    target_site = db.query(models.Site).filter(models.Site.user_id == target_user_id).order_by(models.Site.site_id.asc()).first()
-    if not target_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found for user")
-
-    apply_username_change_or_raise(
-        db,
-        db_site=target_site,
-        new_username_raw=request.user_name,
-        actor_user_id=current_user.user_id,
-        actor_email=current_user.email,
-        request_context=RequestContext(
-            ip=req.client.host if req.client else None,
-            user_agent=req.headers.get("user-agent"),
-        ),
-        is_admin_override=True,
-        reason=(request.reason or "").strip() or "admin_override",
-    )
-    try:
-        db.commit()
-    except IntegrityError:
-        db.rollback()
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Username already registered")
-    db.refresh(db_user)
-    db.refresh(target_site)
-    return user_settings_out(db, db_user, target_site)
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)

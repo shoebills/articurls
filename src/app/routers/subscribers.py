@@ -22,8 +22,8 @@ _SUBSCRIBE_EMAIL_LIMIT = 3
 _SUBSCRIBE_EMAIL_WINDOW = 3600   # 1 hour
 
 
-@router.post("/subscribe/{user_name}", status_code=status.HTTP_200_OK)
-def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe, db: Session = Depends(get_db)):
+@router.post("/subscribe/{subdomain}", status_code=status.HTTP_200_OK)
+def subscribe_blog(subdomain: str, request: Request, body: subscribers.Subscribe, db: Session = Depends(get_db)):
 
     email = normalize_email(str(body.email))
 
@@ -33,11 +33,11 @@ def subscribe_blog(user_name: str, request: Request, body: subscribers.Subscribe
         _SUBSCRIBE_EMAIL_LIMIT, _SUBSCRIBE_EMAIL_WINDOW,
     )
 
-    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
+    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
 
     if not db_site:
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
-                          detail=f"User with username {user_name} doesn't exist")
+                          detail=f"Site with subdomain {subdomain} doesn't exist")
 
     if not db_site.subscriber_collection_enabled:
         raise HTTPException(
@@ -104,15 +104,15 @@ def confirm_subscription(token: str, db: Session = Depends(get_db)):
 
     return {"message": "Email verified successfully"}
 
-@router.post("/unsubscribe/{user_name}", status_code=status.HTTP_200_OK)
-def unsubscribe_blog(user_name: str, request: subscribers.Unsubscribe, db: Session = Depends(get_db)):
+@router.post("/unsubscribe/{subdomain}", status_code=status.HTTP_200_OK)
+def unsubscribe_blog(subdomain: str, request: subscribers.Unsubscribe, db: Session = Depends(get_db)):
 
-    db_site = db.query(models.Site).filter(models.Site.subdomain == user_name).first()
+    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
 
     if not db_site:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"User with username: {user_name} doesn't exist"
+            detail=f"Site with subdomain: {subdomain} doesn't exist"
         )
 
     db_subscriber = (db.query(models.Subscriber).filter(models.Subscriber.email == request.email, models.Subscriber.site_id == db_site.site_id).first())

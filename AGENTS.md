@@ -33,6 +33,7 @@ cd web && npm run lint
 - `.env.docker` — consumed by `docker compose`. Your env plus `DATABASE_HOSTNAME=postgres`, `REDIS_URL=redis://redis:6379/0`, etc. (Gitignored.)
 - `.env.production` — consumed by `docker compose -f docker-compose.prod.yml`. (Gitignored.)
 - `.env.local` — Next.js local overrides (gitignored).
+- **Never read or print real env files** (`.env`, `.env.docker`, `.env.production`, `.env.local`, or any uncommitted `.*env*` file) — they contain secrets. Use only the `.example` templates (`.env.example`, etc.) to learn which variables exist. If a real value is needed at runtime (e.g. DB credentials for `alembic`), pass it as an env-var override on the command line or ask the user — do not cat/grep the file.
 
 ## Key Gotchas
 
@@ -66,7 +67,7 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
 5. **`updated_at` is maintained by a DB trigger** (`set_updated_at()` on users, sites, authors, blogs, user_pages, subscriptions) — bulk updates don't need manual bookkeeping. New tables with `updated_at` need the trigger too.
 6. **Indexes**: hot paths get composite `(site_id, ...)` indexes; use partial indexes for filtered states (e.g. `ix_subscribers_site_active WHERE unsubscribed_at IS NULL AND is_confirmed`). Don't add single-column slug indexes — the `(site_id, slug)` unique constraints already cover all lookups.
 7. **CHECK constraints** for invariant guards (`amount >= 0`, `size_bytes >= 0`, period ordering). Declare them in the model's `__table_args__` AND the migration.
-8. **Deletion flows must clean external state**: before relying on DB cascades, delete storage objects (R2/local) for media rows and release `username_claims` rows. See `delete_site` in `src/app/routers/sites.py` for the reference pattern.
+8. **Deletion flows must clean external state**: before relying on DB cascades, delete storage objects (R2/local) for media rows. See `delete_site` in `src/app/routers/sites.py` for the reference pattern.
 9. **Known dead/removed things — do not reintroduce**: the `views` table (replaced by Umami) and `users.remove_branding` are gone; no code may reference them.
 
 ## Multi-Tenant Domain Routing

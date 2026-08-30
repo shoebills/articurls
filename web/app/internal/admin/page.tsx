@@ -60,7 +60,7 @@ export default function InternalAdminPage() {
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
-                placeholder={section === "users" ? "Search by username or email" : "Search"}
+                placeholder={section === "users" ? "Search by subdomain or email" : "Search"}
                 className="sm:max-w-md"
               />
               {section === "users" ? (
@@ -99,7 +99,7 @@ export default function InternalAdminPage() {
                   <thead className="text-muted-foreground">
                     <tr>
                       <th className="py-2 pr-3">Name</th>
-                      <th className="py-2 pr-3">Username</th>
+                      <th className="py-2 pr-3">Subdomain</th>
                       <th className="py-2 pr-3">Email</th>
                       <th className="py-2 pr-3">Plan</th>
                       <th className="py-2 pr-3">Created</th>
@@ -109,7 +109,7 @@ export default function InternalAdminPage() {
                     {users.map((u) => (
                       <tr key={u.user_id} className="border-t border-border/60">
                         <td className="py-2 pr-3">{u.name}</td>
-                        <td className="py-2 pr-3">@{u.user_name}</td>
+                        <td className="py-2 pr-3">@{u.subdomain}</td>
                         <td className="py-2 pr-3">{u.email}</td>
                         <td className="py-2 pr-3 uppercase">{u.plan}</td>
                         <td className="py-2 pr-3">{u.created_at ? new Date(u.created_at).toLocaleDateString() : "-"}</td>
@@ -142,7 +142,7 @@ export default function InternalAdminPage() {
                   <tbody>
                     {payments.map((p) => (
                       <tr key={p.transaction_id} className="border-t border-border/60">
-                        <td className="py-2 pr-3">@{p.user_name}</td>
+                        <td className="py-2 pr-3">@{p.subdomain}</td>
                         <td className="py-2 pr-3">{p.email}</td>
                         <td className="py-2 pr-3">
                           {p.amount} {p.currency}

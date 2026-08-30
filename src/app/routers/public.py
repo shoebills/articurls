@@ -4,7 +4,7 @@ from sqlalchemy import func, or_
 from typing import List, Any
 from ..database import get_db
 from .. import models, utils
-from ..schemas import blog, user
+from ..schemas import blog, site
 from ..schemas import page as page_schema
 
 
@@ -13,18 +13,18 @@ router = APIRouter(
 )
 
 
-@router.get("/{user_name}/blogs/search", response_model=List[blog.PublicBlogSearchResult], status_code=status.HTTP_200_OK)
+@router.get("/{subdomain}/blogs/search", response_model=List[blog.PublicBlogSearchResult], status_code=status.HTTP_200_OK)
 def search_blogs(
-    user_name: str,
+    subdomain: str,
     request: Request,
     q: str = Query(..., min_length=2, max_length=200, description="Search query"),
     limit: int = Query(5, ge=1, le=100),
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -124,12 +124,12 @@ def search_blogs(
     ]
 
 
-@router.get("/{user_name}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
-def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{subdomain}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
+def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
 
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"User not found")
@@ -148,12 +148,12 @@ def get_blogs(user_name: str, request: Request, db: Session = Depends(get_db)):
 
     return blogs
 
-@router.get("/{user_name}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
-def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{subdomain}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
+def get_blog(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
 
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
 
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -172,24 +172,24 @@ def get_blog(user_name: str, slug: str, request: Request, db: Session = Depends(
     return db_blog
 
 
-@router.get("/{user_name}", response_model=user.PublicUser)
-def get_user(user_name: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{subdomain}", response_model=site.PublicSite)
+def get_site(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
 
     if not db_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
 
-    return utils.public_user_out(db, db_site)
+    return utils.public_site_out(db, db_site)
 
 
-@router.get("/{user_name}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
-def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
+def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     return (
@@ -204,11 +204,11 @@ def get_pages(user_name: str, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/{user_name}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
-def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def get_page(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     db_page = (
@@ -225,11 +225,11 @@ def get_page(user_name: str, slug: str, request: Request, db: Session = Depends(
     return db_page
 
 
-@router.get("/{user_name}/categories", status_code=status.HTTP_200_OK)
-def get_public_categories(user_name: str, request: Request, all: bool = False, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/categories", status_code=status.HTTP_200_OK)
+def get_public_categories(subdomain: str, request: Request, all: bool = False, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -260,11 +260,11 @@ def get_public_categories(user_name: str, request: Request, all: bool = False, d
     return result
 
 
-@router.get("/{user_name}/category/{slug}", status_code=status.HTTP_200_OK)
-def get_public_category_blogs(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/category/{slug}", status_code=status.HTTP_200_OK)
+def get_public_category_blogs(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -310,11 +310,11 @@ def get_public_category_blogs(user_name: str, slug: str, request: Request, db: S
     }
 
 
-@router.get("/{user_name}/authors", status_code=status.HTTP_200_OK)
-def get_public_authors(user_name: str, request: Request, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/authors", status_code=status.HTTP_200_OK)
+def get_public_authors(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
@@ -357,11 +357,11 @@ def get_public_authors(user_name: str, request: Request, db: Session = Depends(g
     return result
 
 
-@router.get("/{user_name}/author/{slug}", status_code=status.HTTP_200_OK)
-def get_public_author_blogs(user_name: str, slug: str, request: Request, db: Session = Depends(get_db)):
-    db_site, canonical_username = utils.resolve_username_to_current(db, user_name)
-    if db_site and canonical_username != utils.normalize_username(user_name):
-        return utils.permanent_username_redirect(str(request.url.path), canonical_username, request.url.query)
+@router.get("/{subdomain}/author/{slug}", status_code=status.HTTP_200_OK)
+def get_public_author_blogs(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
+    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
+        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 

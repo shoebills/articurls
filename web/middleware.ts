@@ -197,7 +197,7 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  // Marketing domain — /[username], /[username]/blog/[slug], etc.
+  // Marketing domain — /[subdomain], /[subdomain]/blog/[slug], etc.
   let appHost = "";
   try {
     appHost = new URL(appOrigin).hostname;

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
@@ -11,7 +11,7 @@ import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
 type EditorialTemplateProps = {
-  site: PublicUser;
+  site: PublicSite;
   blogs: PublicBlog[];
   pages: UserPage[];
   categories: Category[];
@@ -19,7 +19,7 @@ type EditorialTemplateProps = {
 };
 
 export function EditorialTemplate({ site, blogs, pages, categories, basePath }: EditorialTemplateProps) {
-  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.user_name || "My Blog";
+  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
   const maxWidth = site.content_width === "wide" ? "max-w-5xl" : "max-w-3xl";
   const isNavEnabled = site.navbar_enabled !== false;
@@ -38,7 +38,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
       }))
     : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
           label: c.name,
         }))
       : [];
@@ -52,7 +52,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
       }))
     : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
           label: c.name,
         }))
       : [];
@@ -74,11 +74,11 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
                 title={navBlogName}
-                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
                 nameSize={blogNameSize}
                 links={desktopLinks}
                 showSubscribe={showSubscriberCollection}
-                userName={site.user_name}
+                subdomain={site.subdomain}
                 authorName={site.name}
                 alignment={site.navbar_alignment || "left"}
               />
@@ -86,10 +86,10 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
             <div className="sm:hidden">
               <PublicMobileNavMenu
                 title={navBlogName}
-                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
                 nameSize={blogNameSize}
                 links={mobileLinks}
-                userName={site.user_name}
+                subdomain={site.subdomain}
                 authorName={site.name}
                 showSubscribeAction={showSubscriberCollection}
                 showMenuButton={hasMobileNav}
@@ -106,7 +106,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
             </h1>
             {showSubscriberCollection && (
               <div className="mt-8 w-full max-w-sm">
-                <SubscribeToAuthor userName={site.user_name} authorName={site.name} />
+                <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
               </div>
             )}
           </div>
@@ -120,7 +120,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
         ) : (
           <div className="mt-12 space-y-16 lg:space-y-20">
             {blogs.map((b) => {
-              const postHref = getPublicPostUrl(site.user_name, b.slug, basePath);
+              const postHref = getPublicPostUrl(site.subdomain, b.slug, basePath);
               const coverImg = resolveBlogCoverImage(b);
               const firstCat = b.category_ids && b.category_ids.length > 0
                 ? categories.find(c => c.category_id === b.category_ids![0])
@@ -143,7 +143,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs">
                     {b.author ? (
                       <Link
-                        href={getPublicAuthorUrl(site.user_name, b.author.slug, basePath)}
+                        href={getPublicAuthorUrl(site.subdomain, b.author.slug, basePath)}
                         className="relative z-10 font-medium text-muted-foreground hover:text-foreground transition-colors"
                       >
                         {b.author.name}
@@ -156,7 +156,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
                     )}
                     {firstCat && (
                       <Link
-                        href={getPublicCategoryUrl(site.user_name, firstCat.slug, basePath)}
+                        href={getPublicCategoryUrl(site.subdomain, firstCat.slug, basePath)}
                         className="relative z-10 rounded-full bg-primary/10 px-3 py-1 font-medium text-primary hover:bg-primary/20 transition-colors"
                       >
                         {firstCat.name}
@@ -180,7 +180,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
           </div>
         )}
 
-        <PublicSiteFooter user={site} pages={pages} basePath={basePath} />
+        <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
       </main>
     </div>
   );

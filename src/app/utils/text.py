@@ -13,10 +13,10 @@ def normalize_email(email: str | None) -> str:
     return str(email).strip().lower()
 
 
-def normalize_username(user_name: str | None) -> str:
-    if user_name is None:
+def normalize_subdomain(subdomain: str | None) -> str:
+    if subdomain is None:
         return ""
-    return str(user_name).strip().lower()
+    return str(subdomain).strip().lower()
 
 
 def user_by_email(db: Session, email: str) -> models.User | None:
@@ -24,13 +24,6 @@ def user_by_email(db: Session, email: str) -> models.User | None:
     if not norm:
         return None
     return db.query(models.User).filter(func.lower(models.User.email) == norm).first()
-
-
-def user_by_username(db: Session, user_name: str) -> models.User | None:
-    norm = normalize_username(user_name)
-    if not norm:
-        return None
-    return db.query(models.User).filter(func.lower(models.User.user_name) == norm).first()
 
 
 _NORM_PUNCT_RE = re.compile(r"[^\w\s]", re.UNICODE)

@@ -170,6 +170,9 @@ export function SiteSwitcher({
                 />
                 <span className="text-xs text-muted-foreground select-none">.articurls.site</span>
               </div>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                This cannot be changed later, but you can connect a custom domain anytime.
+              </p>
             </div>
 
             <div className="grid gap-2">

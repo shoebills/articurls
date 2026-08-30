@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { PublicBlog, PublicUser, UserPage, Category } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage, Category } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
@@ -11,7 +11,7 @@ import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
 type SaasTemplateProps = {
-  site: PublicUser;
+  site: PublicSite;
   blogs: PublicBlog[];
   pages: UserPage[];
   categories: Category[];
@@ -19,7 +19,7 @@ type SaasTemplateProps = {
 };
 
 export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasTemplateProps) {
-  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.user_name || "My Blog";
+  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
   const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-5xl";
   const isNavEnabled = site.navbar_enabled !== false;
@@ -38,7 +38,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
       }))
     : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
           label: c.name,
         }))
       : [];
@@ -52,7 +52,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
       }))
     : site.nav_menu_enabled !== false
       ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.user_name, c.slug, basePath),
+          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
           label: c.name,
         }))
       : [];
@@ -74,11 +74,11 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
                 title={navBlogName}
-                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
                 nameSize={blogNameSize}
                 links={desktopLinks}
                 showSubscribe={showSubscriberCollection}
-                userName={site.user_name}
+                subdomain={site.subdomain}
                 authorName={site.name}
                 alignment={site.navbar_alignment || "left"}
               />
@@ -86,10 +86,10 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             <div className="sm:hidden">
               <PublicMobileNavMenu
                 title={navBlogName}
-                titleHref={getPublicProfileUrl(site.user_name, basePath)}
+                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
                 nameSize={blogNameSize}
                 links={mobileLinks}
-                userName={site.user_name}
+                subdomain={site.subdomain}
                 authorName={site.name}
                 showSubscribeAction={showSubscriberCollection}
                 showMenuButton={hasMobileNav}
@@ -108,7 +108,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
               </h1>
               {showSubscriberCollection && (
                 <div className="mt-8">
-                  <SubscribeToAuthor userName={site.user_name} authorName={site.name} />
+                  <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
                 </div>
               )}
             </div>
@@ -133,7 +133,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
         {categories.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-border/40">
             <Link
-              href={getPublicProfileUrl(site.user_name, basePath)}
+              href={getPublicProfileUrl(site.subdomain, basePath)}
               className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0"
             >
               All
@@ -141,7 +141,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             {categories.map((c) => (
               <Link
                 key={c.category_id}
-                href={getPublicCategoryUrl(site.user_name, c.slug, basePath)}
+                href={getPublicCategoryUrl(site.subdomain, c.slug, basePath)}
                 className="px-4 py-1.5 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground text-sm font-medium transition-colors shrink-0"
               >
                 {c.name}
@@ -158,7 +158,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {blogs.map((b) => {
-              const postHref = getPublicPostUrl(site.user_name, b.slug, basePath);
+              const postHref = getPublicPostUrl(site.subdomain, b.slug, basePath);
               const coverImg = resolveBlogCoverImage(b);
               const firstCat = b.category_ids && b.category_ids.length > 0
                 ? categories.find(c => c.category_id === b.category_ids![0])
@@ -209,7 +209,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           </div>
         )}
 
-        <PublicSiteFooter user={site} pages={pages} basePath={basePath} />
+        <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
       </main>
     </div>
   );

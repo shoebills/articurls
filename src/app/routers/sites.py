@@ -6,7 +6,7 @@ from typing import List
 import re
 import uuid
 
-from .. import models, utils
+from .. import models
 from ..database import get_db
 from ..schemas import site as site_schema
 from ..security.oauth2 import get_current_user, get_current_site
@@ -123,9 +123,6 @@ def create_site(
     db.add(new_author)
     db.flush()
 
-    # Claim username/subdomain
-    utils.claim_username_or_raise(db, current_user.user_id, cleaned_subdomain)
-
     # Provision Umami Analytics if enabled
     try:
         umami_client = UmamiClient()
@@ -204,11 +201,6 @@ def delete_site(
             delete_media(media.storage_key)
         except Exception:
             pass
-
-    # Release the username claim so the subdomain becomes available again.
-    db.query(models.UsernameClaim).filter(
-        models.UsernameClaim.username == site.subdomain
-    ).delete(synchronize_session=False)
 
     # Remaining children (blogs, pages, categories, blog_categories, media,
     # subscribers, email_logs, authors) are removed by ON DELETE CASCADE.

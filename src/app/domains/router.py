@@ -46,7 +46,7 @@ def _canonical_url_for_subdomain(
             base += db_site.custom_subpath
         return base
     ugc_domain = settings.ugc_domain
-    expected = f"{db_site.user_name}.{ugc_domain}"
+    expected = f"{db_site.subdomain}.{ugc_domain}"
     if requested_hostname != expected:
         return f"https://{expected}"
     return None
@@ -264,17 +264,9 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
             RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support"}
             if subdomain and subdomain not in RESERVED_SUBDOMAINS:
                 db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
-                if not db_site:
-                    claim = db.query(models.UsernameClaim).filter(
-                        models.UsernameClaim.username == subdomain
-                    ).first()
-                    if claim:
-                        db_site = db.query(models.User).filter(
-                            models.User.user_id == claim.user_id
-                        ).first()
                 if db_site:
                     result = {
-                        "username": db_site.subdomain,
+                        "subdomain": db_site.subdomain,
                         "domain_status": "active",
                         "redirect_to": _canonical_url_for_subdomain(db_site, normalized),
                         "custom_subpath": db_site.custom_subpath,
@@ -294,7 +286,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
     result = {
-        "username": db_site.subdomain,
+        "subdomain": db_site.subdomain,
         "domain_status": db_site.domain_status.value if hasattr(db_site.domain_status, "value") else db_site.domain_status,
         "redirect_to": None,
         "custom_subpath": db_site.custom_subpath,
@@ -308,8 +300,8 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     return result
 
 
-@router.get("/internal/sitemap-users", status_code=status.HTTP_200_OK)
-def sitemap_users(request: Request, db: Session = Depends(get_db)):
+@router.get("/internal/sitemap-sites", status_code=status.HTTP_200_OK)
+def sitemap_sites(request: Request, db: Session = Depends(get_db)):
     secret = settings.internal_api_secret
     if not secret or request.headers.get("x-internal-secret") != secret:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
@@ -319,20 +311,20 @@ def sitemap_users(request: Request, db: Session = Depends(get_db)):
     )
 
     return [
-        {"username": u.subdomain, "updated_at": u.updated_at.isoformat() if u.updated_at else None}
+        {"subdomain": u.subdomain, "updated_at": u.updated_at.isoformat() if u.updated_at else None}
         for u in rows
     ]
 
 
-@router.get("/internal/user-seo-eligibility", status_code=status.HTTP_200_OK)
-def user_seo_eligibility(username: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/internal/site-seo-eligibility", status_code=status.HTTP_200_OK)
+def site_seo_eligibility(subdomain: str, request: Request, db: Session = Depends(get_db)):
     secret = settings.internal_api_secret
     if not secret or request.headers.get("x-internal-secret") != secret:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
 
-    db_site = db.query(models.Site).filter(models.Site.subdomain == username).first()
+    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
     if not db_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
 
     has_active_custom_domain = db_site.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
     return {"can_index_on_ugc": bool(not has_active_custom_domain)}

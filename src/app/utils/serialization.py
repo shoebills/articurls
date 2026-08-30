@@ -1,11 +1,11 @@
 from sqlalchemy.orm import Session
 from .. import models
-from ..schemas import user
+from ..schemas import user, site
 
 
-def public_user_out(db: Session, db_site: models.Site):
+def public_site_out(db: Session, db_site: models.Site):
     data = {
-        "user_name": db_site.subdomain,
+        "subdomain": db_site.subdomain,
         "name": db_site.user.name if db_site.user else "",
         "meta_title": db_site.meta_title or "",
         "meta_description": db_site.meta_description or "",
@@ -46,13 +46,13 @@ def public_user_out(db: Session, db_site: models.Site):
         "custom_body_code": db_site.custom_body_code,
         "custom_css": db_site.custom_css,
     }
-    return user.PublicUser(**data)
+    return site.PublicSite(**data)
 
 def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
     data = {
         "user_id": db_user.user_id,
         "name": db_user.name,
-        "user_name": db_site.subdomain,
+        "subdomain": db_site.subdomain,
         "email": db_user.email,
         "google_id": db_user.google_id,
         "profile_image_url": db_user.profile_image_url,
@@ -78,7 +78,6 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "footer_socials_enabled": db_site.footer_socials_enabled,
         "footer_newsletter_enabled": db_site.footer_newsletter_enabled,
         "footer_system_links_enabled": db_site.footer_system_links_enabled,
-        "last_username_change_at": db_site.last_username_change_at,
         "is_admin": False,  # handled downstream if needed
         "favicon_url": db_site.favicon_url,
         "featured_blogs_enabled": db_site.featured_blogs_enabled,

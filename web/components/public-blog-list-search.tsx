@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { PublicBlog, PublicUser, ContentWidth, ListImagePosition } from "@/lib/types";
+import type { PublicBlog, PublicSite, ContentWidth, ListImagePosition } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
@@ -10,8 +10,8 @@ import { Calendar, Image } from "lucide-react";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
-  username: string;
-  user?: PublicUser;
+  subdomain: string;
+  site?: PublicSite;
   hideFeatured?: boolean;
   siteOrigin?: string;
   content_width?: ContentWidth;
@@ -23,14 +23,14 @@ const POSTS_PER_PAGE = 12;
 
 function BlogListItemRow({
   blog: b,
-  username,
+  subdomain,
   authorName,
   inGrid = false,
   largeImage = false,
   showPreview = true,
 }: {
   blog: PublicBlog;
-  username: string;
+  subdomain: string;
   authorName?: string;
   inGrid?: boolean;
   largeImage?: boolean;
@@ -40,7 +40,7 @@ function BlogListItemRow({
   return (
     <li className={inGrid ? "" : "py-5 first:pt-0"}>
       <div className="rounded-xl py-1">
-        <Link href={getPublicPostUrl(username, b.slug)} className="group block transition-colors hover:bg-muted/30">
+        <Link href={getPublicPostUrl(subdomain, b.slug)} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="min-w-0 truncate text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
@@ -82,12 +82,12 @@ function BlogListItemRow({
 
 function BlogListAboveTitleItem({
   blog: b,
-  username,
+  subdomain,
   authorName,
   showPreview = true,
 }: {
   blog: PublicBlog;
-  username: string;
+  subdomain: string;
   authorName?: string;
   showPreview?: boolean;
 }) {
@@ -96,7 +96,7 @@ function BlogListAboveTitleItem({
   return (
     <li className="py-5 first:pt-0">
       <Link
-        href={getPublicPostUrl(username, b.slug)}
+        href={getPublicPostUrl(subdomain, b.slug)}
         className="group block"
       >
         {showImage ? (
@@ -137,12 +137,12 @@ function BlogListAboveTitleItem({
 
 function BlogCardGridItem({
   blog: b,
-  username,
+  subdomain,
   authorName,
   showPreview = true,
 }: {
   blog: PublicBlog;
-  username: string;
+  subdomain: string;
   authorName?: string;
   showPreview?: boolean;
 }) {
@@ -151,7 +151,7 @@ function BlogCardGridItem({
   return (
     <li className="break-inside-avoid">
       <Link
-        href={getPublicPostUrl(username, b.slug)}
+        href={getPublicPostUrl(subdomain, b.slug)}
         className="group block"
       >
         {showImage || showPreview ? (
@@ -203,8 +203,8 @@ function BlogCardGridItem({
 
 export function PublicBlogListSearch({
   blogs,
-  username,
-  user,
+  subdomain,
+  site,
   hideFeatured,
   content_width = "wide",
   list_image_position = "above_title",
@@ -214,13 +214,13 @@ export function PublicBlogListSearch({
 
   const featuredBlogs = useMemo(() => {
     if (hideFeatured) return [];
-    if (!user?.featured_blogs_enabled) return [];
-    if (!user.featured_blog_ids || user.featured_blog_ids.length === 0) return [];
+    if (!site?.featured_blogs_enabled) return [];
+    if (!site.featured_blog_ids || site.featured_blog_ids.length === 0) return [];
     
-    return user.featured_blog_ids
+    return site.featured_blog_ids
       .map(id => blogs.find(b => b.blog_id === id))
       .filter((b): b is PublicBlog => Boolean(b));
-  }, [user, blogs, hideFeatured]);
+  }, [site, blogs, hideFeatured]);
   
   const showFeatured = featuredBlogs.length > 0;
 
@@ -279,8 +279,8 @@ export function PublicBlogListSearch({
                 <ItemComponent
                   key={`featured-${b.blog_id}`}
                   blog={b}
-                  username={username}
-                  authorName={b.author?.name || user?.name}
+                  subdomain={subdomain}
+                  authorName={b.author?.name || site?.name}
                   showPreview={show_preview_in_lists}
                 />
             ))}
@@ -295,8 +295,8 @@ export function PublicBlogListSearch({
           <ItemComponent
             key={b.blog_id}
             blog={b}
-            username={username}
-            authorName={b.author?.name || user?.name}
+            subdomain={subdomain}
+            authorName={b.author?.name || site?.name}
             showPreview={show_preview_in_lists}
           />
         ))}

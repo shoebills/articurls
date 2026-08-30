@@ -26,7 +26,7 @@ function OnboardingForm() {
   const googleName = searchParams.get("name") || "";
 
   const [name, setName] = useState(googleName);
-  const [user_name, setUserName] = useState("");
+  const [subdomain, setSubdomain] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -59,7 +59,7 @@ function OnboardingForm() {
     try {
       const { access_token } = await completeGoogleSignup({
         session_id: sessionId,
-        user_name,
+        subdomain,
         password,
         name, // Include the editable name
       });
@@ -93,7 +93,7 @@ function OnboardingForm() {
         <CardHeader className="space-y-1.5">
           <CardTitle className="text-xl font-bold tracking-tight">Claim your space</CardTitle>
           <CardDescription className="text-sm">
-            Choose your unique username to start publishing
+            Choose your unique subdomain to start publishing
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -129,28 +129,31 @@ function OnboardingForm() {
               </p>
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="user_name" className="text-sm font-medium">
-                Username
+              <Label htmlFor="subdomain" className="text-sm font-medium">
+                Subdomain
               </Label>
               <Input
-                id="user_name"
-                value={user_name}
-                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+                id="subdomain"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
                 placeholder="johndoe"
                 autoFocus
                 required
                 pattern="[a-zA-Z0-9_-]+"
                 title="Letters, numbers, underscore, hyphen"
               />
-              {user_name ? (
+              {subdomain ? (
                 <p className="text-sm leading-relaxed text-foreground font-medium">
-                  <span className="text-primary">{user_name}</span>.{UGC_DOMAIN}
+                  <span className="text-primary">{subdomain}</span>.{UGC_DOMAIN}
                 </p>
               ) : (
                 <p className="text-sm leading-relaxed text-muted-foreground">
-                  Your blog will live at username.{UGC_DOMAIN}
+                  Your blog will live at subdomain.{UGC_DOMAIN}
                 </p>
               )}
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                This cannot be changed later, but you can connect a custom domain anytime.
+              </p>
             </div>
             <div className={FIELD_GROUP}>
               <Label htmlFor="password" className="text-sm font-medium">

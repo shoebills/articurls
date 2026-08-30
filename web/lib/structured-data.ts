@@ -1,4 +1,4 @@
-import type { PublicBlog, PublicUser, UserPage, Category, Author, PublicAuthorSummary } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage, Category, Author, PublicAuthorSummary } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 
@@ -143,11 +143,11 @@ export function getImageObject(url: string | null, width?: number, height?: numb
   };
 }
 
-export function generatePersonSchema(user: PublicUser, profileUrl: string): Person {
+export function generatePersonSchema(site: PublicSite, profileUrl: string): Person {
   return {
     "@type": "Person",
     "@id": profileUrl,
-    name: user.name,
+    name: site.name,
     url: profileUrl,
     jobTitle: "Blogger",
   };
@@ -177,7 +177,7 @@ export function generateAuthorPersonSchema(author: Author | PublicAuthorSummary,
 
 export function generateAuthorProfileSchema(
   author: Author,
-  user: PublicUser,
+  site: PublicSite,
   canonicalUrl: string,
   siteUrl: string
 ): ProfilePage {
@@ -189,10 +189,10 @@ export function generateAuthorProfileSchema(
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: user.nav_blog_name || "My Blog",
+      name: site.nav_blog_name || "My Blog",
     },
     breadcrumb: generateBreadcrumbList([
-      { name: user.nav_blog_name || "Home", url: siteUrl },
+      { name: site.nav_blog_name || "Home", url: siteUrl },
       { name: author.name, url: canonicalUrl },
     ]),
   };
@@ -232,9 +232,9 @@ export function generateFaqPageSchema(
   };
 }
 
-export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSite {
-  const siteName = (user.nav_blog_name || "").trim() || "My Blog";
-  const description = user.meta_description || undefined;
+export function generateWebSiteSchema(site: PublicSite, siteUrl: string): WebSite {
+  const siteName = (site.nav_blog_name || "").trim() || "My Blog";
+  const description = site.meta_description || undefined;
   
   return {
     "@context": "https://schema.org",
@@ -242,14 +242,14 @@ export function generateWebSiteSchema(user: PublicUser, siteUrl: string): WebSit
     name: siteName,
     description,
     url: siteUrl,
-    author: generatePersonSchema(user, siteUrl),
-    publisher: generateOrganizationSchema(siteName, siteUrl, user.favicon_url),
+    author: generatePersonSchema(site, siteUrl),
+    publisher: generateOrganizationSchema(siteName, siteUrl, site.favicon_url),
   };
 }
 
 export function generateBlogPostingSchema(
   blog: PublicBlog,
-  author: PublicUser,
+  author: PublicSite,
   canonicalUrl: string
 ): BlogPosting {
   const title = blog.meta_title || blog.title;
@@ -297,7 +297,7 @@ export function generateBlogPostingSchema(
 
 export function generateCollectionPageSchema(
   category: Pick<Category, 'category_id' | 'name' | 'slug'> & Partial<Category>,
-  author: PublicUser,
+  author: PublicSite,
   canonicalUrl: string
 ): CollectionPage {
   const authorPerson = generatePersonSchema(author, `${canonicalUrl.split('/category/')[0]}`);
@@ -324,7 +324,7 @@ export function generateCollectionPageSchema(
 
 export function generateWebPageSchema(
   page: UserPage,
-  author: PublicUser,
+  author: PublicSite,
   canonicalUrl: string
 ): WebPage {
   const authorPerson = generatePersonSchema(author, `${canonicalUrl.split('/page/')[0]}`);

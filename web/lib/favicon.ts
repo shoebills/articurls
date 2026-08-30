@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { assetUrl } from "@/lib/env";
-import type { PublicUser } from "@/lib/types";
+import type { PublicSite } from "@/lib/types";
 
 /**
  * Platform default favicon hosted on R2.
@@ -20,8 +20,8 @@ const DEFAULT_FAVICON_URL =
  * auto-injects a competing <link rel="icon"> tag. This function has
  * full control over what favicon appears on all public blog pages.
  */
-export function faviconIcons(user: PublicUser | null | undefined): Metadata["icons"] {
-  const url = user?.favicon_url ? assetUrl(user.favicon_url) : DEFAULT_FAVICON_URL;
+export function faviconIcons(site: PublicSite | null | undefined): Metadata["icons"] {
+  const url = site?.favicon_url ? assetUrl(site.favicon_url) : DEFAULT_FAVICON_URL;
 
   if (!url) {
     // Local dev with no env var set — browser uses its own default

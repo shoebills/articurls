@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { API_URL, assetUrl } from "@/lib/env";
-import type { PublicUser } from "@/lib/types";
+import type { PublicSite } from "@/lib/types";
 import { buildAtomXml, fetchPublishedPosts, fetchCategories, type RssItem } from "@/lib/seo-data";
 import {
   buildRuntimeHostsFromEnv,
@@ -19,13 +19,13 @@ function toTimestamp(value: string | null | undefined): number {
   return Number.isNaN(t) ? 0 : t;
 }
 
-async function loadUser(username: string): Promise<PublicUser | null> {
+async function loadSite(subdomain: string): Promise<PublicSite | null> {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
-    return (await res.json()) as PublicUser;
+    return (await res.json()) as PublicSite;
   } catch {
     return null;
   }
@@ -50,13 +50,13 @@ export async function GET(req: NextRequest): Promise<Response> {
     return new NextResponse(null, { status: 404 });
   }
 
-  const user = await loadUser(domainInfo.username);
-  if (!user) return new NextResponse(null, { status: 404 });
-  if (user.rss_enabled === false) return new NextResponse(null, { status: 404 });
+  const site = await loadSite(domainInfo.subdomain);
+  if (!site) return new NextResponse(null, { status: 404 });
+  if (site.rss_enabled === false) return new NextResponse(null, { status: 404 });
 
   const [posts, categories] = await Promise.all([
-    fetchPublishedPosts(domainInfo.username),
-    fetchCategories(domainInfo.username, true),
+    fetchPublishedPosts(domainInfo.subdomain),
+    fetchCategories(domainInfo.subdomain, true),
   ]);
 
   const catMap = new Map(categories.map((c) => [c.category_id, c.name]));
@@ -81,17 +81,17 @@ export async function GET(req: NextRequest): Promise<Response> {
       guid: link,
       pubDate: post.published_at || post.updated_at,
       description: post.meta_description || post.excerpt || "",
-      authorName: post.author?.name || user.name,
+      authorName: post.author?.name || site.name,
       categoryNames,
       imageUrl: post.featured_image_url ? assetUrl(post.featured_image_url) : null,
     };
   });
 
   const xml = buildAtomXml({
-    title: user.nav_blog_name || user.meta_title || `${user.name} — Articurls`,
+    title: site.nav_blog_name || site.meta_title || `${site.name} — Articurls`,
     link: siteOrigin,
-    description: user.meta_description || `Latest posts by ${user.name}.`,
-    authorName: user.name,
+    description: site.meta_description || `Latest posts by ${site.name}.`,
+    authorName: site.name,
     updated: sorted[0]?.updated_at || sorted[0]?.published_at || null,
     items,
   });

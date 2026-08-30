@@ -25,7 +25,7 @@ type PublicMobileNavMenuProps = {
   titleHref?: string;
   nameSize?: NavBlogNameSize | string | null;
   links: PublicMobileNavLink[];
-  userName?: string;
+  subdomain?: string;
   authorName?: string;
   showSubscribeAction?: boolean;
   showMenuButton?: boolean;
@@ -36,7 +36,7 @@ export function PublicMobileNavMenu({
   titleHref,
   nameSize,
   links,
-  userName,
+  subdomain,
   authorName,
   showSubscribeAction = true,
   showMenuButton = true,
@@ -116,10 +116,10 @@ export function PublicMobileNavMenu({
         {showMenuButton ? (
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {userName ? (
+            {subdomain ? (
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
-                userName={userName}
+                subdomain={subdomain}
               />
             ) : null}
             {links.length > 0 ? (
@@ -133,10 +133,10 @@ export function PublicMobileNavMenu({
               >
                 {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
-            ) : showSubscribeAction && userName ? (
+            ) : showSubscribeAction && subdomain ? (
               <SubscribeToAuthor
                 mode="dialog"
-                userName={userName}
+                subdomain={subdomain}
                 authorName={authorName}
                 triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
                 triggerChildren={<Bell className="h-4 w-4" />}
@@ -194,11 +194,11 @@ export function PublicMobileNavMenu({
             <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
           ) : null}
 
-          {showSubscribeAction && userName ? (
+          {showSubscribeAction && subdomain ? (
             <div className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}>
               <SubscribeToAuthor
                 mode="dialog"
-                userName={userName}
+                subdomain={subdomain}
                 authorName={authorName}
                 triggerClassName="h-10 min-h-10 w-full justify-center rounded-md px-3 text-center text-sm font-medium"
               />

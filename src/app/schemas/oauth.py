@@ -24,6 +24,6 @@ class GoogleOAuthSession(BaseModel):
 class CompleteGoogleSignup(BaseModel):
     """Request body for completing Google OAuth signup."""
     session_id: str
-    user_name: str
+    subdomain: str
     password: str = Field(..., min_length=8)
     name: str  # Allow user to edit the name from Google

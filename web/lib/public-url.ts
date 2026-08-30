@@ -9,31 +9,31 @@ export function formatWithBasePath(path: string, basePath = ""): string {
   return result || "/";
 }
 
-export function getPublicPostUrl(_username: string, slug: string, basePath = ""): string {
+export function getPublicPostUrl(_subdomain: string, slug: string, basePath = ""): string {
   return formatWithBasePath(`/blog/${encodeURIComponent(slug)}`, basePath);
 }
 
-export function getPublicProfileUrl(_username: string, basePath = ""): string {
+export function getPublicProfileUrl(_subdomain: string, basePath = ""): string {
   return formatWithBasePath("/", basePath) || "/";
 }
 
-export function getPublicCategoryUrl(_username: string, slug: string, basePath = ""): string {
+export function getPublicCategoryUrl(_subdomain: string, slug: string, basePath = ""): string {
   return formatWithBasePath(`/category/${encodeURIComponent(slug)}`, basePath);
 }
 
-export function getPublicCategoriesUrl(_username: string, basePath = ""): string {
+export function getPublicCategoriesUrl(_subdomain: string, basePath = ""): string {
   return formatWithBasePath("/categories", basePath);
 }
 
-export function getPublicAuthorUrl(_username: string, slug: string, basePath = ""): string {
+export function getPublicAuthorUrl(_subdomain: string, slug: string, basePath = ""): string {
   return formatWithBasePath(`/author/${encodeURIComponent(slug)}`, basePath);
 }
 
-export function getPublicAuthorsUrl(_username: string, basePath = ""): string {
+export function getPublicAuthorsUrl(_subdomain: string, basePath = ""): string {
   return formatWithBasePath("/authors", basePath);
 }
 
-export function getPublicPageUrl(_username: string, slug: string, basePath = ""): string {
+export function getPublicPageUrl(_subdomain: string, slug: string, basePath = ""): string {
   return formatWithBasePath(`/page/${encodeURIComponent(slug)}`, basePath);
 }
 

@@ -5,7 +5,7 @@ export const MARKETING_FAQS = [
   },
   {
     question: "How do I get started?",
-    answer: "Create a free account, claim your username, and start writing. Your blog is live in minutes with no setup or configuration required.",
+    answer: "Create a free account, claim your subdomain, and start writing. Your blog is live in minutes with no setup or configuration required.",
   },
   {
     question: "Can I use my own domain?",

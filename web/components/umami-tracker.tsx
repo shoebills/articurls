@@ -2,16 +2,16 @@ import Script from "next/script";
 import { buildUmamiDomains } from "@/lib/umami-domains";
 import { isUmamiProxyConfigured } from "@/lib/umami-server";
 import { APP_ORIGIN } from "@/lib/env";
-import type { PublicUser } from "@/lib/types";
+import type { PublicSite } from "@/lib/types";
 
 /** First-party Umami pageview tracker (Plan B — all public tenants). Server component only. */
-export function UmamiTracker({ user }: { user: PublicUser }) {
+export function UmamiTracker({ site }: { site: PublicSite }) {
   if (!isUmamiProxyConfigured()) return null;
 
-  const websiteId = user.umami_website_id?.trim();
+  const websiteId = site.umami_website_id?.trim();
   if (!websiteId) return null;
 
-  const domains = buildUmamiDomains(user);
+  const domains = buildUmamiDomains(site);
   if (!domains) return null;
   const appHost = (() => {
     try {

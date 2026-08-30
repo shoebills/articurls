@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { resolveTenantHostFromHeaders } from "@/lib/request-host";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
-import { loadPublicUser } from "@/lib/public-user";
+import { loadPublicSite } from "@/lib/public-site";
 import { UmamiTracker } from "@/components/umami-tracker";
 
 type Props = {
@@ -20,14 +20,14 @@ export default async function SiteLayout({ children }: Props) {
     return children;
   }
 
-  const user = await loadPublicUser(domainInfo.username);
-  if (!user) {
+  const site = await loadPublicSite(domainInfo.subdomain);
+  if (!site) {
     return children;
   }
 
   return (
     <>
-      <UmamiTracker user={user} />
+      <UmamiTracker site={site} />
       {children}
     </>
   );

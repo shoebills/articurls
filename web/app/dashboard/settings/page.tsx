@@ -5,12 +5,10 @@ import {
   getCustomDomain,
   getMe,
   getSeoSettings,
-  patchMe,
   patchSeoSettings,
   patchProMe,
   uploadFavicon,
   deleteFavicon,
-  checkUsernameAvailability,
   ApiError,
   apiCacheHas,
   getCachedApiData,
@@ -25,7 +23,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft,
-  Check,
   ChevronRight,
   Code2,
   Copy,
@@ -51,8 +48,6 @@ import { CodeInjectionSettings } from "@/components/code-injection-settings";
 import { DesignSettingsPanel } from "@/components/design-settings-panel";
 import { NavBuilder } from "@/components/themes/nav-builder";
 import { FooterBuilder } from "@/components/themes/footer-builder";
-
-const USERNAME_CHANGE_COOLDOWN_DAYS = 7;
 
 type SettingTab = "general" | "domains" | "seo" | "code" | "nav" | "footer";
 
@@ -182,12 +177,12 @@ function SettingsOverviewSkeleton() {
 
 export default function SettingsPage() {
   const { token, isPro, refreshUser, user: ctxUser } = useAuth();
-  const [user_name, setUserName] = useState(() => {
+  const [subdomain, setSubdomain] = useState(() => {
     if (typeof window === "undefined") return "";
     const t = localStorage.getItem("articurls_token");
     if (!t) return "";
     const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.user_name ?? "";
+    return cached?.subdomain ?? "";
   });
   const [err, setErr] = useState<string | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
@@ -219,19 +214,6 @@ export default function SettingsPage() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<CustomDomain>("/settings/domain", t) : null;
   });
-  const [lastUsernameChangeAt, setLastUsernameChangeAt] = useState<string | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    if (!t) return null;
-    const cached = getCachedApiData<UserSettings>("/user/me", t);
-    return cached?.last_username_change_at || null;
-  });
-  const [editingUsername, setEditingUsername] = useState(false);
-  const [pendingUsername, setPendingUsername] = useState("");
-  const [usernameAvailability, setUsernameAvailability] = useState<{
-    state: "idle" | "checking" | "available" | "taken" | "invalid";
-    message: string;
-  }  >({ state: "idle", message: "" });
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
@@ -255,9 +237,8 @@ export default function SettingsPage() {
         getSeoSettings(token),
         getCustomDomain(token),
       ]);
-      setUserName(u.user_name);
+      setSubdomain(u.subdomain);
       setCollectSubscribers(u.subscriber_collection_enabled ?? false);
-      setLastUsernameChangeAt(u.last_username_change_at || null);
       setDomain(domainData);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to load");
@@ -272,9 +253,8 @@ export default function SettingsPage() {
 
   useEffect(() => {
     if (ctxUser) {
-      setUserName(ctxUser.user_name);
+      setSubdomain(ctxUser.subdomain);
       setCollectSubscribers(ctxUser.subscriber_collection_enabled ?? false);
-      setLastUsernameChangeAt(ctxUser.last_username_change_at || null);
       setRssEnabled(ctxUser.rss_enabled ?? false);
     }
   }, [ctxUser]);
@@ -334,67 +314,12 @@ export default function SettingsPage() {
     }
   }
 
-  const cooldownEnd = lastUsernameChangeAt
-    ? new Date(lastUsernameChangeAt).getTime() + USERNAME_CHANGE_COOLDOWN_DAYS * 86400000
-    : 0;
-  const cooldownRemainingMs = Math.max(0, cooldownEnd - Date.now());
-  const cooldownRemainingDays = Math.ceil(cooldownRemainingMs / 86400000);
-  const canChange = cooldownRemainingMs <= 0;
-  const normalizedPending = (pendingUsername || user_name || "").trim().toLowerCase();
-  const liveProfileUrl = `https://${encodeURIComponent(normalizedPending)}.${UGC_DOMAIN}/`;
   const rssResourceUrl = domain?.hostname
     ? `https://${domain.hostname}/rss.xml`
-    : user_name
-      ? `https://${encodeURIComponent(user_name)}.${UGC_DOMAIN}/rss.xml`
+    : subdomain
+      ? `https://${encodeURIComponent(subdomain)}.${UGC_DOMAIN}/rss.xml`
       : undefined;
   const rssResourceEnabled = Boolean(rssEnabled && rssResourceUrl);
-
-  useEffect(() => {
-    if (!editingUsername || !token) return;
-    const next = pendingUsername.trim().toLowerCase();
-    if (!next) {
-      setUsernameAvailability({ state: "idle", message: "" });
-      return;
-    }
-    const timer = setTimeout(async () => {
-      setUsernameAvailability({ state: "checking", message: "Checking..." });
-      try {
-        const result = await checkUsernameAvailability(token, next);
-        if (result.available) {
-          setUsernameAvailability({ state: "available", message: "Available" });
-        } else if (result.reason === "taken") {
-          setUsernameAvailability({ state: "taken", message: "Username is taken" });
-        } else {
-          setUsernameAvailability({ state: "invalid", message: result.reason || "Invalid username" });
-        }
-      } catch {
-        setUsernameAvailability({ state: "invalid", message: "Could not validate right now" });
-      }
-    }, 250);
-    return () => clearTimeout(timer);
-  }, [pendingUsername, token, editingUsername]);
-
-  async function saveUsername() {
-    if (!token) return;
-    if (!canChange) return;
-    if (!pendingUsername.trim()) {
-      setUsernameAvailability({ state: "invalid", message: "Username is required" });
-      return;
-    }
-    setBusy(true);
-    setErr(null);
-    try {
-      await patchMe(token, { user_name: pendingUsername.trim().toLowerCase() });
-      await refreshUser();
-      setUserName(pendingUsername.trim().toLowerCase());
-      setEditingUsername(false);
-      setSaved("Saved");
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not update username");
-    } finally {
-      setBusy(false);
-    }
-  }
 
   return (
     <div className="relative mx-auto max-w-[1100px] -mt-1 space-y-6 sm:space-y-8">
@@ -561,96 +486,22 @@ export default function SettingsPage() {
           <Card>
             <CardHeader className="pb-4 sm:pb-4">
               <CardTitle className="text-xl">Subdomain</CardTitle>
-              <CardDescription>Manage your blog's subdomain.</CardDescription>
+              <CardDescription>Your blog&apos;s permanent subdomain.</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {!editingUsername ? (
-                <div className="space-y-3">
-                  <div className="flex max-w-[30ch]">
-                    <Input
-                      value={encodeURIComponent(user_name)}
-                      readOnly
-                      className="rounded-l-lg rounded-r-none border border-r-0 bg-background focus-visible:ring-0 focus-visible:ring-offset-0"
-                    />
-                    <div className="flex shrink-0 items-center rounded-r-lg border bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
-                      .{UGC_DOMAIN}
-                    </div>
-                  </div>
-                  <div className={`flex gap-2 ${!canChange ? "opacity-60" : ""}`}>
-                    {canChange ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => {
-                          setPendingUsername(user_name);
-                          setUsernameAvailability({ state: "idle", message: "" });
-                          setEditingUsername(true);
-                        }}
-                      >
-                        Edit
-                      </Button>
-                    ) : (
-                      <p className="text-xs text-muted-foreground">
-                        Subdomain changed recently. You can change it again in{" "}
-                        {cooldownRemainingDays} day{cooldownRemainingDays === 1 ? "" : "s"}.
-                      </p>
-                    )}
-                  </div>
+            <CardContent className="space-y-4">
+              <div className="flex max-w-[30ch]">
+                <Input
+                  value={encodeURIComponent(subdomain)}
+                  readOnly
+                  className="rounded-l-lg rounded-r-none border border-r-0 bg-background focus-visible:ring-0 focus-visible:ring-offset-0"
+                />
+                <div className="flex shrink-0 items-center rounded-r-lg border bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
+                  .{UGC_DOMAIN}
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex max-w-[30ch]">
-                    <Input
-                      value={pendingUsername}
-                      onChange={(e) =>
-                        setPendingUsername(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())
-                      }
-                      placeholder="yourusername"
-                      className="rounded-l-lg rounded-r-none border border-r-0"
-                      autoCapitalize="none"
-                      autoCorrect="off"
-                    />
-                    <div className="flex shrink-0 items-center rounded-r-lg border bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
-                      .{UGC_DOMAIN}
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="shrink-0 text-sm">
-                      {usernameAvailability.state === "checking" ? (
-                        <span className="inline-flex items-center gap-1 text-muted-foreground">
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" /> Checking...
-                        </span>
-                      ) : usernameAvailability.state === "available" ? (
-                        <span className="inline-flex items-center gap-1 text-emerald-600">
-                          <Check className="h-3.5 w-3.5" /> Available
-                        </span>
-                      ) : usernameAvailability.state === "taken" || usernameAvailability.state === "invalid" ? (
-                        <span className="text-destructive">{usernameAvailability.message}</span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    You can change your subdomain once every {USERNAME_CHANGE_COOLDOWN_DAYS} days.
-                  </p>
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={saveUsername}
-                      disabled={
-                        busy ||
-                        !canChange ||
-                        usernameAvailability.state === "checking" ||
-                        usernameAvailability.state === "taken" ||
-                        usernameAvailability.state === "invalid"
-                      }
-                    >
-                      Save
-                    </Button>
-                    <Button variant="outline" onClick={() => setEditingUsername(false)} disabled={busy}>
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
+              </div>
+              <p className="text-sm leading-relaxed text-muted-foreground">
+                This cannot be changed later, but you can connect a custom domain anytime.
+              </p>
             </CardContent>
           </Card>
 

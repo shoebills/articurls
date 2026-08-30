@@ -31,7 +31,7 @@ function SignupForm() {
   }, [searchParams]);
 
   const [name, setName] = useState("");
-  const [user_name, setUserName] = useState("");
+  const [subdomain, setSubdomain] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -46,7 +46,7 @@ function SignupForm() {
     setInfo(null);
     setBusy(true);
     try {
-      await apiSignup({ name, user_name, email, password });
+      await apiSignup({ name, subdomain, email, password });
       setDone(true);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Sign up failed");
@@ -199,7 +199,7 @@ function SignupForm() {
     );
   }
 
-  // Step 2: Profile (Name, Username, Password) - Final Step
+  // Step 2: Profile (Name, Subdomain, Password) - Final Step
   return (
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
@@ -236,18 +236,21 @@ function SignupForm() {
               />
             </div>
             <div className={FIELD_GROUP}>
-              <Label htmlFor="user_name">Subdomain</Label>
+              <Label htmlFor="subdomain">Subdomain</Label>
               <Input
-                id="user_name"
-                value={user_name}
-                onChange={(e) => setUserName(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
+                id="subdomain"
+                value={subdomain}
+                onChange={(e) => setSubdomain(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
                 placeholder="yourname"
                 required
                 pattern="[a-zA-Z0-9_-]+"
                 title="Letters, numbers, underscore, hyphen"
               />
               <p className="text-sm leading-relaxed text-muted-foreground">
-                Your public URL: {user_name || "username"}.{UGC_DOMAIN}
+                Your public URL: {subdomain || "subdomain"}.{UGC_DOMAIN}
+              </p>
+              <p className="text-xs leading-relaxed text-muted-foreground/80">
+                This cannot be changed later, but you can connect a custom domain anytime.
               </p>
             </div>
             <div className={FIELD_GROUP}>

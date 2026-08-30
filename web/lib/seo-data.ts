@@ -30,11 +30,11 @@ export interface RssItem {
  * The backend already filters to `status == "published"`.
  */
 export async function fetchPublishedPosts(
-  username: string
+  subdomain: string
 ): Promise<PublicBlog[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(username)}/blogs`,
+      `${API_URL}/${encodeURIComponent(subdomain)}/blogs`,
       { cache: "no-store" }
     );
     if (!res.ok) return [];
@@ -50,10 +50,10 @@ export async function fetchPublishedPosts(
  * Fetch visible pages for a user.
  * The backend already filters to `show_in_footer === true`.
  */
-export async function fetchPages(username: string): Promise<UserPage[]> {
+export async function fetchPages(subdomain: string): Promise<UserPage[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(username)}/pages`,
+      `${API_URL}/${encodeURIComponent(subdomain)}/pages`,
       { cache: "no-store" }
     );
     if (!res.ok) return [];
@@ -68,11 +68,11 @@ export async function fetchPages(username: string): Promise<UserPage[]> {
 /**
  * Fetch visible categories for a user.
  */
-export async function fetchCategories(username: string, all = false): Promise<Category[]> {
+export async function fetchCategories(subdomain: string, all = false): Promise<Category[]> {
   try {
     const q = all ? "?all=true" : "";
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(username)}/categories${q}`,
+      `${API_URL}/${encodeURIComponent(subdomain)}/categories${q}`,
       { cache: "no-store" }
     );
     if (!res.ok) return [];
@@ -87,10 +87,10 @@ export async function fetchCategories(username: string, all = false): Promise<Ca
 /**
  * Fetch authors for a user.
  */
-export async function fetchAuthors(username: string): Promise<Author[]> {
+export async function fetchAuthors(subdomain: string): Promise<Author[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(username)}/authors`,
+      `${API_URL}/${encodeURIComponent(subdomain)}/authors`,
       { cache: "no-store" }
     );
     if (!res.ok) return [];

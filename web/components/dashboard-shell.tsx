@@ -20,8 +20,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     ? getSitePublicRoot(activeSite)
     : user?.custom_domain && (user.domain_status === "active" || user.domain_status === "grace")
       ? `https://${user.custom_domain}`
-      : user?.user_name
-        ? `https://${encodeURIComponent(user.user_name)}.${UGC_DOMAIN}`
+      : user?.subdomain
+        ? `https://${encodeURIComponent(user.subdomain)}.${UGC_DOMAIN}`
         : null;
 
   const isLocked = !isPro && !!subscription && !loading;

@@ -135,9 +135,9 @@ export interface FooterColumn {
   links: FooterLink[];
 }
 
-export interface PublicUser {
+export interface PublicSite {
   name: string;
-  user_name: string;
+  subdomain: string;
   meta_title: string;
   meta_description: string;
   og_image_url?: string | null;
@@ -182,7 +182,7 @@ export interface PublicUser {
 export interface UserSettings {
   user_id: string;
   name: string;
-  user_name: string;
+  subdomain: string;
   email: string;
   google_id?: string | null;
   meta_title: string | null;
@@ -208,7 +208,6 @@ export interface UserSettings {
   footer_socials_enabled?: boolean;
   footer_newsletter_enabled?: boolean;
   footer_system_links_enabled?: boolean;
-  last_username_change_at: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
@@ -270,7 +269,7 @@ export interface StorageUsage {
 export interface AdminUserListItem {
   user_id: string;
   name: string;
-  user_name: string;
+  subdomain: string;
   email: string;
   created_at: string | null;
   plan: "inactive" | "pro";
@@ -279,7 +278,7 @@ export interface AdminUserListItem {
 export interface AdminPaymentListItem {
   transaction_id: string;
   user_id: string;
-  user_name: string;
+  subdomain: string;
   email: string;
   amount: number;
   currency: string;
@@ -460,7 +459,7 @@ export interface SubfolderSnippets {
 }
 
 export interface DomainLookupResponse {
-  username: string;
+  subdomain: string;
   domain_status: string;
   redirect_to: string | null;
   custom_subpath?: string | null;

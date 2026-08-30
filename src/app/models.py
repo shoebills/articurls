@@ -51,7 +51,6 @@ class Site(Base):
     verified_at = Column(DateTime(timezone=True), nullable=True, default=None)
     grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
-    last_username_change_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     # Design / Theme
     template_id = Column(String(32), nullable=False, default="editorial")
@@ -130,31 +129,6 @@ class Author(Base):
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 
     site = relationship("Site", back_populates="authors")
-
-
-class UsernameClaim(Base):
-    __tablename__ = "username_claims"
-
-    claim_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    username = Column(String, unique=True, nullable=False, index=True)
-    claimed_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
-
-class UsernameChangeAudit(Base):
-    __tablename__ = "username_change_audits"
-
-    audit_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
-    old_username = Column(String, nullable=False)
-    new_username = Column(String, nullable=False)
-    actor_user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="SET NULL"), nullable=True, index=True)
-    actor_email = Column(String, nullable=True)
-    is_admin_override = Column(Boolean, nullable=False, default=False)
-    reason = Column(String, nullable=True)
-    request_ip = Column(String, nullable=True)
-    user_agent = Column(String, nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class BlogStatus(str, enum.Enum):

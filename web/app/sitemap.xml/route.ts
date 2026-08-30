@@ -7,7 +7,7 @@
  * is used to distinguish the two cases.
  *
  * ── Custom domain request (x-original-host is a non-internal hostname) ──────
- *   - Resolves the domain to a username via /internal/domain-lookup.
+ *   - Resolves the domain to a subdomain via /internal/domain-lookup.
  *   - Returns 404 for pending/expired/none (don't index unverified domains).
  *   - All URLs use https://{custom_domain}/... — NEVER articurls.com.
  *
@@ -31,9 +31,9 @@ export const dynamic = "force-dynamic";
 
 // ── Data loaders ──────────────────────────────────────────────────────────────
 
-async function loadUser(username: string) {
+async function loadSite(subdomain: string) {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
       cache: "no-store",
     });
     if (!res.ok) return null;
@@ -43,9 +43,9 @@ async function loadUser(username: string) {
   }
 }
 
-async function loadBlogs(username: string): Promise<PublicBlog[]> {
+async function loadBlogs(subdomain: string): Promise<PublicBlog[]> {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/blogs`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, {
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -55,9 +55,9 @@ async function loadBlogs(username: string): Promise<PublicBlog[]> {
   }
 }
 
-async function loadPages(username: string): Promise<UserPage[]> {
+async function loadPages(subdomain: string): Promise<UserPage[]> {
   try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/pages`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -73,10 +73,10 @@ interface Category {
   show_in_menu: boolean;
 }
 
-async function loadCategories(username: string, all = false): Promise<Category[]> {
+async function loadCategories(subdomain: string, all = false): Promise<Category[]> {
   try {
     const q = all ? "?all=true" : "";
-    const res = await fetch(`${API_URL}/${encodeURIComponent(username)}/categories${q}`, {
+    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories${q}`, {
       cache: "no-store",
     });
     if (!res.ok) return [];
@@ -143,10 +143,10 @@ async function customDomainSitemap(host: string): Promise<Response> {
     return new NextResponse(null, { status: 404 });
   }
 
-  const { username } = domainInfo;
-  const user = await loadUser(username);
+  const { subdomain } = domainInfo;
+  const site = await loadSite(subdomain);
 
-  if (!user) return new NextResponse(null, { status: 404 });
+  if (!site) return new NextResponse(null, { status: 404 });
 
   const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
   const basePath = customSubpath ? `/${customSubpath}` : "";
@@ -154,15 +154,15 @@ async function customDomainSitemap(host: string): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
   const [blogs, pages, categories, authors] = await Promise.all([
-    loadBlogs(username),
-    loadPages(username),
-    loadCategories(username, true),
-    fetchAuthors(username),
+    loadBlogs(subdomain),
+    loadPages(subdomain),
+    loadCategories(subdomain, true),
+    fetchAuthors(subdomain),
   ]);
 
   const entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [];
 
-  // Profile / home — custom domain root, no username prefix
+  // Profile / home — custom domain root, no subdomain prefix
   entries.push({ loc: siteOrigin, lastmod: today, changefreq: "weekly", priority: "1.0" });
 
   if (categories.length > 0) {
@@ -269,7 +269,7 @@ async function marketingDomainSitemap(): Promise<Response> {
 
 /**
  * Sitemap for articurls.site — landing page only.
- * User content is on subdomains ({username}.articurls.site/sitemap.xml).
+ * User content is on subdomains ({subdomain}.articurls.site/sitemap.xml).
  */
 async function ugcDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];

@@ -18,7 +18,7 @@ import type {
   PublicBlogSearchResult,
   PublicCategoryBlogsResponse,
   UserPage,
-  PublicUser,
+  PublicSite,
   SubscribersAnalytics,
   SubscriberListResponse,
   SubscriptionOut,
@@ -240,7 +240,7 @@ export async function resendVerificationEmail(
 
 export async function signup(data: {
   name: string;
-  user_name: string;
+  subdomain: string;
   email: string;
   password: string;
 }): Promise<{ message: string }> {
@@ -269,7 +269,7 @@ export async function exchangeOAuthCode(code: string): Promise<string> {
 
 export async function completeGoogleSignup(data: {
   session_id: string;
-  user_name: string;
+  subdomain: string;
   password: string;
   name: string;
 }): Promise<{ access_token: string; token_type: string }> {
@@ -293,21 +293,12 @@ export async function getStorageUsage(token: string): Promise<StorageUsage> {
   return apiFetch("/user/storage", { token });
 }
 
-export async function checkUsernameAvailability(
-  token: string,
-  user_name: string
-): Promise<{ available: boolean; normalized: string; reason: string | null }> {
-  const q = new URLSearchParams({ user_name });
-  return apiFetch(`/user/username-availability?${q.toString()}`, { token });
-}
-
 export async function patchMe(
   token: string,
   body: Partial<
     Pick<
       UserSettings,
       | "name"
-      | "user_name"
       | "email"
       | "meta_title"
       | "meta_description"
@@ -435,12 +426,12 @@ export async function updateFooterPages(token: string, ordered_page_ids: string[
   });
 }
 
-export async function getPublicPages(userName: string): Promise<UserPage[]> {
-  return apiFetch(`/${encodeURIComponent(userName)}/pages`);
+export async function getPublicPages(subdomain: string): Promise<UserPage[]> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/pages`);
 }
 
-export async function getPublicPage(userName: string, slug: string): Promise<UserPage> {
-  return apiFetch(`/${encodeURIComponent(userName)}/page/${encodeURIComponent(slug)}`);
+export async function getPublicPage(subdomain: string, slug: string): Promise<UserPage> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/page/${encodeURIComponent(slug)}`);
 }
 
 export async function uploadProfileImage(token: string, file: File): Promise<{ profile_image_url: string }> {
@@ -577,27 +568,27 @@ export async function deleteBlogMediaByUrl(token: string, blogId: string, url: s
   await apiFetch(`/blog/${blogId}/media?${q.toString()}`, { method: "DELETE", token });
 }
 
-export async function getPublicUser(userName: string): Promise<PublicUser> {
-  return apiFetch(`/${encodeURIComponent(userName)}`);
+export async function getPublicSite(subdomain: string): Promise<PublicSite> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}`);
 }
 
-export async function searchPublicBlogs(userName: string, query: string, offset = 0): Promise<PublicBlogSearchResult[]> {
+export async function searchPublicBlogs(subdomain: string, query: string, offset = 0): Promise<PublicBlogSearchResult[]> {
   return apiFetch(
-    `/${encodeURIComponent(userName)}/blogs/search?q=${encodeURIComponent(query)}&limit=5&offset=${offset}`
+    `/${encodeURIComponent(subdomain)}/blogs/search?q=${encodeURIComponent(query)}&limit=5&offset=${offset}`
   );
 }
 
-export async function getPublicBlogs(userName: string): Promise<PublicBlog[]> {
-  return apiFetch(`/${encodeURIComponent(userName)}/blogs`);
+export async function getPublicBlogs(subdomain: string): Promise<PublicBlog[]> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/blogs`);
 }
 
-export async function getPublicBlog(userName: string, slug: string): Promise<PublicBlog> {
-  return apiFetch(`/${encodeURIComponent(userName)}/blog/${encodeURIComponent(slug)}`);
+export async function getPublicBlog(subdomain: string, slug: string): Promise<PublicBlog> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/blog/${encodeURIComponent(slug)}`);
 }
 
 /** Public: request email subscription to a writer’s posts (confirmation email is sent when applicable). */
-export async function publicSubscribe(userName: string, email: string): Promise<{ message: string }> {
-  return apiFetch(`/subscribe/${encodeURIComponent(userName)}`, {
+export async function publicSubscribe(subdomain: string, email: string): Promise<{ message: string }> {
+  return apiFetch(`/subscribe/${encodeURIComponent(subdomain)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
@@ -660,13 +651,13 @@ export async function updateMenuCategories(token: string, ordered_category_ids: 
   });
 }
 
-export async function getPublicCategories(userName: string, all = false): Promise<Category[]> {
+export async function getPublicCategories(subdomain: string, all = false): Promise<Category[]> {
   const q = all ? "?all=true" : "";
-  return apiFetch(`/${encodeURIComponent(userName)}/categories${q}`);
+  return apiFetch(`/${encodeURIComponent(subdomain)}/categories${q}`);
 }
 
-export async function getPublicCategoryBlogs(userName: string, slug: string): Promise<PublicCategoryBlogsResponse> {
-  return apiFetch(`/${encodeURIComponent(userName)}/category/${encodeURIComponent(slug)}`);
+export async function getPublicCategoryBlogs(subdomain: string, slug: string): Promise<PublicCategoryBlogsResponse> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`);
 }
 
 // ── Authors ───────────────────────────────────────────────────────────
@@ -729,12 +720,12 @@ export async function uploadAuthorAvatar(
   });
 }
 
-export async function getPublicAuthors(userName: string): Promise<Author[]> {
-  return apiFetch(`/${encodeURIComponent(userName)}/authors`);
+export async function getPublicAuthors(subdomain: string): Promise<Author[]> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/authors`);
 }
 
-export async function getPublicAuthorBlogs(userName: string, slug: string): Promise<PublicAuthorDetail> {
-  return apiFetch(`/${encodeURIComponent(userName)}/author/${encodeURIComponent(slug)}`);
+export async function getPublicAuthorBlogs(subdomain: string, slug: string): Promise<PublicAuthorDetail> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`);
 }
 
 // ── Sites ─────────────────────────────────────────────────────────────

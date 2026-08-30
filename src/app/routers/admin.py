@@ -6,14 +6,10 @@ import uuid
 from .. import models
 from ..database import get_db
 from ..security.oauth2 import get_current_user
-from ..schemas import user as user_schema
 from ..config import settings
 from ..utils import (
-    RequestContext,
-    apply_username_change_or_raise,
     assert_admin_email,
 )
-from ..utils.serialization import user_settings_out
 
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
@@ -26,7 +22,7 @@ def _require_admin(current_user=Depends(get_current_user)):
 
 @router.get("/users", status_code=status.HTTP_200_OK)
 def list_users(
-    q: str = Query("", description="Search by username/email/name"),
+    q: str = Query("", description="Search by subdomain/email/name"),
     plan: str = Query("all", description="all|inactive|pro"),
     sort: str = Query("latest", description="latest|oldest"),
     limit: int = Query(50, ge=1, le=200),
@@ -77,7 +73,7 @@ def list_users(
             {
                 "user_id": db_user.user_id,
                 "name": db_user.name,
-                "user_name": site.subdomain if site else "",
+                "subdomain": site.subdomain if site else "",
                 "email": db_user.email,
                 "created_at": db_user.created_at,
                 "plan": "pro" if is_pro else "inactive",
@@ -86,40 +82,9 @@ def list_users(
     return output
 
 
-@router.patch("/users/{user_id}/username", response_model=user_schema.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def admin_override_username(
-    user_id: uuid.UUID,
-    request: user_schema.AdminUsernameChange,
-    db: Session = Depends(get_db),
-    current_user=Depends(_require_admin),
-):
-    db_user = db.query(models.User).filter(models.User.user_id == user_id).first()
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-    
-    db_site = db.query(models.Site).filter(models.Site.user_id == user_id).order_by(models.Site.site_id.asc()).first()
-    if not db_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found for user")
-
-    apply_username_change_or_raise(
-        db,
-        db_site=db_site,
-        new_username_raw=request.user_name,
-        actor_user_id=current_user.user_id,
-        actor_email=current_user.email,
-        request_context=RequestContext(ip=None, user_agent="admin_api"),
-        is_admin_override=True,
-        reason=(request.reason or "").strip() or "admin_override",
-    )
-    db.commit()
-    db.refresh(db_user)
-    db.refresh(db_site)
-    return user_settings_out(db, db_user, db_site)
-
-
 @router.get("/payments", status_code=status.HTTP_200_OK)
 def admin_list_payments(
-    q: str = Query("", description="Search by username/email/payment id"),
+    q: str = Query("", description="Search by subdomain/email/payment id"),
     sort: str = Query("latest", description="latest|oldest"),
     limit: int = Query(50, ge=1, le=200),
     offset: int = Query(0, ge=0),
@@ -150,7 +115,7 @@ def admin_list_payments(
         {
             "transaction_id": tx.transaction_id,
             "user_id": usr.user_id,
-            "user_name": site.subdomain if site else "",
+            "subdomain": site.subdomain if site else "",
             "email": usr.email,
             "amount": tx.amount,
             "currency": tx.currency,
@@ -188,7 +153,7 @@ def admin_retry_payment_webhook(webhook_id: uuid.UUID, db: Session = Depends(get
 
 @router.get("/domains", status_code=status.HTTP_200_OK)
 def admin_list_domains(
-    q: str = Query("", description="Search by username/email/domain"),
+    q: str = Query("", description="Search by subdomain/email/domain"),
     status_filter: str = Query("all", description="all|active|grace|expired|pending"),
     sort: str = Query("latest", description="latest|oldest"),
     limit: int = Query(50, ge=1, le=200),
@@ -227,7 +192,7 @@ def admin_list_domains(
         {
             "user_id": user.user_id,
             "site_id": site.site_id,
-            "user_name": site.subdomain,
+            "subdomain": site.subdomain,
             "email": user.email,
             "custom_domain": site.custom_domain,
             "domain_status": site.domain_status,

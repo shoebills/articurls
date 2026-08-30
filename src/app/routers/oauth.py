@@ -33,8 +33,7 @@ from ..utils.google_oauth import (
 from ..utils import (
     user_by_email,
     normalize_email,
-    validate_username_or_raise,
-    claim_username_or_raise,
+    validate_subdomain_or_raise,
 )
 from .. import models
 
@@ -238,10 +237,10 @@ async def complete_google_signup(
     Complete Google OAuth signup by creating user account.
     
     This endpoint is called after the user completes the onboarding form
-    with their desired username and password.
+    with their desired subdomain and password.
     
     Args:
-        request: Onboarding completion data (session_id, username, password)
+        request: Onboarding completion data (session_id, subdomain, password)
         response: FastAPI response object
         db: Database session
         
@@ -249,7 +248,7 @@ async def complete_google_signup(
         Token: Access token and token type
         
     Raises:
-        HTTPException: If session invalid, username taken, or creation fails
+        HTTPException: If session invalid, subdomain taken, or creation fails
     """
     # Retrieve OAuth session data
     session_data = get_oauth_session(request.session_id)
@@ -275,18 +274,18 @@ async def complete_google_signup(
     # Use the name from the request (user may have edited it)
     name = request.name
     
-    # Validate username
-    user_name = validate_username_or_raise(request.user_name)
+    # Validate subdomain
+    subdomain = validate_subdomain_or_raise(request.subdomain)
     
-    # Check if username is taken
-    existing_username = db.query(models.Site).filter(
-        models.Site.subdomain == user_name
+    # Check if subdomain is taken
+    existing_subdomain = db.query(models.Site).filter(
+        models.Site.subdomain == subdomain
     ).first()
     
-    if existing_username:
+    if existing_subdomain:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
+            detail="Subdomain already taken"
         )
     
     # Check if email is now taken (race condition protection)
@@ -327,7 +326,7 @@ async def complete_google_signup(
     # Create default Site
     new_site = models.Site(
         user_id=new_user.user_id,
-        subdomain=user_name,
+        subdomain=subdomain,
         meta_title=f"{name}'s Blog",
         meta_description=f"Explore all the blogs published by {name}.",
     )
@@ -338,29 +337,11 @@ async def complete_google_signup(
     new_author = models.Author(
         site_id=new_site.site_id,
         name=name,
-        slug=user_name,
+        slug=subdomain,
         profile_image_url=picture or settings.default_profile_image_url,
     )
     db.add(new_author)
     db.flush()
-    
-    # Claim username
-    claim_username_or_raise(db, new_user.user_id, user_name)
-    
-    # Add username audit entry
-    db.add(
-        models.UsernameChangeAudit(
-            user_id=new_user.user_id,
-            old_username=user_name,
-            new_username=user_name,
-            actor_user_id=new_user.user_id,
-            actor_email=email,
-            is_admin_override=False,
-            reason="account_created_via_google",
-            request_ip=None,
-            user_agent=None,
-        )
-    )
     
     db.commit()
     db.refresh(new_user)

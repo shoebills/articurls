@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 type Props = {
-  userName: string;
+  subdomain: string;
   authorName?: string;
   /** Full-width card (e.g. blog post). Default. */
   mode?: "card" | "dialog";
@@ -29,7 +29,7 @@ type Props = {
 };
 
 export function SubscribeToAuthor({
-  userName,
+  subdomain,
   authorName,
   mode = "card",
   className,
@@ -52,7 +52,7 @@ export function SubscribeToAuthor({
     setStatus("loading");
     setMessage(null);
     try {
-      const res = await publicSubscribe(userName, email.trim());
+      const res = await publicSubscribe(subdomain, email.trim());
       setStatus("success");
       setMessage(res.message);
       setEmail("");
@@ -76,11 +76,11 @@ export function SubscribeToAuthor({
       ) : (
         <form onSubmit={onSubmit} className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="min-w-0 flex-1 space-y-2">
-            <Label htmlFor={`subscribe-email-${userName}`} className="sr-only">
+            <Label htmlFor={`subscribe-email-${subdomain}`} className="sr-only">
               Email address
             </Label>
             <Input
-              id={`subscribe-email-${userName}`}
+              id={`subscribe-email-${subdomain}`}
               type="email"
               name="email"
               autoComplete="email"

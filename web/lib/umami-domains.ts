@@ -1,6 +1,6 @@
 import { MARKETING_ORIGIN, UGC_ORIGIN } from "@/lib/env";
 import { hasActiveCustomDomain } from "@/lib/custom-domain-redirect";
-import type { PublicUser } from "@/lib/types";
+import type { PublicSite } from "@/lib/types";
 
 function addHost(domains: Set<string>, hostname: string): void {
   const host = hostname.toLowerCase().trim();
@@ -12,7 +12,7 @@ function addHost(domains: Set<string>, hostname: string): void {
 }
 
 /** Comma-separated hostnames for Umami data-domains (must be non-empty). */
-export function buildUmamiDomains(user: PublicUser): string {
+export function buildUmamiDomains(site: PublicSite): string {
   const domains = new Set<string>();
 
   try {
@@ -22,8 +22,8 @@ export function buildUmamiDomains(user: PublicUser): string {
     return "";
   }
 
-  if (hasActiveCustomDomain(user) && user.custom_domain) {
-    addHost(domains, user.custom_domain);
+  if (hasActiveCustomDomain(site) && site.custom_domain) {
+    addHost(domains, site.custom_domain);
   }
 
   return [...domains].join(",");
