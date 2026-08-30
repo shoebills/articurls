@@ -603,7 +603,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   const liveUrl =
     blog.status === "published" && activeSite
-      ? getSitePublicUrl(activeSite, `/blog/${encodeURIComponent(blog.slug)}`)
+      ? getSitePublicUrl(activeSite, `/${encodeURIComponent(blog.slug)}`)
       : null;
 
   function getConfirmMeta(): { title: string; description?: string } {

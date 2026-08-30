@@ -229,72 +229,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? { canonical, types: { "application/rss+xml": `https://${host}${basePath}/rss.xml` } }
       : { canonical };
 
-  // Blog post: /blog/[slug] or direct [slug] under subpath
-  let postSlug: string | null = null;
-  if (segments[0] === "blog" && segments[1]) {
-    postSlug = segments[1];
-  } else if (segments.length === 1 && segments[0] !== "category" && segments[0] !== "page" && basePath) {
-    postSlug = segments[0];
-  }
-
-  if (postSlug) {
-    const [blog, site] = await Promise.all([loadBlog(subdomain, postSlug), loadSite(subdomain)]);
-    if (!blog) return { title: "Not found" };
-    const title = blog.meta_title || blog.title;
-    const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
-    const siteName = resolveSiteName(site);
-    const ogImage = resolveBlogOgImage(blog);
-    return {
-      title,
-      description,
-      alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
-      icons: faviconIcons(site),
-      openGraph: {
-        title,
-        description,
-        url: canonical,
-        type: "article",
-        siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
-      },
-    };
-  }
-
-  if (segments[0] === "page" && segments[1]) {
-    const [page, site] = await Promise.all([loadPage(subdomain, segments[1]), loadSite(subdomain)]);
-    if (!page) return { title: "Not found" };
-    const title = page.meta_title || page.title;
-    const description = resolvePageDescription(page);
-    const siteName = resolveSiteName(site);
-    const ogImage = resolveSiteOgImage(site);
-    return {
-      title,
-      description,
-      alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
-      icons: faviconIcons(site),
-      openGraph: {
-        title,
-        description,
-        url: canonical,
-        type: "website",
-        siteName,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
-      },
-      twitter: {
-        card: "summary_large_image",
-        title,
-        description,
-        images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
-      },
-    };
-  }
-
   if (segments[0] === "category" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
     if (!site || !data) return { title: "Not found" };
@@ -388,6 +322,72 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
+  // Direct single segment: check blog post or custom page
+  if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
+    const slug = segments[0];
+    const [blog, page, site] = await Promise.all([
+      loadBlog(subdomain, slug),
+      loadPage(subdomain, slug),
+      loadSite(subdomain),
+    ]);
+
+    if (blog) {
+      const title = blog.meta_title || blog.title;
+      const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
+      const siteName = resolveSiteName(site);
+      const ogImage = resolveBlogOgImage(blog);
+      return {
+        title,
+        description,
+        alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+        icons: faviconIcons(site),
+        openGraph: {
+          title,
+          description,
+          url: canonical,
+          type: "article",
+          siteName,
+          images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
+        },
+        twitter: {
+          card: "summary_large_image",
+          title,
+          description,
+          images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        },
+      };
+    }
+
+    if (page) {
+      const title = page.meta_title || page.title;
+      const description = resolvePageDescription(page);
+      const siteName = resolveSiteName(site);
+      const ogImage = resolveSiteOgImage(site);
+      return {
+        title,
+        description,
+        alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+        icons: faviconIcons(site),
+        openGraph: {
+          title,
+          description,
+          url: canonical,
+          type: "website",
+          siteName,
+          images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
+        },
+        twitter: {
+          card: "summary_large_image",
+          title,
+          description,
+          images: ogImage ? [{ url: ogImage, alt: `${title} cover image` }] : undefined,
+        },
+      };
+    }
+
+    return { title: "Not found" };
+  }
+
   // Profile / Homepage
   const site = await loadSite(subdomain);
   if (!site) return { title: "Not found" };
@@ -471,252 +471,245 @@ export default async function SitePublicationPage({ params }: Props) {
     permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
   }
 
-  // ── Blog post: /blog/[slug] or direct [slug] under subpath ────────────────
-  let postSlug: string | null = null;
-  if (segments[0] === "blog" && segments[1]) {
-    postSlug = segments[1];
-  } else if (segments.length === 1 && segments[0] !== "category" && segments[0] !== "page" && basePath) {
-    postSlug = segments[0];
-  }
-
-  if (postSlug) {
-    const [blog, site, pages, categories] = await Promise.all([
-      loadBlog(subdomain, postSlug),
+  // ── Blog post or Custom page: /[slug] ────────────────────────────────────
+  if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
+    const slug = segments[0];
+    const [blog, page, site, pages, categories] = await Promise.all([
+      loadBlog(subdomain, slug),
+      loadPage(subdomain, slug),
       loadSite(subdomain),
       loadPages(subdomain),
       loadCategories(subdomain),
     ]);
 
-    if (!blog || !site) notFound();
+    if (!site) notFound();
 
-    const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
-    const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
-    const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const isNavEnabled = site.navbar_enabled !== false;
-    const containerSpacing = isNavEnabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-      : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-    
-    const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const showSubscriberCollection = site.subscriber_collection_enabled === true;
-    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+    // Render Blog post if found
+    if (blog) {
+      const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
+      const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+      const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+      const isNavEnabled = site.navbar_enabled !== false;
+      const containerSpacing = isNavEnabled
+        ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
+        : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+      
+      const desktopLinks = resolveNavLinks(site, categories, basePath);
+      const showSubscriberCollection = site.subscriber_collection_enabled === true;
+      const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
 
-    const currentUrl = `https://${host}${basePath}/blog/${encodeURIComponent(postSlug)}`;
-    const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
-    const featuredImageUrl = featuredBaseUrl
-      ? transformImageUrl(featuredBaseUrl, { width: 1200, fit: "cover" })
-      : null;
-    const featuredImageSrcSet = featuredBaseUrl ? generateSrcSet(featuredBaseUrl, [400, 800, 1200]) : null;
-    const { html: blogHtmlWithIds, headings: tocHeadings } = injectHeadingIds(
-      transformHtmlImages(sanitizeHtml(blog.content))
-    );
+      const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
+      const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
+      const featuredImageUrl = featuredBaseUrl
+        ? transformImageUrl(featuredBaseUrl, { width: 1200, fit: "cover" })
+        : null;
+      const featuredImageSrcSet = featuredBaseUrl ? generateSrcSet(featuredBaseUrl, [400, 800, 1200]) : null;
+      const { html: blogHtmlWithIds, headings: tocHeadings } = injectHeadingIds(
+        transformHtmlImages(sanitizeHtml(blog.content))
+      );
 
-    const blogPostContent = (
-      <>
-        <div className="flex items-center justify-between">
-          <Link href={getPublicProfileUrl(subdomain, basePath)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-            <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-            Back
-          </Link>
-          <BlogPostShareMenu url={currentUrl} title={blog.title} />
-        </div>
-        <header className="mt-6 sm:mt-8">
-          <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
-            {blog.title}
-          </h1>
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-            {blog.author ? (
-              <Link
-                href={getPublicAuthorUrl(subdomain, blog.author.slug, basePath)}
-                className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-              >
-                {blog.author.profile_image_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={transformImageUrl(assetUrl(blog.author.profile_image_url), { width: 48, height: 48, fit: "cover" })}
-                    alt={blog.author.name}
-                    className="h-6 w-6 rounded-full object-cover"
+      const blogPostContent = (
+        <>
+          <div className="flex items-center justify-between">
+            <Link href={getPublicProfileUrl(subdomain, basePath)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+            <BlogPostShareMenu url={currentUrl} title={blog.title} />
+          </div>
+          <header className="mt-6 sm:mt-8">
+            <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
+              {blog.title}
+            </h1>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              {blog.author ? (
+                <Link
+                  href={getPublicAuthorUrl(subdomain, blog.author.slug, basePath)}
+                  className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                >
+                  {blog.author.profile_image_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={transformImageUrl(assetUrl(blog.author.profile_image_url), { width: 48, height: 48, fit: "cover" })}
+                      alt={blog.author.name}
+                      className="h-6 w-6 rounded-full object-cover"
+                    />
+                  ) : null}
+                  <span className="truncate font-medium">{blog.author.name}</span>
+                </Link>
+              ) : null}
+              {blog.published_at && (
+                <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
+                  <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                  {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                </time>
+              )}
+            </div>
+          </header>
+          {featuredImageUrl ? (
+            <figure className="mt-6 sm:mt-8">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={featuredImageUrl}
+                srcSet={featuredImageSrcSet ?? undefined}
+                sizes="(max-width: 1024px) 100vw, 768px"
+                alt={blog.title}
+                loading="eager"
+                decoding="async"
+                className="block h-auto w-full rounded-2xl"
+              />
+            </figure>
+          ) : null}
+          <div className={featuredImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
+            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
+          </div>
+          {showSubscriberCollection ? (
+            <div className="mt-14">
+              <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
+            </div>
+          ) : null}
+        </>
+      );
+
+      return (
+        <ThemeStyleWrapper site={site}>
+          <article className="min-h-screen bg-background">
+          <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
+          <main className={containerSpacing}>
+            {isNavEnabled ? (
+              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
+                <div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(subdomain, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    alignment={site.navbar_alignment || "left"}
+                    basePath={basePath}
                   />
-                ) : null}
-                <span className="truncate font-medium">{blog.author.name}</span>
-              </Link>
-            ) : null}
-            {blog.published_at && (
-              <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
-                <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
-              </time>
-            )}
-          </div>
-        </header>
-        {featuredImageUrl ? (
-          <figure className="mt-6 sm:mt-8">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={featuredImageUrl}
-              srcSet={featuredImageSrcSet ?? undefined}
-              sizes="(max-width: 1024px) 100vw, 768px"
-              alt={blog.title}
-              loading="eager"
-              decoding="async"
-              className="block h-auto w-full rounded-2xl"
-            />
-          </figure>
-        ) : null}
-        <div className={featuredImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
-          <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
-        </div>
-        {showSubscriberCollection ? (
-          <div className="mt-14">
-            <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
-          </div>
-        ) : null}
-      </>
-    );
-
-    return (
-      <ThemeStyleWrapper site={site}>
-        <article className="min-h-screen bg-background">
-        <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
-        <main className={containerSpacing}>
-          {isNavEnabled ? (
-            <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  alignment={site.navbar_alignment || "left"}
-                />
-              </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showMenuButton={hasMobileNav}
-                />
-              </div>
-            </header>
-          ) : null}
-          {site.content_width === "wide" ? (
-            <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
-              <div className="max-w-3xl">
-                <div className="mb-5 sm:mb-6 lg:hidden">
-                  <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
                 </div>
-                {blogPostContent}
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(subdomain, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showMenuButton={hasMobileNav}
+                    basePath={basePath}
+                  />
+                </div>
+              </header>
+            ) : null}
+            {site.content_width === "wide" ? (
+              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
+                <div className="max-w-3xl">
+                  <div className="mb-5 sm:mb-6 lg:hidden">
+                    <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
+                  </div>
+                  {blogPostContent}
+                </div>
+                <aside className="hidden lg:block sticky top-24 self-start z-30">
+                  <BlogPostToc headings={tocHeadings} />
+                </aside>
               </div>
-              <aside className="hidden lg:block sticky top-24 self-start z-30">
-                <BlogPostToc headings={tocHeadings} />
-              </aside>
-            </div>
-          ) : (
-            <div className="mb-5 sm:mb-6">
-              <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
-            </div>
-          )}
-          <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-        </main>
-      </article>
-      </ThemeStyleWrapper>
-    );
-  }
-
-  // ── Custom page: /page/[slug] ─────────────────────────────────────────────
-  if (segments[0] === "page") {
-    if (!segments[1]) notFound();
-    const pageSlug = segments[1];
-    const [site, pages, categories, page] = await Promise.all([
-      loadSite(subdomain),
-      loadPages(subdomain),
-      loadCategories(subdomain),
-      loadPage(subdomain, pageSlug),
-    ]);
-
-    if (!site || !page) notFound();
-
-    const navBlogName = resolveSiteName(site);
-    const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
-    const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-    const contentWidth = site.content_width === "wide" ? "max-w-3xl" : "";
-    const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = isNavEnabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-    const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const showSubscriberCollection = site.subscriber_collection_enabled === true;
-    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
-
-    const currentUrl = `https://${host}${basePath}/page/${encodeURIComponent(pageSlug)}`;
-
-    return (
-      <ThemeStyleWrapper site={site}>
-      <div className="min-h-screen bg-background text-foreground">
-        <main className={mainSpacing}>
-          <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
-          {isNavEnabled ? (
-            <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  alignment={site.navbar_alignment || "left"}
-                />
+            ) : (
+              <div className="mb-5 sm:mb-6">
+                <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
               </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showMenuButton={hasMobileNav}
-                />
+            )}
+            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
+          </main>
+        </article>
+        </ThemeStyleWrapper>
+      );
+    }
+
+    // Render Custom page if found
+    if (page) {
+      const navBlogName = resolveSiteName(site);
+      const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+      const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+      const contentWidth = site.content_width === "wide" ? "max-w-3xl" : "";
+      const isNavEnabled = site.navbar_enabled !== false;
+      const mainSpacing = isNavEnabled
+        ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
+        : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+
+      const desktopLinks = resolveNavLinks(site, categories, basePath);
+      const showSubscriberCollection = site.subscriber_collection_enabled === true;
+      const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+
+      const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
+
+      return (
+        <ThemeStyleWrapper site={site}>
+        <div className="min-h-screen bg-background text-foreground">
+          <main className={mainSpacing}>
+            <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
+            {isNavEnabled ? (
+              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
+                <div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(subdomain, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    alignment={site.navbar_alignment || "left"}
+                    basePath={basePath}
+                  />
+                </div>
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={getPublicProfileUrl(subdomain, basePath)}
+                    nameSize={blogNameSize}
+                    links={desktopLinks}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showMenuButton={hasMobileNav}
+                    basePath={basePath}
+                  />
+                </div>
+              </header>
+            ) : null}
+
+            <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
+              <div className="flex items-center justify-between">
+                <Link
+                  href={getPublicProfileUrl(subdomain, basePath)}
+                  className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+                >
+                  <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                  Back
+                </Link>
+                <BlogPostShareMenu url={currentUrl} title={page.title} />
               </div>
-            </header>
-          ) : null}
 
-          <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
-            <div className="flex items-center justify-between">
-              <Link
-                href={getPublicProfileUrl(subdomain, basePath)}
-                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-              >
-                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Back
-              </Link>
-              <BlogPostShareMenu url={currentUrl} title={page.title} />
+              <header className="mt-6 sm:mt-8">
+                <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
+              </header>
+              <article className="mt-12">
+                <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
+              </article>
             </div>
+            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
+          </main>
+        </div>
+        </ThemeStyleWrapper>
+      );
+    }
 
-            <header className="mt-6 sm:mt-8">
-              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
-            </header>
-            <article className="mt-12">
-              <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
-            </article>
-          </div>
-          <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-        </main>
-      </div>
-      </ThemeStyleWrapper>
-    );
+    notFound();
   }
 
   // ── Category page: /category/[slug] ───────────────────────────────────────

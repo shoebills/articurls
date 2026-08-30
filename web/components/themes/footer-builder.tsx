@@ -126,7 +126,7 @@ export function FooterBuilder({
 
     if (formType === "page") {
       const selected = pages.find((p) => p.slug === formPageSlug);
-      finalUrl = `/page/${formPageSlug}`;
+      finalUrl = `/${formPageSlug}`;
       if (!finalLabel && selected) finalLabel = selected.title;
     } else if (formType === "category") {
       const selected = categories.find((c) => c.slug === formCatSlug);
@@ -387,7 +387,7 @@ export function FooterBuilder({
                   <SelectContent>
                     {pages.map((p) => (
                       <SelectItem key={p.page_id} value={p.slug}>
-                        {p.title} (/page/{p.slug})
+                        {p.title} (/{p.slug})
                       </SelectItem>
                     ))}
                   </SelectContent>

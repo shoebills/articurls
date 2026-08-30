@@ -70,43 +70,40 @@ function withCacheHeaders(
   const tags: string[] = [tenantTag];
 
   // Extract content-specific tags based on path pattern
-  const blogMatch = pathname.match(/\/blog\/([^\/]+)/);
-  const pageMatch = pathname.match(/\/page\/([^\/]+)/);
   const categoryMatch = pathname.match(/\/category\/([^\/]+)/);
+  const authorMatch = pathname.match(/\/author\/([^\/]+)/);
 
-  if (blogMatch) {
-    // Individual blog post
-    tags.push(`post-${blogMatch[1]}`);
-  } else if (pageMatch) {
-    // Custom page
-    tags.push(`page-${pageMatch[1]}`);
+  if (pathname === "/" || pathname === "" || pathname === "/categories") {
+    // Home/profile or categories index page - also a listing page
+    tags.push("home");
+    tags.push("posts-list");
   } else if (categoryMatch) {
     // Category listing page - add posts-list for cascade purging
     tags.push(`category-${categoryMatch[1]}`);
     tags.push("posts-list");
-  } else if (pathname === "/" || pathname === "") {
-    // Home/profile page - also a listing page
-    tags.push("home");
+  } else if (authorMatch) {
+    // Author page
+    tags.push(`author-${authorMatch[1]}`);
     tags.push("posts-list");
+  } else {
+    // Direct slug (e.g. /my-post, /about, /blog/my-post, /page/about)
+    const segments = pathname.split("/").filter(Boolean);
+    const slug = segments[segments.length - 1];
+    if (slug) {
+      tags.push(`post-${slug}`);
+      tags.push(`page-${slug}`);
+      tags.push("posts-list");
+    }
   }
 
   // Set cache tags for targeted purging via backend (Vercel API + Next.js revalidateTag).
   response.headers.set("Vercel-Cache-Tag", tags.join(","));
 
   // Cache public blog content at the edge; purge via revalidateTag on content change.
-  if (
-    pathname === "/" ||
-    pathname.startsWith("/blog/") ||
-    pathname.startsWith("/page/") ||
-    pathname.startsWith("/category/")
-  ) {
-    response.headers.set(
-      "Cache-Control",
-      "public, max-age=14400, stale-while-revalidate=3600",
-    );
-  } else {
-    response.headers.set("Cache-Control", "no-store, must-revalidate");
-  }
+  response.headers.set(
+    "Cache-Control",
+    "public, max-age=14400, stale-while-revalidate=3600",
+  );
 
   return response;
 }
@@ -143,7 +140,7 @@ export function middleware(request: NextRequest) {
     runtimeHosts,
   );
 
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
   if (pathname !== "/" && pathname.endsWith("/")) {
     const url = request.nextUrl.clone();

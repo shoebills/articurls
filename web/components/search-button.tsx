@@ -16,9 +16,11 @@ const MIN_QUERY_LENGTH = 2;
 export function SearchButton({
   iconClassName,
   subdomain,
+  basePath = "",
 }: {
   iconClassName?: string;
   subdomain: string;
+  basePath?: string;
 }) {
   const router = useRouter();
   const [query, setQuery] = useState("");
@@ -157,11 +159,11 @@ export function SearchButton({
         if (results[idx]) {
           const slug = results[idx].slug;
           selectResult();
-          router.push(getPublicPostUrl(subdomain, slug));
+          router.push(getPublicPostUrl(subdomain, slug, basePath));
         }
       }
     },
-    [results, highlightedIndex, subdomain, router, selectResult]
+    [results, highlightedIndex, subdomain, basePath, router, selectResult]
   );
 
   useEffect(() => {
@@ -282,7 +284,7 @@ export function SearchButton({
                       {results.map((blog, i) => (
                         <li key={blog.blog_id}>
                           <Link
-                            href={getPublicPostUrl(subdomain, blog.slug)}
+                            href={getPublicPostUrl(subdomain, blog.slug, basePath)}
                             onClick={selectResult}
                             onMouseEnter={() => setHighlightedIndex(i)}
                             className={`block px-4 py-3 text-sm transition-colors ${

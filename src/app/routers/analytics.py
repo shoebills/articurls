@@ -469,29 +469,36 @@ def get_umami_pages(
             .all()
         }
 
-        SYSTEM_PATHS = {"/", "/rss.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe"}
+        SYSTEM_PATHS = {"/", "/rss.xml", "/atom.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe", "/categories", "/authors"}
+        subpath = (current_site.custom_subpath or "").strip().rstrip("/")
+
+        def _strip_subpath(raw_path: str) -> str:
+            p = raw_path.strip().rstrip("/") or "/"
+            if subpath and p.startswith(subpath):
+                p = p[len(subpath):] or "/"
+            return p
 
         def resolve_path_status(path: str) -> str:
-            p = path.strip().rstrip("/") or "/"
+            p = _strip_subpath(path)
             if p in SYSTEM_PATHS:
                 return "live"
-            # custom domain: /blog/{slug} or /page/{slug}
+            if p.startswith("/category/") or p.startswith("/author/"):
+                return "live"
+
+            slug = p.lstrip("/")
             if p.startswith("/blog/"):
                 slug = p[len("/blog/"):]
-                if slug in published_blog_slugs:
-                    return "live"
-                if slug in archived_blog_slugs:
-                    return "archived"
-                return "deleted"
-            if p.startswith("/page/"):
+            elif p.startswith("/page/"):
                 slug = p[len("/page/"):]
-                if slug in published_page_slugs:
-                    return "live"
-                if slug in archived_page_slugs:
-                    return "archived"
-                return "deleted"
-            if p.startswith("/category/"):
+
+            if slug in published_blog_slugs:
                 return "live"
+            if slug in archived_blog_slugs:
+                return "archived"
+            if slug in published_page_slugs:
+                return "live"
+            if slug in archived_page_slugs:
+                return "archived"
             return "deleted"
 
         enriched = [
@@ -500,15 +507,24 @@ def get_umami_pages(
         ]
 
         def extract_content_key(x: str) -> tuple | None:
-            p = x.strip().rstrip("/") or "/"
+            p = _strip_subpath(x)
             if p == "/":
                 return ("home",)
-            if p.startswith("/blog/"):
-                return ("blog", p[len("/blog/"):])
-            if p.startswith("/page/"):
-                return ("page", p[len("/page/"):])
             if p.startswith("/category/"):
                 return ("category", p[len("/category/"):])
+            if p.startswith("/author/"):
+                return ("author", p[len("/author/"):])
+            
+            slug = p.lstrip("/")
+            if p.startswith("/blog/"):
+                slug = p[len("/blog/"):]
+            elif p.startswith("/page/"):
+                slug = p[len("/page/"):]
+
+            if slug in published_blog_slugs or slug in archived_blog_slugs:
+                return ("post", slug)
+            if slug in published_page_slugs or slug in archived_page_slugs:
+                return ("page", slug)
             return None
 
         merged: dict = {}
@@ -527,10 +543,13 @@ def get_umami_pages(
         for key, row in merged.items():
             if isinstance(key, tuple):
                 if key[0] == "home":
-                    row["x"] = "/"
+                    row["x"] = f"{subpath}/" if subpath else "/"
+                elif key[0] in ("post", "page"):
+                    _, slug = key
+                    row["x"] = f"{subpath}/{slug}" if subpath else f"/{slug}"
                 else:
                     type_, slug = key
-                    row["x"] = f"/{type_}/{slug}"
+                    row["x"] = f"{subpath}/{type_}/{slug}" if subpath else f"/{type_}/{slug}"
 
         live_and_archived = [
             r for k, r in merged.items()

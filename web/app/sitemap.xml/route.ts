@@ -175,7 +175,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
 
   for (const blog of blogs) {
     entries.push({
-      loc: `${siteOrigin}/blog/${encodeURIComponent(blog.slug)}`,
+      loc: `${siteOrigin}/${encodeURIComponent(blog.slug)}`,
       lastmod: isoDate(blog.updated_at) ?? isoDate(blog.published_at),
       changefreq: "monthly",
       priority: "0.8",
@@ -185,7 +185,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
   for (const page of pages) {
     if (!page.show_in_footer) continue;
     entries.push({
-      loc: `${siteOrigin}/page/${encodeURIComponent(page.slug)}`,
+      loc: `${siteOrigin}/${encodeURIComponent(page.slug)}`,
       lastmod: isoDate(page.updated_at),
       changefreq: "monthly",
       priority: "0.6",

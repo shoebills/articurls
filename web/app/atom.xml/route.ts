@@ -70,7 +70,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   const siteOrigin = `https://${effectiveHost}${basePath}`;
 
   const items: RssItem[] = sorted.slice(0, MAX_FEED_ITEMS).map((post) => {
-    const link = `${siteOrigin}/blog/${encodeURIComponent(post.slug)}`;
+    const link = `${siteOrigin}/${encodeURIComponent(post.slug)}`;
     const categoryNames = (post.category_ids || [])
       .map((id) => catMap.get(id))
       .filter((name): name is string => !!name);

@@ -29,17 +29,19 @@ type PublicMobileNavMenuProps = {
   authorName?: string;
   showSubscribeAction?: boolean;
   showMenuButton?: boolean;
+  basePath?: string;
 };
 
 export function PublicMobileNavMenu({
   title,
-  titleHref,
-  nameSize,
+  titleHref = "/",
+  nameSize = "medium",
   links,
   subdomain,
   authorName,
-  showSubscribeAction = true,
+  showSubscribeAction = false,
   showMenuButton = true,
+  basePath = "",
 }: PublicMobileNavMenuProps) {
   const size = normalizeNavBlogNameSize(nameSize);
   const titleClass = publicNavMobileBlogTitleClassName(size);
@@ -120,6 +122,7 @@ export function PublicMobileNavMenu({
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
                 subdomain={subdomain}
+                basePath={basePath}
               />
             ) : null}
             {links.length > 0 ? (

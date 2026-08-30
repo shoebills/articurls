@@ -22,20 +22,26 @@ def public_blog_home_url(site: Union[models.Site, models.User]) -> str:
     domain_status = str(
         site.domain_status.value if hasattr(site.domain_status, "value") else getattr(site, "domain_status", "")
     )
-    if getattr(site, "custom_domain", None) and domain_status in ("active", "grace"):
-        return f"https://{site.custom_domain}/"
+    subpath = getattr(site, "custom_subpath", None)
+    clean_subpath = f"/{subpath.strip('/')}" if subpath and subpath.strip('/') else ""
 
-    return f"{_ugc_subdomain(site)}/"
+    if getattr(site, "custom_domain", None) and domain_status in ("active", "grace"):
+        return f"https://{site.custom_domain}{clean_subpath}/"
+
+    return f"{_ugc_subdomain(site)}{clean_subpath}/"
 
 
 def public_post_url(site: Union[models.Site, models.User], blog: models.Blog, _db: Session = None) -> str:
     domain_status = str(
         site.domain_status.value if hasattr(site.domain_status, "value") else getattr(site, "domain_status", "")
     )
+    subpath = getattr(site, "custom_subpath", None)
+    clean_subpath = f"/{subpath.strip('/')}" if subpath and subpath.strip('/') else ""
+
     if (
         getattr(site, "custom_domain", None)
         and domain_status in ("active", "grace")
     ):
-        return f"https://{site.custom_domain}/blog/{blog.slug}"
+        return f"https://{site.custom_domain}{clean_subpath}/{blog.slug}"
 
-    return f"{_ugc_subdomain(site)}/blog/{blog.slug}"
+    return f"{_ugc_subdomain(site)}{clean_subpath}/{blog.slug}"

@@ -454,8 +454,10 @@ export interface SubfolderSettings {
 export interface SubfolderSnippets {
   cloudflare_worker: string;
   nextjs: string;
+  vercel?: string;
   nginx: string;
   caddy: string;
+  apache?: string;
 }
 
 export interface DomainLookupResponse {

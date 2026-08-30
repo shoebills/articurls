@@ -38,6 +38,7 @@ type PublicDesktopNavProps = {
   subdomain: string;
   authorName: string;
   alignment?: "left" | "center" | "right" | string;
+  basePath?: string;
 };
 
 function linkClass(active?: boolean, isCta?: boolean) {
@@ -59,6 +60,7 @@ export function PublicDesktopNav({
   subdomain,
   authorName,
   alignment = "left",
+  basePath = "",
 }: PublicDesktopNavProps) {
   const size = normalizeNavBlogNameSize(nameSize);
   const [inlineCount, setInlineCount] = useState<number | null>(null);
@@ -211,6 +213,7 @@ export function PublicDesktopNav({
           <SearchButton
             iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
             subdomain={subdomain}
+            basePath={basePath}
           />
         ) : null}
         {showSubscribe && subdomain ? (

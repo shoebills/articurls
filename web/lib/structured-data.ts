@@ -247,6 +247,24 @@ export function generateWebSiteSchema(site: PublicSite, siteUrl: string): WebSit
   };
 }
 
+function getSiteUrlFromCanonical(canonicalUrl: string): string {
+  try {
+    const u = new URL(canonicalUrl);
+    const pathParts = u.pathname.split("/").filter(Boolean);
+    if (pathParts.length <= 1) {
+      return u.origin;
+    }
+    pathParts.pop();
+    if (pathParts.length > 0 && (pathParts[pathParts.length - 1] === "category" || pathParts[pathParts.length - 1] === "author")) {
+      pathParts.pop();
+    }
+    const subpath = pathParts.length > 0 ? `/${pathParts.join("/")}` : "";
+    return `${u.origin}${subpath}`;
+  } catch {
+    return canonicalUrl;
+  }
+}
+
 export function generateBlogPostingSchema(
   blog: PublicBlog,
   author: PublicSite,
@@ -254,7 +272,7 @@ export function generateBlogPostingSchema(
 ): BlogPosting {
   const title = blog.meta_title || blog.title;
   const description = blog.meta_description || undefined;
-  const siteUrl = canonicalUrl.split('/blog/')[0];
+  const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
   const authorPerson = blog.author
     ? generateAuthorPersonSchema(blog.author, `${siteUrl}/author/${encodeURIComponent(blog.author.slug)}`)
     : generatePersonSchema(author, siteUrl);
@@ -300,8 +318,8 @@ export function generateCollectionPageSchema(
   author: PublicSite,
   canonicalUrl: string
 ): CollectionPage {
-  const authorPerson = generatePersonSchema(author, `${canonicalUrl.split('/category/')[0]}`);
-  const siteUrl = canonicalUrl.split('/category/')[0];
+  const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
+  const authorPerson = generatePersonSchema(author, siteUrl);
   
   return {
     "@context": "https://schema.org",
@@ -327,8 +345,8 @@ export function generateWebPageSchema(
   author: PublicSite,
   canonicalUrl: string
 ): WebPage {
-  const authorPerson = generatePersonSchema(author, `${canonicalUrl.split('/page/')[0]}`);
-  const siteUrl = canonicalUrl.split('/page/')[0];
+  const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
+  const authorPerson = generatePersonSchema(author, siteUrl);
   
   return {
     "@context": "https://schema.org",
@@ -344,7 +362,7 @@ export function generateWebPageSchema(
     },
     dateModified: page.updated_at || undefined,
     breadcrumb: generateBreadcrumbList([
-      { name: author.nav_blog_name || "Home", url: canonicalUrl.split('/page')[0] },
+      { name: author.nav_blog_name || "Home", url: siteUrl },
       { name: page.title || "Untitled Page", url: canonicalUrl },
     ]),
   };

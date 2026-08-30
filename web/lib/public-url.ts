@@ -10,7 +10,7 @@ export function formatWithBasePath(path: string, basePath = ""): string {
 }
 
 export function getPublicPostUrl(_subdomain: string, slug: string, basePath = ""): string {
-  return formatWithBasePath(`/blog/${encodeURIComponent(slug)}`, basePath);
+  return formatWithBasePath(`/${encodeURIComponent(slug)}`, basePath);
 }
 
 export function getPublicProfileUrl(_subdomain: string, basePath = ""): string {
@@ -34,7 +34,7 @@ export function getPublicAuthorsUrl(_subdomain: string, basePath = ""): string {
 }
 
 export function getPublicPageUrl(_subdomain: string, slug: string, basePath = ""): string {
-  return formatWithBasePath(`/page/${encodeURIComponent(slug)}`, basePath);
+  return formatWithBasePath(`/${encodeURIComponent(slug)}`, basePath);
 }
 
 function hasActiveDomain(site: Pick<SiteSummary, "custom_domain" | "domain_status">): boolean {

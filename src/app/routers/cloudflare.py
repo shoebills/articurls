@@ -211,6 +211,10 @@ export default {{
   async rewrites() {{
     return [
       {{
+        source: '{clean_subpath}',
+        destination: '{backend}{clean_subpath}',
+      }},
+      {{
         source: '{clean_subpath}/:path*',
         destination: '{backend}{clean_subpath}/:path*',
       }},
@@ -218,9 +222,23 @@ export default {{
   }},
 }};"""
 
+    vercel_rewrite = f"""// vercel.json
+{{
+  "rewrites": [
+    {{
+      "source": "{clean_subpath}",
+      "destination": "{backend}{clean_subpath}"
+    }},
+    {{
+      "source": "{clean_subpath}/:match*",
+      "destination": "{backend}{clean_subpath}/:match*"
+    }}
+  ]
+}}"""
+
     nginx_config = f"""# Nginx location block
-location {clean_subpath}/ {{
-    proxy_pass {backend}{clean_subpath}/;
+location {clean_subpath} {{
+    proxy_pass {backend}{clean_subpath};
     proxy_set_header Host {domain};
     proxy_set_header X-Original-Host {domain};
     proxy_set_header X-Articurls-Basepath {clean_subpath};
@@ -231,7 +249,7 @@ location {clean_subpath}/ {{
 
     caddy_config = f"""# Caddyfile
 {domain} {{
-    handle_path {clean_subpath}/* {{
+    handle_path {clean_subpath}* {{
         reverse_proxy {backend} {{
             header_up Host {domain}
             header_up X-Original-Host {domain}
@@ -240,9 +258,20 @@ location {clean_subpath}/ {{
     }}
 }}"""
 
+    apache_config = f"""# Apache .htaccess or httpd.conf
+RewriteEngine On
+SSLProxyEngine On
+ProxyPreserveHost Off
+RequestHeader set X-Original-Host "{domain}"
+RequestHeader set X-Articurls-Basepath "{clean_subpath}"
+ProxyPass {clean_subpath} {backend}{clean_subpath}
+ProxyPassReverse {clean_subpath} {backend}{clean_subpath}"""
+
     return {
         "cloudflare_worker": cf_worker,
         "nextjs": nextjs_rewrite,
+        "vercel": vercel_rewrite,
         "nginx": nginx_config,
         "caddy": caddy_config,
+        "apache": apache_config,
     }

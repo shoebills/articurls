@@ -191,7 +191,7 @@ export default function PagesDashboardPage() {
 
   function onViewPost(page: UserPage) {
     if (!token || !activeSite) return;
-    const url = getSitePublicUrl(activeSite, `/page/${encodeURIComponent(page.slug)}`);
+    const url = getSitePublicUrl(activeSite, `/${encodeURIComponent(page.slug)}`);
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 

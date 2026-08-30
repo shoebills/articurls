@@ -8,6 +8,33 @@ from .. import models
 
 DRAFT_SLUG_RE = re.compile(r"^draft-[a-f0-9]{12}$")
 
+RESERVED_SLUGS = frozenset({
+    "category",
+    "categories",
+    "author",
+    "authors",
+    "sitemap.xml",
+    "rss.xml",
+    "atom.xml",
+    "feed.xml",
+    "robots.txt",
+    "favicon.ico",
+    "script.js",
+    "api",
+    "dashboard",
+    "login",
+    "signup",
+    "onboarding",
+    "verify",
+    "reset-password",
+    "forgot-password",
+    "confirm-subscription",
+    "unsubscribe",
+    "internal",
+    "site",
+    "_next",
+})
+
 
 def unique_blog_slug(db: Session, site_id: int, base_slug: str, exclude_blog_id: int | None = None) -> str:
 
@@ -15,12 +42,17 @@ def unique_blog_slug(db: Session, site_id: int, base_slug: str, exclude_blog_id:
     counter = 1
 
     while True:
-        q = db.query(models.Blog).filter(models.Blog.site_id == site_id, models.Blog.slug == candidate)
-
-        if exclude_blog_id is not None:
-            q = q.filter(models.Blog.blog_id != exclude_blog_id)
-        if q.first() is None:
-            return candidate
+        if candidate not in RESERVED_SLUGS:
+            q = db.query(models.Blog).filter(models.Blog.site_id == site_id, models.Blog.slug == candidate)
+            if exclude_blog_id is not None:
+                q = q.filter(models.Blog.blog_id != exclude_blog_id)
+            if q.first() is None:
+                page_exists = db.query(models.UserPage).filter(
+                    models.UserPage.site_id == site_id,
+                    models.UserPage.slug == candidate,
+                ).first()
+                if page_exists is None:
+                    return candidate
         
         candidate = f"{base_slug}-{counter}"
         counter += 1
@@ -51,13 +83,19 @@ def unique_page_slug(
     counter = 1
 
     while True:
-        q = db.query(models.UserPage).filter(
-            models.UserPage.site_id == site_id, models.UserPage.slug == candidate
-        )
-        if exclude_page_id is not None:
-            q = q.filter(models.UserPage.page_id != exclude_page_id)
-        if q.first() is None:
-            return candidate
+        if candidate not in RESERVED_SLUGS:
+            q = db.query(models.UserPage).filter(
+                models.UserPage.site_id == site_id, models.UserPage.slug == candidate
+            )
+            if exclude_page_id is not None:
+                q = q.filter(models.UserPage.page_id != exclude_page_id)
+            if q.first() is None:
+                blog_exists = db.query(models.Blog).filter(
+                    models.Blog.site_id == site_id,
+                    models.Blog.slug == candidate,
+                ).first()
+                if blog_exists is None:
+                    return candidate
 
         candidate = f"{base}-{counter}"
         counter += 1

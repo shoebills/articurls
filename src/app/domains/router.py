@@ -225,6 +225,7 @@ async def delete_domain(
         await _remove_vercel_domain(old_domain)
 
     db_site.custom_domain = None
+    db_site.custom_subpath = None
     db_site.domain_status = models.DomainStatus.NONE
     db_site.domain_dns_instructions = None
     db_site.verified_at = None

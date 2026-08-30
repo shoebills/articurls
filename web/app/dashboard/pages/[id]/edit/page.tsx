@@ -388,7 +388,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   const liveUrl =
     page.status === "published" && activeSite
-      ? getSitePublicUrl(activeSite, `/page/${encodeURIComponent(page.slug)}`)
+      ? getSitePublicUrl(activeSite, `/${encodeURIComponent(page.slug)}`)
       : null;
 
   const slugEditable = page.status === "draft";

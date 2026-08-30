@@ -16,16 +16,12 @@ import {
 import type { CustomDomain, UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft,
   ChevronRight,
   Code2,
-  Copy,
   Globe,
   Loader2,
   PanelBottom,
@@ -34,15 +30,13 @@ import {
   Search,
   SlidersHorizontal,
   Trash2,
-  X,
   type LucideIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { assetUrl, UGC_DOMAIN } from "@/lib/env";
+import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import CustomDomainSettings from "@/components/custom-domain-settings";
-import SubfolderSettings from "@/components/subfolder-settings";
+import { DomainSettings } from "@/components/domain-settings";
 import SeoSettings from "@/components/seo-settings";
 import { CodeInjectionSettings } from "@/components/code-injection-settings";
 import { DesignSettingsPanel } from "@/components/design-settings-panel";
@@ -483,40 +477,8 @@ export default function SettingsPage() {
         </div>
 
       <div className={cn("space-y-6 sm:space-y-8", selectedTab !== "domains" && "hidden")}>
-          <Card>
-            <CardHeader className="pb-4 sm:pb-4">
-              <CardTitle className="text-xl">Subdomain</CardTitle>
-              <CardDescription>Your blog&apos;s permanent subdomain.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex max-w-[30ch]">
-                <Input
-                  value={encodeURIComponent(subdomain)}
-                  readOnly
-                  className="rounded-l-lg rounded-r-none border border-r-0 bg-background focus-visible:ring-0 focus-visible:ring-offset-0"
-                />
-                <div className="flex shrink-0 items-center rounded-r-lg border bg-muted/40 px-3 text-sm font-mono text-muted-foreground">
-                  .{UGC_DOMAIN}
-                </div>
-              </div>
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                This cannot be changed later, but you can connect a custom domain anytime.
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-4 sm:pb-4">
-              <CardTitle className="text-xl">Custom Domain (Subdomain)</CardTitle>
-              <CardDescription>Point a standalone custom domain or subdomain (e.g. blog.yourcompany.com) to your blog.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <CustomDomainSettings />
-            </CardContent>
-          </Card>
-
-          <SubfolderSettings />
-        </div>
+        <DomainSettings subdomain={subdomain} />
+      </div>
 
       <div className={cn(selectedTab !== "seo" && "hidden")}>
         <SeoSettings />

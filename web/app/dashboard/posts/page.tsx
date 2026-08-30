@@ -150,7 +150,7 @@ export default function PostsPage() {
 
   function handleViewPost(blog: BlogListItem) {
     if (!activeSite) return;
-    const url = getSitePublicUrl(activeSite, `/blog/${encodeURIComponent(blog.slug)}`);
+    const url = getSitePublicUrl(activeSite, `/${encodeURIComponent(blog.slug)}`);
     if (url) window.open(url, "_blank", "noopener,noreferrer");
   }
 

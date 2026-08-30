@@ -17,6 +17,7 @@ type PublicBlogListSearchProps = {
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
   show_preview_in_lists?: boolean;
+  basePath?: string;
 };
 
 const POSTS_PER_PAGE = 12;
@@ -28,6 +29,7 @@ function BlogListItemRow({
   inGrid = false,
   largeImage = false,
   showPreview = true,
+  basePath = "",
 }: {
   blog: PublicBlog;
   subdomain: string;
@@ -35,12 +37,13 @@ function BlogListItemRow({
   inGrid?: boolean;
   largeImage?: boolean;
   showPreview?: boolean;
+  basePath?: string;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   return (
     <li className={inGrid ? "" : "py-5 first:pt-0"}>
       <div className="rounded-xl py-1">
-        <Link href={getPublicPostUrl(subdomain, b.slug)} className="group block transition-colors hover:bg-muted/30">
+        <Link href={getPublicPostUrl(subdomain, b.slug, basePath)} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
               <h3 className="min-w-0 truncate text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
@@ -85,18 +88,20 @@ function BlogListAboveTitleItem({
   subdomain,
   authorName,
   showPreview = true,
+  basePath = "",
 }: {
   blog: PublicBlog;
   subdomain: string;
   authorName?: string;
   showPreview?: boolean;
+  basePath?: string;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   const showImage = previewImage && showPreview;
   return (
     <li className="py-5 first:pt-0">
       <Link
-        href={getPublicPostUrl(subdomain, b.slug)}
+        href={getPublicPostUrl(subdomain, b.slug, basePath)}
         className="group block"
       >
         {showImage ? (
@@ -140,18 +145,20 @@ function BlogCardGridItem({
   subdomain,
   authorName,
   showPreview = true,
+  basePath = "",
 }: {
   blog: PublicBlog;
   subdomain: string;
   authorName?: string;
   showPreview?: boolean;
+  basePath?: string;
 }) {
   const previewImage = resolveBlogCoverImage(b);
   const showImage = previewImage && showPreview;
   return (
     <li className="break-inside-avoid">
       <Link
-        href={getPublicPostUrl(subdomain, b.slug)}
+        href={getPublicPostUrl(subdomain, b.slug, basePath)}
         className="group block"
       >
         {showImage || showPreview ? (
@@ -209,6 +216,7 @@ export function PublicBlogListSearch({
   content_width = "wide",
   list_image_position = "above_title",
   show_preview_in_lists = true,
+  basePath = "",
 }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
@@ -282,6 +290,7 @@ export function PublicBlogListSearch({
                   subdomain={subdomain}
                   authorName={b.author?.name || site?.name}
                   showPreview={show_preview_in_lists}
+                  basePath={basePath}
                 />
             ))}
           </ul>
@@ -298,6 +307,7 @@ export function PublicBlogListSearch({
             subdomain={subdomain}
             authorName={b.author?.name || site?.name}
             showPreview={show_preview_in_lists}
+            basePath={basePath}
           />
         ))}
       </ul>
