@@ -19,6 +19,7 @@ import { ColorModePicker } from "@/components/themes/color-mode-picker";
 import { ColorPalettePicker } from "@/components/themes/color-palette-picker";
 import { TypographyPairingPicker } from "@/components/themes/typography-pairing-picker";
 import { ButtonStylePicker } from "@/components/themes/button-style-picker";
+import { DEFAULT_DESIGN_SETTINGS } from "@/components/design-settings-panel";
 import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
@@ -26,67 +27,11 @@ export default function ThemesDashboardPage() {
 
   const [design, setDesign] = useState<DesignSettings>(() => {
     if (typeof window === "undefined") {
-      return {
-        template_id: "editorial",
-        site_mode: "system",
-        color_theme: "base",
-        custom_color: null,
-        font_family: "sans",
-        button_style: "rounded",
-        navbar_alignment: "left",
-        navbar_style: "bordered",
-        navbar_enabled: true,
-        nav_blog_name: null,
-        nav_blog_name_size: "medium",
-        nav_menu_enabled: true,
-        nav_items: [],
-        show_about_section: false,
-        site_footer_enabled: true,
-        footer_columns: [],
-        footer_copyright: null,
-        footer_socials_enabled: true,
-        footer_newsletter_enabled: true,
-        footer_system_links_enabled: true,
-        featured_blogs_enabled: true,
-        featured_blog_ids: [],
-        content_width: "wide",
-        list_image_position: "above_title",
-        show_preview_in_lists: true,
-        about_title: null,
-      };
+      return DEFAULT_DESIGN_SETTINGS;
     }
     const t = localStorage.getItem("articurls_token");
     const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
-    return (
-      cached ?? {
-        template_id: "editorial",
-        site_mode: "system",
-        color_theme: "base",
-        custom_color: null,
-        font_family: "sans",
-        button_style: "rounded",
-        navbar_alignment: "left",
-        navbar_style: "bordered",
-        navbar_enabled: true,
-        nav_blog_name: null,
-        nav_blog_name_size: "medium",
-        nav_menu_enabled: true,
-        nav_items: [],
-        show_about_section: false,
-        site_footer_enabled: true,
-        footer_columns: [],
-        footer_copyright: null,
-        footer_socials_enabled: true,
-        footer_newsletter_enabled: true,
-        footer_system_links_enabled: true,
-        featured_blogs_enabled: true,
-        featured_blog_ids: [],
-        content_width: "wide",
-        list_image_position: "above_title",
-        show_preview_in_lists: true,
-        about_title: null,
-      }
-    );
+    return cached ?? DEFAULT_DESIGN_SETTINGS;
   });
 
   const [loading, setLoading] = useState(() => {

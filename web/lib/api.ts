@@ -417,15 +417,6 @@ export async function archivePage(token: string, pageId: string): Promise<UserPa
   return apiFetch(`/pages/${pageId}/archive`, { method: "POST", token });
 }
 
-export async function updateFooterPages(token: string, ordered_page_ids: string[]): Promise<UserPage[]> {
-  return apiFetch("/pages/footer", {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ordered_page_ids }),
-  });
-}
-
 export async function getPublicPages(subdomain: string): Promise<UserPage[]> {
   return apiFetch(`/${encodeURIComponent(subdomain)}/pages`);
 }

@@ -1,6 +1,6 @@
-from typing import List, Union
+from typing import List
 import uuid
-from fastapi import APIRouter, Body, Depends, File, HTTPException, Query, UploadFile, status, BackgroundTasks
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -424,63 +424,3 @@ def archive_page(
     schedule_page_purge(background_tasks, current_site, db_page.slug)
 
     return db_page
-
-
-@router.patch("/footer", response_model=list[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
-def update_footer_pages(
-    background_tasks: BackgroundTasks,
-    payload: dict = Body(...),
-    db: Session = Depends(get_db),
-    current_user=Depends(get_current_user),
-    current_site: models.Site = Depends(get_current_site),
-):
-    raw_ids = payload.get("ordered_page_ids", [])
-    if raw_ids is None:
-        raw_ids = []
-    if not isinstance(raw_ids, list):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="ordered_page_ids must be a list",
-        )
-
-    normalized_ids: list[uuid.UUID] = []
-    for raw_id in raw_ids:
-        try:
-            normalized_ids.append(uuid.UUID(str(raw_id)))
-        except (TypeError, ValueError):
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid page id in footer: {raw_id}",
-            ) from None
-
-    pages = (
-        db.query(models.UserPage)
-        .filter(models.UserPage.site_id == current_site.site_id)
-        .order_by(models.UserPage.created_at.asc())
-        .all()
-    )
-    pages_by_id = {p.page_id: p for p in pages}
-
-    for page in pages:
-        page.show_in_footer = False
-        page.footer_order = None
-
-    for idx, page_id in enumerate(normalized_ids):
-        if page_id not in pages_by_id:
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Invalid page id in footer: {page_id}",
-            )
-        pages_by_id[page_id].show_in_footer = True
-        pages_by_id[page_id].footer_order = idx
-
-    db.commit()
-
-    schedule_tenant_purge(background_tasks, current_site)
-
-    return (
-        db.query(models.UserPage)
-        .filter(models.UserPage.site_id == current_site.site_id)
-        .order_by(models.UserPage.created_at.asc())
-        .all()
-    )

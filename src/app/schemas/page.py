@@ -1,5 +1,5 @@
-from pydantic import BaseModel, field_validator
-from typing import List, Literal, Optional, Union
+from pydantic import BaseModel
+from typing import List, Literal, Optional
 from datetime import datetime
 import uuid
 from .. import models
@@ -52,19 +52,6 @@ class UserPageOut(UserPageBase):
 
     class Config:
         from_attributes = True
-
-
-class UserPageMenuUpdate(BaseModel):
-    ordered_page_ids: List[Union[uuid.UUID, str]]
-
-    @field_validator("ordered_page_ids", mode="before")
-    @classmethod
-    def ensure_list(cls, value):
-        if value is None:
-            return []
-        if not isinstance(value, list):
-            raise ValueError("ordered_page_ids must be a list")
-        return value
 
 
 class DesignSettings(BaseModel):
