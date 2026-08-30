@@ -33,7 +33,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { assetUrl } from "@/lib/env";
+import { assetUrl, UGC_DOMAIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DomainSettings } from "@/components/domain-settings";
