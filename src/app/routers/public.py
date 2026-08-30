@@ -148,30 +148,6 @@ def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
     return blogs
 
-@router.get("/{subdomain}/blog/{slug}", response_model=blog.PublicBlog, status_code=200)
-def get_blog(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
-
-    db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
-    if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
-        return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
-
-    if not db_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    db_blog = (
-        db.query(models.Blog)
-        .filter(models.Blog.slug == slug, models.Blog.site_id == db_site.site_id)
-        .first()
-    )
-    if not db_blog:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
-    if db_blog.status != models.BlogStatus.PUBLISHED:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Blog not found")
-
-    db_blog.excerpt = utils.make_excerpt(db_blog.content)
-    return db_blog
-
-
 @router.get("/{subdomain}", response_model=site.PublicSite)
 def get_site(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
@@ -204,13 +180,30 @@ def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
     )
 
 
-@router.get("/{subdomain}/page/{slug}", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
-def get_page(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+@router.get("/{subdomain}/content/{slug}", response_model=blog.PublicResolvedContent, status_code=status.HTTP_200_OK)
+def get_public_content(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
+
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # 1. Check blog post first (most common)
+    db_blog = (
+        db.query(models.Blog)
+        .filter(
+            models.Blog.site_id == db_site.site_id,
+            models.Blog.slug == slug,
+            models.Blog.status == models.BlogStatus.PUBLISHED,
+        )
+        .first()
+    )
+    if db_blog:
+        db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        return {"type": "blog", "blog": db_blog}
+
+    # 2. Check static page
     db_page = (
         db.query(models.UserPage)
         .filter(
@@ -220,9 +213,10 @@ def get_page(subdomain: str, slug: str, request: Request, db: Session = Depends(
         )
         .first()
     )
-    if not db_page:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
-    return db_page
+    if db_page:
+        return {"type": "page", "page": db_page}
+
+    raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Content not found")
 
 
 @router.get("/{subdomain}/categories", status_code=status.HTTP_200_OK)

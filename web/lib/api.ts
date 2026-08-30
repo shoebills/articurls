@@ -17,6 +17,7 @@ import type {
   PublicBlog,
   PublicBlogSearchResult,
   PublicCategoryBlogsResponse,
+  PublicResolvedContent,
   UserPage,
   PublicSite,
   SubscribersAnalytics,
@@ -421,8 +422,8 @@ export async function getPublicPages(subdomain: string): Promise<UserPage[]> {
   return apiFetch(`/${encodeURIComponent(subdomain)}/pages`);
 }
 
-export async function getPublicPage(subdomain: string, slug: string): Promise<UserPage> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/page/${encodeURIComponent(slug)}`);
+export async function getPublicContent(subdomain: string, slug: string): Promise<PublicResolvedContent> {
+  return apiFetch(`/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`);
 }
 
 export async function uploadProfileImage(token: string, file: File): Promise<{ profile_image_url: string }> {
@@ -571,10 +572,6 @@ export async function searchPublicBlogs(subdomain: string, query: string, offset
 
 export async function getPublicBlogs(subdomain: string): Promise<PublicBlog[]> {
   return apiFetch(`/${encodeURIComponent(subdomain)}/blogs`);
-}
-
-export async function getPublicBlog(subdomain: string, slug: string): Promise<PublicBlog> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/blog/${encodeURIComponent(slug)}`);
 }
 
 /** Public: request email subscription to a writer’s posts (confirmation email is sent when applicable). */

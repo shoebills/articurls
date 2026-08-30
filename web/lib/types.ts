@@ -304,6 +304,10 @@ export interface UserPage {
   updated_at: string;
 }
 
+export type PublicResolvedContent =
+  | { type: "blog"; blog: PublicBlog; page?: never }
+  | { type: "page"; page: UserPage; blog?: never };
+
 export interface DesignSettings {
   template_id: string;
   site_mode: string;

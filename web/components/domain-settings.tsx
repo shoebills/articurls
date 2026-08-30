@@ -484,7 +484,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
       {/* ── 2. Unified Custom Domain / Subdirectory Card ───────────────────── */}
       <Card className="rounded-2xl border border-border/80 shadow-xs">
-        <CardHeader className="pb-4 sm:pb-4 border-b border-border/60">
+        <CardHeader className="pb-4 sm:pb-4">
           <div className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
               {isSubdirectoryActive ? <FolderTree className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
@@ -498,7 +498,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           </div>
         </CardHeader>
 
-        <CardContent className="pt-6 space-y-6">
+        <CardContent className="space-y-6">
           {info && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />

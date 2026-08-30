@@ -1,9 +1,10 @@
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Optional, Literal
 import uuid
 from ..models import BlogStatus
 from .author import PublicAuthorSummary
+from . import page as page_schema
 
 
 class BlogMediaOut(BaseModel):
@@ -77,6 +78,15 @@ class PublicBlog(BaseModel):
 
 class PublicBlogs(PublicBlog):
     excerpt: Optional[str] = None
+
+
+class PublicResolvedContent(BaseModel):
+    type: Literal["blog", "page"]
+    blog: Optional[PublicBlog] = None
+    page: Optional[page_schema.UserPageOut] = None
+
+    class Config:
+        from_attributes = True
 
 
 class PublicBlogSearchResult(BaseModel):

@@ -9,7 +9,7 @@ import {
   isInternalHost,
   resolveTenantHostFromHeaders,
 } from "@/lib/request-host";
-import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -145,9 +145,9 @@ async function loadBlogs(subdomain: string): Promise<PublicBlog[]> {
   return res.json();
 }
 
-async function loadBlog(subdomain: string, slug: string): Promise<PublicBlog | null> {
+async function loadContent(subdomain: string, slug: string): Promise<PublicResolvedContent | null> {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/blog/${encodeURIComponent(slug)}`,
+    `${API_URL}/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`,
     { cache: "no-store" }
   );
   if (res.status === 404) return null;
@@ -164,16 +164,6 @@ async function loadPages(subdomain: string): Promise<UserPage[]> {
 async function loadCategories(subdomain: string): Promise<Category[]> {
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories`, { cache: "no-store" });
   if (!res.ok) return [];
-  return res.json();
-}
-
-async function loadPage(subdomain: string, slug: string): Promise<UserPage | null> {
-  const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/page/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) return null;
   return res.json();
 }
 
@@ -325,13 +315,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Direct single segment: check blog post or custom page
   if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
     const slug = segments[0];
-    const [blog, page, site] = await Promise.all([
-      loadBlog(subdomain, slug),
-      loadPage(subdomain, slug),
+    const [content, site] = await Promise.all([
+      loadContent(subdomain, slug),
       loadSite(subdomain),
     ]);
 
-    if (blog) {
+    if (!content) return { title: "Not found" };
+
+    if (content.type === "blog" && content.blog) {
+      const blog = content.blog;
       const title = blog.meta_title || blog.title;
       const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
       const siteName = resolveSiteName(site);
@@ -358,7 +350,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    if (page) {
+    if (content.type === "page" && content.page) {
+      const page = content.page;
       const title = page.meta_title || page.title;
       const description = resolvePageDescription(page);
       const siteName = resolveSiteName(site);
@@ -474,18 +467,18 @@ export default async function SitePublicationPage({ params }: Props) {
   // ── Blog post or Custom page: /[slug] ────────────────────────────────────
   if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
     const slug = segments[0];
-    const [blog, page, site, pages, categories] = await Promise.all([
-      loadBlog(subdomain, slug),
-      loadPage(subdomain, slug),
+    const [content, site, pages, categories] = await Promise.all([
+      loadContent(subdomain, slug),
       loadSite(subdomain),
       loadPages(subdomain),
       loadCategories(subdomain),
     ]);
 
-    if (!site) notFound();
+    if (!site || !content) notFound();
 
     // Render Blog post if found
-    if (blog) {
+    if (content.type === "blog" && content.blog) {
+      const blog = content.blog;
       const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
       const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
       const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
@@ -631,7 +624,8 @@ export default async function SitePublicationPage({ params }: Props) {
     }
 
     // Render Custom page if found
-    if (page) {
+    if (content.type === "page" && content.page) {
+      const page = content.page;
       const navBlogName = resolveSiteName(site);
       const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
       const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
