@@ -1,5 +1,4 @@
 import { cache } from "react";
-import { headers } from "next/headers";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
 import Link from "next/link";
@@ -7,7 +6,6 @@ import { API_URL, UGC_ORIGIN, assetUrl } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
-  resolveTenantHostFromHeaders,
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
@@ -43,9 +41,9 @@ function getPublicNavHeaderClass(navbarStyle?: string) {
   return "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
 }
 
-type Props = { params: Promise<{ slug?: string[] }> };
+type Props = { params: Promise<{ domain: string; slug?: string[] }> };
 
-export const dynamic = "force-dynamic";
+export const revalidate = 86400;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -67,10 +65,9 @@ function resolvePageDescription(page: UserPage): string | undefined {
 
 function resolveRoutingSegments(
   rawSegments: string[],
-  customSubpath?: string | null,
-  headerBasepath?: string | null
+  customSubpath?: string | null
 ): { segments: string[]; basePath: string } {
-  const base = (customSubpath || headerBasepath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  const base = (customSubpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
   if (!base) {
     return { segments: rawSegments, basePath: "" };
   }
@@ -116,8 +113,10 @@ const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupRespon
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
-        cache: "force-cache",
-        next: { revalidate: 60 },
+        next: {
+          revalidate: 86400,
+          tags: [`domain-${host}`, "domains"],
+        },
         headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET || "" },
       }
     );
@@ -133,8 +132,6 @@ const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupRespon
     return null;
   }
 });
-
-export const revalidate = 86400;
 
 const loadSite = loadPublicSite;
 
@@ -233,9 +230,9 @@ const loadAllCategories = cache(async (subdomain: string): Promise<Category[]> =
 // ── Metadata ──────────────────────────────────────────────────────────────────
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const h = await headers();
+  const { domain, slug: rawSegments = [] } = await params;
+  const host = decodeURIComponent(domain);
   const runtimeHosts = buildRuntimeHostsFromEnv();
-  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
   if (isInternalHost(host, runtimeHosts)) return {};
 
   const domainInfo = await resolveDomainInfo(host);
@@ -243,9 +240,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") return {};
   const subdomain = domainInfo.subdomain;
 
-  const { slug: rawSegments = [] } = await params;
-  const headerBasepath = h.get("x-articurls-basepath");
-  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath, headerBasepath);
+  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
 
   const canonical = `https://${host}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
   const alternatesWithOptionalRss = (rssEnabled: boolean) =>
@@ -455,9 +450,9 @@ export const viewport = {
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default async function SitePublicationPage({ params }: Props) {
-  const h = await headers();
+  const { domain, slug: rawSegments = [] } = await params;
+  const host = decodeURIComponent(domain);
   const runtimeHosts = buildRuntimeHostsFromEnv();
-  const host = resolveTenantHostFromHeaders(h, runtimeHosts);
 
   if (isInternalHost(host, runtimeHosts)) notFound();
 
@@ -468,7 +463,6 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   if (domainInfo.domain_status === "expired") {
-    const { slug: rawSegments = [] } = await params;
     const pathname = rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`;
     const ugcHost = new URL(UGC_ORIGIN).hostname;
     const redirectUrl = `https://${encodeURIComponent(domainInfo.subdomain)}.${ugcHost}${pathname}`;
@@ -476,7 +470,6 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   if (domainInfo.domain_status === "pending") {
-    const { slug: rawSegments = [] } = await params;
     const pathname = rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`;
     const ugcHost = new URL(UGC_ORIGIN).hostname;
     redirect(`https://${encodeURIComponent(domainInfo.subdomain)}.${ugcHost}${pathname}`);
@@ -487,9 +480,7 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   const subdomain = domainInfo.subdomain;
-  const { slug: rawSegments = [] } = await params;
-  const headerBasepath = h.get("x-articurls-basepath");
-  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath, headerBasepath);
+  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
 
   const pathname = `${basePath}${segments.length === 0 ? "" : `/${segments.join("/")}`}`;
   const siteOrigin = `https://${host}${basePath}`;
@@ -786,6 +777,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   subdomain={site.subdomain}
                   authorName={site.name}
                   alignment={site.navbar_alignment || "left"}
+                  basePath={basePath}
                 />
               </div>
               <div className="sm:hidden">
@@ -798,60 +790,55 @@ export default async function SitePublicationPage({ params }: Props) {
                   authorName={site.name}
                   showSubscribeAction={showSubscriberCollection}
                   showMenuButton={hasMobileNav}
+                  basePath={basePath}
                 />
               </div>
             </header>
           ) : null}
 
-          <div className="mb-6 flex items-center gap-3">
-              <Link
-                href={getPublicProfileUrl(subdomain, basePath)}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                ← All posts
-              </Link>
-              <span className="select-none text-sm text-muted-foreground">·</span>
-              <h1 className="text-xl font-bold tracking-tight sm:text-2xl">{categoryName}</h1>
-            </div>
+          {/* Category Header */}
+          <div className="mb-10 text-center sm:mb-12">
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+              {categoryName}
+            </h1>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {blogs.length} {blogs.length === 1 ? "article" : "articles"} in this category
+            </p>
+          </div>
 
-            {blogs.length > 0 ? (
-              <PublicBlogListSearch
-                blogs={blogs}
-                subdomain={subdomain}
-                site={site}
-                hideFeatured
-                siteOrigin={siteOrigin}
-                content_width={site.content_width || "wide"}
-                list_image_position={site.list_image_position || "above_title"}
-                show_preview_in_lists={site.show_preview_in_lists ?? true}
-              />
-            ) : (
-              <div className="rounded-xl border border-border/70 bg-background px-4 py-8 text-center">
-                <p className="text-sm text-muted-foreground">No posts in this category yet.</p>
-              </div>
-            )}
-            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
+          <PublicBlogListSearch
+            blogs={blogs}
+            subdomain={site.subdomain}
+            site={site}
+            hideFeatured
+            content_width={site.content_width || "wide"}
+            list_image_position={site.list_image_position || "above_title"}
+            show_preview_in_lists={site.show_preview_in_lists ?? true}
+            basePath={basePath}
+          />
+
+          <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
         </main>
       </div>
       </ThemeStyleWrapper>
     );
   }
 
-  // ── Author Profile page: /author/[slug] ──────────────────────────────────
+  // ── Author page: /author/[slug] ───────────────────────────────────────────
   if (segments[0] === "author") {
     if (!segments[1]) notFound();
     const authorSlug = segments[1];
-    const [site, pages, categories, authorData] = await Promise.all([
+    const [site, pages, categories, data] = await Promise.all([
       loadSite(subdomain),
       loadPages(subdomain),
       loadCategories(subdomain),
       loadAuthorBlogs(subdomain, authorSlug),
     ]);
 
-    if (!site || !authorData) notFound();
+    if (!site || !data) notFound();
 
-    const author = authorData.author;
-    const blogs = authorData.blogs;
+    const blogs = data.blogs;
+    const author = data.author;
     const navBlogName = resolveSiteName(site);
     const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
     const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
@@ -884,6 +871,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
+                    basePath={basePath}
                   />
                 </div>
                 <div className="sm:hidden">
@@ -896,6 +884,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     authorName={site.name}
                     showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
+                    basePath={basePath}
                   />
                 </div>
               </header>
@@ -916,99 +905,49 @@ export default async function SitePublicationPage({ params }: Props) {
                     {author.name.slice(0, 1).toUpperCase()}
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
-                  <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{author.name}</h1>
-                    <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-                      {blogs.length} {blogs.length === 1 ? "article" : "articles"}
-                    </span>
-                  </div>
+                <div className="space-y-3 flex-1 min-w-0">
+                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{author.name}</h1>
                   {author.occupation ? (
-                    <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground">
-                      <BriefcaseBusiness className="h-4 w-4 shrink-0" />
+                    <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
+                      <BriefcaseBusiness className="h-4 w-4 shrink-0 text-muted-foreground" />
                       {author.occupation}
-                    </p>
+                    </div>
                   ) : null}
-                  {author.bio && (
-                    <p className={`${author.occupation ? "mt-2" : "mt-3"} text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl`}>
-                      {author.bio}
-                    </p>
-                  )}
-                  {/* Social Links */}
-                  <div className="mt-4 flex flex-wrap items-center justify-center sm:justify-start gap-3">
-                    {author.website_link && (
+                  {author.bio ? (
+                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">{author.bio}</p>
+                  ) : null}
+                  {author.website_link ? (
+                    <div className="pt-1">
                       <a
                         href={author.website_link}
                         target="_blank"
                         rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
                       >
                         <Globe className="h-3.5 w-3.5" />
                         Website
                       </a>
-                    )}
-                    {author.x_link && (
-                      <a
-                        href={author.x_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        X
-                      </a>
-                    )}
-                    {author.github_link && (
-                      <a
-                        href={author.github_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        GitHub
-                      </a>
-                    )}
-                    {author.linkedin_link && (
-                      <a
-                        href={author.linkedin_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-                      >
-                        LinkedIn
-                      </a>
-                    )}
-                  </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
 
-            <div className="mb-6 flex items-center gap-3">
-              <Link
-                href={getPublicProfileUrl(subdomain, basePath)}
-                className="text-sm text-muted-foreground hover:text-foreground"
-              >
-                ← All posts
-              </Link>
-              <span className="select-none text-sm text-muted-foreground">·</span>
-              <h2 className="text-xl font-bold tracking-tight sm:text-2xl">Articles by {author.name}</h2>
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold tracking-tight">Articles by {author.name}</h2>
             </div>
 
-            {blogs.length > 0 ? (
-              <PublicBlogListSearch
-                blogs={blogs}
-                subdomain={subdomain}
-                site={site}
-                hideFeatured
-                siteOrigin={siteOrigin}
-                content_width={site.content_width || "wide"}
-                list_image_position={site.list_image_position || "above_title"}
-                show_preview_in_lists={site.show_preview_in_lists ?? true}
-              />
-            ) : (
-              <div className="rounded-xl border border-border/70 bg-background px-4 py-8 text-center">
-                <p className="text-sm text-muted-foreground">No posts by this author yet.</p>
-              </div>
-            )}
+            <PublicBlogListSearch
+              blogs={blogs}
+              subdomain={site.subdomain}
+              site={site}
+              hideFeatured
+              content_width={site.content_width || "wide"}
+              list_image_position={site.list_image_position || "above_title"}
+              show_preview_in_lists={site.show_preview_in_lists ?? true}
+              basePath={basePath}
+            />
+
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>
         </div>
@@ -1018,10 +957,9 @@ export default async function SitePublicationPage({ params }: Props) {
 
   // ── Categories Hub page: /categories ──────────────────────────────────────
   if (segments[0] === "categories") {
-    const [site, pages, categories, allCats] = await Promise.all([
+    const [site, pages, allCategories] = await Promise.all([
       loadSite(subdomain),
       loadPages(subdomain),
-      loadCategories(subdomain),
       loadAllCategories(subdomain),
     ]);
 
@@ -1035,13 +973,16 @@ export default async function SitePublicationPage({ params }: Props) {
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
-    const desktopLinks = resolveNavLinks(site, categories, basePath);
+    const desktopLinks = resolveNavLinks(site, allCategories, basePath);
     const showSubscriberCollection = site.subscriber_collection_enabled === true;
     const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+
+    const currentUrl = `https://${host}${basePath}/categories`;
 
     return (
       <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
+          <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, currentUrl)} />
           <main className={mainSpacing}>
             {isNavEnabled ? (
               <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
@@ -1055,6 +996,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
+                    basePath={basePath}
                   />
                 </div>
                 <div className="sm:hidden">
@@ -1067,59 +1009,57 @@ export default async function SitePublicationPage({ params }: Props) {
                     authorName={site.name}
                     showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
+                    basePath={basePath}
                   />
                 </div>
               </header>
             ) : null}
 
+            {/* Back link */}
             <div className="mb-8">
               <Link
                 href={getPublicProfileUrl(subdomain, basePath)}
-                className="text-sm text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 mb-4"
+                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
               >
-                ← Home
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Back to Home
               </Link>
-              <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Categories</h1>
-              <p className="mt-2 text-base text-muted-foreground">
-                Browse all topics and articles published on {navBlogName}.
+            </div>
+
+            {/* Categories Hub Header */}
+            <div className="mb-10 text-center sm:mb-12">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+                Topics & Categories
+              </h1>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Browse articles by category
               </p>
             </div>
 
-            {allCats.length === 0 ? (
-              <div className="rounded-xl border border-border/70 bg-background px-4 py-12 text-center">
-                <p className="text-sm text-muted-foreground">No categories available.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {allCats.map((cat) => (
-                  <Link
-                    key={cat.category_id}
-                    href={getPublicCategoryUrl(subdomain, cat.slug, basePath)}
-                    className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-6 shadow-2xs hover:border-primary/50 hover:shadow-sm transition-all"
-                  >
-                    <div>
-                      <div className="flex items-center justify-between gap-2">
-                        <h2 className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                          {cat.name}
-                        </h2>
-                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                          {cat.blog_count ?? 0}
-                        </span>
-                      </div>
-                      {cat.description && (
-                        <p className="mt-3 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                          {cat.description}
-                        </p>
-                      )}
-                    </div>
-                    <div className="mt-4 pt-3 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground group-hover:text-foreground">
-                      <span>Explore topic</span>
-                      <span>→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+            {/* Categories Grid */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
+              {allCategories.map((cat) => (
+                <Link
+                  key={cat.category_id}
+                  href={getPublicCategoryUrl(subdomain, cat.slug, basePath)}
+                  className="group rounded-2xl border border-border/70 bg-card p-6 shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-sm"
+                >
+                  <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
+                    {cat.name}
+                  </h3>
+                  {cat.description ? (
+                    <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                      {cat.description}
+                    </p>
+                  ) : null}
+                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
+                    <span>{cat.blog_count ?? 0} {(cat.blog_count ?? 0) === 1 ? "article" : "articles"}</span>
+                    <span className="font-medium text-primary group-hover:translate-x-0.5 transition-transform">Browse →</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>
         </div>
@@ -1127,9 +1067,7 @@ export default async function SitePublicationPage({ params }: Props) {
     );
   }
 
-  // ── Profile / home ────────────────────────────────────────────────────────
-  if (segments.length > 0) notFound();
-
+  // ── Publication homepage: / ───────────────────────────────────────────────
   const [site, blogs, pages, categories] = await Promise.all([
     loadSite(subdomain),
     loadBlogs(subdomain),
@@ -1139,16 +1077,19 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (!site) notFound();
 
-  const currentUrl = `https://${host}${basePath}`;
+  if (site.template_id === "editorial") {
+    return (
+      <>
+        <StructuredData data={generateWebSiteSchema(site, siteOrigin)} />
+        <EditorialTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+      </>
+    );
+  }
 
   return (
-    <ThemeStyleWrapper site={site}>
-      <StructuredData data={generateWebSiteSchema(site, currentUrl)} />
-      {site.template_id === "saas" ? (
-        <SaasTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
-      ) : (
-        <EditorialTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
-      )}
-    </ThemeStyleWrapper>
+    <>
+      <StructuredData data={generateWebSiteSchema(site, siteOrigin)} />
+      <SaasTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+    </>
   );
 }

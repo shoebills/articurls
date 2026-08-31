@@ -183,7 +183,9 @@ export function middleware(request: NextRequest) {
     const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
     rewriteUrl.pathname =
-      segments.length === 0 ? "/site" : `/site/${segments.join("/")}`;
+      segments.length === 0
+        ? `/site/${encodeURIComponent(host)}`
+        : `/site/${encodeURIComponent(host)}/${segments.join("/")}`;
 
     return withCacheHeaders(
       withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {

@@ -1,15 +1,15 @@
-import { headers } from "next/headers";
-import { resolveTenantHostFromHeaders } from "@/lib/request-host";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { loadPublicSite } from "@/lib/public-site";
 import { UmamiTracker } from "@/components/umami-tracker";
 
 type Props = {
   children: React.ReactNode;
+  params: Promise<{ domain: string }>;
 };
 
-export default async function SiteLayout({ children }: Props) {
-  const host = resolveTenantHostFromHeaders(await headers());
+export default async function SiteLayout({ children, params }: Props) {
+  const { domain } = await params;
+  const host = decodeURIComponent(domain);
   const domainInfo = await resolveDomainForSeo(host);
 
   if (!domainInfo) {
