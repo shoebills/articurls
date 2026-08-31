@@ -43,6 +43,10 @@ function getPublicNavHeaderClass(navbarStyle?: string) {
 
 type Props = { params: Promise<{ domain: string; slug?: string[] }> };
 
+export function generateStaticParams() {
+  return [];
+}
+export const dynamicParams = true;
 export const revalidate = 86400;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
