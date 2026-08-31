@@ -42,7 +42,10 @@ export async function resolveDomainForSeo(
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
       {
-        cache: "no-store",
+        next: {
+          revalidate: 86400,
+          tags: [`domain-${host}`, "domains"],
+        },
         headers: {
           "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
         },

@@ -45,6 +45,19 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async headers() {
+    return [
+      {
+        source: "/site/:path*",
+        headers: [
+          {
+            key: "Cache-Control",
+            value: "public, max-age=0, s-maxage=86400, stale-while-revalidate=3600",
+          },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
