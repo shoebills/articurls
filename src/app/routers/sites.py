@@ -203,7 +203,7 @@ def delete_site(
             pass
 
     # Remaining children (blogs, pages, categories, blog_categories, media,
-    # subscribers, email_logs, authors) are removed by ON DELETE CASCADE.
+    # subscribers, authors) are removed by ON DELETE CASCADE.
     db.delete(site)
     db.commit()
 

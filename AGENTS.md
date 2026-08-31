@@ -59,7 +59,7 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
 
 1. **Migrations are hand-written**, one per change, chained off `alembic heads`. Never autogenerate. Verify with `alembic check` before commit.
 2. **Foreign keys declare `ondelete` in both the model and the DB** (they must match or `alembic check` fails):
-   - Ownership children (site/blogs/pages/media/subscribers/email_logs/categories/authors) → `ON DELETE CASCADE`.
+   - Ownership children (site/blogs/pages/media/subscribers/categories/authors) → `ON DELETE CASCADE`.
    - Attribution references (e.g. `blogs.author_id`) → `ON DELETE SET NULL`.
    - Always add `ondelete` in the model too — the DB already has cascades; models must mirror them.
 3. **No stringly-typed state columns.** Use Python `str`-mixin enums with lowercase values via `values_callable`, backed by native PG enum types. Convention: `Enum(MyEnum, name="my_enum", values_callable=lambda x: [e.value for e in x])`. Adding a value = one `ALTER TYPE ... ADD VALUE` migration. Never smuggle state into the wrong column: plan goes in `plan_type`, lifecycle goes in `status` (e.g. `lapsed` is a status, not a plan).
@@ -68,7 +68,7 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
 6. **Indexes**: hot paths get composite `(site_id, ...)` indexes; use partial indexes for filtered states (e.g. `ix_subscribers_site_active WHERE unsubscribed_at IS NULL AND is_confirmed`). Don't add single-column slug indexes — the `(site_id, slug)` unique constraints already cover all lookups.
 7. **CHECK constraints** for invariant guards (`amount >= 0`, `size_bytes >= 0`, period ordering). Declare them in the model's `__table_args__` AND the migration.
 8. **Deletion flows must clean external state**: before relying on DB cascades, delete storage objects (R2/local) for media rows. See `delete_site` in `src/app/routers/sites.py` for the reference pattern.
-9. **Known dead/removed things — do not reintroduce**: the `views` table (replaced by Umami) and `users.remove_branding` are gone; no code may reference them.
+9. **Known dead/removed things — do not reintroduce**: the `views` table (replaced by Umami), `users.remove_branding`, `email_logs`, and `blogs.notify_subscribers` are gone; no code may reference them.
 
 ## Multi-Tenant Domain Routing
 

@@ -161,7 +161,6 @@ class Blog(Base):
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     featured_image_url = Column(String, nullable=True)
-    notify_subscribers = Column(Boolean, nullable=False, default=False)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
@@ -205,28 +204,6 @@ class Subscriber(Base):
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
     unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
     is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
-
-
-class EmailLogStatus(str, enum.Enum):
-    PENDING = "pending"
-    SENT = "sent"
-    FAILED = "failed"
-
-
-class EmailLogs(Base):
-    __tablename__ = "email_logs"
-    __table_args__ = (
-        UniqueConstraint("site_id", "blog_id", name="uq_email_logs_site_blog"),
-        CheckConstraint("total_recipients >= 0", name="ck_email_logs_recipients_nonneg"),
-    )
-
-    log_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
-    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), index=True, nullable=False)
-    blog_id = Column(UUID(as_uuid=True), ForeignKey("blogs.blog_id", ondelete="CASCADE"), index=True, nullable=False)
-    total_recipients = Column(Integer, default=0, nullable=False)
-    status = Column(Enum(EmailLogStatus, name="email_log_status", values_callable=lambda x: [e.value for e in x]), default=EmailLogStatus.PENDING, nullable=False)
-    sent_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
 
 class SubscriptionPlanType(str, enum.Enum):

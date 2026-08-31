@@ -64,8 +64,8 @@ export function SubscribeToAuthor({
 
   const description =
     authorName != null && authorName !== ""
-      ? `Get an email when ${authorName} publishes a new post.`
-      : "Get an email when new posts are published.";
+      ? `Subscribe to receive updates from ${authorName}.`
+      : "Subscribe to receive updates.";
 
   const formBody = (
     <>

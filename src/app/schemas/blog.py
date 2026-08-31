@@ -23,7 +23,6 @@ class CreateBlog(BaseModel):
     author_id: Optional[uuid.UUID] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
-    notify_subscribers: bool = False
 
 
 class GetBlog(BaseModel):
@@ -34,7 +33,6 @@ class GetBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
-    notify_subscribers: bool
     status: BlogStatus
     scheduled_at: Optional[datetime] = None
     published_at: Optional[datetime] = None
@@ -108,7 +106,6 @@ class UpdateBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
-    notify_subscribers: Optional[bool] = None
 
 class ScheduleBlog(BaseModel):
     scheduled_at: datetime

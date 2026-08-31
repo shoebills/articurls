@@ -58,7 +58,6 @@ export interface BlogListItem {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
-  notify_subscribers: boolean;
   status: BlogStatus;
   scheduled_at: string | null;
   published_at: string | null;

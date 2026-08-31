@@ -15,7 +15,6 @@ from ..schemas import blog
 from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
-from ..workers import tasks
 from ..storage.service import save_media, delete_media
 from ..cache.service import schedule_post_purge
 from ..config import settings
@@ -85,7 +84,6 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         slug=candidate_slug,
         meta_title=candidate_meta_title,
         meta_description=candidate_meta_description,
-        notify_subscribers=request.notify_subscribers,
         status=models.BlogStatus.DRAFT,
     )
 
@@ -375,7 +373,6 @@ def delete_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = 
             # Keep delete resilient even if object was already removed externally.
             pass
 
-    db.query(models.EmailLogs).filter(models.EmailLogs.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.query(models.BlogCategory).filter(models.BlogCategory.blog_id == db_blog.blog_id).delete(synchronize_session=False)
     db.delete(db_blog)
     db.commit()
@@ -440,14 +437,6 @@ def publish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session =
     _attach_category_ids(db, db_blog)
 
     schedule_post_purge(background_tasks, current_site, db_blog.slug)
-
-    db_user = db.query(models.User).filter(models.User.user_id == current_user.user_id).first()
-
-    if not db_user:
-        return db_blog
-
-    if first_publish and db_blog.notify_subscribers:
-        tasks.send_post_emails.delay(str(db_blog.blog_id))
 
     return db_blog
 

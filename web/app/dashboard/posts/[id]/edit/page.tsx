@@ -62,7 +62,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [metaTitleDirty, setMetaTitleDirty] = useState(false);
   const [metaDescDirty, setMetaDescDirty] = useState(false);
   const [metaDesc, setMetaDesc] = useState("");
-  const [notify, setNotify] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -86,7 +85,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const metaTitleDirtyRef = useRef(metaTitleDirty);
   const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
-  const notifyRef = useRef(notify);
   const featuredImageUrlRef = useRef(featuredImageUrl);
   const savedCatIdsRef = useRef<string[]>([]);
 
@@ -126,7 +124,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setMetaDescDirty(!descSynced);
     setMetaDesc(descSynced ? "" : (b.meta_description || ""));
     setFeaturedImageUrl(b.featured_image_url || "");
-    setNotify(b.notify_subscribers);
     const blogCatIds = (b as unknown as { category_ids?: string[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
@@ -190,7 +187,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
-  useEffect(() => { notifyRef.current = notify; }, [notify]);
   useEffect(() => { featuredImageUrlRef.current = featuredImageUrl; }, [featuredImageUrl]);
 
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
@@ -218,7 +214,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return (
       blog.title !== title.trim() ||
       (blog.content || "") !== (content || "") ||
-      blog.notify_subscribers !== notify ||
       (slugEditable && blog.slug !== nextSlug) ||
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc ||
@@ -227,14 +222,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       authorChanged ||
       featuredChanged
     );
-  }, [blog, title, content, notify, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user]);
+  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
     if (!isDirty()) return true;
     const nextTitle = title.trim();
     const nextContent = content;
-    const nextNotify = notify;
     const nextSlugCustom = slugCustom;
     const nextSlugCustomDirty = slugCustomDirty;
     const nextMetaTitle = metaTitle;
@@ -255,7 +249,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const body: Parameters<typeof updateBlog>[2] = {
         title: nextTitle,
         content: nextContent,
-        notify_subscribers: nextNotify,
         author_id: nextAuthorId,
       };
 
@@ -297,7 +290,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const metaDescChanged = nextMetaDesc !== metaDescRef.current;
       const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
       const featuredChanged = nextFeaturedImageUrl !== featuredImageUrlRef.current;
-      const notifyChanged = nextNotify !== notifyRef.current;
 
       if (!titleChanged) setTitle(finalBlog.title);
       if (!contentChanged) setContent(finalBlog.content || "");
@@ -314,7 +306,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         setSlugCustom(finalBlog.slug !== derived ? finalBlog.slug : "");
       }
       if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
-      if (!notifyChanged) setNotify(finalBlog.notify_subscribers);
 
       // Re-derive dirty flags from effective (current) state
       const effectiveTitle = titleChanged ? titleRef.current : finalBlog.title;
@@ -460,7 +451,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, notify, featuredImageUrl, isDirty, saving]);
+  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, featuredImageUrl, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -516,7 +507,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         metaTitleDirty?: boolean;
         metaDesc?: string;
         metaDescDirty?: boolean;
-        notify?: boolean;
         featuredImageUrl?: string;
       };
       if (typeof draft.title === "string") setTitle(draft.title);
@@ -527,7 +517,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
       if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
-      if (typeof draft.notify === "boolean") setNotify(draft.notify);
       if (typeof draft.featuredImageUrl === "string") setFeaturedImageUrl(draft.featuredImageUrl);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
@@ -563,7 +552,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           metaTitleDirty,
           metaDesc,
           metaDescDirty,
-          notify,
           featuredImageUrl,
         })
       );
@@ -582,7 +570,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     metaTitleDirty,
     metaDesc,
     metaDescDirty,
-    notify,
     featuredImageUrl,
   ]);
 
@@ -712,23 +699,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         content={content}
         onChange={setContent}
       />
-
-      {/* Email Subscribers */}
-      <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-background p-3 space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-medium">Email subscribers</p>
-            <Switch
-              className="shrink-0"
-              checked={notify}
-              onCheckedChange={(v) => {
-                setNotify(v);
-              }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Send this post via email to subscribers when published</p>
-        </div>
-      </div>
 
       {/* Show in Featured Posts */}
       <div className="mt-6 space-y-2">

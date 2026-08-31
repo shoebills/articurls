@@ -47,7 +47,7 @@ const PANELS = [
     key: "subscribers",
     kicker: "Grow",
     title: "Turn readers into subscribers",
-    body: "Collect emails from your posts and notify everyone when you publish.",
+    body: "Collect emails from your posts, build your audience, and export your list anytime.",
     visual: <SubscribersPanel />,
   },
   {
@@ -372,7 +372,7 @@ function SubscribersPanel() {
       <div className="p-6">
         <div className="rounded-xl border border-border/80 bg-muted/20 p-5">
           <p className="text-sm font-semibold text-foreground">Email updates</p>
-          <p className="mt-1 text-sm text-muted-foreground">Get an email when new posts are published.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Subscribe to receive updates from this blog.</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
             <div className="flex h-10 w-full items-center rounded-lg border border-input bg-white px-3 text-sm text-muted-foreground sm:flex-1">
               you@example.com
@@ -387,8 +387,8 @@ function SubscribersPanel() {
             <Check className="h-4 w-4" />
           </span>
           <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">Welcome email sent</span>, new subscribers are greeted
-            automatically.
+            <span className="font-medium text-foreground">Confirmation sent</span>, new subscribers confirm their
+            email automatically.
           </p>
         </div>
       </div>

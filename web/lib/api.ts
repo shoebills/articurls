@@ -496,7 +496,6 @@ export async function createBlog(
     slug?: string;
     meta_title?: string;
     meta_description?: string;
-    notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {
   return apiFetch("/blog/", {
@@ -518,7 +517,6 @@ export async function updateBlog(
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
-    notify_subscribers?: boolean;
   }
 ): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}`, {

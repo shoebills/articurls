@@ -25,7 +25,7 @@ export const MARKETING_FAQS = [
   },
   {
     question: "Can I collect subscribers?",
-    answer: "Yes. Collect email subscribers from your posts and notify them automatically whenever you publish something new.",
+    answer: "Yes. Collect email subscribers from your posts, export them to CSV anytime, and connect them with your favorite email tools.",
   },
   {
     question: "What's included in the 7-day free trial?",

@@ -15,7 +15,6 @@ function ensureNewDraft(token: string) {
     newDraftPromise = createBlog(token, {
       title: "",
       content: "<p></p>",
-      notify_subscribers: false,
     }).finally(() => {
       newDraftPromise = null;
     });

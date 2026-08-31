@@ -39,8 +39,6 @@ export function PricingSection() {
         "Unlimited media storage",
         "Custom domain with automatic SSL",
         "Collect email subscribers",
-        "Send posts via email to subscribers",
-        "Email automation",
         "Pageviews & visitor analytics",
         "Subscriber analytics",
         "RSS feed, sitemap & robots.txt",

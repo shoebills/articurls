@@ -1,4 +1,4 @@
-import { BarChart3, Check, Globe, Mail } from "lucide-react";
+import { BarChart3, Check, Globe } from "lucide-react";
 
 export function HeroShowcase() {
   return (
@@ -80,8 +80,8 @@ export function HeroShowcase() {
 
         <div className="hero-float-b absolute -bottom-6 right-2 z-40 [animation-delay:800ms] sm:-bottom-8 sm:right-8">
           <div className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/95 px-3.5 py-2 shadow-[0_18px_60px_-30px_rgba(15,23,42,0.5)] backdrop-blur">
-            <Mail className="h-3.5 w-3.5 text-[#7C3AED]" />
-            <span className="text-xs font-medium text-foreground">Published. Subscribers notified</span>
+            <Globe className="h-3.5 w-3.5 text-[#7C3AED]" />
+            <span className="text-xs font-medium text-foreground">Published to your custom domain</span>
           </div>
         </div>
       </div>
