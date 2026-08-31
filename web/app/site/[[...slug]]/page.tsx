@@ -31,6 +31,7 @@ import { injectHeadingIds } from "@/lib/toc";
 import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
 import { EditorialTemplate } from "@/components/themes/editorial/editorial-template";
 import { SaasTemplate } from "@/components/themes/saas/saas-template";
+import { loadPublicSite } from "@/lib/public-site";
 
 function getPublicNavHeaderClass(navbarStyle?: string) {
   if (navbarStyle === "floating") {
@@ -102,7 +103,7 @@ function resolveNavLinks(site: PublicSite, categories: Category[], basePath: str
   }));
 }
 
-async function resolveDomainInfo(host: string): Promise<DomainLookupResponse | null> {
+const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupResponse | null> => {
   const ugcHost = new URL(UGC_ORIGIN).hostname;
   const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
   if (host.endsWith(`.${ugcHost}`)) {
@@ -131,70 +132,103 @@ async function resolveDomainInfo(host: string): Promise<DomainLookupResponse | n
   } catch {
     return null;
   }
-}
+});
 
-const loadSite = cache(async (subdomain: string): Promise<PublicSite | null> => {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, { cache: "no-store" });
+export const revalidate = 86400;
+
+const loadSite = loadPublicSite;
+
+const loadBlogs = cache(async (subdomain: string): Promise<PublicBlog[]> => {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, {
+    next: {
+      revalidate: 86400,
+      tags: [`subdomain-${subdomain}`, "posts-list", "home"],
+    },
+  });
+  if (!res.ok) return [];
+  return res.json();
+});
+
+const loadContent = cache(async (subdomain: string, slug: string): Promise<PublicResolvedContent | null> => {
+  const res = await fetch(
+    `${API_URL}/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`,
+    {
+      next: {
+        revalidate: 86400,
+        tags: [`subdomain-${subdomain}`, `post-${slug}`, `page-${slug}`, "posts-list"],
+      },
+    }
+  );
+  if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
 });
 
-async function loadBlogs(subdomain: string): Promise<PublicBlog[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, { cache: "no-store" });
+const loadPages = cache(async (subdomain: string): Promise<UserPage[]> => {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
+    next: {
+      revalidate: 86400,
+      tags: [`subdomain-${subdomain}`, "pages-list", "posts-list"],
+    },
+  });
   if (!res.ok) return [];
   return res.json();
-}
+});
 
-async function loadContent(subdomain: string, slug: string): Promise<PublicResolvedContent | null> {
-  const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
-  );
-  if (res.status === 404) return null;
-  if (!res.ok) return null;
-  return res.json();
-}
-
-async function loadPages(subdomain: string): Promise<UserPage[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, { cache: "no-store" });
+const loadCategories = cache(async (subdomain: string): Promise<Category[]> => {
+  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories`, {
+    next: {
+      revalidate: 86400,
+      tags: [`subdomain-${subdomain}`, "categories-list", "posts-list"],
+    },
+  });
   if (!res.ok) return [];
   return res.json();
-}
+});
 
-async function loadCategories(subdomain: string): Promise<Category[]> {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories`, { cache: "no-store" });
-  if (!res.ok) return [];
-  return res.json();
-}
-
-async function loadCategoryBlogs(subdomain: string, slug: string): Promise<PublicCategoryBlogsResponse | null> {
+const loadCategoryBlogs = cache(async (subdomain: string, slug: string): Promise<PublicCategoryBlogsResponse | null> => {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    {
+      next: {
+        revalidate: 86400,
+        tags: [`subdomain-${subdomain}`, `category-${slug}`, "posts-list"],
+      },
+    }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
-}
+});
 
-async function loadAuthorBlogs(subdomain: string, slug: string): Promise<PublicAuthorDetail | null> {
+const loadAuthorBlogs = cache(async (subdomain: string, slug: string): Promise<PublicAuthorDetail | null> => {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`,
-    { cache: "no-store" }
+    {
+      next: {
+        revalidate: 86400,
+        tags: [`subdomain-${subdomain}`, `author-${slug}`, "posts-list"],
+      },
+    }
   );
   if (res.status === 404) return null;
   if (!res.ok) return null;
   return res.json();
-}
+});
 
-async function loadAllCategories(subdomain: string): Promise<Category[]> {
+const loadAllCategories = cache(async (subdomain: string): Promise<Category[]> => {
   const res = await fetch(
     `${API_URL}/${encodeURIComponent(subdomain)}/categories?all=true`,
-    { cache: "no-store" }
+    {
+      next: {
+        revalidate: 86400,
+        tags: [`subdomain-${subdomain}`, "categories-list"],
+      },
+    }
   );
   if (!res.ok) return [];
   return res.json();
-}
+});
 
 // ── Metadata ──────────────────────────────────────────────────────────────────
 

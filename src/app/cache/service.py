@@ -110,23 +110,33 @@ def _tenant_hosts(site) -> List[str]:
 def schedule_post_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_blog_post, host, slug)
+    if getattr(site, "subdomain", None):
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", f"post-{slug}", "posts-list"])
 
 
 def schedule_page_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_custom_page, host, slug)
+    if getattr(site, "subdomain", None):
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", f"page-{slug}", "pages-list"])
 
 
 def schedule_category_purge(background_tasks: BackgroundTasks, site, slug: str) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_category, host, slug)
+    if getattr(site, "subdomain", None):
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", f"category-{slug}", "posts-list"])
 
 
 def schedule_homepage_purge(background_tasks: BackgroundTasks, site) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_homepage, host)
+    if getattr(site, "subdomain", None):
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", "home", "posts-list"])
 
 
 def schedule_tenant_purge(background_tasks: BackgroundTasks, site) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_entire_tenant, host)
+    if getattr(site, "subdomain", None):
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", "posts-list", "site-settings", "pages-list", "categories-list"])

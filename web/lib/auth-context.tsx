@@ -135,6 +135,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [sites, refreshUser]);
 
   useEffect(() => {
+    const handleTokenRefreshed = (e: Event) => {
+      const newToken = (e as CustomEvent<string>).detail;
+      if (newToken) setToken(newToken);
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("articurls_token_refreshed", handleTokenRefreshed);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("articurls_token_refreshed", handleTokenRefreshed);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     const t = localStorage.getItem(TOKEN_KEY);
     setToken(t);
     if (!t) {

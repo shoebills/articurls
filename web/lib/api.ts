@@ -90,6 +90,7 @@ export async function refreshAccessToken(): Promise<string> {
   const data = await res.json() as TokenResponse;
   if (typeof window !== "undefined") {
     localStorage.setItem("articurls_token", data.access_token);
+    window.dispatchEvent(new CustomEvent("articurls_token_refreshed", { detail: data.access_token }));
   }
   return data.access_token;
 }
@@ -131,6 +132,22 @@ export async function apiFetch<T>(
 ): Promise<T> {
   const { token, disableCache, headers: h, ...rest } = init;
   let effectiveToken = token;
+
+  if (typeof window !== "undefined") {
+    // If a refresh is already underway, wait for it before firing
+    if (refreshPromise && !path.includes("/refresh") && !path.includes("/login") && !path.includes("/logout")) {
+      try {
+        effectiveToken = await refreshPromise;
+      } catch {
+        // Continue with current token
+      }
+    } else {
+      const storedToken = localStorage.getItem("articurls_token");
+      if (storedToken && (!effectiveToken || isRetry)) {
+        effectiveToken = storedToken;
+      }
+    }
+  }
   
   const method = rest.method || "GET";
   const siteId = getSiteIdForCache();
@@ -145,10 +162,6 @@ export async function apiFetch<T>(
 
   if (method !== "GET" && typeof window !== "undefined") {
     apiCache.clear();
-  }
-  
-  if (isRetry && typeof window !== "undefined") {
-    effectiveToken = localStorage.getItem("articurls_token") || effectiveToken;
   }
 
   const headers = new Headers(h);

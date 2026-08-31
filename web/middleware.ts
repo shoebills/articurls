@@ -102,7 +102,7 @@ function withCacheHeaders(
   // Cache public blog content at the edge; purge via revalidateTag on content change.
   response.headers.set(
     "Cache-Control",
-    "public, max-age=14400, stale-while-revalidate=3600",
+    "public, s-maxage=86400, stale-while-revalidate=3600",
   );
 
   return response;

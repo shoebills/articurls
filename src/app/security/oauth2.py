@@ -76,10 +76,16 @@ def get_current_site(
 ) -> models.Site:
     site_id_raw = request.headers.get("X-Site-ID")
     if not site_id_raw:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="X-Site-ID header is required",
+        site = (
+            db.query(models.Site)
+            .filter(models.Site.user_id == current_user.user_id)
+            .order_by(models.Site.created_at.asc())
+            .first()
         )
+        if not site:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
+        return site
+
     try:
         site_id = uuid.UUID(str(site_id_raw))
     except (ValueError, TypeError):
