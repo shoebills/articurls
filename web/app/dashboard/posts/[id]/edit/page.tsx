@@ -736,14 +736,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 value={slugCustom}
                 disabled={!slugEditable}
                 onChange={(e) => {
-                  setSlugCustomDirty(true);
-                  setSlugCustom(e.target.value);
+                  const v = e.target.value;
+                  if (v.trim() === "") {
+                    setSlugCustomDirty(false);
+                    setSlugCustom("");
+                  } else {
+                    setSlugCustomDirty(true);
+                    setSlugCustom(v);
+                  }
                 }}
                 placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
                 {slugEditable
-                  ? "Updates from the title until you edit this field."
+                  ? "Auto-generated from the title when empty."
                   : "The public URL cannot be changed after the post is published."}
               </p>
             </div>
@@ -848,9 +854,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <div className="space-y-2">
               <div className="space-y-2">
                 <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground pt-1">Manage categories via{" "}
-                  <Link href="/dashboard/categories" className="underline underline-offset-2 hover:text-foreground transition-colors">Categories</Link>
-                </p>
+                <p className="text-xs text-muted-foreground pt-1">Select categories for this post.</p>
               </div>
               <div className="relative">
                 <button
@@ -954,11 +958,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             {/* Author */}
             <div className="space-y-2">
               <div className="space-y-2">
-                <Label>Post author</Label>
-                <p className="text-xs text-muted-foreground pt-1">
-                  Assign a writer byline. Manage team via{" "}
-                  <Link href="/dashboard/authors" className="underline underline-offset-2 hover:text-foreground transition-colors">Authors</Link>
-                </p>
+                <Label>Assign author</Label>
+                <p className="text-xs text-muted-foreground pt-1">Assign an author to this post.</p>
               </div>
               <div className="relative">
                 <select
@@ -969,10 +970,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   }}
                   className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
-                  <option value="">No byline</option>
+                  <option value="">No author</option>
                   {allAuthors.map((a) => (
                     <option key={a.author_id} value={a.author_id}>
-                      {a.name} (/author/{a.slug})
+                      {a.name}
                     </option>
                   ))}
                 </select>

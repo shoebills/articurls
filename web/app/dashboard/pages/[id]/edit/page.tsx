@@ -509,14 +509,20 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 value={slugCustom}
                 disabled={!slugEditable}
                 onChange={(e) => {
-                  setSlugCustomDirty(true);
-                  setSlugCustom(e.target.value);
+                  const v = e.target.value;
+                  if (v.trim() === "") {
+                    setSlugCustomDirty(false);
+                    setSlugCustom("");
+                  } else {
+                    setSlugCustomDirty(true);
+                    setSlugCustom(v);
+                  }
                 }}
                 placeholder="Same as title by default"
               />
               <p className="text-xs text-muted-foreground">
                 {slugEditable
-                  ? "Updates from the title until you edit this field."
+                  ? "Auto-generated from the title when empty."
                   : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
