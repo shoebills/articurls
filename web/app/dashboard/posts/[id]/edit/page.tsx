@@ -621,7 +621,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] pb-24">
+    <div className="mx-auto max-w-[1100px] pb-36 sm:pb-40">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/dashboard"
@@ -697,59 +697,110 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={setContent}
       />
 
-      <Separator className="my-8" />
+      {/* Floating Action Dock */}
+      <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-4 right-4 md:left-[calc(14.5rem+2rem)] md:right-8 z-30 pointer-events-none">
+        <div className="mx-auto max-w-[1100px] pointer-events-auto">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/95 p-2.5 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:px-4 sm:py-3">
+            <div className="flex items-center gap-2 text-xs">
+              <BlogStatusBadge status={blog.status} />
+              <span className="text-muted-foreground/40 select-none">·</span>
+              <span className="text-muted-foreground">
+                {saving || saveStatus === "saving"
+                  ? "Saving..."
+                  : dirty
+                    ? "Unsaved changes"
+                    : "Saved"}
+              </span>
+            </div>
 
-      <div className="flex flex-wrap gap-2">
-        {requiresManualUpdate ? (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setPendingAction("undo")}
-              disabled={saving || !dirty}
-            >
-              Undo
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => setPendingAction("update")}
-              disabled={saving || !dirty}
-            >
-              {saving ? "Updating…" : "Update blog"}
-            </Button>
-          </>
-        ) : (
-          <></>
-        )}
-        {blog.status === "draft" && (
-          <>
-            <Button variant="default" onClick={() => setPendingAction("publish")}>
-              Publish
-            </Button>
-            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
-              Schedule
-            </Button>
-          </>
-        )}
-        {blog.status === "scheduled" && (
-          <>
-            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
-              Reschedule
-            </Button>
-            <Button variant="outline" onClick={() => setPendingAction("unschedule")}>
-              Unschedule
-            </Button>
-          </>
-        )}
-        {blog.status === "published" && (
-          <Button variant="outline" onClick={() => setPendingAction("archive")}>
-            Archive
-          </Button>
-        )}
-        {blog.status === "archived" && (
-          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
-            Unarchive
-          </Button>
-        )}
+            <div className="flex flex-wrap items-center gap-2">
+              {requiresManualUpdate ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("undo")}
+                    disabled={saving || !dirty}
+                  >
+                    Undo
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("update")}
+                    disabled={saving || !dirty}
+                  >
+                    {saving ? "Updating…" : "Update blog"}
+                  </Button>
+                </>
+              ) : (
+                <></>
+              )}
+              {blog.status === "draft" && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setScheduleOpen(true)}
+                  >
+                    Schedule
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("publish")}
+                  >
+                    Publish
+                  </Button>
+                </>
+              )}
+              {blog.status === "scheduled" && (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setScheduleOpen(true)}
+                  >
+                    Reschedule
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unschedule")}
+                  >
+                    Unschedule
+                  </Button>
+                </>
+              )}
+              {blog.status === "published" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 text-xs"
+                  onClick={() => setPendingAction("archive")}
+                >
+                  Archive
+                </Button>
+              )}
+              {blog.status === "archived" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 text-xs"
+                  onClick={() => setPendingAction("unarchive")}
+                >
+                  Unarchive
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
