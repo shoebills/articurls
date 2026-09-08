@@ -39,10 +39,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { assetUrl } from "@/lib/env";
-import { getSitePublicUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, ExternalLink } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -51,7 +50,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = id;
-  const { token, refreshUser, user, activeSite } = useAuth();
+  const { token, refreshUser, user } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [title, setTitle] = useState("");
@@ -588,11 +587,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     );
   }
 
-  const liveUrl =
-    blog.status === "published" && activeSite
-      ? getSitePublicUrl(activeSite, `/${encodeURIComponent(blog.slug)}`)
-      : null;
-
   function getConfirmMeta(): { title: string; description?: string } {
     if (!blog) return { title: "" };
     if (pendingAction === "undo") return { title: "Discard unsaved changes?" };
@@ -792,14 +786,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           className="w-[calc(100vw-2rem)] sm:w-[min(calc(100vw-2rem),38rem)] max-w-2xl max-h-[85dvh] sm:max-h-[80dvh] overflow-y-auto p-4 sm:p-6 gap-0"
           onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          <DialogHeader className="pb-4 border-b border-border">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <DialogTitle className="text-lg font-semibold">Advanced settings</DialogTitle>
-                <DialogDescription className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                  Configure URL slug, SEO metadata, featured image, categories, and author.
-                </DialogDescription>
-              </div>
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle className="text-lg font-semibold">Advanced settings</DialogTitle>
               <Button
                 type="button"
                 variant="ghost"
@@ -813,23 +802,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             </div>
           </DialogHeader>
 
-          <div className="space-y-6 py-4">
+          <div className="space-y-6 pt-4 pb-2">
             {/* URL Slug */}
             <div className="space-y-2">
-              <div className="flex items-center justify-between gap-2">
-                <Label>URL slug</Label>
-                {liveUrl && (
-                  <a
-                    href={liveUrl}
-                    target="_blank"
-                    rel="noopener"
-                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-                  >
-                    View live post
-                    <ExternalLink className="h-3 w-3" />
-                  </a>
-                )}
-              </div>
+              <Label>URL slug</Label>
               <Input
                 className="mt-2"
                 value={slugCustom}
