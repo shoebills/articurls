@@ -671,7 +671,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       <Textarea
         ref={titleTextareaRef}
-        className="mb-4 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+        className="mb-6 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onInput={(e) => {
@@ -681,13 +681,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         }}
         placeholder="Title"
       />
-      <p className="mb-3 text-xs text-muted-foreground">
-        {saveStatus === "saving"
-          ? "Saving changes..."
-          : saveStatus === "saved"
-            ? "Saved"
-            : "\u00a0"}
-      </p>
 
       <BlogEditor
         key={blog.blog_id}

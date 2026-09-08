@@ -22,11 +22,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronDown, ChevronUp, ExternalLink, ChevronLeft } from "lucide-react";
+import { ChevronLeft, Settings, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
-import { getSitePublicUrl } from "@/lib/public-url";
 import { getContentExcerpt } from "@/lib/utils";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
@@ -42,7 +41,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pageId = id;
-  const { token, activeSite, refreshUser } = useAuth();
+  const { token, refreshUser } = useAuth();
 
   const [page, setPage] = useState<UserPage | null>(null);
   const [title, setTitle] = useState("");
@@ -386,11 +385,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     );
   }
 
-  const liveUrl =
-    page.status === "published" && activeSite
-      ? getSitePublicUrl(activeSite, `/${encodeURIComponent(page.slug)}`)
-      : null;
-
   const slugEditable = page.status === "draft";
 
   function getConfirmMeta(): { title: string; description?: string } {
@@ -423,7 +417,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] pb-24">
+    <div className="mx-auto max-w-[1100px] pb-36 sm:pb-40">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Link
           href="/dashboard/pages"
@@ -433,13 +427,16 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           Pages
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          {liveUrl && (
-            <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>
-              <a href={liveUrl} target="_blank" rel="noopener">
-                View page
-              </a>
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 min-h-0 gap-1.5 px-3"
+            onClick={() => setAdvancedOpen(true)}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Advanced
+          </Button>
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">
@@ -456,7 +453,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       <Textarea
         ref={titleTextareaRef}
-        className="mb-4 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
+        className="mb-6 min-h-0 resize-none overflow-hidden border-none px-0 text-2xl font-bold tracking-tight shadow-none focus-visible:ring-0 sm:text-3xl md:text-4xl lg:text-5xl"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
         onInput={(e) => {
@@ -466,41 +463,110 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         }}
         placeholder="Title"
       />
-      <p className="mb-3 text-xs text-muted-foreground">
-        {saveStatus === "saving"
-          ? "Saving changes..."
-          : saveStatus === "saved"
-            ? "Saved"
-            : "\u00a0"}
-      </p>
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
 
-      <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-background p-3 space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-medium">Show in Footer</p>
-            <Switch
-              className="shrink-0"
-              checked={showInFooter}
-              onCheckedChange={(v) => setShowInFooter(v)}
-            />
+      {/* Floating Action Dock */}
+      <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-30 pointer-events-none">
+        <div className="mx-auto flex w-full max-w-[1200px] pointer-events-none">
+          <div className="hidden w-[14.5rem] shrink-0 md:block" aria-hidden />
+          <div className="min-w-0 flex-1 px-4 sm:px-5 md:px-8 pointer-events-none">
+            <div className="mx-auto max-w-[1100px] pointer-events-auto">
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/95 p-2.5 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:px-4 sm:py-3">
+            <div className="flex items-center text-xs">
+              <span className="text-muted-foreground">
+                {saving || saveStatus === "saving"
+                  ? "Saving..."
+                  : dirty
+                    ? "Unsaved changes"
+                    : "Saved"}
+              </span>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              {requiresManualUpdate ? (
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("undo")}
+                    disabled={saving || !dirty}
+                  >
+                    Undo
+                  </Button>
+                  <Button
+                    variant="default"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("update")}
+                    disabled={saving || !dirty}
+                  >
+                    {saving ? "Updating…" : "Update page"}
+                  </Button>
+                </>
+              ) : (
+                <></>
+              )}
+              {page.status === "draft" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 text-xs"
+                  onClick={() => setPendingAction("publish")}
+                >
+                  Publish
+                </Button>
+              )}
+              {page.status === "published" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 text-xs"
+                  onClick={() => setPendingAction("archive")}
+                >
+                  Archive
+                </Button>
+              )}
+              {page.status === "archived" && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 min-h-0 px-3 text-xs"
+                  onClick={() => setPendingAction("unarchive")}
+                >
+                  Unarchive
+                </Button>
+              )}
+            </div>
+            </div>
+            </div>
           </div>
-          <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
         </div>
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-background">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
-          onClick={() => setAdvancedOpen(!advancedOpen)}
+      <Dialog open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <DialogContent
+          className="w-[calc(100vw-2rem)] sm:w-[min(calc(100vw-2rem),38rem)] max-w-2xl max-h-[85dvh] sm:max-h-[80dvh] overflow-y-auto p-4 sm:p-6 gap-0"
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          Advanced settings
-          {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        {advancedOpen && (
-          <div className="space-y-6 px-4 py-4">
+          <DialogHeader>
+            <div className="flex items-center justify-between gap-4">
+              <DialogTitle className="text-lg font-semibold">Advanced settings</DialogTitle>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:text-foreground"
+                onClick={() => setAdvancedOpen(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 pt-4 pb-2">
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
@@ -557,49 +623,33 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 </div>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Show in Footer */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="page-footer-switch" className="cursor-pointer">
+                  Show in Footer
+                </Label>
+                <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
+              </div>
+              <Switch
+                id="page-footer-switch"
+                className="shrink-0"
+                checked={showInFooter}
+                onCheckedChange={(v) => setShowInFooter(v)}
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      <Separator className="my-8" />
-
-      <div className="flex flex-wrap gap-2">
-        {requiresManualUpdate ? (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setPendingAction("undo")}
-              disabled={saving || !dirty}
-            >
-              Undo
+          <DialogFooter className="pt-4 border-t border-border flex items-center justify-end">
+            <Button type="button" onClick={() => setAdvancedOpen(false)}>
+              Done
             </Button>
-            <Button
-              variant="default"
-              onClick={() => setPendingAction("update")}
-              disabled={saving || !dirty}
-            >
-              {saving ? "Updating…" : "Update page"}
-            </Button>
-          </>
-        ) : (
-          <></>
-        )}
-        {page.status === "draft" && (
-          <Button variant="default" onClick={() => setPendingAction("publish")}>
-            Publish
-          </Button>
-        )}
-        {page.status === "published" && (
-          <Button variant="outline" onClick={() => setPendingAction("archive")}>
-            Archive
-          </Button>
-        )}
-        {page.status === "archived" && (
-          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
-            Unarchive
-          </Button>
-        )}
-      </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
         <DialogContent>
