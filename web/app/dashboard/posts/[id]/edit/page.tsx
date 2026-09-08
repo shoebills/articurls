@@ -42,7 +42,7 @@ import { assetUrl } from "@/lib/env";
 import { getSitePublicUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, ChevronUp, Loader2, Check, ChevronLeft } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, ExternalLink } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -637,13 +637,16 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           Posts
         </Link>
         <div className="flex flex-wrap items-center gap-2">
-          {liveUrl && (
-            <Button variant="outline" size="sm" className="h-8 min-h-0 px-3" asChild>
-              <a href={liveUrl} target="_blank" rel="noopener">
-                View post
-              </a>
-            </Button>
-          )}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 min-h-0 gap-1.5 px-3"
+            onClick={() => setAdvancedOpen(true)}
+          >
+            <Settings className="h-3.5 w-3.5" />
+            Advanced
+          </Button>
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">
@@ -700,37 +703,133 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={setContent}
       />
 
-      {/* Show in Featured Posts */}
-      <div className="mt-6 space-y-2">
-        <div className="rounded-md border border-border bg-background p-3 space-y-1">
-          <div className="flex items-center justify-between gap-4">
-            <p className="text-sm font-medium">Show in Featured Posts</p>
-            <Switch
-              className="shrink-0"
-              checked={featuredIds.includes(blogId)}
-              onCheckedChange={(v) => {
-                setFeaturedIds(v ? [...featuredIds, blogId] : featuredIds.filter((id) => id !== blogId));
-              }}
-            />
-          </div>
-          <p className="text-xs text-muted-foreground">Show this post at the top of your blog when featured posts are enabled.</p>
-        </div>
+      <Separator className="my-8" />
+
+      <div className="flex flex-wrap gap-2">
+        {requiresManualUpdate ? (
+          <>
+            <Button
+              variant="outline"
+              onClick={() => setPendingAction("undo")}
+              disabled={saving || !dirty}
+            >
+              Undo
+            </Button>
+            <Button
+              variant="default"
+              onClick={() => setPendingAction("update")}
+              disabled={saving || !dirty}
+            >
+              {saving ? "Updating…" : "Update blog"}
+            </Button>
+          </>
+        ) : (
+          <></>
+        )}
+        {blog.status === "draft" && (
+          <>
+            <Button variant="default" onClick={() => setPendingAction("publish")}>
+              Publish
+            </Button>
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              Schedule
+            </Button>
+          </>
+        )}
+        {blog.status === "scheduled" && (
+          <>
+            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
+              Reschedule
+            </Button>
+            <Button variant="outline" onClick={() => setPendingAction("unschedule")}>
+              Unschedule
+            </Button>
+          </>
+        )}
+        {blog.status === "published" && (
+          <Button variant="outline" onClick={() => setPendingAction("archive")}>
+            Archive
+          </Button>
+        )}
+        {blog.status === "archived" && (
+          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
+            Unarchive
+          </Button>
+        )}
       </div>
 
-      <div className="mt-6 rounded-lg border border-border bg-background">
-        <button
-          type="button"
-          className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-medium"
-          onClick={() => setAdvancedOpen(!advancedOpen)}
+      <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{getConfirmMeta().title}</DialogTitle>
+            {getConfirmMeta().description && (
+              <DialogDescription>{getConfirmMeta().description}</DialogDescription>
+            )}
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPendingAction(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmPendingAction}>
+              {pendingAction === "undo"
+                ? "Undo"
+                : pendingAction === "unschedule"
+                  ? "Unschedule"
+                  : pendingAction === "publish"
+                    ? "Publish"
+                    : pendingAction === "archive"
+                      ? "Archive"
+                      : pendingAction === "unarchive"
+                        ? "Unarchive"
+                        : "Update blog"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <DialogContent
+          className="w-[calc(100vw-2rem)] sm:w-[min(calc(100vw-2rem),38rem)] max-w-2xl max-h-[85dvh] sm:max-h-[80dvh] overflow-y-auto p-4 sm:p-6 gap-0"
+          onOpenAutoFocus={(e) => e.preventDefault()}
         >
-          Advanced settings
-          {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </button>
-        {advancedOpen && (
-          <div className="space-y-6 px-4 py-4">
+          <DialogHeader className="pb-4 border-b border-border">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <DialogTitle className="text-lg font-semibold">Advanced settings</DialogTitle>
+                <DialogDescription className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                  Configure URL slug, SEO metadata, featured image, categories, and author.
+                </DialogDescription>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 shrink-0 rounded-md text-muted-foreground hover:text-foreground"
+                onClick={() => setAdvancedOpen(false)}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Close</span>
+              </Button>
+            </div>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
             {/* URL Slug */}
             <div className="space-y-2">
-              <Label>URL slug</Label>
+              <div className="flex items-center justify-between gap-2">
+                <Label>URL slug</Label>
+                {liveUrl && (
+                  <a
+                    href={liveUrl}
+                    target="_blank"
+                    rel="noopener"
+                    className="inline-flex items-center gap-1 text-xs text-primary hover:underline"
+                  >
+                    View live post
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
               <Input
                 className="mt-2"
                 value={slugCustom}
@@ -756,6 +855,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
             <Separator />
 
+            {/* Meta Title & Meta Description */}
             <div className="space-y-4">
               <div className="space-y-3">
                 <div className="space-y-2">
@@ -865,7 +965,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                     setCatDropdownOpen(!catDropdownOpen);
                   }}
-                   disabled={false}
+                  disabled={false}
                 >
                   <span className="truncate text-muted-foreground">
                     {selectedCatIds.length === 0
@@ -875,7 +975,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
                 </button>
                 {catDropdownOpen && (
-                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-[max-content] max-md:right-0 max-md:w-auto rounded-xl border border-border bg-popover shadow-lg">
+                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-full max-w-xs rounded-xl border border-border bg-popover shadow-lg">
                     <div className="pt-4 pb-4 px-2 space-y-4">
                       {allCategories.length === 0 ? (
                         <div className="flex min-h-[56px] flex-col items-center justify-center rounded-lg border border-dashed px-4 py-3 text-center">
@@ -883,37 +983,37 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                         </div>
                       ) : (
                         <div className="max-h-56 w-full overflow-y-auto pt-1 pb-0">
-                        {allCategories.map((cat) => {
-                          const isChecked = pendingCatIds.includes(cat.category_id);
-                          return (
-                            <button
-                              key={cat.category_id}
-                              type="button"
-                              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
-                              onClick={() => {
-                                setPendingCatIds((prev) =>
-                                  isChecked
-                                    ? prev.filter((id) => id !== cat.category_id)
-                                    : [...prev, cat.category_id]
-                                );
-                              }}
-                            >
-                              <span
-                                className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
-                                  isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
-                                }`}
+                          {allCategories.map((cat) => {
+                            const isChecked = pendingCatIds.includes(cat.category_id);
+                            return (
+                              <button
+                                key={cat.category_id}
+                                type="button"
+                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+                                onClick={() => {
+                                  setPendingCatIds((prev) =>
+                                    isChecked
+                                      ? prev.filter((id) => id !== cat.category_id)
+                                      : [...prev, cat.category_id]
+                                  );
+                                }}
                               >
-                                {isChecked && <Check className="h-3 w-3" />}
-                              </span>
-                              <span className="max-md:truncate max-md:min-w-0 whitespace-nowrap">{cat.name}</span>
-                            </button>
-                          );
-                        })}
-                      </div>
+                                <span
+                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                                    isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                                  }`}
+                                >
+                                  {isChecked && <Check className="h-3 w-3" />}
+                                </span>
+                                <span className="truncate whitespace-nowrap">{cat.name}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
                       )}
                       <div className="flex gap-2 px-3">
                         <Button
-                  variant="outline"
+                          variant="outline"
                           className="flex-1"
                           onClick={() => {
                             setPendingCatIds([...selectedCatIds]);
@@ -979,89 +1079,33 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </select>
               </div>
             </div>
+
+            <Separator />
+
+            {/* Show in Featured Posts */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="modal-featured-posts-switch" className="cursor-pointer">
+                  Show in Featured Posts
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Show this post at the top of your blog when featured posts are enabled.
+                </p>
+              </div>
+              <Switch
+                id="modal-featured-posts-switch"
+                className="shrink-0"
+                checked={featuredIds.includes(blogId)}
+                onCheckedChange={(v) => {
+                  setFeaturedIds(v ? [...featuredIds, blogId] : featuredIds.filter((id) => id !== blogId));
+                }}
+              />
+            </div>
           </div>
-        )}
-      </div>
 
-      <Separator className="my-8" />
-
-      <div className="flex flex-wrap gap-2">
-        {requiresManualUpdate ? (
-          <>
-            <Button
-              variant="outline"
-              onClick={() => setPendingAction("undo")}
-              disabled={saving || !dirty}
-            >
-              Undo
-            </Button>
-            <Button
-              variant="default"
-              onClick={() => setPendingAction("update")}
-              disabled={saving || !dirty}
-            >
-              {saving ? "Updating…" : "Update blog"}
-            </Button>
-          </>
-        ) : (
-          <></>
-        )}
-        {blog.status === "draft" && (
-          <>
-            <Button variant="default" onClick={() => setPendingAction("publish")}>
-              Publish
-            </Button>
-            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
-              Schedule
-            </Button>
-          </>
-        )}
-        {blog.status === "scheduled" && (
-          <>
-            <Button variant="outline" onClick={() => setScheduleOpen(true)}>
-              Reschedule
-            </Button>
-            <Button variant="outline" onClick={() => setPendingAction("unschedule")}>
-              Unschedule
-            </Button>
-          </>
-        )}
-        {blog.status === "published" && (
-          <Button variant="outline" onClick={() => setPendingAction("archive")}>
-            Archive
-          </Button>
-        )}
-        {blog.status === "archived" && (
-          <Button variant="outline" onClick={() => setPendingAction("unarchive")}>
-            Unarchive
-          </Button>
-        )}
-      </div>
-
-      <Dialog open={pendingAction !== null} onOpenChange={(o) => !o && setPendingAction(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{getConfirmMeta().title}</DialogTitle>
-            {getConfirmMeta().description && (
-              <DialogDescription>{getConfirmMeta().description}</DialogDescription>
-            )}
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPendingAction(null)}>
-              Cancel
-            </Button>
-            <Button onClick={confirmPendingAction}>
-              {pendingAction === "undo"
-                ? "Undo"
-                : pendingAction === "unschedule"
-                  ? "Unschedule"
-                  : pendingAction === "publish"
-                    ? "Publish"
-                    : pendingAction === "archive"
-                      ? "Archive"
-                      : pendingAction === "unarchive"
-                        ? "Unarchive"
-                        : "Update blog"}
+          <DialogFooter className="pt-4 border-t border-border flex items-center justify-end">
+            <Button type="button" onClick={() => setAdvancedOpen(false)}>
+              Done
             </Button>
           </DialogFooter>
         </DialogContent>
