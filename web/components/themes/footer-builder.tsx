@@ -179,7 +179,7 @@ export function FooterBuilder({
         <div className="space-y-0.5">
           <label className="text-sm font-medium text-foreground">Enable Site Footer</label>
           <p className="text-xs text-muted-foreground">
-            Display modular footer columns, newsletter subscription, and system links at the bottom of your publication.
+            Display footer columns, newsletter subscription, and system links at the bottom of your publication.
           </p>
         </div>
         <Switch
@@ -190,11 +190,11 @@ export function FooterBuilder({
 
       {footerEnabled ? (
         <>
-          {/* Modular Columns Section */}
+          {/* Footer Columns Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-sm font-medium text-foreground">Modular Footer Columns</label>
+                <label className="text-sm font-medium text-foreground">Footer Columns</label>
                 <p className="text-xs text-muted-foreground">
                   Organize your footer into structured link columns (e.g. Product, Company, Resources).
                 </p>

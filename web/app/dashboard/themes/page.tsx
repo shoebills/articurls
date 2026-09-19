@@ -19,19 +19,15 @@ import { ColorModePicker } from "@/components/themes/color-mode-picker";
 import { ColorPalettePicker } from "@/components/themes/color-palette-picker";
 import { TypographyPairingPicker } from "@/components/themes/typography-pairing-picker";
 import { ButtonStylePicker } from "@/components/themes/button-style-picker";
-import { DEFAULT_DESIGN_SETTINGS } from "@/components/design-settings-panel";
 import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
   const { token, refreshUser } = useAuth();
 
-  const [design, setDesign] = useState<DesignSettings>(() => {
-    if (typeof window === "undefined") {
-      return DEFAULT_DESIGN_SETTINGS;
-    }
+  const [design, setDesign] = useState<DesignSettings | null>(() => {
+    if (typeof window === "undefined") return null;
     const t = localStorage.getItem("articurls_token");
-    const cached = t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
-    return cached ?? DEFAULT_DESIGN_SETTINGS;
+    return t ? getCachedApiData<DesignSettings>("/user/design", t) : null;
   });
 
   const [loading, setLoading] = useState(() => {
@@ -62,11 +58,11 @@ export default function ThemesDashboardPage() {
   }, [token]);
 
   const handleUpdate = (updates: Partial<DesignSettings>) => {
-    setDesign((prev) => ({ ...prev, ...updates }));
+    setDesign((prev) => (prev ? { ...prev, ...updates } : null));
   };
 
   const handleSave = async () => {
-    if (!token) return;
+    if (!token || !design) return;
     setSaving(true);
     setErr(null);
     setSuccess(null);
@@ -96,7 +92,7 @@ export default function ThemesDashboardPage() {
         </p>
       </div>
 
-      {loading ? (
+      {loading || !design ? (
         <div className="space-y-6">
           <Skeleton className="h-72 w-full max-w-2xl rounded-2xl" />
           <Skeleton className="h-40 w-full rounded-2xl" />
