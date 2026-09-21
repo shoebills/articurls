@@ -8,6 +8,7 @@ class SubscriptionOut(BaseModel):
     subscription_id: uuid.UUID
     plan_type: str
     status: str
+    tier: Optional[str] = None
     current_period_start: Optional[datetime]
     current_period_end: Optional[datetime]
     created_at: Optional[datetime]
@@ -31,6 +32,11 @@ class CheckoutResponse(BaseModel):
     checkout_url: str
 
 
+class CheckoutRequest(BaseModel):
+    plan: str = "monthly"
+    tier: Optional[str] = None
+
+
 class CustomerPortalResponse(BaseModel):
     url: str
 
@@ -46,6 +52,6 @@ class AccountUsage(BaseModel):
     total_pageviews: int = 0
     tier_limit: int = 10000
     plan_type: str = "trial"
-    tier_price_usd: int = 9
+    tier_price_usd: int = 19
     usage_percentage: float = 0.0
     sites: list[SiteUsageItem] = []

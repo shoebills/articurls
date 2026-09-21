@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, status, Response, Depends
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 
 from ..database import get_db
 from ..config import settings
@@ -342,7 +342,16 @@ async def complete_google_signup(
     )
     db.add(new_author)
     db.flush()
-    
+
+    trial_start = datetime.now(timezone.utc)
+    db.add(models.Subscriptions(
+        user_id=new_user.user_id,
+        plan_type="trial",
+        status="active",
+        current_period_start=trial_start,
+        current_period_end=trial_start + timedelta(days=settings.trial_duration_days),
+    ))
+
     db.commit()
     db.refresh(new_user)
 

@@ -805,13 +805,14 @@ export async function getSubscription(token: string): Promise<SubscriptionOut | 
 
 export async function createCheckout(
   token: string,
-  plan: "monthly" | "lifetime" = "monthly"
+  plan: "monthly" | "lifetime" = "monthly",
+  tier?: string
 ): Promise<{ checkout_url: string }> {
   return apiFetch("/billing/checkout", {
     method: "POST",
     token,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ plan }),
+    body: JSON.stringify({ plan, tier: tier ?? null }),
   });
 }
 

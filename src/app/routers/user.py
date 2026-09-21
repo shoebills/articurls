@@ -33,7 +33,6 @@ router = APIRouter(
 
 _SIGNUP_IP_LIMIT = 5
 _SIGNUP_IP_WINDOW = 3600  # 1 hour
-TRIAL_DURATION_DAYS = 7
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, req: Request, db: Session = Depends(get_db)):
@@ -87,7 +86,7 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     db.refresh(new_user)
 
     trial_start = datetime.now(timezone.utc)
-    trial_end = trial_start + timedelta(days=TRIAL_DURATION_DAYS)
+    trial_end = trial_start + timedelta(days=settings.trial_duration_days)
     db.add(models.Subscriptions(
         user_id=new_user.user_id,
         plan_type="trial",

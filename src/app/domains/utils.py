@@ -73,7 +73,7 @@ def start_domain_grace_period(user, now: datetime | None = None) -> None:
 
 
 def expire_domain_access(user) -> None:
-    if user.domain_status != models.DomainStatus.GRACE:
+    if user.domain_status not in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
         return
 
     user.domain_status = models.DomainStatus.EXPIRED

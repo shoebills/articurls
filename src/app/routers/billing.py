@@ -4,7 +4,7 @@ import traceback
 import uuid
 from typing import List, Any
 from datetime import datetime, timezone
-from fastapi import APIRouter, Body, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from .. import models
@@ -13,7 +13,7 @@ from ..utils import user_by_email
 from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
-from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CustomerPortalResponse, AccountUsage
+from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CheckoutRequest, CustomerPortalResponse, AccountUsage
 from ..payments.client import client as dodo_client
 from ..config import settings
 from ..domains.utils import restore_domain_access, start_domain_grace_period
@@ -24,6 +24,15 @@ router = APIRouter(
     prefix="/billing", 
     tags=["Billing"]
     )
+
+
+TIER_PRODUCT_IDS = {
+    "pro_10k": settings.dodopayments_product_id_10k,
+    "pro_100k": settings.dodopayments_product_id_100k,
+    "pro_250k": settings.dodopayments_product_id_250k,
+    "pro_500k": settings.dodopayments_product_id_500k,
+    "pro_1m": settings.dodopayments_product_id_1m,
+}
 
 
 def _to_aware_dt(value):
@@ -170,7 +179,8 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
     if db_sub.plan_type != "lifetime" or db_sub.status not in {"active", "past_due"}:
         return False
 
-    start_domain_grace_period(db_user)
+    for db_site in db_user.sites:
+        start_domain_grace_period(db_site)
     db_sub.status = "lapsed"
     db_sub.dodo_subscription_id = None
     db_sub.current_period_start = None
@@ -178,12 +188,19 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
     return True
 
 
+def _restore_user_domain_access(db_user) -> None:
+    for db_site in db_user.sites:
+        restore_domain_access(db_site)
+
+
 @router.post("/checkout", response_model=CheckoutResponse)
 def create_checkout(
-    plan: str = Body("monthly", embed=True),
+    body: CheckoutRequest,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    plan = body.plan
+    tier = body.tier
 
     check_rate_limit_user("checkout", current_user.user_id, 5, 60)
 
@@ -195,12 +212,20 @@ def create_checkout(
     if existing_lifetime:
         raise HTTPException(status_code=409, detail="You already have lifetime access")
 
-    product_ids = {
-        "monthly": settings.dodopayments_product_id,
-        "lifetime": settings.dodopayments_lifetime_product_id,
-    }
-    product_id = product_ids.get(plan)
-    if not product_id:
+    if plan == "lifetime":
+        product_id = settings.dodopayments_lifetime_product_id
+        tier = None
+        if not product_id:
+            raise HTTPException(status_code=503, detail="Lifetime plan is not configured")
+    elif plan == "monthly":
+        if not tier:
+            tier = "pro_10k"
+        product_id = TIER_PRODUCT_IDS.get(tier)
+        if not product_id:
+            if tier in TIER_PRODUCT_IDS:
+                raise HTTPException(status_code=503, detail="This tier is not configured yet")
+            raise HTTPException(status_code=400, detail="Invalid tier")
+    else:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
     session = dodo_client.checkout_sessions.create(
@@ -219,7 +244,7 @@ def create_checkout(
 
         return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success",
 
-        metadata={"plan_type": plan, "user_id": str(current_user.user_id)},
+        metadata={"plan_type": plan, "user_id": str(current_user.user_id), "tier": tier or ""},
     )
 
     return {"checkout_url": session.checkout_url}
@@ -290,6 +315,11 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                     _capture_dodo_customer_id(event.data, db_user)
 
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
+                    incoming_tier = _metadata_get(getattr(event.data, "metadata", None), "tier")
+                    if incoming_tier and incoming_tier in TIER_PRODUCT_IDS:
+                        effective_tier = incoming_tier
+                    else:
+                        effective_tier = None
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
@@ -313,6 +343,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 db_sub.status = "active"
                                 db_sub.current_period_start = _to_aware_dt(incoming_start)
                                 db_sub.current_period_end = _to_aware_dt(incoming_end)
+                                if effective_tier:
+                                    db_sub.tier = effective_tier
 
                         else:
                             new_sub = models.Subscriptions(
@@ -320,6 +352,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 dodo_subscription_id=event.data.subscription_id,
                                 plan_type="pro",
                                 status="active",
+                                tier=effective_tier,
                                 current_period_start=_to_aware_dt(getattr(event.data, "previous_billing_date", None)),
                                 current_period_end=_to_aware_dt(getattr(event.data, "next_billing_date", None)),
                             )
@@ -328,7 +361,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                             db_sub = new_sub
 
                         # Restore domain from grace/expired back to active on renewal
-                        restore_domain_access(db_user)
+                        _restore_user_domain_access(db_user)
 
                         if db_sub and incoming_dodo_sid:
                             db.query(models.Transactions).filter(
@@ -430,7 +463,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                             db.add(db_sub)
 
                         # Restore domain from grace/expired back to active on renewal
-                        restore_domain_access(db_user)
+                        _restore_user_domain_access(db_user)
 
                         if db_sub and incoming_dodo_sid:
                             db.query(models.Transactions).filter(
@@ -508,7 +541,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                             except Exception:
                                 pass
 
-                        restore_domain_access(db_user)
+                        _restore_user_domain_access(db_user)
 
                         now = datetime.now(timezone.utc)
                         if db_sub:
@@ -718,7 +751,7 @@ def get_account_usage(
         "pro_250k": {"limit": 250000, "price": 99},
         "pro_500k": {"limit": 500000, "price": 149},
         "pro_1m": {"limit": 1000000, "price": 249},
-        "lifetime": {"limit": 100000, "price": 199},
+        "lifetime": {"limit": 100000, "price": 99},
     }
     tier_info = TIERS.get(tier_key, {"limit": 10000, "price": 19})
 

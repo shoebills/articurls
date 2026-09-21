@@ -29,8 +29,12 @@ class Settings(BaseSettings):
     dodopayments_api_key: str
     dodopayments_webhook_key: str
     dodopayments_environment: str
-    dodopayments_product_id: str
+    dodopayments_product_id_10k: str
     dodopayments_lifetime_product_id: str
+    dodopayments_product_id_100k: str = ""
+    dodopayments_product_id_250k: str = ""
+    dodopayments_product_id_500k: str = ""
+    dodopayments_product_id_1m: str = ""
 
     uploads_dir: str = "uploads"
     # Reader/marketing site origin (blog links in emails; env: MARKETING_ORIGIN).
@@ -49,6 +53,8 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
 
     app_base_url: str = "http://localhost:3000"
+
+    trial_duration_days: int = 7
 
     @property
     def ugc_domain(self) -> str:

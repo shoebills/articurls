@@ -21,7 +21,7 @@ export function TrialExpiredOverlay() {
           <Button asChild className="h-12 w-full gap-2 text-base shadow-md shadow-primary/20">
             <Link href="/dashboard/billing?plan=pro">
               <Zap className="h-4 w-4" />
-              Subscribe — $9/mo
+              Subscribe — $19/mo
             </Link>
           </Button>
           <Button asChild variant="outline" className="h-12 w-full text-base">

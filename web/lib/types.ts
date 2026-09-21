@@ -350,6 +350,7 @@ export interface SubscriptionOut {
   subscription_id: string;
   plan_type: string;
   status: string;
+  tier: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   created_at: string | null;

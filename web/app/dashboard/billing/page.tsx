@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   getSubscription,
   getTransactions,
   getCustomerPortalLink,
   getAccountUsage,
+  createCheckout,
   ApiError,
   isProSubscription,
 } from "@/lib/api";
@@ -28,12 +30,26 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
   const { token } = useAuth();
+  const router = useRouter();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [busyPortal, setBusyPortal] = useState(false);
+  const [busyPlan, setBusyPlan] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const plan = params.get("plan");
+    if (!plan) return;
+    const clean = window.location.pathname;
+    window.history.replaceState({}, "", clean);
+    if (plan === "pro") {
+      router.replace("/dashboard/billing/upgrade");
+    }
+  }, [router]);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -75,6 +91,19 @@ export default function BillingPage() {
       }
     } finally {
       setBusyPortal(false);
+    }
+  }
+
+  async function buyLifetime() {
+    if (!token) return;
+    setBusyPlan("lifetime");
+    setErr(null);
+    try {
+      const { checkout_url } = await createCheckout(token, "lifetime");
+      window.location.href = checkout_url;
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
+      setBusyPlan(null);
     }
   }
 
@@ -185,6 +214,30 @@ export default function BillingPage() {
               ) : null}
             </CardContent>
           </Card>
+
+          {/* Lifetime one-time purchase */}
+          {!isLifetime && (
+            <Card className="border-amber-500/25 bg-amber-500/[0.04]">
+              <CardHeader className="pb-2">
+                <div className="flex items-center gap-2">
+                  <Flame className="h-5 w-5 text-amber-500" />
+                  <CardTitle className="text-lg sm:text-xl font-semibold">Go Lifetime</CardTitle>
+                </div>
+                <CardDescription>
+                  Pay once — $99. Keep Pro features and 100k monthly views forever, no recurring billing.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button
+                  onClick={buyLifetime}
+                  disabled={busyPlan === "lifetime"}
+                  className="gap-1.5 text-sm font-semibold"
+                >
+                  {busyPlan === "lifetime" ? "Redirecting…" : "Buy Lifetime — $99"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Combined Usage Meter */}
           {usage && (

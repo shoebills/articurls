@@ -30,12 +30,12 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 const VIEW_TIERS = [
-  { id: "10k", label: "Up to 10k views", price: 19, views: 10_000 },
-  { id: "100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
-  { id: "250k", label: "Up to 250k views", price: 99, views: 250_000 },
-  { id: "500k", label: "Up to 500k views", price: 149, views: 500_000 },
-  { id: "1m", label: "Up to 1M views", price: 249, views: 1_000_000 },
-  { id: "custom", label: "1M+ views (Custom)", price: null, views: null },
+  { id: "10k", tierKey: "pro_10k", label: "Up to 10k views", price: 19, views: 10_000 },
+  { id: "100k", tierKey: "pro_100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
+  { id: "250k", tierKey: "pro_250k", label: "Up to 250k views", price: 99, views: 250_000 },
+  { id: "500k", tierKey: "pro_500k", label: "Up to 500k views", price: 149, views: 500_000 },
+  { id: "1m", tierKey: "pro_1m", label: "Up to 1M views", price: 249, views: 1_000_000 },
+  { id: "custom", tierKey: null, label: "1M+ views (Custom)", price: null, views: null },
 ];
 
 export default function UpgradePlanPage() {
@@ -79,7 +79,8 @@ export default function UpgradePlanPage() {
     if (!token) return;
     setBusyPlan(planId);
     try {
-      const { checkout_url } = await createCheckout(token, "monthly");
+      const tierKey = VIEW_TIERS[selectedTierIndex]?.tierKey ?? "pro_10k";
+      const { checkout_url } = await createCheckout(token, "monthly", tierKey);
       window.location.href = checkout_url;
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
