@@ -169,7 +169,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
       {/* QA Blocks */}
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/80 p-6 text-center">
-          <p className="text-xs text-muted-foreground">No FAQs added yet.</p>
+          <p className="text-sm text-muted-foreground">No FAQs added yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -247,8 +247,8 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
 
                 {/* Block Body (Expandable) */}
                 {isOpen && (
-                  <div className="p-3.5 sm:p-4 pt-0 space-y-3.5 mt-1 pt-3.5">
-                    <div className="space-y-2">
+                  <div className="p-3.5 sm:p-4 pt-0 space-y-5 mt-1 pt-3.5">
+                    <div className="flex flex-col gap-2.5">
                       <Label htmlFor={`faq-question-${item.id}`}>Question</Label>
                       <Input
                         id={`faq-question-${item.id}`}
@@ -260,7 +260,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
                       />
                     </div>
 
-                    <div className="space-y-2">
+                    <div className="flex flex-col gap-2.5">
                       <Label htmlFor={`faq-answer-${item.id}`}>Answer</Label>
                       <Textarea
                         id={`faq-answer-${item.id}`}

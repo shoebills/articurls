@@ -58,7 +58,6 @@ export function FooterBuilder({
   const footerEnabled = settings.site_footer_enabled !== false;
   const footerColumns = settings.footer_columns || [];
   const copyright = settings.footer_copyright || "";
-  const newsletterEnabled = settings.footer_newsletter_enabled !== false;
   const systemLinksEnabled = settings.footer_system_links_enabled !== false;
 
   useEffect(() => {
@@ -179,7 +178,7 @@ export function FooterBuilder({
         <div className="space-y-0.5">
           <label className="text-sm font-medium text-foreground">Enable Site Footer</label>
           <p className="text-xs text-muted-foreground">
-            Display footer columns, newsletter subscription, and system links at the bottom of your publication.
+            Display footer columns and system links at the bottom of your publication.
           </p>
         </div>
         <Switch
@@ -303,28 +302,15 @@ export function FooterBuilder({
           <div className="space-y-4">
             <label className="text-sm font-medium text-foreground">Footer Features & Integrations</label>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="flex items-center justify-between rounded-xl border p-3">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">Newsletter Box</p>
-                  <p className="text-[11px] text-muted-foreground">Subscribe input form</p>
-                </div>
-                <Switch
-                  checked={newsletterEnabled}
-                  onCheckedChange={(checked) => onChange({ footer_newsletter_enabled: checked })}
-                />
+            <div className="flex items-center justify-between rounded-xl border p-3">
+              <div className="space-y-0.5">
+                <p className="text-xs font-semibold">System Links</p>
+                <p className="text-[11px] text-muted-foreground">RSS Feed & Sitemap</p>
               </div>
-
-              <div className="flex items-center justify-between rounded-xl border p-3">
-                <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">System Links</p>
-                  <p className="text-[11px] text-muted-foreground">RSS Feed & Sitemap</p>
-                </div>
-                <Switch
-                  checked={systemLinksEnabled}
-                  onCheckedChange={(checked) => onChange({ footer_system_links_enabled: checked })}
-                />
-              </div>
+              <Switch
+                checked={systemLinksEnabled}
+                onCheckedChange={(checked) => onChange({ footer_system_links_enabled: checked })}
+              />
             </div>
           </div>
 
