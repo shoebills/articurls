@@ -50,6 +50,11 @@ export interface PublicAuthorDetail {
   blogs: PublicBlog[];
 }
 
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
 export interface BlogListItem {
   blog_id: string;
   title: string;
@@ -58,6 +63,12 @@ export interface BlogListItem {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  og_image_url?: string | null;
+  canonical_url?: string | null;
+  noindex?: boolean;
+  is_pinned?: boolean;
+  custom_schema?: Record<string, unknown> | null;
+  faq_items?: FaqItem[] | null;
   status: BlogStatus;
   scheduled_at: string | null;
   published_at: string | null;
@@ -82,6 +93,12 @@ export interface PublicBlog {
   meta_title: string | null;
   meta_description: string | null;
   featured_image_url: string | null;
+  og_image_url?: string | null;
+  canonical_url?: string | null;
+  noindex?: boolean;
+  is_pinned?: boolean;
+  custom_schema?: Record<string, unknown> | null;
+  faq_items?: FaqItem[] | null;
   published_at: string | null;
   updated_at: string;
   user_id?: string;

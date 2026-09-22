@@ -8,6 +8,7 @@ import type {
   BlogDetail,
   BlogListItem,
   BlogMediaOut,
+  FaqItem,
   Category,
   CustomDomain,
   DesignSettings,
@@ -509,6 +510,13 @@ export async function createBlog(
     slug?: string;
     meta_title?: string;
     meta_description?: string;
+    featured_image_url?: string;
+    og_image_url?: string;
+    canonical_url?: string;
+    noindex?: boolean;
+    is_pinned?: boolean;
+    custom_schema?: Record<string, unknown> | null;
+    faq_items?: FaqItem[];
   }
 ): Promise<BlogDetail> {
   return apiFetch("/blog/", {
@@ -530,6 +538,12 @@ export async function updateBlog(
     meta_title?: string | null;
     meta_description?: string | null;
     featured_image_url?: string | null;
+    og_image_url?: string | null;
+    canonical_url?: string | null;
+    noindex?: boolean;
+    is_pinned?: boolean;
+    custom_schema?: Record<string, unknown> | null;
+    faq_items?: FaqItem[] | null;
   }
 ): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}`, {

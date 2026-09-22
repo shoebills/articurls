@@ -150,6 +150,7 @@ class Blog(Base):
         UniqueConstraint("site_id", "slug", name="uq_blogs_site_slug"),
         Index("ix_blogs_status_scheduled_at", "status", "scheduled_at"),
         Index("ix_blogs_site_status_published_at", "site_id", "status", "published_at"),
+        Index("ix_blogs_site_is_pinned", "site_id", "is_pinned"),
     )
 
     blog_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
@@ -161,6 +162,12 @@ class Blog(Base):
     meta_title = Column(String, nullable=True)
     meta_description = Column(String, nullable=True)
     featured_image_url = Column(String, nullable=True)
+    og_image_url = Column(String, nullable=True)
+    canonical_url = Column(String, nullable=True)
+    noindex = Column(Boolean, nullable=False, default=False, server_default="false")
+    is_pinned = Column(Boolean, nullable=False, default=False, server_default="false")
+    custom_schema = Column(JSON, nullable=True)
+    faq_items = Column(JSON, nullable=True, default=list)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)

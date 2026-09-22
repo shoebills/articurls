@@ -16,6 +16,11 @@ class BlogMediaOut(BaseModel):
         from_attributes = True
 
 
+class FaqItem(BaseModel):
+    question: str
+    answer: str
+
+
 class CreateBlog(BaseModel):
     title: str = Field(..., max_length=300)
     content: str = Field(..., max_length=500_000)
@@ -23,6 +28,13 @@ class CreateBlog(BaseModel):
     author_id: Optional[uuid.UUID] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: bool = False
+    is_pinned: bool = False
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = []
 
 
 class GetBlog(BaseModel):
@@ -33,6 +45,12 @@ class GetBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: bool = False
+    is_pinned: bool = False
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = []
     status: BlogStatus
     scheduled_at: Optional[datetime] = None
     published_at: Optional[datetime] = None
@@ -61,6 +79,12 @@ class PublicBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: bool = False
+    is_pinned: bool = False
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = []
     published_at: Optional[datetime] = None
     updated_at: datetime
     site_id: Optional[uuid.UUID] = None
@@ -106,6 +130,12 @@ class UpdateBlog(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: Optional[bool] = None
+    is_pinned: Optional[bool] = None
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = None
 
 class ScheduleBlog(BaseModel):
     scheduled_at: datetime

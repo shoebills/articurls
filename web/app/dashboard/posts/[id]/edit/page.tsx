@@ -19,9 +19,11 @@ import {
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail, Category, Author } from "@/lib/types";
+import type { BlogDetail, Category, Author, FaqItem } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
+import { FaqEditor } from "@/components/editor/faq-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -41,7 +43,7 @@ import {
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Sparkles } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -63,6 +65,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [metaDesc, setMetaDesc] = useState("");
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [ogImageUrl, setOgImageUrl] = useState("");
+  const [uploadingOg, setUploadingOg] = useState(false);
+  const [canonicalUrl, setCanonicalUrl] = useState("");
+  const [noindex, setNoindex] = useState(false);
+  const [customSchemaStr, setCustomSchemaStr] = useState("");
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
+  const [modalTab, setModalTab] = useState<"config" | "seo">("config");
+
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule" | "publish" | "archive" | "unarchive">(null);
@@ -72,6 +83,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [err, setErr] = useState<string | null>(null);
   const [featuredIds, setFeaturedIds] = useState<string[]>([]);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
+  const ogInputRef = useRef<HTMLInputElement | null>(null);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const autosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const localAutosaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -123,6 +135,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setMetaDescDirty(!descSynced);
     setMetaDesc(descSynced ? "" : (b.meta_description || ""));
     setFeaturedImageUrl(b.featured_image_url || "");
+    setOgImageUrl(b.og_image_url || "");
+    setCanonicalUrl(b.canonical_url || "");
+    setNoindex(b.noindex ?? false);
+    setIsPinned(b.is_pinned ?? false);
+    setCustomSchemaStr(b.custom_schema ? JSON.stringify(b.custom_schema, null, 2) : "");
+    setFaqItems(b.faq_items || []);
     const blogCatIds = (b as unknown as { category_ids?: string[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
@@ -210,6 +228,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
     const authorChanged = savedAuthorIdRef.current !== authorId;
     const featuredChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
+    const isPinnedDirty = isPinned !== (blog.is_pinned ?? false);
+    const ogImageDirty = ogImageUrl.trim() !== (blog.og_image_url || "");
+    const canonicalDirty = canonicalUrl.trim() !== (blog.canonical_url || "");
+    const noindexDirty = noindex !== (blog.noindex ?? false);
+    const currentSchemaStr = blog.custom_schema ? JSON.stringify(blog.custom_schema, null, 2) : "";
+    const schemaDirty = customSchemaStr.trim() !== currentSchemaStr.trim();
+    const currentFaqStr = JSON.stringify(blog.faq_items || []);
+    const faqDirty = JSON.stringify(faqItems) !== currentFaqStr;
     return (
       blog.title !== title.trim() ||
       (blog.content || "") !== (content || "") ||
@@ -219,9 +245,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty ||
       authorChanged ||
-      featuredChanged
+      featuredChanged ||
+      isPinnedDirty ||
+      ogImageDirty ||
+      canonicalDirty ||
+      noindexDirty ||
+      schemaDirty ||
+      faqDirty
     );
-  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user]);
+  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user, isPinned, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -245,10 +277,31 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setSaveStatus("saving");
     if (!silent) setErr(null);
     try {
+      let parsedSchema: Record<string, unknown> | null = null;
+      if (customSchemaStr.trim()) {
+        try {
+          parsedSchema = JSON.parse(customSchemaStr.trim());
+        } catch {
+          if (!silent) {
+            setErr("Custom schema must be valid JSON.");
+            setSaving(false);
+            setSaveStatus("idle");
+            return false;
+          }
+        }
+      }
+
       const body: Parameters<typeof updateBlog>[2] = {
         title: nextTitle,
         content: nextContent,
         author_id: nextAuthorId,
+        featured_image_url: nextFeaturedImageUrl.trim() || null,
+        og_image_url: ogImageUrl.trim() || null,
+        canonical_url: canonicalUrl.trim() || null,
+        noindex,
+        is_pinned: isPinned,
+        custom_schema: parsedSchema,
+        faq_items: faqItems,
       };
 
       if (slugEditable) {
@@ -272,7 +325,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       } else {
         body.meta_description = null;
       }
-      body.featured_image_url = nextFeaturedImageUrl.trim() || null;
 
       const responseBlog = await updateBlog(token, blog.blog_id, body);
       let finalBlog = responseBlog;
@@ -436,6 +488,20 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
       setUploadingFeatured(false);
+    }
+  }
+
+  async function uploadOgImage(file: File) {
+    if (!token || !blog) return;
+    setUploadingOg(true);
+    try {
+      const media = await uploadBlogMedia(token, blog.blog_id, file);
+      setOgImageUrl(media.url);
+      setSaveStatus("idle");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "OG image upload failed");
+    } finally {
+      setUploadingOg(false);
     }
   }
 
@@ -690,6 +756,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         onChange={setContent}
       />
 
+      <div className="mt-8 mb-24">
+        <FaqEditor
+          items={faqItems}
+          onChange={setFaqItems}
+          disabled={saving}
+        />
+      </div>
+
       {/* Floating Action Dock */}
       <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-30 pointer-events-none">
         <div className="mx-auto flex w-full max-w-[1200px] pointer-events-none">
@@ -849,282 +923,448 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             </div>
           </DialogHeader>
 
-          <div className="space-y-6 pt-4 pb-2">
-            {/* URL Slug */}
-            <div className="space-y-2">
-              <Label>URL slug</Label>
-              <Input
-                className="mt-2"
-                value={slugCustom}
-                disabled={!slugEditable}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  if (v.trim() === "") {
-                    setSlugCustomDirty(false);
-                    setSlugCustom("");
-                  } else {
-                    setSlugCustomDirty(true);
-                    setSlugCustom(v);
-                  }
-                }}
-                placeholder="Same as title by default"
-              />
-              <p className="text-xs text-muted-foreground">
-                {slugEditable
-                  ? "Auto-generated from the title when empty."
-                  : "The public URL cannot be changed after the post is published."}
-              </p>
-            </div>
+          <Tabs value={modalTab} onValueChange={(v) => setModalTab(v as "config" | "seo")} className="w-full pt-2">
+            <TabsList className="grid w-full grid-cols-2 mb-2">
+              <TabsTrigger value="config" className="text-xs sm:text-sm">
+                Post Configuration
+              </TabsTrigger>
+              <TabsTrigger value="seo" className="text-xs sm:text-sm">
+                SEO & Metadata
+              </TabsTrigger>
+            </TabsList>
 
-            <Separator />
-
-            {/* Meta Title & Meta Description */}
-            <div className="space-y-4">
-              <div className="space-y-3">
-                <div className="space-y-2">
-                  <Label>Meta title</Label>
-                  <Input
-                    className="mt-2"
-                    value={metaTitle}
-                    onChange={(e) => {
-                      setMetaTitleDirty(true);
-                      setMetaTitle(e.target.value);
-                    }}
-                    placeholder="Same as title by default"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Meta description</Label>
-                  <Input
-                    className="mt-2"
-                    value={metaDesc}
-                    onChange={(e) => {
-                      setMetaDescDirty(true);
-                      setMetaDesc(e.target.value);
-                    }}
-                    placeholder="Same as content by default"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Featured Image */}
-            <div className="space-y-2">
-              <Label>Featured image</Label>
-              <p className="text-xs text-muted-foreground pt-1">Used for home preview and share cards. Recommended 1200×630px.</p>
-              <input
-                ref={featuredInputRef}
-                type="file"
-                accept="image/*"
-                className="sr-only"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void uploadFeaturedImage(f);
-                  e.currentTarget.value = "";
-                }}
-              />
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  type="button"
-                  variant="default"
-                  onClick={() => featuredInputRef.current?.click()}
-                  disabled={uploadingFeatured}
-                >
-                  {uploadingFeatured ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    "Upload"
-                  )}
-                </Button>
-                {featuredImageUrl ? (
+            {/* TAB 1: POST CONFIGURATION */}
+            <TabsContent value="config" className="space-y-6 pt-3 pb-2">
+              {/* Featured Image */}
+              <div className="space-y-2">
+                <Label>Featured image</Label>
+                <p className="text-xs text-muted-foreground pt-1">Used for home preview and share cards. Recommended 1200×630px.</p>
+                <input
+                  ref={featuredInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadFeaturedImage(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <div className="flex flex-wrap items-center gap-2">
                   <Button
                     type="button"
-                    variant="ghost"
-                    onClick={async () => {
-                      if (token && blog && featuredImageUrl && !content.includes(featuredImageUrl)) {
-                        try {
-                          await deleteBlogMediaByUrl(token, blog.blog_id, featuredImageUrl);
-                        } catch {
-                          // Do not block local removal if cleanup fails.
-                        }
-                      }
-                      setFeaturedImageUrl("");
-                    }}
+                    variant="default"
+                    onClick={() => featuredInputRef.current?.click()}
                     disabled={uploadingFeatured}
                   >
-                    Remove
+                    {uploadingFeatured ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload"
+                    )}
                   </Button>
+                  {featuredImageUrl ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={async () => {
+                        if (token && blog && featuredImageUrl && !content.includes(featuredImageUrl)) {
+                          try {
+                            await deleteBlogMediaByUrl(token, blog.blog_id, featuredImageUrl);
+                          } catch {
+                            // Do not block local removal if cleanup fails.
+                          }
+                        }
+                        setFeaturedImageUrl("");
+                      }}
+                      disabled={uploadingFeatured}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+                {featuredImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={transformImageUrl(assetUrl(featuredImageUrl), { width: 600 })}
+                    alt=""
+                    className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                  />
                 ) : null}
               </div>
-              {featuredImageUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={transformImageUrl(assetUrl(featuredImageUrl), { width: 600 })}
-                  alt=""
-                  className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
-                />
-              ) : null}
-            </div>
 
-            <Separator />
+              <Separator />
 
-            {/* Categories */}
-            <div className="space-y-2">
+              {/* Categories */}
               <div className="space-y-2">
-                <Label>Assign category</Label>
-                <p className="text-xs text-muted-foreground pt-1">Select categories for this post.</p>
-              </div>
-              <div className="relative">
-                <button
-                  ref={catTriggerRef}
-                  type="button"
-                  className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-                  onClick={() => {
-                    if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
-                    setCatDropdownOpen(!catDropdownOpen);
-                  }}
-                  disabled={false}
-                >
-                  <span className="truncate text-muted-foreground">
-                    {selectedCatIds.length === 0
-                      ? "Select categories"
-                      : `${selectedCatIds.length} selected`}
-                  </span>
-                  <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
-                </button>
-                {catDropdownOpen && (
-                  <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-full max-w-xs rounded-xl border border-border bg-popover shadow-lg">
-                    <div className="pt-4 pb-4 px-2 space-y-4">
-                      {allCategories.length === 0 ? (
-                        <div className="flex min-h-[56px] flex-col items-center justify-center rounded-lg border border-dashed px-4 py-3 text-center">
-                          <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
-                        </div>
-                      ) : (
-                        <div className="max-h-56 w-full overflow-y-auto pt-1 pb-0">
-                          {allCategories.map((cat) => {
-                            const isChecked = pendingCatIds.includes(cat.category_id);
-                            return (
-                              <button
-                                key={cat.category_id}
-                                type="button"
-                                className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
-                                onClick={() => {
-                                  setPendingCatIds((prev) =>
-                                    isChecked
-                                      ? prev.filter((id) => id !== cat.category_id)
-                                      : [...prev, cat.category_id]
-                                  );
-                                }}
-                              >
-                                <span
-                                  className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
-                                    isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
-                                  }`}
+                <div className="space-y-2">
+                  <Label>Assign category</Label>
+                  <p className="text-xs text-muted-foreground pt-1">Select categories for this post.</p>
+                </div>
+                <div className="relative">
+                  <button
+                    ref={catTriggerRef}
+                    type="button"
+                    className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => {
+                      if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
+                      setCatDropdownOpen(!catDropdownOpen);
+                    }}
+                    disabled={false}
+                  >
+                    <span className="truncate text-muted-foreground">
+                      {selectedCatIds.length === 0
+                        ? "Select categories"
+                        : `${selectedCatIds.length} selected`}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${catDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {catDropdownOpen && (
+                    <div ref={catDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-full max-w-xs rounded-xl border border-border bg-popover shadow-lg">
+                      <div className="pt-4 pb-4 px-2 space-y-4">
+                        {allCategories.length === 0 ? (
+                          <div className="flex min-h-[56px] flex-col items-center justify-center rounded-lg border border-dashed px-4 py-3 text-center">
+                            <p className="text-sm font-medium text-muted-foreground">No categories yet.</p>
+                          </div>
+                        ) : (
+                          <div className="max-h-56 w-full overflow-y-auto pt-1 pb-0">
+                            {allCategories.map((cat) => {
+                              const isChecked = pendingCatIds.includes(cat.category_id);
+                              return (
+                                <button
+                                  key={cat.category_id}
+                                  type="button"
+                                  className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent"
+                                  onClick={() => {
+                                    setPendingCatIds((prev) =>
+                                      isChecked
+                                        ? prev.filter((id) => id !== cat.category_id)
+                                        : [...prev, cat.category_id]
+                                    );
+                                  }}
                                 >
-                                  {isChecked && <Check className="h-3 w-3" />}
-                                </span>
-                                <span className="truncate whitespace-nowrap">{cat.name}</span>
-                              </button>
-                            );
-                          })}
+                                  <span
+                                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                                      isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                                    }`}
+                                  >
+                                    {isChecked && <Check className="h-3 w-3" />}
+                                  </span>
+                                  <span className="truncate whitespace-nowrap">{cat.name}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                        <div className="flex gap-2 px-3">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              setPendingCatIds([...selectedCatIds]);
+                              setCatDropdownOpen(false);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedCatIds([...pendingCatIds]);
+                              setCatDropdownOpen(false);
+                            }}
+                          >
+                            Done
+                          </Button>
                         </div>
-                      )}
-                      <div className="flex gap-2 px-3">
-                        <Button
-                          variant="outline"
-                          className="flex-1"
-                          onClick={() => {
-                            setPendingCatIds([...selectedCatIds]);
-                            setCatDropdownOpen(false);
-                          }}
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          className="flex-1"
-                          onClick={() => {
-                            setSelectedCatIds([...pendingCatIds]);
-                            setCatDropdownOpen(false);
-                          }}
-                        >
-                          Done
-                        </Button>
                       </div>
                     </div>
+                  )}
+                </div>
+                {selectedCatIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedCatIds.map((id) => {
+                      const cat = allCategories.find((c) => c.category_id === id);
+                      return cat ? (
+                        <span
+                          key={id}
+                          className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                        >
+                          {cat.name}
+                        </span>
+                      ) : null;
+                    })}
                   </div>
                 )}
               </div>
-              {selectedCatIds.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {selectedCatIds.map((id) => {
-                    const cat = allCategories.find((c) => c.category_id === id);
-                    return cat ? (
-                      <span
-                        key={id}
-                        className="rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
-                      >
-                        {cat.name}
-                      </span>
-                    ) : null;
-                  })}
-                </div>
-              )}
-            </div>
 
-            <Separator />
+              <Separator />
 
-            {/* Author */}
-            <div className="space-y-2">
+              {/* Author */}
               <div className="space-y-2">
-                <Label>Assign author</Label>
-                <p className="text-xs text-muted-foreground pt-1">Assign an author to this post.</p>
+                <div className="space-y-2">
+                  <Label>Assign author</Label>
+                  <p className="text-xs text-muted-foreground pt-1">Assign an author to this post.</p>
+                </div>
+                <div className="relative">
+                  <select
+                    value={authorId ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value || null;
+                      setAuthorId(val);
+                    }}
+                    className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  >
+                    <option value="">No author</option>
+                    {allAuthors.map((a) => (
+                      <option key={a.author_id} value={a.author_id}>
+                        {a.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
               </div>
-              <div className="relative">
-                <select
-                  value={authorId ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value || null;
-                    setAuthorId(val);
+
+              <Separator />
+
+              {/* Pin to top */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="modal-pin-post-switch" className="cursor-pointer">
+                    Pin to the top
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Keep this post pinned at the top of your blog listing.
+                  </p>
+                </div>
+                <Switch
+                  id="modal-pin-post-switch"
+                  className="shrink-0"
+                  checked={isPinned}
+                  onCheckedChange={setIsPinned}
+                />
+              </div>
+
+              <Separator />
+
+              {/* Show in Featured Posts */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="modal-featured-posts-switch" className="cursor-pointer">
+                    Featured post
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Showcase this post in the dedicated featured articles section.
+                  </p>
+                </div>
+                <Switch
+                  id="modal-featured-posts-switch"
+                  className="shrink-0"
+                  checked={featuredIds.includes(blogId)}
+                  onCheckedChange={(v) => {
+                    setFeaturedIds(v ? [...featuredIds, blogId] : featuredIds.filter((id) => id !== blogId));
                   }}
-                  className="inline-flex h-10 w-full max-w-xs items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                >
-                  <option value="">No author</option>
-                  {allAuthors.map((a) => (
-                    <option key={a.author_id} value={a.author_id}>
-                      {a.name}
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
-            </div>
 
-            <Separator />
+              <Separator />
 
-            {/* Show in Featured Posts */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="modal-featured-posts-switch" className="cursor-pointer">
-                  Show in Featured Posts
-                </Label>
+              {/* Related Posts */}
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-3.5 space-y-1">
+                <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
+                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  Related Posts
+                </div>
                 <p className="text-xs text-muted-foreground">
-                  Show this post at the top of your blog when featured posts are enabled.
+                  Up to 3 newest articles from the same categories are automatically recommended at the bottom of this post for your readers.
                 </p>
               </div>
-              <Switch
-                id="modal-featured-posts-switch"
-                className="shrink-0"
-                checked={featuredIds.includes(blogId)}
-                onCheckedChange={(v) => {
-                  setFeaturedIds(v ? [...featuredIds, blogId] : featuredIds.filter((id) => id !== blogId));
-                }}
-              />
-            </div>
-          </div>
+            </TabsContent>
+
+            {/* TAB 2: SEO & METADATA */}
+            <TabsContent value="seo" className="space-y-6 pt-3 pb-2">
+              {/* URL Slug */}
+              <div className="space-y-2">
+                <Label>URL slug</Label>
+                <Input
+                  className="mt-2"
+                  value={slugCustom}
+                  disabled={!slugEditable}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    if (v.trim() === "") {
+                      setSlugCustomDirty(false);
+                      setSlugCustom("");
+                    } else {
+                      setSlugCustomDirty(true);
+                      setSlugCustom(v);
+                    }
+                  }}
+                  placeholder="Same as title by default"
+                />
+                <p className="text-xs text-muted-foreground">
+                  {slugEditable
+                    ? "Auto-generated from the title when empty."
+                    : "The public URL cannot be changed after the post is published."}
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Meta Title & Meta Description */}
+              <div className="space-y-4">
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <Label>Meta title</Label>
+                    <Input
+                      className="mt-2"
+                      value={metaTitle}
+                      onChange={(e) => {
+                        setMetaTitleDirty(true);
+                        setMetaTitle(e.target.value);
+                      }}
+                      placeholder="Same as title by default"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Meta description</Label>
+                    <Input
+                      className="mt-2"
+                      value={metaDesc}
+                      onChange={(e) => {
+                        setMetaDescDirty(true);
+                        setMetaDesc(e.target.value);
+                      }}
+                      placeholder="Same as content by default"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Do not index */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <Label htmlFor="modal-noindex-switch" className="cursor-pointer">
+                    Do not index
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Instruct search engines not to index this post (adds noindex meta tag).
+                  </p>
+                </div>
+                <Switch
+                  id="modal-noindex-switch"
+                  className="shrink-0"
+                  checked={noindex}
+                  onCheckedChange={setNoindex}
+                />
+              </div>
+
+              <Separator />
+
+              {/* Social OG Image */}
+              <div className="space-y-2">
+                <Label>Social share image (OG image)</Label>
+                <p className="text-xs text-muted-foreground pt-1">
+                  Custom image for Twitter, LinkedIn, and social previews. Falls back to featured image if empty.
+                </p>
+                <input
+                  ref={ogInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => {
+                    const f = e.target.files?.[0];
+                    if (f) void uploadOgImage(f);
+                    e.currentTarget.value = "";
+                  }}
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={() => ogInputRef.current?.click()}
+                    disabled={uploadingOg}
+                  >
+                    {uploadingOg ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload"
+                    )}
+                  </Button>
+                  {ogImageUrl ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      onClick={async () => {
+                        if (token && blog && ogImageUrl && !content.includes(ogImageUrl)) {
+                          try {
+                            await deleteBlogMediaByUrl(token, blog.blog_id, ogImageUrl);
+                          } catch {
+                            // Do not block local removal if cleanup fails.
+                          }
+                        }
+                        setOgImageUrl("");
+                      }}
+                      disabled={uploadingOg}
+                    >
+                      Remove
+                    </Button>
+                  ) : null}
+                </div>
+                {ogImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
+                    alt=""
+                    className="mt-2 aspect-[1200/630] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                  />
+                ) : null}
+              </div>
+
+              <Separator />
+
+              {/* Canonical URL */}
+              <div className="space-y-2">
+                <Label htmlFor="modal-canonical-url">Canonical URL</Label>
+                <Input
+                  id="modal-canonical-url"
+                  className="mt-2"
+                  value={canonicalUrl}
+                  onChange={(e) => setCanonicalUrl(e.target.value)}
+                  placeholder="https://example.com/original-article"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Specify if this article was originally published on a different website or domain.
+                </p>
+              </div>
+
+              <Separator />
+
+              {/* Custom schema */}
+              <div className="space-y-2">
+                <Label htmlFor="modal-custom-schema">Custom schema (JSON-LD)</Label>
+                <Textarea
+                  id="modal-custom-schema"
+                  className="mt-2 font-mono text-xs"
+                  rows={4}
+                  value={customSchemaStr}
+                  onChange={(e) => setCustomSchemaStr(e.target.value)}
+                  placeholder={'{\n  "@type": "Recipe",\n  "name": "..."\n}'}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional custom JSON-LD schema injected directly into this post. Must be valid JSON.
+                </p>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter className="pt-4 border-t border-border flex items-center justify-end">
             <Button type="button" onClick={() => setAdvancedOpen(false)}>

@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Pin, Plus, Search, Trash2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
@@ -337,9 +337,17 @@ export default function PostsPage() {
               >
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="min-w-0 space-y-1">
-                    <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-foreground">
-                      {b.title || "Untitled"}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      {b.is_pinned && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary shrink-0">
+                          <Pin className="h-3 w-3" />
+                          Pinned
+                        </span>
+                      )}
+                      <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-foreground">
+                        {b.title || "Untitled"}
+                      </h2>
+                    </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-2 text-[0.625rem] sm:text-xs text-muted-foreground">
                     {b.status === "scheduled" && b.scheduled_at ? (

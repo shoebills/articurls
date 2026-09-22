@@ -32,6 +32,7 @@ import {
   LineChart,
   Mail,
   ChevronRight,
+  Pin,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import type { BlogListItem, SubscribersAnalytics, AccountUsage, RecentSubscriber, SubscriberListResponse } from "@/lib/types";
@@ -519,9 +520,14 @@ export default function DashboardPage() {
                         className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50 group"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                            {post.title || "Untitled"}
-                          </p>
+                          <div className="flex items-center gap-1.5">
+                            {post.is_pinned && (
+                              <Pin className="h-3 w-3 text-primary shrink-0" />
+                            )}
+                            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                              {post.title || "Untitled"}
+                            </p>
+                          </div>
                           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{formatDate(post.published_at || post.created_at)}</span>
                             <span>•</span>

@@ -6,7 +6,7 @@ import type { PublicBlog, PublicSite, ContentWidth, ListImagePosition } from "@/
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
-import { Calendar, Image } from "lucide-react";
+import { Calendar, Image, Pin } from "lucide-react";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -46,8 +46,13 @@ function BlogListItemRow({
         <Link href={getPublicPostUrl(subdomain, b.slug, basePath)} className="group block transition-colors hover:bg-muted/30">
           <div className="flex items-start gap-4">
             <div className="min-w-0 flex-1">
-              <h3 className="min-w-0 truncate text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
-                {b.title}
+              <h3 className="min-w-0 truncate text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
+                {b.is_pinned && (
+                  <span title="Pinned post" className="inline-flex shrink-0">
+                    <Pin className="h-4 w-4 text-primary rotate-45" />
+                  </span>
+                )}
+                <span className="truncate">{b.title}</span>
               </h3>
 {b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "max-sm:line-clamp-2" : "line-clamp-2"}`}>{b.excerpt}</p>}
             </div>
@@ -116,8 +121,13 @@ function BlogListAboveTitleItem({
             />
           </div>
         ) : null}
-        <h3 className="text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
-          {b.title}
+        <h3 className="text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
+          {b.is_pinned && (
+            <span title="Pinned post" className="inline-flex shrink-0">
+              <Pin className="h-4 w-4 text-primary rotate-45" />
+            </span>
+          )}
+          <span>{b.title}</span>
         </h3>
         {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
       </Link>
@@ -181,8 +191,13 @@ function BlogCardGridItem({
           </div>
         ) : null}
         <div className="pt-4 pb-3">
-          <h3 className="line-clamp-2 text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4">
-            {b.title}
+          <h3 className="line-clamp-2 text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
+            {b.is_pinned && (
+              <span title="Pinned post" className="inline-flex shrink-0">
+                <Pin className="h-4 w-4 text-primary rotate-45" />
+              </span>
+            )}
+            <span>{b.title}</span>
           </h3>
           {b.excerpt && (
             <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>
@@ -235,6 +250,8 @@ export function PublicBlogListSearch({
   const sortedBlogs = useMemo(() => {
     const rows = [...blogs];
     rows.sort((a, b) => {
+      if (a.is_pinned && !b.is_pinned) return -1;
+      if (!a.is_pinned && b.is_pinned) return 1;
       const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
       const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
       return bDate - aDate;

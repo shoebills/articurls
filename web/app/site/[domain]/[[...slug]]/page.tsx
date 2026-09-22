@@ -13,15 +13,15 @@ import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
-import { resolveBlogOgImage } from "@/lib/blog-images";
+import { resolveBlogOgImage, resolveBlogCoverImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
-import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
+import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl, getPublicPostUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
-import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema } from "@/lib/structured-data";
+import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema, generateFaqPageSchema } from "@/lib/structured-data";
 import { BriefcaseBusiness, Calendar, ChevronLeft, Globe } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
@@ -360,16 +360,20 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       const title = blog.meta_title || blog.title;
       const description = blog.meta_description || blog.excerpt || excerptFromHtml(blog.content) || undefined;
       const siteName = resolveSiteName(site);
-      const ogImage = resolveBlogOgImage(blog);
+      const postCanonical = blog.canonical_url || canonical;
+      const ogImage = blog.og_image_url
+        ? transformImageUrl(assetUrl(blog.og_image_url), { width: 1200, height: 630, fit: "cover" })
+        : resolveBlogOgImage(blog);
       return {
         title,
         description,
+        robots: blog.noindex ? { index: false, follow: true } : undefined,
         alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
         icons: faviconIcons(site),
         openGraph: {
           title,
           description,
-          url: canonical,
+          url: postCanonical,
           type: "article",
           siteName,
           images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
@@ -496,11 +500,12 @@ export default async function SitePublicationPage({ params }: Props) {
   // ── Blog post or Custom page: /[slug] ────────────────────────────────────
   if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
     const slug = segments[0];
-    const [content, site, pages, categories] = await Promise.all([
+    const [content, site, pages, categories, allBlogs] = await Promise.all([
       loadContent(subdomain, slug),
       loadSite(subdomain),
       loadPages(subdomain),
       loadCategories(subdomain),
+      loadBlogs(subdomain),
     ]);
 
     if (!site || !content) notFound();
@@ -519,6 +524,14 @@ export default async function SitePublicationPage({ params }: Props) {
       const desktopLinks = resolveNavLinks(site, categories, basePath);
       const showSubscriberCollection = site.subscriber_collection_enabled === true;
       const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+
+      const otherBlogs = (allBlogs || []).filter((b) => b.blog_id !== blog.blog_id);
+      const currentCatIds = blog.category_ids || [];
+      const sameCategoryBlogs = currentCatIds.length > 0
+        ? otherBlogs.filter((b) => b.category_ids?.some((id) => currentCatIds.includes(id)))
+        : [];
+      const remainderBlogs = otherBlogs.filter((b) => !sameCategoryBlogs.some((s) => s.blog_id === b.blog_id));
+      const relatedBlogs = [...sameCategoryBlogs, ...remainderBlogs].slice(0, 3);
 
       const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
       const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
@@ -585,6 +598,81 @@ export default async function SitePublicationPage({ params }: Props) {
           <div className={featuredImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
           </div>
+
+          {/* Frequently Asked Questions */}
+          {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
+            <section className="mt-12 pt-8 border-t border-border/60">
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
+                Frequently Asked Questions
+              </h3>
+              <div className="space-y-4">
+                {blog.faq_items.map((faq, idx) => (
+                  <div key={idx} className="rounded-xl border border-border/70 bg-card p-5 shadow-2xs">
+                    <h4 className="font-semibold text-base text-foreground mb-1.5">
+                      {faq.question}
+                    </h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                      {faq.answer}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {/* Related Articles */}
+          {relatedBlogs.length > 0 && (
+            <section className="mt-12 pt-8 border-t border-border/60">
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+                  Related articles
+                </h3>
+                <Link
+                  href={getPublicProfileUrl(subdomain, basePath)}
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+                >
+                  View all →
+                </Link>
+              </div>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {relatedBlogs.map((rel) => {
+                  const relUrl = getPublicPostUrl(subdomain, rel.slug, basePath);
+                  const relCover = resolveBlogCoverImage(rel);
+                  return (
+                    <Link
+                      key={rel.blog_id}
+                      href={relUrl}
+                      className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-2xs transition-all hover:border-border hover:shadow-xs"
+                    >
+                      <div>
+                        {relCover && (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={transformImageUrl(assetUrl(relCover), { width: 400, height: 220, fit: "cover" })}
+                            alt=""
+                            className="aspect-[16/9] w-full rounded-lg object-cover mb-3"
+                          />
+                        )}
+                        <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                          {rel.title}
+                        </h4>
+                      </div>
+                      {rel.published_at && (
+                        <p className="mt-3 text-xs text-muted-foreground">
+                          {new Date(rel.published_at).toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </p>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            </section>
+          )}
+
           {showSubscriberCollection ? (
             <div className="mt-14">
               <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
@@ -597,6 +685,15 @@ export default async function SitePublicationPage({ params }: Props) {
         <ThemeStyleWrapper site={site}>
           <article className="min-h-screen bg-background">
           <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
+          {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
+            <StructuredData data={generateFaqPageSchema(blog.faq_items, currentUrl)} />
+          )}
+          {blog.custom_schema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(blog.custom_schema) }}
+            />
+          )}
           <main className={containerSpacing}>
             {isNavEnabled ? (
               <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>

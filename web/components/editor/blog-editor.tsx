@@ -46,6 +46,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PromptDialog } from "@/components/prompt-dialog";
+import { LinkDialog } from "@/components/editor/link-dialog";
 import {
   ApiError,
   deleteBlogMediaByUrl,
@@ -205,7 +206,13 @@ export function BlogEditor({
       }),
       Underline,
       Highlight.configure({ multicolor: false }),
-      Link.configure({ openOnClick: false, autolink: true }),
+      Link.configure({
+        openOnClick: false,
+        autolink: true,
+        HTMLAttributes: {
+          rel: null,
+        },
+      }),
       Image.configure({
         inline: false,
         HTMLAttributes: {
@@ -287,6 +294,7 @@ export function BlogEditor({
   // Dialog states
   const [linkDialogOpen, setLinkDialogOpen] = useState(false);
   const [linkUrl, setLinkUrl] = useState("");
+  const [linkNofollow, setLinkNofollow] = useState(false);
   const [youtubeDialogOpen, setYoutubeDialogOpen] = useState(false);
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [altDialogOpen, setAltDialogOpen] = useState(false);
@@ -357,18 +365,20 @@ export function BlogEditor({
 
   const setLink = useCallback(() => {
     if (!editor) return;
-    const prev = editor.getAttributes("link").href;
-    setLinkUrl(prev || "https://");
+    const attrs = editor.getAttributes("link");
+    setLinkUrl(attrs.href || "https://");
+    setLinkNofollow(attrs.rel?.includes("nofollow") ?? false);
     setLinkDialogOpen(true);
   }, [editor]);
 
-  const handleLinkConfirm = useCallback((url: string) => {
+  const handleLinkConfirm = useCallback((url: string, nofollow: boolean) => {
     if (!editor) return;
-    if (url === "") {
+    if (url === "" || url === "https://") {
       editor.chain().focus().extendMarkRange("link").unsetLink().run();
       return;
     }
-    editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+    const rel = nofollow ? "nofollow" : null;
+    editor.chain().focus().extendMarkRange("link").setLink({ href: url, rel }).run();
   }, [editor]);
 
   const addImage = useCallback(async () => {
@@ -813,15 +823,12 @@ export function BlogEditor({
       </div>
 
       {/* Link Dialog */}
-      <PromptDialog
+      <LinkDialog
         open={linkDialogOpen}
         onOpenChange={setLinkDialogOpen}
-        title="Add Link"
-        description="Enter the URL for this link."
-        placeholder="https://"
-        defaultValue={linkUrl}
+        defaultUrl={linkUrl}
+        defaultNofollow={linkNofollow}
         onConfirm={handleLinkConfirm}
-        submitLabel="Add Link"
       />
 
       {/* YouTube Dialog */}

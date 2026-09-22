@@ -137,7 +137,7 @@ def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
     results = (
         db.query(models.Blog)
         .filter(models.Blog.site_id == db_site.site_id, models.Blog.status == models.BlogStatus.PUBLISHED)
-        .order_by(models.Blog.published_at.desc())
+        .order_by(models.Blog.is_pinned.desc(), models.Blog.published_at.desc())
         .all()
     )
 
@@ -278,6 +278,7 @@ def get_public_category_blogs(subdomain: str, slug: str, request: Request, db: S
             models.Blog.site_id == db_site.site_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
+        .order_by(models.Blog.is_pinned.desc(), models.Blog.published_at.desc())
         .all()
     )
 
@@ -374,7 +375,7 @@ def get_public_author_blogs(subdomain: str, slug: str, request: Request, db: Ses
             models.Blog.site_id == db_site.site_id,
             models.Blog.status == models.BlogStatus.PUBLISHED,
         )
-        .order_by(models.Blog.published_at.desc())
+        .order_by(models.Blog.is_pinned.desc(), models.Blog.published_at.desc())
         .all()
     )
 

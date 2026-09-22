@@ -318,6 +318,9 @@ function SetupForm() {
                       .{UGC_DOMAIN}
                     </span>
                   </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    This cannot be changed later, but you can connect a custom domain anytime.
+                  </p>
                 </div>
 
                 {subdomainStatus === "checking" && (

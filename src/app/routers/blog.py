@@ -84,6 +84,13 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         slug=candidate_slug,
         meta_title=candidate_meta_title,
         meta_description=candidate_meta_description,
+        featured_image_url=request.featured_image_url,
+        og_image_url=request.og_image_url,
+        canonical_url=request.canonical_url,
+        noindex=request.noindex,
+        is_pinned=request.is_pinned,
+        custom_schema=request.custom_schema,
+        faq_items=[item.model_dump() for item in request.faq_items] if request.faq_items else [],
         status=models.BlogStatus.DRAFT,
     )
 
@@ -99,6 +106,9 @@ def get_blogs(db: Session = Depends(get_db), current_user = Depends(get_current_
 
     results = db.query(models.Blog).filter(
         models.Blog.site_id == current_site.site_id
+    ).order_by(
+        models.Blog.is_pinned.desc(),
+        models.Blog.created_at.desc(),
     ).all()
 
     blogs = []
@@ -317,10 +327,18 @@ def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: Backg
             if not author_exists:
                 raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid author_id for this site")
 
+    if "faq_items" in update_data and update_data["faq_items"] is not None:
+        update_data["faq_items"] = [
+            item.model_dump() if hasattr(item, "model_dump") else item
+            for item in update_data["faq_items"]
+        ]
+
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
     MEANINGFUL_FIELDS = {
-        "title", "content", "meta_title", "meta_description", "featured_image_url", "author_id",
+        "title", "content", "meta_title", "meta_description", "featured_image_url",
+        "author_id", "og_image_url", "canonical_url", "noindex", "is_pinned",
+        "custom_schema", "faq_items",
     }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 
