@@ -9,6 +9,7 @@ import {
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { PublicFaqSection } from "@/components/public-faq-section";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
@@ -605,25 +606,8 @@ export default async function SitePublicationPage({ params }: Props) {
             <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
           </div>
 
-          {/* Frequently Asked Questions */}
           {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
-            <section className="mt-12 pt-8 border-t border-border/60">
-              <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
-                Frequently Asked Questions
-              </h3>
-              <div className="space-y-4">
-                {blog.faq_items.map((faq, idx) => (
-                  <div key={idx} className="rounded-xl border border-border/70 bg-card p-5 shadow-2xs">
-                    <h4 className="font-semibold text-base text-foreground mb-1.5">
-                      {faq.question}
-                    </h4>
-                    <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                      {faq.answer}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
+            <PublicFaqSection items={blog.faq_items} />
           )}
 
           {/* Related Articles */}
@@ -857,25 +841,8 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
               </article>
 
-              {/* Frequently Asked Questions */}
               {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
-                <section className="mt-12 pt-8 border-t border-border/60">
-                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
-                    Frequently Asked Questions
-                  </h3>
-                  <div className="space-y-4">
-                    {page.faq_items.map((faq, idx) => (
-                      <div key={idx} className="rounded-xl border border-border/70 bg-card p-5 shadow-2xs">
-                        <h4 className="font-semibold text-base text-foreground mb-1.5">
-                          {faq.question}
-                        </h4>
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                          {faq.answer}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </section>
+                <PublicFaqSection items={page.faq_items} />
               )}
             </div>
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />

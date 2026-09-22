@@ -5,7 +5,7 @@ import Link from "next/link";
 import slugify from "slugify";
 import { ApiError, archivePage, getPage, publishPage, updatePage, uploadPageMedia, deletePageMediaByUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { UserPage, FaqItem } from "@/lib/types";
+import type { UserPage } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { FaqEditor } from "@/components/editor/faq-editor";
@@ -65,7 +65,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [noindex, setNoindex] = useState(false);
   const [customSchemaStr, setCustomSchemaStr] = useState("");
-  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
@@ -112,7 +111,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setCanonicalUrl(p.canonical_url || "");
     setNoindex(p.noindex ?? false);
     setCustomSchemaStr(p.custom_schema ? JSON.stringify(p.custom_schema, null, 2) : "");
-    setFaqItems(p.faq_items || []);
   }, []);
 
   const load = useCallback(async () => {
@@ -171,7 +169,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const noindexDirty = noindex !== (page.noindex ?? false);
     const currentSchemaStr = page.custom_schema ? JSON.stringify(page.custom_schema, null, 2) : "";
     const schemaDirty = customSchemaStr.trim() !== currentSchemaStr.trim();
-    const faqDirty = JSON.stringify(faqItems) !== JSON.stringify(page.faq_items || []);
 
     return (
       page.title !== nextTitle ||
@@ -184,10 +181,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       ogDirty ||
       canonicalDirty ||
       noindexDirty ||
-      schemaDirty ||
-      faqDirty
+      schemaDirty
     );
-  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   async function save(silent = false) {
     if (!token || !page) return false;
@@ -237,7 +233,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         canonical_url: canonicalUrl.trim() || null,
         noindex,
         custom_schema: parsedSchema,
-        faq_items: faqItems,
       };
       const responsePage = await updatePage(token, page.page_id, body);
       setPage(responsePage);
@@ -346,7 +341,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -406,7 +401,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         canonicalUrl?: string;
         noindex?: boolean;
         customSchemaStr?: string;
-        faqItems?: FaqItem[];
       };
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
@@ -422,7 +416,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.canonicalUrl === "string") setCanonicalUrl(draft.canonicalUrl);
       if (typeof draft.noindex === "boolean") setNoindex(draft.noindex);
       if (typeof draft.customSchemaStr === "string") setCustomSchemaStr(draft.customSchemaStr);
-      if (Array.isArray(draft.faqItems)) setFaqItems(draft.faqItems);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
     }
@@ -463,12 +456,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           canonicalUrl,
           noindex,
           customSchemaStr,
-          faqItems,
         })
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   useEffect(() => {
     return () => {
@@ -594,8 +586,18 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
       <div className="mt-8 mb-24">
         <FaqEditor
-          items={faqItems}
-          onChange={setFaqItems}
+          key={`faq-${page.page_id}`}
+          initialItems={page.faq_items || []}
+          onPersist={async (items) => {
+            if (!token || !page) return;
+            try {
+              const updated = await updatePage(token, page.page_id, { faq_items: items });
+              setPage(updated);
+            } catch (e) {
+              setErr(e instanceof ApiError ? e.message : "Failed to save FAQs");
+              throw e;
+            }
+          }}
           disabled={saving}
         />
       </div>

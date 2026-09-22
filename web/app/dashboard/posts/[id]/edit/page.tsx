@@ -19,7 +19,7 @@ import {
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail, Category, Author, FaqItem } from "@/lib/types";
+import type { BlogDetail, Category, Author } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { FaqEditor } from "@/components/editor/faq-editor";
@@ -72,7 +72,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [noindex, setNoindex] = useState(false);
   const [customSchemaStr, setCustomSchemaStr] = useState("");
-  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
   const [modalTab, setModalTab] = useState<"config" | "seo">("config");
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -142,7 +141,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setNoindex(b.noindex ?? false);
     setIsPinned(b.is_pinned ?? false);
     setCustomSchemaStr(b.custom_schema ? JSON.stringify(b.custom_schema, null, 2) : "");
-    setFaqItems(b.faq_items || []);
     const blogCatIds = (b as unknown as { category_ids?: string[] }).category_ids || [];
     setSelectedCatIds(blogCatIds);
     setPendingCatIds(blogCatIds);
@@ -236,8 +234,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const noindexDirty = noindex !== (blog.noindex ?? false);
     const currentSchemaStr = blog.custom_schema ? JSON.stringify(blog.custom_schema, null, 2) : "";
     const schemaDirty = customSchemaStr.trim() !== currentSchemaStr.trim();
-    const currentFaqStr = JSON.stringify(blog.faq_items || []);
-    const faqDirty = JSON.stringify(faqItems) !== currentFaqStr;
     return (
       blog.title !== title.trim() ||
       (blog.content || "") !== (content || "") ||
@@ -252,10 +248,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       ogImageDirty ||
       canonicalDirty ||
       noindexDirty ||
-      schemaDirty ||
-      faqDirty
+      schemaDirty
     );
-  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user, isPinned, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
+  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user, isPinned, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -303,7 +298,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         noindex,
         is_pinned: isPinned,
         custom_schema: parsedSchema,
-        faq_items: faqItems,
       };
 
       if (slugEditable) {
@@ -786,8 +780,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
       <div className="mt-8 mb-24">
         <FaqEditor
-          items={faqItems}
-          onChange={setFaqItems}
+          key={`faq-${blog.blog_id}`}
+          initialItems={blog.faq_items || []}
+          onPersist={async (items) => {
+            if (!token || !blog) return;
+            try {
+              const updated = await updateBlog(token, blog.blog_id, { faq_items: items });
+              setBlog(updated);
+            } catch (e) {
+              setErr(e instanceof ApiError ? e.message : "Failed to save FAQs");
+              throw e;
+            }
+          }}
           disabled={saving}
         />
       </div>
