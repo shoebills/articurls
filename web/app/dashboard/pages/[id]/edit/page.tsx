@@ -23,7 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Loader2, Settings, X } from "lucide-react";
+import { ChevronLeft, Loader2, Settings, X, Link2, Check } from "lucide-react";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
@@ -44,7 +45,7 @@ function normalizeEditableSlugCustom(page: UserPage): string {
 export default function EditPageRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const pageId = id;
-  const { token, refreshUser } = useAuth();
+  const { token, refreshUser, activeSite } = useAuth();
 
   const [page, setPage] = useState<UserPage | null>(null);
   const [title, setTitle] = useState("");
@@ -66,6 +67,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [customSchemaStr, setCustomSchemaStr] = useState("");
   const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -514,6 +516,19 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setPendingAction(null);
   }
 
+  async function copyLink() {
+    if (!page || !activeSite) return;
+    const url = getSitePublicUrl(activeSite, `/${encodeURIComponent(page.slug)}`);
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // clipboard unavailable; ignore
+    }
+  }
+
   return (
     <div className="mx-auto max-w-[1100px] pb-36 sm:pb-40">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
@@ -535,6 +550,19 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             <Settings className="h-3.5 w-3.5" />
             Advanced
           </Button>
+          {page.status === "published" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 min-h-0"
+              aria-label="Copy link"
+              title="Copy link"
+              onClick={() => void copyLink()}
+            >
+              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Link2 className="h-3.5 w-3.5" />}
+            </Button>
+          )}
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">

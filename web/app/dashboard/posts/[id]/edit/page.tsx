@@ -43,7 +43,8 @@ import {
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Sparkles } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Sparkles, Link2 } from "lucide-react";
+import { getSitePublicUrl } from "@/lib/public-url";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 
@@ -52,7 +53,7 @@ const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 export default function EditPostPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   const blogId = id;
-  const { token, refreshUser, user } = useAuth();
+  const { token, refreshUser, user, activeSite } = useAuth();
 
   const [blog, setBlog] = useState<BlogDetail | null>(null);
   const [title, setTitle] = useState("");
@@ -75,6 +76,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [modalTab, setModalTab] = useState<"config" | "seo">("config");
 
   const [advancedOpen, setAdvancedOpen] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
@@ -686,6 +688,19 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     setPendingAction(null);
   }
 
+  async function copyLink() {
+    if (!blog || !activeSite) return;
+    const url = getSitePublicUrl(activeSite, `/${encodeURIComponent(blog.slug)}`);
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedLink(true);
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // clipboard unavailable; ignore
+    }
+  }
+
   return (
     <div className="mx-auto max-w-[1100px] pb-36 sm:pb-40">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
@@ -707,6 +722,19 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <Settings className="h-3.5 w-3.5" />
             Advanced
           </Button>
+          {blog.status === "published" && (
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 min-h-0"
+              aria-label="Copy link"
+              title="Copy link"
+              onClick={() => void copyLink()}
+            >
+              {copiedLink ? <Check className="h-3.5 w-3.5 text-emerald-500" /> : <Link2 className="h-3.5 w-3.5" />}
+            </Button>
+          )}
         </div>
       </div>
       <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs text-muted-foreground">
