@@ -200,11 +200,10 @@ function SetupForm() {
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
     const plan = localStorage.getItem("pendingPlan");
     localStorage.removeItem("pendingPlan");
-    if (plan === "pro" || plan === "lifetime") {
-      router.replace(`/dashboard/billing?plan=${plan}`);
-    } else {
-      router.replace("/dashboard");
-    }
+    const targetUrl = (plan === "pro" || plan === "lifetime")
+      ? `/dashboard/billing?plan=${plan}`
+      : "/dashboard";
+    window.location.assign(targetUrl);
   }
 
   async function finishGoogleFlow() {
@@ -220,11 +219,10 @@ function SetupForm() {
     localStorage.setItem("articurls_last_login", "google");
     const plan = localStorage.getItem("pendingPlan");
     localStorage.removeItem("pendingPlan");
-    if (plan === "pro" || plan === "lifetime") {
-      router.replace(`/dashboard/billing?plan=${plan}`);
-    } else {
-      router.replace("/dashboard");
-    }
+    const targetUrl = (plan === "pro" || plan === "lifetime")
+      ? `/dashboard/billing?plan=${plan}`
+      : "/dashboard";
+    window.location.assign(targetUrl);
   }
 
   async function onSubmit(e: React.FormEvent) {
