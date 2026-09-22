@@ -57,7 +57,7 @@ export function PublicFaqSection({ items }: { items: FaqItem[] }) {
                 </div>
               </button>
               {isOpen && (
-                <div className="px-4 pb-5 sm:px-5 sm:pb-6 pt-0 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap border-t border-border/40 mt-1 pt-4">
+                <div className="px-4 pb-5 sm:px-5 sm:pb-6 pt-0 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap mt-1 pt-4">
                   {item.answer}
                 </div>
               )}

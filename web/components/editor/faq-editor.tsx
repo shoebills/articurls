@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { ChevronDown, ChevronUp, Loader2, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, Loader2, Plus, Trash2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface FaqEditorProps {
@@ -152,9 +152,6 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
       <div className="flex items-center justify-between gap-4">
         <div>
           <h3 className="text-xl font-bold tracking-tight text-foreground">FAQs</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Add frequently asked questions below your post/page.
-          </p>
         </div>
         <Button
           type="button"
@@ -172,9 +169,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
       {/* QA Blocks */}
       {items.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border/80 p-6 text-center">
-          <p className="text-xs text-muted-foreground">
-            No FAQs added yet. Click the + button above to add a question.
-          </p>
+          <p className="text-xs text-muted-foreground">No FAQs added yet.</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -197,11 +192,6 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
                     className="flex-1 text-left font-semibold text-sm sm:text-base text-foreground truncate cursor-pointer hover:text-primary transition-colors"
                   >
                     Question {index + 1}
-                    {item.question && (
-                      <span className="font-normal text-muted-foreground ml-2 text-xs truncate hidden sm:inline">
-                        — {item.question}
-                      </span>
-                    )}
                   </button>
 
                   {/* Right side: Up/Down sequence arrows + Expand/Collapse toggle */}
@@ -215,7 +205,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
                       disabled={disabled || index === 0}
                       title="Move up"
                     >
-                      <ChevronUp className="h-4 w-4" />
+                      <ArrowUp className="h-4 w-4" />
                     </Button>
                     <Button
                       type="button"
@@ -226,7 +216,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
                       disabled={disabled || index === items.length - 1}
                       title="Move down"
                     >
-                      <ChevronDown className="h-4 w-4" />
+                      <ArrowDown className="h-4 w-4" />
                     </Button>
 
                     <Button
@@ -257,25 +247,21 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
 
                 {/* Block Body (Expandable) */}
                 {isOpen && (
-                  <div className="p-3.5 sm:p-4 pt-0 space-y-3.5 border-t border-border/40 mt-1 pt-3.5">
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`faq-question-${item.id}`} className="text-xs font-medium">
-                        Question
-                      </Label>
+                  <div className="p-3.5 sm:p-4 pt-0 space-y-3.5 mt-1 pt-3.5">
+                    <div className="space-y-2">
+                      <Label htmlFor={`faq-question-${item.id}`}>Question</Label>
                       <Input
                         id={`faq-question-${item.id}`}
                         value={item.question}
                         onChange={(e) => updateField(item.id, "question", e.target.value)}
-                        placeholder="e.g. How does billing work?"
+                        placeholder="Write a question..."
                         disabled={disabled || isSaving}
-                        className="bg-background text-sm"
+                        className="bg-background"
                       />
                     </div>
 
-                    <div className="space-y-1.5">
-                      <Label htmlFor={`faq-answer-${item.id}`} className="text-xs font-medium">
-                        Answer
-                      </Label>
+                    <div className="space-y-2">
+                      <Label htmlFor={`faq-answer-${item.id}`}>Answer</Label>
                       <Textarea
                         id={`faq-answer-${item.id}`}
                         value={item.answer}
@@ -283,7 +269,7 @@ export function FaqEditor({ initialItems, onPersist, disabled }: FaqEditorProps)
                         placeholder="Provide the answer..."
                         disabled={disabled || isSaving}
                         rows={3}
-                        className="bg-background text-sm resize-y"
+                        className="bg-background resize-y"
                       />
                     </div>
 
