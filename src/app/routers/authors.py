@@ -59,6 +59,9 @@ def _author_out(db: Session, author: models.Author) -> dict:
         "youtube_link": author.youtube_link,
         "website_link": author.website_link,
         "profile_image_url": author.profile_image_url,
+        "meta_title": author.meta_title,
+        "meta_description": author.meta_description,
+        "noindex": author.noindex,
         "blog_count": blog_count,
         "created_at": author.created_at,
         "updated_at": author.updated_at,
@@ -113,6 +116,8 @@ def create_author(
         youtube_link=request.youtube_link,
         website_link=request.website_link,
         profile_image_url=request.profile_image_url,
+        meta_title=(request.meta_title or "").strip() or None,
+        meta_description=(request.meta_description or "").strip() or None,
     )
     db.add(new_author)
     db.commit()
@@ -185,9 +190,15 @@ def update_author(
         "youtube_link",
         "website_link",
         "profile_image_url",
+        "noindex",
     ]:
         if field in update_data:
             setattr(author, field, update_data[field])
+
+    if "meta_title" in update_data:
+        author.meta_title = (update_data["meta_title"] or "").strip() or None
+    if "meta_description" in update_data:
+        author.meta_description = (update_data["meta_description"] or "").strip() or None
 
     db.commit()
     db.refresh(author)

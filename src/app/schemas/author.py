@@ -18,6 +18,8 @@ class AuthorBase(BaseModel):
     youtube_link: Optional[str] = None
     website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
 
 
 class AuthorCreate(AuthorBase):
@@ -38,6 +40,9 @@ class AuthorUpdate(BaseModel):
     youtube_link: Optional[str] = None
     website_link: Optional[str] = None
     profile_image_url: Optional[str] = None
+    meta_title: Optional[str] = None
+    meta_description: Optional[str] = None
+    noindex: Optional[bool] = None
 
 
 class AuthorOut(AuthorBase):
@@ -46,6 +51,7 @@ class AuthorOut(AuthorBase):
     name: str
     slug: str
     blog_count: int = 0
+    noindex: bool = False
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

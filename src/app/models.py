@@ -124,6 +124,9 @@ class Author(Base):
     youtube_link = Column(String, nullable=True)
     website_link = Column(String, nullable=True)
     profile_image_url = Column(String, nullable=True)
+    meta_title = Column(String, nullable=True)
+    meta_description = Column(Text, nullable=True)
+    noindex = Column(Boolean, nullable=False, default=False, server_default="false")
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
@@ -350,6 +353,8 @@ class Category(Base):
     name = Column(String, nullable=False)
     slug = Column(String, nullable=False)
     description = Column(Text, nullable=True, default=None)
+    meta_title = Column(String, nullable=True)
+    meta_description = Column(Text, nullable=True)
     show_in_menu = Column(Boolean, nullable=False, default=True)
     menu_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)

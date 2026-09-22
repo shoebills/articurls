@@ -257,8 +257,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
     if (!site || !data) return { title: "Not found" };
     const categoryName = data.category.name || segments[1];
-    const title = `${categoryName} — ${site.name}`;
-    const description = `Browse all ${categoryName} posts by ${site.name}.`;
+    const title = data.category.meta_title?.trim() || `${categoryName} — ${site.name}`;
+    const description = data.category.meta_description?.trim() || `Browse all ${categoryName} posts by ${site.name}.`;
     const siteName = resolveSiteName(site);
     const ogImage =
       (data.blogs[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
@@ -290,14 +290,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     if (!site || !data) return { title: "Not found" };
     const author = data.author;
     const siteName = resolveSiteName(site);
-    const title = `${author.name} — Author at ${siteName}`;
-    const description = author.bio || `Read articles and essays by ${author.name}.`;
+    const title = author.meta_title?.trim() || `${author.name} — Author at ${siteName}`;
+    const description = author.meta_description?.trim() || author.bio || `Read articles and essays by ${author.name}.`;
     const ogImage = author.profile_image_url
       ? transformImageUrl(assetUrl(author.profile_image_url), { width: 1200, height: 630, fit: "cover" })
       : resolveSiteOgImage(site);
     return {
       title,
       description,
+      robots: author.noindex ? { index: false, follow: true } : undefined,
       alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
       icons: faviconIcons(site),
       openGraph: {

@@ -48,6 +48,8 @@ def _category_out(db: Session, cat: models.Category) -> dict:
         "name": cat.name,
         "slug": cat.slug,
         "description": cat.description,
+        "meta_title": cat.meta_title,
+        "meta_description": cat.meta_description,
         "blog_count": blog_count,
         "show_in_menu": cat.show_in_menu,
         "menu_order": cat.menu_order,
@@ -90,6 +92,8 @@ def create_category(
         name=name,
         slug=_unique_category_slug(db, current_site.site_id, name),
         description=request.description,
+        meta_title=(request.meta_title or "").strip() or None,
+        meta_description=(request.meta_description or "").strip() or None,
     )
     db.add(new_cat)
     db.commit()
@@ -195,6 +199,10 @@ def update_category(
 
     if request.description is not None:
         db_cat.description = request.description
+    if request.meta_title is not None:
+        db_cat.meta_title = (request.meta_title or "").strip() or None
+    if request.meta_description is not None:
+        db_cat.meta_description = (request.meta_description or "").strip() or None
 
     db.commit()
     db.refresh(db_cat)

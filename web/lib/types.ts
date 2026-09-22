@@ -23,6 +23,9 @@ export interface Author {
   github_link?: string | null;
   youtube_link?: string | null;
   website_link?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
+  noindex?: boolean;
   blog_count?: number;
   created_at?: string;
   updated_at?: string;
@@ -429,6 +432,8 @@ export interface Category {
   name: string;
   slug: string;
   description?: string | null;
+  meta_title?: string | null;
+  meta_description?: string | null;
   blog_count: number;
   show_in_menu: boolean;
   menu_order: number | null;
@@ -436,7 +441,14 @@ export interface Category {
 }
 
 export interface PublicCategoryBlogsResponse {
-  category: { category_id: string; name: string; slug: string; description?: string | null };
+  category: {
+    category_id: string;
+    name: string;
+    slug: string;
+    description?: string | null;
+    meta_title?: string | null;
+    meta_description?: string | null;
+  };
   blogs: PublicBlog[];
 }
 

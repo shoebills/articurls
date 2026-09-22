@@ -650,7 +650,10 @@ export async function listCategories(token: string): Promise<Category[]> {
   return apiFetch("/categories/", { token });
 }
 
-export async function createCategory(token: string, body: { name: string; description?: string }): Promise<Category> {
+export async function createCategory(
+  token: string,
+  body: { name: string; description?: string; meta_title?: string; meta_description?: string },
+): Promise<Category> {
   return apiFetch("/categories/", {
     method: "POST",
     token,
@@ -659,7 +662,11 @@ export async function createCategory(token: string, body: { name: string; descri
   });
 }
 
-export async function updateCategory(token: string, id: string, body: { name?: string; description?: string }): Promise<Category> {
+export async function updateCategory(
+  token: string,
+  id: string,
+  body: { name?: string; description?: string; meta_title?: string; meta_description?: string },
+): Promise<Category> {
   return apiFetch(`/categories/${id}`, {
     method: "PATCH",
     token,

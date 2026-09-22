@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -27,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { ChevronLeft, Loader2, Trash2, Upload, UserRound, X } from "lucide-react";
+import { ChevronDown, ChevronLeft, Loader2, Trash2, Upload, UserRound, X } from "lucide-react";
 import { assetUrl } from "@/lib/env";
 import slugify from "slugify";
 import type { Author } from "@/lib/types";
@@ -60,6 +61,10 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
   const [instagramLink, setInstagramLink] = useState("");
   const [facebookLink, setFacebookLink] = useState("");
   const [pinterestLink, setPinterestLink] = useState("");
+  const [metaTitle, setMetaTitle] = useState("");
+  const [metaDescription, setMetaDescription] = useState("");
+  const [noindex, setNoindex] = useState(false);
+  const [seoAdvancedOpen, setSeoAdvancedOpen] = useState(false);
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
@@ -79,6 +84,9 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     setInstagramLink(a.instagram_link || "");
     setFacebookLink(a.facebook_link || "");
     setPinterestLink(a.pinterest_link || "");
+    setMetaTitle(a.meta_title || "");
+    setMetaDescription(a.meta_description || "");
+    setNoindex(a.noindex === true);
     setAvatarPreview(a.profile_image_url ? assetUrl(a.profile_image_url) : null);
     setAvatarFile(null);
   }, []);
@@ -149,6 +157,9 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
       instagramLink.trim() !== (author?.instagram_link || "") ||
       facebookLink.trim() !== (author?.facebook_link || "") ||
       pinterestLink.trim() !== (author?.pinterest_link || "") ||
+      metaTitle.trim() !== (author?.meta_title || "") ||
+      metaDescription.trim() !== (author?.meta_description || "") ||
+      noindex !== (author?.noindex === true) ||
       avatarFile !== null);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -180,6 +191,9 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
         instagram_link: instagramLink.trim() || null,
         facebook_link: facebookLink.trim() || null,
         pinterest_link: pinterestLink.trim() || null,
+        meta_title: metaTitle.trim() || null,
+        meta_description: metaDescription.trim() || null,
+        noindex,
       };
 
       const updated = await updateAuthor(token, authorId, payload);
@@ -510,6 +524,70 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 />
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* SEO Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">SEO</CardTitle>
+            <CardDescription>
+              Search engine settings for this author&apos;s public profile page.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <button
+              type="button"
+              onClick={() => setSeoAdvancedOpen(!seoAdvancedOpen)}
+              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Advanced settings
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform ${seoAdvancedOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {seoAdvancedOpen ? (
+              <div className="space-y-5 rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="space-y-2">
+                  <Label htmlFor="meta_title">Meta Title</Label>
+                  <Input
+                    id="meta_title"
+                    placeholder="Overrides the browser tab title for this author"
+                    value={metaTitle}
+                    onChange={(e) => setMetaTitle(e.target.value)}
+                    disabled={submitting}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="meta_description">Meta Description</Label>
+                  <Textarea
+                    id="meta_description"
+                    placeholder="Overrides the search engine description for this author"
+                    rows={2}
+                    value={metaDescription}
+                    onChange={(e) => setMetaDescription(e.target.value)}
+                    disabled={submitting}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Hide from search engines</p>
+                    <p className="text-xs text-muted-foreground">
+                      Adds a noindex meta tag to this author&apos;s page.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={noindex}
+                    onCheckedChange={setNoindex}
+                    disabled={submitting}
+                    aria-label="Hide author page from search engines"
+                  />
+                </div>
+              </div>
+            ) : null}
           </CardContent>
         </Card>
 

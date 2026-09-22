@@ -300,6 +300,8 @@ def get_public_category_blogs(subdomain: str, slug: str, request: Request, db: S
             "name": db_cat.name,
             "slug": db_cat.slug,
             "description": db_cat.description,
+            "meta_title": db_cat.meta_title,
+            "meta_description": db_cat.meta_description,
         },
         "blogs": blogs,
     }
@@ -408,6 +410,9 @@ def get_public_author_blogs(subdomain: str, slug: str, request: Request, db: Ses
             "github_link": author.github_link,
             "youtube_link": author.youtube_link,
             "website_link": author.website_link,
+            "meta_title": author.meta_title,
+            "meta_description": author.meta_description,
+            "noindex": author.noindex,
             "blog_count": len(blogs),
         },
         "blogs": blogs,

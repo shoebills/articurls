@@ -15,6 +15,7 @@ import { useAuth } from "@/lib/auth-context";
 import type { Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -50,6 +51,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   GripVertical,
   MoreVertical,
+  ChevronDown,
   Pencil,
   Plus,
   Tags,
@@ -120,10 +122,18 @@ export default function CategoriesDashboardPage() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [createDescription, setCreateDescription] = useState("");
+  const [createMetaTitle, setCreateMetaTitle] = useState("");
+  const [createMetaDescription, setCreateMetaDescription] = useState("");
+  const [createAdvancedOpen, setCreateAdvancedOpen] = useState(false);
 
-  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
-  const [renameId, setRenameId] = useState<string | null>(null);
-  const [renameName, setRenameName] = useState("");
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editMetaTitle, setEditMetaTitle] = useState("");
+  const [editMetaDescription, setEditMetaDescription] = useState("");
+  const [editAdvancedOpen, setEditAdvancedOpen] = useState(false);
 
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -174,7 +184,13 @@ export default function CategoriesDashboardPage() {
   }, [token]);
 
   useEffect(() => {
-    if (!createDialogOpen) setCreateName("");
+    if (!createDialogOpen) {
+      setCreateName("");
+      setCreateDescription("");
+      setCreateMetaTitle("");
+      setCreateMetaDescription("");
+      setCreateAdvancedOpen(false);
+    }
   }, [createDialogOpen]);
 
   async function handleCreate() {
@@ -182,7 +198,12 @@ export default function CategoriesDashboardPage() {
     setBusy(true);
     setErr(null);
     try {
-      await createCategory(token, { name: createName.trim() });
+      await createCategory(token, {
+        name: createName.trim(),
+        description: createDescription,
+        meta_title: createMetaTitle,
+        meta_description: createMetaDescription,
+      });
       setCreateDialogOpen(false);
       const rows = await listCategories(token);
       setCategories(rows);
@@ -193,19 +214,23 @@ export default function CategoriesDashboardPage() {
     }
   }
 
-  async function handleRename() {
-    if (!token || renameId == null || !renameName.trim()) return;
+  async function handleEdit() {
+    if (!token || editId == null || !editName.trim()) return;
     setBusy(true);
     setErr(null);
     try {
-      await updateCategory(token, renameId, { name: renameName.trim() });
-      setRenameDialogOpen(false);
-      setRenameId(null);
-      setRenameName("");
+      await updateCategory(token, editId, {
+        name: editName.trim(),
+        description: editDescription,
+        meta_title: editMetaTitle,
+        meta_description: editMetaDescription,
+      });
+      setEditDialogOpen(false);
+      setEditId(null);
       const rows = await listCategories(token);
       setCategories(rows);
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to rename category");
+      setErr(e instanceof ApiError ? e.message : "Failed to update category");
     } finally {
       setBusy(false);
     }
@@ -396,13 +421,17 @@ export default function CategoriesDashboardPage() {
                 <DropdownMenuContent align="end" className="w-48">
                   <DropdownMenuItem
                     onClick={() => {
-                      setRenameId(cat.category_id);
-                      setRenameName(cat.name);
-                      setRenameDialogOpen(true);
+                      setEditId(cat.category_id);
+                      setEditName(cat.name);
+                      setEditDescription(cat.description ?? "");
+                      setEditMetaTitle(cat.meta_title ?? "");
+                      setEditMetaDescription(cat.meta_description ?? "");
+                      setEditAdvancedOpen(false);
+                      setEditDialogOpen(true);
                     }}
                   >
                     <Pencil className="h-4 w-4" />
-                    Rename
+                    Edit
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => handleToggleNav(cat)}
@@ -492,16 +521,63 @@ export default function CategoriesDashboardPage() {
           <DialogHeader>
             <DialogTitle>New Category</DialogTitle>
           </DialogHeader>
-          <Input
-            placeholder="Category name"
-            value={createName}
-            onChange={(e) => setCreateName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleCreate();
-            }}
-            autoFocus
-            disabled={busy}
-          />
+          <div className="space-y-3">
+            <Input
+              placeholder="Category name"
+              value={createName}
+              onChange={(e) => setCreateName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+              }}
+              autoFocus
+              disabled={busy}
+            />
+
+            <button
+              type="button"
+              onClick={() => setCreateAdvancedOpen(!createAdvancedOpen)}
+              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Advanced settings
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform ${createAdvancedOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {createAdvancedOpen ? (
+              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
+                  <Textarea
+                    placeholder="Short description shown on the category page"
+                    rows={3}
+                    value={createDescription}
+                    onChange={(e) => setCreateDescription(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Meta Title</label>
+                  <Input
+                    placeholder="Overrides the browser tab title for this category"
+                    value={createMetaTitle}
+                    onChange={(e) => setCreateMetaTitle(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Meta Description</label>
+                  <Textarea
+                    placeholder="Overrides the search engine description for this category"
+                    rows={2}
+                    value={createMetaDescription}
+                    onChange={(e) => setCreateMetaDescription(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
@@ -521,38 +597,84 @@ export default function CategoriesDashboardPage() {
       </Dialog>
 
       <Dialog
-        open={renameDialogOpen}
-        onOpenChange={setRenameDialogOpen}
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Rename Category</DialogTitle>
+            <DialogTitle>Edit Category</DialogTitle>
           </DialogHeader>
-          <Input
-            placeholder="Category name"
-            value={renameName}
-            onChange={(e) => setRenameName(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleRename();
-            }}
-            autoFocus
-            disabled={busy}
-          />
+          <div className="space-y-3">
+            <Input
+              placeholder="Category name"
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleEdit();
+              }}
+              autoFocus
+              disabled={busy}
+            />
+
+            <button
+              type="button"
+              onClick={() => setEditAdvancedOpen(!editAdvancedOpen)}
+              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+            >
+              Advanced settings
+              <ChevronDown
+                className={`h-4 w-4 shrink-0 transition-transform ${editAdvancedOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+
+            {editAdvancedOpen ? (
+              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
+                  <Textarea
+                    placeholder="Short description shown on the category page"
+                    rows={3}
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Meta Title</label>
+                  <Input
+                    placeholder="Overrides the browser tab title for this category"
+                    value={editMetaTitle}
+                    onChange={(e) => setEditMetaTitle(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">Meta Description</label>
+                  <Textarea
+                    placeholder="Overrides the search engine description for this category"
+                    rows={2}
+                    value={editMetaDescription}
+                    onChange={(e) => setEditMetaDescription(e.target.value)}
+                    disabled={busy}
+                  />
+                </div>
+              </div>
+            ) : null}
+          </div>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => {
-                setRenameDialogOpen(false);
-                setRenameId(null);
-                setRenameName("");
+                setEditDialogOpen(false);
+                setEditId(null);
               }}
               disabled={busy}
             >
               Cancel
             </Button>
             <Button
-              onClick={handleRename}
-              disabled={busy || !renameName.trim()}
+              onClick={handleEdit}
+              disabled={busy || !editName.trim()}
             >
               Save
             </Button>
