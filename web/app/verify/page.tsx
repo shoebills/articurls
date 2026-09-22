@@ -29,7 +29,7 @@ function VerifyInner() {
         localStorage.setItem(TOKEN_KEY, res.access_token);
         setMsg(res.message === "Already confirmed" ? "Already verified — redirecting…" : "Verified — redirecting…");
         const sites = await listSites(res.access_token);
-        window.location.assign(sites.length > 0 ? "/dashboard" : "/onboarding");
+        window.location.assign(sites.length > 0 ? "/dashboard" : "/setup");
       } catch (ex) {
         setErr(ex instanceof ApiError ? ex.message : "Verification failed");
         setMsg("");

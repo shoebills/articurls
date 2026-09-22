@@ -138,7 +138,7 @@ function TemplateCard({
   );
 }
 
-function OnboardingForm() {
+function SetupForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id") || null;
@@ -287,7 +287,7 @@ function OnboardingForm() {
             <CardTitle className="text-xl font-bold tracking-tight">{titles[step]}</CardTitle>
           </div>
           <CardDescription className="text-sm">
-            {flow === "google" ? "Claim your space" : "Set up your blog"}
+            {flow === "google" ? "Claim your space" : "Set up your blog in a few simple steps"}
           </CardDescription>
           {/* Progress dots */}
           <div className="flex items-center gap-1.5 pt-2" aria-label={`Step ${step + 1} of ${totalSteps}`}>
@@ -304,25 +304,11 @@ function OnboardingForm() {
         </CardHeader>
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
+            {/* Step 0: Name */}
             {step === 0 && (
-              <>
+              <div className="space-y-4">
                 {flow === "google" ? (
                   <>
-                    <div className={FIELD_GROUP}>
-                      <Label htmlFor="email" className="text-sm font-medium">
-                        Email
-                      </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={email}
-                        disabled
-                        className="bg-muted/50 cursor-not-allowed text-muted-foreground"
-                      />
-                      <p className="text-xs leading-relaxed text-muted-foreground">
-                        Verified with Google
-                      </p>
-                    </div>
                     <div className={FIELD_GROUP}>
                       <Label htmlFor="name" className="text-sm font-medium">
                         Your name
@@ -331,73 +317,107 @@ function OnboardingForm() {
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="John Doe"
+                        placeholder="Jane Doe"
                         autoFocus
                         required
                       />
-                      <p className="text-xs leading-relaxed text-muted-foreground">
-                        How you&apos;ll appear to readers
+                    </div>
+
+                    <div className={FIELD_GROUP}>
+                      <Label htmlFor="blogName" className="text-sm font-medium">
+                        Blog name <span className="text-xs text-muted-foreground">(optional)</span>
+                      </Label>
+                      <Input
+                        id="blogName"
+                        value={blogName}
+                        onChange={(e) => setBlogName(e.target.value)}
+                        placeholder="e.g. Jane's Notes"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Shown in your header and page title
                       </p>
                     </div>
-                  </>
-                ) : null}
-                <div className={FIELD_GROUP}>
-                  <Label htmlFor="blog-name" className="text-sm font-medium">
-                    Blog name
-                  </Label>
-                  <Input
-                    id="blog-name"
-                    value={blogName}
-                    onChange={(e) => setBlogName(e.target.value)}
-                    placeholder={flow === "google" ? googleName || "My Blog" : "My Blog"}
-                    autoFocus={flow === "email"}
-                  />
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    Shown in your blog&apos;s navigation — you can change it anytime
-                  </p>
-                </div>
-              </>
-            )}
 
-            {step === 1 && (
-              <div className={FIELD_GROUP}>
-                <Label htmlFor="subdomain" className="text-sm font-medium">
-                  Subdomain
-                </Label>
-                <Input
-                  id="subdomain"
-                  value={subdomain}
-                  onChange={(e) => setSubdomain(cleanSubdomain(e.target.value))}
-                  placeholder="johndoe"
-                  autoFocus
-                  required
-                  minLength={3}
-                />
-                {subdomain ? (
-                  <p className="text-sm leading-relaxed text-foreground font-medium">
-                    <span className="text-primary">{subdomain}</span>.{UGC_DOMAIN}
-                  </p>
+                    {email && (
+                      <p className="text-xs text-muted-foreground">
+                        Signed in as <span className="font-medium text-foreground">{email}</span>
+                      </p>
+                    )}
+                  </>
                 ) : (
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    Your blog will live at subdomain.{UGC_DOMAIN}
-                  </p>
+                  <div className={FIELD_GROUP}>
+                    <Label htmlFor="blogName" className="text-sm font-medium">
+                      What should we call your blog?
+                    </Label>
+                    <Input
+                      id="blogName"
+                      value={blogName}
+                      onChange={(e) => setBlogName(e.target.value)}
+                      placeholder="e.g. Jane's Notes, Tech Dispatch, Daily Life"
+                      autoFocus
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      You can change this anytime in settings
+                    </p>
+                  </div>
                 )}
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  This cannot be changed later, but you can connect a custom domain anytime.
-                </p>
               </div>
             )}
 
+            {/* Step 1: Subdomain */}
+            {step === 1 && (
+              <div className="space-y-4">
+                <div className={FIELD_GROUP}>
+                  <Label htmlFor="subdomain" className="text-sm font-medium">
+                    Pick your subdomain
+                  </Label>
+                  <div className="flex items-center rounded-md border border-input bg-muted/30 px-3">
+                    <input
+                      id="subdomain"
+                      className="flex-1 bg-transparent py-2 text-sm focus:outline-none"
+                      placeholder="my-blog"
+                      value={subdomain}
+                      onChange={(e) => setSubdomain(cleanSubdomain(e.target.value))}
+                      autoFocus
+                      required
+                    />
+                    <span className="text-xs text-muted-foreground select-none">
+                      .{UGC_DOMAIN}
+                    </span>
+                  </div>
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    This is your free Articurls URL. You can connect your own custom domain later.
+                  </p>
+                </div>
+
+                {subdomain.length >= 3 && (
+                  <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3 text-xs text-primary">
+                    <span className="font-medium">Preview:</span>{" "}
+                    <span className="font-mono">
+                      https://{cleanSubdomain(subdomain)}.{UGC_DOMAIN}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Step 2: Theme Picker */}
             {step === 2 && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                {TEMPLATES.map((t) => (
-                  <TemplateCard
-                    key={t.id}
-                    template={t}
-                    selected={templateId === t.id}
-                    onSelect={() => setTemplateId(t.id)}
-                  />
-                ))}
+              <div className="space-y-3">
+                <p className="text-xs text-muted-foreground">
+                  Pick a layout to start with. You can change themes and fonts anytime in settings.
+                </p>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  {TEMPLATES.map((tpl) => (
+                    <TemplateCard
+                      key={tpl.id}
+                      template={tpl}
+                      selected={templateId === tpl.id}
+                      onSelect={() => setTemplateId(tpl.id)}
+                    />
+                  ))}
+                </div>
               </div>
             )}
 
@@ -405,13 +425,19 @@ function OnboardingForm() {
               <Button
                 type="button"
                 className="w-full"
-                disabled={!canContinue()}
+                size="lg"
                 onClick={goNext}
+                disabled={!canContinue()}
               >
                 Continue
               </Button>
             ) : (
-              <Button type="submit" className="w-full" disabled={busy || !canContinue()}>
+              <Button
+                type="submit"
+                className="w-full"
+                size="lg"
+                disabled={busy}
+              >
                 {busy ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -434,7 +460,7 @@ function OnboardingForm() {
   );
 }
 
-function OnboardingFallback() {
+function SetupFallback() {
   return (
     <div className="relative flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="pointer-events-none absolute inset-0 bg-dot-pattern opacity-40" aria-hidden />
@@ -443,10 +469,10 @@ function OnboardingFallback() {
   );
 }
 
-export default function OnboardingPage() {
+export default function SetupPage() {
   return (
-    <Suspense fallback={<OnboardingFallback />}>
-      <OnboardingForm />
+    <Suspense fallback={<SetupFallback />}>
+      <SetupForm />
     </Suspense>
   );
 }

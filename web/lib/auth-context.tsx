@@ -77,7 +77,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setSites(siteList);
 
     if (siteList.length === 0) {
-      // Fresh account that hasn't created a site yet — send to onboarding.
+      // Account has no sites (fresh signup or deleted only site) — send to setup.
       // getMe/getSubscription both 404 without a site (get_current_site).
       setActiveSite(null);
       setUser(null);
@@ -166,9 +166,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     (async () => {
       try {
-        const needsOnboarding = await loadAuthData(t);
-        if (needsOnboarding) {
-          router.replace("/onboarding");
+        const needsSetup = await loadAuthData(t);
+        if (needsSetup) {
+          router.replace("/setup");
         }
       } catch (err: unknown) {
         const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
@@ -189,9 +189,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem(TOKEN_KEY, res.access_token);
       localStorage.setItem("articurls_last_login", "password");
       setToken(res.access_token);
-      const needsOnboarding = await refreshUser();
-      if (needsOnboarding) {
-        router.replace("/onboarding");
+      const needsSetup = await refreshUser();
+      if (needsSetup) {
+        router.replace("/setup");
         return;
       }
       if (redirectTo === "/dashboard") {

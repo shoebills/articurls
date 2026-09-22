@@ -112,7 +112,7 @@ const APP_ALLOWED_PREFIXES = [
   "/dashboard",
   "/login",
   "/signup",
-  "/onboarding",
+  "/setup",
   "/verify",
   "/forgot-password",
   "/reset-password",
@@ -153,7 +153,7 @@ export function middleware(request: NextRequest) {
       !pathname.startsWith("/dashboard") &&
       !pathname.startsWith("/login") &&
       !pathname.startsWith("/signup") &&
-      !pathname.startsWith("/onboarding") &&
+      !pathname.startsWith("/setup") &&
       !pathname.startsWith("/verify") &&
       !pathname.startsWith("/forgot-password") &&
       !pathname.startsWith("/reset-password") &&

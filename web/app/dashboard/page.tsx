@@ -7,6 +7,7 @@ import { exchangeOAuthCode } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import {
   listBlogs,
+  listSubscribers,
   subscribersAnalytics,
   getUmamiOverview,
   getAccountUsage,
@@ -18,6 +19,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { BlogStatusBadge } from "@/components/blog-status-badge";
 import {
   FileText,
   Users,
@@ -28,9 +30,47 @@ import {
   Tags,
   Palette,
   LineChart,
+  Mail,
+  ChevronRight,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { BlogListItem, SubscribersAnalytics, AccountUsage } from "@/lib/types";
+import type { BlogListItem, SubscribersAnalytics, AccountUsage, RecentSubscriber, SubscriberListResponse } from "@/lib/types";
+
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  try {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return "—";
+  }
+}
+
+function SubscriberStatusBadge({ sub }: { sub: RecentSubscriber }) {
+  if (sub.unsubscribed_at) {
+    return (
+      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+        Unsubscribed
+      </span>
+    );
+  }
+  if (!sub.is_confirmed) {
+    return (
+      <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
+        Pending
+      </span>
+    );
+  }
+  return (
+    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
+      Active
+    </span>
+  );
+}
 
 function StatCard({
   icon: Icon,
@@ -82,7 +122,7 @@ const quickActions = [
 
 export default function DashboardPage() {
   const router = useRouter();
-  const { token, user } = useAuth();
+  const { token, user, activeSite } = useAuth();
   const exchangedOAuth = useRef(false);
   const [oauthBusy, setOauthBusy] = useState(false);
 
@@ -90,6 +130,11 @@ export default function DashboardPage() {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<BlogListItem[]>("/blog/", t) ?? [] : [];
+  });
+  const [recentSubscribers, setRecentSubscribers] = useState<RecentSubscriber[]>(() => {
+    if (typeof window === "undefined") return [];
+    const t = localStorage.getItem("articurls_token");
+    return t ? getCachedApiData<SubscriberListResponse>("/list?page=1&limit=5", t)?.items ?? [] : [];
   });
   const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
     if (typeof window === "undefined") return null;
@@ -126,15 +171,19 @@ export default function DashboardPage() {
       setLoading(true);
       setErr(null);
       try {
-        const [blogsRes, subsRes, usageRes] = await Promise.all([
+        const [blogsRes, subsRes, usageRes, recentSubsRes] = await Promise.all([
           listBlogs(token).catch(() => [] as BlogListItem[]),
           subscribersAnalytics(token, "7d").catch(() => null),
           getAccountUsage(token).catch(() => null),
+          listSubscribers(token, 1, 5).catch(() => null),
         ]);
         if (cancelled) return;
         setBlogs(blogsRes);
         setSubs(subsRes);
         setUsage(usageRes);
+        if (recentSubsRes?.items) {
+          setRecentSubscribers(recentSubsRes.items);
+        }
       } catch (e) {
         if (!cancelled) setErr(e instanceof ApiError ? e.message : "Failed to load dashboard");
       } finally {
@@ -193,11 +242,32 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Welcome back, {user?.name ? user.name.split(" ")[0] : "Abhishek"}!</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s an overview of your active site and overall traffic.
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {activeSite ? (
+              <>
+                Managing <span className="font-semibold text-foreground">{activeSite.nav_blog_name || activeSite.subdomain}</span>{" "}
+                <span className="text-muted-foreground/80 font-mono text-xs">
+                  ({activeSite.custom_domain || `${activeSite.subdomain}.articurls.site`})
+                </span>
+              </>
+            ) : (
+              "Here's an overview of your active site and overall traffic."
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button asChild size="sm" className="h-9 gap-1.5 text-xs font-semibold">
+            <Link href="/dashboard/posts/new">
+              <PenLine className="h-3.5 w-3.5" />
+              Write Post
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {/* Top Metric Cards */}
@@ -394,6 +464,147 @@ export default function DashboardPage() {
                 <Link href="/dashboard/support">Support →</Link>
               </Button>
             </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Recent Posts & Recent Subscribers Grid */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        {/* Recent Posts (up to 5) */}
+        <Card className="flex flex-col justify-between rounded-2xl border border-border/70 bg-card shadow-2xs">
+          <div>
+            <CardHeader className="flex flex-row items-center justify-between p-5 sm:p-6 pb-3 sm:pb-3 border-b border-border/40">
+              <div>
+                <CardTitle className="text-base sm:text-lg font-bold tracking-tight">Recent Posts</CardTitle>
+                <CardDescription className="mt-0.5 text-xs">
+                  Latest articles on this site
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
+                <Link href="/dashboard/posts">
+                  View all
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4">
+              {loading && blogs.length === 0 ? (
+                <div className="space-y-3 p-2">
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                </div>
+              ) : blogs.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 p-8 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                    <FileText className="h-5 w-5 opacity-70" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No posts yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+                    Start writing to publish your first article on this site.
+                  </p>
+                  <Button asChild size="sm" variant="outline" className="mt-4 h-8 gap-1.5 text-xs font-semibold">
+                    <Link href="/dashboard/posts/new">
+                      <PenLine className="h-3.5 w-3.5" />
+                      Write Post
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <ul className="divide-y divide-border/40">
+                  {blogs.slice(0, 5).map((post) => (
+                    <li key={post.blog_id}>
+                      <Link
+                        href={`/dashboard/posts/${post.blog_id}/edit`}
+                        className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50 group"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {post.title || "Untitled"}
+                          </p>
+                          <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>{formatDate(post.published_at || post.created_at)}</span>
+                            <span>•</span>
+                            <span className="font-mono text-[11px] text-muted-foreground/80 truncate max-w-[140px] sm:max-w-[200px]">
+                              /{post.slug}
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <BlogStatusBadge status={post.status} />
+                          <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
+                        </div>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </CardContent>
+          </div>
+        </Card>
+
+        {/* Recent Subscribers (up to 5) */}
+        <Card className="flex flex-col justify-between rounded-2xl border border-border/70 bg-card shadow-2xs">
+          <div>
+            <CardHeader className="flex flex-row items-center justify-between p-5 sm:p-6 pb-3 sm:pb-3 border-b border-border/40">
+              <div>
+                <CardTitle className="text-base sm:text-lg font-bold tracking-tight">Recent Subscribers</CardTitle>
+                <CardDescription className="mt-0.5 text-xs">
+                  Latest audience members
+                </CardDescription>
+              </div>
+              <Button asChild variant="ghost" size="sm" className="h-8 gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
+                <Link href="/dashboard/audience">
+                  View all
+                  <ArrowRight className="h-3 w-3" />
+                </Link>
+              </Button>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4">
+              {loading && recentSubscribers.length === 0 ? (
+                <div className="space-y-3 p-2">
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                  <Skeleton className="h-12 w-full rounded-xl" />
+                </div>
+              ) : recentSubscribers.length === 0 ? (
+                <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 p-8 text-center">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground mb-3">
+                    <Mail className="h-5 w-5 opacity-70" />
+                  </div>
+                  <p className="text-sm font-semibold text-foreground">No subscribers yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground max-w-xs">
+                    Readers who subscribe to your blog will appear here.
+                  </p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-border/40">
+                  {recentSubscribers.slice(0, 5).map((sub) => {
+                    const initial = sub.email.slice(0, 1).toUpperCase();
+                    return (
+                      <li key={sub.email}>
+                        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                              {initial}
+                            </div>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">
+                                {sub.email}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Joined {formatDate(sub.subscribed_at)}
+                              </p>
+                            </div>
+                          </div>
+                          <SubscriberStatusBadge sub={sub} />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </CardContent>
           </div>
         </Card>
       </div>

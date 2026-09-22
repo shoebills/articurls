@@ -24,6 +24,7 @@ RESERVED_SLUGS = frozenset({
     "dashboard",
     "login",
     "signup",
+    "setup",
     "onboarding",
     "verify",
     "reset-password",

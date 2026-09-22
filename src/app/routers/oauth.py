@@ -206,15 +206,15 @@ async def google_callback(
         
         store_oauth_session(session_id, session_data.model_dump())
         
-        # Redirect to onboarding page with email and name in URL for display
+        # Redirect to setup page with email and name in URL for display
         from urllib.parse import quote
-        onboarding_url = (
-            f"{settings.app_base_url}/onboarding?"
+        setup_url = (
+            f"{settings.app_base_url}/setup?"
             f"session_id={session_id}&"
             f"email={quote(email)}&"
             f"name={quote(name)}"
         )
-        return RedirectResponse(url=onboarding_url, status_code=status.HTTP_302_FOUND)
+        return RedirectResponse(url=setup_url, status_code=status.HTTP_302_FOUND)
         
     except HTTPException:
         raise
