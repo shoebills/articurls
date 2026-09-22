@@ -21,7 +21,7 @@ class User(Base):
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    password = Column(String, nullable=False)
+    password = Column(String, nullable=True)
     google_id = Column(String, nullable=True, unique=True, index=True)
     dodo_customer_id = Column(String, nullable=True, unique=True, index=True)
     email_verified = Column(Boolean, nullable=False, default=False)

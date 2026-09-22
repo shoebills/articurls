@@ -5,7 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { completeGoogleSignup, createSite, ApiError } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,13 +154,12 @@ function OnboardingForm() {
   const [subdomain, setSubdomain] = useState("");
   const [templateId, setTemplateId] = useState<string>("standard");
   const [name, setName] = useState(googleName);
-  const [password, setPassword] = useState("");
   const [step, setStep] = useState(0);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   const flow: Flow = sessionId ? "google" : "email";
-  const totalSteps = flow === "google" ? 4 : 3;
+  const totalSteps = 3;
 
   useEffect(() => {
     if (googleName) setName(googleName);
@@ -189,9 +187,6 @@ function OnboardingForm() {
     if (step === 1) {
       return cleanSubdomain(subdomain).length >= 3;
     }
-    if (flow === "google" && step === 3) {
-      return password.length >= 8;
-    }
     return true;
   }
 
@@ -217,12 +212,12 @@ function OnboardingForm() {
     const { access_token } = await completeGoogleSignup({
       session_id: sessionId,
       subdomain: cleanSubdomain(subdomain),
-      password,
       name: name.trim(),
       nav_blog_name: blogName.trim() || undefined,
       template_id: templateId,
     });
     localStorage.setItem(TOKEN_KEY, access_token);
+    localStorage.setItem("articurls_last_login", "google");
     const plan = localStorage.getItem("pendingPlan");
     localStorage.removeItem("pendingPlan");
     if (plan === "pro" || plan === "lifetime") {
@@ -267,7 +262,9 @@ function OnboardingForm() {
   if (flow === "email" && !storedToken) return null; // redirecting
 
   const titles =
-    flow === "google" ? ["About you", "Pick your subdomain", "Choose a theme", "Set a password"] : ["Name your blog", "Pick your subdomain", "Choose a theme"];
+    flow === "google"
+      ? ["About you", "Pick your subdomain", "Choose a theme"]
+      : ["Name your blog", "Pick your subdomain", "Choose a theme"];
 
   return (
     <AuthPageShell>
@@ -401,27 +398,6 @@ function OnboardingForm() {
                     onSelect={() => setTemplateId(t.id)}
                   />
                 ))}
-              </div>
-            )}
-
-            {flow === "google" && step === 3 && (
-              <div className={FIELD_GROUP}>
-                <Label htmlFor="password" className="text-sm font-medium">
-                  Password
-                </Label>
-                <PasswordInput
-                  id="password"
-                  autoComplete="new-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
-                  autoFocus
-                  required
-                  minLength={8}
-                />
-                <p className="text-xs leading-relaxed text-muted-foreground">
-                  Secure your account and content
-                </p>
               </div>
             )}
 

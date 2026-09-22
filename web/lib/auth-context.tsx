@@ -187,6 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async (email: string, password: string, redirectTo = "/dashboard") => {
       const res = await apiLogin(email, password);
       localStorage.setItem(TOKEN_KEY, res.access_token);
+      localStorage.setItem("articurls_last_login", "password");
       setToken(res.access_token);
       const needsOnboarding = await refreshUser();
       if (needsOnboarding) {

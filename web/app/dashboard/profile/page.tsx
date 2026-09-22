@@ -5,6 +5,7 @@ import {
   getMe,
   patchMe,
   uploadProfileImage,
+  changePassword,
   ApiError,
   apiCacheHas,
   getCachedApiData,
@@ -13,9 +14,10 @@ import type { UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Camera, Pencil, Trash2, UserRound } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl } from "@/lib/env";
@@ -48,6 +50,12 @@ export default function ProfilePage() {
   });
   const pfpInputRef = useRef<HTMLInputElement>(null);
   const [pfpDeleteOpen, setPfpDeleteOpen] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [pwErr, setPwErr] = useState<string | null>(null);
+  const [pwSaved, setPwSaved] = useState<string | null>(null);
+  const [pwBusy, setPwBusy] = useState(false);
 
   useEffect(() => {
     if (!token) return;
@@ -121,6 +129,42 @@ export default function ProfilePage() {
       setErr(ex instanceof ApiError ? ex.message : "Could not remove photo");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function onChangePassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!token) return;
+    setPwErr(null);
+    setPwSaved(null);
+
+    if (newPassword.length < 8) {
+      setPwErr("New password must be at least 8 characters");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPwErr("Passwords do not match");
+      return;
+    }
+
+    setPwBusy(true);
+    try {
+      const res = await changePassword(token, { new_password: newPassword });
+      localStorage.setItem("articurls_token", res.access_token);
+      localStorage.setItem("articurls_last_login", "password");
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("articurls_token_refreshed", { detail: res.access_token })
+        );
+      }
+      setNewPassword("");
+      setConfirmPassword("");
+      setPwSaved("Password updated successfully");
+      await refreshUser();
+    } catch (e) {
+      setPwErr(e instanceof ApiError ? e.message : "Failed to update password");
+    } finally {
+      setPwBusy(false);
     }
   }
 
@@ -262,8 +306,67 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
 
-      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
-      {!err && <FloatingErrorToast message={saved} onDismiss={() => setSaved(null)} autoDismissMs={3000} variant="success" />}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl">Password</CardTitle>
+          <CardDescription>
+            {ctxUser?.has_password
+              ? "Change your password for signing in with email."
+              : "Your account uses Google sign-in. Set a password to also log in with email."}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={onChangePassword} className="space-y-4">
+            <div className="grid gap-6 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label htmlFor="new-password">New password</Label>
+                <PasswordInput
+                  id="new-password"
+                  className="mt-2"
+                  autoComplete="new-password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                  required
+                  minLength={8}
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label htmlFor="confirm-password">Confirm new password</Label>
+                <PasswordInput
+                  id="confirm-password"
+                  className="mt-2"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Re-enter new password"
+                  required
+                  minLength={8}
+                />
+              </div>
+            </div>
+            <div className="pt-2">
+              <Button
+                type="submit"
+                size="lg"
+                disabled={pwBusy || !newPassword || !confirmPassword}
+              >
+                {pwBusy ? "Saving..." : ctxUser?.has_password ? "Update Password" : "Set Password"}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <FloatingErrorToast message={err || pwErr} onDismiss={() => { setErr(null); setPwErr(null); }} />
+      {!(err || pwErr) && (
+        <FloatingErrorToast
+          message={saved || pwSaved}
+          onDismiss={() => { setSaved(null); setPwSaved(null); }}
+          autoDismissMs={3000}
+          variant="success"
+        />
+      )}
 
       <Dialog open={pfpDeleteOpen} onOpenChange={setPfpDeleteOpen}>
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">

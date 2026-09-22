@@ -52,7 +52,7 @@ def login(response: Response, request: OAuth2PasswordRequestForm = Depends(), re
 
     db_user = user_by_email(db, email)
     
-    if not db_user:
+    if not db_user or not db_user.password:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Email or password is incorrect")

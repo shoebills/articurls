@@ -1,5 +1,5 @@
 import jwt
-from fastapi import Depends, APIRouter, HTTPException, Request, status, BackgroundTasks
+from fastapi import Depends, APIRouter, HTTPException, Request, Response, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models, utils
@@ -7,6 +7,7 @@ from ..security import hashing, oauth2
 from ..security.oauth2 import get_current_site
 from ..utils.serialization import user_settings_out
 from ..schemas import user
+from ..schemas.token import Token
 from ..schemas import page as page_schema
 from ..email.service import send_verify_new_user
 from datetime import datetime, timedelta, timezone
@@ -196,6 +197,40 @@ def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current
     db.refresh(current_site)
     
     return user_settings_out(db, current_user, current_site)
+
+
+@router.patch("/me/password", response_model=Token, status_code=status.HTTP_200_OK)
+def update_password(
+    request: user.PasswordUpdate,
+    response: Response,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(oauth2.get_current_user),
+):
+    current_user.password = hashing.get_password_hash(request.new_password)
+    current_user.token_version = (current_user.token_version or 0) + 1
+    db.commit()
+    db.refresh(current_user)
+
+    access_token = oauth2.create_access_token(
+        data={"sub": current_user.email, "ver": current_user.token_version},
+        expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
+    )
+    refresh_token = oauth2.create_refresh_token(current_user.email)
+
+    response.set_cookie(
+        key="refresh_token",
+        value=refresh_token,
+        httponly=True,
+        secure=True,
+        samesite="lax",
+        path="/",
+        max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+    }
 
 
 @router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)

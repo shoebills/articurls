@@ -276,6 +276,7 @@ export async function exchangeOAuthCode(code: string): Promise<string> {
   const data = await res.json() as TokenResponse;
   if (typeof window !== "undefined") {
     localStorage.setItem("articurls_token", data.access_token);
+    localStorage.setItem("articurls_last_login", "google");
   }
   return data.access_token;
 }
@@ -283,7 +284,6 @@ export async function exchangeOAuthCode(code: string): Promise<string> {
 export async function completeGoogleSignup(data: {
   session_id: string;
   subdomain: string;
-  password: string;
   name: string;
   nav_blog_name?: string;
   template_id?: string;
@@ -322,6 +322,18 @@ export async function patchMe(
   >
 ): Promise<UserSettings> {
   return apiFetch("/user/me", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function changePassword(
+  token: string,
+  body: { new_password: string }
+): Promise<TokenResponse> {
+  return apiFetch("/user/me/password", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },

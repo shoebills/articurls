@@ -237,10 +237,10 @@ async def complete_google_signup(
     Complete Google OAuth signup by creating user account.
     
     This endpoint is called after the user completes the onboarding form
-    with their desired subdomain and password.
+    with their desired subdomain, blog name, and template.
     
     Args:
-        request: Onboarding completion data (session_id, subdomain, password)
+        request: Onboarding completion data (session_id, subdomain, name, ...)
         response: FastAPI response object
         db: Database session
         
@@ -308,14 +308,11 @@ async def complete_google_signup(
             detail="Google account already linked"
         )
     
-    # Hash password
-    hashed_password = hashing.get_password_hash(request.password)
-    
-    # Create new user
+    # Create new user (passwordless Google account)
     new_user = models.User(
         name=name,
         email=email,
-        password=hashed_password,
+        password=None,
         google_id=google_id,
         email_verified=True,  # Google verified the email
     )

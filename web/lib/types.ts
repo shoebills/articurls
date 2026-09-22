@@ -184,6 +184,7 @@ export interface UserSettings {
   subdomain: string;
   email: string;
   google_id?: string | null;
+  has_password?: boolean;
   meta_title: string | null;
   meta_description: string | null;
   profile_image_url: string | null;

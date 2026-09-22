@@ -55,6 +55,7 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "subdomain": db_site.subdomain,
         "email": db_user.email,
         "google_id": db_user.google_id,
+        "has_password": bool(db_user.password),
         "profile_image_url": db_user.profile_image_url,
         "meta_title": db_site.meta_title,
         "meta_description": db_site.meta_description,

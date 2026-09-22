@@ -27,6 +27,11 @@ function LoginForm() {
   const [info, setInfo] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [resending, setResending] = useState(false);
+  const [lastLoginMethod, setLastLoginMethod] = useState<string | null>(null);
+
+  useEffect(() => {
+    setLastLoginMethod(localStorage.getItem("articurls_last_login"));
+  }, []);
 
   useEffect(() => {
     if (!loading && token) router.replace("/dashboard");
@@ -151,7 +156,12 @@ function LoginForm() {
                 fill="#EA4335"
               />
             </svg>
-            Continue with Google
+            <span>Continue with Google</span>
+            {lastLoginMethod === "google" && (
+              <span className="ml-2 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                Last used
+              </span>
+            )}
           </Button>
 
           <div className="relative my-4">

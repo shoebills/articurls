@@ -15,6 +15,7 @@ class UserSettings(BaseModel):
     subdomain: str
     email: EmailStr
     google_id: Optional[str] = None
+    has_password: bool = False
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
     profile_image_url: Optional[str] = None
@@ -58,6 +59,10 @@ class UserSettings(BaseModel):
     class Config:
         from_attributes = True
         
+
+class PasswordUpdate(BaseModel):
+    new_password: str = Field(..., min_length=8)
+
 
 class UpdateUser(BaseModel):
     name: Optional[str] = None
