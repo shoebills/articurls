@@ -3,11 +3,12 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, getPage, publishPage, updatePage } from "@/lib/api";
+import { ApiError, archivePage, getPage, publishPage, updatePage, uploadPageMedia, deletePageMediaByUrl } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { UserPage } from "@/lib/types";
+import type { UserPage, FaqItem } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
+import { FaqEditor } from "@/components/editor/faq-editor";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,11 +23,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { ChevronLeft, Settings, X } from "lucide-react";
+import { ChevronLeft, Loader2, Settings, X } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
 import { getContentExcerpt } from "@/lib/utils";
+import { assetUrl } from "@/lib/env";
+import { transformImageUrl } from "@/lib/image-transform";
 
 const DRAFT_SLUG_RE = /^draft-[0-9a-f]{12}$/i;
 
@@ -54,6 +57,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
   const [showInFooter, setShowInFooter] = useState(false);
+  const [featuredImageUrl, setFeaturedImageUrl] = useState("");
+  const [uploadingFeatured, setUploadingFeatured] = useState(false);
+  const [ogImageUrl, setOgImageUrl] = useState("");
+  const [uploadingOg, setUploadingOg] = useState(false);
+  const [canonicalUrl, setCanonicalUrl] = useState("");
+  const [noindex, setNoindex] = useState(false);
+  const [customSchemaStr, setCustomSchemaStr] = useState("");
+  const [faqItems, setFaqItems] = useState<FaqItem[]>([]);
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +83,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
   const showInFooterRef = useRef(showInFooter);
+  const featuredInputRef = useRef<HTMLInputElement | null>(null);
+  const ogInputRef = useRef<HTMLInputElement | null>(null);
 
   const applyPageToForm = useCallback((p: UserPage) => {
     setPage(p);
@@ -92,6 +105,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setMetaDescDirty(!descSynced);
     setMetaDesc(descSynced ? "" : (p.meta_description || ""));
     setShowInFooter(p.show_in_footer);
+    setFeaturedImageUrl(p.featured_image_url || "");
+    setOgImageUrl(p.og_image_url || "");
+    setCanonicalUrl(p.canonical_url || "");
+    setNoindex(p.noindex ?? false);
+    setCustomSchemaStr(p.custom_schema ? JSON.stringify(p.custom_schema, null, 2) : "");
+    setFaqItems(p.faq_items || []);
   }, []);
 
   const load = useCallback(async () => {
@@ -144,6 +163,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       !page.meta_title || page.meta_title === page.title ? null : page.meta_title;
     const currentMetaDesc =
       !page.meta_description || page.meta_description === pageContentExcerpt ? null : page.meta_description;
+    const featuredDirty = featuredImageUrl.trim() !== (page.featured_image_url || "");
+    const ogDirty = ogImageUrl.trim() !== (page.og_image_url || "");
+    const canonicalDirty = canonicalUrl.trim() !== (page.canonical_url || "");
+    const noindexDirty = noindex !== (page.noindex ?? false);
+    const currentSchemaStr = page.custom_schema ? JSON.stringify(page.custom_schema, null, 2) : "";
+    const schemaDirty = customSchemaStr.trim() !== currentSchemaStr.trim();
+    const faqDirty = JSON.stringify(faqItems) !== JSON.stringify(page.faq_items || []);
 
     return (
       page.title !== nextTitle ||
@@ -151,9 +177,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       page.slug !== nextSlug ||
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc ||
-      page.show_in_footer !== showInFooter
+      page.show_in_footer !== showInFooter ||
+      featuredDirty ||
+      ogDirty ||
+      canonicalDirty ||
+      noindexDirty ||
+      schemaDirty ||
+      faqDirty
     );
-  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
 
   async function save(silent = false) {
     if (!token || !page) return false;
@@ -172,6 +204,20 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     setSaveStatus("saving");
     if (!silent) setErr(null);
     try {
+      let parsedSchema: Record<string, unknown> | null = null;
+      if (customSchemaStr.trim()) {
+        try {
+          parsedSchema = JSON.parse(customSchemaStr.trim());
+        } catch {
+          if (!silent) {
+            setErr("Custom schema must be valid JSON.");
+            setSaving(false);
+            setSaveStatus("idle");
+            return false;
+          }
+        }
+      }
+
       const body = {
         title: nextTitle,
         content: nextContent,
@@ -184,6 +230,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             ? null
             : nextMetaDesc.trim() || null,
         show_in_footer: nextShowInFooter,
+        featured_image_url: featuredImageUrl.trim() || null,
+        og_image_url: ogImageUrl.trim() || null,
+        canonical_url: canonicalUrl.trim() || null,
+        noindex,
+        custom_schema: parsedSchema,
+        faq_items: faqItems,
       };
       const responsePage = await updatePage(token, page.page_id, body);
       setPage(responsePage);
@@ -255,6 +307,34 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }
 
+  async function uploadFeaturedImage(file: File) {
+    if (!token || !page) return;
+    setUploadingFeatured(true);
+    try {
+      const media = await uploadPageMedia(token, page.page_id, file);
+      setFeaturedImageUrl(media.url);
+      setSaveStatus("idle");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
+    } finally {
+      setUploadingFeatured(false);
+    }
+  }
+
+  async function uploadOgImage(file: File) {
+    if (!token || !page) return;
+    setUploadingOg(true);
+    try {
+      const media = await uploadPageMedia(token, page.page_id, file);
+      setOgImageUrl(media.url);
+      setSaveStatus("idle");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "OG image upload failed");
+    } finally {
+      setUploadingOg(false);
+    }
+  }
+
   useEffect(() => {
     if (!page || saving || !isDirty() || ["published", "archived"].includes(page.status)) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -264,7 +344,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -319,6 +399,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         metaDesc?: string;
         metaDescDirty?: boolean;
         showInFooter?: boolean;
+        featuredImageUrl?: string;
+        ogImageUrl?: string;
+        canonicalUrl?: string;
+        noindex?: boolean;
+        customSchemaStr?: string;
+        faqItems?: FaqItem[];
       };
       if (typeof draft.title === "string") setTitle(draft.title);
       if (typeof draft.content === "string") setContent(draft.content);
@@ -329,6 +415,12 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
       if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
       if (typeof draft.showInFooter === "boolean") setShowInFooter(draft.showInFooter);
+      if (typeof draft.featuredImageUrl === "string") setFeaturedImageUrl(draft.featuredImageUrl);
+      if (typeof draft.ogImageUrl === "string") setOgImageUrl(draft.ogImageUrl);
+      if (typeof draft.canonicalUrl === "string") setCanonicalUrl(draft.canonicalUrl);
+      if (typeof draft.noindex === "boolean") setNoindex(draft.noindex);
+      if (typeof draft.customSchemaStr === "string") setCustomSchemaStr(draft.customSchemaStr);
+      if (Array.isArray(draft.faqItems)) setFaqItems(draft.faqItems);
     } catch {
       window.localStorage.removeItem(manualDraftKey);
     }
@@ -364,11 +456,17 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           metaDesc,
           metaDescDirty,
           showInFooter,
+          featuredImageUrl,
+          ogImageUrl,
+          canonicalUrl,
+          noindex,
+          customSchemaStr,
+          faqItems,
         })
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr, faqItems]);
 
   useEffect(() => {
     return () => {
@@ -465,6 +563,14 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       />
 
       <BlogEditor key={page.page_id} blogId={null} pageId={page.page_id} token={token} content={content} onChange={setContent} />
+
+      <div className="mt-8 mb-24">
+        <FaqEditor
+          items={faqItems}
+          onChange={setFaqItems}
+          disabled={saving}
+        />
+      </div>
 
       {/* Floating Action Dock */}
       <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-30 pointer-events-none">
@@ -567,6 +673,69 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           </DialogHeader>
 
           <div className="space-y-6 pt-4 pb-2">
+            {/* Featured Image */}
+            <div className="space-y-2">
+              <Label>Featured image</Label>
+              <p className="text-xs text-muted-foreground pt-1">Displayed at the top of this page and used for share cards. Recommended 1200×630px.</p>
+              <input
+                ref={featuredInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadFeaturedImage(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => featuredInputRef.current?.click()}
+                  disabled={uploadingFeatured}
+                >
+                  {uploadingFeatured ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    "Upload"
+                  )}
+                </Button>
+                {featuredImageUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={async () => {
+                      if (token && page && featuredImageUrl && !content.includes(featuredImageUrl)) {
+                        try {
+                          await deletePageMediaByUrl(token, page.page_id, featuredImageUrl);
+                        } catch {
+                          // Do not block local removal if cleanup fails.
+                        }
+                      }
+                      setFeaturedImageUrl("");
+                    }}
+                    disabled={uploadingFeatured}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+              {featuredImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={transformImageUrl(assetUrl(featuredImageUrl), { width: 600 })}
+                  alt=""
+                  className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                />
+              ) : null}
+            </div>
+
+            <Separator />
+
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
@@ -622,6 +791,126 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                   />
                 </div>
               </div>
+            </div>
+
+            <Separator />
+
+            {/* Do not index */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="page-noindex-switch" className="cursor-pointer">
+                  Do not index
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Instruct search engines not to index this page (adds noindex meta tag).
+                </p>
+              </div>
+              <Switch
+                id="page-noindex-switch"
+                className="shrink-0"
+                checked={noindex}
+                onCheckedChange={setNoindex}
+              />
+            </div>
+
+            <Separator />
+
+            {/* Social OG Image */}
+            <div className="space-y-2">
+              <Label>Social share image (OG image)</Label>
+              <p className="text-xs text-muted-foreground pt-1">
+                Custom image for Twitter, LinkedIn, and social previews. Falls back to featured image if empty.
+              </p>
+              <input
+                ref={ogInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadOgImage(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  variant="default"
+                  onClick={() => ogInputRef.current?.click()}
+                  disabled={uploadingOg}
+                >
+                  {uploadingOg ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    "Upload"
+                  )}
+                </Button>
+                {ogImageUrl ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={async () => {
+                      if (token && page && ogImageUrl && !content.includes(ogImageUrl)) {
+                        try {
+                          await deletePageMediaByUrl(token, page.page_id, ogImageUrl);
+                        } catch {
+                          // Do not block local removal if cleanup fails.
+                        }
+                      }
+                      setOgImageUrl("");
+                    }}
+                    disabled={uploadingOg}
+                  >
+                    Remove
+                  </Button>
+                ) : null}
+              </div>
+              {ogImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
+                  alt=""
+                  className="mt-2 aspect-[1200/630] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                />
+              ) : null}
+            </div>
+
+            <Separator />
+
+            {/* Canonical URL */}
+            <div className="space-y-2">
+              <Label htmlFor="page-canonical-url">Canonical URL</Label>
+              <Input
+                id="page-canonical-url"
+                className="mt-2"
+                value={canonicalUrl}
+                onChange={(e) => setCanonicalUrl(e.target.value)}
+                placeholder="https://example.com/original-page"
+              />
+              <p className="text-xs text-muted-foreground">
+                Specify if this page was originally published on a different website or domain.
+              </p>
+            </div>
+
+            <Separator />
+
+            {/* Custom schema */}
+            <div className="space-y-2">
+              <Label htmlFor="page-custom-schema">Custom schema (JSON-LD)</Label>
+              <Textarea
+                id="page-custom-schema"
+                className="mt-2 font-mono text-xs"
+                rows={4}
+                value={customSchemaStr}
+                onChange={(e) => setCustomSchemaStr(e.target.value)}
+                placeholder={'{\n  "@type": "WebPage",\n  "name": "..."\n}'}
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional custom JSON-LD schema injected directly into this page. Must be valid JSON.
+              </p>
             </div>
 
             <Separator />

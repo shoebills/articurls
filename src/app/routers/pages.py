@@ -334,7 +334,16 @@ def update_page(
     elif "meta_description" in update_data:
         update_data["meta_description"] = (update_data["meta_description"] or "").strip() or None
 
-    MEANINGFUL_FIELDS = {"title", "content", "meta_title", "meta_description"}
+    if "faq_items" in update_data and update_data["faq_items"] is not None:
+        update_data["faq_items"] = [
+            item.model_dump() if hasattr(item, "model_dump") else item
+            for item in update_data["faq_items"]
+        ]
+
+    MEANINGFUL_FIELDS = {
+        "title", "content", "meta_title", "meta_description", "featured_image_url",
+        "og_image_url", "canonical_url", "noindex", "custom_schema", "faq_items",
+    }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 
     for key, value in update_data.items():

@@ -427,7 +427,20 @@ export async function deletePage(token: string, pageId: string): Promise<void> {
 export async function updatePage(
   token: string,
   pageId: string,
-  body: { title?: string; content?: string; slug?: string; meta_title?: string | null; meta_description?: string | null; show_in_footer?: boolean }
+  body: {
+    title?: string;
+    content?: string;
+    slug?: string;
+    meta_title?: string | null;
+    meta_description?: string | null;
+    featured_image_url?: string | null;
+    og_image_url?: string | null;
+    canonical_url?: string | null;
+    noindex?: boolean;
+    custom_schema?: Record<string, unknown> | null;
+    faq_items?: FaqItem[] | null;
+    show_in_footer?: boolean;
+  }
 ): Promise<UserPage> {
   return apiFetch(`/pages/id/${pageId}`, {
     method: "PATCH",

@@ -392,16 +392,22 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       const title = page.meta_title || page.title;
       const description = resolvePageDescription(page);
       const siteName = resolveSiteName(site);
-      const ogImage = resolveSiteOgImage(site);
+      const pageCanonical = page.canonical_url || canonical;
+      const ogImage = page.og_image_url
+        ? transformImageUrl(assetUrl(page.og_image_url), { width: 1200, height: 630, fit: "cover" })
+        : page.featured_image_url
+          ? transformImageUrl(assetUrl(page.featured_image_url), { width: 1200, height: 630, fit: "cover" })
+          : resolveSiteOgImage(site);
       return {
         title,
         description,
+        robots: page.noindex ? { index: false, follow: true } : undefined,
         alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
         icons: faviconIcons(site),
         openGraph: {
           title,
           description,
-          url: canonical,
+          url: pageCanonical,
           type: "website",
           siteName,
           images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
@@ -767,11 +773,26 @@ export default async function SitePublicationPage({ params }: Props) {
 
       const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
 
+      const pageFeaturedBaseUrl = page.featured_image_url ? assetUrl(page.featured_image_url) : null;
+      const pageFeaturedImageUrl = pageFeaturedBaseUrl
+        ? transformImageUrl(pageFeaturedBaseUrl, { width: 1200, fit: "cover" })
+        : null;
+      const pageFeaturedSrcSet = pageFeaturedBaseUrl ? generateSrcSet(pageFeaturedBaseUrl, [400, 800, 1200]) : null;
+
       return (
         <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
           <main className={mainSpacing}>
             <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
+            {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
+              <StructuredData data={generateFaqPageSchema(page.faq_items, currentUrl)} />
+            )}
+            {page.custom_schema && (
+              <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(page.custom_schema) }}
+              />
+            )}
             {isNavEnabled ? (
               <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
                 <div className="hidden w-full sm:block">
@@ -818,9 +839,44 @@ export default async function SitePublicationPage({ params }: Props) {
               <header className="mt-6 sm:mt-8">
                 <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
               </header>
-              <article className="mt-12">
+              {pageFeaturedImageUrl ? (
+                <figure className="mt-6 sm:mt-8">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={pageFeaturedImageUrl}
+                    srcSet={pageFeaturedSrcSet ?? undefined}
+                    sizes="(max-width: 1024px) 100vw, 768px"
+                    alt={page.title}
+                    loading="eager"
+                    decoding="async"
+                    className="block h-auto w-full rounded-2xl"
+                  />
+                </figure>
+              ) : null}
+              <article className={pageFeaturedImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
                 <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
               </article>
+
+              {/* Frequently Asked Questions */}
+              {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
+                <section className="mt-12 pt-8 border-t border-border/60">
+                  <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
+                    Frequently Asked Questions
+                  </h3>
+                  <div className="space-y-4">
+                    {page.faq_items.map((faq, idx) => (
+                      <div key={idx} className="rounded-xl border border-border/70 bg-card p-5 shadow-2xs">
+                        <h4 className="font-semibold text-base text-foreground mb-1.5">
+                          {faq.question}
+                        </h4>
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                          {faq.answer}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
             </div>
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>

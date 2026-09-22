@@ -10,6 +10,11 @@ class UserPageBase(BaseModel):
     content: str = ""
 
 
+class FaqItem(BaseModel):
+    question: str
+    answer: str
+
+
 class UserPageCreate(UserPageBase):
     slug: Optional[str] = None
 
@@ -20,6 +25,12 @@ class UserPageUpdate(BaseModel):
     slug: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: Optional[bool] = None
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = None
     show_in_footer: Optional[bool] = None
 
 
@@ -43,6 +54,12 @@ class UserPageOut(UserPageBase):
     slug: str
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
+    featured_image_url: Optional[str] = None
+    og_image_url: Optional[str] = None
+    canonical_url: Optional[str] = None
+    noindex: bool = False
+    custom_schema: Optional[dict] = None
+    faq_items: Optional[List[FaqItem]] = []
     status: models.PageStatus
     published_at: Optional[datetime] = None
     show_in_footer: bool

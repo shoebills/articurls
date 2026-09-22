@@ -313,6 +313,12 @@ export interface UserPage {
   content: string;
   meta_title: string | null;
   meta_description: string | null;
+  featured_image_url?: string | null;
+  og_image_url?: string | null;
+  canonical_url?: string | null;
+  noindex?: boolean;
+  custom_schema?: Record<string, unknown> | null;
+  faq_items?: FaqItem[] | null;
   status: PageStatus;
   published_at: string | null;
   show_in_footer: boolean;
