@@ -120,6 +120,13 @@ class UmamiClient:
             json={"name": name, "domain": domain},
         )
 
+    def delete_website_sync(self, website_id: str) -> Dict[str, Any]:
+        """Delete an Umami website and all its analytics data."""
+        return self._request_sync(
+            "DELETE",
+            f"/api/websites/{website_id}",
+        )
+
     def update_website_sync(
         self,
         website_id: str,

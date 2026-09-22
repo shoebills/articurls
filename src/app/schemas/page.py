@@ -55,7 +55,7 @@ class UserPageOut(UserPageBase):
 
 
 class DesignSettings(BaseModel):
-    template_id: str = "editorial"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     custom_color: Optional[str] = None

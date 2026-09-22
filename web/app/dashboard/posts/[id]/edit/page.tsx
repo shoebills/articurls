@@ -331,7 +331,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
       if (featuredIdsChanged && user) {
         await patchDesignSettings(token, {
-          template_id: user.template_id ?? "editorial",
+          template_id: user.template_id ?? "standard",
           site_mode: user.site_mode ?? "system",
           color_theme: user.color_theme ?? "base",
           custom_color: user.custom_color ?? null,

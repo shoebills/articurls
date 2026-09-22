@@ -5,7 +5,6 @@ import uuid
 
 class CreateUser(BaseModel):
     name: str
-    subdomain: str
     email: EmailStr
     password: str = Field(..., min_length=8)
 
@@ -20,7 +19,7 @@ class UserSettings(BaseModel):
     meta_description: Optional[str] = None
     profile_image_url: Optional[str] = None
 
-    template_id: str = "editorial"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     custom_color: Optional[str] = None

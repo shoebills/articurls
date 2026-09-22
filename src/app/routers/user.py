@@ -17,11 +17,9 @@ from ..storage.service import (
     get_user_storage_usage_bytes,
     save_image_local,
 )
-from ..umami.service import enqueue_umami_provision
 from ..utils import (
     normalize_email,
     user_by_email,
-    validate_subdomain_or_raise,
 )
 from ..cache.service import schedule_homepage_purge, schedule_tenant_purge
 from ..utils.rate_limit import check_rate_limit_ip
@@ -40,7 +38,6 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     check_rate_limit_ip(req, "signup", _SIGNUP_IP_LIMIT, _SIGNUP_IP_WINDOW)
 
     email = normalize_email(str(request.email))
-    subdomain = validate_subdomain_or_raise(request.subdomain)
 
     db_email = user_by_email(db, email)
 
@@ -48,55 +45,17 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered")
-    
-    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
-    db_subdomain = db_site
-    
-    if db_subdomain:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Subdomain already registered")
-    
+
     hashed_password = hashing.get_password_hash(request.password)
-    
+
     new_user = models.User(
         name=request.name,
         email=request.email,
         password=hashed_password
     )
     db.add(new_user)
-    db.flush()
-    
-    new_site = models.Site(
-        user_id=new_user.user_id,
-        subdomain=subdomain,
-    )
-    db.add(new_site)
-    db.flush()
-    
-    new_author = models.Author(
-        site_id=new_site.site_id,
-        name=request.name,
-        slug=subdomain,
-    )
-    db.add(new_author)
-    db.flush()
-    
     db.commit()
     db.refresh(new_user)
-
-    trial_start = datetime.now(timezone.utc)
-    trial_end = trial_start + timedelta(days=settings.trial_duration_days)
-    db.add(models.Subscriptions(
-        user_id=new_user.user_id,
-        plan_type="trial",
-        status="active",
-        current_period_start=trial_start,
-        current_period_end=trial_end,
-    ))
-    db.commit()
-
-    enqueue_umami_provision(new_user.user_id)
 
     verify_token = oauth2.create_new_user_token(email)
     send_verify_new_user(email, request.name, verify_token)
@@ -128,7 +87,11 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     db_user = user_by_email(db, payload.get("email"))
 
-    
+    if db_user is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid confirmation link",
+        )
 
     if db_user.email_verified:
         access_token = oauth2.create_access_token(
@@ -143,6 +106,22 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
             }
 
     db_user.email_verified = True
+
+    # Trial starts at verification — create the 7-day trial now.
+    existing_sub = db.query(models.Subscriptions).filter(
+        models.Subscriptions.user_id == db_user.user_id
+    ).first()
+    if existing_sub is None:
+        trial_start = datetime.now(timezone.utc)
+        trial_end = trial_start + timedelta(days=settings.trial_duration_days)
+        db.add(models.Subscriptions(
+            user_id=db_user.user_id,
+            plan_type="trial",
+            status="active",
+            current_period_start=trial_start,
+            current_period_end=trial_end,
+        ))
+
     db.commit()
     db.refresh(db_user)
 

@@ -27,7 +27,7 @@ import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
 import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
-import { EditorialTemplate } from "@/components/themes/editorial/editorial-template";
+import { StandardTemplate } from "@/components/themes/standard/standard-template";
 import { SaasTemplate } from "@/components/themes/saas/saas-template";
 import { loadPublicSite } from "@/lib/public-site";
 
@@ -1081,11 +1081,11 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (!site) notFound();
 
-  if (site.template_id === "editorial") {
+  if (site.template_id === "standard") {
     return (
       <>
         <StructuredData data={generateWebSiteSchema(site, siteOrigin)} />
-        <EditorialTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+        <StandardTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
       </>
     );
   }

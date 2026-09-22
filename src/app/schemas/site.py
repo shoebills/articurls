@@ -7,6 +7,7 @@ import uuid
 class SiteCreate(BaseModel):
     subdomain: str
     nav_blog_name: Optional[str] = None
+    template_id: Optional[str] = None
 
 
 class SiteUpdate(BaseModel):
@@ -53,7 +54,7 @@ class PublicSite(BaseModel):
     meta_title: str
     meta_description: str
     og_image_url: Optional[str] = None
-    template_id: str = "editorial"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     custom_color: Optional[str] = None

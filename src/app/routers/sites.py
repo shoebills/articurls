@@ -111,6 +111,8 @@ def create_site(
         subdomain=cleaned_subdomain,
         nav_blog_name=request.nav_blog_name.strip() if request.nav_blog_name else cleaned_subdomain,
     )
+    if request.template_id in ("standard", "saas"):
+        new_site.template_id = request.template_id
     db.add(new_site)
     db.flush()
 

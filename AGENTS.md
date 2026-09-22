@@ -52,6 +52,7 @@ cd web && npm run lint
 - **Celery beat** publishes scheduled blogs every minute and runs Pro expiry check hourly.
 - **migration** dont autogenerate migrations cause you cant run commands in server, write it instead
 - **Model ↔ DB drift**: run `alembic check` locally after every model/migration change (`alembic upgrade head && alembic check`). The migration chain must work on an empty DB — conditional DDL guards (e.g. `to_regclass(...)`) are the accepted pattern for tables that are created/dropped at different points in the graph.
+- **Develoment phase** Note that this app isnt live yet, no real customers so dont think about backfilling (but suggest wherever needed), also dont hestitate to wipe out old dashboard urls and renaming variables or db columns names or any internal names just to make the system consistent. Do not run docker container by yourself, building backend and alembic migration to head is my job
 
 ## Database Design Principles
 

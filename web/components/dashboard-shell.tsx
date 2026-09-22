@@ -2,17 +2,23 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { Button } from "@/components/ui/button";
-import { TrialExpiredOverlay } from "@/components/trial-expired-overlay";
+import { TrialExpiredPopup } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
 import { getSitePublicRoot } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
 
+// The popup must never block the pages a user needs to actually pay or ask
+// for help — those routes stay usable.
+const POPUP_EXEMPT_PREFIXES = ["/dashboard/billing", "/dashboard/support"];
+
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const { user, activeSite, isPro, subscription, loading } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
@@ -25,6 +31,8 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         : null;
 
   const isLocked = !isPro && !!subscription && !loading;
+  const isPopupExempt = POPUP_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const showTrialPopup = isLocked && !isPopupExempt;
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -48,10 +56,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
   }, [open, close]);
-
-  if (isLocked) {
-    return <TrialExpiredOverlay />;
-  }
 
   return (
     <div className="flex min-h-dvh w-full bg-background md:justify-center">
@@ -146,8 +150,9 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="flex-1 touch-pan-y bg-background px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
+        <main className="relative flex-1 touch-pan-y bg-background px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
           {children}
+          {showTrialPopup ? <TrialExpiredPopup /> : null}
         </main>
       </div>
     </div>

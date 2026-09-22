@@ -53,7 +53,7 @@ class Site(Base):
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
     # Design / Theme
-    template_id = Column(String(32), nullable=False, default="editorial")
+    template_id = Column(String(32), nullable=False, default="standard")
     site_mode = Column(String(16), nullable=False, default="system")
     color_theme = Column(String(32), nullable=False, default="base")
     custom_color = Column(String(16), nullable=True, default=None)
@@ -227,6 +227,10 @@ class Subscriptions(Base):
             "current_period_end IS NULL OR current_period_start IS NULL OR current_period_end >= current_period_start",
             name="ck_subscriptions_period_order",
         ),
+        CheckConstraint(
+            "warning_stage >= 0 AND warning_stage <= 3",
+            name="ck_subscriptions_warning_stage_range",
+        ),
     )
 
     subscription_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
@@ -237,6 +241,7 @@ class Subscriptions(Base):
     status = Column(Enum(SubscriptionStatus, name="subscription_status", values_callable=lambda x: [e.value for e in x]), nullable=False, default=SubscriptionStatus.INACTIVE)
     current_period_start = Column(DateTime(timezone=True), nullable=True)
     current_period_end = Column(DateTime(timezone=True), nullable=True)
+    warning_stage = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

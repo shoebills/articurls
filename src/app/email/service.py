@@ -43,6 +43,7 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
         "{{ verify_url }}",
         f"{base}/verify?token={verify_token}",
     )
+    html = html.replace("{{ expiry_hours }}", "24")
 
     subject = "Verify your email for Articurls"
 
@@ -56,4 +57,29 @@ def send_password_reset(to_email: str, reset_token: str):
     html = html.replace("{{ reset_url }}", reset_url)
 
     subject = "Reset your Articurls password"
+    send_email(to_email, subject, html)
+
+
+def send_trial_expired_email(to_email: str, blog_name: str):
+
+    html = (TEMPLATE_DIR / "trial_expired.html").read_text()
+
+    html = html.replace("{{ blog_name }}", blog_name)
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = "Your Articurls trial has ended"
+    send_email(to_email, subject, html)
+
+
+def send_trial_deletion_warning_email(to_email: str, blog_name: str, time_left: str):
+
+    html = (TEMPLATE_DIR / "deletion_warning.html").read_text()
+
+    html = html.replace("{{ blog_name }}", blog_name)
+    html = html.replace("{{ time_left }}", time_left)
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = f"Your Articurls account will be deleted in {time_left}"
     send_email(to_email, subject, html)

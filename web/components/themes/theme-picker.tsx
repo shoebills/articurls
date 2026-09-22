@@ -11,26 +11,26 @@ export function ThemePicker({
   settings: DesignSettings;
   onChange: (updates: Partial<DesignSettings>) => void;
 }) {
-  const selectedTemplate = settings.template_id || "editorial";
+  const selectedTemplate = settings.template_id || "standard";
 
-  const editorialDemoUrl = `https://editorial.${UGC_DOMAIN}`;
+  const standardDemoUrl = `https://editorial.${UGC_DOMAIN}`;
   const saasDemoUrl = `https://saas.${UGC_DOMAIN}`;
 
   return (
     <div className="grid grid-cols-1 gap-4 max-w-2xl md:grid-cols-2">
-      {/* Editorial Template */}
+      {/* Standard Template */}
       <div
         role="button"
         tabIndex={0}
-        onClick={() => onChange({ template_id: "editorial" })}
+        onClick={() => onChange({ template_id: "standard" })}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
-            onChange({ template_id: "editorial" });
+            onChange({ template_id: "standard" });
           }
         }}
         className={`group relative flex flex-col justify-between rounded-xl border-2 p-4 text-left transition-all cursor-pointer ${
-          selectedTemplate === "editorial"
+          selectedTemplate === "standard"
             ? "border-primary bg-primary/[0.03] shadow-sm ring-1 ring-primary/20"
             : "border-border/70 hover:border-border hover:bg-muted/30"
         }`}
@@ -40,7 +40,7 @@ export function ThemePicker({
             <div className="flex items-center gap-2.5">
               <div
                 className={`flex h-9 w-9 items-center justify-center rounded-lg border ${
-                  selectedTemplate === "editorial"
+                  selectedTemplate === "standard"
                     ? "border-primary/30 bg-primary/10 text-primary"
                     : "border-border bg-muted/50 text-muted-foreground"
                 }`}
@@ -48,12 +48,12 @@ export function ThemePicker({
                 <LayoutTemplate className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="font-semibold text-foreground text-base">Editorial</h4>
+                <h4 className="font-semibold text-foreground text-base">Standard</h4>
                 <p className="text-xs text-muted-foreground">Clean, centered typography</p>
               </div>
             </div>
 
-            {selectedTemplate === "editorial" ? (
+            {selectedTemplate === "standard" ? (
               <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
                 <Check className="h-3.5 w-3.5" />
                 <span>Active</span>
@@ -86,7 +86,7 @@ export function ThemePicker({
 
         <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end">
           <a
-            href={editorialDemoUrl}
+            href={standardDemoUrl}
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}

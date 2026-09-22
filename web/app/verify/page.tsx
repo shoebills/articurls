@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { verifyEmail, ApiError } from "@/lib/api";
+import { verifyEmail, listSites, ApiError } from "@/lib/api";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,7 +28,8 @@ function VerifyInner() {
         const res = await verifyEmail(token);
         localStorage.setItem(TOKEN_KEY, res.access_token);
         setMsg(res.message === "Already confirmed" ? "Already verified — redirecting…" : "Verified — redirecting…");
-        window.location.assign("/dashboard");
+        const sites = await listSites(res.access_token);
+        window.location.assign(sites.length > 0 ? "/dashboard" : "/onboarding");
       } catch (ex) {
         setErr(ex instanceof ApiError ? ex.message : "Verification failed");
         setMsg("");

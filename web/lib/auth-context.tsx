@@ -21,7 +21,7 @@ type AuthContextValue = {
   loading: boolean;
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<boolean>;
   refreshSites: () => Promise<void>;
   switchSite: (siteId: string) => Promise<void>;
 };
@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const loadAuthData = useCallback(async (t: string) => {
+  const loadAuthData = useCallback(async (t: string): Promise<boolean> => {
     let siteList: SiteSummary[] = [];
     try {
       siteList = await listSites(t);
@@ -76,32 +76,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     setSites(siteList);
 
+    if (siteList.length === 0) {
+      // Fresh account that hasn't created a site yet — send to onboarding.
+      // getMe/getSubscription both 404 without a site (get_current_site).
+      setActiveSite(null);
+      setUser(null);
+      setSubscription(null);
+      return true;
+    }
+
     const storedSiteId = localStorage.getItem(SITE_KEY);
     const current = siteList.find((s) => String(s.site_id) === storedSiteId) || siteList[0] || null;
     if (current) {
       localStorage.setItem(SITE_KEY, String(current.site_id));
       setActiveSite(current);
     }
-    if (!current && !localStorage.getItem(SITE_KEY)) {
-      throw new Error("No site available");
-    }
 
     const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
     setUser(me);
     setSubscription(sub);
+    return false;
   }, []);
 
-  const refreshUser = useCallback(async () => {
+  const refreshUser = useCallback(async (): Promise<boolean> => {
     const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
     if (!t) {
       setUser(null);
       setSubscription(null);
       setSites([]);
       setActiveSite(null);
-      return;
+      return false;
     }
     try {
-      await loadAuthData(t);
+      return await loadAuthData(t);
     } catch (err: unknown) {
       const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
       if (status === 401) {
@@ -113,6 +120,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSites([]);
         setActiveSite(null);
       }
+      return false;
     }
   }, [loadAuthData]);
 
@@ -158,7 +166,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     (async () => {
       try {
-        await loadAuthData(t);
+        const needsOnboarding = await loadAuthData(t);
+        if (needsOnboarding) {
+          router.replace("/onboarding");
+        }
       } catch (err: unknown) {
         const status = (err as { status?: number; response?: { status?: number } })?.status || (err as { response?: { status?: number } })?.response?.status;
         if (status === 401) {
@@ -170,14 +181,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     })();
-  }, [loadAuthData]);
+  }, [loadAuthData, router]);
 
   const login = useCallback(
     async (email: string, password: string, redirectTo = "/dashboard") => {
       const res = await apiLogin(email, password);
       localStorage.setItem(TOKEN_KEY, res.access_token);
       setToken(res.access_token);
-      await refreshUser();
+      const needsOnboarding = await refreshUser();
+      if (needsOnboarding) {
+        router.replace("/onboarding");
+        return;
+      }
       if (redirectTo === "/dashboard") {
         const plan = localStorage.getItem("pendingPlan");
         localStorage.removeItem("pendingPlan");

@@ -254,7 +254,6 @@ export async function resendVerificationEmail(
 
 export async function signup(data: {
   name: string;
-  subdomain: string;
   email: string;
   password: string;
 }): Promise<{ message: string }> {
@@ -286,6 +285,8 @@ export async function completeGoogleSignup(data: {
   subdomain: string;
   password: string;
   name: string;
+  nav_blog_name?: string;
+  template_id?: string;
 }): Promise<{ access_token: string; token_type: string }> {
   return apiFetch("/auth/google/complete", {
     method: "POST",
@@ -735,7 +736,7 @@ export async function listSites(token: string): Promise<SiteSummary[]> {
 
 export async function createSite(
   token: string,
-  body: { subdomain: string; nav_blog_name?: string }
+  body: { subdomain: string; nav_blog_name?: string; template_id?: string }
 ): Promise<SiteSummary> {
   return apiFetch("/sites/", {
     method: "POST",

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verify your email</title>
+  <title>Account deletion warning</title>
 </head>
 <body style="margin:0;padding:0;background-color:#f6f6f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f6f6f6;padding:40px 16px;">
@@ -16,25 +16,18 @@
                 Hi {{ blog_name }},
               </p>
               <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#333333;">
-                Thanks for signing up for <strong>Articurls</strong>. Confirm your email address to activate your account and open your dashboard.
+                Your <strong>Articurls</strong> trial has ended and your account is scheduled for deletion.
+              </p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#333333;">
+                <strong>{{ time_left }}</strong> — that's how much time remains until your account and all its content are permanently deleted. Subscribe now to keep everything.
               </p>
               <p style="margin:0 0 32px;">
-                <a href="{{ verify_url }}" style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 24px;border-radius:6px;">
-                  Verify email address
+                <a href="{{ billing_url }}" style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 24px;border-radius:6px;">
+                  Subscribe now
                 </a>
               </p>
-              <p style="margin:0 0 16px;font-size:14px;line-height:1.5;color:#666666;">
-                Or paste this link into your browser:
-              </p>
-              <p style="margin:0 0 32px;font-size:13px;line-height:1.5;color:#111111;word-break:break-all;">
-                {{ verify_url }}
-              </p>
-              <p style="margin:0 0 16px;padding:14px 16px;border-radius:6px;background-color:#fff7ed;border:1px solid #fed7aa;font-size:13px;line-height:1.6;color:#92400e;">
-                <strong>Your 7-day free trial starts once you verify your email.</strong><br>
-                Unverified accounts are automatically deleted 14 days after sign-up.
-              </p>
               <p style="margin:0;font-size:13px;line-height:1.5;color:#888888;">
-                This link expires in {{ expiry_hours }} hours. If you didn’t create an account, you can safely ignore this email.
+                After deletion, your blogs, posts, subscribers, and settings cannot be recovered.
               </p>
             </td>
           </tr>

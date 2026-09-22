@@ -14,9 +14,11 @@ import {
   Tags,
   Gauge,
   UserCheck,
+  Hourglass,
 } from "lucide-react";
 import { SiteSwitcher } from "@/components/site-switcher";
 import { SidebarAccountDropdown } from "@/components/sidebar-account-dropdown";
+import { useAuth } from "@/lib/auth-context";
 
 const primaryLinks = [
   { href: "/dashboard", label: "Dashboard", icon: Gauge },
@@ -45,6 +47,20 @@ type PanelProps = {
 
 export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
+  const { isTrial, daysRemaining } = useAuth();
+
+  const trialChip = isTrial ? (
+    <Link
+      href="/dashboard/billing?plan=pro"
+      onClick={() => onNavigate?.()}
+      className="mx-2.5 mb-1 flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50/70 px-2.5 py-2 text-xs font-medium leading-tight text-amber-900 transition-colors hover:bg-amber-50"
+    >
+      <Hourglass className="h-3.5 w-3.5 shrink-0 text-amber-600" />
+      {daysRemaining !== null && daysRemaining > 0
+        ? `${daysRemaining} ${daysRemaining === 1 ? "day" : "days"} left in trial`
+        : "Trial ended — subscribe now"}
+    </Link>
+  ) : null;
 
   const renderNavLinks = (items: typeof primaryLinks) =>
     items.map(({ href, label, icon: Icon }) => {
@@ -85,6 +101,9 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
       {/* Site Switcher */}
       <SiteSwitcher onNavigate={onNavigate} />
+
+      {/* Trial countdown chip */}
+      {trialChip}
 
       <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
         <nav className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 min-h-0 gap-5">

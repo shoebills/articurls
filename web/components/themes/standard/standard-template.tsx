@@ -10,7 +10,7 @@ import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl, getPublicA
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
-type EditorialTemplateProps = {
+type StandardTemplateProps = {
   site: PublicSite;
   blogs: PublicBlog[];
   pages: UserPage[];
@@ -18,7 +18,7 @@ type EditorialTemplateProps = {
   basePath: string;
 };
 
-export function EditorialTemplate({ site, blogs, pages, categories, basePath }: EditorialTemplateProps) {
+export function StandardTemplate({ site, blogs, pages, categories, basePath }: StandardTemplateProps) {
   const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
   const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
   const maxWidth = site.content_width === "wide" ? "max-w-5xl" : "max-w-3xl";
@@ -112,7 +112,7 @@ export function EditorialTemplate({ site, blogs, pages, categories, basePath }: 
           </div>
         ) : null}
 
-        {/* Linear Editorial Feed */}
+        {/* Linear Standard Feed */}
         {blogs.length === 0 ? (
           <div className="py-24 text-center">
             <p className="text-base text-muted-foreground">No posts published yet.</p>

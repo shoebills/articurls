@@ -12,7 +12,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { API_URL, UGC_DOMAIN } from "@/lib/env";
+import { API_URL } from "@/lib/env";
 
 /** Label → control spacing; same for text inputs. */
 const FIELD_GROUP = "flex flex-col gap-2";
@@ -31,7 +31,6 @@ function SignupForm() {
   }, [searchParams]);
 
   const [name, setName] = useState("");
-  const [subdomain, setSubdomain] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -46,7 +45,7 @@ function SignupForm() {
     setInfo(null);
     setBusy(true);
     try {
-      await apiSignup({ name, subdomain, email, password });
+      await apiSignup({ name, email, password });
       setDone(true);
     } catch (ex) {
       setErr(ex instanceof ApiError ? ex.message : "Sign up failed");
@@ -100,6 +99,9 @@ function SignupForm() {
                 {info}
               </p>
             )}
+            <p className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-2.5 text-sm leading-relaxed text-amber-900">
+              Your 7-day free trial starts once you verify your email. Unverified accounts are deleted after 14 days.
+            </p>
             <Button
               type="button"
               variant="outline"
@@ -199,7 +201,7 @@ function SignupForm() {
     );
   }
 
-  // Step 2: Profile (Name, Subdomain, Password) - Final Step
+  // Step 2: Profile (Name, Password) - Final Step
   return (
     <AuthPageShell>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
@@ -234,24 +236,6 @@ function SignupForm() {
                 autoFocus
                 required 
               />
-            </div>
-            <div className={FIELD_GROUP}>
-              <Label htmlFor="subdomain">Subdomain</Label>
-              <Input
-                id="subdomain"
-                value={subdomain}
-                onChange={(e) => setSubdomain(e.target.value.replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase())}
-                placeholder="yourname"
-                required
-                pattern="[a-zA-Z0-9_-]+"
-                title="Letters, numbers, underscore, hyphen"
-              />
-              <p className="text-sm leading-relaxed text-muted-foreground">
-                Your public URL: {subdomain || "subdomain"}.{UGC_DOMAIN}
-              </p>
-              <p className="text-xs leading-relaxed text-muted-foreground/80">
-                This cannot be changed later, but you can connect a custom domain anytime.
-              </p>
             </div>
             <div className={FIELD_GROUP}>
               <Label htmlFor="password">Password</Label>
