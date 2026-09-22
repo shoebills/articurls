@@ -225,8 +225,10 @@ function SetupForm() {
     window.location.assign(targetUrl);
   }
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleFinalSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (busy) return;
+
     setErr(null);
     setBusy(true);
     try {
@@ -236,7 +238,7 @@ function SetupForm() {
         await finishEmailFlow();
       }
     } catch (ex) {
-      setErr(ex instanceof ApiError ? ex.message : "Failed to create your blog");
+      setErr(ex instanceof ApiError ? ex.message : "Failed to create your site");
     } finally {
       setBusy(false);
     }
@@ -245,16 +247,26 @@ function SetupForm() {
   function goNext() {
     setErr(null);
     if (step < totalSteps - 1) {
-      setStep(step + 1);
+      setStep((prev) => Math.min(prev + 1, totalSteps - 1));
     }
   }
 
   function goBack() {
     setErr(null);
     if (step > 0) {
-      setStep(step - 1);
+      setStep((prev) => Math.max(prev - 1, 0));
     }
   }
+
+  const handleInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      e.stopPropagation();
+      if (canContinue()) {
+        goNext();
+      }
+    }
+  };
 
   if (flow === "google" && !sessionId) return null; // redirecting
   if (flow === "email" && !storedToken) return null; // redirecting
@@ -262,7 +274,7 @@ function SetupForm() {
   const titles =
     flow === "google"
       ? ["About you", "Pick your subdomain", "Choose a theme"]
-      : ["Name your blog", "Pick your subdomain", "Choose a theme"];
+      : ["Create new site", "Pick your subdomain", "Choose a theme"];
 
   return (
     <AuthPageShell>
@@ -285,7 +297,7 @@ function SetupForm() {
             <CardTitle className="text-xl font-bold tracking-tight">{titles[step]}</CardTitle>
           </div>
           <CardDescription className="text-sm">
-            {flow === "google" ? "Claim your space" : "Set up your blog in a few simple steps"}
+            {flow === "google" ? "Claim your space" : "Set up your publication"}
           </CardDescription>
           {/* Progress dots */}
           <div className="flex items-center gap-1.5 pt-2" aria-label={`Step ${step + 1} of ${totalSteps}`}>
@@ -301,7 +313,15 @@ function SetupForm() {
           </div>
         </CardHeader>
         <CardContent>
-          <form onSubmit={onSubmit} className="space-y-4">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (step === totalSteps - 1) {
+                handleFinalSubmit(e);
+              }
+            }}
+            className="space-y-4"
+          >
             {/* Step 0: Name */}
             {step === 0 && (
               <div className="space-y-4">
@@ -315,6 +335,7 @@ function SetupForm() {
                         id="name"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        onKeyDown={handleInputKeyDown}
                         placeholder="Jane Doe"
                         autoFocus
                         required
@@ -323,17 +344,15 @@ function SetupForm() {
 
                     <div className={FIELD_GROUP}>
                       <Label htmlFor="blogName" className="text-sm font-medium">
-                        Blog name <span className="text-xs text-muted-foreground">(optional)</span>
+                        Site name <span className="text-xs text-muted-foreground">(optional)</span>
                       </Label>
                       <Input
                         id="blogName"
                         value={blogName}
                         onChange={(e) => setBlogName(e.target.value)}
+                        onKeyDown={handleInputKeyDown}
                         placeholder="e.g. Jane's Notes"
                       />
-                      <p className="text-xs text-muted-foreground">
-                        Shown in your header and page title
-                      </p>
                     </div>
 
                     {email && (
@@ -345,19 +364,17 @@ function SetupForm() {
                 ) : (
                   <div className={FIELD_GROUP}>
                     <Label htmlFor="blogName" className="text-sm font-medium">
-                      What should we call your blog?
+                      Site name
                     </Label>
                     <Input
                       id="blogName"
                       value={blogName}
                       onChange={(e) => setBlogName(e.target.value)}
-                      placeholder="e.g. Jane's Notes, Tech Dispatch, Daily Life"
+                      onKeyDown={handleInputKeyDown}
+                      placeholder="e.g. Jane's Notes"
                       autoFocus
                       required
                     />
-                    <p className="text-xs text-muted-foreground">
-                      You can change this anytime in settings
-                    </p>
                   </div>
                 )}
               </div>
@@ -377,6 +394,7 @@ function SetupForm() {
                       placeholder="my-blog"
                       value={subdomain}
                       onChange={(e) => setSubdomain(cleanSubdomain(e.target.value))}
+                      onKeyDown={handleInputKeyDown}
                       autoFocus
                       required
                     />
@@ -384,9 +402,6 @@ function SetupForm() {
                       .{UGC_DOMAIN}
                     </span>
                   </div>
-                  <p className="text-xs leading-relaxed text-muted-foreground">
-                    This is your free Articurls URL. You can connect your own custom domain later.
-                  </p>
                 </div>
 
                 {subdomain.length >= 3 && (
@@ -404,7 +419,7 @@ function SetupForm() {
             {step === 2 && (
               <div className="space-y-3">
                 <p className="text-xs text-muted-foreground">
-                  Pick a layout to start with. You can change themes and fonts anytime in settings.
+                  Pick a layout to start with
                 </p>
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   {TEMPLATES.map((tpl) => (
@@ -421,6 +436,7 @@ function SetupForm() {
 
             {step < totalSteps - 1 ? (
               <Button
+                key="btn-continue"
                 type="button"
                 className="w-full"
                 size="lg"
@@ -431,6 +447,7 @@ function SetupForm() {
               </Button>
             ) : (
               <Button
+                key="btn-submit"
                 type="submit"
                 className="w-full"
                 size="lg"
@@ -444,7 +461,7 @@ function SetupForm() {
                 ) : flow === "google" ? (
                   "Start publishing"
                 ) : (
-                  "Create my blog"
+                  "Create site"
                 )}
               </Button>
             )}
