@@ -746,6 +746,14 @@ export async function listSites(token: string): Promise<SiteSummary[]> {
   return apiFetch("/sites/", { token });
 }
 
+export async function checkSubdomainAvailability(
+  subdomain: string
+): Promise<{ available: boolean; subdomain: string; reason?: string }> {
+  return apiFetch(`/sites/check-availability?subdomain=${encodeURIComponent(subdomain)}`, {
+    disableCache: true,
+  });
+}
+
 export async function createSite(
   token: string,
   body: { subdomain: string; nav_blog_name?: string; template_id?: string }

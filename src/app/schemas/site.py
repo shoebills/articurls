@@ -7,7 +7,7 @@ import uuid
 class SiteCreate(BaseModel):
     subdomain: str
     nav_blog_name: Optional[str] = None
-    template_id: Optional[str] = None
+    template_id: Optional[str] = "saas"
 
 
 class SiteUpdate(BaseModel):

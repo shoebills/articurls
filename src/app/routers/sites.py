@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks
+from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -54,6 +54,30 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
         "post_count": post_count,
         "subscriber_count": subscriber_count,
     }
+
+
+@router.get("/check-availability", status_code=status.HTTP_200_OK)
+def check_subdomain_availability(
+    subdomain: str = Query(..., min_length=1),
+    db: Session = Depends(get_db),
+):
+    raw_subdomain = subdomain.strip().lower()
+    cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
+
+    if not cleaned_subdomain or len(cleaned_subdomain) < 3 or len(cleaned_subdomain) > 48:
+        return {"available": False, "subdomain": cleaned_subdomain, "reason": "Must be between 3 and 48 characters."}
+
+    if not re.match(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$", cleaned_subdomain):
+        return {"available": False, "subdomain": cleaned_subdomain, "reason": "Can only contain lowercase letters, numbers, and hyphens."}
+
+    if cleaned_subdomain in RESERVED_SUBDOMAINS:
+        return {"available": False, "subdomain": cleaned_subdomain, "reason": "This subdomain is reserved."}
+
+    existing_site = db.query(models.Site).filter(models.Site.subdomain == cleaned_subdomain).first()
+    if existing_site:
+        return {"available": False, "subdomain": cleaned_subdomain, "reason": "Already taken."}
+
+    return {"available": True, "subdomain": cleaned_subdomain}
 
 
 @router.get("/", response_model=List[site_schema.SiteSummary], status_code=status.HTTP_200_OK)
