@@ -536,7 +536,7 @@ export default function CategoriesDashboardPage() {
             <button
               type="button"
               onClick={() => setCreateAdvancedOpen(!createAdvancedOpen)}
-              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="ml-auto flex items-center justify-end gap-1 rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               Advanced settings
               <ChevronDown
@@ -545,7 +545,7 @@ export default function CategoriesDashboardPage() {
             </button>
 
             {createAdvancedOpen ? (
-              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
                   <Textarea
@@ -619,7 +619,7 @@ export default function CategoriesDashboardPage() {
             <button
               type="button"
               onClick={() => setEditAdvancedOpen(!editAdvancedOpen)}
-              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="ml-auto flex items-center justify-end gap-1 rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
             >
               Advanced settings
               <ChevronDown
@@ -628,7 +628,7 @@ export default function CategoriesDashboardPage() {
             </button>
 
             {editAdvancedOpen ? (
-              <div className="space-y-3 rounded-lg border border-border/60 bg-muted/20 p-3">
+              <div className="space-y-3">
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
                   <Textarea

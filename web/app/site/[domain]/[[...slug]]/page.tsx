@@ -22,7 +22,7 @@ import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { StructuredData } from "@/components/structured-data";
-import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema, generateFaqPageSchema } from "@/lib/structured-data";
+import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema, generateFaqPageSchema, generateBreadcrumbList } from "@/lib/structured-data";
 import { BriefcaseBusiness, Calendar, ChevronLeft, Globe } from "lucide-react";
 import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
@@ -676,6 +676,10 @@ export default async function SitePublicationPage({ params }: Props) {
         <ThemeStyleWrapper site={site}>
           <article className="min-h-screen bg-background">
           <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
+          <StructuredData data={generateBreadcrumbList([
+            { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+            { name: blog.meta_title || blog.title, url: currentUrl },
+          ])} />
           {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
             <StructuredData data={generateFaqPageSchema(blog.faq_items, currentUrl)} />
           )}
@@ -769,6 +773,10 @@ export default async function SitePublicationPage({ params }: Props) {
         <div className="min-h-screen bg-background text-foreground">
           <main className={mainSpacing}>
             <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
+            <StructuredData data={generateBreadcrumbList([
+              { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+              { name: page.title || "Untitled Page", url: currentUrl },
+            ])} />
             {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
               <StructuredData data={generateFaqPageSchema(page.faq_items, currentUrl)} />
             )}
@@ -889,6 +897,10 @@ export default async function SitePublicationPage({ params }: Props) {
       <ThemeStyleWrapper site={site}>
       <div className="min-h-screen bg-background text-foreground">
         <StructuredData data={generateCollectionPageSchema(data.category, site, currentUrl)} />
+        <StructuredData data={generateBreadcrumbList([
+          { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+          { name: categoryName, url: currentUrl },
+        ])} />
         <main className={mainSpacing}>
           {isNavEnabled ? (
             <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
@@ -983,6 +995,10 @@ export default async function SitePublicationPage({ params }: Props) {
       <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateAuthorProfileSchema(author, site, currentUrl, siteUrl)} />
+          <StructuredData data={generateBreadcrumbList([
+            { name: site.nav_blog_name || "Home", url: siteUrl },
+            { name: author.name, url: currentUrl },
+          ])} />
           <main className={mainSpacing}>
             {isNavEnabled ? (
               <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
@@ -1108,6 +1124,10 @@ export default async function SitePublicationPage({ params }: Props) {
       <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, currentUrl)} />
+          <StructuredData data={generateBreadcrumbList([
+            { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+            { name: "Categories", url: currentUrl },
+          ])} />
           <main className={mainSpacing}>
             {isNavEnabled ? (
               <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>

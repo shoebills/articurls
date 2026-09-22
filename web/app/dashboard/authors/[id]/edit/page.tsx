@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   getAuthor,
-  listAuthors,
   updateAuthor,
   deleteAuthor,
   uploadAuthorAvatar,
@@ -40,7 +39,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
   const { token } = useAuth();
 
   const [author, setAuthor] = useState<Author | null>(null);
-  const [totalAuthorsCount, setTotalAuthorsCount] = useState<number>(1);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -101,12 +99,8 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     setError(null);
 
     try {
-      const [authorData, allAuthors] = await Promise.all([
-        getAuthor(token, authorId),
-        listAuthors(token).catch(() => [] as Author[]),
-      ]);
+      const authorData = await getAuthor(token, authorId);
       populateAuthor(authorData);
-      setTotalAuthorsCount(allAuthors.length);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to load author");
     } finally {
@@ -279,11 +273,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Edit Author</h1>
-          {author.blog_count !== undefined && (
-            <span className="inline-flex items-center rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-              {author.blog_count} {author.blog_count === 1 ? "post" : "posts"}
-            </span>
-          )}
         </div>
       </div>
 
@@ -302,13 +291,10 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
         <Card>
           <CardHeader>
             <CardTitle className="text-xl">Profile Details</CardTitle>
-            <CardDescription>
-              Basic identity, byline photo, and author bio shown across articles.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             {/* Avatar upload */}
-            <div className="space-y-2.5">
+            <div className="space-y-4">
               <Label>Author Photo</Label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="relative">
@@ -423,13 +409,69 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                 disabled={submitting}
               />
             </div>
+
+            {/* Advanced settings */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={() => setSeoAdvancedOpen(!seoAdvancedOpen)}
+                className="ml-auto flex items-center justify-end gap-1 rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
+              >
+                Advanced settings
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 transition-transform ${seoAdvancedOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {seoAdvancedOpen ? (
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_title">Meta Title</Label>
+                    <Input
+                      id="meta_title"
+                      placeholder="Overrides the browser tab title for this author"
+                      value={metaTitle}
+                      onChange={(e) => setMetaTitle(e.target.value)}
+                      disabled={submitting}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="meta_description">Meta Description</Label>
+                    <Textarea
+                      id="meta_description"
+                      placeholder="Overrides the search engine description for this author"
+                      rows={2}
+                      value={metaDescription}
+                      onChange={(e) => setMetaDescription(e.target.value)}
+                      disabled={submitting}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                      <p className="text-sm font-medium">Hide from search engines</p>
+                      <p className="text-xs text-muted-foreground">
+                        Adds a noindex meta tag to this author&apos;s page.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={noindex}
+                      onCheckedChange={setNoindex}
+                      disabled={submitting}
+                      aria-label="Hide author page from search engines"
+                    />
+                  </div>
+                </div>
+              ) : null}
+            </div>
           </CardContent>
         </Card>
 
         {/* Social Links Card */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-xl">Social Profiles & Website</CardTitle>
+            <CardTitle className="text-xl">Social Profiles</CardTitle>
             <CardDescription>
               Connect external links to display on the author&apos;s public profile.
             </CardDescription>
@@ -527,100 +569,27 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
           </CardContent>
         </Card>
 
-        {/* SEO Card */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-xl">SEO</CardTitle>
-            <CardDescription>
-              Search engine settings for this author&apos;s public profile page.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <button
-              type="button"
-              onClick={() => setSeoAdvancedOpen(!seoAdvancedOpen)}
-              className="flex w-full items-center justify-between rounded-md px-1 py-1 text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Advanced settings
-              <ChevronDown
-                className={`h-4 w-4 shrink-0 transition-transform ${seoAdvancedOpen ? "rotate-180" : ""}`}
-              />
-            </button>
-
-            {seoAdvancedOpen ? (
-              <div className="space-y-5 rounded-lg border border-border/60 bg-muted/20 p-4">
-                <div className="space-y-2">
-                  <Label htmlFor="meta_title">Meta Title</Label>
-                  <Input
-                    id="meta_title"
-                    placeholder="Overrides the browser tab title for this author"
-                    value={metaTitle}
-                    onChange={(e) => setMetaTitle(e.target.value)}
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="meta_description">Meta Description</Label>
-                  <Textarea
-                    id="meta_description"
-                    placeholder="Overrides the search engine description for this author"
-                    rows={2}
-                    value={metaDescription}
-                    onChange={(e) => setMetaDescription(e.target.value)}
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between rounded-lg border p-3">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Hide from search engines</p>
-                    <p className="text-xs text-muted-foreground">
-                      Adds a noindex meta tag to this author&apos;s page.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={noindex}
-                    onCheckedChange={setNoindex}
-                    disabled={submitting}
-                    aria-label="Hide author page from search engines"
-                  />
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-
         {/* Danger Zone Card */}
         <Card className="border-destructive/30 bg-destructive/[0.02]">
           <CardHeader>
             <CardTitle className="text-xl text-destructive">Danger Zone</CardTitle>
             <CardDescription>
-              Permanently remove this author profile from your publication.
+              Permanently remove this author profile from your publication? Their{" "}
+              {author.blog_count ?? 0} {author.blog_count === 1 ? "post" : "posts"} will not be
+              assigned any author.
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 rounded-lg border border-destructive/20 bg-background p-4">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-foreground">Delete this author</p>
-                <p className="text-xs text-muted-foreground">
-                  {totalAuthorsCount > 1
-                    ? `Their ${author.blog_count ?? 0} ${author.blog_count === 1 ? "post" : "posts"} will be reassigned to another author.`
-                    : `Their ${author.blog_count ?? 0} ${author.blog_count === 1 ? "post" : "posts"} will no longer show a byline.`}
-                </p>
-              </div>
-
-              <Button
-                type="button"
-                variant="destructive"
-                onClick={() => setDeleteDialogOpen(true)}
-                disabled={submitting || deleting}
-                className="shrink-0 gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete Author
-              </Button>
-            </div>
+          <CardContent>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => setDeleteDialogOpen(true)}
+              disabled={submitting || deleting}
+              className="shrink-0 gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete Author
+            </Button>
           </CardContent>
         </Card>
 
@@ -648,7 +617,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
           <DialogHeader>
             <DialogTitle>Delete Author</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete &quot;{author.name}&quot;? Their {author.blog_count ?? 0} {author.blog_count === 1 ? "post" : "posts"} {totalAuthorsCount > 1 ? "will be reassigned to another author." : "will no longer show a byline."}
+              Are you sure you want to delete &quot;{author.name}&quot;? Their {author.blog_count ?? 0} {author.blog_count === 1 ? "post" : "posts"} will not be assigned any author.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

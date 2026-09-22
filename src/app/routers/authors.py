@@ -226,25 +226,11 @@ def delete_author(
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
-    # Reassign blogs to another author on the site, or clear the byline if none remains
-    fallback_author = (
-        db.query(models.Author)
-        .filter(
-            models.Author.site_id == current_site.site_id,
-            models.Author.author_id != author_id,
-        )
-        .first()
+    # Clear the byline on all blogs by this author
+    db.query(models.Blog).filter(models.Blog.author_id == author_id).update(
+        {models.Blog.author_id: None},
+        synchronize_session=False,
     )
-    if fallback_author:
-        db.query(models.Blog).filter(models.Blog.author_id == author_id).update(
-            {models.Blog.author_id: fallback_author.author_id},
-            synchronize_session=False,
-        )
-    else:
-        db.query(models.Blog).filter(models.Blog.author_id == author_id).update(
-            {models.Blog.author_id: None},
-            synchronize_session=False,
-        )
 
     db.delete(author)
     db.commit()

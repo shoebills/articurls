@@ -60,7 +60,6 @@ export interface BlogPosting {
     name: string;
   };
   publisher?: Organization;
-  breadcrumb?: BreadcrumbList;
 }
 
 export interface ProfilePage {
@@ -72,7 +71,6 @@ export interface ProfilePage {
     "@id": string;
     name: string;
   };
-  breadcrumb?: BreadcrumbList;
 }
 
 export interface WebSite {
@@ -97,7 +95,6 @@ export interface CollectionPage {
     "@id": string;
     name: string;
   };
-  breadcrumb?: BreadcrumbList;
 }
 
 export interface WebPage {
@@ -113,7 +110,6 @@ export interface WebPage {
     name: string;
   };
   dateModified?: string;
-  breadcrumb?: BreadcrumbList;
 }
 
 export interface BreadcrumbList {
@@ -191,10 +187,6 @@ export function generateAuthorProfileSchema(
       "@id": siteUrl,
       name: site.nav_blog_name || "My Blog",
     },
-    breadcrumb: generateBreadcrumbList([
-      { name: site.nav_blog_name || "Home", url: siteUrl },
-      { name: author.name, url: canonicalUrl },
-    ]),
   };
 }
 
@@ -306,10 +298,6 @@ export function generateBlogPostingSchema(
       name: siteName,
     },
     publisher: generateOrganizationSchema(siteName, siteUrl, author.favicon_url),
-    breadcrumb: generateBreadcrumbList([
-      { name: author.nav_blog_name || "Home", url: siteUrl },
-      { name: title, url: canonicalUrl },
-    ]),
   };
 }
 
@@ -333,10 +321,6 @@ export function generateCollectionPageSchema(
       "@id": siteUrl,
       name: author.nav_blog_name || "My Blog",
     },
-    breadcrumb: generateBreadcrumbList([
-      { name: author.nav_blog_name || "Home", url: siteUrl },
-      { name: category.name, url: canonicalUrl },
-    ]),
   };
 }
 
@@ -361,10 +345,6 @@ export function generateWebPageSchema(
       name: author.nav_blog_name || "My Blog",
     },
     dateModified: page.updated_at || undefined,
-    breadcrumb: generateBreadcrumbList([
-      { name: author.nav_blog_name || "Home", url: siteUrl },
-      { name: page.title || "Untitled Page", url: canonicalUrl },
-    ]),
   };
 }
 
