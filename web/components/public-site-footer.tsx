@@ -24,7 +24,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   const showSitemap = site.footer_show_sitemap !== false;
   const showRss = site.footer_show_rss !== false && site.rss_enabled === true;
   const showAtom = site.footer_show_atom === true && site.atom_enabled === true;
-  const showNewsletter = site.newsletter_show_in_footer !== false && site.subscriber_collection_enabled;
+  const showNewsletter = site.newsletter_show_in_footer !== false;
   const currentYear = new Date().getFullYear();
   const copyrightText = site.footer_copyright || `© ${currentYear} ${site.site_name || site.name || site.subdomain}. All rights reserved.`;
 

@@ -542,8 +542,7 @@ export default async function SitePublicationPage({ params }: Props) {
         : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
       
       const desktopLinks = resolveNavLinks(site, categories, basePath);
-      const showSubscriberCollection = site.subscriber_collection_enabled === true;
-      const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+      const hasMobileNav = desktopLinks.length > 0;
 
       const otherBlogs = (allBlogs || []).filter((b) => b.blog_id !== blog.blog_id);
       const currentCatIds = blog.category_ids || [];
@@ -676,18 +675,16 @@ export default async function SitePublicationPage({ params }: Props) {
             </section>
           )}
 
-          {showSubscriberCollection ? (
-            <div className="mt-14">
-              <SubscribeToAuthor
-                subdomain={site.subdomain}
-                authorName={site.name}
-                headline={site.newsletter_headline}
-                text={site.newsletter_text}
-                disclaimer={site.newsletter_disclaimer}
-                buttonText={site.newsletter_button_text}
-              />
-            </div>
-          ) : null}
+          <div className="mt-14">
+            <SubscribeToAuthor
+              subdomain={site.subdomain}
+              authorName={site.name}
+              headline={site.newsletter_headline}
+              text={site.newsletter_text}
+              disclaimer={site.newsletter_disclaimer}
+              buttonText={site.newsletter_button_text}
+            />
+          </div>
         </>
       );
 
@@ -718,7 +715,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
@@ -734,7 +730,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
-                    showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -786,8 +781,7 @@ export default async function SitePublicationPage({ params }: Props) {
         : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
       const desktopLinks = resolveNavLinks(site, categories, basePath);
-      const showSubscriberCollection = site.subscriber_collection_enabled === true;
-      const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+      const hasMobileNav = desktopLinks.length > 0;
 
       const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
 
@@ -824,7 +818,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
@@ -840,7 +833,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
-                    showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -920,8 +912,7 @@ export default async function SitePublicationPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const showSubscriberCollection = site.subscriber_collection_enabled === true;
-    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
+    const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
 
     const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
 
@@ -943,7 +934,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
@@ -959,7 +949,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
-                    showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -1019,8 +1008,7 @@ export default async function SitePublicationPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const showSubscriberCollection = site.subscriber_collection_enabled === true;
-    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
+    const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
     const currentUrl = `https://${host}${basePath}/author/${encodeURIComponent(authorSlug)}`;
     const siteUrl = `https://${host}${basePath}`;
     const authorAvatar = author.profile_image_url ? assetUrl(author.profile_image_url) : null;
@@ -1043,7 +1031,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
@@ -1059,7 +1046,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
-                    showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -1151,8 +1137,7 @@ export default async function SitePublicationPage({ params }: Props) {
       : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
 
     const desktopLinks = resolveNavLinks(site, allCategories, basePath);
-    const showSubscriberCollection = site.subscriber_collection_enabled === true;
-    const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection;
+    const hasMobileNav = desktopLinks.length > 0;
 
     const currentUrl = `https://${host}${basePath}/categories`;
 
@@ -1174,7 +1159,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
-                    showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
                     authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
@@ -1190,7 +1174,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
-                    showSubscribeAction={showSubscriberCollection}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />

@@ -110,7 +110,6 @@ class PublicSite(BaseModel):
     pagination_type: Literal["prev_next", "numbered"] = "prev_next"
     toc_enabled: bool = True
 
-    subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
     rss_enabled: bool = False

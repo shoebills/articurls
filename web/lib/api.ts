@@ -348,7 +348,6 @@ export async function patchProMe(
     navbar_enabled?: boolean;
     site_name?: string | null;
     nav_menu_enabled?: boolean;
-    subscriber_collection_enabled?: boolean;
   }
 ): Promise<UserSettings> {
   return apiFetch("/user/pro/me", {

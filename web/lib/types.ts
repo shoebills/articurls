@@ -209,7 +209,6 @@ export interface PublicSite {
   posts_per_page?: number;
   pagination_type?: "prev_next" | "numbered";
   toc_enabled?: boolean;
-  subscriber_collection_enabled: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled?: boolean;
@@ -283,7 +282,6 @@ export interface UserSettings {
   posts_per_page?: number;
   pagination_type?: "prev_next" | "numbered";
   toc_enabled?: boolean;
-  subscriber_collection_enabled: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled: boolean;

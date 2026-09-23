@@ -2,10 +2,9 @@
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
-import { Bell, ExternalLink, Menu, X } from "lucide-react";
+import { ExternalLink, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -39,10 +38,8 @@ export function PublicMobileNavMenu({
   titleHref = "/",
   links,
   subdomain,
-  authorName,
   logoUrl,
   searchEnabled = true,
-  showSubscribeAction = false,
   showMenuButton = true,
   basePath = "",
 }: PublicMobileNavMenuProps) {
@@ -151,14 +148,6 @@ export function PublicMobileNavMenu({
               >
                 {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
-            ) : showSubscribeAction && subdomain ? (
-              <SubscribeToAuthor
-                mode="dialog"
-                subdomain={subdomain}
-                authorName={authorName}
-                triggerClassName="flex h-9 w-9 min-h-0 shrink-0 items-center justify-center rounded-md transition-all duration-200 p-0"
-                triggerChildren={<Bell className="h-4 w-4" />}
-              />
             ) : null}
           </div>
         ) : null}
@@ -208,20 +197,9 @@ export function PublicMobileNavMenu({
                 </Link>
               ))}
             </div>
-          ) : !showSubscribeAction ? (
+          ) : (
             <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
-          ) : null}
-
-          {showSubscribeAction && subdomain ? (
-            <div className={`flex flex-col items-center ${links.length > 0 ? "border-t border-border/60 p-1.5" : "p-1.5"}`}>
-              <SubscribeToAuthor
-                mode="dialog"
-                subdomain={subdomain}
-                authorName={authorName}
-                triggerClassName="h-10 min-h-10 w-full justify-center rounded-md px-3 text-center text-sm font-medium"
-              />
-            </div>
-          ) : null}
+          )}
         </div>
       ) : null}
     </div>

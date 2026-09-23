@@ -56,8 +56,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
         }))
       : [];
 
-  const showSubscriberCollection = site.subscriber_collection_enabled === true;
-  const hasMobileNav = desktopLinks.length > 0 || showSubscriberCollection || blogs.length > 0;
+  const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
 
   const publicNavHeaderClass = site.navbar_style === "floating"
     ? "sticky top-4 z-40 mb-8 rounded-full border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
@@ -79,7 +78,6 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 logoUrl={site.logo_url}
                 searchEnabled={site.search_enabled !== false}
                 links={desktopLinks}
-                showSubscribe={showSubscriberCollection}
                 subdomain={site.subdomain}
                 authorName={site.name}
                 alignment={site.navbar_alignment || "left"}
@@ -94,7 +92,6 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 links={mobileLinks}
                 subdomain={site.subdomain}
                 authorName={site.name}
-                showSubscribeAction={showSubscriberCollection}
                 showMenuButton={hasMobileNav}
               />
             </div>
@@ -115,7 +112,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   </span>
                 ) : null}
               </h1>
-              {showSubscriberCollection && site.newsletter_show_near_header ? (
+              {site.newsletter_show_near_header ? (
                 <div className="mt-8">
                   <SubscribeToAuthor
                     subdomain={site.subdomain}
@@ -143,7 +140,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
               </div>
             </div>
           </div>
-        ) : showSubscriberCollection && site.newsletter_show_near_header ? (
+        ) : site.newsletter_show_near_header ? (
           <div className="my-10 max-w-md">
             <SubscribeToAuthor
               subdomain={site.subdomain}

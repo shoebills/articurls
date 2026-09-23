@@ -72,7 +72,6 @@ class UserSettings(BaseModel):
     og_image_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[str] | None = []
-    subscriber_collection_enabled: bool = True
     custom_domain: Optional[str] = None
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
@@ -108,7 +107,6 @@ class UpdateProUser(BaseModel):
     site_name: Optional[str] = None
     nav_menu_enabled: Optional[bool] = None
     favicon_url: Optional[str] = None
-    subscriber_collection_enabled: Optional[bool] = None
 
 
 class SeoSettings(BaseModel):

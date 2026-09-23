@@ -53,12 +53,6 @@ def subscribe_blog(
     if not db_site:
       raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, 
                           detail=f"Site with subdomain {subdomain} doesn't exist")
-
-    if not db_site.subscriber_collection_enabled:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Subscriptions are unavailable for this blog",
-        )
      
     db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.email == email, models.Subscriber.site_id == db_site.site_id).first()
 

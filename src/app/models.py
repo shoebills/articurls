@@ -121,7 +121,6 @@ class Site(Base):
     toc_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
 
     # System & Features
-    subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
 
     # SEO

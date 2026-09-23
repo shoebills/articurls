@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { SearchButton } from "@/components/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -29,9 +28,9 @@ type PublicDesktopNavProps = {
   title: string;
   titleHref: string;
   links: PublicNavDesktopLink[];
-  showSubscribe: boolean;
+  showSubscribe?: boolean;
   subdomain: string;
-  authorName: string;
+  authorName?: string;
   logoUrl?: string | null;
   searchEnabled?: boolean;
   nameSize?: string;
@@ -53,9 +52,7 @@ export function PublicDesktopNav({
   title,
   titleHref,
   links,
-  showSubscribe,
   subdomain,
-  authorName,
   logoUrl,
   searchEnabled = true,
   alignment = "left",
@@ -221,11 +218,6 @@ export function PublicDesktopNav({
             subdomain={subdomain}
             basePath={basePath}
           />
-        ) : null}
-        {showSubscribe && subdomain ? (
-          <div className="shrink-0">
-            <SubscribeToAuthor mode="dialog" subdomain={subdomain} authorName={authorName} />
-          </div>
         ) : null}
       </div>
     </div>
