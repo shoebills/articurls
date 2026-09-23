@@ -30,6 +30,20 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
 
   return (
     <footer className="mt-20 border-t border-border/80 pt-12 pb-16">
+      {showNewsletter ? (
+        <div className="max-w-md mx-auto mb-10">
+          <SubscribeToAuthor
+            subdomain={site.subdomain}
+            authorName={site.name}
+            headline={site.newsletter_headline}
+            text={site.newsletter_text}
+            disclaimer={site.newsletter_disclaimer}
+            buttonText={site.newsletter_button_text}
+            mode="card"
+          />
+        </div>
+      ) : null}
+      {showNewsletter ? <div aria-hidden="true" className="h-px bg-border/70 mb-12" /> : null}
       {hasModularColumns ? (
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-12 mb-12">
           {/* Brand Column */}
@@ -43,7 +57,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
                   className="h-8 max-h-8 w-auto object-contain mb-2"
                 />
               ) : null}
-              <h3 className="font-bold text-lg tracking-tight text-foreground">
+              <h3 className="font-bold text-2xl tracking-tight text-foreground">
                 {site.site_name || site.name || "My Blog"}
               </h3>
             </div>
@@ -51,20 +65,6 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {site.footer_description}
               </p>
-            ) : null}
-
-            {showNewsletter ? (
-              <div className="pt-2">
-                <SubscribeToAuthor
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  headline={site.newsletter_headline}
-                  text={site.newsletter_text}
-                  disclaimer={site.newsletter_disclaimer}
-                  buttonText={site.newsletter_button_text}
-                  mode="card"
-                />
-              </div>
             ) : null}
           </div>
 
@@ -109,7 +109,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
                 className="h-8 max-h-8 w-auto object-contain mx-auto mb-2"
               />
             ) : null}
-            <h3 className="font-bold text-lg tracking-tight text-foreground">
+            <h3 className="font-bold text-2xl tracking-tight text-foreground">
               {site.site_name || site.name || "My Blog"}
             </h3>
             {site.footer_description ? (
@@ -118,20 +118,6 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               </p>
             ) : null}
           </div>
-
-          {showNewsletter ? (
-            <div className="max-w-md mx-auto pt-2">
-              <SubscribeToAuthor
-                subdomain={site.subdomain}
-                authorName={site.name}
-                headline={site.newsletter_headline}
-                text={site.newsletter_text}
-                disclaimer={site.newsletter_disclaimer}
-                buttonText={site.newsletter_button_text}
-                mode="card"
-              />
-            </div>
-          ) : null}
 
           {pages.filter((p) => p.show_in_footer).length > 0 ? (
             <nav aria-label="Footer links">
@@ -173,7 +159,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
             </Link>
           ) : null}
           {showSitemap ? (
-            <Link href={`${basePath}/sitemaps/posts.xml`} className="hover:text-foreground">
+            <Link href="/sitemap.xml" className="hover:text-foreground">
               Sitemap
             </Link>
           ) : null}

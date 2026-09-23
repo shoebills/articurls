@@ -44,7 +44,6 @@ import {
   AlignRight,
   PanelTop,
   AppWindow,
-  Minus,
   Plus,
   GripVertical,
   Pencil,
@@ -195,6 +194,7 @@ export function NavBuilder({
 
   const align = settings.navbar_alignment || "left";
   const style = settings.navbar_style || "bordered";
+  const displayStyle = style === "minimal" ? "bordered" : style;
   const navItems = settings.nav_items || [];
 
   const sensors = useSensors(
@@ -339,7 +339,7 @@ export function NavBuilder({
         {/* Full Image Logo upload */}
         <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Logo Image</label>
-          <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
+          <div className="mt-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
             <div className="flex items-center gap-4">
               <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1">
                 {settings.logo_url ? (
@@ -432,7 +432,7 @@ export function NavBuilder({
       <div className="space-y-6 max-w-md">
         <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Alignment</label>
-          <div className="flex gap-2">
+          <div className="mt-2 flex gap-2">
             {(
               [
                 { id: "left", icon: AlignLeft, label: "Left" },
@@ -459,12 +459,11 @@ export function NavBuilder({
 
         <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Style</label>
-          <div className="flex gap-2">
+          <div className="mt-2 flex gap-2">
             {(
               [
                 { id: "bordered", icon: PanelTop, label: "Bordered" },
                 { id: "floating", icon: AppWindow, label: "Floating" },
-                { id: "minimal", icon: Minus, label: "Minimal" },
               ] as const
             ).map((s) => (
               <button
@@ -472,7 +471,7 @@ export function NavBuilder({
                 key={s.id}
                 onClick={() => onChange({ navbar_style: s.id })}
                 className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
-                  style === s.id
+                  displayStyle === s.id
                     ? "border-primary bg-primary text-primary-foreground shadow-2xs"
                     : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
                 }`}

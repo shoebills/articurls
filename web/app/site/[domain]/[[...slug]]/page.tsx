@@ -34,7 +34,7 @@ import { loadPublicSite } from "@/lib/public-site";
 
 function getPublicNavHeaderClass(navbarStyle?: string) {
   if (navbarStyle === "floating") {
-    return "sticky top-4 z-40 mb-8 rounded-full border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm";
+    return "sticky top-4 z-40 mb-8 rounded-xl border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm";
   }
   if (navbarStyle === "minimal") {
     return "sticky top-0 z-40 mb-8 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";

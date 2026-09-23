@@ -168,6 +168,46 @@ def create_site(
     return _site_summary_out(db, new_site)
 
 
+@router.get("/code-injection", response_model=site_schema.CodeInjectionSettings, status_code=status.HTTP_200_OK)
+def get_code_injection(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
+):
+    return {
+        "custom_head_code": current_site.custom_head_code,
+        "custom_body_code": current_site.custom_body_code,
+        "custom_css": current_site.custom_css,
+    }
+
+
+@router.patch("/code-injection", response_model=site_schema.CodeInjectionSettings, status_code=status.HTTP_200_OK)
+def update_code_injection(
+    request: site_schema.CodeInjectionUpdate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
+):
+    update_data = request.model_dump(exclude_unset=True)
+    if "custom_head_code" in update_data:
+        current_site.custom_head_code = update_data["custom_head_code"]
+    if "custom_body_code" in update_data:
+        current_site.custom_body_code = update_data["custom_body_code"]
+    if "custom_css" in update_data:
+        current_site.custom_css = update_data["custom_css"]
+
+    db.commit()
+    db.refresh(current_site)
+
+    schedule_tenant_purge(background_tasks, current_site)
+    return {
+        "custom_head_code": current_site.custom_head_code,
+        "custom_body_code": current_site.custom_body_code,
+        "custom_css": current_site.custom_css,
+    }
+
+
 @router.get("/{site_id}", response_model=site_schema.SiteSummary, status_code=status.HTTP_200_OK)
 def get_site(
     site_id: uuid.UUID,
@@ -231,43 +271,3 @@ def delete_site(
 
     schedule_tenant_purge(background_tasks, site)
     return {"message": "Site deleted successfully"}
-
-
-@router.get("/code-injection", response_model=site_schema.CodeInjectionSettings, status_code=status.HTTP_200_OK)
-def get_code_injection(
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
-    current_site: models.Site = Depends(get_current_site),
-):
-    return {
-        "custom_head_code": current_site.custom_head_code,
-        "custom_body_code": current_site.custom_body_code,
-        "custom_css": current_site.custom_css,
-    }
-
-
-@router.patch("/code-injection", response_model=site_schema.CodeInjectionSettings, status_code=status.HTTP_200_OK)
-def update_code_injection(
-    request: site_schema.CodeInjectionUpdate,
-    background_tasks: BackgroundTasks,
-    db: Session = Depends(get_db),
-    current_user: models.User = Depends(get_current_user),
-    current_site: models.Site = Depends(get_current_site),
-):
-    update_data = request.model_dump(exclude_unset=True)
-    if "custom_head_code" in update_data:
-        current_site.custom_head_code = update_data["custom_head_code"]
-    if "custom_body_code" in update_data:
-        current_site.custom_body_code = update_data["custom_body_code"]
-    if "custom_css" in update_data:
-        current_site.custom_css = update_data["custom_css"]
-
-    db.commit()
-    db.refresh(current_site)
-
-    schedule_tenant_purge(background_tasks, current_site)
-    return {
-        "custom_head_code": current_site.custom_head_code,
-        "custom_body_code": current_site.custom_body_code,
-        "custom_css": current_site.custom_css,
-    }

@@ -59,7 +59,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
   const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
 
   const publicNavHeaderClass = site.navbar_style === "floating"
-    ? "sticky top-4 z-40 mb-8 rounded-full border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
+    ? "sticky top-4 z-40 mb-8 rounded-xl border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
     : site.navbar_style === "minimal"
       ? "sticky top-0 z-40 mb-8 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6"
       : "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
@@ -96,49 +96,33 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           </header>
         ) : null}
 
-        {/* SaaS Split Hero */}
+        {/* SaaS Hero */}
         {hasHero ? (
-          <div className="mb-14 mt-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
-            <div>
-              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground">
-                {site.hero_title ? (
-                  <span className="text-primary block mb-2">{site.hero_title}</span>
-                ) : null}
-                {site.hero_description ? (
-                  <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed">
-                    {site.hero_description}
-                  </span>
-                ) : null}
-              </h1>
-              {site.newsletter_show_near_header ? (
-                <div className="mt-8">
-                  <SubscribeToAuthor
-                    subdomain={site.subdomain}
-                    headline={site.newsletter_headline}
-                    text={site.newsletter_text}
-                    disclaimer={site.newsletter_disclaimer}
-                    buttonText={site.newsletter_button_text}
-                  />
-                </div>
+          <div className="mb-14 mt-10 text-center max-w-2xl mx-auto">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground">
+              {site.hero_title ? (
+                <span className="text-primary block mb-2">{site.hero_title}</span>
               ) : null}
-            </div>
-            <div className="hidden md:flex justify-end">
-              <div className="w-full max-w-sm aspect-square bg-muted/30 rounded-3xl border border-border/80 flex items-center justify-center p-8">
-                <div className="w-full h-full rounded-2xl border border-border/60 bg-background/80 p-5 shadow-sm flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="h-3 w-1/3 rounded-full bg-primary/40" />
-                    <div className="h-2 w-3/4 rounded-full bg-foreground/15" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-2 w-full rounded-full bg-foreground/10" />
-                    <div className="h-2 w-5/6 rounded-full bg-foreground/10" />
-                  </div>
-                </div>
+              {site.hero_description ? (
+                <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed">
+                  {site.hero_description}
+                </span>
+              ) : null}
+            </h1>
+            {site.newsletter_show_near_header ? (
+              <div className="mt-8 max-w-md mx-auto">
+                <SubscribeToAuthor
+                  subdomain={site.subdomain}
+                  headline={site.newsletter_headline}
+                  text={site.newsletter_text}
+                  disclaimer={site.newsletter_disclaimer}
+                  buttonText={site.newsletter_button_text}
+                />
               </div>
-            </div>
+            ) : null}
           </div>
         ) : site.newsletter_show_near_header ? (
-          <div className="my-10 max-w-md">
+          <div className="my-10 max-w-md mx-auto">
             <SubscribeToAuthor
               subdomain={site.subdomain}
               headline={site.newsletter_headline}
@@ -154,7 +138,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-border/40">
             <Link
               href={getPublicProfileUrl(site.subdomain, basePath)}
-              className="px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shrink-0"
+              className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium shrink-0"
             >
               All
             </Link>
@@ -162,7 +146,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
               <Link
                 key={c.category_id}
                 href={getPublicCategoryUrl(site.subdomain, c.slug, basePath)}
-                className="px-4 py-1.5 rounded-full bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground text-sm font-medium transition-colors shrink-0"
+                className="px-4 py-1.5 rounded-md bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground text-sm font-medium transition-colors shrink-0"
               >
                 {c.name}
               </Link>

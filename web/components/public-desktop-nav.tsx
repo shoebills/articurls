@@ -37,7 +37,7 @@ type PublicDesktopNavProps = {
 
 function linkClass(active?: boolean, isCta?: boolean) {
   if (isCta) {
-    return "inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity";
+    return "inline-flex h-9 items-center gap-1 whitespace-nowrap px-4 text-sm font-medium rounded-md bg-primary text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity";
   }
   return cn(
     "whitespace-nowrap text-sm transition-colors",
@@ -150,7 +150,7 @@ export function PublicDesktopNav({
             className="h-8 max-h-8 w-auto object-contain"
           />
         ) : (
-          <span className="text-lg font-bold tracking-tight text-foreground hover:opacity-90 transition-opacity truncate">
+          <span className="text-2xl font-bold tracking-tight text-foreground hover:opacity-90 transition-opacity truncate">
             {title}
           </span>
         )}

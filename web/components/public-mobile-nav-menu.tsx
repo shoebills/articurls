@@ -101,7 +101,7 @@ export function PublicMobileNavMenu({
       <div
           className={cn(
             "flex items-center gap-3 py-[var(--mobile-nav-rail-gap)]",
-            showMenuButton || ctaLinks.length > 0 ? "justify-between" : "justify-start"
+            showMenuButton ? "justify-between" : "justify-start"
           )}
         >
         {titleHref ? (
@@ -114,7 +114,7 @@ export function PublicMobileNavMenu({
                 className="h-7 max-h-7 w-auto object-contain"
               />
             ) : (
-              <span className="font-bold text-base tracking-tight truncate">{title}</span>
+              <span className="font-bold text-2xl tracking-tight truncate">{title}</span>
             )}
           </Link>
         ) : (
@@ -122,11 +122,11 @@ export function PublicMobileNavMenu({
             // eslint-disable-next-line @next/next/no-img-element
             <img src={assetUrl(logoUrl)} alt={title} className="h-7 max-h-7 w-auto object-contain" />
           ) : (
-            <p className="font-bold text-base tracking-tight truncate">{title}</p>
+            <p className="font-bold text-2xl tracking-tight truncate">{title}</p>
           )
         )}
 
-        {(showMenuButton || ctaLinks.length > 0) ? (
+        {showMenuButton ? (
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {subdomain && searchEnabled !== false ? (
@@ -148,18 +148,6 @@ export function PublicMobileNavMenu({
                 {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
             ) : null}
-            {ctaLinks.map((l) => (
-              <Link
-                key={l.href}
-                prefetch={false}
-                href={l.href}
-                target={l.open_in_new_tab ? "_blank" : undefined}
-                rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
-                className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity"
-              >
-                {l.label}
-              </Link>
-            ))}
           </div>
         ) : null}
       </div>
@@ -184,25 +172,46 @@ export function PublicMobileNavMenu({
           }
           aria-hidden={!open || !trayLayout}
         >
-          {regularLinks.length > 0 ? (
-            <div className="space-y-1.5 p-1.5">
-              {regularLinks.map((item) => (
-                <Link
-                  prefetch={false}
-                  key={item.href}
-                  href={item.href}
-                  target={item.open_in_new_tab ? "_blank" : undefined}
-                  rel={item.open_in_new_tab ? "noopener noreferrer" : undefined}
-                  onClick={() => setOpen(false)}
-                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors text-foreground/90 hover:bg-muted hover:text-foreground"
-                >
-                  <span>{item.label}</span>
-                  {item.open_in_new_tab ? (
-                    <ExternalLink className="h-3.5 w-3.5 opacity-60 ml-2" />
-                  ) : null}
-                </Link>
-              ))}
-            </div>
+          {regularLinks.length > 0 || ctaLinks.length > 0 ? (
+            <>
+              {regularLinks.length > 0 ? (
+                <div className="space-y-1.5 p-1.5">
+                  {regularLinks.map((item) => (
+                    <Link
+                      prefetch={false}
+                      key={item.href}
+                      href={item.href}
+                      target={item.open_in_new_tab ? "_blank" : undefined}
+                      rel={item.open_in_new_tab ? "noopener noreferrer" : undefined}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors text-foreground/90 hover:bg-muted hover:text-foreground"
+                    >
+                      <span>{item.label}</span>
+                      {item.open_in_new_tab ? (
+                        <ExternalLink className="h-3.5 w-3.5 opacity-60 ml-2" />
+                      ) : null}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+              {ctaLinks.length > 0 ? (
+                <div className={`p-1.5 ${regularLinks.length > 0 ? "border-t border-border/60" : ""}`}>
+                  {ctaLinks.map((l) => (
+                    <Link
+                      key={l.href}
+                      prefetch={false}
+                      href={l.href}
+                      target={l.open_in_new_tab ? "_blank" : undefined}
+                      rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+                      onClick={() => setOpen(false)}
+                      className="flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              ) : null}
+            </>
           ) : (
             <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
           )}
