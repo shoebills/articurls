@@ -31,16 +31,19 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   return (
     <footer className="mt-20 border-t border-border/80 pt-12 pb-16">
       {showNewsletter ? (
-        <div className="max-w-md mx-auto mb-10 bg-muted/20 rounded-xl p-6">
-          <SubscribeToAuthor
-            subdomain={site.subdomain}
-            authorName={site.name}
-            headline={site.newsletter_headline}
-            text={site.newsletter_text}
-            disclaimer={site.newsletter_disclaimer}
-            buttonText={site.newsletter_button_text}
-            mode="card"
-          />
+        <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
+          <div className="max-w-md mx-auto">
+            <SubscribeToAuthor
+              subdomain={site.subdomain}
+              authorName={site.name}
+              headline={site.newsletter_headline}
+              text={site.newsletter_text}
+              disclaimer={site.newsletter_disclaimer}
+              buttonText={site.newsletter_button_text}
+              mode="card"
+              className="space-y-4 text-center"
+            />
+          </div>
         </div>
       ) : null}
       {showNewsletter ? <div aria-hidden="true" className="h-px bg-border/70 mb-12" /> : null}

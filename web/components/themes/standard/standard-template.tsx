@@ -59,10 +59,10 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
   const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
 
   const publicNavHeaderClass = site.navbar_style === "floating"
-    ? "sticky top-4 z-40 mb-12 rounded-xl border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
+    ? "sticky top-4 z-40 mb-16 rounded-xl border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
     : site.navbar_style === "minimal"
-      ? "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6"
-      : "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
+      ? "sticky top-0 z-40 mb-16 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6"
+      : "sticky top-0 z-40 mb-16 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
 
   const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
 
@@ -98,38 +98,46 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
 
         {/* Hero Section */}
         {hasHero ? (
-          <div className="mb-20 mt-16 text-center max-w-2xl mx-auto flex flex-col items-center">
-            {site.hero_title ? (
-              <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
-                {site.hero_title}
-              </h1>
-            ) : null}
-            {site.hero_description ? (
-              <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
-                {site.hero_description}
-              </p>
-            ) : null}
+          <>
+            <div className="mb-8 mt-24 text-center max-w-2xl mx-auto flex flex-col items-center">
+              {site.hero_title ? (
+                <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
+                  {site.hero_title}
+                </h1>
+              ) : null}
+              {site.hero_description ? (
+                <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
+                  {site.hero_description}
+                </p>
+              ) : null}
+            </div>
             {site.newsletter_show_near_header ? (
-              <div className="mt-8 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
-                <SubscribeToAuthor
-                  subdomain={site.subdomain}
-                  headline={site.newsletter_headline}
-                  text={site.newsletter_text}
-                  disclaimer={site.newsletter_disclaimer}
-                  buttonText={site.newsletter_button_text}
-                />
+              <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
+                <div className="max-w-md mx-auto">
+                  <SubscribeToAuthor
+                    subdomain={site.subdomain}
+                    headline={site.newsletter_headline}
+                    text={site.newsletter_text}
+                    disclaimer={site.newsletter_disclaimer}
+                    buttonText={site.newsletter_button_text}
+                    className="space-y-4 text-center"
+                  />
+                </div>
               </div>
             ) : null}
-          </div>
+          </>
         ) : site.newsletter_show_near_header ? (
-          <div className="my-10 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
-            <SubscribeToAuthor
-              subdomain={site.subdomain}
-              headline={site.newsletter_headline}
-              text={site.newsletter_text}
-              disclaimer={site.newsletter_disclaimer}
-              buttonText={site.newsletter_button_text}
-            />
+          <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 my-10">
+            <div className="max-w-md mx-auto">
+              <SubscribeToAuthor
+                subdomain={site.subdomain}
+                headline={site.newsletter_headline}
+                text={site.newsletter_text}
+                disclaimer={site.newsletter_disclaimer}
+                buttonText={site.newsletter_button_text}
+                className="space-y-4 text-center"
+              />
+            </div>
           </div>
         ) : null}
 

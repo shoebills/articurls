@@ -14,7 +14,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { assetUrl } from "@/lib/env";
 
-const LINK_GAP_PX = 24;
+const LINK_GAP_PX = 32;
 
 export type PublicNavDesktopLink = {
   href: string;
@@ -117,10 +117,10 @@ export function PublicDesktopNav({
         : "justify-end";
 
   return (
-    <div className="relative flex w-full items-center gap-x-4 sm:gap-x-6">
+    <div className="relative flex w-full items-center gap-x-6 sm:gap-x-8">
       <div
         ref={measureRef}
-        className="pointer-events-none absolute -left-[9999px] top-0 flex items-center gap-x-6 opacity-0"
+        className="pointer-events-none absolute -left-[9999px] top-0 flex items-center gap-x-8 opacity-0"
         aria-hidden
       >
         {regularLinks.map((l) => (
@@ -156,7 +156,7 @@ export function PublicDesktopNav({
         )}
       </Link>
 
-      <div ref={navSlotRef} className={cn("flex min-w-0 flex-1 items-center gap-x-6 overflow-hidden", slotJustify)}>
+      <div ref={navSlotRef} className={cn("flex min-w-0 flex-1 items-center gap-x-8 overflow-hidden", slotJustify)}>
         {inlineCount === null ? (
           <span className="invisible text-sm" aria-hidden>
             Placeholder
