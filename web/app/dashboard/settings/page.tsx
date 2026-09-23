@@ -148,7 +148,7 @@ export default function SettingsPage() {
               <p className="text-sm text-muted-foreground">{section.description}</p>
             </div>
             <div aria-hidden="true" className="h-px bg-border/70" />
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-3 max-w-3xl">
               {section.items.map((item) => (
                 <SettingsCard key={item.id} item={item} />
               ))}

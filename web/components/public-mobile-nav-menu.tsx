@@ -24,11 +24,8 @@ type PublicMobileNavMenuProps = {
   titleHref?: string;
   links: PublicMobileNavLink[];
   subdomain?: string;
-  authorName?: string;
   logoUrl?: string | null;
   searchEnabled?: boolean;
-  nameSize?: string | null;
-  showSubscribeAction?: boolean;
   showMenuButton?: boolean;
   basePath?: string;
 };
@@ -43,6 +40,8 @@ export function PublicMobileNavMenu({
   showMenuButton = true,
   basePath = "",
 }: PublicMobileNavMenuProps) {
+  const ctaLinks = links.filter((l) => l.is_cta);
+  const regularLinks = links.filter((l) => !l.is_cta);
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -100,11 +99,11 @@ export function PublicMobileNavMenu({
   return (
     <div ref={rootRef} className="relative [--mobile-nav-rail-gap:2px]">
       <div
-        className={cn(
-          "flex items-center gap-3 py-[var(--mobile-nav-rail-gap)]",
-          showMenuButton ? "justify-between" : "justify-start"
-        )}
-      >
+          className={cn(
+            "flex items-center gap-3 py-[var(--mobile-nav-rail-gap)]",
+            showMenuButton || ctaLinks.length > 0 ? "justify-between" : "justify-start"
+          )}
+        >
         {titleHref ? (
           <Link href={titleHref} className="truncate !flex-none flex items-center pr-2">
             {logoUrl ? (
@@ -127,7 +126,7 @@ export function PublicMobileNavMenu({
           )
         )}
 
-        {showMenuButton ? (
+        {(showMenuButton || ctaLinks.length > 0) ? (
           <div className="flex items-center gap-2">
             <ThemeToggle />
             {subdomain && searchEnabled !== false ? (
@@ -137,7 +136,7 @@ export function PublicMobileNavMenu({
                 basePath={basePath}
               />
             ) : null}
-            {links.length > 0 ? (
+            {regularLinks.length > 0 ? (
               <button
                 type="button"
                 aria-label={open ? "Close menu" : "Open menu"}
@@ -149,6 +148,18 @@ export function PublicMobileNavMenu({
                 {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
               </button>
             ) : null}
+            {ctaLinks.map((l) => (
+              <Link
+                key={l.href}
+                prefetch={false}
+                href={l.href}
+                target={l.open_in_new_tab ? "_blank" : undefined}
+                rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+                className="inline-flex items-center gap-1 whitespace-nowrap text-xs font-semibold px-3.5 py-1.5 rounded-lg bg-primary text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity"
+              >
+                {l.label}
+              </Link>
+            ))}
           </div>
         ) : null}
       </div>
@@ -173,9 +184,9 @@ export function PublicMobileNavMenu({
           }
           aria-hidden={!open || !trayLayout}
         >
-          {links.length > 0 ? (
+          {regularLinks.length > 0 ? (
             <div className="space-y-1.5 p-1.5">
-              {links.map((item) => (
+              {regularLinks.map((item) => (
                 <Link
                   prefetch={false}
                   key={item.href}
@@ -183,15 +194,10 @@ export function PublicMobileNavMenu({
                   target={item.open_in_new_tab ? "_blank" : undefined}
                   rel={item.open_in_new_tab ? "noopener noreferrer" : undefined}
                   onClick={() => setOpen(false)}
-                  className={cn(
-                    "flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors",
-                    item.is_cta
-                      ? "bg-primary text-primary-foreground hover:opacity-90 justify-center text-center"
-                      : "text-foreground/90 hover:bg-muted hover:text-foreground"
-                  )}
+                  className="flex items-center justify-between rounded-lg px-3 py-2 text-sm font-medium transition-colors text-foreground/90 hover:bg-muted hover:text-foreground"
                 >
                   <span>{item.label}</span>
-                  {item.open_in_new_tab && !item.is_cta ? (
+                  {item.open_in_new_tab ? (
                     <ExternalLink className="h-3.5 w-3.5 opacity-60 ml-2" />
                   ) : null}
                 </Link>

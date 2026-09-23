@@ -13,7 +13,6 @@ import {
 } from "@/lib/api";
 import type { DesignSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { FooterBuilder } from "@/components/themes/footer-builder";
@@ -110,15 +109,11 @@ export default function FooterSettingsPage() {
         </Button>
       </div>
 
-      <Card className="border-border/70 shadow-xs">
-        <CardContent className="pt-6">
-          {loading || !design ? (
-            <Skeleton className="h-64 w-full rounded-xl" />
-          ) : (
-            <FooterBuilder settings={design} onChange={handleUpdate} />
-          )}
-        </CardContent>
-      </Card>
+      {loading || !design ? (
+        <Skeleton className="h-64 w-full rounded-xl" />
+      ) : (
+        <FooterBuilder settings={design} onChange={handleUpdate} />
+      )}
 
       <div className="flex justify-end pt-2">
         <Button

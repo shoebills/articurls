@@ -200,20 +200,19 @@ export default function GeneralSettingsPage() {
       ) : (
         <div className="space-y-8">
           {/* Site Name */}
-          <div className="space-y-[18px] max-w-md">
+          <div className="space-y-2.5 max-w-md">
             <Label htmlFor="site_name">Site Name</Label>
-            <div className="space-y-1.5">
-              <Input
-                id="site_name"
-                placeholder="My Blog"
-                value={siteName}
-                onChange={(e) => setSiteName(e.target.value)}
-                disabled={busy}
-              />
-              <p className="text-xs text-muted-foreground">
-                Shown in navigation, footer, and browser title.
-              </p>
-            </div>
+            <Input
+              id="site_name"
+              className="mt-2"
+              placeholder="My Blog"
+              value={siteName}
+              onChange={(e) => setSiteName(e.target.value)}
+              disabled={busy}
+            />
+            <p className="text-xs text-muted-foreground">
+              Shown in navigation, footer, and browser title.
+            </p>
           </div>
 
           {/* Blog favicon */}
@@ -307,10 +306,11 @@ export default function GeneralSettingsPage() {
               </p>
             </div>
             <div className="space-y-6 max-w-2xl">
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <Label htmlFor="hero_title">Hero Title</Label>
                 <Input
                   id="hero_title"
+                  className="mt-2"
                   placeholder="e.g. Ideas, thoughts, and technical essays."
                   maxLength={120}
                   value={heroTitle}
@@ -318,10 +318,11 @@ export default function GeneralSettingsPage() {
                   disabled={busy}
                 />
               </div>
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <Label htmlFor="hero_description">Hero Description</Label>
                 <Textarea
                   id="hero_description"
+                  className="mt-2"
                   placeholder="A short introduction or tagline about your publication..."
                   rows={3}
                   value={heroDescription}
@@ -336,46 +337,43 @@ export default function GeneralSettingsPage() {
           <div className="space-y-4">
             <h2 className="text-base font-semibold">Language & Region</h2>
             <div className="space-y-6 max-w-md">
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <Label htmlFor="site_language">Site Language (HTML lang)</Label>
-                <div className="space-y-1.5">
-                  <Select
-                    value={siteLanguage}
-                    onValueChange={setSiteLanguage}
-                    disabled={busy}
-                  >
-                    <SelectTrigger id="site_language">
-                      <SelectValue placeholder="Select language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {LANGUAGES.map((l) => (
-                        <SelectItem key={l.code} value={l.code}>
-                          {l.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Sets the primary &lt;html lang=&quot;...&quot;&gt; attribute.
-                  </p>
-                </div>
+                <Select
+                  value={siteLanguage}
+                  onValueChange={setSiteLanguage}
+                  disabled={busy}
+                >
+                  <SelectTrigger id="site_language" className="mt-2">
+                    <SelectValue placeholder="Select language" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {LANGUAGES.map((l) => (
+                      <SelectItem key={l.code} value={l.code}>
+                        {l.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Sets the primary &lt;html lang=&quot;...&quot;&gt; attribute.
+                </p>
               </div>
 
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <Label htmlFor="og_locale">OpenGraph Locale</Label>
-                <div className="space-y-1.5">
-                  <Input
-                    id="og_locale"
-                    placeholder="e.g. en_US"
-                    maxLength={10}
-                    value={ogLocale}
-                    onChange={(e) => setOgLocale(e.target.value)}
-                    disabled={busy}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Optional locale tag for social previews (e.g. en_US, es_ES).
-                  </p>
-                </div>
+                <Input
+                  id="og_locale"
+                  className="mt-2"
+                  placeholder="e.g. en_US"
+                  maxLength={10}
+                  value={ogLocale}
+                  onChange={(e) => setOgLocale(e.target.value)}
+                  disabled={busy}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Optional locale tag for social previews (e.g. en_US, es_ES).
+                </p>
               </div>
             </div>
           </div>

@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -91,144 +90,140 @@ export default function NewsletterSettingsPage() {
       </div>
 
       {loading || !design ? (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-6">
-          {/* Subscription Copy Card */}
-          <Card>
-            <CardContent className="p-6 space-y-5">
-              <h2 className="text-base font-semibold">Form Content & Copy</h2>
+        <form onSubmit={handleSave} className="space-y-8">
+          {/* Form Content & Copy */}
+          <div className="space-y-5">
+            <h2 className="text-base font-semibold">Form Content & Copy</h2>
 
-              <div className="space-y-[18px]">
-                <Label htmlFor="newsletter_headline">Form Headline</Label>
+            <div className="space-y-2.5">
+              <Label htmlFor="newsletter_headline">Form Headline</Label>
+              <Input
+                id="newsletter_headline"
+                className="mt-2"
+                placeholder="e.g. Subscribe to our newsletter"
+                maxLength={120}
+                value={design.newsletter_headline || ""}
+                onChange={(e) => setDesign({ ...design, newsletter_headline: e.target.value })}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2.5">
+              <Label htmlFor="newsletter_text">Introduction Text</Label>
+              <Textarea
+                id="newsletter_text"
+                className="mt-2"
+                placeholder="e.g. Get our latest articles and updates delivered directly to your inbox."
+                rows={2}
+                value={design.newsletter_text || ""}
+                onChange={(e) => setDesign({ ...design, newsletter_text: e.target.value })}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-6 max-w-md">
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_button_text">Button Label</Label>
                 <Input
-                  id="newsletter_headline"
-                  placeholder="e.g. Subscribe to our newsletter"
-                  maxLength={120}
-                  value={design.newsletter_headline || ""}
-                  onChange={(e) => setDesign({ ...design, newsletter_headline: e.target.value })}
+                  id="newsletter_button_text"
+                  className="mt-2"
+                  placeholder="Subscribe"
+                  maxLength={50}
+                  value={design.newsletter_button_text || ""}
+                  onChange={(e) => setDesign({ ...design, newsletter_button_text: e.target.value })}
                   disabled={saving}
                 />
               </div>
 
-              <div className="space-y-[18px]">
-                <Label htmlFor="newsletter_text">Introduction Text</Label>
-                <Textarea
-                  id="newsletter_text"
-                  placeholder="e.g. Get our latest articles and updates delivered directly to your inbox."
-                  rows={2}
-                  value={design.newsletter_text || ""}
-                  onChange={(e) => setDesign({ ...design, newsletter_text: e.target.value })}
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_disclaimer">Disclaimer or Privacy Note</Label>
+                <Input
+                  id="newsletter_disclaimer"
+                  className="mt-2"
+                  placeholder="e.g. No spam, unsubscribe anytime."
+                  value={design.newsletter_disclaimer || ""}
+                  onChange={(e) => setDesign({ ...design, newsletter_disclaimer: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Form Placement */}
+          <div className="space-y-4">
+            <h2 className="text-base font-semibold">Form Placement</h2>
+
+            <div className="space-y-3 max-w-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Near Header</p>
+                  <p className="text-xs text-muted-foreground">Renders inline below the publication header / hero</p>
+                </div>
+                <Switch
+                  checked={design.newsletter_show_near_header === true}
+                  onCheckedChange={(checked) => setDesign({ ...design, newsletter_show_near_header: checked })}
                   disabled={saving}
                 />
               </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-[18px]">
-                  <Label htmlFor="newsletter_button_text">Button Label</Label>
-                  <Input
-                    id="newsletter_button_text"
-                    placeholder="Subscribe"
-                    maxLength={50}
-                    value={design.newsletter_button_text || ""}
-                    onChange={(e) => setDesign({ ...design, newsletter_button_text: e.target.value })}
-                    disabled={saving}
-                  />
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">In Footer</p>
+                  <p className="text-xs text-muted-foreground">Renders a subscription box at the bottom of pages</p>
                 </div>
-
-                <div className="space-y-[18px]">
-                  <Label htmlFor="newsletter_disclaimer">Disclaimer or Privacy Note</Label>
-                  <Input
-                    id="newsletter_disclaimer"
-                    placeholder="e.g. No spam, unsubscribe anytime."
-                    value={design.newsletter_disclaimer || ""}
-                    onChange={(e) => setDesign({ ...design, newsletter_disclaimer: e.target.value })}
-                    disabled={saving}
-                  />
-                </div>
+                <Switch
+                  checked={design.newsletter_show_in_footer !== false}
+                  onCheckedChange={(checked) => setDesign({ ...design, newsletter_show_in_footer: checked })}
+                  disabled={saving}
+                />
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
-          {/* Form Placement Card */}
-          <Card>
-            <CardContent className="p-6 space-y-4">
-              <h2 className="text-base font-semibold">Form Placement</h2>
+          {/* ESP & Webhook Integration */}
+          <div className="space-y-5">
+            <div className="flex items-center gap-2">
+              <Webhook className="h-5 w-5 text-muted-foreground" />
+              <h2 className="text-base font-semibold">ESP & Webhook Integration</h2>
+            </div>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              When readers subscribe, Articurls will trigger an HTTP POST request to this endpoint with the reader&apos;s email address. Connect your favorite Email Service Provider (ConvertKit, Mailchimp, Loops, Brevo) or automation platform (Zapier, Make).
+            </p>
 
-              <div className="grid gap-3 sm:grid-cols-2">
-                <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Near Header</p>
-                    <p className="text-xs text-muted-foreground">Renders inline below the publication header / hero</p>
-                  </div>
-                  <Switch
-                    checked={design.newsletter_show_near_header === true}
-                    onCheckedChange={(checked) => setDesign({ ...design, newsletter_show_near_header: checked })}
-                    disabled={saving}
-                  />
-                </div>
+            <div className="space-y-2.5">
+              <Label htmlFor="newsletter_webhook_url">Webhook Endpoint URL</Label>
+              <Input
+                id="newsletter_webhook_url"
+                className="mt-2"
+                placeholder="https://hooks.zapier.com/hooks/catch/..."
+                value={design.newsletter_webhook_url || ""}
+                onChange={(e) => setDesign({ ...design, newsletter_webhook_url: e.target.value })}
+                disabled={saving}
+              />
+            </div>
 
-                <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">In Footer</p>
-                    <p className="text-xs text-muted-foreground">Renders a subscription box at the bottom of pages</p>
-                  </div>
-                  <Switch
-                    checked={design.newsletter_show_in_footer !== false}
-                    onCheckedChange={(checked) => setDesign({ ...design, newsletter_show_in_footer: checked })}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* External Webhook Card */}
-          <Card>
-            <CardContent className="p-6 space-y-5">
-              <div className="flex items-center gap-2">
-                <Webhook className="h-5 w-5 text-muted-foreground" />
-                <h2 className="text-base font-semibold">ESP & Webhook Integration</h2>
-              </div>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                When readers subscribe, Articurls will trigger an HTTP POST request to this endpoint with the reader&apos;s email address. Connect your favorite Email Service Provider (ConvertKit, Mailchimp, Loops, Brevo) or automation platform (Zapier, Make).
+            <div className="space-y-2.5">
+              <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token (Optional)</Label>
+              <Input
+                id="newsletter_webhook_token"
+                className="mt-2"
+                type="password"
+                placeholder="Secret token sent as Authorization: Bearer <token>"
+                value={design.newsletter_webhook_token || ""}
+                onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
+                disabled={saving}
+              />
+              <p className="text-[11px] text-muted-foreground">
+                Secure secret token included in request headers for endpoint verification.
               </p>
-
-              <div className="space-y-[18px]">
-                <Label htmlFor="newsletter_webhook_url">Webhook Endpoint URL</Label>
-                <Input
-                  id="newsletter_webhook_url"
-                  placeholder="https://hooks.zapier.com/hooks/catch/..."
-                  value={design.newsletter_webhook_url || ""}
-                  onChange={(e) => setDesign({ ...design, newsletter_webhook_url: e.target.value })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-[18px]">
-                <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token (Optional)</Label>
-                <div className="space-y-1.5">
-                  <Input
-                    id="newsletter_webhook_token"
-                    type="password"
-                    placeholder="Secret token sent as Authorization: Bearer <token>"
-                    value={design.newsletter_webhook_token || ""}
-                    onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
-                    disabled={saving}
-                  />
-                  <p className="text-[11px] text-muted-foreground">
-                    Secure secret token included in request headers for endpoint verification.
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={saving} className="min-w-[120px]">

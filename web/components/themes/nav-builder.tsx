@@ -307,39 +307,37 @@ export function NavBuilder({
   return (
     <div className="space-y-6">
       {/* Brand Identity & Logo */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-4">
-          <div className="space-y-[18px]">
+      <div className="space-y-6 max-w-md">
+        <div className="space-y-6">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-foreground">Header Brand Name</label>
-            <div className="space-y-1.5">
-              <Input
-                value={settings.site_name || ""}
-                onChange={(e) => onChange({ site_name: e.target.value })}
-                placeholder="e.g. My Publication"
-              />
-              <p className="text-xs text-muted-foreground">
-                Displayed when no logo image is set.
-              </p>
-            </div>
+            <Input
+              value={settings.site_name || ""}
+              onChange={(e) => onChange({ site_name: e.target.value })}
+              placeholder="e.g. My Publication"
+              className="mt-2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Displayed when no logo image is set.
+            </p>
           </div>
 
-          <div className="space-y-[18px]">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
-            <div className="space-y-1.5">
-              <Input
-                value={settings.logo_link ?? "/"}
-                onChange={(e) => onChange({ logo_link: e.target.value })}
-                placeholder="/"
-              />
-              <p className="text-xs text-muted-foreground">
-                Destination URL when visitors click your logo or brand title.
-              </p>
-            </div>
+            <Input
+              value={settings.logo_link ?? "/"}
+              onChange={(e) => onChange({ logo_link: e.target.value })}
+              placeholder="/"
+              className="mt-2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Destination URL when visitors click your logo or brand title.
+            </p>
           </div>
         </div>
 
         {/* Full Image Logo upload */}
-        <div className="space-y-[18px]">
+        <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Logo Image</label>
           <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
             <div className="flex items-center gap-4">
@@ -412,7 +410,7 @@ export function NavBuilder({
       <hr className="border-border/60" />
 
       {/* Search Toggle */}
-      <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
+      <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
             <Search className="h-4 w-4 text-muted-foreground" />
@@ -431,8 +429,8 @@ export function NavBuilder({
       <hr className="border-border/60" />
 
       {/* Alignment & Style */}
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-[18px]">
+      <div className="space-y-6 max-w-md">
+        <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Alignment</label>
           <div className="flex gap-2">
             {(
@@ -459,7 +457,7 @@ export function NavBuilder({
           </div>
         </div>
 
-        <div className="space-y-[18px]">
+        <div className="space-y-2.5">
           <label className="text-sm font-medium text-foreground">Header Style</label>
           <div className="flex gap-2">
             {(
@@ -523,7 +521,7 @@ export function NavBuilder({
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={navItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 {navItems.map((item) => (
                   <SortableNavItemRow
                     key={item.id}
@@ -549,10 +547,10 @@ export function NavBuilder({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-[18px]">
+            <div className="space-y-2.5">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Type</label>
               <Select value={formType} onValueChange={(v) => setFormType(v as NavItemType)}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -564,7 +562,7 @@ export function NavBuilder({
             </div>
 
             {formType === "page" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Page</label>
                 <Select
                   value={formPageSlug}
@@ -574,7 +572,7 @@ export function NavBuilder({
                     if (selected && !formLabel) setFormLabel(selected.title);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Choose a published page" />
                   </SelectTrigger>
                   <SelectContent>
@@ -589,7 +587,7 @@ export function NavBuilder({
             ) : null}
 
             {formType === "category" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Category</label>
                 <Select
                   value={formCatSlug}
@@ -599,7 +597,7 @@ export function NavBuilder({
                     if (selected && !formLabel) setFormLabel(selected.name);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Choose a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -613,22 +611,24 @@ export function NavBuilder({
               </div>
             ) : null}
 
-            <div className="space-y-[18px]">
+            <div className="space-y-2.5">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Label</label>
               <Input
                 value={formLabel}
                 onChange={(e) => setFormLabel(e.target.value)}
                 placeholder="e.g. Features, Pricing, Docs"
+                className="mt-2"
               />
             </div>
 
             {formType === "custom" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Destination URL</label>
                 <Input
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
                   placeholder="e.g. /pricing or https://acme.com"
+                  className="mt-2"
                 />
               </div>
             ) : null}

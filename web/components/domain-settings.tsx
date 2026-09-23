@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
@@ -432,22 +432,19 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
       <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
       {/* ── 1. Permanent Subdomain Banner ─────────────────────────────────── */}
-      <Card className="rounded-2xl border border-border/80 shadow-xs">
-        <CardHeader className="pb-3 sm:pb-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-base font-semibold">Permanent Address</CardTitle>
-              <CardDescription className="text-xs">
-                Your default Articurls URL that is always active and online.
-              </CardDescription>
-            </div>
-            <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-              Default
-            </span>
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-base font-semibold">Permanent Address</h3>
+            <p className="text-xs text-muted-foreground">
+              Your default Articurls URL that is always active and online.
+            </p>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
+          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
+            Default
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
             <span className="font-mono text-sm font-medium text-foreground truncate max-w-full">
               {subdomain}.{UGC_DOMAIN}
             </span>
@@ -479,26 +476,23 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      {/* ── 2. Unified Custom Domain / Subdirectory Card ───────────────────── */}
-      <Card className="rounded-2xl border border-border/80 shadow-xs">
-        <CardHeader className="pb-4 sm:pb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
-              {isSubdirectoryActive ? <FolderTree className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-            </div>
-            <div>
-              <CardTitle className="text-base font-semibold">Custom Domain & Subdirectory</CardTitle>
-              <CardDescription className="text-xs">
-                Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
-              </CardDescription>
-            </div>
+      {/* ── 2. Unified Custom Domain / Subdirectory ───────────────────── */}
+      <div className="space-y-6">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
+            {isSubdirectoryActive ? <FolderTree className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
           </div>
-        </CardHeader>
+          <div>
+            <h3 className="text-base font-semibold">Custom Domain & Subdirectory</h3>
+            <p className="text-xs text-muted-foreground">
+              Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
+            </p>
+          </div>
+        </div>
 
-        <CardContent className="space-y-6">
+        <div className="space-y-6">
           {info && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-600 dark:text-blue-400" />
@@ -509,7 +503,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           {/* ── No Domain Configured: Unified Input ────────────────────────── */}
           {!isSubdirectoryActive && !isCustomDomainConfigured && (
             <form onSubmit={handleConnect} className="space-y-4">
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <div className="flex flex-col gap-2.5 sm:flex-row">
                   <Input
                     type="text"
@@ -750,8 +744,8 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

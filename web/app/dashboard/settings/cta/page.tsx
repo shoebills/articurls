@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -91,98 +90,98 @@ export default function CtaSettingsPage() {
       </div>
 
       {loading || !design ? (
-        <Card>
-          <CardContent className="p-6 space-y-4">
-            <Skeleton className="h-10 w-full" />
-            <Skeleton className="h-24 w-full" />
-            <Skeleton className="h-10 w-full" />
-          </CardContent>
-        </Card>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-24 w-full" />
+          <Skeleton className="h-10 w-full" />
+        </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-6">
-          <Card>
-            <CardContent className="p-6 space-y-5">
-              <div className="space-y-[18px]">
-                <Label htmlFor="cta_heading">Heading</Label>
+        <form onSubmit={handleSave} className="space-y-8">
+          <div className="space-y-5">
+            <div className="space-y-2.5">
+              <Label htmlFor="cta_heading">Heading</Label>
+              <Input
+                id="cta_heading"
+                className="mt-2"
+                placeholder="e.g. Enjoyed this article? Join my newsletter"
+                maxLength={120}
+                value={design.cta_heading || ""}
+                onChange={(e) => setDesign({ ...design, cta_heading: e.target.value })}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-2.5">
+              <Label htmlFor="cta_description">Description</Label>
+              <Textarea
+                id="cta_description"
+                className="mt-2"
+                placeholder="A short message explaining what readers get when they take action..."
+                rows={3}
+                value={design.cta_description || ""}
+                onChange={(e) => setDesign({ ...design, cta_description: e.target.value })}
+                disabled={saving}
+              />
+            </div>
+
+            <div className="space-y-6 max-w-md">
+              <div className="space-y-2.5">
+                <Label htmlFor="cta_button_text">Button Text</Label>
                 <Input
-                  id="cta_heading"
-                  placeholder="e.g. Enjoyed this article? Join my newsletter"
-                  maxLength={120}
-                  value={design.cta_heading || ""}
-                  onChange={(e) => setDesign({ ...design, cta_heading: e.target.value })}
+                  id="cta_button_text"
+                  className="mt-2"
+                  placeholder="e.g. Get Started, Learn More, Subscribe"
+                  maxLength={50}
+                  value={design.cta_button_text || ""}
+                  onChange={(e) => setDesign({ ...design, cta_button_text: e.target.value })}
                   disabled={saving}
                 />
               </div>
 
-              <div className="space-y-[18px]">
-                <Label htmlFor="cta_description">Description</Label>
-                <Textarea
-                  id="cta_description"
-                  placeholder="A short message explaining what readers get when they take action..."
-                  rows={3}
-                  value={design.cta_description || ""}
-                  onChange={(e) => setDesign({ ...design, cta_description: e.target.value })}
+              <div className="space-y-2.5">
+                <Label htmlFor="cta_button_url">Button Destination URL</Label>
+                <Input
+                  id="cta_button_url"
+                  className="mt-2"
+                  placeholder="e.g. https://example.com or /pricing"
+                  value={design.cta_button_url || ""}
+                  onChange={(e) => setDesign({ ...design, cta_button_url: e.target.value })}
                   disabled={saving}
                 />
               </div>
+            </div>
 
-              <div className="grid gap-6 sm:grid-cols-2">
-                <div className="space-y-[18px]">
-                  <Label htmlFor="cta_button_text">Button Text</Label>
-                  <Input
-                    id="cta_button_text"
-                    placeholder="e.g. Get Started, Learn More, Subscribe"
-                    maxLength={50}
-                    value={design.cta_button_text || ""}
-                    onChange={(e) => setDesign({ ...design, cta_button_text: e.target.value })}
+            <hr className="border-border/60" />
+
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-foreground">Display Visibility</p>
+              <div className="space-y-3 max-w-md">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Show on Blog Posts</p>
+                    <p className="text-xs text-muted-foreground">Appears at the bottom of published articles</p>
+                  </div>
+                  <Switch
+                    checked={design.cta_show_on_posts !== false}
+                    onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_posts: checked })}
                     disabled={saving}
                   />
                 </div>
 
-                <div className="space-y-[18px]">
-                  <Label htmlFor="cta_button_url">Button Destination URL</Label>
-                  <Input
-                    id="cta_button_url"
-                    placeholder="e.g. https://example.com or /pricing"
-                    value={design.cta_button_url || ""}
-                    onChange={(e) => setDesign({ ...design, cta_button_url: e.target.value })}
+                <div className="flex items-center justify-between gap-4">
+                  <div className="space-y-0.5">
+                    <p className="text-sm font-medium">Show on Custom Pages</p>
+                    <p className="text-xs text-muted-foreground">Appears at the bottom of custom static pages</p>
+                  </div>
+                  <Switch
+                    checked={design.cta_show_on_pages === true}
+                    onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_pages: checked })}
                     disabled={saving}
                   />
                 </div>
               </div>
-
-              <hr className="border-border/60" />
-
-              <div className="space-y-3">
-                <p className="text-sm font-medium text-foreground">Display Visibility</p>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium">Show on Blog Posts</p>
-                      <p className="text-xs text-muted-foreground">Appears at the bottom of published articles</p>
-                    </div>
-                    <Switch
-                      checked={design.cta_show_on_posts !== false}
-                      onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_posts: checked })}
-                      disabled={saving}
-                    />
-                  </div>
-
-                  <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
-                    <div className="space-y-0.5">
-                      <p className="text-sm font-medium">Show on Custom Pages</p>
-                      <p className="text-xs text-muted-foreground">Appears at the bottom of custom static pages</p>
-                    </div>
-                    <Switch
-                      checked={design.cta_show_on_pages === true}
-                      onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_pages: checked })}
-                      disabled={saving}
-                    />
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+            </div>
+          </div>
 
           <div className="flex justify-end">
             <Button type="submit" disabled={saving} className="min-w-[120px]">

@@ -79,7 +79,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                 searchEnabled={site.search_enabled !== false}
                 links={desktopLinks}
                 subdomain={site.subdomain}
-                authorName={site.name}
                 alignment={site.navbar_alignment || "left"}
               />
             </div>
@@ -91,7 +90,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                 searchEnabled={site.search_enabled !== false}
                 links={mobileLinks}
                 subdomain={site.subdomain}
-                authorName={site.name}
                 showMenuButton={hasMobileNav}
               />
             </div>
@@ -115,7 +113,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
               <div className="mt-8 w-full max-w-sm">
                 <SubscribeToAuthor
                   subdomain={site.subdomain}
-                  authorName={site.name}
                   headline={site.newsletter_headline}
                   text={site.newsletter_text}
                   disclaimer={site.newsletter_disclaimer}
@@ -128,7 +125,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
           <div className="my-12 w-full max-w-md mx-auto">
             <SubscribeToAuthor
               subdomain={site.subdomain}
-              authorName={site.name}
               headline={site.newsletter_headline}
               text={site.newsletter_text}
               disclaimer={site.newsletter_disclaimer}

@@ -28,12 +28,9 @@ type PublicDesktopNavProps = {
   title: string;
   titleHref: string;
   links: PublicNavDesktopLink[];
-  showSubscribe?: boolean;
   subdomain: string;
-  authorName?: string;
   logoUrl?: string | null;
   searchEnabled?: boolean;
-  nameSize?: string;
   alignment?: "left" | "center" | "right" | string;
   basePath?: string;
 };
@@ -58,6 +55,8 @@ export function PublicDesktopNav({
   alignment = "left",
   basePath = "",
 }: PublicDesktopNavProps) {
+  const ctaLinks = links.filter((l) => l.is_cta);
+  const regularLinks = links.filter((l) => !l.is_cta);
   const [inlineCount, setInlineCount] = useState<number | null>(null);
   const navSlotRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
@@ -65,8 +64,8 @@ export function PublicDesktopNav({
   const recompute = useCallback(() => {
     const slot = navSlotRef.current;
     const measureRoot = measureRef.current;
-    if (!slot || !measureRoot || links.length === 0) {
-      setInlineCount(links.length);
+    if (!slot || !measureRoot || regularLinks.length === 0) {
+      setInlineCount(regularLinks.length);
       return;
     }
 
@@ -77,8 +76,8 @@ export function PublicDesktopNav({
 
     const avail = slot.clientWidth;
     let best = 0;
-    for (let k = links.length; k >= 0; k--) {
-      const needMore = k < links.length;
+    for (let k = regularLinks.length; k >= 0; k--) {
+      const needMore = k < regularLinks.length;
       let total = 0;
       for (let i = 0; i < k; i++) {
         total += widths[i] ?? 0;
@@ -94,7 +93,7 @@ export function PublicDesktopNav({
       }
     }
     setInlineCount(best);
-  }, [links]);
+  }, [regularLinks]);
 
   useLayoutEffect(() => {
     recompute();
@@ -107,8 +106,8 @@ export function PublicDesktopNav({
     };
   }, [recompute]);
 
-  const inlineLinks = inlineCount === null ? [] : links.slice(0, inlineCount);
-  const overflowLinks = inlineCount === null ? [] : links.slice(inlineCount);
+  const inlineLinks = inlineCount === null ? [] : regularLinks.slice(0, inlineCount);
+  const overflowLinks = inlineCount === null ? [] : regularLinks.slice(inlineCount);
 
   const slotJustify =
     alignment === "center"
@@ -124,7 +123,7 @@ export function PublicDesktopNav({
         className="pointer-events-none absolute -left-[9999px] top-0 flex items-center gap-x-6 opacity-0"
         aria-hidden
       >
-        {links.map((l) => (
+        {regularLinks.map((l) => (
           <span key={l.href} data-nav-link-measure className={linkClass(l.active, l.is_cta)}>
             {l.label}
           </span>
@@ -219,6 +218,18 @@ export function PublicDesktopNav({
             basePath={basePath}
           />
         ) : null}
+        {ctaLinks.map((l) => (
+          <Link
+            key={l.href}
+            prefetch={false}
+            href={l.href}
+            target={l.open_in_new_tab ? "_blank" : undefined}
+            rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+            className={linkClass(l.active, l.is_cta)}
+          >
+            {l.label}
+          </Link>
+        ))}
       </div>
     </div>
   );

@@ -174,7 +174,7 @@ export function FooterBuilder({
   return (
     <div className="space-y-6">
       {/* Footer Enabled Switch */}
-      <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
+      <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5">
           <label className="text-sm font-medium text-foreground">Enable Site Footer</label>
           <p className="text-xs text-muted-foreground">
@@ -299,13 +299,14 @@ export function FooterBuilder({
           <hr className="border-border/60" />
 
           {/* Footer Description */}
-          <div className="space-y-[18px]">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-foreground">Footer Brand Description</label>
             <Textarea
               value={settings.footer_description || ""}
               onChange={(e) => onChange({ footer_description: e.target.value })}
               placeholder="A brief summary or mission statement shown under your brand in the footer..."
               rows={2}
+              className="mt-2"
             />
           </div>
 
@@ -315,8 +316,8 @@ export function FooterBuilder({
           <div className="space-y-4">
             <label className="text-sm font-medium text-foreground">Footer Links & Feeds</label>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div className="flex items-center justify-between rounded-xl border p-3">
+            <div className="space-y-3 max-w-md">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold">Sitemap Link</p>
                   <p className="text-[11px] text-muted-foreground">Link to sitemaps</p>
@@ -327,7 +328,7 @@ export function FooterBuilder({
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-xl border p-3">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold">RSS Feed Link</p>
                   <p className="text-[11px] text-muted-foreground">Link to /rss.xml</p>
@@ -338,7 +339,7 @@ export function FooterBuilder({
                 />
               </div>
 
-              <div className="flex items-center justify-between rounded-xl border p-3">
+              <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-xs font-semibold">Atom Feed Link</p>
                   <p className="text-[11px] text-muted-foreground">Link to /atom.xml</p>
@@ -354,18 +355,17 @@ export function FooterBuilder({
           <hr className="border-border/60" />
 
           {/* Custom Copyright */}
-          <div className="space-y-[18px]">
+          <div className="space-y-2.5">
             <label className="text-sm font-medium text-foreground">Custom Copyright / Tagline Text</label>
-            <div className="space-y-1.5">
-              <Input
-                value={copyright}
-                onChange={(e) => onChange({ footer_copyright: e.target.value })}
-                placeholder="e.g. © 2026 Acme Inc. All rights reserved."
-              />
-              <p className="text-xs text-muted-foreground">
-                Optional custom copyright or legal notice rendered at the very bottom of the page.
-              </p>
-            </div>
+            <Input
+              value={copyright}
+              onChange={(e) => onChange({ footer_copyright: e.target.value })}
+              placeholder="e.g. © 2026 Acme Inc. All rights reserved."
+              className="mt-2"
+            />
+            <p className="text-xs text-muted-foreground">
+              Optional custom copyright or legal notice rendered at the very bottom of the page.
+            </p>
           </div>
         </>
       ) : null}
@@ -381,10 +381,10 @@ export function FooterBuilder({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-[18px]">
+            <div className="space-y-2.5">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Type</label>
               <Select value={formType} onValueChange={(v) => setFormType(v as FooterLinkType)}>
-                <SelectTrigger>
+                <SelectTrigger className="mt-2">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -396,7 +396,7 @@ export function FooterBuilder({
             </div>
 
             {formType === "page" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Page</label>
                 <Select
                   value={formPageSlug}
@@ -406,7 +406,7 @@ export function FooterBuilder({
                     if (selected && !formLabel) setFormLabel(selected.title);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Choose a published page" />
                   </SelectTrigger>
                   <SelectContent>
@@ -421,7 +421,7 @@ export function FooterBuilder({
             ) : null}
 
             {formType === "category" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Category</label>
                 <Select
                   value={formCatSlug}
@@ -431,7 +431,7 @@ export function FooterBuilder({
                     if (selected && !formLabel) setFormLabel(selected.name);
                   }}
                 >
-                  <SelectTrigger>
+                  <SelectTrigger className="mt-2">
                     <SelectValue placeholder="Choose a category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -445,22 +445,24 @@ export function FooterBuilder({
               </div>
             ) : null}
 
-            <div className="space-y-[18px]">
+            <div className="space-y-2.5">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Label</label>
               <Input
                 value={formLabel}
                 onChange={(e) => setFormLabel(e.target.value)}
                 placeholder="e.g. Terms of Service, Privacy Policy, Features"
+                className="mt-2"
               />
             </div>
 
             {formType === "custom" ? (
-              <div className="space-y-[18px]">
+              <div className="space-y-2.5">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Destination URL</label>
                 <Input
                   value={formUrl}
                   onChange={(e) => setFormUrl(e.target.value)}
                   placeholder="e.g. /terms or https://acme.com"
+                  className="mt-2"
                 />
               </div>
             ) : null}

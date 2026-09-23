@@ -11,7 +11,6 @@ import {
   deleteOgImage,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -145,143 +144,135 @@ export default function SeoSettings() {
 
   if (loading) {
     return (
-      <Card>
-        <CardHeader className="pb-4 sm:pb-4">
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-4 w-72 mt-2" />
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="space-y-[18px]">
-            <Skeleton className="h-4 w-20" />
-            <Skeleton className="h-10 w-full" />
-          </div>
-          <div className="space-y-[18px]">
-            <Skeleton className="h-4 w-28" />
-            <Skeleton className="h-24 w-full" />
-          </div>
-          <Skeleton className="h-10 w-20" />
-            <div className="border-t pt-5 mt-2 space-y-3">
-              <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
-                <div className="space-y-0.5">
-                  <Skeleton className="h-4 w-16" />
-                  <Skeleton className="h-3 w-32" />
-                </div>
-                <Skeleton className="h-9 w-16" />
-              </div>
-              <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
-                <div className="space-y-0.5">
-                  <Skeleton className="h-4 w-28" />
-                  <Skeleton className="h-3 w-48" />
-                </div>
-                <Skeleton className="h-9 w-16" />
-              </div>
+      <div className="space-y-4">
+        <div className="space-y-2.5">
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-10 w-full mt-2" />
+        </div>
+        <div className="space-y-2.5">
+          <Skeleton className="h-4 w-28" />
+          <Skeleton className="h-24 w-full mt-2" />
+        </div>
+        <Skeleton className="h-10 w-20" />
+        <div className="border-t pt-5 mt-2 space-y-3">
+          <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+            <div className="space-y-0.5">
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-3 w-32" />
             </div>
-        </CardContent>
-      </Card>
+            <Skeleton className="h-9 w-16" />
+          </div>
+          <div className="flex items-center justify-between rounded-lg border bg-background px-4 py-3">
+            <div className="space-y-0.5">
+              <Skeleton className="h-4 w-28" />
+              <Skeleton className="h-3 w-48" />
+            </div>
+            <Skeleton className="h-9 w-16" />
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
     <>
-      <Card>
-        <CardContent className="space-y-4 pt-6 sm:pt-6">
-          <div className="space-y-[18px]">
-            <Label htmlFor="seo_meta_title">Meta title</Label>
-            <Input
-              id="seo_meta_title"
-             
-              value={metaTitle}
-              onChange={(e) => setMetaTitle(e.target.value)}
-              placeholder="Your site title on search engines"
-            />
+      <div className="space-y-4">
+        <div className="space-y-2.5">
+          <Label htmlFor="seo_meta_title">Meta title</Label>
+          <Input
+            id="seo_meta_title"
+            className="mt-2"
+            value={metaTitle}
+            onChange={(e) => setMetaTitle(e.target.value)}
+            placeholder="Your site title on search engines"
+          />
+        </div>
+        <div className="space-y-2.5">
+          <Label htmlFor="seo_meta_description">Meta description</Label>
+          <Textarea
+            id="seo_meta_description"
+            className="mt-2"
+            value={metaDescription}
+            onChange={(e) => setMetaDescription(e.target.value)}
+            placeholder="Short summary for search previews"
+            rows={3}
+          />
+        </div>
+        <div className="pt-4">
+          <Button
+            onClick={onSave}
+            disabled={busy || (metaTitle === originalMetaTitle && metaDescription === originalMetaDescription)}
+          >
+            Save
+          </Button>
+        </div>
+        <div className="border-t pt-5 mt-2 space-y-4">
+          <div>
+            <p className="text-sm font-medium">Open Graph image</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
           </div>
-          <div className="space-y-[18px]">
-            <Label htmlFor="seo_meta_description">Meta description</Label>
-            <Textarea
-              id="seo_meta_description"
-             
-              value={metaDescription}
-              onChange={(e) => setMetaDescription(e.target.value)}
-              placeholder="Short summary for search previews"
-              rows={3}
-            />
-          </div>
-          <div className="pt-4">
+          <input
+            ref={ogInputRef}
+            type="file"
+            accept="image/*"
+            className="sr-only"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleUploadOgImage(f);
+              e.currentTarget.value = "";
+            }}
+          />
+          <div className="flex flex-wrap items-center gap-2">
             <Button
-              onClick={onSave}
-              disabled={busy || (metaTitle === originalMetaTitle && metaDescription === originalMetaDescription)}
+              type="button"
+              variant="default"
+              onClick={() => ogInputRef.current?.click()}
+              disabled={ogImageBusy}
             >
-              Save
+              {ogImageBusy ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Uploading...
+                </>
+              ) : (
+                "Upload"
+              )}
             </Button>
-          </div>
-          <div className="border-t pt-5 mt-2 space-y-4">
-            <div>
-              <p className="text-sm font-medium">Open Graph image</p>
-              <p className="text-xs text-muted-foreground mt-0.5">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
-            </div>
-            <input
-              ref={ogInputRef}
-              type="file"
-              accept="image/*"
-              className="sr-only"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void handleUploadOgImage(f);
-                e.currentTarget.value = "";
-              }}
-            />
-            <div className="flex flex-wrap items-center gap-2">
+            {ogImageUrl ? (
               <Button
                 type="button"
-                variant="default"
-                onClick={() => ogInputRef.current?.click()}
+                variant="ghost"
+                onClick={handleRemoveOgImage}
                 disabled={ogImageBusy}
               >
-                {ogImageBusy ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Uploading...
-                  </>
-                ) : (
-                  "Upload"
-                )}
+                Remove
               </Button>
-              {ogImageUrl ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={handleRemoveOgImage}
-                  disabled={ogImageBusy}
-                >
-                  Remove
-                </Button>
-              ) : null}
-            </div>
-            {ogImageUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
-                alt=""
-                className="aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
-              />
             ) : null}
           </div>
-          <div className="border-t pt-5 mt-2 space-y-3">
-            <SeoResourceRow
-              label="Sitemap"
-              url={sitemapResourceUrl ?? "#"}
-              displayText="/sitemap.xml"
-              enabled={!!sitemapResourceUrl}
+          {ogImageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={transformImageUrl(assetUrl(ogImageUrl), { width: 600 })}
+              alt=""
+              className="aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
             />
-            <SeoResourceRow
-              label="Robots.txt"
-              url={robotsResourceUrl ?? "#"}
-              displayText="/robots.txt"
-              enabled={!!robotsResourceUrl}
-            />
-          </div>
-        </CardContent>
-      </Card>
+          ) : null}
+        </div>
+        <div className="border-t pt-5 mt-2 space-y-3">
+          <SeoResourceRow
+            label="Sitemap"
+            url={sitemapResourceUrl ?? "#"}
+            displayText="/sitemap.xml"
+            enabled={!!sitemapResourceUrl}
+          />
+          <SeoResourceRow
+            label="Robots.txt"
+            url={robotsResourceUrl ?? "#"}
+            displayText="/robots.txt"
+            enabled={!!robotsResourceUrl}
+          />
+        </div>
+      </div>
       <FloatingErrorToast
         message={savedMsg}
         onDismiss={() => setSavedMsg(null)}

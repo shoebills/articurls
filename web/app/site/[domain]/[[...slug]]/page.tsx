@@ -678,7 +678,6 @@ export default async function SitePublicationPage({ params }: Props) {
           <div className="mt-14">
             <SubscribeToAuthor
               subdomain={site.subdomain}
-              authorName={site.name}
               headline={site.newsletter_headline}
               text={site.newsletter_text}
               disclaimer={site.newsletter_disclaimer}
@@ -716,7 +715,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
                     basePath={basePath}
                   />
@@ -729,7 +727,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -819,7 +816,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
                     basePath={basePath}
                   />
@@ -832,7 +828,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -935,7 +930,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
                     basePath={basePath}
                   />
@@ -948,7 +942,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -1032,7 +1025,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
                     basePath={basePath}
                   />
@@ -1045,7 +1037,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
@@ -1160,7 +1151,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     alignment={site.navbar_alignment || "left"}
                     basePath={basePath}
                   />
@@ -1173,7 +1163,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
-                    authorName={site.name}
                     showMenuButton={hasMobileNav}
                     basePath={basePath}
                   />
