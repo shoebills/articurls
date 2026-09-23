@@ -192,6 +192,15 @@ export function ThemeStyleWrapper({
     }
   }, [siteMode, setTheme]);
 
+  useEffect(() => {
+    if (site.site_language) {
+      document.documentElement.lang = site.site_language;
+    }
+    return () => {
+      document.documentElement.lang = "en";
+    };
+  }, [site.site_language]);
+
   const palette = getPaletteTokens(site.color_theme, site.custom_color);
   const radius = RADIUS_VALUES[(site.button_style as keyof typeof RADIUS_VALUES) || "rounded"];
   const fontClass = FONT_CLASSES[(site.font_family as keyof typeof FONT_CLASSES) || "sans"];

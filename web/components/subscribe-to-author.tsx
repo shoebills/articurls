@@ -20,6 +20,10 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 type Props = {
   subdomain: string;
   authorName?: string;
+  headline?: string | null;
+  text?: string | null;
+  disclaimer?: string | null;
+  buttonText?: string | null;
   /** Full-width card (e.g. blog post). Default. */
   mode?: "card" | "dialog";
   className?: string;
@@ -31,6 +35,10 @@ type Props = {
 export function SubscribeToAuthor({
   subdomain,
   authorName,
+  headline,
+  text,
+  disclaimer,
+  buttonText,
   mode = "card",
   className,
   triggerClassName,
@@ -62,10 +70,13 @@ export function SubscribeToAuthor({
     }
   }
 
-  const description =
-    authorName != null && authorName !== ""
+  const displayHeadline = headline || "Email updates";
+  const displayDescription =
+    text ||
+    (authorName != null && authorName !== ""
       ? `Subscribe to receive updates from ${authorName}.`
-      : "Subscribe to receive updates.";
+      : "Subscribe to receive updates.");
+  const submitButtonLabel = buttonText || "Subscribe";
 
   const formBody = (
     <>
@@ -102,11 +113,14 @@ export function SubscribeToAuthor({
                 Subscribing…
               </>
             ) : (
-              "Subscribe"
+              submitButtonLabel
             )}
           </Button>
         </form>
       )}
+      {disclaimer ? (
+        <p className="mt-2 text-xs text-muted-foreground">{disclaimer}</p>
+      ) : null}
     </>
   );
 
@@ -141,13 +155,13 @@ export function SubscribeToAuthor({
                 triggerClassName,
               )}
             >
-              {triggerChildren ?? "Subscribe"}
+              {triggerChildren ?? submitButtonLabel}
             </Button>
           </DialogTrigger>
           <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm sm:max-w-md" onOpenAutoFocus={(e) => e.preventDefault()}>
             <DialogHeader>
-              <DialogTitle>Email updates</DialogTitle>
-              <DialogDescription>{description}</DialogDescription>
+              <DialogTitle>{displayHeadline}</DialogTitle>
+              <DialogDescription>{displayDescription}</DialogDescription>
             </DialogHeader>
             {formBody}
           </DialogContent>
@@ -164,8 +178,8 @@ export function SubscribeToAuthor({
           className ?? "rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5"
         }
       >
-        <p className="text-sm font-semibold text-foreground">Email updates</p>
-        <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm font-semibold text-foreground">{displayHeadline}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{displayDescription}</p>
         {formBody}
       </div>
       {errorToast}

@@ -91,11 +91,11 @@ export function SubscriberList() {
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
             <div className="overflow-x-auto">
-              <table className="table-fixed w-[600px]">
+              <table className="w-full table-fixed">
                 <thead>
                   <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                    <th className="w-[300px] px-3 py-2 font-medium">Email</th>
-                    <th className="w-[300px] px-3 py-2 font-medium">Subscribed</th>
+                    <th className="w-1/2 px-3 py-2 font-medium">Email</th>
+                    <th className="w-1/2 px-3 py-2 font-medium">Subscribed</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -121,11 +121,11 @@ export function SubscriberList() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="table-fixed w-[600px]">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="border-b text-left text-xs font-medium text-muted-foreground">
-                      <th className="w-[300px] px-3 py-2 font-medium">Email</th>
-                      <th className="w-[300px] px-3 py-2 font-medium">Subscribed</th>
+                      <th className="w-1/2 px-3 py-2 font-medium">Email</th>
+                      <th className="w-1/2 px-3 py-2 font-medium">Subscribed</th>
                     </tr>
                   </thead>
                   <tbody>

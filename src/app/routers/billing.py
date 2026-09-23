@@ -775,7 +775,7 @@ def get_account_usage(
         site_items.append({
             "site_id": site.site_id,
             "subdomain": site.subdomain,
-            "nav_blog_name": site.nav_blog_name or site.subdomain,
+            "site_name": site.site_name or site.subdomain,
             "pageviews": views,
         })
 

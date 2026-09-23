@@ -185,7 +185,7 @@ export function generateAuthorProfileSchema(
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: site.nav_blog_name || "My Blog",
+      name: site.site_name || "My Blog",
     },
   };
 }
@@ -225,7 +225,7 @@ export function generateFaqPageSchema(
 }
 
 export function generateWebSiteSchema(site: PublicSite, siteUrl: string): WebSite {
-  const siteName = (site.nav_blog_name || "").trim() || "My Blog";
+  const siteName = (site.site_name || "").trim() || "My Blog";
   const description = site.meta_description || undefined;
   
   return {
@@ -268,7 +268,7 @@ export function generateBlogPostingSchema(
   const authorPerson = blog.author
     ? generateAuthorPersonSchema(blog.author, `${siteUrl}/author/${encodeURIComponent(blog.author.slug)}`)
     : generatePersonSchema(author, siteUrl);
-  const siteName = author.nav_blog_name || "My Blog";
+  const siteName = author.site_name || "My Blog";
   
   // Generate multiple image sizes for better SEO
   const images: ImageObject[] = [];
@@ -319,7 +319,7 @@ export function generateCollectionPageSchema(
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: author.nav_blog_name || "My Blog",
+      name: author.site_name || "My Blog",
     },
   };
 }
@@ -342,7 +342,7 @@ export function generateWebPageSchema(
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: author.nav_blog_name || "My Blog",
+      name: author.site_name || "My Blog",
     },
     dateModified: page.updated_at || undefined,
   };

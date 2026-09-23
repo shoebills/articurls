@@ -107,7 +107,7 @@ function SetupForm() {
     if (!storedToken) return;
     const newSite = await createSite(storedToken, {
       subdomain: cleanSubdomain(subdomain),
-      nav_blog_name: blogName.trim() || undefined,
+      site_name: blogName.trim() || undefined,
       template_id: "saas",
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
@@ -125,7 +125,7 @@ function SetupForm() {
       session_id: sessionId,
       subdomain: cleanSubdomain(subdomain),
       name: name.trim(),
-      nav_blog_name: blogName.trim() || undefined,
+      site_name: blogName.trim() || undefined,
       template_id: "saas",
     });
     localStorage.setItem(TOKEN_KEY, access_token);

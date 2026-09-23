@@ -7,7 +7,6 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu, PublicMobileNavLink } from "@/components/public-mobile-nav-menu";
 import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
-import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
 type StandardTemplateProps = {
@@ -19,8 +18,8 @@ type StandardTemplateProps = {
 };
 
 export function StandardTemplate({ site, blogs, pages, categories, basePath }: StandardTemplateProps) {
-  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
-  const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+  const displayName = (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
+  const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
   const maxWidth = site.content_width === "wide" ? "max-w-5xl" : "max-w-3xl";
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = isNavEnabled
@@ -66,6 +65,8 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
       ? "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6"
       : "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/80 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-16 sm:pb-5 sm:pt-6";
 
+  const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className={mainSpacing}>
@@ -73,9 +74,10 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
           <header className={publicNavHeaderClass} data-public-nav>
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
-                nameSize={blogNameSize}
+                title={displayName}
+                titleHref={titleHref}
+                logoUrl={site.logo_url}
+                searchEnabled={site.search_enabled !== false}
                 links={desktopLinks}
                 showSubscribe={showSubscriberCollection}
                 subdomain={site.subdomain}
@@ -85,9 +87,10 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
             </div>
             <div className="sm:hidden">
               <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
-                nameSize={blogNameSize}
+                title={displayName}
+                titleHref={titleHref}
+                logoUrl={site.logo_url}
+                searchEnabled={site.search_enabled !== false}
                 links={mobileLinks}
                 subdomain={site.subdomain}
                 authorName={site.name}
@@ -99,16 +102,41 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
         ) : null}
 
         {/* Hero Section */}
-        {site.about_title && site.show_about_section ? (
+        {hasHero ? (
           <div className="mb-20 mt-16 text-center max-w-2xl mx-auto flex flex-col items-center">
-            <h1 className="mb-6 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
-              {site.about_title}
-            </h1>
-            {showSubscriberCollection && (
+            {site.hero_title ? (
+              <h1 className="mb-4 text-4xl font-bold tracking-tight sm:text-5xl leading-tight">
+                {site.hero_title}
+              </h1>
+            ) : null}
+            {site.hero_description ? (
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-xl">
+                {site.hero_description}
+              </p>
+            ) : null}
+            {showSubscriberCollection && site.newsletter_show_near_header ? (
               <div className="mt-8 w-full max-w-sm">
-                <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
+                <SubscribeToAuthor
+                  subdomain={site.subdomain}
+                  authorName={site.name}
+                  headline={site.newsletter_headline}
+                  text={site.newsletter_text}
+                  disclaimer={site.newsletter_disclaimer}
+                  buttonText={site.newsletter_button_text}
+                />
               </div>
-            )}
+            ) : null}
+          </div>
+        ) : showSubscriberCollection && site.newsletter_show_near_header ? (
+          <div className="my-12 w-full max-w-md mx-auto">
+            <SubscribeToAuthor
+              subdomain={site.subdomain}
+              authorName={site.name}
+              headline={site.newsletter_headline}
+              text={site.newsletter_text}
+              disclaimer={site.newsletter_disclaimer}
+              buttonText={site.newsletter_button_text}
+            />
           </div>
         ) : null}
 

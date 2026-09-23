@@ -26,5 +26,5 @@ class CompleteGoogleSignup(BaseModel):
     session_id: str
     subdomain: str
     name: str  # Allow user to edit the name from Google
-    nav_blog_name: str | None = None
+    site_name: str | None = None
     template_id: str | None = "saas"

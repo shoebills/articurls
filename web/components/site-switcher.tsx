@@ -24,7 +24,7 @@ export function SiteSwitcher({
   const router = useRouter();
   const { sites, activeSite, switchSite } = useAuth();
 
-  const currentDisplayName = activeSite?.nav_blog_name || activeSite?.subdomain || "My Site";
+  const currentDisplayName = activeSite?.site_name || activeSite?.subdomain || "My Site";
 
   return (
     <div className={cn("p-2.5 pb-1", className)}>
@@ -56,7 +56,7 @@ export function SiteSwitcher({
           </DropdownMenuLabel>
           {sites.map((site) => {
             const isSelected = activeSite?.site_id === site.site_id;
-            const name = site.nav_blog_name || site.subdomain;
+            const name = site.site_name || site.subdomain;
             return (
               <DropdownMenuItem
                 key={site.site_id}

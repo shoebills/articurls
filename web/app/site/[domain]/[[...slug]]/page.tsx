@@ -20,7 +20,7 @@ import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/im
 import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl, getPublicPostUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
-import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
+import { ContentEndCta } from "@/components/content-end-cta";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema, generateFaqPageSchema, generateBreadcrumbList } from "@/lib/structured-data";
 import { BriefcaseBusiness, Calendar, ChevronLeft, Globe } from "lucide-react";
@@ -53,7 +53,7 @@ export const revalidate = 86400;
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveSiteName(site: PublicSite | null | undefined): string {
-  return (site?.nav_blog_name || "").trim() || site?.name || site?.subdomain || "My Blog";
+  return (site?.site_name || "").trim() || site?.name || site?.subdomain || "My Blog";
 }
 
 function resolveSiteOgImage(site: PublicSite | null | undefined): string | undefined {
@@ -248,10 +248,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
 
   const canonical = `https://${host}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
-  const alternatesWithOptionalRss = (rssEnabled: boolean) =>
-    rssEnabled
-      ? { canonical, types: { "application/rss+xml": `https://${host}${basePath}/rss.xml` } }
-      : { canonical };
+  const alternatesWithFeeds = (site?: PublicSite | null) => {
+    const types: Record<string, string> = {};
+    if (site?.rss_enabled) {
+      types["application/rss+xml"] = `https://${host}${basePath}/rss.xml`;
+    }
+    if (site?.atom_enabled) {
+      types["application/atom+xml"] = `https://${host}${basePath}/atom.xml`;
+    }
+    return Object.keys(types).length > 0 ? { canonical, types } : { canonical };
+  };
 
   if (segments[0] === "category" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
@@ -266,7 +272,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+      alternates: alternatesWithFeeds(site),
       icons: faviconIcons(site),
       openGraph: {
         title,
@@ -274,6 +280,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
+        locale: site.og_locale || undefined,
         images: ogImage ? [{ url: ogImage, alt: `${categoryName} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
@@ -299,7 +306,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       robots: author.noindex ? { index: false, follow: true } : undefined,
-      alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+      alternates: alternatesWithFeeds(site),
       icons: faviconIcons(site),
       openGraph: {
         title,
@@ -307,6 +314,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "profile",
         siteName,
+        locale: site.og_locale || undefined,
         images: ogImage ? [{ url: ogImage, alt: `${author.name} avatar`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
@@ -328,7 +336,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return {
       title,
       description,
-      alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+      alternates: alternatesWithFeeds(site),
       icons: faviconIcons(site),
       openGraph: {
         title,
@@ -336,6 +344,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         url: canonical,
         type: "website",
         siteName,
+        locale: site.og_locale || undefined,
         images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image`, width: 1200, height: 630 }] : undefined,
       },
       twitter: {
@@ -370,7 +379,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         robots: blog.noindex ? { index: false, follow: true } : undefined,
-        alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+        alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
         openGraph: {
           title,
@@ -378,6 +387,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: postCanonical,
           type: "article",
           siteName,
+          locale: site?.og_locale || undefined,
           images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
         },
         twitter: {
@@ -404,7 +414,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         robots: page.noindex ? { index: false, follow: true } : undefined,
-        alternates: alternatesWithOptionalRss(site?.rss_enabled !== false),
+        alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
         openGraph: {
           title,
@@ -412,6 +422,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: pageCanonical,
           type: "website",
           siteName,
+          locale: site?.og_locale || undefined,
           images: ogImage ? [{ url: ogImage, alt: `${title} cover image`, width: 1200, height: 630 }] : undefined,
         },
         twitter: {
@@ -436,7 +447,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    alternates: alternatesWithOptionalRss(site.rss_enabled !== false),
+    alternates: alternatesWithFeeds(site),
     icons: faviconIcons(site),
     openGraph: {
       title,
@@ -444,6 +455,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       url: canonical,
       type: "website",
       siteName,
+      locale: site.og_locale || undefined,
       images: ogImage ? [{ url: ogImage, alt: `${siteName} cover image`, width: 1200, height: 630 }] : undefined,
     },
     twitter: {
@@ -521,8 +533,8 @@ export default async function SitePublicationPage({ params }: Props) {
     // Render Blog post if found
     if (content.type === "blog" && content.blog) {
       const blog = content.blog;
-      const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
-      const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+      const navBlogName = resolveSiteName(site);
+      const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
       const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
       const isNavEnabled = site.navbar_enabled !== false;
       const containerSpacing = isNavEnabled
@@ -666,7 +678,14 @@ export default async function SitePublicationPage({ params }: Props) {
 
           {showSubscriberCollection ? (
             <div className="mt-14">
-              <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
+              <SubscribeToAuthor
+                subdomain={site.subdomain}
+                authorName={site.name}
+                headline={site.newsletter_headline}
+                text={site.newsletter_text}
+                disclaimer={site.newsletter_disclaimer}
+                buttonText={site.newsletter_button_text}
+              />
             </div>
           ) : null}
         </>
@@ -677,7 +696,7 @@ export default async function SitePublicationPage({ params }: Props) {
           <article className="min-h-screen bg-background">
           <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
           <StructuredData data={generateBreadcrumbList([
-            { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+            { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
             { name: blog.meta_title || blog.title, url: currentUrl },
           ])} />
           {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
@@ -695,8 +714,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
@@ -708,8 +728,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="sm:hidden">
                   <PublicMobileNavMenu
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
@@ -720,23 +741,31 @@ export default async function SitePublicationPage({ params }: Props) {
                 </div>
               </header>
             ) : null}
-            {site.content_width === "wide" ? (
-              <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
-                <div className="max-w-3xl">
-                  <div className="mb-5 sm:mb-6 lg:hidden">
+            {site.toc_enabled !== false ? (
+              site.content_width === "wide" ? (
+                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
+                  <div className="max-w-3xl">
+                    <div className="mb-5 sm:mb-6 lg:hidden">
+                      <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
+                    </div>
+                    {blogPostContent}
+                  </div>
+                  <aside className="hidden lg:block sticky top-24 self-start z-30">
+                    <BlogPostToc headings={tocHeadings} />
+                  </aside>
+                </div>
+              ) : (
+                <div className="space-y-0">
+                  <div className="mb-5 sm:mb-6">
                     <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
                   </div>
                   {blogPostContent}
                 </div>
-                <aside className="hidden lg:block sticky top-24 self-start z-30">
-                  <BlogPostToc headings={tocHeadings} />
-                </aside>
-              </div>
+              )
             ) : (
-              <div className="mb-5 sm:mb-6">
-                <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
-              </div>
+              blogPostContent
             )}
+            <ContentEndCta site={site} />
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>
         </article>
@@ -748,7 +777,7 @@ export default async function SitePublicationPage({ params }: Props) {
     if (content.type === "page" && content.page) {
       const page = content.page;
       const navBlogName = resolveSiteName(site);
-      const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+      const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
       const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
       const contentWidth = site.content_width === "wide" ? "max-w-3xl" : "";
       const isNavEnabled = site.navbar_enabled !== false;
@@ -774,7 +803,7 @@ export default async function SitePublicationPage({ params }: Props) {
           <main className={mainSpacing}>
             <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
             <StructuredData data={generateBreadcrumbList([
-              { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+              { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
               { name: page.title || "Untitled Page", url: currentUrl },
             ])} />
             {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
@@ -791,8 +820,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
@@ -804,8 +834,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="sm:hidden">
                   <PublicMobileNavMenu
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
@@ -854,6 +885,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 <PublicFaqSection items={page.faq_items} />
               )}
             </div>
+            <ContentEndCta site={site} isPage />
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>
         </div>
@@ -880,7 +912,7 @@ export default async function SitePublicationPage({ params }: Props) {
     const blogs = data.blogs;
     const categoryName = data.category.name;
     const navBlogName = resolveSiteName(site);
-    const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
     const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
@@ -898,38 +930,40 @@ export default async function SitePublicationPage({ params }: Props) {
       <div className="min-h-screen bg-background text-foreground">
         <StructuredData data={generateCollectionPageSchema(data.category, site, currentUrl)} />
         <StructuredData data={generateBreadcrumbList([
-          { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+          { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
           { name: categoryName, url: currentUrl },
         ])} />
         <main className={mainSpacing}>
           {isNavEnabled ? (
             <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-              <div className="hidden w-full sm:block">
-                <PublicDesktopNav
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  showSubscribe={showSubscriberCollection}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  alignment={site.navbar_alignment || "left"}
-                  basePath={basePath}
-                />
-              </div>
-              <div className="sm:hidden">
-                <PublicMobileNavMenu
-                  title={navBlogName}
-                  titleHref={getPublicProfileUrl(subdomain, basePath)}
-                  nameSize={blogNameSize}
-                  links={desktopLinks}
-                  subdomain={site.subdomain}
-                  authorName={site.name}
-                  showSubscribeAction={showSubscriberCollection}
-                  showMenuButton={hasMobileNav}
-                  basePath={basePath}
-                />
-              </div>
+<div className="hidden w-full sm:block">
+                  <PublicDesktopNav
+                    title={navBlogName}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
+                    links={desktopLinks}
+                    showSubscribe={showSubscriberCollection}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    alignment={site.navbar_alignment || "left"}
+                    basePath={basePath}
+                  />
+                </div>
+                <div className="sm:hidden">
+                  <PublicMobileNavMenu
+                    title={navBlogName}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
+                    links={desktopLinks}
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    showSubscribeAction={showSubscriberCollection}
+                    showMenuButton={hasMobileNav}
+                    basePath={basePath}
+                  />
+                </div>
             </header>
           ) : null}
 
@@ -977,7 +1011,7 @@ export default async function SitePublicationPage({ params }: Props) {
     const blogs = data.blogs;
     const author = data.author;
     const navBlogName = resolveSiteName(site);
-    const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
     const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
@@ -996,7 +1030,7 @@ export default async function SitePublicationPage({ params }: Props) {
         <div className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateAuthorProfileSchema(author, site, currentUrl, siteUrl)} />
           <StructuredData data={generateBreadcrumbList([
-            { name: site.nav_blog_name || "Home", url: siteUrl },
+            { name: resolveSiteName(site) || "Home", url: siteUrl },
             { name: author.name, url: currentUrl },
           ])} />
           <main className={mainSpacing}>
@@ -1005,8 +1039,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
@@ -1018,8 +1053,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="sm:hidden">
                   <PublicMobileNavMenu
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}
@@ -1107,7 +1143,7 @@ export default async function SitePublicationPage({ params }: Props) {
     if (!site) notFound();
 
     const navBlogName = resolveSiteName(site);
-    const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
     const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
@@ -1125,7 +1161,7 @@ export default async function SitePublicationPage({ params }: Props) {
         <div className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, currentUrl)} />
           <StructuredData data={generateBreadcrumbList([
-            { name: site.nav_blog_name || "Home", url: `https://${host}${basePath}` },
+            { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
             { name: "Categories", url: currentUrl },
           ])} />
           <main className={mainSpacing}>
@@ -1134,8 +1170,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="hidden w-full sm:block">
                   <PublicDesktopNav
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     showSubscribe={showSubscriberCollection}
                     subdomain={site.subdomain}
@@ -1147,8 +1184,9 @@ export default async function SitePublicationPage({ params }: Props) {
                 <div className="sm:hidden">
                   <PublicMobileNavMenu
                     title={navBlogName}
-                    titleHref={getPublicProfileUrl(subdomain, basePath)}
-                    nameSize={blogNameSize}
+                    titleHref={titleHref}
+                    logoUrl={site.logo_url}
+                    searchEnabled={site.search_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     authorName={site.name}

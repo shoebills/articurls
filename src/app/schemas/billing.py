@@ -44,7 +44,7 @@ class CustomerPortalResponse(BaseModel):
 class SiteUsageItem(BaseModel):
     site_id: uuid.UUID
     subdomain: str
-    nav_blog_name: Optional[str] = None
+    site_name: Optional[str] = None
     pageviews: int = 0
 
 

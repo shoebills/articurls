@@ -44,7 +44,7 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
         "custom_domain": site.custom_domain,
         "custom_subpath": site.custom_subpath,
         "domain_status": site.domain_status.value if hasattr(site.domain_status, "value") else str(site.domain_status),
-        "nav_blog_name": site.nav_blog_name,
+        "site_name": site.site_name,
         "template_id": site.template_id,
         "created_at": site.created_at,
         "post_count": post_count,
@@ -129,7 +129,7 @@ def create_site(
     new_site = models.Site(
         user_id=current_user.user_id,
         subdomain=cleaned_subdomain,
-        nav_blog_name=request.nav_blog_name.strip() if request.nav_blog_name else cleaned_subdomain,
+        site_name=request.site_name.strip() if request.site_name else cleaned_subdomain,
     )
     if request.template_id in ("standard", "saas"):
         new_site.template_id = request.template_id

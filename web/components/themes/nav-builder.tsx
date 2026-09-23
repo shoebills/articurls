@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { listPages, listCategories } from "@/lib/api";
+import { listPages, listCategories, uploadLogo, deleteLogo, ApiError } from "@/lib/api";
+import { assetUrl } from "@/lib/env";
 import type { Category, DesignSettings, NavItem, NavItemType, UserPage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,6 +51,9 @@ import {
   Trash2,
   ExternalLink,
   Sparkles,
+  Search,
+  Image as ImageIcon,
+  Loader2,
 } from "lucide-react";
 
 function SortableNavItemRow({
@@ -143,6 +147,43 @@ export function NavBuilder({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Logo upload state
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState<string | null>(null);
+
+  const handleLogoUpload = async (file: File) => {
+    if (!token) return;
+    if (file.size > 2 * 1024 * 1024) {
+      setLogoError("Logo too large (max 2MB)");
+      return;
+    }
+    setLogoBusy(true);
+    setLogoError(null);
+    try {
+      const res = await uploadLogo(token, file);
+      onChange({ logo_url: res.logo_url });
+    } catch (e) {
+      setLogoError(e instanceof ApiError ? e.message : "Failed to upload logo");
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
+  const handleLogoDelete = async () => {
+    if (!token) return;
+    setLogoBusy(true);
+    setLogoError(null);
+    try {
+      await deleteLogo(token);
+      onChange({ logo_url: null });
+    } catch (e) {
+      setLogoError(e instanceof ApiError ? e.message : "Failed to delete logo");
+    } finally {
+      setLogoBusy(false);
+    }
+  };
+
   // Form states
   const [formType, setFormType] = useState<NavItemType>("custom");
   const [formLabel, setFormLabel] = useState("");
@@ -229,20 +270,22 @@ export function NavBuilder({
     if (!finalLabel || !finalUrl) return;
 
     if (editingId) {
-      const updated = navItems.map((item) =>
-        item.id === editingId
-          ? {
-              ...item,
-              type: formType,
-              label: finalLabel,
-              url: finalUrl,
-              is_cta: formIsCta,
-              open_in_new_tab: formNewTab,
-            }
-          : item
-      );
+      const updated = navItems.map((item) => {
+        if (item.id === editingId) {
+          return {
+            ...item,
+            type: formType,
+            label: finalLabel,
+            url: finalUrl,
+            is_cta: formIsCta,
+            open_in_new_tab: formNewTab,
+          };
+        }
+        return formIsCta ? { ...item, is_cta: false } : item;
+      });
       onChange({ nav_items: updated });
     } else {
+      const baseItems = formIsCta ? navItems.map((i) => ({ ...i, is_cta: false })) : navItems;
       const newItem: NavItem = {
         id: `nav_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
         type: formType,
@@ -251,7 +294,7 @@ export function NavBuilder({
         is_cta: formIsCta,
         open_in_new_tab: formNewTab,
       };
-      onChange({ nav_items: [...navItems, newItem] });
+      onChange({ nav_items: [...baseItems, newItem] });
     }
 
     setDialogOpen(false);
@@ -263,42 +306,122 @@ export function NavBuilder({
 
   return (
     <div className="space-y-6">
-      {/* Brand Identity / Title */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Header Brand Name</label>
-          <Input
-            value={settings.nav_blog_name || ""}
-            onChange={(e) => onChange({ nav_blog_name: e.target.value })}
-            placeholder="e.g. My Publication"
-          />
-        </div>
+      {/* Brand Identity & Logo */}
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Header Brand Name</label>
+            <Input
+              value={settings.site_name || ""}
+              onChange={(e) => onChange({ site_name: e.target.value })}
+              placeholder="e.g. My Publication"
+            />
+            <p className="text-xs text-muted-foreground">
+              Displayed when no logo image is set.
+            </p>
+          </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-foreground">Brand Font Size</label>
-          <div className="flex gap-2">
-            {(
-              [
-                { id: "small", label: "Small" },
-                { id: "medium", label: "Medium" },
-                { id: "large", label: "Large" },
-              ] as const
-            ).map((s) => (
-              <button
-                type="button"
-                key={s.id}
-                onClick={() => onChange({ nav_blog_name_size: s.id })}
-                className={`flex-1 rounded-lg border py-2 text-xs font-medium transition-all ${
-                  (settings.nav_blog_name_size || "medium") === s.id
-                    ? "border-primary bg-primary text-primary-foreground shadow-2xs"
-                    : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
+            <Input
+              value={settings.logo_link ?? "/"}
+              onChange={(e) => onChange({ logo_link: e.target.value })}
+              placeholder="/"
+            />
+            <p className="text-xs text-muted-foreground">
+              Destination URL when visitors click your logo or brand title.
+            </p>
           </div>
         </div>
+
+        {/* Full Image Logo upload */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Header Logo Image</label>
+          <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
+            <div className="flex items-center gap-4">
+              <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1">
+                {settings.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={assetUrl(settings.logo_url)}
+                    alt="Logo"
+                    className="h-full w-full object-contain"
+                  />
+                ) : (
+                  <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+                )}
+              </div>
+              <div className="space-y-1.5 flex-1 min-w-0">
+                <input
+                  ref={logoInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (file) await handleLogoUpload(file);
+                    e.target.value = "";
+                  }}
+                  disabled={logoBusy}
+                />
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 text-xs h-8"
+                    disabled={logoBusy}
+                    onClick={() => logoInputRef.current?.click()}
+                  >
+                    {logoBusy ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : (
+                      <Pencil className="h-3.5 w-3.5" />
+                    )}
+                    {settings.logo_url ? "Change Logo" : "Upload Logo"}
+                  </Button>
+                  {settings.logo_url ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-2 text-xs"
+                      disabled={logoBusy}
+                      onClick={handleLogoDelete}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  ) : null}
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  PNG, JPG, WebP or SVG up to 2MB.
+                </p>
+                {logoError && (
+                  <p className="text-xs text-destructive">{logoError}</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <hr className="border-border/60" />
+
+      {/* Search Toggle */}
+      <div className="flex items-center justify-between rounded-xl border p-4 bg-muted/20">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <Search className="h-4 w-4 text-muted-foreground" />
+            <label className="text-sm font-medium text-foreground">Search in Navigation</label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Display a quick search button in your header for visitors to find articles.
+          </p>
+        </div>
+        <Switch
+          checked={settings.search_enabled !== false}
+          onCheckedChange={(checked) => onChange({ search_enabled: checked })}
+        />
       </div>
 
       <hr className="border-border/60" />

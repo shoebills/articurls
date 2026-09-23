@@ -6,7 +6,7 @@ import { Bell, ExternalLink, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
-import { normalizeNavBlogNameSize, publicNavMobileBlogTitleClassName, type NavBlogNameSize } from "@/lib/nav-blog-name";
+import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 const TRAY_GAP_BELOW_NAVBAR_PX = 8;
@@ -23,10 +23,12 @@ export type PublicMobileNavLink = {
 type PublicMobileNavMenuProps = {
   title: string;
   titleHref?: string;
-  nameSize?: NavBlogNameSize | string | null;
   links: PublicMobileNavLink[];
   subdomain?: string;
   authorName?: string;
+  logoUrl?: string | null;
+  searchEnabled?: boolean;
+  nameSize?: string | null;
   showSubscribeAction?: boolean;
   showMenuButton?: boolean;
   basePath?: string;
@@ -35,16 +37,15 @@ type PublicMobileNavMenuProps = {
 export function PublicMobileNavMenu({
   title,
   titleHref = "/",
-  nameSize = "medium",
   links,
   subdomain,
   authorName,
+  logoUrl,
+  searchEnabled = true,
   showSubscribeAction = false,
   showMenuButton = true,
   basePath = "",
 }: PublicMobileNavMenuProps) {
-  const size = normalizeNavBlogNameSize(nameSize);
-  const titleClass = publicNavMobileBlogTitleClassName(size);
   const [open, setOpen] = useState(false);
   const [trayLayout, setTrayLayout] = useState<TrayLayout | null>(null);
   const rootRef = useRef<HTMLDivElement | null>(null);
@@ -108,17 +109,31 @@ export function PublicMobileNavMenu({
         )}
       >
         {titleHref ? (
-          <Link href={titleHref} className={cn(titleClass, !showMenuButton && "!flex-none")}>
-            {title}
+          <Link href={titleHref} className="truncate !flex-none flex items-center pr-2">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={assetUrl(logoUrl)}
+                alt={title}
+                className="h-7 max-h-7 w-auto object-contain"
+              />
+            ) : (
+              <span className="font-bold text-base tracking-tight truncate">{title}</span>
+            )}
           </Link>
         ) : (
-          <p className={cn(titleClass, !showMenuButton && "!flex-none")}>{title}</p>
+          logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={assetUrl(logoUrl)} alt={title} className="h-7 max-h-7 w-auto object-contain" />
+          ) : (
+            <p className="font-bold text-base tracking-tight truncate">{title}</p>
+          )
         )}
 
         {showMenuButton ? (
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            {subdomain ? (
+            {subdomain && searchEnabled !== false ? (
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
                 subdomain={subdomain}

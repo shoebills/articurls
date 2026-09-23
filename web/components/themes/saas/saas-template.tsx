@@ -7,7 +7,6 @@ import { PublicSiteFooter } from "@/components/public-site-footer";
 import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu, PublicMobileNavLink } from "@/components/public-mobile-nav-menu";
 import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl } from "@/lib/public-url";
-import { normalizeNavBlogNameSize } from "@/lib/nav-blog-name";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
 type SaasTemplateProps = {
@@ -19,8 +18,8 @@ type SaasTemplateProps = {
 };
 
 export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasTemplateProps) {
-  const navBlogName = (site.nav_blog_name || "").trim() || site.name || site.subdomain || "My Blog";
-  const blogNameSize = normalizeNavBlogNameSize(site.nav_blog_name_size);
+  const displayName = (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
+  const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
   const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-5xl";
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = isNavEnabled
@@ -66,6 +65,8 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
       ? "sticky top-0 z-40 mb-8 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6"
       : "sticky top-0 z-40 mb-8 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
 
+  const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
+
   return (
     <div className="min-h-screen bg-background text-foreground font-sans">
       <main className={mainSpacing}>
@@ -73,9 +74,10 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           <header className={publicNavHeaderClass} data-public-nav>
             <div className="hidden w-full sm:block">
               <PublicDesktopNav
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
-                nameSize={blogNameSize}
+                title={displayName}
+                titleHref={titleHref}
+                logoUrl={site.logo_url}
+                searchEnabled={site.search_enabled !== false}
                 links={desktopLinks}
                 showSubscribe={showSubscriberCollection}
                 subdomain={site.subdomain}
@@ -85,9 +87,10 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             </div>
             <div className="sm:hidden">
               <PublicMobileNavMenu
-                title={navBlogName}
-                titleHref={getPublicProfileUrl(site.subdomain, basePath)}
-                nameSize={blogNameSize}
+                title={displayName}
+                titleHref={titleHref}
+                logoUrl={site.logo_url}
+                searchEnabled={site.search_enabled !== false}
                 links={mobileLinks}
                 subdomain={site.subdomain}
                 authorName={site.name}
@@ -99,18 +102,31 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
         ) : null}
 
         {/* SaaS Split Hero */}
-        {site.about_title && site.show_about_section ? (
+        {hasHero ? (
           <div className="mb-14 mt-10 grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div>
               <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground">
-                <span className="text-primary block mb-2">{site.about_title}</span>
-                The latest news and resources.
+                {site.hero_title ? (
+                  <span className="text-primary block mb-2">{site.hero_title}</span>
+                ) : null}
+                {site.hero_description ? (
+                  <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed">
+                    {site.hero_description}
+                  </span>
+                ) : null}
               </h1>
-              {showSubscriberCollection && (
+              {showSubscriberCollection && site.newsletter_show_near_header ? (
                 <div className="mt-8">
-                  <SubscribeToAuthor subdomain={site.subdomain} authorName={site.name} />
+                  <SubscribeToAuthor
+                    subdomain={site.subdomain}
+                    authorName={site.name}
+                    headline={site.newsletter_headline}
+                    text={site.newsletter_text}
+                    disclaimer={site.newsletter_disclaimer}
+                    buttonText={site.newsletter_button_text}
+                  />
                 </div>
-              )}
+              ) : null}
             </div>
             <div className="hidden md:flex justify-end">
               <div className="w-full max-w-sm aspect-square bg-muted/30 rounded-3xl border border-border/80 flex items-center justify-center p-8">
@@ -126,6 +142,17 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 </div>
               </div>
             </div>
+          </div>
+        ) : showSubscriberCollection && site.newsletter_show_near_header ? (
+          <div className="my-10 max-w-md">
+            <SubscribeToAuthor
+              subdomain={site.subdomain}
+              authorName={site.name}
+              headline={site.newsletter_headline}
+              text={site.newsletter_text}
+              disclaimer={site.newsletter_disclaimer}
+              buttonText={site.newsletter_button_text}
+            />
           </div>
         ) : null}
 

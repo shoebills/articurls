@@ -1,4 +1,4 @@
-from fastapi import Depends, APIRouter, HTTPException, Query, Request, status
+from fastapi import Depends, APIRouter, HTTPException, Query, Request, status, BackgroundTasks
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
@@ -19,8 +19,26 @@ _SUBSCRIBE_EMAIL_LIMIT = 3
 _SUBSCRIBE_EMAIL_WINDOW = 3600   # 1 hour
 
 
+def _dispatch_subscriber_webhook(url: str, token: str | None, payload: dict):
+    try:
+        import httpx
+        headers = {"Content-Type": "application/json"}
+        if token:
+            headers["Authorization"] = f"Bearer {token}"
+        with httpx.Client(timeout=10.0) as client:
+            client.post(url, json=payload, headers=headers)
+    except Exception:
+        pass
+
+
 @router.post("/subscribe/{subdomain}", status_code=status.HTTP_200_OK)
-def subscribe_blog(subdomain: str, request: Request, body: subscribers.Subscribe, db: Session = Depends(get_db)):
+def subscribe_blog(
+    subdomain: str,
+    request: Request,
+    body: subscribers.Subscribe,
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    db: Session = Depends(get_db),
+):
 
     email = normalize_email(str(body.email))
 
@@ -57,6 +75,20 @@ def subscribe_blog(subdomain: str, request: Request, body: subscribers.Subscribe
     db.add(new_subscriber)
     db.commit()
     db.refresh(new_subscriber)
+
+    if db_site.newsletter_webhook_url:
+        payload = {
+            "event": "subscriber.created",
+            "email": new_subscriber.email,
+            "site_id": str(db_site.site_id),
+            "subdomain": db_site.subdomain,
+        }
+        background_tasks.add_task(
+            _dispatch_subscriber_webhook,
+            db_site.newsletter_webhook_url,
+            db_site.newsletter_webhook_token,
+            payload,
+        )
 
     return {"message": "You're subscribed!"}
 

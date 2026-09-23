@@ -6,12 +6,12 @@ import uuid
 
 class SiteCreate(BaseModel):
     subdomain: str
-    nav_blog_name: Optional[str] = None
+    site_name: Optional[str] = None
     template_id: Optional[str] = "saas"
 
 
 class SiteUpdate(BaseModel):
-    nav_blog_name: Optional[str] = None
+    site_name: Optional[str] = None
     custom_head_code: Optional[str] = None
     custom_body_code: Optional[str] = None
     custom_css: Optional[str] = None
@@ -23,7 +23,7 @@ class SiteSummary(BaseModel):
     custom_domain: Optional[str] = None
     custom_subpath: Optional[str] = None
     domain_status: str
-    nav_blog_name: Optional[str] = None
+    site_name: Optional[str] = None
     template_id: str
     created_at: Optional[datetime] = None
     post_count: int = 0
@@ -50,6 +50,7 @@ class CodeInjectionUpdate(BaseModel):
 
 class PublicSite(BaseModel):
     name: str
+    site_name: Optional[str] = None
     subdomain: str
     meta_title: str
     meta_description: str
@@ -64,28 +65,56 @@ class PublicSite(BaseModel):
     navbar_style: str = "bordered"
 
     navbar_enabled: bool
-    nav_blog_name: Optional[str] = None
-    nav_blog_name_size: Literal["small", "medium", "large"] = "medium"
     nav_menu_enabled: bool
     nav_items: Optional[list[dict]] = None
-    show_about_section: bool
+    logo_url: Optional[str] = None
+    logo_link: Optional[str] = "/"
+    search_enabled: bool = True
+
+    hero_title: Optional[str] = None
+    hero_description: Optional[str] = None
+    site_language: str = "en"
+    og_locale: Optional[str] = None
+
+    cta_heading: Optional[str] = None
+    cta_description: Optional[str] = None
+    cta_button_text: Optional[str] = None
+    cta_button_url: Optional[str] = None
+    cta_show_on_posts: bool = True
+    cta_show_on_pages: bool = False
+
     site_footer_enabled: bool = True
+    footer_description: Optional[str] = None
     footer_columns: Optional[list[dict]] = None
     footer_copyright: Optional[str] = None
     footer_socials_enabled: bool = True
-    footer_newsletter_enabled: bool = True
-    footer_system_links_enabled: bool = True
+    footer_show_sitemap: bool = True
+    footer_show_rss: bool = True
+    footer_show_atom: bool = False
+
+    newsletter_headline: Optional[str] = None
+    newsletter_text: Optional[str] = None
+    newsletter_disclaimer: Optional[str] = None
+    newsletter_button_text: Optional[str] = "Subscribe"
+    newsletter_show_near_header: bool = False
+    newsletter_show_in_footer: bool = True
+    newsletter_webhook_url: Optional[str] = None
+
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[str] | None = []
     content_width: Literal["narrow", "wide"] = "wide"
     list_image_position: Literal["above_title", "next_to_title"] = "above_title"
     show_preview_in_lists: bool = True
-    about_title: Optional[str] = None
+    posts_per_page: int = 12
+    pagination_type: Literal["prev_next", "numbered"] = "prev_next"
+    toc_enabled: bool = True
+
     subscriber_collection_enabled: bool = False
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None
     rss_enabled: bool = False
+    atom_enabled: bool = False
     custom_head_code: Optional[str] = None
     custom_body_code: Optional[str] = None
     custom_css: Optional[str] = None

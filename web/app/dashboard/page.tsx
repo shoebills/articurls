@@ -229,7 +229,7 @@ export default function DashboardPage() {
           <p className="mt-1 text-sm text-muted-foreground">
             {activeSite ? (
               <>
-                Managing <span className="font-semibold text-foreground">{activeSite.nav_blog_name || activeSite.subdomain}</span>{" "}
+                Managing <span className="font-semibold text-foreground">{activeSite.site_name || activeSite.subdomain}</span>{" "}
                 <span className="text-muted-foreground/80 font-mono text-xs">
                   ({activeSite.custom_domain || `${activeSite.subdomain}.articurls.site`})
                 </span>
@@ -380,7 +380,7 @@ export default function DashboardPage() {
                                 <div className="flex items-center gap-1.5 min-w-0">
                                   <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                   <span className="font-semibold text-xs text-foreground truncate">
-                                    {site.nav_blog_name || site.subdomain}
+                                    {site.site_name || site.subdomain}
                                   </span>
                                 </div>
                                 <span className="text-xs font-bold tabular-nums text-foreground shrink-0">

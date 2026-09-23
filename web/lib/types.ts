@@ -123,7 +123,6 @@ export interface PublicBlogSearchResult {
   published_at: string | null;
 }
 
-export type NavBlogNameSize = "small" | "medium" | "large";
 export type ContentWidth = "narrow" | "wide";
 export type ListImagePosition = "above_title" | "next_to_title";
 
@@ -169,24 +168,47 @@ export interface PublicSite {
   navbar_alignment?: string;
   navbar_style?: string;
   navbar_enabled: boolean;
-  nav_blog_name: string | null;
-  nav_blog_name_size?: NavBlogNameSize;
+  site_name: string | null;
   nav_menu_enabled: boolean;
   nav_items?: NavItem[] | null;
-  show_about_section: boolean;
+  logo_url?: string | null;
+  logo_link?: string | null;
+  search_enabled?: boolean;
+  hero_title?: string | null;
+  hero_description?: string | null;
+  site_language?: string;
+  og_locale?: string | null;
+  atom_enabled?: boolean;
+  cta_heading?: string | null;
+  cta_description?: string | null;
+  cta_button_text?: string | null;
+  cta_button_url?: string | null;
+  cta_show_on_posts?: boolean;
+  cta_show_on_pages?: boolean;
   site_footer_enabled: boolean;
+  footer_description?: string | null;
   footer_columns?: FooterColumn[] | null;
   footer_copyright?: string | null;
   footer_socials_enabled?: boolean;
-  footer_newsletter_enabled?: boolean;
-  footer_system_links_enabled?: boolean;
+  footer_show_sitemap?: boolean;
+  footer_show_rss?: boolean;
+  footer_show_atom?: boolean;
+  newsletter_headline?: string | null;
+  newsletter_text?: string | null;
+  newsletter_disclaimer?: string | null;
+  newsletter_button_text?: string | null;
+  newsletter_show_near_header?: boolean;
+  newsletter_show_in_footer?: boolean;
+  newsletter_webhook_url?: string | null;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
   show_preview_in_lists?: boolean;
-  about_title?: string | null;
+  posts_per_page?: number;
+  pagination_type?: "prev_next" | "numbered";
+  toc_enabled?: boolean;
   subscriber_collection_enabled: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
@@ -208,6 +230,7 @@ export interface UserSettings {
   meta_title: string | null;
   meta_description: string | null;
   profile_image_url: string | null;
+  og_image_url?: string | null;
   template_id: string;
   site_mode: string;
   color_theme: string;
@@ -217,17 +240,39 @@ export interface UserSettings {
   navbar_alignment: string;
   navbar_style: string;
   navbar_enabled: boolean;
-  nav_blog_name: string | null;
-  nav_blog_name_size?: NavBlogNameSize;
+  site_name: string | null;
   nav_menu_enabled: boolean;
   nav_items?: NavItem[] | null;
-  show_about_section: boolean;
+  logo_url?: string | null;
+  logo_link?: string | null;
+  search_enabled?: boolean;
+  hero_title?: string | null;
+  hero_description?: string | null;
+  site_language?: string;
+  og_locale?: string | null;
+  atom_enabled?: boolean;
+  cta_heading?: string | null;
+  cta_description?: string | null;
+  cta_button_text?: string | null;
+  cta_button_url?: string | null;
+  cta_show_on_posts?: boolean;
+  cta_show_on_pages?: boolean;
   site_footer_enabled: boolean;
+  footer_description?: string | null;
   footer_columns?: FooterColumn[] | null;
   footer_copyright?: string | null;
   footer_socials_enabled?: boolean;
-  footer_newsletter_enabled?: boolean;
-  footer_system_links_enabled?: boolean;
+  footer_show_sitemap?: boolean;
+  footer_show_rss?: boolean;
+  footer_show_atom?: boolean;
+  newsletter_headline?: string | null;
+  newsletter_text?: string | null;
+  newsletter_disclaimer?: string | null;
+  newsletter_button_text?: string | null;
+  newsletter_show_near_header?: boolean;
+  newsletter_show_in_footer?: boolean;
+  newsletter_webhook_url?: string | null;
+  newsletter_webhook_token?: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
@@ -235,7 +280,9 @@ export interface UserSettings {
   content_width?: ContentWidth;
   list_image_position?: ListImagePosition;
   show_preview_in_lists?: boolean;
-  about_title?: string | null;
+  posts_per_page?: number;
+  pagination_type?: "prev_next" | "numbered";
+  toc_enabled?: boolean;
   subscriber_collection_enabled: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
@@ -251,7 +298,7 @@ export interface SiteSummary {
   custom_domain?: string | null;
   custom_subpath?: string | null;
   domain_status: DomainStatus;
-  nav_blog_name?: string | null;
+  site_name?: string | null;
   template_id: string;
   created_at?: string | null;
   post_count: number;
@@ -267,7 +314,7 @@ export interface CodeInjectionSettings {
 export interface SiteUsageItem {
   site_id: string;
   subdomain: string;
-  nav_blog_name?: string | null;
+  site_name?: string | null;
   pageviews: number;
 }
 
@@ -345,23 +392,53 @@ export interface DesignSettings {
   navbar_style: string;
   
   navbar_enabled: boolean;
-  nav_blog_name: string | null;
-  nav_blog_name_size: NavBlogNameSize;
+  site_name: string | null;
   nav_menu_enabled: boolean;
   nav_items?: NavItem[] | null;
-  show_about_section: boolean;
+  logo_url?: string | null;
+  logo_link?: string | null;
+  search_enabled?: boolean;
+
+  hero_title?: string | null;
+  hero_description?: string | null;
+  site_language?: string;
+  og_locale?: string | null;
+  atom_enabled?: boolean;
+  rss_enabled?: boolean;
+
+  cta_heading?: string | null;
+  cta_description?: string | null;
+  cta_button_text?: string | null;
+  cta_button_url?: string | null;
+  cta_show_on_posts?: boolean;
+  cta_show_on_pages?: boolean;
+
   site_footer_enabled: boolean;
+  footer_description?: string | null;
   footer_columns?: FooterColumn[] | null;
   footer_copyright?: string | null;
   footer_socials_enabled?: boolean;
-  footer_newsletter_enabled?: boolean;
-  footer_system_links_enabled?: boolean;
+  footer_show_sitemap?: boolean;
+  footer_show_rss?: boolean;
+  footer_show_atom?: boolean;
+
+  newsletter_headline?: string | null;
+  newsletter_text?: string | null;
+  newsletter_disclaimer?: string | null;
+  newsletter_button_text?: string | null;
+  newsletter_show_near_header?: boolean;
+  newsletter_show_in_footer?: boolean;
+  newsletter_webhook_url?: string | null;
+  newsletter_webhook_token?: string | null;
+
   featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
   content_width: ContentWidth;
   list_image_position: ListImagePosition;
   show_preview_in_lists: boolean;
-  about_title?: string | null;
+  posts_per_page?: number;
+  pagination_type?: "prev_next" | "numbered";
+  toc_enabled?: boolean;
 }
 
 export interface SeoSettings {

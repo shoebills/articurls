@@ -7,6 +7,9 @@ import {
   PanelTop,
   Search,
   SlidersHorizontal,
+  BookOpen,
+  Sparkles,
+  Mail,
   type LucideIcon,
 } from "lucide-react";
 
@@ -27,14 +30,35 @@ interface SettingsSection {
 const SETTINGS_SECTIONS: SettingsSection[] = [
   {
     title: "Website",
-    description: "Manage your site's core configuration and domain settings.",
+    description: "Manage your site's core configuration and presentation.",
     items: [
       {
         id: "general",
         href: "/dashboard/settings/general",
         title: "General",
-        description: "Site identity, favicon, subscriber collection and RSS feed.",
+        description: "Site identity, hero section, language and feeds.",
         icon: SlidersHorizontal,
+      },
+      {
+        id: "content",
+        href: "/dashboard/settings/content",
+        title: "Content",
+        description: "Reading width, feed layout, pagination and table of contents.",
+        icon: BookOpen,
+      },
+      {
+        id: "nav",
+        href: "/dashboard/settings/navigation",
+        title: "Navigation",
+        description: "Brand name, header style, logo image and navigation links.",
+        icon: PanelTop,
+      },
+      {
+        id: "footer",
+        href: "/dashboard/settings/footer",
+        title: "Footer",
+        description: "Multi-column link groups, description and copyright.",
+        icon: PanelBottom,
       },
       {
         id: "domains",
@@ -43,26 +67,26 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         description: "Subdomain, custom domains and subfolder publishing.",
         icon: Globe,
       },
-      {
-        id: "nav",
-        href: "/dashboard/settings/navigation",
-        title: "Navigation",
-        description: "Brand name, header style, custom links and CTA buttons.",
-        icon: PanelTop,
-      },
-      {
-        id: "footer",
-        href: "/dashboard/settings/footer",
-        title: "Footer",
-        description: "Multi-column link groups, newsletter and copyright.",
-        icon: PanelBottom,
-      },
     ],
   },
   {
-    title: "Growth & Discovery",
-    description: "Configure how your site is discovered and optimized for search.",
+    title: "Audience & Growth",
+    description: "Promotions, subscriber collection, and search visibility.",
     items: [
+      {
+        id: "newsletter",
+        href: "/dashboard/settings/newsletter",
+        title: "Newsletter",
+        description: "Subscription copy, placement and external webhook sync.",
+        icon: Mail,
+      },
+      {
+        id: "cta",
+        href: "/dashboard/settings/cta",
+        title: "Call to Action",
+        description: "Standalone promotional banner for posts and pages.",
+        icon: Sparkles,
+      },
       {
         id: "seo",
         href: "/dashboard/settings/seo",

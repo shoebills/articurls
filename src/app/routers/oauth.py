@@ -326,7 +326,7 @@ async def complete_google_signup(
         subdomain=subdomain,
         meta_title=f"{name}'s Blog",
         meta_description=f"Explore all the blogs published by {name}.",
-        nav_blog_name=(request.nav_blog_name or "").strip() or None,
+        site_name=(request.site_name or "").strip() or None,
     )
     if request.template_id in ("standard", "saas"):
         new_site.template_id = request.template_id

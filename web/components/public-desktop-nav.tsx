@@ -12,12 +12,8 @@ import {
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { SearchButton } from "@/components/search-button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  normalizeNavBlogNameSize,
-  publicNavDesktopBlogTitleClassName,
-  type NavBlogNameSize,
-} from "@/lib/nav-blog-name";
 import { cn } from "@/lib/utils";
+import { assetUrl } from "@/lib/env";
 
 const LINK_GAP_PX = 24;
 
@@ -32,11 +28,13 @@ export type PublicNavDesktopLink = {
 type PublicDesktopNavProps = {
   title: string;
   titleHref: string;
-  nameSize: NavBlogNameSize;
   links: PublicNavDesktopLink[];
   showSubscribe: boolean;
   subdomain: string;
   authorName: string;
+  logoUrl?: string | null;
+  searchEnabled?: boolean;
+  nameSize?: string;
   alignment?: "left" | "center" | "right" | string;
   basePath?: string;
 };
@@ -54,15 +52,15 @@ function linkClass(active?: boolean, isCta?: boolean) {
 export function PublicDesktopNav({
   title,
   titleHref,
-  nameSize,
   links,
   showSubscribe,
   subdomain,
   authorName,
+  logoUrl,
+  searchEnabled = true,
   alignment = "left",
   basePath = "",
 }: PublicDesktopNavProps) {
-  const size = normalizeNavBlogNameSize(nameSize);
   const [inlineCount, setInlineCount] = useState<number | null>(null);
   const navSlotRef = useRef<HTMLDivElement | null>(null);
   const measureRef = useRef<HTMLDivElement | null>(null);
@@ -146,12 +144,20 @@ export function PublicDesktopNav({
       <Link
         prefetch={false}
         href={titleHref}
-        className={cn(
-          publicNavDesktopBlogTitleClassName(size),
-          "!flex-none min-w-0 max-w-[min(100%,14rem)] shrink-0 truncate pr-3 sm:max-w-[45%]"
-        )}
+        className="!flex-none min-w-0 max-w-[min(100%,14rem)] shrink-0 truncate pr-3 sm:max-w-[45%] flex items-center"
       >
-        {title}
+        {logoUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={assetUrl(logoUrl)}
+            alt={title}
+            className="h-8 max-h-8 w-auto object-contain"
+          />
+        ) : (
+          <span className="text-lg font-bold tracking-tight text-foreground hover:opacity-90 transition-opacity truncate">
+            {title}
+          </span>
+        )}
       </Link>
 
       <div ref={navSlotRef} className={cn("flex min-w-0 flex-1 items-center gap-x-6 overflow-hidden", slotJustify)}>
@@ -209,7 +215,7 @@ export function PublicDesktopNav({
 
       <div className="flex items-center gap-2 shrink-0">
         <ThemeToggle />
-        {subdomain ? (
+        {subdomain && searchEnabled !== false ? (
           <SearchButton
             iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
             subdomain={subdomain}

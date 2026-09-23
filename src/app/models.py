@@ -36,6 +36,9 @@ class User(Base):
 
 class Site(Base):
     __tablename__ = "sites"
+    __table_args__ = (
+        CheckConstraint("posts_per_page >= 6 AND posts_per_page <= 48", name="ck_sites_posts_per_page"),
+    )
 
     site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
@@ -52,6 +55,15 @@ class Site(Base):
     grace_started_at = Column(DateTime(timezone=True), nullable=True, default=None)
     grace_expires_at = Column(DateTime(timezone=True), nullable=True, default=None)
 
+    # General / Identity
+    site_name = Column(String, nullable=True)
+    hero_title = Column(String(120), nullable=True)
+    hero_description = Column(Text, nullable=True)
+    site_language = Column(String(8), nullable=False, default="en", server_default="en")
+    og_locale = Column(String(10), nullable=True)
+    atom_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
+    rss_enabled = Column(Boolean, nullable=False, default=False)
+
     # Design / Theme
     template_id = Column(String(32), nullable=False, default="standard")
     site_mode = Column(String(16), nullable=False, default="system")
@@ -59,29 +71,56 @@ class Site(Base):
     custom_color = Column(String(16), nullable=True, default=None)
     font_family = Column(String(32), nullable=False, default="sans")
     button_style = Column(String(16), nullable=False, default="rounded")
+
+    # Navigation
     navbar_alignment = Column(String(16), nullable=False, default="left")
     navbar_style = Column(String(16), nullable=False, default="bordered")
     navbar_enabled = Column(Boolean, nullable=False, default=True)
-    nav_blog_name = Column(String, nullable=True)
-    nav_blog_name_size = Column(String(16), nullable=False, default="medium")
     nav_menu_enabled = Column(Boolean, nullable=False, default=True)
     nav_items = Column(JSON, nullable=True, default=None)
-    show_about_section = Column(Boolean, nullable=False, default=False)
+    logo_url = Column(String, nullable=True)
+    logo_link = Column(String, nullable=True, default="/", server_default="/")
+    search_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+
+    # Standalone Content End CTA
+    cta_heading = Column(String(120), nullable=True)
+    cta_description = Column(Text, nullable=True)
+    cta_button_text = Column(String(50), nullable=True)
+    cta_button_url = Column(String, nullable=True)
+    cta_show_on_posts = Column(Boolean, nullable=False, default=True, server_default="true")
+    cta_show_on_pages = Column(Boolean, nullable=False, default=False, server_default="false")
+
+    # Footer
     site_footer_enabled = Column(Boolean, nullable=False, default=True)
+    footer_description = Column(Text, nullable=True)
     footer_columns = Column(JSON, nullable=True, default=None)
     footer_copyright = Column(String, nullable=True, default=None)
     footer_socials_enabled = Column(Boolean, nullable=False, default=True)
-    footer_newsletter_enabled = Column(Boolean, nullable=False, default=True)
-    footer_system_links_enabled = Column(Boolean, nullable=False, default=True)
+    footer_show_sitemap = Column(Boolean, nullable=False, default=True, server_default="true")
+    footer_show_rss = Column(Boolean, nullable=False, default=True, server_default="true")
+    footer_show_atom = Column(Boolean, nullable=False, default=False, server_default="false")
+
+    # Newsletter
+    newsletter_headline = Column(String(120), nullable=True)
+    newsletter_text = Column(Text, nullable=True)
+    newsletter_disclaimer = Column(Text, nullable=True)
+    newsletter_button_text = Column(String(50), nullable=True, default="Subscribe", server_default="Subscribe")
+    newsletter_show_near_header = Column(Boolean, nullable=False, default=False, server_default="false")
+    newsletter_show_in_footer = Column(Boolean, nullable=False, default=True, server_default="true")
+    newsletter_webhook_url = Column(Text, nullable=True)
+    newsletter_webhook_token = Column(Text, nullable=True)
+
+    # Content & Presentation
     content_width = Column(String(8), nullable=False, default="wide")
     list_image_position = Column(String(16), nullable=False, default="above_title")
     show_preview_in_lists = Column(Boolean, nullable=False, default=True)
-    about_title = Column(String(40), nullable=True)
-    
-    # Features
-    rss_enabled = Column(Boolean, nullable=False, default=False)
     featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
+    posts_per_page = Column(Integer, nullable=False, default=12, server_default="12")
+    pagination_type = Column(String(16), nullable=False, default="prev_next", server_default="prev_next")
+    toc_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+
+    # System & Features
     subscriber_collection_enabled = Column(Boolean, nullable=False, default=True)
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
 

@@ -88,7 +88,7 @@ export async function GET(req: NextRequest): Promise<Response> {
   });
 
   const xml = buildAtomXml({
-    title: site.nav_blog_name || site.meta_title || `${site.name} — Articurls`,
+    title: site.site_name || site.meta_title || `${site.name} — Articurls`,
     link: siteOrigin,
     description: site.meta_description || `Latest posts by ${site.name}.`,
     authorName: site.name,

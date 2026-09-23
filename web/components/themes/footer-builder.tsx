@@ -6,6 +6,7 @@ import { listPages, listCategories } from "@/lib/api";
 import type { Category, DesignSettings, FooterColumn, FooterLink, FooterLinkType, UserPage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
@@ -58,7 +59,6 @@ export function FooterBuilder({
   const footerEnabled = settings.site_footer_enabled !== false;
   const footerColumns = settings.footer_columns || [];
   const copyright = settings.footer_copyright || "";
-  const systemLinksEnabled = settings.footer_system_links_enabled !== false;
 
   useEffect(() => {
     if (!token) return;
@@ -298,19 +298,56 @@ export function FooterBuilder({
 
           <hr className="border-border/60" />
 
-          {/* Additional Footer Features */}
-          <div className="space-y-4">
-            <label className="text-sm font-medium text-foreground">Footer Features & Integrations</label>
+          {/* Footer Description */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Footer Brand Description</label>
+            <Textarea
+              value={settings.footer_description || ""}
+              onChange={(e) => onChange({ footer_description: e.target.value })}
+              placeholder="A brief summary or mission statement shown under your brand in the footer..."
+              rows={2}
+            />
+          </div>
 
-            <div className="flex items-center justify-between rounded-xl border p-3">
-              <div className="space-y-0.5">
-                <p className="text-xs font-semibold">System Links</p>
-                <p className="text-[11px] text-muted-foreground">RSS Feed & Sitemap</p>
+          <hr className="border-border/60" />
+
+          {/* Footer System Links */}
+          <div className="space-y-4">
+            <label className="text-sm font-medium text-foreground">Footer Links & Feeds</label>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <div className="flex items-center justify-between rounded-xl border p-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold">Sitemap Link</p>
+                  <p className="text-[11px] text-muted-foreground">Link to sitemaps</p>
+                </div>
+                <Switch
+                  checked={settings.footer_show_sitemap !== false}
+                  onCheckedChange={(checked) => onChange({ footer_show_sitemap: checked })}
+                />
               </div>
-              <Switch
-                checked={systemLinksEnabled}
-                onCheckedChange={(checked) => onChange({ footer_system_links_enabled: checked })}
-              />
+
+              <div className="flex items-center justify-between rounded-xl border p-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold">RSS Feed Link</p>
+                  <p className="text-[11px] text-muted-foreground">Link to /rss.xml</p>
+                </div>
+                <Switch
+                  checked={settings.footer_show_rss !== false}
+                  onCheckedChange={(checked) => onChange({ footer_show_rss: checked })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl border p-3">
+                <div className="space-y-0.5">
+                  <p className="text-xs font-semibold">Atom Feed Link</p>
+                  <p className="text-[11px] text-muted-foreground">Link to /atom.xml</p>
+                </div>
+                <Switch
+                  checked={settings.footer_show_atom === true}
+                  onCheckedChange={(checked) => onChange({ footer_show_atom: checked })}
+                />
+              </div>
             </div>
           </div>
 

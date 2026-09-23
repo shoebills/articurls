@@ -338,9 +338,6 @@ async def delete_favicon(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    
-    
-
     current_site.favicon_url = None
     db.commit()
     db.refresh(current_site)
@@ -348,6 +345,38 @@ async def delete_favicon(
     schedule_tenant_purge(background_tasks, current_site)
 
     return {"favicon_url": None}
+
+
+@router.post("/me/logo", status_code=status.HTTP_200_OK)
+async def upload_logo(
+    file: UploadFile = File(...),
+    background_tasks: BackgroundTasks = BackgroundTasks(),
+    db: Session = Depends(get_db),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
+):
+    logo_url = await save_image_local(file=file, category="logos", user_id=current_user.user_id, db=db)
+    current_site.logo_url = logo_url
+    db.commit()
+    db.refresh(current_site)
+
+    schedule_tenant_purge(background_tasks, current_site)
+
+    return {"logo_url": current_site.logo_url}
+
+
+@router.delete("/me/logo", status_code=status.HTTP_200_OK)
+async def delete_logo(
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
+):
+    current_site.logo_url = None
+    db.commit()
+    db.refresh(current_site)
+
+    schedule_tenant_purge(background_tasks, current_site)
+
+    return {"logo_url": None}
 
 
 @router.post("/seo/og-image", status_code=status.HTTP_200_OK)

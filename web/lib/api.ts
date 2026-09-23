@@ -286,7 +286,7 @@ export async function completeGoogleSignup(data: {
   session_id: string;
   subdomain: string;
   name: string;
-  nav_blog_name?: string;
+  site_name?: string;
   template_id?: string;
 }): Promise<{ access_token: string; token_type: string }> {
   return apiFetch("/auth/google/complete", {
@@ -346,7 +346,7 @@ export async function patchProMe(
   token: string,
   body: {
     navbar_enabled?: boolean;
-    nav_blog_name?: string | null;
+    site_name?: string | null;
     nav_menu_enabled?: boolean;
     subscriber_collection_enabled?: boolean;
   }
@@ -480,6 +480,16 @@ export async function uploadFavicon(token: string, file: File): Promise<{ favico
 
 export async function deleteFavicon(token: string): Promise<{ favicon_url: null }> {
   return apiFetch("/user/me/favicon", { method: "DELETE", token });
+}
+
+export async function uploadLogo(token: string, file: File): Promise<{ logo_url: string }> {
+  const fd = new FormData();
+  fd.append("file", file);
+  return apiFetch("/user/me/logo", { method: "POST", token, body: fd });
+}
+
+export async function deleteLogo(token: string): Promise<{ logo_url: null }> {
+  return apiFetch("/user/me/logo", { method: "DELETE", token });
 }
 
 export async function uploadOgImage(token: string, file: File): Promise<{ og_image_url: string }> {
@@ -780,7 +790,7 @@ export async function checkSubdomainAvailability(
 
 export async function createSite(
   token: string,
-  body: { subdomain: string; nav_blog_name?: string; template_id?: string }
+  body: { subdomain: string; site_name?: string; template_id?: string }
 ): Promise<SiteSummary> {
   return apiFetch("/sites/", {
     method: "POST",
