@@ -112,7 +112,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
               </h1>
             </div>
             {site.newsletter_show_near_header ? (
-              <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mt-8 mb-10">
+              <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mt-8 mb-10">
                 <div className="max-w-md mx-auto">
                   <SubscribeToAuthor
                     subdomain={site.subdomain}
@@ -127,7 +127,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             ) : null}
           </>
         ) : site.newsletter_show_near_header ? (
-          <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 my-10">
+          <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 my-10">
             <div className="max-w-md mx-auto">
               <SubscribeToAuthor
                 subdomain={site.subdomain}

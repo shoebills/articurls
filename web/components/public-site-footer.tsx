@@ -3,7 +3,7 @@ import type { PublicSite, UserPage } from "@/lib/types";
 import { getPublicPageUrl } from "@/lib/public-url";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { assetUrl } from "@/lib/env";
-import { ExternalLink, Rss } from "lucide-react";
+import { Rss } from "lucide-react";
 
 type PublicSiteFooterProps = {
   site: PublicSite;
@@ -29,9 +29,9 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   const copyrightText = site.footer_copyright || `© ${currentYear} ${site.site_name || site.name || site.subdomain}. All rights reserved.`;
 
   return (
-    <footer className="mt-20 border-t border-border/80 pt-12 pb-16">
+    <footer className="mt-20 pt-12 pb-16">
       {showNewsletter ? (
-        <div className="bg-muted/30 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
+        <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
           <div className="max-w-md mx-auto">
             <SubscribeToAuthor
               subdomain={site.subdomain}
@@ -48,9 +48,9 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
       ) : null}
       {showNewsletter ? <div aria-hidden="true" className="h-px bg-border/70 mb-12" /> : null}
       {hasModularColumns ? (
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-12 mb-12">
+        <div className="grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-12 mb-12">
           {/* Brand Column */}
-          <div className="space-y-4 lg:col-span-1">
+          <div className="space-y-4 col-span-2 lg:col-span-1">
             <div className="space-y-2">
               {site.logo_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -88,10 +88,9 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
                         href={href}
                         target={isExternal ? "_blank" : undefined}
                         rel={isExternal ? "noopener noreferrer" : undefined}
-                        className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
+                        className="transition-colors hover:text-foreground"
                       >
-                        <span>{link.label}</span>
-                        {isExternal ? <ExternalLink className="h-3 w-3 opacity-60" /> : null}
+                        {link.label}
                       </Link>
                     </li>
                   );
