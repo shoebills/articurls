@@ -299,7 +299,7 @@ export function FooterBuilder({
           <hr className="border-border/60" />
 
           {/* Footer Description */}
-          <div className="space-y-2">
+          <div className="space-y-[18px]">
             <label className="text-sm font-medium text-foreground">Footer Brand Description</label>
             <Textarea
               value={settings.footer_description || ""}
@@ -354,16 +354,18 @@ export function FooterBuilder({
           <hr className="border-border/60" />
 
           {/* Custom Copyright */}
-          <div className="space-y-2">
+          <div className="space-y-[18px]">
             <label className="text-sm font-medium text-foreground">Custom Copyright / Tagline Text</label>
-            <Input
-              value={copyright}
-              onChange={(e) => onChange({ footer_copyright: e.target.value })}
-              placeholder="e.g. © 2026 Acme Inc. All rights reserved."
-            />
-            <p className="text-xs text-muted-foreground">
-              Optional custom copyright or legal notice rendered at the very bottom of the page.
-            </p>
+            <div className="space-y-1.5">
+              <Input
+                value={copyright}
+                onChange={(e) => onChange({ footer_copyright: e.target.value })}
+                placeholder="e.g. © 2026 Acme Inc. All rights reserved."
+              />
+              <p className="text-xs text-muted-foreground">
+                Optional custom copyright or legal notice rendered at the very bottom of the page.
+              </p>
+            </div>
           </div>
         </>
       ) : null}
@@ -379,7 +381,7 @@ export function FooterBuilder({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Type</label>
               <Select value={formType} onValueChange={(v) => setFormType(v as FooterLinkType)}>
                 <SelectTrigger>
@@ -394,7 +396,7 @@ export function FooterBuilder({
             </div>
 
             {formType === "page" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Page</label>
                 <Select
                   value={formPageSlug}
@@ -419,7 +421,7 @@ export function FooterBuilder({
             ) : null}
 
             {formType === "category" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Category</label>
                 <Select
                   value={formCatSlug}
@@ -443,7 +445,7 @@ export function FooterBuilder({
               </div>
             ) : null}
 
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Label</label>
               <Input
                 value={formLabel}
@@ -453,7 +455,7 @@ export function FooterBuilder({
             </div>
 
             {formType === "custom" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Destination URL</label>
                 <Input
                   value={formUrl}

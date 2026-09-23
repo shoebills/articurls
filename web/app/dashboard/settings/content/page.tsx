@@ -110,48 +110,52 @@ export default function ContentSettingsPage() {
           <Card>
             <CardContent className="p-6 space-y-5">
               <h2 className="text-base font-semibold">Feed & Pagination</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="posts_per_page">Posts Per Page</Label>
-                  <Input
-                    id="posts_per_page"
-                    type="number"
-                    min={6}
-                    max={48}
-                    value={design.posts_per_page ?? 12}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value, 10);
-                      if (isNaN(val)) {
-                        setDesign({ ...design, posts_per_page: 12 });
-                      } else {
-                        setDesign({ ...design, posts_per_page: Math.min(48, Math.max(6, val)) });
-                      }
-                    }}
-                    disabled={saving}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Number of articles displayed per page in your home and category feeds (6–48).
-                  </p>
+                  <div className="space-y-1.5">
+                    <Input
+                      id="posts_per_page"
+                      type="number"
+                      min={6}
+                      max={48}
+                      value={design.posts_per_page ?? 12}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value, 10);
+                        if (isNaN(val)) {
+                          setDesign({ ...design, posts_per_page: 12 });
+                        } else {
+                          setDesign({ ...design, posts_per_page: Math.min(48, Math.max(6, val)) });
+                        }
+                      }}
+                      disabled={saving}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Number of articles displayed per page in your home and category feeds (6–48).
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="pagination_type">Pagination Style</Label>
-                  <Select
-                    value={design.pagination_type || "prev_next"}
-                    onValueChange={(val) => setDesign({ ...design, pagination_type: val as "prev_next" | "numbered" })}
-                    disabled={saving}
-                  >
-                    <SelectTrigger id="pagination_type">
-                      <SelectValue placeholder="Select style" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="prev_next">Previous / Next Buttons</SelectItem>
-                      <SelectItem value="numbered">Numbered Pages (1, 2, 3...)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Controls how visitors navigate through multiple pages of posts.
-                  </p>
+                  <div className="space-y-1.5">
+                    <Select
+                      value={design.pagination_type || "prev_next"}
+                      onValueChange={(val) => setDesign({ ...design, pagination_type: val as "prev_next" | "numbered" })}
+                      disabled={saving}
+                    >
+                      <SelectTrigger id="pagination_type">
+                        <SelectValue placeholder="Select style" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="prev_next">Previous / Next Buttons</SelectItem>
+                        <SelectItem value="numbered">Numbered Pages (1, 2, 3...)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Controls how visitors navigate through multiple pages of posts.
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
@@ -180,45 +184,49 @@ export default function ContentSettingsPage() {
           <Card>
             <CardContent className="p-6 space-y-5">
               <h2 className="text-base font-semibold">Article & Feed Layout</h2>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="content_width">Reading Width</Label>
-                  <Select
-                    value={design.content_width || "wide"}
-                    onValueChange={(val) => setDesign({ ...design, content_width: val as ContentWidth })}
-                    disabled={saving}
-                  >
-                    <SelectTrigger id="content_width">
-                      <SelectValue placeholder="Select width" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="wide">Wide (Maximum content area)</SelectItem>
-                      <SelectItem value="narrow">Narrow (Centered readable column)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Overall reading container width for articles and publication pages.
-                  </p>
+                  <div className="space-y-1.5">
+                    <Select
+                      value={design.content_width || "wide"}
+                      onValueChange={(val) => setDesign({ ...design, content_width: val as ContentWidth })}
+                      disabled={saving}
+                    >
+                      <SelectTrigger id="content_width">
+                        <SelectValue placeholder="Select width" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="wide">Wide (Maximum content area)</SelectItem>
+                        <SelectItem value="narrow">Narrow (Centered readable column)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Overall reading container width for articles and publication pages.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="list_image_position">Featured Image in Lists</Label>
-                  <Select
-                    value={design.list_image_position || "above_title"}
-                    onValueChange={(val) => setDesign({ ...design, list_image_position: val as ListImagePosition })}
-                    disabled={saving}
-                  >
-                    <SelectTrigger id="list_image_position">
-                      <SelectValue placeholder="Select position" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="above_title">Above Title (Card layout)</SelectItem>
-                      <SelectItem value="next_to_title">Beside Title (Horizontal row)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Placement of post featured thumbnails inside article lists.
-                  </p>
+                  <div className="space-y-1.5">
+                    <Select
+                      value={design.list_image_position || "above_title"}
+                      onValueChange={(val) => setDesign({ ...design, list_image_position: val as ListImagePosition })}
+                      disabled={saving}
+                    >
+                      <SelectTrigger id="list_image_position">
+                        <SelectValue placeholder="Select position" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="above_title">Above Title (Card layout)</SelectItem>
+                        <SelectItem value="next_to_title">Beside Title (Horizontal row)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Placement of post featured thumbnails inside article lists.
+                    </p>
+                  </div>
                 </div>
               </div>
 

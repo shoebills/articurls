@@ -151,11 +151,11 @@ export default function SeoSettings() {
           <Skeleton className="h-4 w-72 mt-2" />
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="space-y-2.5">
+          <div className="space-y-[18px]">
             <Skeleton className="h-4 w-20" />
             <Skeleton className="h-10 w-full" />
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-[18px]">
             <Skeleton className="h-4 w-28" />
             <Skeleton className="h-24 w-full" />
           </div>
@@ -185,21 +185,21 @@ export default function SeoSettings() {
     <>
       <Card>
         <CardContent className="space-y-4 pt-6 sm:pt-6">
-          <div className="space-y-2.5">
+          <div className="space-y-[18px]">
             <Label htmlFor="seo_meta_title">Meta title</Label>
             <Input
               id="seo_meta_title"
-              className="mt-2"
+             
               value={metaTitle}
               onChange={(e) => setMetaTitle(e.target.value)}
               placeholder="Your site title on search engines"
             />
           </div>
-          <div className="space-y-2.5">
+          <div className="space-y-[18px]">
             <Label htmlFor="seo_meta_description">Meta description</Label>
             <Textarea
               id="seo_meta_description"
-              className="mt-2"
+             
               value={metaDescription}
               onChange={(e) => setMetaDescription(e.target.value)}
               placeholder="Short summary for search previews"

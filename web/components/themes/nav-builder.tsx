@@ -309,33 +309,37 @@ export function NavBuilder({
       {/* Brand Identity & Logo */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div className="space-y-4">
-          <div className="space-y-2">
+          <div className="space-y-[18px]">
             <label className="text-sm font-medium text-foreground">Header Brand Name</label>
-            <Input
-              value={settings.site_name || ""}
-              onChange={(e) => onChange({ site_name: e.target.value })}
-              placeholder="e.g. My Publication"
-            />
-            <p className="text-xs text-muted-foreground">
-              Displayed when no logo image is set.
-            </p>
+            <div className="space-y-1.5">
+              <Input
+                value={settings.site_name || ""}
+                onChange={(e) => onChange({ site_name: e.target.value })}
+                placeholder="e.g. My Publication"
+              />
+              <p className="text-xs text-muted-foreground">
+                Displayed when no logo image is set.
+              </p>
+            </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-[18px]">
             <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
-            <Input
-              value={settings.logo_link ?? "/"}
-              onChange={(e) => onChange({ logo_link: e.target.value })}
-              placeholder="/"
-            />
-            <p className="text-xs text-muted-foreground">
-              Destination URL when visitors click your logo or brand title.
-            </p>
+            <div className="space-y-1.5">
+              <Input
+                value={settings.logo_link ?? "/"}
+                onChange={(e) => onChange({ logo_link: e.target.value })}
+                placeholder="/"
+              />
+              <p className="text-xs text-muted-foreground">
+                Destination URL when visitors click your logo or brand title.
+              </p>
+            </div>
           </div>
         </div>
 
         {/* Full Image Logo upload */}
-        <div className="space-y-2">
+        <div className="space-y-[18px]">
           <label className="text-sm font-medium text-foreground">Header Logo Image</label>
           <div className="rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
             <div className="flex items-center gap-4">
@@ -428,7 +432,7 @@ export function NavBuilder({
 
       {/* Alignment & Style */}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <div className="space-y-2">
+        <div className="space-y-[18px]">
           <label className="text-sm font-medium text-foreground">Header Alignment</label>
           <div className="flex gap-2">
             {(
@@ -455,7 +459,7 @@ export function NavBuilder({
           </div>
         </div>
 
-        <div className="space-y-2">
+        <div className="space-y-[18px]">
           <label className="text-sm font-medium text-foreground">Header Style</label>
           <div className="flex gap-2">
             {(
@@ -519,7 +523,7 @@ export function NavBuilder({
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
             <SortableContext items={navItems.map((i) => i.id)} strategy={verticalListSortingStrategy}>
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 {navItems.map((item) => (
                   <SortableNavItemRow
                     key={item.id}
@@ -545,7 +549,7 @@ export function NavBuilder({
           </DialogHeader>
 
           <div className="space-y-4 py-2">
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Type</label>
               <Select value={formType} onValueChange={(v) => setFormType(v as NavItemType)}>
                 <SelectTrigger>
@@ -560,7 +564,7 @@ export function NavBuilder({
             </div>
 
             {formType === "page" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Page</label>
                 <Select
                   value={formPageSlug}
@@ -585,7 +589,7 @@ export function NavBuilder({
             ) : null}
 
             {formType === "category" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Select Category</label>
                 <Select
                   value={formCatSlug}
@@ -609,7 +613,7 @@ export function NavBuilder({
               </div>
             ) : null}
 
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <label className="text-xs font-semibold uppercase text-muted-foreground">Link Label</label>
               <Input
                 value={formLabel}
@@ -619,7 +623,7 @@ export function NavBuilder({
             </div>
 
             {formType === "custom" ? (
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <label className="text-xs font-semibold uppercase text-muted-foreground">Destination URL</label>
                 <Input
                   value={formUrl}

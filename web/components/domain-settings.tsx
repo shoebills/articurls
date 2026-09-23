@@ -509,7 +509,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           {/* ── No Domain Configured: Unified Input ────────────────────────── */}
           {!isSubdirectoryActive && !isCustomDomainConfigured && (
             <form onSubmit={handleConnect} className="space-y-4">
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <div className="flex flex-col gap-2.5 sm:flex-row">
                   <Input
                     type="text"

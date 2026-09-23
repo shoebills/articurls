@@ -102,7 +102,7 @@ export default function CtaSettingsPage() {
         <form onSubmit={handleSave} className="space-y-6">
           <Card>
             <CardContent className="p-6 space-y-5">
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="cta_heading">Heading</Label>
                 <Input
                   id="cta_heading"
@@ -114,7 +114,7 @@ export default function CtaSettingsPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="cta_description">Description</Label>
                 <Textarea
                   id="cta_description"
@@ -126,8 +126,8 @@ export default function CtaSettingsPage() {
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="cta_button_text">Button Text</Label>
                   <Input
                     id="cta_button_text"
@@ -139,7 +139,7 @@ export default function CtaSettingsPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="cta_button_url">Button Destination URL</Label>
                   <Input
                     id="cta_button_url"

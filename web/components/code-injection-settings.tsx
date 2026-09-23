@@ -75,7 +75,7 @@ export function CodeInjectionSettings() {
         ) : (
           <form onSubmit={handleSave} className="space-y-6">
             {/* Head Code */}
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <div className="flex items-center justify-between">
                 <Label htmlFor="head-code" className="font-semibold text-sm">
                   Header Code Injection (<code className="text-xs text-primary font-mono">&lt;head&gt;</code>)
@@ -95,7 +95,7 @@ export function CodeInjectionSettings() {
             </div>
 
             {/* Body Code */}
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <div className="flex items-center justify-between">
                 <Label htmlFor="body-code" className="font-semibold text-sm">
                   Footer Code Injection (<code className="text-xs text-primary font-mono">Before &lt;/body&gt;</code>)
@@ -115,7 +115,7 @@ export function CodeInjectionSettings() {
             </div>
 
             {/* Custom CSS */}
-            <div className="space-y-2">
+            <div className="space-y-[18px]">
               <div className="flex items-center justify-between">
                 <Label htmlFor="custom-css" className="font-semibold text-sm">
                   Custom CSS Styling (<code className="text-xs text-primary font-mono">&lt;style&gt;</code>)

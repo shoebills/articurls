@@ -105,7 +105,7 @@ export default function NewsletterSettingsPage() {
             <CardContent className="p-6 space-y-5">
               <h2 className="text-base font-semibold">Form Content & Copy</h2>
 
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="newsletter_headline">Form Headline</Label>
                 <Input
                   id="newsletter_headline"
@@ -117,7 +117,7 @@ export default function NewsletterSettingsPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="newsletter_text">Introduction Text</Label>
                 <Textarea
                   id="newsletter_text"
@@ -129,8 +129,8 @@ export default function NewsletterSettingsPage() {
                 />
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
+              <div className="grid gap-6 sm:grid-cols-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="newsletter_button_text">Button Label</Label>
                   <Input
                     id="newsletter_button_text"
@@ -142,7 +142,7 @@ export default function NewsletterSettingsPage() {
                   />
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-[18px]">
                   <Label htmlFor="newsletter_disclaimer">Disclaimer or Privacy Note</Label>
                   <Input
                     id="newsletter_disclaimer"
@@ -200,7 +200,7 @@ export default function NewsletterSettingsPage() {
                 When readers subscribe, Articurls will trigger an HTTP POST request to this endpoint with the reader&apos;s email address. Connect your favorite Email Service Provider (ConvertKit, Mailchimp, Loops, Brevo) or automation platform (Zapier, Make).
               </p>
 
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="newsletter_webhook_url">Webhook Endpoint URL</Label>
                 <Input
                   id="newsletter_webhook_url"
@@ -211,19 +211,21 @@ export default function NewsletterSettingsPage() {
                 />
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-[18px]">
                 <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token (Optional)</Label>
-                <Input
-                  id="newsletter_webhook_token"
-                  type="password"
-                  placeholder="Secret token sent as Authorization: Bearer <token>"
-                  value={design.newsletter_webhook_token || ""}
-                  onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
-                  disabled={saving}
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  Secure secret token included in request headers for endpoint verification.
-                </p>
+                <div className="space-y-1.5">
+                  <Input
+                    id="newsletter_webhook_token"
+                    type="password"
+                    placeholder="Secret token sent as Authorization: Bearer <token>"
+                    value={design.newsletter_webhook_token || ""}
+                    onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
+                    disabled={saving}
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    Secure secret token included in request headers for endpoint verification.
+                  </p>
+                </div>
               </div>
             </CardContent>
           </Card>
