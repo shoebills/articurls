@@ -173,11 +173,7 @@ export function SubscribeToAuthor({
 
   return (
     <>
-      <div
-        className={
-          className ?? "rounded-xl border border-border/80 bg-muted/20 p-4 sm:p-5"
-        }
-      >
+      <div className={className ?? "py-8 space-y-1"}>
         <p className="text-sm font-semibold text-foreground">{displayHeadline}</p>
         <p className="mt-1 text-sm text-muted-foreground">{displayDescription}</p>
         {formBody}

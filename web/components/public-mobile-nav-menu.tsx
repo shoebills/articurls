@@ -4,7 +4,7 @@ import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Menu, X } from "lucide-react";
 import { SearchButton } from "@/components/search-button";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { ThemeModeSelector } from "@/components/theme-mode-selector";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
@@ -128,7 +128,6 @@ export function PublicMobileNavMenu({
 
         {showMenuButton ? (
           <div className="flex items-center gap-2">
-            <ThemeToggle />
             {subdomain && searchEnabled !== false ? (
               <SearchButton
                 iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
@@ -194,8 +193,12 @@ export function PublicMobileNavMenu({
                   ))}
                 </div>
               ) : null}
+              <div className="border-t border-border/60 mx-1.5" />
+              <div className="p-1">
+                <ThemeModeSelector />
+              </div>
               {ctaLinks.length > 0 ? (
-                <div className={`p-1.5 ${regularLinks.length > 0 ? "border-t border-border/60" : ""}`}>
+                <div className="border-t border-border/60 p-1.5">
                   {ctaLinks.map((l) => (
                     <Link
                       key={l.href}
@@ -213,7 +216,12 @@ export function PublicMobileNavMenu({
               ) : null}
             </>
           ) : (
-            <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
+            <>
+              <div className="p-1">
+                <ThemeModeSelector />
+              </div>
+              <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
+            </>
           )}
         </div>
       ) : null}

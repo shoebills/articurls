@@ -98,19 +98,19 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
 
         {/* SaaS Hero */}
         {hasHero ? (
-          <div className="mb-14 mt-10 text-center max-w-2xl mx-auto">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground">
+          <div className="mb-14 mt-10 max-w-2xl text-left">
+            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground text-left">
               {site.hero_title ? (
-                <span className="text-primary block mb-2">{site.hero_title}</span>
+                <span className="text-primary block mb-2 text-left">{site.hero_title}</span>
               ) : null}
               {site.hero_description ? (
-                <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed">
+                <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed text-left">
                   {site.hero_description}
                 </span>
               ) : null}
             </h1>
             {site.newsletter_show_near_header ? (
-              <div className="mt-8 max-w-md mx-auto">
+              <div className="mt-8 max-w-md">
                 <SubscribeToAuthor
                   subdomain={site.subdomain}
                   headline={site.newsletter_headline}
@@ -122,7 +122,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
             ) : null}
           </div>
         ) : site.newsletter_show_near_header ? (
-          <div className="my-10 max-w-md mx-auto">
+          <div className="my-10 max-w-md">
             <SubscribeToAuthor
               subdomain={site.subdomain}
               headline={site.newsletter_headline}
