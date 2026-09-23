@@ -98,19 +98,21 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
 
         {/* SaaS Hero */}
         {hasHero ? (
-          <div className="mb-14 mt-10 max-w-2xl text-left">
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground text-left">
-              {site.hero_title ? (
-                <span className="text-primary block mb-2 text-left">{site.hero_title}</span>
-              ) : null}
-              {site.hero_description ? (
-                <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed text-left">
-                  {site.hero_description}
-                </span>
-              ) : null}
-            </h1>
+          <>
+            <div className="mb-8 mt-10 max-w-2xl text-left">
+              <h1 className="text-4xl font-bold tracking-tight sm:text-5xl text-foreground text-left">
+                {site.hero_title ? (
+                  <span className="text-primary block mb-2 text-left">{site.hero_title}</span>
+                ) : null}
+                {site.hero_description ? (
+                  <span className="text-xl sm:text-2xl font-normal text-muted-foreground block mt-3 leading-relaxed text-left">
+                    {site.hero_description}
+                  </span>
+                ) : null}
+              </h1>
+            </div>
             {site.newsletter_show_near_header ? (
-              <div className="mt-8 max-w-md">
+              <div className="mt-8 mb-10 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
                 <SubscribeToAuthor
                   subdomain={site.subdomain}
                   headline={site.newsletter_headline}
@@ -120,9 +122,9 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 />
               </div>
             ) : null}
-          </div>
+          </>
         ) : site.newsletter_show_near_header ? (
-          <div className="my-10 max-w-md">
+          <div className="my-10 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
             <SubscribeToAuthor
               subdomain={site.subdomain}
               headline={site.newsletter_headline}

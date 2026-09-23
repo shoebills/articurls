@@ -8,7 +8,6 @@ import {
   isInternalHost,
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
-import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicFaqSection } from "@/components/public-faq-section";
 import { PublicDesktopNav } from "@/components/public-desktop-nav";
 import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
@@ -674,16 +673,6 @@ export default async function SitePublicationPage({ params }: Props) {
               </div>
             </section>
           )}
-
-          <div className="mt-14">
-            <SubscribeToAuthor
-              subdomain={site.subdomain}
-              headline={site.newsletter_headline}
-              text={site.newsletter_text}
-              disclaimer={site.newsletter_disclaimer}
-              buttonText={site.newsletter_button_text}
-            />
-          </div>
         </>
       );
 

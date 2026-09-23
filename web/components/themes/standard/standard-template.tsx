@@ -110,7 +110,7 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
               </p>
             ) : null}
             {site.newsletter_show_near_header ? (
-              <div className="mt-8 w-full max-w-sm">
+              <div className="mt-8 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
                 <SubscribeToAuthor
                   subdomain={site.subdomain}
                   headline={site.newsletter_headline}
@@ -122,7 +122,7 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
             ) : null}
           </div>
         ) : site.newsletter_show_near_header ? (
-          <div className="my-12 w-full max-w-md mx-auto">
+          <div className="my-10 max-w-md mx-auto bg-muted/20 rounded-xl p-6">
             <SubscribeToAuthor
               subdomain={site.subdomain}
               headline={site.newsletter_headline}

@@ -31,7 +31,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   return (
     <footer className="mt-20 border-t border-border/80 pt-12 pb-16">
       {showNewsletter ? (
-        <div className="max-w-md mx-auto mb-10">
+        <div className="max-w-md mx-auto mb-10 bg-muted/20 rounded-xl p-6">
           <SubscribeToAuthor
             subdomain={site.subdomain}
             authorName={site.name}
