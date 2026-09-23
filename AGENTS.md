@@ -37,6 +37,7 @@ cd web && npm run lint
 
 ## Key Gotchas
 
+- **NEVER commit** — do not run `git commit`, `git add -A`, or `git push` unless the user explicitly asks to commit. Writing/printing a commit message is NOT permission to commit; only commit when the user says so.
 - **No tests exist** in this repo. There is no test framework, no `pytest`, no `jest`. All verification is manual.
 - **No Python lint/typecheck command** is configured. The frontend has `npm run lint` (ESLint).
 - **Tailwind CSS v4** — uses `@tailwindcss/postcss` plugin, not the v3 `tailwindcss`/`autoprefixer` PostCSS plugins. Config is inline in CSS, not `tailwind.config.ts`.

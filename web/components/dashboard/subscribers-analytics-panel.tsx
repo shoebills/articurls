@@ -23,7 +23,6 @@ import {
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { TrendingUp, Users2 } from "lucide-react";
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
@@ -59,11 +58,6 @@ function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], t
 export function SubscribersAnalyticsPanel() {
   const { token, loading: authLoading } = useAuth();
   const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
-  const [subs, setSubs] = useState<SubscribersAnalytics | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t) : null;
-  });
   const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number }[]>(() => {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
@@ -84,6 +78,8 @@ export function SubscribersAnalyticsPanel() {
 
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
+  const totalGained = chartSubs.reduce((sum, p) => sum + p.gained, 0);
+
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
@@ -93,7 +89,6 @@ export function SubscribersAnalyticsPanel() {
       try {
         const data = await subscribersAnalytics(token, sPeriod);
         if (cancelled) return;
-        setSubs(data);
         setChartSubs(
           data.series.map((p) => ({
             timestamp: p.timestamp,
@@ -133,82 +128,22 @@ export function SubscribersAnalyticsPanel() {
         </div>
 
         {authLoading || loading ? (
-          <>
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Skeleton className="h-3 w-24 sm:h-3.5 sm:w-28 mb-2" />
-                      <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
-                    </div>
-                    <Skeleton className="h-5 w-5 rounded-md" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Skeleton className="h-3 w-20 sm:h-3.5 sm:w-24 mb-2" />
-                      <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
-                    </div>
-                    <Skeleton className="h-5 w-5 rounded-md" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <Card>
-              <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
-                <Skeleton className="h-5 w-40 sm:h-6 sm:w-48" />
-                <Skeleton className="h-3 w-64 sm:h-4 sm:w-72 mt-2" />
-              </CardHeader>
-              <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
-                <Skeleton className="h-full w-full rounded-md" />
-              </CardContent>
-            </Card>
-          </>
+          <Card>
+            <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
+              <Skeleton className="h-5 w-40 sm:h-6 sm:w-48" />
+              <Skeleton className="h-3 w-64 sm:h-4 sm:w-72 mt-2" />
+            </CardHeader>
+            <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
+              <Skeleton className="h-full w-full rounded-md" />
+            </CardContent>
+          </Card>
         ) : (
-          <>
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        New subscribers
-                      </p>
-                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
-                        {subs?.subscribed ?? "—"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 mt-0.5">
-                      <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Total subscribers
-                      </p>
-                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
-                        {subs?.current_subscribers ?? "—"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 mt-0.5">
-                      <Users2 className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            <Card>
+          <Card>
               <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Subscribers gained</CardTitle>
+                <CardTitle className="text-base sm:text-lg">
+                  Subscribers gained{" "}
+                  <span className="font-normal text-muted-foreground">+{totalGained}</span>
+                </CardTitle>
                 <CardDescription className="text-xs sm:text-sm">New subscribers over time.</CardDescription>
               </CardHeader>
               <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
@@ -265,7 +200,6 @@ export function SubscribersAnalyticsPanel() {
                 </ResponsiveContainer>
               </CardContent>
             </Card>
-          </>
         )}
       </div>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

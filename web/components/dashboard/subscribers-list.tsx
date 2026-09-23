@@ -21,14 +21,6 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function StatusBadge() {
-  return (
-    <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
-      Active
-    </span>
-  );
-}
-
 export function SubscriberList() {
   const { token, loading: authLoading } = useAuth();
   const [subscribers, setSubscribers] = useState<SubscriberListResponse["items"]>(() => {
@@ -99,12 +91,11 @@ export function SubscriberList() {
         <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
           {authLoading || loading ? (
             <div className="overflow-x-auto">
-              <table className="table-fixed w-[900px]">
+              <table className="table-fixed w-[600px]">
                 <thead>
                   <tr className="border-b text-left text-xs font-medium text-muted-foreground">
                     <th className="w-[300px] px-3 py-2 font-medium">Email</th>
                     <th className="w-[300px] px-3 py-2 font-medium">Subscribed</th>
-                    <th className="w-[300px] px-3 py-2 font-medium">Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -112,7 +103,6 @@ export function SubscriberList() {
                     <tr key={i} className="border-b last:border-0">
                       <td className="px-3 py-2.5"><Skeleton className="h-4 w-36" /></td>
                       <td className="px-3 py-2.5"><Skeleton className="h-4 w-24" /></td>
-                      <td className="px-3 py-2.5"><Skeleton className="h-5 w-16 rounded-full" /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -131,12 +121,11 @@ export function SubscriberList() {
           ) : (
             <>
               <div className="overflow-x-auto">
-                <table className="table-fixed w-[900px]">
+                <table className="table-fixed w-[600px]">
                   <thead>
                     <tr className="border-b text-left text-xs font-medium text-muted-foreground">
                       <th className="w-[300px] px-3 py-2 font-medium">Email</th>
                       <th className="w-[300px] px-3 py-2 font-medium">Subscribed</th>
-                      <th className="w-[300px] px-3 py-2 font-medium">Status</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -146,7 +135,6 @@ export function SubscriberList() {
                         <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
                           {formatDate(sub.subscribed_at)}
                         </td>
-                        <td className="px-3 py-2.5"><StatusBadge /></td>
                       </tr>
                     ))}
                   </tbody>
