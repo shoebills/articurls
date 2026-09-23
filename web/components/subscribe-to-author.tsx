@@ -81,11 +81,11 @@ export function SubscribeToAuthor({
   const formBody = (
     <>
       {status === "success" && message ? (
-        <p className="mt-1 text-sm text-muted-foreground" role="status">
+        <p className="mt-4 text-base text-muted-foreground text-center" role="status">
           {message}
         </p>
       ) : (
-        <form onSubmit={onSubmit} className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <form onSubmit={onSubmit} className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-end max-w-md mx-auto">
           <div className="min-w-0 flex-1 space-y-2">
             <Label htmlFor={`subscribe-email-${subdomain}`} className="sr-only">
               Email address
@@ -119,7 +119,7 @@ export function SubscribeToAuthor({
         </form>
       )}
       {disclaimer ? (
-        <p className="mt-2 text-xs text-muted-foreground">{disclaimer}</p>
+        <p className="mt-4 text-sm text-muted-foreground text-center">{disclaimer}</p>
       ) : null}
     </>
   );
@@ -173,9 +173,9 @@ export function SubscribeToAuthor({
 
   return (
     <>
-      <div className={className ?? "py-8 space-y-1"}>
-        <p className="text-sm font-semibold text-foreground">{displayHeadline}</p>
-        <p className="mt-1 text-sm text-muted-foreground">{displayDescription}</p>
+      <div className={className ?? "py-12 space-y-4 text-center"}>
+        <p className="text-2xl font-bold tracking-tight text-foreground text-center">{displayHeadline}</p>
+        <p className="text-lg text-muted-foreground text-center max-w-xl mx-auto leading-relaxed">{displayDescription}</p>
         {formBody}
       </div>
       {errorToast}
