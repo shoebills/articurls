@@ -21,21 +21,7 @@ function formatDate(dateStr: string): string {
   });
 }
 
-function StatusBadge({ sub }: { sub: SubscriberListResponse["items"][number] }) {
-  if (sub.unsubscribed_at) {
-    return (
-      <span className="rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-        Unsubscribed
-      </span>
-    );
-  }
-  if (!sub.is_confirmed) {
-    return (
-      <span className="rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-700">
-        Pending
-      </span>
-    );
-  }
+function StatusBadge() {
   return (
     <span className="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700">
       Active
@@ -160,7 +146,7 @@ export function SubscriberList() {
                         <td className="px-3 py-2.5 text-sm text-muted-foreground whitespace-nowrap">
                           {formatDate(sub.subscribed_at)}
                         </td>
-                        <td className="px-3 py-2.5"><StatusBadge sub={sub} /></td>
+                        <td className="px-3 py-2.5"><StatusBadge /></td>
                       </tr>
                     ))}
                   </tbody>

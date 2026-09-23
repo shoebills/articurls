@@ -361,13 +361,3 @@ export function generateBreadcrumbList(items: { name: string; url: string }[]): 
     numberOfItems: items.length,
   };
 }
-
-export function generateSubscriptionConfirmationSchema(currentUrl: string): WebPage {
-  return {
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Subscription Confirmed",
-    description: "Email subscription confirmation page",
-    url: currentUrl,
-  };
-}

@@ -1,12 +1,9 @@
-import uuid
 from fastapi import Depends, APIRouter, HTTPException, Query, Request, status
-from sqlalchemy import func
 from sqlalchemy.orm import Session
 from ..database import get_db
 from .. import models
 from ..schemas import subscribers
-from ..security.oauth2 import verify_unsubscribe_token, create_sub_confirm_token, verify_sub_confirm_token, get_current_user, get_current_site
-from ..email.service import send_sub_confirmation_email
+from ..security.oauth2 import get_current_user, get_current_site
 from ..utils import normalize_email
 from ..utils.rate_limit import check_rate_limit_ip_and_email
 
@@ -47,19 +44,12 @@ def subscribe_blog(subdomain: str, request: Request, body: subscribers.Subscribe
      
     db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.email == email, models.Subscriber.site_id == db_site.site_id).first()
 
-    # already active subscriber
-    if db_subscriber and db_subscriber.unsubscribed_at is None:
+    # already a subscriber
+    if db_subscriber:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Already subscribed to this user"
         )
-
-    # resubscribe
-    if db_subscriber and db_subscriber.unsubscribed_at:
-        db_subscriber.unsubscribed_at = None
-        db.commit()
-        db.refresh(db_subscriber)
-        return {"message": "Subscribed again"}
     
     new_subscriber = models.Subscriber(email=email, 
                                        site_id=db_site.site_id)
@@ -68,100 +58,7 @@ def subscribe_blog(subdomain: str, request: Request, body: subscribers.Subscribe
     db.commit()
     db.refresh(new_subscriber)
 
-    token = create_sub_confirm_token(new_subscriber.subscriber_id, new_subscriber.site_id)
-    send_sub_confirmation_email(new_subscriber.email, db_site.nav_blog_name or db_site.subdomain, token)
-
-    return {"message": "Please check your email to confirm subscription"}
-
-@router.get("/confirm-subscription", status_code=status.HTTP_200_OK)
-def confirm_subscription(token: str, db: Session = Depends(get_db)):
-
-    try:
-        payload = verify_sub_confirm_token(token)
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired confirmation link")
-    
-    target_site_id = payload.get("site_id") or payload.get("user_id")
-    try:
-        sub_id = uuid.UUID(str(payload["subscriber_id"]))
-        site_id = uuid.UUID(str(target_site_id))
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid confirmation link")
-
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == sub_id, models.Subscriber.site_id == site_id).first()
-
-    if not db_subscriber:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subscriber not found")
-
-    if db_subscriber.is_confirmed:
-        return {"message": "Already confirmed"}
-    
-    db_subscriber.is_confirmed = True
-
-    db.commit()
-    db.refresh(db_subscriber)
-
-    return {"message": "Email verified successfully"}
-
-@router.post("/unsubscribe/{subdomain}", status_code=status.HTTP_200_OK)
-def unsubscribe_blog(subdomain: str, request: subscribers.Unsubscribe, db: Session = Depends(get_db)):
-
-    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
-
-    if not db_site:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Site with subdomain: {subdomain} doesn't exist"
-        )
-
-    db_subscriber = (db.query(models.Subscriber).filter(models.Subscriber.email == request.email, models.Subscriber.site_id == db_site.site_id).first())
-
-    if not db_subscriber:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Subscriber not found"
-        )
-
-    if db_subscriber.unsubscribed_at:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Already unsubscribed"
-        )
-
-    db_subscriber.unsubscribed_at = func.now()
-
-    db.commit()
-
-    return {"message": "Successfully unsubscribed"}
-
-@router.get("/unsubscribe", status_code=status.HTTP_200_OK)
-def unsubscribe_via_email(token: str, db: Session = Depends(get_db)):
-    try:
-        payload = verify_unsubscribe_token(token)
-
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired unsubscriber link")
-    
-    target_site_id = payload.get("site_id") or payload.get("user_id")
-    try:
-        sub_id = uuid.UUID(str(payload["subscriber_id"]))
-        site_id = uuid.UUID(str(target_site_id))
-    except (ValueError, TypeError):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid unsubscriber link")
-
-    db_subscriber = db.query(models.Subscriber).filter(models.Subscriber.subscriber_id == sub_id, models.Subscriber.site_id == site_id).first()
-
-    if not db_subscriber:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Subcriber not found")
-    
-    if db_subscriber.unsubscribed_at:
-        return {"message": "Already unsubscribed"}
-    
-    db_subscriber.unsubscribed_at = func.now()
-    db.commit()
-
-    return {"message": "Successfully unsubscribed"}
+    return {"message": "You're subscribed!"}
 
 @router.get("/list", status_code=status.HTTP_200_OK)
 def list_subscribers(
@@ -189,8 +86,6 @@ def list_subscribers(
             {
                 "email": sub.email,
                 "subscribed_at": sub.subscribed_at.isoformat() if sub.subscribed_at else None,
-                "is_confirmed": sub.is_confirmed,
-                "unsubscribed_at": sub.unsubscribed_at.isoformat() if sub.unsubscribed_at else None,
             }
             for sub in db_subscribers
         ],

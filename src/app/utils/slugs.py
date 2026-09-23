@@ -29,8 +29,6 @@ RESERVED_SLUGS = frozenset({
     "verify",
     "reset-password",
     "forgot-password",
-    "confirm-subscription",
-    "unsubscribe",
     "internal",
     "site",
     "_next",

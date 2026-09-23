@@ -143,7 +143,6 @@ Disallow: /signup
 Disallow: /verify
 Disallow: /forgot-password
 Disallow: /reset-password
-Disallow: /confirm-subscription
 Disallow: /setup
 Disallow: /onboarding
 Disallow: /internal/

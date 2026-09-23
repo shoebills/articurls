@@ -400,22 +400,18 @@ export interface TokenResponse {
 export interface SubscribersAnalyticsSeriesPoint {
   timestamp: string;
   subscribed: number;
-  unsubscribed: number;
 }
 
 export interface SubscribersAnalytics {
   period: string;
   current_subscribers: number;
   subscribed: number;
-  unsubscribed: number;
   series: SubscribersAnalyticsSeriesPoint[];
 }
 
 export interface RecentSubscriber {
   email: string;
   subscribed_at: string;
-  is_confirmed: boolean;
-  unsubscribed_at: string | null;
 }
 
 export interface SubscriberListResponse {

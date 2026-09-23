@@ -18,21 +18,6 @@ def send_email(to_email, subject, html):
     else:
         send_smtp_email(to_email, subject, html)
 
-def send_sub_confirmation_email(to_email: str, blog_name: str, confirm_token: str):
-
-    html = (TEMPLATE_DIR / "confirm_subscription.html").read_text()
-
-    html = html.replace("{{ blog_name }}", blog_name)
-    frontend_base = settings.app_base_url.rstrip("/")
-    html = html.replace(
-        "{{ confirm_url }}",
-        f"{frontend_base}/confirm-subscription?token={confirm_token}",
-    )
-
-    subject = f"Confirm your subscription to {blog_name}'s blog"
-
-    send_email(to_email, subject, html)
-
 def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
 
     html = (TEMPLATE_DIR / "verify_new_user.html").read_text()

@@ -204,16 +204,12 @@ class Subscriber(Base):
     __tablename__ = "subscribers"
     __table_args__ = (
         UniqueConstraint("site_id", "email", name="uq_subscribers_site_email"),
-        Index("ix_subscribers_site_active", "site_id", postgresql_where=text("unsubscribed_at IS NULL AND is_confirmed")),
-        CheckConstraint("unsubscribed_at IS NULL OR subscribed_at IS NULL OR unsubscribed_at >= subscribed_at", name="ck_subscribers_unsub_after_sub"),
     )
 
     subscriber_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), index=True, nullable=False)
     email = Column(String, nullable=False)
     subscribed_at = Column(DateTime(timezone=True), server_default=func.now(), index=True, nullable=False)
-    unsubscribed_at = Column(DateTime(timezone=True), index=True, nullable=True)
-    is_confirmed = Column(Boolean, index=True, nullable=False, default=False)
 
 
 class SubscriptionPlanType(str, enum.Enum):

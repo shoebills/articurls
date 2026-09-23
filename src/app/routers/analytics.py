@@ -133,28 +133,16 @@ def _build_series(
     slots: list[datetime],
     since: datetime,
 ) -> list[dict]:
-    sub_query = db.query(models.Subscriber).filter(
-        models.Subscriber.site_id == site_id,
-        models.Subscriber.is_confirmed == True,
-    )
-
     trunc_unit = {"hour": "hour", "day": "day", "month": "month"}[unit]
 
     sub_rows = (
-        sub_query
-        .filter(models.Subscriber.subscribed_at >= since)
+        db.query(models.Subscriber)
+        .filter(
+            models.Subscriber.site_id == site_id,
+            models.Subscriber.subscribed_at >= since,
+        )
         .with_entities(
             func.date_trunc(trunc_unit, models.Subscriber.subscribed_at).label("ts"),
-            func.count(models.Subscriber.subscriber_id).label("cnt"),
-        )
-        .group_by("ts")
-        .all()
-    )
-    unsub_rows = (
-        sub_query
-        .filter(models.Subscriber.unsubscribed_at >= since)
-        .with_entities(
-            func.date_trunc(trunc_unit, models.Subscriber.unsubscribed_at).label("ts"),
             func.count(models.Subscriber.subscriber_id).label("cnt"),
         )
         .group_by("ts")
@@ -165,10 +153,6 @@ def _build_series(
     for row in sub_rows:
         ts = row.ts.replace(tzinfo=timezone.utc) if row.ts.tzinfo is None else row.ts
         sub_map[ts] = row.cnt
-    unsub_map = {}
-    for row in unsub_rows:
-        ts = row.ts.replace(tzinfo=timezone.utc) if row.ts.tzinfo is None else row.ts
-        unsub_map[ts] = row.cnt
 
     series = []
     for slot in slots:
@@ -176,7 +160,6 @@ def _build_series(
         series.append({
             "timestamp": slot_aware.isoformat(),
             "subscribed": sub_map.get(slot_aware, 0),
-            "unsubscribed": unsub_map.get(slot_aware, 0),
         })
     return series
 
@@ -184,13 +167,13 @@ def _build_series(
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
-    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.site_id == current_site.site_id, models.Subscriber.unsubscribed_at.is_(None), models.Subscriber.is_confirmed == True).scalar()
+    current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.site_id == current_site.site_id).scalar()
 
     unit = _time_unit(period)
     now = datetime.now(timezone.utc)
     since = get_since(period, now)
 
-    sub_query = db.query(models.Subscriber).filter(models.Subscriber.site_id == current_site.site_id, models.Subscriber.is_confirmed == True)
+    sub_query = db.query(models.Subscriber).filter(models.Subscriber.site_id == current_site.site_id)
 
     if since:
         until = None
@@ -201,13 +184,10 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
             until = until.replace(day=1) - timedelta(microseconds=1)
         if until:
             subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since, models.Subscriber.subscribed_at <= until).scalar()
-            unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at >= since, models.Subscriber.unsubscribed_at <= until).scalar()
         else:
             subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since).scalar()
-            unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at >= since).scalar()
     else:
         subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
-        unsubscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.unsubscribed_at.isnot(None)).scalar()
 
     if since is None:
         account_since = current_user.created_at
@@ -237,7 +217,6 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
         "period": period,
         "current_subscribers": current_subscribers,
         "subscribed": subscribed,
-        "unsubscribed": unsubscribed,
         "series": series,
     }
 
@@ -246,9 +225,7 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
     db_subscribers = db.query(models.Subscriber).filter(
-        models.Subscriber.site_id == current_site.site_id, 
-        models.Subscriber.unsubscribed_at.is_(None), 
-        models.Subscriber.is_confirmed.is_(True)
+        models.Subscriber.site_id == current_site.site_id
         ).order_by(models.Subscriber.subscribed_at.desc()).all()
 
     buffer = io.StringIO()
@@ -469,7 +446,7 @@ def get_umami_pages(
             .all()
         }
 
-        SYSTEM_PATHS = {"/", "/rss.xml", "/atom.xml", "/sitemap.xml", "/confirm-subscription", "/unsubscribe", "/categories", "/authors"}
+        SYSTEM_PATHS = {"/", "/rss.xml", "/atom.xml", "/sitemap.xml", "/categories", "/authors"}
         subpath = (current_site.custom_subpath or "").strip().rstrip("/")
 
         def _strip_subpath(raw_path: str) -> str:

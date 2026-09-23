@@ -625,23 +625,13 @@ export async function getPublicBlogs(subdomain: string): Promise<PublicBlog[]> {
   return apiFetch(`/${encodeURIComponent(subdomain)}/blogs`);
 }
 
-/** Public: request email subscription to a writer’s posts (confirmation email is sent when applicable). */
+/** Public: request email subscription to a writer's posts. */
 export async function publicSubscribe(subdomain: string, email: string): Promise<{ message: string }> {
   return apiFetch(`/subscribe/${encodeURIComponent(subdomain)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),
   });
-}
-
-/** Public: confirm a subscription via the token from the confirmation email. */
-export async function confirmSubscription(token: string): Promise<{ message: string }> {
-  return apiFetch(`/confirm-subscription?token=${encodeURIComponent(token)}`);
-}
-
-/** Public: unsubscribe via token from email link. */
-export async function unsubscribeViaEmail(token: string): Promise<{ message: string }> {
-  return apiFetch(`/unsubscribe?token=${encodeURIComponent(token)}`);
 }
 
 // ── Categories ────────────────────────────────────────────────────────

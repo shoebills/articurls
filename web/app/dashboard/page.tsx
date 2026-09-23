@@ -51,28 +51,6 @@ function formatDate(dateStr: string | null | undefined): string {
   }
 }
 
-function SubscriberStatusBadge({ sub }: { sub: RecentSubscriber }) {
-  if (sub.unsubscribed_at) {
-    return (
-      <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-        Unsubscribed
-      </span>
-    );
-  }
-  if (!sub.is_confirmed) {
-    return (
-      <span className="rounded-full bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400">
-        Pending
-      </span>
-    );
-  }
-  return (
-    <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400">
-      Active
-    </span>
-  );
-}
-
 function StatCard({
   icon: Icon,
   label,
@@ -589,21 +567,18 @@ export default function DashboardPage() {
                     const initial = sub.email.slice(0, 1).toUpperCase();
                     return (
                       <li key={sub.email}>
-                        <div className="flex items-center justify-between gap-3 px-3 py-2.5">
-                          <div className="flex min-w-0 items-center gap-2.5">
-                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                              {initial}
-                            </div>
-                            <div className="min-w-0">
-                              <p className="truncate text-sm font-medium text-foreground">
-                                {sub.email}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                Joined {formatDate(sub.subscribed_at)}
-                              </p>
-                            </div>
+                        <div className="flex items-center gap-3 px-3 py-2.5">
+                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
+                            {initial}
                           </div>
-                          <SubscriberStatusBadge sub={sub} />
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-foreground">
+                              {sub.email}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Joined {formatDate(sub.subscribed_at)}
+                            </p>
+                          </div>
                         </div>
                       </li>
                     );

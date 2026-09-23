@@ -10,5 +10,3 @@ class Unsubscribe(BaseModel):
 class RecentSubscriber(BaseModel):
     email: str
     subscribed_at: datetime
-    is_confirmed: bool
-    unsubscribed_at: datetime | None

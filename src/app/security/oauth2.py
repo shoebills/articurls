@@ -177,54 +177,6 @@ def verify_new_user_token(token: str):
     
     return payload
 
-def create_unsubscribe_token(subscriber_id: uuid.UUID | str, site_id: uuid.UUID | str):
-    expire = datetime.now(timezone.utc) + timedelta(days=30)
-
-    payload = {
-        "subscriber_id": str(subscriber_id),
-        "site_id": str(site_id),
-        "user_id": str(site_id),  # fallback for backward compatibility
-        "purpose": "unsubscribe",
-        "exp": expire,
-    }
-
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    
-    return token
-
-def verify_unsubscribe_token(token: str):
-
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-    if payload.get("purpose") != "unsubscribe":
-        raise ValueError("Invalid token purpose")
-    
-    return payload
-
-def create_sub_confirm_token(subscriber_id: uuid.UUID | str, site_id: uuid.UUID | str):
-    expire = datetime.now(timezone.utc) + timedelta(days=30)
-
-    payload = {
-        "subscriber_id": str(subscriber_id),
-        "site_id": str(site_id),
-        "user_id": str(site_id),  # fallback for backward compatibility
-        "purpose": "confirm-subscription",
-        "exp": expire,
-    }
-
-    token = jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
-    
-    return token
-
-def verify_sub_confirm_token(token: str):
-
-    payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-
-    if payload.get("purpose") != "confirm-subscription":
-        raise ValueError("Invalid token purpose")
-    
-    return payload
-
 def create_reset_password_token(email: str):
     expire = datetime.now(timezone.utc) + timedelta(hours=1)
     payload = {

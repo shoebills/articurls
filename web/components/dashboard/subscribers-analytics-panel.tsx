@@ -19,12 +19,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowDown, ArrowUp, Minus, TrendingDown, TrendingUp, Users2 } from "lucide-react";
+import { TrendingUp, Users2 } from "lucide-react";
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
 const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
@@ -65,7 +64,7 @@ export function SubscribersAnalyticsPanel() {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t) : null;
   });
-  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number; lost: number }[]>(() => {
+  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number }[]>(() => {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
     if (!t) return [];
@@ -73,7 +72,6 @@ export function SubscribersAnalyticsPanel() {
     return cached?.series.map((p) => ({
       timestamp: p.timestamp,
       gained: p.subscribed,
-      lost: p.unsubscribed,
     })) ?? [];
   });
   const [err, setErr] = useState<string | null>(null);
@@ -100,7 +98,6 @@ export function SubscribersAnalyticsPanel() {
           data.series.map((p) => ({
             timestamp: p.timestamp,
             gained: p.subscribed,
-            lost: p.unsubscribed,
           }))
         );
       } catch (e) {
@@ -137,34 +134,12 @@ export function SubscribersAnalyticsPanel() {
 
         {authLoading || loading ? (
           <>
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               <Card>
                 <CardContent className="p-3 sm:p-4 lg:p-5">
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="flex-1 min-w-0">
                       <Skeleton className="h-3 w-24 sm:h-3.5 sm:w-28 mb-2" />
-                      <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
-                    </div>
-                    <Skeleton className="h-5 w-5 rounded-md" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Skeleton className="h-3 w-20 sm:h-3.5 sm:w-24 mb-2" />
-                      <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
-                    </div>
-                    <Skeleton className="h-5 w-5 rounded-md" />
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <Skeleton className="h-3 w-28 sm:h-3.5 sm:w-32 mb-2" />
                       <Skeleton className="h-8 w-20 sm:h-10 sm:w-24" />
                     </div>
                     <Skeleton className="h-5 w-5 rounded-md" />
@@ -195,7 +170,7 @@ export function SubscribersAnalyticsPanel() {
           </>
         ) : (
           <>
-            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:gap-4 sm:grid-cols-2">
               <Card>
                 <CardContent className="p-3 sm:p-4 lg:p-5">
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
@@ -218,47 +193,7 @@ export function SubscribersAnalyticsPanel() {
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Unsubscribed
-                      </p>
-                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
-                        {subs?.unsubscribed ?? "—"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 mt-0.5">
-                      <TrendingDown className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Net growth
-                      </p>
-                      <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
-                        {subs ? (subs.subscribed - subs.unsubscribed > 0 ? "+" : "") + (subs.subscribed - subs.unsubscribed) : "—"}
-                      </p>
-                    </div>
-                    <div className="shrink-0 mt-0.5">
-                      {subs && subs.subscribed - subs.unsubscribed > 0 ? (
-                        <ArrowUp className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-500" />
-                      ) : subs && subs.subscribed - subs.unsubscribed < 0 ? (
-                        <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-red-500" />
-                      ) : (
-                        <Minus className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-muted-foreground opacity-70" />
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-3 sm:p-4 lg:p-5">
-                  <div className="flex items-start justify-between gap-2 sm:gap-3">
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] sm:text-xs md:text-sm text-muted-foreground font-medium mb-1">
-                        Current subscribers
+                        Total subscribers
                       </p>
                       <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
                         {subs?.current_subscribers ?? "—"}
@@ -273,20 +208,16 @@ export function SubscribersAnalyticsPanel() {
             </div>
             <Card>
               <CardHeader className="px-4 pb-6 pt-4 sm:p-9 sm:pb-6">
-                <CardTitle className="text-base sm:text-lg">Subscribers trend</CardTitle>
-                <CardDescription className="text-xs sm:text-sm">New subscribers and unsubscribes over time.</CardDescription>
+                <CardTitle className="text-base sm:text-lg">Subscribers gained</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">New subscribers over time.</CardDescription>
               </CardHeader>
               <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartSubs} margin={{ top: 12, right: 8, left: 0, bottom: 8 }}>
                     <defs>
-                      <linearGradient id="colorSubscribed" x1="0" y1="0" x2="0" y2="1">
+                      <linearGradient id="colorGained" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35} />
                         <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorUnsubscribed" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="oklch(0.55 0.2 25)" stopOpacity={0.35} />
-                        <stop offset="100%" stopColor="oklch(0.55 0.2 25)" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid
@@ -320,10 +251,6 @@ export function SubscribersAnalyticsPanel() {
                         boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
                       }}
                     />
-                    <Legend
-                      wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
-                      iconType="circle"
-                    />
                     <Area
                       type="monotone"
                       dataKey="gained"
@@ -331,17 +258,7 @@ export function SubscribersAnalyticsPanel() {
                       stroke="oklch(0.6 0.15 145)"
                       strokeWidth={3}
                       fillOpacity={1}
-                      fill="url(#colorSubscribed)"
-                      activeDot={{ r: 5 }}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="lost"
-                      name="Unsubscribed"
-                      stroke="oklch(0.55 0.2 25)"
-                      strokeWidth={3}
-                      fillOpacity={1}
-                      fill="url(#colorUnsubscribed)"
+                      fill="url(#colorGained)"
                       activeDot={{ r: 5 }}
                     />
                   </AreaChart>

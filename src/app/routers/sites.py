@@ -35,11 +35,7 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
     ) or 0
     subscriber_count = (
         db.query(func.count(models.Subscriber.subscriber_id))
-        .filter(
-            models.Subscriber.site_id == site.site_id,
-            models.Subscriber.unsubscribed_at.is_(None),
-            models.Subscriber.is_confirmed == True,
-        )
+        .filter(models.Subscriber.site_id == site.site_id)
         .scalar()
     ) or 0
     return {
