@@ -86,6 +86,12 @@ export async function refreshAccessToken(): Promise<string> {
     credentials: "include",
   });
   if (!res.ok) {
+    if (res.status === 401 && typeof window !== "undefined") {
+      localStorage.removeItem("articurls_token");
+      localStorage.removeItem("articurls_site_id");
+      clearApiCache();
+      window.dispatchEvent(new CustomEvent("articurls_session_expired"));
+    }
     throw new ApiError(await parseError(res), res.status);
   }
   const data = await res.json() as TokenResponse;
@@ -135,17 +141,17 @@ export async function apiFetch<T>(
   let effectiveToken = token;
 
   if (typeof window !== "undefined") {
-    // If a refresh is already underway, wait for it before firing
-    if (refreshPromise && !path.includes("/refresh") && !path.includes("/login") && !path.includes("/logout")) {
+    // Prefer the latest stored token so requests always use the freshest
+    // access token after a silent refresh (callers may hold a stale `token`).
+    const storedToken = localStorage.getItem("articurls_token");
+    if (storedToken) {
+      effectiveToken = storedToken;
+    } else if (refreshPromise && !path.includes("/refresh") && !path.includes("/login") && !path.includes("/logout")) {
+      // A refresh is already underway — wait for it before firing
       try {
         effectiveToken = await refreshPromise;
       } catch {
-        // Continue with current token
-      }
-    } else {
-      const storedToken = localStorage.getItem("articurls_token");
-      if (storedToken && (!effectiveToken || isRetry)) {
-        effectiveToken = storedToken;
+        // Continue without a token
       }
     }
   }

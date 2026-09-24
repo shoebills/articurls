@@ -144,13 +144,16 @@ def verify_refresh_token(token: str):
     except jwt.PyJWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
-def revoke_refresh_token(token: str):
+def revoke_refresh_token(token: str, grace_seconds: int = 0):
     from ..redis_client import redis_client
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         jti = payload.get("jti")
         if jti:
-            redis_client.delete(f"refresh_token:{jti}")
+            if grace_seconds > 0:
+                redis_client.expire(f"refresh_token:{jti}", grace_seconds)
+            else:
+                redis_client.delete(f"refresh_token:{jti}")
     except jwt.PyJWTError:
         pass
 

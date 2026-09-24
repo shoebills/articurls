@@ -68,12 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const loadAuthData = useCallback(async (t: string): Promise<boolean> => {
-    let siteList: SiteSummary[] = [];
-    try {
-      siteList = await listSites(t);
-    } catch (e) {
-      if (!localStorage.getItem(SITE_KEY)) throw e;
-    }
+    const siteList = await listSites(t);
     setSites(siteList);
 
     if (siteList.length === 0) {
@@ -153,6 +148,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       if (typeof window !== "undefined") {
         window.removeEventListener("articurls_token_refreshed", handleTokenRefreshed);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      localStorage.removeItem(TOKEN_KEY);
+      localStorage.removeItem(SITE_KEY);
+      clearApiCache();
+      setToken(null);
+      setUser(null);
+      setSubscription(null);
+      setSites([]);
+      setActiveSite(null);
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("articurls_session_expired", handleSessionExpired);
+    }
+    return () => {
+      if (typeof window !== "undefined") {
+        window.removeEventListener("articurls_session_expired", handleSessionExpired);
       }
     };
   }, []);

@@ -209,7 +209,7 @@ export function PublicDesktopNav({
         )}
       </div>
 
-      <div className="flex items-center gap-8 shrink-0">
+      <div className="flex items-center gap-6 shrink-0">
         <ThemeToggle />
         {subdomain && searchEnabled !== false ? (
           <SearchButton

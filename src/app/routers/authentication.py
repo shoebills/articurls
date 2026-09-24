@@ -104,7 +104,7 @@ def refresh(request: Request, response: Response, db: Session = Depends(get_db))
     if not db_user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
-    oauth2.revoke_refresh_token(refresh_token)
+    oauth2.revoke_refresh_token(refresh_token, grace_seconds=30)
     
     new_access_token = oauth2.create_access_token(
         data={"sub": email, "ver": db_user.token_version},
