@@ -226,33 +226,35 @@ export default function SeoSettings() {
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="space-y-2.5">
-          <Label htmlFor="seo_meta_title">Meta title</Label>
-          <Input
-            id="seo_meta_title"
-            className="mt-2"
-            value={form.meta_title}
-            onChange={(e) => patch({ meta_title: e.target.value })}
-            placeholder="Your site title on search engines"
-          />
-        </div>
-        <div className="space-y-2.5">
-          <Label htmlFor="seo_meta_description">Meta description</Label>
-          <Textarea
-            id="seo_meta_description"
-            className="mt-2"
-            value={form.meta_description}
-            onChange={(e) => patch({ meta_description: e.target.value })}
-            placeholder="Short summary for search previews"
-            rows={3}
-          />
-        </div>
+      <div className="space-y-10">
+        <section className="space-y-4">
+          <div className="space-y-2.5">
+            <Label htmlFor="seo_meta_title">Meta title</Label>
+            <Input
+              id="seo_meta_title"
+              className="mt-2"
+              value={form.meta_title}
+              onChange={(e) => patch({ meta_title: e.target.value })}
+              placeholder="Your site title on search engines"
+            />
+          </div>
+          <div className="space-y-2.5">
+            <Label htmlFor="seo_meta_description">Meta description</Label>
+            <Textarea
+              id="seo_meta_description"
+              className="mt-2"
+              value={form.meta_description}
+              onChange={(e) => patch({ meta_description: e.target.value })}
+              placeholder="Short summary for search previews"
+              rows={3}
+            />
+          </div>
+        </section>
 
-        <div className="border-t pt-5 mt-2 space-y-4">
+        <section className="space-y-4 pt-6 border-t border-border/60">
           <div>
-            <p className="text-sm font-medium">Open Graph image</p>
-            <p className="text-xs text-muted-foreground mt-0.5">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Open Graph image</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
           </div>
           <input
             ref={ogInputRef}
@@ -300,133 +302,143 @@ export default function SeoSettings() {
               className="aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
             />
           ) : null}
-        </div>
+        </section>
 
-        <div className="border-t pt-5 mt-2 space-y-6">
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Indexing</h2>
+              <p className="text-xs text-muted-foreground sm:text-sm">When off, the entire site is hidden from search engines.</p>
+            </div>
+            <Switch
+              checked={form.seo_indexing_enabled}
+              onCheckedChange={(checked) => patch({ seo_indexing_enabled: checked })}
+              disabled={busy}
+            />
+          </div>
+        </section>
+
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Noindex</h2>
           <ToggleRow
-            title="Indexing"
-            hint="When off, the entire site is hidden from search engines."
-            checked={form.seo_indexing_enabled}
+            title="Category pages"
+            checked={form.seo_noindex_categories}
             disabled={busy}
-            onCheckedChange={(checked) => patch({ seo_indexing_enabled: checked })}
+            onCheckedChange={(checked) => patch({ seo_noindex_categories: checked })}
           />
-
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold">Noindex</h2>
-            <ToggleRow
-              title="Category pages"
-              checked={form.seo_noindex_categories}
-              disabled={busy}
-              onCheckedChange={(checked) => patch({ seo_noindex_categories: checked })}
-            />
-            <ToggleRow
-              title="Author pages"
-              checked={form.seo_noindex_authors}
-              disabled={busy}
-              onCheckedChange={(checked) => patch({ seo_noindex_authors: checked })}
-            />
-            <ToggleRow
-              title="Pages"
-              checked={form.seo_noindex_pages}
-              disabled={busy}
-              onCheckedChange={(checked) => patch({ seo_noindex_pages: checked })}
-            />
-          </div>
-
-          <div className="space-y-4">
-            <h2 className="text-sm font-semibold">Trailing slash</h2>
-            <ToggleRow
-              title="Listing URLs"
-              hint="Adds / to category, author and homepage canonicals."
-              checked={form.seo_trailing_slash_listings}
-              disabled={busy}
-              onCheckedChange={(checked) => patch({ seo_trailing_slash_listings: checked })}
-            />
-            <ToggleRow
-              title="Structured data URLs"
-              hint="Adds / to JSON-LD URLs."
-              checked={form.seo_trailing_slash_jsonld}
-              disabled={busy}
-              onCheckedChange={(checked) => patch({ seo_trailing_slash_jsonld: checked })}
-            />
-          </div>
-
           <ToggleRow
-            title="Sitemap"
-            hint="When off, /sitemap.xml returns 404."
-            checked={form.seo_sitemap_enabled}
+            title="Author pages"
+            checked={form.seo_noindex_authors}
             disabled={busy}
-            onCheckedChange={(checked) => patch({ seo_sitemap_enabled: checked })}
+            onCheckedChange={(checked) => patch({ seo_noindex_authors: checked })}
           />
+          <ToggleRow
+            title="Pages"
+            checked={form.seo_noindex_pages}
+            disabled={busy}
+            onCheckedChange={(checked) => patch({ seo_noindex_pages: checked })}
+          />
+        </section>
 
-          <div className="space-y-2.5">
-            <Label htmlFor="seo_robots_mode">Robots.txt</Label>
-            <Select
-              value={form.seo_robots_mode}
-              onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Trailing slash</h2>
+          <ToggleRow
+            title="Listing URLs"
+            hint="Adds / to category, author and homepage canonicals."
+            checked={form.seo_trailing_slash_listings}
+            disabled={busy}
+            onCheckedChange={(checked) => patch({ seo_trailing_slash_listings: checked })}
+          />
+          <ToggleRow
+            title="Structured data URLs"
+            hint="Adds / to JSON-LD URLs."
+            checked={form.seo_trailing_slash_jsonld}
+            disabled={busy}
+            onCheckedChange={(checked) => patch({ seo_trailing_slash_jsonld: checked })}
+          />
+        </section>
+
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <div className="flex items-center justify-between gap-4">
+            <div className="space-y-1">
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Sitemap</h2>
+              <p className="text-xs text-muted-foreground sm:text-sm">When off, /sitemap.xml returns 404.</p>
+            </div>
+            <Switch
+              checked={form.seo_sitemap_enabled}
+              onCheckedChange={(checked) => patch({ seo_sitemap_enabled: checked })}
               disabled={busy}
-            >
-              <SelectTrigger id="seo_robots_mode" className="mt-2">
-                <SelectValue placeholder="Select mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automatically managed</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-            {form.seo_robots_mode === "custom" ? (
-              <Textarea
-                id="seo_robots_custom"
-                className="mt-2 font-mono text-xs"
-                rows={6}
-                value={form.seo_robots_custom ?? ""}
-                onChange={(e) => patch({ seo_robots_custom: e.target.value })}
-                placeholder={"User-agent: *\nAllow: /"}
-                disabled={busy}
-              />
-            ) : null}
+            />
           </div>
+        </section>
 
-          <div className="space-y-2.5">
-            <Label htmlFor="seo_llms_mode">LLMs.txt</Label>
-            <Select
-              value={form.seo_llms_mode}
-              onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Robots.txt</h2>
+          <Select
+            value={form.seo_robots_mode}
+            onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
+            disabled={busy}
+          >
+            <SelectTrigger id="seo_robots_mode">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automatically managed</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {form.seo_robots_mode === "custom" ? (
+            <Textarea
+              id="seo_robots_custom"
+              className="font-mono text-xs"
+              rows={6}
+              value={form.seo_robots_custom ?? ""}
+              onChange={(e) => patch({ seo_robots_custom: e.target.value })}
+              placeholder={"User-agent: *\nAllow: /"}
               disabled={busy}
-            >
-              <SelectTrigger id="seo_llms_mode" className="mt-2">
-                <SelectValue placeholder="Select mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="auto">Automatically managed</SelectItem>
-                <SelectItem value="custom">Custom</SelectItem>
-              </SelectContent>
-            </Select>
-            {form.seo_llms_mode === "custom" ? (
-              <Textarea
-                id="seo_llms_custom"
-                className="mt-2 font-mono text-xs"
-                rows={6}
-                value={form.seo_llms_custom ?? ""}
-                onChange={(e) => patch({ seo_llms_custom: e.target.value })}
-                placeholder={"# My site\n> Description"}
-                disabled={busy}
-              />
-            ) : null}
-          </div>
+            />
+          ) : null}
+        </section>
 
-          <div className="pt-2">
-            <Button onClick={onSave} disabled={busy || !dirty} className="min-w-[120px]">
-              {busy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
+        <section className="space-y-4 pt-6 border-t border-border/60">
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">LLMs.txt</h2>
+          <Select
+            value={form.seo_llms_mode}
+            onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}
+            disabled={busy}
+          >
+            <SelectTrigger id="seo_llms_mode">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automatically managed</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {form.seo_llms_mode === "custom" ? (
+            <Textarea
+              id="seo_llms_custom"
+              className="font-mono text-xs"
+              rows={6}
+              value={form.seo_llms_custom ?? ""}
+              onChange={(e) => patch({ seo_llms_custom: e.target.value })}
+              placeholder={"# My site\n> Description"}
+              disabled={busy}
+            />
+          ) : null}
+        </section>
+
+        <div className="flex items-center justify-end pt-6 border-t border-border/60">
+          <Button onClick={onSave} disabled={busy || !dirty} className="min-w-[120px]">
+            {busy ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
         </div>
       </div>
       <FloatingErrorToast
