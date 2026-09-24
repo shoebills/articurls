@@ -379,23 +379,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
       if (featuredIdsChanged && user) {
         await patchDesignSettings(token, {
-          template_id: user.template_id ?? "standard",
-          site_mode: user.site_mode ?? "system",
-          color_theme: user.color_theme ?? "base",
-          custom_color: user.custom_color ?? null,
-          font_family: user.font_family ?? "sans",
-          button_style: user.button_style ?? "rounded",
-          navbar_alignment: user.navbar_alignment ?? "left",
-          navbar_style: user.navbar_style ?? "bordered",
-          navbar_enabled: user.navbar_enabled,
-          site_name: user.site_name,
-          nav_menu_enabled: user.nav_menu_enabled,
-          site_footer_enabled: user.site_footer_enabled,
-          featured_blogs_enabled: user.featured_blogs_enabled,
           featured_blog_ids: featuredIds,
-          content_width: user.content_width ?? "wide",
-          list_image_position: user.list_image_position ?? "above_title",
-          show_preview_in_lists: user.show_preview_in_lists ?? true,
         });
       }
 

@@ -33,6 +33,7 @@ type PublicDesktopNavProps = {
   searchEnabled?: boolean;
   alignment?: "left" | "center" | "right" | string;
   basePath?: string;
+  buttonVariant?: string;
 };
 
 function linkClass(active?: boolean, isCta?: boolean) {
@@ -54,6 +55,7 @@ export function PublicDesktopNav({
   searchEnabled = true,
   alignment = "left",
   basePath = "",
+  buttonVariant = "solid",
 }: PublicDesktopNavProps) {
   const ctaLinks = links.filter((l) => l.is_cta);
   const regularLinks = links.filter((l) => !l.is_cta);
@@ -225,6 +227,8 @@ export function PublicDesktopNav({
             href={l.href}
             target={l.open_in_new_tab ? "_blank" : undefined}
             rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
+            data-button-variant={buttonVariant}
+            data-button-radius="true"
             className={linkClass(l.active, l.is_cta)}
           >
             {l.label}

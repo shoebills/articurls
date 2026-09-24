@@ -24,6 +24,7 @@ type Props = {
   text?: string | null;
   disclaimer?: string | null;
   buttonText?: string | null;
+  buttonVariant?: string;
   /** Full-width card (e.g. blog post). Default. */
   mode?: "card" | "dialog";
   className?: string;
@@ -39,6 +40,7 @@ export function SubscribeToAuthor({
   text,
   disclaimer,
   buttonText,
+  buttonVariant = "solid",
   mode = "card",
   className,
   triggerClassName,
@@ -105,6 +107,8 @@ export function SubscribeToAuthor({
           <Button
             type="submit"
             disabled={status === "loading"}
+            data-button-variant={buttonVariant}
+            data-button-radius="true"
             className="h-10 min-h-10 w-full touch-manipulation sm:h-10 sm:min-h-10 sm:w-auto sm:min-w-[7.5rem] sm:shrink-0"
           >
             {status === "loading" ? (

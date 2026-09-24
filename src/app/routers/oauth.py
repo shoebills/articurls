@@ -328,7 +328,7 @@ async def complete_google_signup(
         meta_description=f"Explore all the blogs published by {name}.",
         site_name=(request.site_name or "").strip() or None,
     )
-    if request.template_id in ("standard", "saas"):
+    if request.template_id in ("saas",):
         new_site.template_id = request.template_id
     db.add(new_site)
     db.flush()

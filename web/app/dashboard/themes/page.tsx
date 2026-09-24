@@ -11,7 +11,6 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import type { DesignSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { ThemePicker } from "@/components/themes/theme-picker";
@@ -83,100 +82,103 @@ export default function ThemesDashboardPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-4xl space-y-8 pb-12">
       {/* Header */}
-      <div className="mb-5 sm:mb-6">
+      <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Customize your publication template, colors, and typography.
+          Customize your publication template, color palette, typography, and button styling.
         </p>
       </div>
 
       {loading || !design ? (
-        <div className="space-y-6">
-          <Skeleton className="h-72 w-full max-w-2xl rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
-          <Skeleton className="h-40 w-full rounded-2xl" />
+        <div className="space-y-8">
+          <Skeleton className="h-64 w-full max-w-2xl rounded-xl" />
+          <Skeleton className="h-32 w-full max-w-xl rounded-xl" />
+          <Skeleton className="h-44 w-full max-w-xl rounded-xl" />
+          <Skeleton className="h-44 w-full max-w-xl rounded-xl" />
+          <Skeleton className="h-44 w-full max-w-xl rounded-xl" />
         </div>
       ) : (
-        <div className="space-y-6">
-          {/* Blog Template — templates side by side */}
-          <div>
-            <h2 className="text-base font-bold tracking-tight sm:text-lg">Blog Template</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Choose the overarching visual layout and post architecture for your blog.
-            </p>
-            <div className="mt-4">
-              <ThemePicker settings={design} onChange={handleUpdate} />
+        <div className="space-y-10">
+          {/* Blog Template */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Blog Template</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Choose the overarching visual layout and post architecture for your blog.
+              </p>
             </div>
-          </div>
+            <div>
+              <ThemePicker />
+            </div>
+          </section>
 
           {/* Color Mode */}
-          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
-            <CardHeader>
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Color Mode</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
+          <section className="space-y-4 pt-6 border-t border-border/60">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Color Mode</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                 Choose whether your publication defaults to light, dark, or follows the reader&apos;s system preference.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+              </p>
+            </div>
+            <div className="max-w-md">
               <ColorModePicker settings={design} onChange={handleUpdate} />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
           {/* Color Palette */}
-          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
-            <CardHeader>
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Color Palette</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Select an accent color palette for buttons, links, and highlights.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <section className="space-y-4 pt-6 border-t border-border/60">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Color Palette</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Select a curated accent palette or customize brand, surface, background, and link colors.
+              </p>
+            </div>
+            <div>
               <ColorPalettePicker settings={design} onChange={handleUpdate} />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
-          {/* Typography Pairing */}
-          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
-            <CardHeader>
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Typography Pairing</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Curated font families engineered for reading comfort and aesthetic balance.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          {/* Typography */}
+          <section className="space-y-4 pt-6 border-t border-border/60">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Typography</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Select curated typography pairings or customize headings, article content, and UI fonts independently.
+              </p>
+            </div>
+            <div>
               <TypographyPairingPicker settings={design} onChange={handleUpdate} />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
 
           {/* Button Style */}
-          <Card className="rounded-2xl border-border/70 bg-card shadow-2xs">
-            <CardHeader>
-              <CardTitle className="text-base font-bold tracking-tight sm:text-lg">Button Style</CardTitle>
-              <CardDescription className="text-xs sm:text-sm">
-                Defines the border radius for buttons, badges, and interactive inputs.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+          <section className="space-y-4 pt-6 border-t border-border/60">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Button Style</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Defines corner radius and style variant for buttons, badges, and interactive inputs.
+              </p>
+            </div>
+            <div>
               <ButtonStylePicker settings={design} onChange={handleUpdate} />
-            </CardContent>
-          </Card>
+            </div>
+          </section>
+
+          {/* Save Bar */}
+          <div className="flex items-center justify-end pt-6 border-t border-border/60">
+            <Button
+              onClick={handleSave}
+              disabled={saving || loading}
+              className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </div>
         </div>
       )}
-
-      <div className="flex justify-end border-t border-border/60 pt-6">
-        <Button
-          onClick={handleSave}
-          disabled={saving || loading}
-          className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90"
-        >
-          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          Save Changes
-        </Button>
-      </div>
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} variant="error" />
       <FloatingErrorToast message={success} onDismiss={() => setSuccess(null)} variant="success" />

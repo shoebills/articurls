@@ -2,7 +2,8 @@
 
 import React, { useEffect } from "react";
 import { useTheme } from "next-themes";
-import type { PublicSite } from "@/lib/types";
+import type { ColorPalette, PublicSite } from "@/lib/types";
+import { DEFAULT_PALETTES } from "./color-palette-picker";
 
 // The 5 curated presets with complete light and dark tokens
 export const COLOR_PALETTES = {
@@ -138,40 +139,73 @@ export const COLOR_PALETTES = {
   },
 };
 
-export const FONT_CLASSES = {
-  sans: "font-sans",
-  serif: "font-serif",
-  mono: "font-mono",
-  jakarta: "font-sans tracking-tight",
+export const FONT_STACKS: Record<string, string> = {
+  sans: "var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+  serif: "ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif",
+  mono: "var(--font-jetbrains-mono), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace",
+  jakarta: "var(--font-geist), ui-sans-serif, system-ui, sans-serif",
 };
 
 export const RADIUS_VALUES = {
   pill: "9999px",
-  rounded: "0.75rem",
+  rounded: "0.5rem",
   square: "0px",
 };
 
-function getPaletteTokens(colorTheme?: string | null, customColor?: string | null) {
-  if (colorTheme === "custom" && customColor) {
-    const baseLight = COLOR_PALETTES.base.light;
-    const baseDark = COLOR_PALETTES.base.dark;
+function getPaletteTokens(colorTheme?: string | null, customPalette?: ColorPalette | null) {
+  const key = (colorTheme as keyof typeof COLOR_PALETTES) || "base";
+  const defaultBase = COLOR_PALETTES[key] || COLOR_PALETTES.base;
+  const defaultTokens = DEFAULT_PALETTES[key] || DEFAULT_PALETTES.base;
+
+  if (customPalette && Object.keys(customPalette).length > 0) {
     return {
       light: {
-        ...baseLight,
-        primary: customColor,
-        primaryForeground: "#ffffff",
-        ring: customColor,
+        background: customPalette.background,
+        foreground: customPalette.background_text,
+        card: customPalette.background,
+        cardForeground: customPalette.background_text,
+        popover: customPalette.background,
+        popoverForeground: customPalette.background_text,
+        primary: customPalette.primary,
+        primaryForeground: customPalette.primary_text,
+        secondary: customPalette.secondary,
+        secondaryForeground: customPalette.secondary_text,
+        muted: customPalette.secondary,
+        mutedForeground: `color-mix(in srgb, ${customPalette.background_text} 60%, transparent)`,
+        border: `color-mix(in srgb, ${customPalette.background_text} 15%, transparent)`,
+        input: `color-mix(in srgb, ${customPalette.background_text} 15%, transparent)`,
+        ring: customPalette.primary,
+        link: customPalette.link,
       },
       dark: {
-        ...baseDark,
-        primary: customColor,
-        primaryForeground: "#ffffff",
-        ring: customColor,
+        ...defaultBase.dark,
+        primary: customPalette.primary,
+        primaryForeground: customPalette.primary_text,
+        secondary: customPalette.secondary,
+        secondaryForeground: customPalette.secondary_text,
+        input: defaultBase.dark.border,
+        ring: customPalette.primary,
+        link: customPalette.link,
       },
     };
   }
-  const key = (colorTheme as keyof typeof COLOR_PALETTES) || "base";
-  return COLOR_PALETTES[key] || COLOR_PALETTES.base;
+
+  return {
+    light: {
+      ...defaultBase.light,
+      secondary: defaultTokens.secondary,
+      secondaryForeground: defaultTokens.secondary_text,
+      input: defaultBase.light.border,
+      link: defaultTokens.link,
+    },
+    dark: {
+      ...defaultBase.dark,
+      secondary: "oklch(0.24 0.008 260)",
+      secondaryForeground: "oklch(0.92 0.004 260)",
+      input: defaultBase.dark.border,
+      link: defaultTokens.link,
+    },
+  };
 }
 
 export function ThemeStyleWrapper({
@@ -201,9 +235,16 @@ export function ThemeStyleWrapper({
     };
   }, [site.site_language]);
 
-  const palette = getPaletteTokens(site.color_theme, site.custom_color);
+  const palette = getPaletteTokens(site.color_theme, site.color_palette);
   const radius = RADIUS_VALUES[(site.button_style as keyof typeof RADIUS_VALUES) || "rounded"];
-  const fontClass = FONT_CLASSES[(site.font_family as keyof typeof FONT_CLASSES) || "sans"];
+
+  const fontHeading = (site.font_heading as keyof typeof FONT_STACKS) || (site.font_family as keyof typeof FONT_STACKS) || "sans";
+  const fontContent = (site.font_content as keyof typeof FONT_STACKS) || (site.font_family as keyof typeof FONT_STACKS) || "sans";
+  const fontUi = (site.font_ui as keyof typeof FONT_STACKS) || (site.font_family as keyof typeof FONT_STACKS) || "sans";
+
+  const headingStack = FONT_STACKS[fontHeading] || FONT_STACKS.sans;
+  const contentStack = FONT_STACKS[fontContent] || FONT_STACKS.sans;
+  const uiStack = FONT_STACKS[fontUi] || FONT_STACKS.sans;
 
   const cssContent = `
     :root, .articurls-theme-scope {
@@ -215,12 +256,22 @@ export function ThemeStyleWrapper({
       --popover-foreground: ${palette.light.cardForeground};
       --primary: ${palette.light.primary};
       --primary-foreground: ${palette.light.primaryForeground};
+      --secondary: ${palette.light.secondary};
+      --secondary-foreground: ${palette.light.secondaryForeground};
       --muted: ${palette.light.muted};
       --muted-foreground: ${palette.light.mutedForeground};
       --border: ${palette.light.border};
-      --input: ${palette.light.border};
+      --input: ${palette.light.input || palette.light.border};
       --ring: ${palette.light.ring};
+      --link: ${palette.light.link};
       --radius: ${radius};
+      --radius-sm: calc(var(--radius) - 4px);
+      --radius-md: calc(var(--radius) - 2px);
+      --radius-lg: var(--radius);
+      --font-heading-family: ${headingStack};
+      --font-content-family: ${contentStack};
+      --font-ui-family: ${uiStack};
+      font-family: var(--font-content-family);
     }
 
     .dark, .dark .articurls-theme-scope, .articurls-theme-scope.dark {
@@ -232,16 +283,70 @@ export function ThemeStyleWrapper({
       --popover-foreground: ${palette.dark.cardForeground};
       --primary: ${palette.dark.primary};
       --primary-foreground: ${palette.dark.primaryForeground};
+      --secondary: ${palette.dark.secondary};
+      --secondary-foreground: ${palette.dark.secondaryForeground};
       --muted: ${palette.dark.muted};
       --muted-foreground: ${palette.dark.mutedForeground};
       --border: ${palette.dark.border};
-      --input: ${palette.dark.border};
+      --input: ${palette.dark.input || palette.dark.border};
       --ring: ${palette.dark.ring};
+      --link: ${palette.dark.link};
+      --radius: ${radius};
+      --radius-sm: calc(var(--radius) - 4px);
+      --radius-md: calc(var(--radius) - 2px);
+      --radius-lg: var(--radius);
+      --font-heading-family: ${headingStack};
+      --font-content-family: ${contentStack};
+      --font-ui-family: ${uiStack};
+      font-family: var(--font-content-family);
+    }
+
+    .articurls-theme-scope h1,
+    .articurls-theme-scope h2,
+    .articurls-theme-scope h3,
+    .articurls-theme-scope h4,
+    .articurls-theme-scope h5,
+    .articurls-theme-scope h6,
+    .articurls-theme-scope .font-heading {
+      font-family: var(--font-heading-family);
+    }
+
+    .articurls-theme-scope nav,
+    .articurls-theme-scope header,
+    .articurls-theme-scope button,
+    .articurls-theme-scope .font-ui {
+      font-family: var(--font-ui-family);
+    }
+
+    .articurls-theme-scope a:not([class*="btn"]):not([role="button"]):not([class*="button"]):not([data-no-link-color]):not([data-public-nav] a) {
+      color: var(--link);
+    }
+
+    .articurls-theme-scope [data-button-radius] {
+      border-radius: var(--radius) !important;
+    }
+
+    .articurls-theme-scope [data-button-variant="outline"] {
+      border: 2px solid var(--primary) !important;
+      background-color: transparent !important;
+      color: var(--primary) !important;
+    }
+    .articurls-theme-scope [data-button-variant="outline"]:hover {
+      background-color: color-mix(in srgb, var(--primary) 12%, transparent) !important;
+    }
+
+    .articurls-theme-scope [data-button-variant="soft"] {
+      border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent) !important;
+      background-color: color-mix(in srgb, var(--primary) 15%, transparent) !important;
+      color: var(--primary) !important;
+    }
+    .articurls-theme-scope [data-button-variant="soft"]:hover {
+      background-color: color-mix(in srgb, var(--primary) 25%, transparent) !important;
     }
   `;
 
   return (
-    <div className={`articurls-theme-scope min-h-screen bg-background text-foreground ${fontClass}`}>
+    <div className="articurls-theme-scope min-h-screen bg-background text-foreground">
       <style id="articurls-theme-vars" dangerouslySetInnerHTML={{ __html: cssContent }} />
       {site.custom_css ? (
         <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: site.custom_css }} />

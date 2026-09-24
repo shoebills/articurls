@@ -21,7 +21,13 @@ export function ContentEndCta({ site, isPage = false }: { site: PublicSite; isPa
       ) : null}
       {site.cta_button_text && site.cta_button_url ? (
         <div className="pt-2">
-          <Button asChild size="default" className="font-semibold shadow-xs">
+          <Button
+            asChild
+            size="default"
+            className="font-semibold shadow-xs"
+            data-button-variant={site.button_variant || "solid"}
+            data-button-radius="true"
+          >
             <Link
               href={site.cta_button_url}
               target={site.cta_button_url.startsWith("http") ? "_blank" : undefined}

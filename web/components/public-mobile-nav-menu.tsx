@@ -28,6 +28,7 @@ type PublicMobileNavMenuProps = {
   searchEnabled?: boolean;
   showMenuButton?: boolean;
   basePath?: string;
+  buttonVariant?: string;
 };
 
 export function PublicMobileNavMenu({
@@ -39,6 +40,7 @@ export function PublicMobileNavMenu({
   searchEnabled = true,
   showMenuButton = true,
   basePath = "",
+  buttonVariant = "solid",
 }: PublicMobileNavMenuProps) {
   const ctaLinks = links.filter((l) => l.is_cta);
   const regularLinks = links.filter((l) => !l.is_cta);
@@ -207,6 +209,8 @@ export function PublicMobileNavMenu({
                       target={l.open_in_new_tab ? "_blank" : undefined}
                       rel={l.open_in_new_tab ? "noopener noreferrer" : undefined}
                       onClick={() => setOpen(false)}
+                      data-button-variant={buttonVariant}
+                      data-button-radius="true"
                       className="flex h-9 w-full items-center justify-center gap-1 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-2xs hover:opacity-90 transition-opacity"
                     >
                       {l.label}

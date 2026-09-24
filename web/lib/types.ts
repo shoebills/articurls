@@ -153,6 +153,19 @@ export interface FooterColumn {
   links: FooterLink[];
 }
 
+export interface ColorPalette {
+  primary: string;
+  primary_text: string;
+  secondary: string;
+  secondary_text: string;
+  background: string;
+  background_text: string;
+  link: string;
+}
+
+export type ButtonVariant = "solid" | "outline" | "soft";
+export type ButtonStyle = "pill" | "rounded" | "square";
+
 export interface PublicSite {
   name: string;
   subdomain: string;
@@ -162,9 +175,13 @@ export interface PublicSite {
   template_id?: string;
   site_mode?: string;
   color_theme?: string;
-  custom_color?: string | null;
+  color_palette?: ColorPalette | null;
   font_family?: string;
+  font_heading?: string;
+  font_content?: string;
+  font_ui?: string;
   button_style?: string;
+  button_variant?: ButtonVariant;
   navbar_alignment?: string;
   navbar_style?: string;
   navbar_enabled: boolean;
@@ -233,9 +250,13 @@ export interface UserSettings {
   template_id: string;
   site_mode: string;
   color_theme: string;
-  custom_color: string | null;
+  color_palette?: ColorPalette | null;
   font_family: string;
+  font_heading?: string;
+  font_content?: string;
+  font_ui?: string;
   button_style: string;
+  button_variant?: ButtonVariant;
   navbar_alignment: string;
   navbar_style: string;
   navbar_enabled: boolean;
@@ -383,9 +404,13 @@ export interface DesignSettings {
   template_id: string;
   site_mode: string;
   color_theme: string;
-  custom_color: string | null;
+  color_palette?: ColorPalette | null;
   font_family: string;
+  font_heading?: string;
+  font_content?: string;
+  font_ui?: string;
   button_style: string;
+  button_variant?: ButtonVariant;
   navbar_alignment: string;
   navbar_style: string;
   

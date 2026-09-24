@@ -396,7 +396,7 @@ export async function patchSeoSettings(
   });
 }
 
-export async function patchDesignSettings(token: string, body: DesignSettings): Promise<DesignSettings> {
+export async function patchDesignSettings(token: string, body: Partial<DesignSettings>): Promise<DesignSettings> {
   return apiFetch("/user/design", {
     method: "PATCH",
     token,

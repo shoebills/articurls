@@ -40,6 +40,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               text={site.newsletter_text}
               disclaimer={site.newsletter_disclaimer}
               buttonText={site.newsletter_button_text}
+              buttonVariant={site.button_variant || "solid"}
               mode="card"
               className="space-y-4 text-center"
             />

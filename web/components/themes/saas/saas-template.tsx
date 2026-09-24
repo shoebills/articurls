@@ -67,7 +67,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
   const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
 
   return (
-    <div className="min-h-screen bg-background text-foreground font-sans">
+    <div className="min-h-screen bg-background text-foreground">
       <main className={mainSpacing}>
         {isNavEnabled ? (
           <header className={publicNavHeaderClass} data-public-nav>
@@ -80,6 +80,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 links={desktopLinks}
                 subdomain={site.subdomain}
                 alignment={site.navbar_alignment || "left"}
+                buttonVariant={site.button_variant || "solid"}
               />
             </div>
             <div className="sm:hidden">
@@ -91,6 +92,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 links={mobileLinks}
                 subdomain={site.subdomain}
                 showMenuButton={hasMobileNav}
+                buttonVariant={site.button_variant || "solid"}
               />
             </div>
           </header>
@@ -120,6 +122,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                     text={site.newsletter_text}
                     disclaimer={site.newsletter_disclaimer}
                     buttonText={site.newsletter_button_text}
+                    buttonVariant={site.button_variant || "solid"}
                     className="space-y-4 text-center"
                   />
                 </div>
@@ -135,6 +138,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                 text={site.newsletter_text}
                 disclaimer={site.newsletter_disclaimer}
                 buttonText={site.newsletter_button_text}
+                buttonVariant={site.button_variant || "solid"}
                 className="space-y-4 text-center"
               />
             </div>
@@ -146,6 +150,8 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-border/40">
             <Link
               href={getPublicProfileUrl(site.subdomain, basePath)}
+              data-button-variant={site.button_variant || "solid"}
+              data-button-radius="true"
               className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium shrink-0"
             >
               All

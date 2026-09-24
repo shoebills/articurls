@@ -65,12 +65,16 @@ class Site(Base):
     rss_enabled = Column(Boolean, nullable=False, default=False)
 
     # Design / Theme
-    template_id = Column(String(32), nullable=False, default="standard")
-    site_mode = Column(String(16), nullable=False, default="system")
-    color_theme = Column(String(32), nullable=False, default="base")
-    custom_color = Column(String(16), nullable=True, default=None)
-    font_family = Column(String(32), nullable=False, default="sans")
-    button_style = Column(String(16), nullable=False, default="rounded")
+    template_id = Column(String(32), nullable=False, default="saas", server_default="saas")
+    site_mode = Column(String(16), nullable=False, default="system", server_default="system")
+    color_theme = Column(String(32), nullable=False, default="base", server_default="base")
+    color_palette = Column(JSON, nullable=True, default=None)
+    font_family = Column(String(32), nullable=False, default="sans", server_default="sans")
+    font_heading = Column(String(32), nullable=False, default="sans", server_default="sans")
+    font_content = Column(String(32), nullable=False, default="sans", server_default="sans")
+    font_ui = Column(String(32), nullable=False, default="sans", server_default="sans")
+    button_style = Column(String(16), nullable=False, default="rounded", server_default="rounded")
+    button_variant = Column(String(16), nullable=False, default="solid", server_default="solid")
 
     # Navigation
     navbar_alignment = Column(String(16), nullable=False, default="left")

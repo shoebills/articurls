@@ -20,12 +20,16 @@ class UserSettings(BaseModel):
     meta_description: Optional[str] = None
     profile_image_url: Optional[str] = None
 
-    template_id: str = "standard"
+    template_id: str = "saas"
     site_mode: str = "system"
     color_theme: str = "base"
-    custom_color: Optional[str] = None
+    color_palette: Optional[dict] = None
     font_family: str = "sans"
+    font_heading: str = "sans"
+    font_content: str = "sans"
+    font_ui: str = "sans"
     button_style: str = "rounded"
+    button_variant: str = "solid"
     navbar_alignment: str = "left"
     navbar_style: str = "bordered"
     
