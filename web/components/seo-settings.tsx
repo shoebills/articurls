@@ -6,7 +6,9 @@ import {
   apiCacheHas,
   getCachedApiData,
   getSeoSettings,
+  getSeoAdvancedSettings,
   patchSeoSettings,
+  patchSeoAdvancedSettings,
   uploadOgImage,
   deleteOgImage,
 } from "@/lib/api";
@@ -15,10 +17,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import type { SeoSettings } from "@/lib/types";
+import type { SeoSettings, SeoAdvancedSettings } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
 import { getSitePublicUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
@@ -74,6 +78,7 @@ export default function SeoSettings() {
   const [ogImageBusy, setOgImageBusy] = useState(false);
   const sitemapResourceUrl = getSitePublicUrl(activeSite, "/sitemap.xml") ?? undefined;
   const robotsResourceUrl = getSitePublicUrl(activeSite, "/robots.txt") ?? undefined;
+  const llmsResourceUrl = getSitePublicUrl(activeSite, "/llms.txt") ?? undefined;
   useEffect(() => {
     if (!token) return;
     (async () => {
@@ -271,7 +276,14 @@ export default function SeoSettings() {
             displayText="/robots.txt"
             enabled={!!robotsResourceUrl}
           />
+          <SeoResourceRow
+            label="LLMs.txt"
+            url={llmsResourceUrl ?? "#"}
+            displayText="/llms.txt"
+            enabled={!!llmsResourceUrl}
+          />
         </div>
+        <SeoAdvancedBlock />
       </div>
       <FloatingErrorToast
         message={savedMsg}
@@ -320,5 +332,256 @@ function SeoResourceRow({
         View
       </Button>
     </div>
+  );
+}
+
+const DEFAULT_ADVANCED: SeoAdvancedSettings = {
+  seo_indexing_enabled: true,
+  seo_noindex_categories: false,
+  seo_noindex_authors: false,
+  seo_noindex_pages: false,
+  seo_trailing_slash_listings: false,
+  seo_trailing_slash_jsonld: false,
+  seo_sitemap_enabled: true,
+  seo_robots_mode: "auto",
+  seo_robots_custom: null,
+  seo_llms_mode: "auto",
+  seo_llms_custom: null,
+};
+
+function ToggleRow({
+  title,
+  hint,
+  checked,
+  disabled,
+  onCheckedChange,
+}: {
+  title: string;
+  hint?: string;
+  checked: boolean;
+  disabled: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="space-y-0.5">
+        <p className="text-sm font-medium">{title}</p>
+        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+      </div>
+      <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
+    </div>
+  );
+}
+
+function SeoAdvancedBlock() {
+  const { token, refreshUser } = useAuth();
+  const [settings, setSettings] = useState<SeoAdvancedSettings>(DEFAULT_ADVANCED);
+  const [original, setOriginal] = useState<SeoAdvancedSettings>(DEFAULT_ADVANCED);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [savedMsg, setSavedMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    (async () => {
+      try {
+        const data = await getSeoAdvancedSettings(token);
+        const merged = { ...DEFAULT_ADVANCED, ...data };
+        setSettings(merged);
+        setOriginal(merged);
+      } catch (e) {
+        setErr(e instanceof ApiError ? e.message : "Failed to load SEO settings");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [token]);
+
+  const dirty = JSON.stringify(settings) !== JSON.stringify(original);
+
+  const patch = (partial: Partial<SeoAdvancedSettings>) => {
+    setSettings((s) => ({ ...s, ...partial }));
+  };
+
+  async function onSave() {
+    if (!token) return;
+    setSaving(true);
+    setErr(null);
+    try {
+      await patchSeoAdvancedSettings(token, {
+        seo_indexing_enabled: settings.seo_indexing_enabled,
+        seo_noindex_categories: settings.seo_noindex_categories,
+        seo_noindex_authors: settings.seo_noindex_authors,
+        seo_noindex_pages: settings.seo_noindex_pages,
+        seo_trailing_slash_listings: settings.seo_trailing_slash_listings,
+        seo_trailing_slash_jsonld: settings.seo_trailing_slash_jsonld,
+        seo_sitemap_enabled: settings.seo_sitemap_enabled,
+        seo_robots_mode: settings.seo_robots_mode,
+        seo_robots_custom: settings.seo_robots_mode === "custom" ? settings.seo_robots_custom || null : null,
+        seo_llms_mode: settings.seo_llms_mode,
+        seo_llms_custom: settings.seo_llms_mode === "custom" ? settings.seo_llms_custom || null : null,
+      });
+      await refreshUser();
+      setOriginal(settings);
+      setSavedMsg("Saved");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to save SEO settings");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="border-t pt-5 mt-2 space-y-3">
+        <Skeleton className="h-4 w-24" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-6 w-full" />
+        <Skeleton className="h-24 w-full" />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <div className="border-t pt-5 mt-2 space-y-6">
+        <div className="space-y-4">
+          <ToggleRow
+            title="Indexing"
+            hint="When off, the entire site is hidden from search engines."
+            checked={settings.seo_indexing_enabled}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_indexing_enabled: checked })}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold">Noindex</h2>
+          <ToggleRow
+            title="Category pages"
+            checked={settings.seo_noindex_categories}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_noindex_categories: checked })}
+          />
+          <ToggleRow
+            title="Author pages"
+            checked={settings.seo_noindex_authors}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_noindex_authors: checked })}
+          />
+          <ToggleRow
+            title="Pages"
+            checked={settings.seo_noindex_pages}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_noindex_pages: checked })}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <h2 className="text-sm font-semibold">Trailing slash</h2>
+          <ToggleRow
+            title="Listing URLs"
+            hint="Adds / to category, author and homepage canonicals."
+            checked={settings.seo_trailing_slash_listings}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_trailing_slash_listings: checked })}
+          />
+          <ToggleRow
+            title="Structured data URLs"
+            hint="Adds / to JSON-LD URLs."
+            checked={settings.seo_trailing_slash_jsonld}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_trailing_slash_jsonld: checked })}
+          />
+        </div>
+
+        <div className="space-y-4">
+          <ToggleRow
+            title="Sitemap"
+            hint="When off, /sitemap.xml returns 404."
+            checked={settings.seo_sitemap_enabled}
+            disabled={saving}
+            onCheckedChange={(checked) => patch({ seo_sitemap_enabled: checked })}
+          />
+        </div>
+
+        <div className="space-y-2.5">
+          <Label htmlFor="seo_robots_mode">Robots.txt</Label>
+          <Select
+            value={settings.seo_robots_mode}
+            onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
+            disabled={saving}
+          >
+            <SelectTrigger id="seo_robots_mode" className="mt-2">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automatically managed</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {settings.seo_robots_mode === "custom" ? (
+            <Textarea
+              id="seo_robots_custom"
+              className="mt-2 font-mono text-xs"
+              rows={6}
+              value={settings.seo_robots_custom ?? ""}
+              onChange={(e) => patch({ seo_robots_custom: e.target.value })}
+              placeholder={"User-agent: *\nAllow: /"}
+              disabled={saving}
+            />
+          ) : null}
+        </div>
+
+        <div className="space-y-2.5">
+          <Label htmlFor="seo_llms_mode">LLMs.txt</Label>
+          <Select
+            value={settings.seo_llms_mode}
+            onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}
+            disabled={saving}
+          >
+            <SelectTrigger id="seo_llms_mode" className="mt-2">
+              <SelectValue placeholder="Select mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">Automatically managed</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+          {settings.seo_llms_mode === "custom" ? (
+            <Textarea
+              id="seo_llms_custom"
+              className="mt-2 font-mono text-xs"
+              rows={6}
+              value={settings.seo_llms_custom ?? ""}
+              onChange={(e) => patch({ seo_llms_custom: e.target.value })}
+              placeholder={"# My site\n> Description"}
+              disabled={saving}
+            />
+          ) : null}
+        </div>
+
+        <div className="pt-2">
+          <Button onClick={onSave} disabled={saving || !dirty} className="min-w-[120px]">
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              "Save"
+            )}
+          </Button>
+        </div>
+      </div>
+      <FloatingErrorToast
+        message={savedMsg}
+        onDismiss={() => setSavedMsg(null)}
+        autoDismissMs={3000}
+        variant="success"
+      />
+      <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
+    </>
   );
 }

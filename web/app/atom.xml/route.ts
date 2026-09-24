@@ -52,7 +52,8 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   const site = await loadSite(domainInfo.subdomain);
   if (!site) return new NextResponse(null, { status: 404 });
-  if (site.rss_enabled === false) return new NextResponse(null, { status: 404 });
+  if (site.atom_enabled === false) return new NextResponse(null, { status: 404 });
+  if (site.seo_indexing_enabled === false) return new NextResponse(null, { status: 404 });
 
   const [posts, categories] = await Promise.all([
     fetchPublishedPosts(domainInfo.subdomain),
@@ -61,9 +62,11 @@ export async function GET(req: NextRequest): Promise<Response> {
 
   const catMap = new Map(categories.map((c) => [c.category_id, c.name]));
 
-  const sorted = [...posts].sort(
-    (a, b) => toTimestamp(b.published_at || b.updated_at) - toTimestamp(a.published_at || a.updated_at),
-  );
+  const sorted = [...posts]
+    .filter((p) => !p.noindex)
+    .sort(
+      (a, b) => toTimestamp(b.published_at || b.updated_at) - toTimestamp(a.published_at || a.updated_at),
+    );
 
   const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
   const basePath = customSubpath ? `/${customSubpath}` : "";

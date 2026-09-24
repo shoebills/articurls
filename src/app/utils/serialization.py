@@ -71,6 +71,17 @@ def public_site_out(db: Session, db_site: models.Site):
         "custom_head_code": db_site.custom_head_code,
         "custom_body_code": db_site.custom_body_code,
         "custom_css": db_site.custom_css,
+        "seo_indexing_enabled": db_site.seo_indexing_enabled,
+        "seo_noindex_categories": db_site.seo_noindex_categories,
+        "seo_noindex_authors": db_site.seo_noindex_authors,
+        "seo_noindex_pages": db_site.seo_noindex_pages,
+        "seo_trailing_slash_listings": db_site.seo_trailing_slash_listings,
+        "seo_trailing_slash_jsonld": db_site.seo_trailing_slash_jsonld,
+        "seo_sitemap_enabled": db_site.seo_sitemap_enabled,
+        "seo_robots_mode": db_site.seo_robots_mode,
+        "seo_robots_custom": db_site.seo_robots_custom if db_site.seo_robots_mode == "custom" else None,
+        "seo_llms_mode": db_site.seo_llms_mode,
+        "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
     }
     return site.PublicSite(**data)
 
@@ -148,6 +159,17 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "custom_head_code": db_site.custom_head_code,
         "custom_body_code": db_site.custom_body_code,
         "custom_css": db_site.custom_css,
+        "seo_indexing_enabled": db_site.seo_indexing_enabled,
+        "seo_noindex_categories": db_site.seo_noindex_categories,
+        "seo_noindex_authors": db_site.seo_noindex_authors,
+        "seo_noindex_pages": db_site.seo_noindex_pages,
+        "seo_trailing_slash_listings": db_site.seo_trailing_slash_listings,
+        "seo_trailing_slash_jsonld": db_site.seo_trailing_slash_jsonld,
+        "seo_sitemap_enabled": db_site.seo_sitemap_enabled,
+        "seo_robots_mode": db_site.seo_robots_mode,
+        "seo_robots_custom": db_site.seo_robots_custom if db_site.seo_robots_mode == "custom" else None,
+        "seo_llms_mode": db_site.seo_llms_mode,
+        "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
     }
     
     # check if user is admin

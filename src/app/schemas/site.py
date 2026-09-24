@@ -123,5 +123,17 @@ class PublicSite(BaseModel):
     custom_css: Optional[str] = None
     umami_website_id: Optional[str] = None
 
+    seo_indexing_enabled: bool = True
+    seo_noindex_categories: bool = False
+    seo_noindex_authors: bool = False
+    seo_noindex_pages: bool = False
+    seo_trailing_slash_listings: bool = False
+    seo_trailing_slash_jsonld: bool = False
+    seo_sitemap_enabled: bool = True
+    seo_robots_mode: Literal["auto", "custom"] = "auto"
+    seo_robots_custom: Optional[str] = None
+    seo_llms_mode: Literal["auto", "custom"] = "auto"
+    seo_llms_custom: Optional[str] = None
+
     class Config:
         from_attributes = True

@@ -38,6 +38,8 @@ class Site(Base):
     __tablename__ = "sites"
     __table_args__ = (
         CheckConstraint("posts_per_page >= 6 AND posts_per_page <= 48", name="ck_sites_posts_per_page"),
+        CheckConstraint("seo_robots_mode IN ('auto', 'custom')", name="ck_sites_seo_robots_mode"),
+        CheckConstraint("seo_llms_mode IN ('auto', 'custom')", name="ck_sites_seo_llms_mode"),
     )
 
     site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
@@ -132,6 +134,17 @@ class Site(Base):
     meta_description = Column(String, nullable=True)
     favicon_url = Column(String, nullable=True)
     og_image_url = Column(String, nullable=True)
+    seo_indexing_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    seo_noindex_categories = Column(Boolean, nullable=False, default=False, server_default="false")
+    seo_noindex_authors = Column(Boolean, nullable=False, default=False, server_default="false")
+    seo_noindex_pages = Column(Boolean, nullable=False, default=False, server_default="false")
+    seo_trailing_slash_listings = Column(Boolean, nullable=False, default=False, server_default="false")
+    seo_trailing_slash_jsonld = Column(Boolean, nullable=False, default=False, server_default="false")
+    seo_sitemap_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    seo_robots_mode = Column(String(16), nullable=False, default="auto", server_default="auto")
+    seo_robots_custom = Column(Text, nullable=True, default=None)
+    seo_llms_mode = Column(String(16), nullable=False, default="auto", server_default="auto")
+    seo_llms_custom = Column(Text, nullable=True, default=None)
 
     # Code Injection
     custom_head_code = Column(Text, nullable=True, default=None)

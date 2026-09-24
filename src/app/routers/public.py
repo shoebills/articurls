@@ -350,6 +350,7 @@ def get_public_authors(subdomain: str, request: Request, db: Session = Depends(g
             "youtube_link": a.youtube_link,
             "website_link": a.website_link,
             "blog_count": blog_count,
+            "noindex": a.noindex,
         })
     return result
 

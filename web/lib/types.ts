@@ -233,6 +233,17 @@ export interface PublicSite {
   custom_css?: string | null;
   /** Umami website UUID for first-party analytics (Step 6 tracker). */
   umami_website_id?: string | null;
+  seo_indexing_enabled?: boolean;
+  seo_noindex_categories?: boolean;
+  seo_noindex_authors?: boolean;
+  seo_noindex_pages?: boolean;
+  seo_trailing_slash_listings?: boolean;
+  seo_trailing_slash_jsonld?: boolean;
+  seo_sitemap_enabled?: boolean;
+  seo_robots_mode?: "auto" | "custom";
+  seo_robots_custom?: string | null;
+  seo_llms_mode?: "auto" | "custom";
+  seo_llms_custom?: string | null;
 }
 
 export interface UserSettings {
@@ -308,6 +319,17 @@ export interface UserSettings {
   custom_head_code?: string | null;
   custom_body_code?: string | null;
   custom_css?: string | null;
+  seo_indexing_enabled?: boolean;
+  seo_noindex_categories?: boolean;
+  seo_noindex_authors?: boolean;
+  seo_noindex_pages?: boolean;
+  seo_trailing_slash_listings?: boolean;
+  seo_trailing_slash_jsonld?: boolean;
+  seo_sitemap_enabled?: boolean;
+  seo_robots_mode?: "auto" | "custom";
+  seo_robots_custom?: string | null;
+  seo_llms_mode?: "auto" | "custom";
+  seo_llms_custom?: string | null;
 }
 
 export interface SiteSummary {
@@ -468,6 +490,20 @@ export interface SeoSettings {
   meta_description: string | null;
   og_image_url: string | null;
   rss_enabled: boolean;
+}
+
+export interface SeoAdvancedSettings {
+  seo_indexing_enabled: boolean;
+  seo_noindex_categories: boolean;
+  seo_noindex_authors: boolean;
+  seo_noindex_pages: boolean;
+  seo_trailing_slash_listings: boolean;
+  seo_trailing_slash_jsonld: boolean;
+  seo_sitemap_enabled: boolean;
+  seo_robots_mode: "auto" | "custom";
+  seo_robots_custom: string | null;
+  seo_llms_mode: "auto" | "custom";
+  seo_llms_custom: string | null;
 }
 
 

@@ -90,6 +90,18 @@ class UserSettings(BaseModel):
     custom_body_code: Optional[str] = None
     custom_css: Optional[str] = None
 
+    seo_indexing_enabled: bool = True
+    seo_noindex_categories: bool = False
+    seo_noindex_authors: bool = False
+    seo_noindex_pages: bool = False
+    seo_trailing_slash_listings: bool = False
+    seo_trailing_slash_jsonld: bool = False
+    seo_sitemap_enabled: bool = True
+    seo_robots_mode: Literal["auto", "custom"] = "auto"
+    seo_robots_custom: Optional[str] = None
+    seo_llms_mode: Literal["auto", "custom"] = "auto"
+    seo_llms_custom: Optional[str] = None
+
     class Config:
         from_attributes = True
         
@@ -128,6 +140,37 @@ class SeoSettingsUpdate(BaseModel):
     meta_description: Optional[str] = None
     og_image_url: Optional[str] = None
     rss_enabled: Optional[bool] = None
+
+
+class SeoAdvancedSettings(BaseModel):
+    seo_indexing_enabled: bool = True
+    seo_noindex_categories: bool = False
+    seo_noindex_authors: bool = False
+    seo_noindex_pages: bool = False
+    seo_trailing_slash_listings: bool = False
+    seo_trailing_slash_jsonld: bool = False
+    seo_sitemap_enabled: bool = True
+    seo_robots_mode: Literal["auto", "custom"] = "auto"
+    seo_robots_custom: Optional[str] = None
+    seo_llms_mode: Literal["auto", "custom"] = "auto"
+    seo_llms_custom: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SeoAdvancedUpdate(BaseModel):
+    seo_indexing_enabled: Optional[bool] = None
+    seo_noindex_categories: Optional[bool] = None
+    seo_noindex_authors: Optional[bool] = None
+    seo_noindex_pages: Optional[bool] = None
+    seo_trailing_slash_listings: Optional[bool] = None
+    seo_trailing_slash_jsonld: Optional[bool] = None
+    seo_sitemap_enabled: Optional[bool] = None
+    seo_robots_mode: Optional[Literal["auto", "custom"]] = None
+    seo_robots_custom: Optional[str] = Field(None, max_length=10000)
+    seo_llms_mode: Optional[Literal["auto", "custom"]] = None
+    seo_llms_custom: Optional[str] = Field(None, max_length=10000)
 
 
 class StorageUsage(BaseModel):

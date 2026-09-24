@@ -15,6 +15,7 @@ import type {
   DomainAddResponse,
   DomainVerifyResponse,
   SeoSettings,
+  SeoAdvancedSettings,
   PublicBlog,
   PublicBlogSearchResult,
   PublicCategoryBlogsResponse,
@@ -389,6 +390,22 @@ export async function patchSeoSettings(
   body: Partial<SeoSettings>
 ): Promise<SeoSettings> {
   return apiFetch("/user/seo", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getSeoAdvancedSettings(token: string): Promise<SeoAdvancedSettings> {
+  return apiFetch("/user/seo/advanced", { token });
+}
+
+export async function patchSeoAdvancedSettings(
+  token: string,
+  body: Partial<SeoAdvancedSettings>
+): Promise<SeoAdvancedSettings> {
+  return apiFetch("/user/seo/advanced", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },

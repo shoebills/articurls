@@ -27,12 +27,13 @@ import {
   resolveTenantHostFromRequest,
 } from "@/lib/request-host";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
+import type { PublicSite } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
 const DISALLOW_ALL = "User-agent: *\nDisallow: /\n";
 
-async function loadSite(subdomain: string) {
+async function loadSite(subdomain: string): Promise<PublicSite | null> {
   try {
     const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
       cache: "no-store",
@@ -104,7 +105,31 @@ async function customDomainRobots(host: string): Promise<Response> {
     });
   }
 
-  const siteOrigin = `https://${host}`;
+  // Site-wide indexing off → block crawling entirely.
+  if (site.seo_indexing_enabled === false) {
+    return new Response(DISALLOW_ALL, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "Vary": "x-original-host",
+      },
+    });
+  }
+
+  // Custom robots.txt overrides the auto template.
+  if (site.seo_robots_mode === "custom" && (site.seo_robots_custom || "").trim()) {
+    return new Response(site.seo_robots_custom!.replace(/\r/g, ""), {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "Vary": "x-original-host",
+      },
+    });
+  }
+
+  const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+  const basePath = customSubpath ? `/${customSubpath}` : "";
+  const siteOrigin = `https://${host}${basePath}`;
   const body = `User-agent: *
 Allow: /
 
@@ -126,7 +151,8 @@ Sitemap: ${siteOrigin}/sitemap.xml
   return new Response(body, {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
-      "Cache-Control": "no-cache, no-store, must-revalidate",
+      "Cache-Control": "public, max-age=300",
+      "Vary": "x-original-host",
     },
   });
 }

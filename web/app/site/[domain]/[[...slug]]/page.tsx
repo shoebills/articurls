@@ -66,6 +66,23 @@ function resolvePageDescription(page: UserPage): string | undefined {
   return contentDescription || undefined;
 }
 
+function withTrailingSlash(url: string, enabled: boolean): string {
+  if (!enabled || url.endsWith("/")) return url;
+  return `${url}/`;
+}
+
+function withJsonLdSlash(url: string, site?: PublicSite | null): string {
+  return withTrailingSlash(url, site?.seo_trailing_slash_jsonld === true);
+}
+
+function resolveNoindex(noindex: boolean): { index: false; follow: true } | undefined {
+  return noindex ? { index: false, follow: true } : undefined;
+}
+
+function isSiteIndexingOff(site?: PublicSite | null): boolean {
+  return site?.seo_indexing_enabled === false;
+}
+
 function resolveRoutingSegments(
   rawSegments: string[],
   customSubpath?: string | null
@@ -267,15 +284,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const ogImage =
       (data.blogs[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
       resolveSiteOgImage(site);
+    const categoryCanonical = withTrailingSlash(canonical, site.seo_trailing_slash_listings === true);
     return {
       title,
       description,
-      alternates: alternatesWithFeeds(site),
+      robots: resolveNoindex(site.seo_noindex_categories === true || isSiteIndexingOff(site)),
+      alternates: { ...alternatesWithFeeds(site), canonical: categoryCanonical },
       icons: faviconIcons(site),
       openGraph: {
         title,
         description,
-        url: canonical,
+        url: categoryCanonical,
         type: "website",
         siteName,
         locale: site.og_locale || undefined,
@@ -300,16 +319,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const ogImage = author.profile_image_url
       ? transformImageUrl(assetUrl(author.profile_image_url), { width: 1200, height: 630, fit: "cover" })
       : resolveSiteOgImage(site);
+    const authorCanonical = withTrailingSlash(canonical, site.seo_trailing_slash_listings === true);
     return {
       title,
       description,
-      robots: author.noindex ? { index: false, follow: true } : undefined,
-      alternates: alternatesWithFeeds(site),
+      robots: resolveNoindex(author.noindex === true || site.seo_noindex_authors === true || isSiteIndexingOff(site)),
+      alternates: { ...alternatesWithFeeds(site), canonical: authorCanonical },
       icons: faviconIcons(site),
       openGraph: {
         title,
         description,
-        url: canonical,
+        url: authorCanonical,
         type: "profile",
         siteName,
         locale: site.og_locale || undefined,
@@ -331,15 +351,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const title = `Categories — ${siteName}`;
     const description = `Explore all topics and categories on ${siteName}.`;
     const ogImage = resolveSiteOgImage(site);
+    const hubCanonical = withTrailingSlash(canonical, site.seo_trailing_slash_listings === true);
     return {
       title,
       description,
-      alternates: alternatesWithFeeds(site),
+      robots: resolveNoindex(site.seo_noindex_categories === true || isSiteIndexingOff(site)),
+      alternates: { ...alternatesWithFeeds(site), canonical: hubCanonical },
       icons: faviconIcons(site),
       openGraph: {
         title,
         description,
-        url: canonical,
+        url: hubCanonical,
         type: "website",
         siteName,
         locale: site.og_locale || undefined,
@@ -376,7 +398,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       return {
         title,
         description,
-        robots: blog.noindex ? { index: false, follow: true } : undefined,
+        robots: resolveNoindex(blog.noindex === true || isSiteIndexingOff(site)),
         alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
         openGraph: {
@@ -411,7 +433,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       return {
         title,
         description,
-        robots: page.noindex ? { index: false, follow: true } : undefined,
+        robots: resolveNoindex(page.noindex === true || site?.seo_noindex_pages === true || isSiteIndexingOff(site)),
         alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
         openGraph: {
@@ -442,15 +464,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const description = site.meta_description || undefined;
   const siteName = resolveSiteName(site);
   const ogImage = resolveSiteOgImage(site);
+  const homeCanonical = withTrailingSlash(canonical, site.seo_trailing_slash_listings === true);
   return {
     title,
     description,
-    alternates: alternatesWithFeeds(site),
+    robots: resolveNoindex(isSiteIndexingOff(site)),
+    alternates: { ...alternatesWithFeeds(site), canonical: homeCanonical },
     icons: faviconIcons(site),
     openGraph: {
       title,
       description,
-      url: canonical,
+      url: homeCanonical,
       type: "website",
       siteName,
       locale: site.og_locale || undefined,
@@ -678,13 +702,13 @@ export default async function SitePublicationPage({ params }: Props) {
       return (
         <ThemeStyleWrapper site={site}>
           <article className="min-h-screen bg-background">
-          <StructuredData data={generateBlogPostingSchema(blog, site, currentUrl)} />
+          <StructuredData data={generateBlogPostingSchema(blog, site, withJsonLdSlash(currentUrl, site))} />
           <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
-            { name: blog.meta_title || blog.title, url: currentUrl },
+            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
+            { name: blog.meta_title || blog.title, url: withJsonLdSlash(currentUrl, site) },
           ])} />
           {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
-            <StructuredData data={generateFaqPageSchema(blog.faq_items, currentUrl)} />
+            <StructuredData data={generateFaqPageSchema(blog.faq_items, withJsonLdSlash(currentUrl, site))} />
           )}
           {blog.custom_schema && (
             <script
@@ -773,13 +797,13 @@ export default async function SitePublicationPage({ params }: Props) {
         <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
           <main className={mainSpacing}>
-            <StructuredData data={generateWebPageSchema(page, site, currentUrl)} />
+            <StructuredData data={generateWebPageSchema(page, site, withJsonLdSlash(currentUrl, site))} />
             <StructuredData data={generateBreadcrumbList([
-              { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
-              { name: page.title || "Untitled Page", url: currentUrl },
+              { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
+              { name: page.title || "Untitled Page", url: withJsonLdSlash(currentUrl, site) },
             ])} />
             {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
-              <StructuredData data={generateFaqPageSchema(page.faq_items, currentUrl)} />
+              <StructuredData data={generateFaqPageSchema(page.faq_items, withJsonLdSlash(currentUrl, site))} />
             )}
             {page.custom_schema && (
               <script
@@ -897,10 +921,10 @@ export default async function SitePublicationPage({ params }: Props) {
     return (
       <ThemeStyleWrapper site={site}>
       <div className="min-h-screen bg-background text-foreground">
-        <StructuredData data={generateCollectionPageSchema(data.category, site, currentUrl)} />
+        <StructuredData data={generateCollectionPageSchema(data.category, site, withJsonLdSlash(currentUrl, site))} />
         <StructuredData data={generateBreadcrumbList([
-          { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
-          { name: categoryName, url: currentUrl },
+          { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
+          { name: categoryName, url: withJsonLdSlash(currentUrl, site) },
         ])} />
         <main className={mainSpacing}>
           {isNavEnabled ? (
@@ -993,10 +1017,10 @@ export default async function SitePublicationPage({ params }: Props) {
     return (
       <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateAuthorProfileSchema(author, site, currentUrl, siteUrl)} />
+          <StructuredData data={generateAuthorProfileSchema(author, site, withJsonLdSlash(currentUrl, site), withJsonLdSlash(siteUrl, site))} />
           <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: siteUrl },
-            { name: author.name, url: currentUrl },
+            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(siteUrl, site) },
+            { name: author.name, url: withJsonLdSlash(currentUrl, site) },
           ])} />
           <main className={mainSpacing}>
             {isNavEnabled ? (
@@ -1120,10 +1144,10 @@ export default async function SitePublicationPage({ params }: Props) {
     return (
       <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, currentUrl)} />
+          <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, withJsonLdSlash(currentUrl, site))} />
           <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: `https://${host}${basePath}` },
-            { name: "Categories", url: currentUrl },
+            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
+            { name: "Categories", url: withJsonLdSlash(currentUrl, site) },
           ])} />
           <main className={mainSpacing}>
             {isNavEnabled ? (
@@ -1221,7 +1245,7 @@ export default async function SitePublicationPage({ params }: Props) {
 
   return (
     <ThemeStyleWrapper site={site}>
-      <StructuredData data={generateWebSiteSchema(site, siteOrigin)} />
+      <StructuredData data={generateWebSiteSchema(site, withJsonLdSlash(siteOrigin, site))} />
       <SaasTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
     </ThemeStyleWrapper>
   );

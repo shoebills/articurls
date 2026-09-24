@@ -573,6 +573,9 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                       ? `Your domain is active and serving traffic.`
                       : `Add the DNS records below at your registrar to verify.`}
                   </p>
+                  <SslStatusBadge
+                    status={isSubdirectoryActive ? "origin" : domainData?.domain_status || "pending"}
+                  />
                 </div>
 
                 {confirmDelete ? (
@@ -659,6 +662,16 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                       {activeSnippetCode}
                     </pre>
                   </div>
+
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_DOCS_ORIGIN || "https://docs.articurls.com"}/custom-domain/subdirectory`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                  >
+                    <ExternalLink className="h-3 w-3" />
+                    View full docs
+                  </a>
                 </div>
               )}
 
@@ -772,6 +785,23 @@ function StatusBadge({ status, isSubdirectory }: { status: string; isSubdirector
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
       {s.label}
     </span>
+  );
+}
+
+function SslStatusBadge({ status }: { status: string }) {
+  const map: Record<string, { label: string; className: string }> = {
+    active: { label: "SSL Active", className: "text-emerald-600 dark:text-emerald-400" },
+    grace: { label: "SSL Active", className: "text-emerald-600 dark:text-emerald-400" },
+    pending: { label: "SSL Pending", className: "text-amber-600 dark:text-amber-400" },
+    expired: { label: "SSL Inactive", className: "text-red-600 dark:text-red-400" },
+    origin: { label: "SSL via your origin", className: "text-muted-foreground" },
+  };
+  const s = map[status] || { label: "SSL Pending", className: "text-amber-600 dark:text-amber-400" };
+  return (
+    <p className={`inline-flex items-center gap-1.5 text-xs font-medium ${s.className}`}>
+      <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
+      {s.label}
+    </p>
   );
 }
 

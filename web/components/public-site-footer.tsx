@@ -162,7 +162,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
             </Link>
           ) : null}
           {showSitemap ? (
-            <Link href="/sitemap.xml" className="hover:text-foreground">
+            <Link href={`${basePath}/sitemap.xml`} className="hover:text-foreground">
               Sitemap
             </Link>
           ) : null}

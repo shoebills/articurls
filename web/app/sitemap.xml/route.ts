@@ -23,7 +23,7 @@ import {
   isInternalHost,
   resolveTenantHostFromRequest,
 } from "@/lib/request-host";
-import type { PublicBlog, UserPage } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage } from "@/lib/types";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { fetchAuthors } from "@/lib/seo-data";
 
@@ -31,7 +31,7 @@ export const dynamic = "force-dynamic";
 
 // ── Data loaders ──────────────────────────────────────────────────────────────
 
-async function loadSite(subdomain: string) {
+async function loadSite(subdomain: string): Promise<PublicSite | null> {
   try {
     const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
       cache: "no-store",
@@ -83,6 +83,20 @@ async function loadCategories(subdomain: string, all = false): Promise<Category[
     return res.json();
   } catch {
     return [];
+  }
+}
+
+function withTrailingSlash(url: string, enabled: boolean): string {
+  if (!enabled || url.endsWith("/")) return url;
+  return `${url}/`;
+}
+
+function isExternalCanonical(canonicalUrl: string | null | undefined, siteOrigin: string): boolean {
+  if (!canonicalUrl) return false;
+  try {
+    return new URL(canonicalUrl).origin !== new URL(siteOrigin).origin;
+  } catch {
+    return false;
   }
 }
 
@@ -148,9 +162,15 @@ async function customDomainSitemap(host: string): Promise<Response> {
 
   if (!site) return new NextResponse(null, { status: 404 });
 
+  // Site-level kill switches: sitemap disabled or indexing off → no sitemap.
+  if (site.seo_sitemap_enabled === false || site.seo_indexing_enabled === false) {
+    return new NextResponse(null, { status: 404 });
+  }
+
   const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
   const basePath = customSubpath ? `/${customSubpath}` : "";
   const siteOrigin = `https://${host}${basePath}`;
+  const trailingSlash = site.seo_trailing_slash_listings === true;
   const today = new Date().toISOString().split("T")[0];
 
   const [blogs, pages, categories, authors] = await Promise.all([
@@ -160,20 +180,32 @@ async function customDomainSitemap(host: string): Promise<Response> {
     fetchAuthors(subdomain),
   ]);
 
+  // Sitemap is a contract: only indexable, canonical, same-host URLs.
+  const indexableBlogs = blogs.filter(
+    (b) => !b.noindex && !isExternalCanonical(b.canonical_url, siteOrigin)
+  );
+  const indexablePages = pages.filter(
+    (p) => p.show_in_footer && !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin)
+  );
+  const indexableCategories = site.seo_noindex_categories ? [] : categories;
+  const indexableAuthors = authors.filter(
+    (a) => !a.noindex && !site.seo_noindex_authors
+  );
+
   const entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [];
 
   // Profile / home — custom domain root, no subdomain prefix
-  entries.push({ loc: siteOrigin, lastmod: today, changefreq: "weekly", priority: "1.0" });
+  entries.push({ loc: withTrailingSlash(siteOrigin, trailingSlash), lastmod: today, changefreq: "weekly", priority: "1.0" });
 
-  if (categories.length > 0) {
+  if (indexableCategories.length > 0) {
     entries.push({
-      loc: `${siteOrigin}/categories`,
+      loc: withTrailingSlash(`${siteOrigin}/categories`, trailingSlash),
       changefreq: "weekly",
       priority: "0.6",
     });
   }
 
-  for (const blog of blogs) {
+  for (const blog of indexableBlogs) {
     entries.push({
       loc: `${siteOrigin}/${encodeURIComponent(blog.slug)}`,
       lastmod: isoDate(blog.updated_at) ?? isoDate(blog.published_at),
@@ -182,8 +214,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
     });
   }
 
-  for (const page of pages) {
-    if (!page.show_in_footer) continue;
+  for (const page of indexablePages) {
     entries.push({
       loc: `${siteOrigin}/${encodeURIComponent(page.slug)}`,
       lastmod: isoDate(page.updated_at),
@@ -192,17 +223,17 @@ async function customDomainSitemap(host: string): Promise<Response> {
     });
   }
 
-  for (const cat of categories) {
+  for (const cat of indexableCategories) {
     entries.push({
-      loc: `${siteOrigin}/category/${encodeURIComponent(cat.slug)}`,
+      loc: withTrailingSlash(`${siteOrigin}/category/${encodeURIComponent(cat.slug)}`, trailingSlash),
       changefreq: "weekly",
       priority: "0.5",
     });
   }
 
-  for (const author of authors) {
+  for (const author of indexableAuthors) {
     entries.push({
-      loc: `${siteOrigin}/author/${encodeURIComponent(author.slug)}`,
+      loc: withTrailingSlash(`${siteOrigin}/author/${encodeURIComponent(author.slug)}`, trailingSlash),
       changefreq: "weekly",
       priority: "0.5",
     });
