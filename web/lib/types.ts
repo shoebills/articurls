@@ -490,20 +490,17 @@ export interface SeoSettings {
   meta_description: string | null;
   og_image_url: string | null;
   rss_enabled: boolean;
-}
-
-export interface SeoAdvancedSettings {
-  seo_indexing_enabled: boolean;
-  seo_noindex_categories: boolean;
-  seo_noindex_authors: boolean;
-  seo_noindex_pages: boolean;
-  seo_trailing_slash_listings: boolean;
-  seo_trailing_slash_jsonld: boolean;
-  seo_sitemap_enabled: boolean;
-  seo_robots_mode: "auto" | "custom";
-  seo_robots_custom: string | null;
-  seo_llms_mode: "auto" | "custom";
-  seo_llms_custom: string | null;
+  seo_indexing_enabled?: boolean;
+  seo_noindex_categories?: boolean;
+  seo_noindex_authors?: boolean;
+  seo_noindex_pages?: boolean;
+  seo_trailing_slash_listings?: boolean;
+  seo_trailing_slash_jsonld?: boolean;
+  seo_sitemap_enabled?: boolean;
+  seo_robots_mode?: "auto" | "custom";
+  seo_robots_custom?: string | null;
+  seo_llms_mode?: "auto" | "custom";
+  seo_llms_custom?: string | null;
 }
 
 

@@ -169,31 +169,13 @@ def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: Backg
     if update_data:
         for key, value in update_data.items():
             setattr(current_site, key, value)
+        if current_site.seo_robots_mode != "custom":
+            current_site.seo_robots_custom = None
+        if current_site.seo_llms_mode != "custom":
+            current_site.seo_llms_custom = None
         db.commit()
         db.refresh(current_site)
         schedule_tenant_purge(background_tasks, current_site)
-    return current_site
-
-
-@router.get("/seo/advanced", response_model=user.SeoAdvancedSettings, status_code=status.HTTP_200_OK)
-def get_seo_advanced_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
-    return current_site
-
-
-@router.patch("/seo/advanced", response_model=user.SeoAdvancedSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_seo_advanced_settings(request: user.SeoAdvancedUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
-    update_data = request.model_dump(exclude_unset=True)
-    if not update_data:
-        return current_site
-    for key, value in update_data.items():
-        setattr(current_site, key, value)
-    if current_site.seo_robots_mode != "custom":
-        current_site.seo_robots_custom = None
-    if current_site.seo_llms_mode != "custom":
-        current_site.seo_llms_custom = None
-    db.commit()
-    db.refresh(current_site)
-    schedule_tenant_purge(background_tasks, current_site)
     return current_site
 
 
