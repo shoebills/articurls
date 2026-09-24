@@ -8,7 +8,7 @@ import {
   Search,
   SlidersHorizontal,
   BookOpen,
-  Sparkles,
+  Megaphone,
   Mail,
   type LucideIcon,
 } from "lucide-react";
@@ -85,12 +85,12 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         href: "/dashboard/settings/cta",
         title: "Call to Action",
         description: "Standalone promotional banner for posts and pages.",
-        icon: Sparkles,
+        icon: Megaphone,
       },
       {
         id: "seo",
         href: "/dashboard/settings/seo",
-        title: "SEO",
+        title: "Search Engine Optimization",
         description: "Search engine indexing, metadata and social previews.",
         icon: Search,
       },

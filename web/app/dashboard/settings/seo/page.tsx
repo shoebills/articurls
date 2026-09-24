@@ -20,7 +20,7 @@ export default function SeoSettingsPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">SEO</h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Search Engine Optimization</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Search engine indexing, metadata and social previews.
         </p>

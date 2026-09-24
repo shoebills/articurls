@@ -43,7 +43,7 @@ import {
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Sparkles, Link2 } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Newspaper, Link2 } from "lucide-react";
 import { getSitePublicUrl } from "@/lib/public-url";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
@@ -1189,7 +1189,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               {/* Related Posts */}
               <div className="rounded-lg border border-border/60 bg-muted/20 p-3.5 space-y-1">
                 <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                  <Sparkles className="h-3.5 w-3.5 text-primary" />
+                  <Newspaper className="h-3.5 w-3.5 text-primary" />
                   Related Posts
                 </div>
                 <p className="text-xs text-muted-foreground">

@@ -24,7 +24,7 @@ import {
 import {
   Check,
   ChevronLeft,
-  Sparkles,
+  Zap,
   Mail,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -115,7 +115,7 @@ export default function UpgradePlanPage() {
       ) : (
         <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
           <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1.5 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
-            <Sparkles className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
+            <Zap className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
           </div>
 
           <CardContent className="p-6 sm:p-8 space-y-8">

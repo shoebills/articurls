@@ -49,7 +49,8 @@ import {
   Pencil,
   Trash2,
   ExternalLink,
-  Sparkles,
+  Megaphone,
+  SunMoon,
   Search,
   Image as ImageIcon,
   Loader2,
@@ -97,7 +98,7 @@ function SortableNavItemRow({
             <span className="font-medium text-sm truncate text-foreground">{item.label}</span>
             {item.is_cta ? (
               <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                <Sparkles className="h-2.5 w-2.5" />
+                <Megaphone className="h-2.5 w-2.5" />
                 CTA Button
               </span>
             ) : null}
@@ -430,7 +431,7 @@ export function NavBuilder({
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <SunMoon className="h-4 w-4 text-muted-foreground" />
             <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
           </div>
           <p className="text-xs text-muted-foreground">

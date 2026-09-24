@@ -96,7 +96,7 @@ function ToggleRow({
     <div className="flex items-center justify-between gap-4">
       <div className="space-y-0.5">
         <p className="text-sm font-medium">{title}</p>
-        {hint ? <p className="text-xs text-muted-foreground">{hint}</p> : null}
+        {hint ? <p className="text-xs text-muted-foreground sm:text-sm">{hint}</p> : null}
       </div>
       <Switch checked={checked} onCheckedChange={onCheckedChange} disabled={disabled} />
     </div>
