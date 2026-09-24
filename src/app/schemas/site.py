@@ -74,6 +74,7 @@ class PublicSite(BaseModel):
     logo_url: Optional[str] = None
     logo_link: Optional[str] = "/"
     search_enabled: bool = True
+    theme_toggle_enabled: bool = True
 
     hero_title: Optional[str] = None
     hero_description: Optional[str] = None
@@ -107,8 +108,7 @@ class PublicSite(BaseModel):
     favicon_url: Optional[str] = None
     featured_blogs_enabled: bool = True
     featured_blog_ids: list[str] | None = []
-    content_width: Literal["narrow", "wide"] = "wide"
-    list_image_position: Literal["above_title", "next_to_title"] = "above_title"
+    content_layout: Literal["grid", "list"] = "grid"
     show_preview_in_lists: bool = True
     posts_per_page: int = 12
     pagination_type: Literal["prev_next", "numbered"] = "prev_next"

@@ -123,8 +123,7 @@ export interface PublicBlogSearchResult {
   published_at: string | null;
 }
 
-export type ContentWidth = "narrow" | "wide";
-export type ListImagePosition = "above_title" | "next_to_title";
+export type ContentLayout = "grid" | "list";
 
 export type NavItemType = "custom" | "page" | "category";
 
@@ -191,6 +190,7 @@ export interface PublicSite {
   logo_url?: string | null;
   logo_link?: string | null;
   search_enabled?: boolean;
+  theme_toggle_enabled?: boolean;
   hero_title?: string | null;
   hero_description?: string | null;
   site_language?: string;
@@ -220,8 +220,7 @@ export interface PublicSite {
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
-  content_width?: ContentWidth;
-  list_image_position?: ListImagePosition;
+  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "numbered";
@@ -266,6 +265,7 @@ export interface UserSettings {
   logo_url?: string | null;
   logo_link?: string | null;
   search_enabled?: boolean;
+  theme_toggle_enabled?: boolean;
   hero_title?: string | null;
   hero_description?: string | null;
   site_language?: string;
@@ -297,8 +297,7 @@ export interface UserSettings {
   favicon_url?: string | null;
   featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
-  content_width?: ContentWidth;
-  list_image_position?: ListImagePosition;
+  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "numbered";
@@ -421,6 +420,7 @@ export interface DesignSettings {
   logo_url?: string | null;
   logo_link?: string | null;
   search_enabled?: boolean;
+  theme_toggle_enabled?: boolean;
 
   hero_title?: string | null;
   hero_description?: string | null;
@@ -456,8 +456,7 @@ export interface DesignSettings {
 
   featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
-  content_width: ContentWidth;
-  list_image_position: ListImagePosition;
+  content_layout: ContentLayout;
   show_preview_in_lists: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "numbered";

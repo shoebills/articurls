@@ -11,7 +11,7 @@ import {
   getDesignSettings,
   patchDesignSettings,
 } from "@/lib/api";
-import type { DesignSettings, ContentWidth, ListImagePosition } from "@/lib/types";
+import type { DesignSettings, ContentLayout } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -173,42 +173,22 @@ export default function ContentSettingsPage() {
             <h2 className="text-base font-semibold">Article & Feed Layout</h2>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
-                <Label htmlFor="content_width">Reading Width</Label>
+                <Label htmlFor="content_layout">Content layout</Label>
                 <Select
-                  value={design.content_width || "wide"}
-                  onValueChange={(val) => setDesign({ ...design, content_width: val as ContentWidth })}
+                  value={design.content_layout || "grid"}
+                  onValueChange={(val) => setDesign({ ...design, content_layout: val as ContentLayout })}
                   disabled={saving}
                 >
-                  <SelectTrigger id="content_width" className="mt-2">
-                    <SelectValue placeholder="Select width" />
+                  <SelectTrigger id="content_layout" className="mt-2">
+                    <SelectValue placeholder="Select layout" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="wide">Wide (Maximum content area)</SelectItem>
-                    <SelectItem value="narrow">Narrow (Centered readable column)</SelectItem>
+                    <SelectItem value="grid">Grid (Image above)</SelectItem>
+                    <SelectItem value="list">List (Image beside)</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
-                  Overall reading container width for articles and publication pages.
-                </p>
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="list_image_position">Featured Image in Lists</Label>
-                <Select
-                  value={design.list_image_position || "above_title"}
-                  onValueChange={(val) => setDesign({ ...design, list_image_position: val as ListImagePosition })}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="list_image_position" className="mt-2">
-                    <SelectValue placeholder="Select position" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="above_title">Above Title (Card layout)</SelectItem>
-                    <SelectItem value="next_to_title">Beside Title (Horizontal row)</SelectItem>
-                  </SelectContent>
-                </Select>
-                <p className="text-xs text-muted-foreground">
-                  Placement of post featured thumbnails inside article lists.
+                  Grid shows cards with image above title, list shows image beside title.
                 </p>
               </div>
             </div>

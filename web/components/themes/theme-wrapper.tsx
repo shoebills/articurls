@@ -264,10 +264,7 @@ export function ThemeStyleWrapper({
       --input: ${palette.light.input || palette.light.border};
       --ring: ${palette.light.ring};
       --link: ${palette.light.link};
-      --radius: ${radius};
-      --radius-sm: calc(var(--radius) - 4px);
-      --radius-md: calc(var(--radius) - 2px);
-      --radius-lg: var(--radius);
+      --button-radius: ${radius};
       --font-heading-family: ${headingStack};
       --font-content-family: ${contentStack};
       --font-ui-family: ${uiStack};
@@ -291,10 +288,7 @@ export function ThemeStyleWrapper({
       --input: ${palette.dark.input || palette.dark.border};
       --ring: ${palette.dark.ring};
       --link: ${palette.dark.link};
-      --radius: ${radius};
-      --radius-sm: calc(var(--radius) - 4px);
-      --radius-md: calc(var(--radius) - 2px);
-      --radius-lg: var(--radius);
+      --button-radius: ${radius};
       --font-heading-family: ${headingStack};
       --font-content-family: ${contentStack};
       --font-ui-family: ${uiStack};
@@ -318,12 +312,12 @@ export function ThemeStyleWrapper({
       font-family: var(--font-ui-family);
     }
 
-    .articurls-theme-scope a:not([class*="btn"]):not([role="button"]):not([class*="button"]):not([data-no-link-color]):not([data-public-nav] a) {
+    .articurls-theme-scope .prose-blog a {
       color: var(--link);
     }
 
     .articurls-theme-scope [data-button-radius] {
-      border-radius: var(--radius) !important;
+      border-radius: var(--button-radius) !important;
     }
 
     .articurls-theme-scope [data-button-variant="outline"] {

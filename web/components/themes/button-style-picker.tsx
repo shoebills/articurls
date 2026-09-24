@@ -115,15 +115,12 @@ export function ButtonStylePicker({
             );
           })}
         </div>
-        <p className="text-xs text-muted-foreground">
-          Controls the visual appearance of CTA buttons, search triggers, and newsletter submission inputs.
-        </p>
       </div>
 
       {/* Live Interactive Preview */}
       <div className="rounded-xl border border-border/80 bg-muted/20 p-4 flex items-center justify-between gap-4">
         <div>
-          <div className="text-xs font-semibold text-foreground">Interactive Preview</div>
+          <div className="text-xs font-semibold text-foreground">Preview</div>
           <div className="text-xs text-muted-foreground">This is how action buttons will appear to your readers.</div>
         </div>
         <button

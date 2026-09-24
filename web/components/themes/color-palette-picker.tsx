@@ -1,10 +1,11 @@
 "use client";
+/* eslint-disable react-hooks/set-state-in-effect */
 
 import { type ColorPalette, type DesignSettings } from "@/lib/types";
 import { Check, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export const DEFAULT_PALETTES: Record<string, ColorPalette> = {
   base: {
@@ -76,6 +77,17 @@ export function ColorPalettePicker({
   };
 
   const [showCustom, setShowCustom] = useState(theme === "custom");
+  const prevThemeRef = useRef(theme);
+
+  useEffect(() => {
+    const prev = prevThemeRef.current;
+    if (theme === "custom" && prev !== "custom") {
+      setShowCustom(true);
+    } else if (theme !== "custom" && prev === "custom") {
+      setShowCustom(false);
+    }
+    prevThemeRef.current = theme;
+  }, [theme]);
 
   const handlePresetSelect = (key: string) => {
     const presetPalette = DEFAULT_PALETTES[key] || DEFAULT_PALETTES.base;
@@ -107,7 +119,10 @@ export function ColorPalettePicker({
               type="button"
               key={key}
               onClick={() => {
+                const wasCustomOpen = showCustom;
                 setShowCustom(false);
+                // Avoid redundant patch if already on this preset and custom panel was closed
+                if (theme === key && !wasCustomOpen) return;
                 handlePresetSelect(key);
               }}
               className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
@@ -149,7 +164,7 @@ export function ColorPalettePicker({
         >
           <div
             className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
-              theme === "custom" || showCustom
+              theme === "custom"
                 ? "border-foreground ring-2 ring-primary/30 ring-offset-2 ring-offset-background scale-105 bg-primary/10 text-primary"
                 : "border-dashed border-border/80 hover:border-foreground/50 hover:scale-105 bg-muted/40 text-muted-foreground"
             }`}
@@ -158,7 +173,7 @@ export function ColorPalettePicker({
           </div>
           <span
             className={`text-xs font-medium ${
-              theme === "custom" || showCustom ? "text-foreground font-semibold" : "text-muted-foreground"
+              theme === "custom" ? "text-foreground font-semibold" : "text-muted-foreground"
             }`}
           >
             Custom
@@ -167,7 +182,7 @@ export function ColorPalettePicker({
       </div>
 
       {/* Custom Fine-Grained Palette Inputs */}
-      {showCustom || theme === "custom" ? (
+      {showCustom ? (
         <div className="space-y-5 pt-2 border-t border-border/60 max-w-xl">
           <div>
             <h4 className="text-sm font-semibold text-foreground">Custom Color Palette</h4>

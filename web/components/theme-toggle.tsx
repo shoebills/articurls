@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const NAV_ICON_CLASS =
-  "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground";
+  "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground";
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, setTheme } = useTheme();
@@ -34,7 +34,7 @@ export function ThemeToggle({ className }: { className?: string }) {
           aria-label="Theme"
           className={cn(NAV_ICON_CLASS, className)}
         >
-          <Icon className="h-4 w-4" />
+          <Icon className="h-5 w-5" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[8rem]">

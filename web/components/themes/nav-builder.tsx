@@ -426,6 +426,23 @@ export function NavBuilder({
         />
       </div>
 
+      {/* Theme Mode Toggle */}
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-muted-foreground" />
+            <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Show a light / dark / system mode switcher in the header.
+          </p>
+        </div>
+        <Switch
+          checked={settings.theme_toggle_enabled !== false}
+          onCheckedChange={(checked) => onChange({ theme_toggle_enabled: checked })}
+        />
+      </div>
+
       <hr className="border-border/60" />
 
       {/* Alignment & Style */}

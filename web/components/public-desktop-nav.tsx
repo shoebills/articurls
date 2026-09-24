@@ -31,6 +31,7 @@ type PublicDesktopNavProps = {
   subdomain: string;
   logoUrl?: string | null;
   searchEnabled?: boolean;
+  themeToggleEnabled?: boolean;
   alignment?: "left" | "center" | "right" | string;
   basePath?: string;
   buttonVariant?: string;
@@ -53,6 +54,7 @@ export function PublicDesktopNav({
   subdomain,
   logoUrl,
   searchEnabled = true,
+  themeToggleEnabled = true,
   alignment = "left",
   basePath = "",
   buttonVariant = "solid",
@@ -212,10 +214,10 @@ export function PublicDesktopNav({
       </div>
 
       <div className="flex items-center gap-6 shrink-0">
-        <ThemeToggle />
+        {themeToggleEnabled !== false ? <ThemeToggle /> : null}
         {subdomain && searchEnabled !== false ? (
           <SearchButton
-            iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
+            iconClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
             subdomain={subdomain}
             basePath={basePath}
           />

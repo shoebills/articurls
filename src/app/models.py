@@ -85,6 +85,7 @@ class Site(Base):
     logo_url = Column(String, nullable=True)
     logo_link = Column(String, nullable=True, default="/", server_default="/")
     search_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    theme_toggle_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
 
     # Standalone Content End CTA
     cta_heading = Column(String(120), nullable=True)
@@ -115,8 +116,7 @@ class Site(Base):
     newsletter_webhook_token = Column(Text, nullable=True)
 
     # Content & Presentation
-    content_width = Column(String(8), nullable=False, default="wide")
-    list_image_position = Column(String(16), nullable=False, default="above_title")
+    content_layout = Column(String(16), nullable=False, default="grid", server_default="grid")
     show_preview_in_lists = Column(Boolean, nullable=False, default=True)
     featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])

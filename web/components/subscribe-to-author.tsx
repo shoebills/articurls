@@ -102,6 +102,7 @@ export function SubscribeToAuthor({
               onChange={(e) => setEmail(e.target.value)}
               required
               disabled={status === "loading"}
+              data-button-radius="true"
             />
           </div>
           <Button

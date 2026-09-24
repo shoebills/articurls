@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import type { PublicBlog, PublicSite, ContentWidth, ListImagePosition } from "@/lib/types";
+import type { PublicBlog, PublicSite, ContentLayout } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 import { getPublicPostUrl } from "@/lib/public-url";
@@ -14,8 +14,7 @@ type PublicBlogListSearchProps = {
   site?: PublicSite;
   hideFeatured?: boolean;
   siteOrigin?: string;
-  content_width?: ContentWidth;
-  list_image_position?: ListImagePosition;
+  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   basePath?: string;
 };
@@ -54,9 +53,9 @@ function BlogListItemRow({
                 )}
                 <span className="truncate">{b.title}</span>
               </h3>
-{b.excerpt && <p className={`mt-2 text-muted-foreground ${largeImage ? "max-sm:line-clamp-2" : "line-clamp-2"}`}>{b.excerpt}</p>}
+{showPreview && b.excerpt ? <p className={`mt-2 text-muted-foreground ${largeImage ? "max-sm:line-clamp-2" : "line-clamp-2"}`}>{b.excerpt}</p> : null}
             </div>
-            {previewImage && showPreview ? (
+            {previewImage ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
                 src={previewImage}
@@ -102,14 +101,13 @@ function BlogListAboveTitleItem({
   basePath?: string;
 }) {
   const previewImage = resolveBlogCoverImage(b);
-  const showImage = previewImage && showPreview;
   return (
     <li className="py-5 first:pt-0">
       <Link
         href={getPublicPostUrl(subdomain, b.slug, basePath)}
         className="group block"
       >
-        {showImage ? (
+        {previewImage ? (
           <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm mb-4 transition-shadow group-hover:shadow-md">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
@@ -129,7 +127,7 @@ function BlogListAboveTitleItem({
           )}
           <span>{b.title}</span>
         </h3>
-        {b.excerpt && <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>}
+        {showPreview && b.excerpt ? <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p> : null}
       </Link>
       <div className="mt-3 flex items-center justify-between gap-2">
         <span className="truncate text-sm text-muted-foreground">{authorName}</span>
@@ -164,32 +162,29 @@ function BlogCardGridItem({
   basePath?: string;
 }) {
   const previewImage = resolveBlogCoverImage(b);
-  const showImage = previewImage && showPreview;
   return (
     <li className="break-inside-avoid">
       <Link
         href={getPublicPostUrl(subdomain, b.slug, basePath)}
         className="group block"
       >
-        {showImage || showPreview ? (
-          <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
-            {showImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewImage}
-                alt=""
-                width={600}
-                height={400}
-                className="aspect-[3/2] w-full object-cover"
-              />
-            ) : (
-              <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
-                {/* eslint-disable-next-line jsx-a11y/alt-text */}
-                <Image className="h-8 w-8 text-muted-foreground/40" />
-              </div>
-            )}
-          </div>
-        ) : null}
+        <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
+          {previewImage ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={previewImage}
+              alt=""
+              width={600}
+              height={400}
+              className="aspect-[3/2] w-full object-cover"
+            />
+          ) : (
+            <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
+              {/* eslint-disable-next-line jsx-a11y/alt-text */}
+              <Image className="h-8 w-8 text-muted-foreground/40" />
+            </div>
+          )}
+        </div>
         <div className="pt-4 pb-3">
           <h3 className="line-clamp-2 text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
             {b.is_pinned && (
@@ -199,9 +194,9 @@ function BlogCardGridItem({
             )}
             <span>{b.title}</span>
           </h3>
-          {b.excerpt && (
+          {showPreview && b.excerpt ? (
             <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>
-          )}
+          ) : null}
         </div>
       </Link>
       <div className="flex items-center justify-between gap-2 pb-1">
@@ -228,8 +223,7 @@ export function PublicBlogListSearch({
   subdomain,
   site,
   hideFeatured,
-  content_width = "wide",
-  list_image_position = "above_title",
+  content_layout = "grid",
   show_preview_in_lists = true,
   basePath = "",
 }: PublicBlogListSearchProps) {
@@ -269,23 +263,16 @@ export function PublicBlogListSearch({
     return sortedBlogs.slice(start, start + postsPerPage);
   }, [sortedBlogs, currentPage, postsPerPage]);
 
-  const isWide = content_width === "wide";
-  const isAboveTitle = list_image_position === "above_title";
+  const isGrid = content_layout === "grid";
 
   let ItemComponent: typeof BlogListItemRow;
   let listClass = "";
 
-  if (isWide && isAboveTitle) {
+  if (isGrid) {
     ItemComponent = BlogCardGridItem;
     listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
-  } else if (isWide && !isAboveTitle) {
-    ItemComponent = function BlogListItemRowLarge(props) { return <BlogListItemRow {...props} largeImage />; };
-    listClass = "";
-  } else if (!isWide && isAboveTitle) {
-    ItemComponent = BlogListAboveTitleItem;
-    listClass = "";
   } else {
-    ItemComponent = BlogListItemRow;
+    ItemComponent = function BlogListItemRowLarge(props) { return <BlogListItemRow {...props} largeImage />; };
     listClass = "";
   }
 

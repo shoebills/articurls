@@ -202,10 +202,10 @@ export function SearchButton({
         onClick={openSearch}
         className={
           iconClassName ??
-          "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
+          "flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
         }
       >
-        <Search className="h-4 w-4" />
+        <Search className="h-5 w-5" />
       </button>
 
       {mounted ? (

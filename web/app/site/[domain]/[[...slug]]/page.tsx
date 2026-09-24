@@ -533,7 +533,7 @@ export default async function SitePublicationPage({ params }: Props) {
       const blog = content.blog;
       const navBlogName = resolveSiteName(site);
       const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+      const maxWidth = "max-w-7xl";
       const isNavEnabled = site.navbar_enabled !== false;
       const containerSpacing = isNavEnabled
         ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
@@ -701,6 +701,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     alignment={site.navbar_alignment || "left"}
@@ -713,6 +714,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     showMenuButton={hasMobileNav}
@@ -722,7 +724,6 @@ export default async function SitePublicationPage({ params }: Props) {
               </header>
             ) : null}
             {site.toc_enabled !== false ? (
-              site.content_width === "wide" ? (
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
                   <div className="max-w-3xl">
                     <div className="mb-5 sm:mb-6 lg:hidden">
@@ -734,14 +735,6 @@ export default async function SitePublicationPage({ params }: Props) {
                     <BlogPostToc headings={tocHeadings} />
                   </aside>
                 </div>
-              ) : (
-                <div className="space-y-0">
-                  <div className="mb-5 sm:mb-6">
-                    <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
-                  </div>
-                  {blogPostContent}
-                </div>
-              )
             ) : (
               blogPostContent
             )}
@@ -758,8 +751,8 @@ export default async function SitePublicationPage({ params }: Props) {
       const page = content.page;
       const navBlogName = resolveSiteName(site);
       const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
-      const contentWidth = site.content_width === "wide" ? "max-w-3xl" : "";
+      const maxWidth = "max-w-7xl";
+      const contentWidth = "max-w-3xl";
       const isNavEnabled = site.navbar_enabled !== false;
       const mainSpacing = isNavEnabled
         ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
@@ -802,6 +795,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     alignment={site.navbar_alignment || "left"}
@@ -814,6 +808,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     showMenuButton={hasMobileNav}
@@ -888,7 +883,7 @@ export default async function SitePublicationPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
@@ -916,6 +911,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     alignment={site.navbar_alignment || "left"}
@@ -928,6 +924,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     showMenuButton={hasMobileNav}
@@ -952,8 +949,7 @@ export default async function SitePublicationPage({ params }: Props) {
             subdomain={site.subdomain}
             site={site}
             hideFeatured
-            content_width={site.content_width || "wide"}
-            list_image_position={site.list_image_position || "above_title"}
+            content_layout={site.content_layout || "grid"}
             show_preview_in_lists={site.show_preview_in_lists ?? true}
             basePath={basePath}
           />
@@ -982,7 +978,7 @@ export default async function SitePublicationPage({ params }: Props) {
     const author = data.author;
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
@@ -1011,6 +1007,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     alignment={site.navbar_alignment || "left"}
@@ -1023,6 +1020,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     showMenuButton={hasMobileNav}
@@ -1084,8 +1082,7 @@ export default async function SitePublicationPage({ params }: Props) {
               subdomain={site.subdomain}
               site={site}
               hideFeatured
-              content_width={site.content_width || "wide"}
-              list_image_position={site.list_image_position || "above_title"}
+                content_layout={site.content_layout || "grid"}
               show_preview_in_lists={site.show_preview_in_lists ?? true}
               basePath={basePath}
             />
@@ -1109,7 +1106,7 @@ export default async function SitePublicationPage({ params }: Props) {
 
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = site.content_width === "wide" ? "max-w-7xl" : "max-w-3xl";
+    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
     const mainSpacing = isNavEnabled
       ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
@@ -1137,6 +1134,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     alignment={site.navbar_alignment || "left"}
@@ -1149,6 +1147,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     titleHref={titleHref}
                     logoUrl={site.logo_url}
                     searchEnabled={site.search_enabled !== false}
+                    themeToggleEnabled={site.theme_toggle_enabled !== false}
                     links={desktopLinks}
                     subdomain={site.subdomain}
                     showMenuButton={hasMobileNav}
@@ -1221,9 +1220,9 @@ export default async function SitePublicationPage({ params }: Props) {
   if (!site) notFound();
 
   return (
-    <>
+    <ThemeStyleWrapper site={site}>
       <StructuredData data={generateWebSiteSchema(site, siteOrigin)} />
       <SaasTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
-    </>
+    </ThemeStyleWrapper>
   );
 }

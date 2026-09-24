@@ -26,6 +26,7 @@ type PublicMobileNavMenuProps = {
   subdomain?: string;
   logoUrl?: string | null;
   searchEnabled?: boolean;
+  themeToggleEnabled?: boolean;
   showMenuButton?: boolean;
   basePath?: string;
   buttonVariant?: string;
@@ -38,6 +39,7 @@ export function PublicMobileNavMenu({
   subdomain,
   logoUrl,
   searchEnabled = true,
+  themeToggleEnabled = true,
   showMenuButton = true,
   basePath = "",
   buttonVariant = "solid",
@@ -132,7 +134,7 @@ export function PublicMobileNavMenu({
           <div className="flex items-center gap-2">
             {subdomain && searchEnabled !== false ? (
               <SearchButton
-                iconClassName="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border/80 bg-background text-muted-foreground shadow-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
+                iconClassName="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
                 subdomain={subdomain}
                 basePath={basePath}
               />
@@ -195,10 +197,14 @@ export function PublicMobileNavMenu({
                   ))}
                 </div>
               ) : null}
-              <div className="border-t border-border/60 mx-1.5" />
-              <div className="p-1">
-                <ThemeModeSelector />
-              </div>
+              {themeToggleEnabled !== false ? (
+                <>
+                  <div className="border-t border-border/60 mx-1.5" />
+                  <div className="p-1">
+                    <ThemeModeSelector />
+                  </div>
+                </>
+              ) : null}
               {ctaLinks.length > 0 ? (
                 <div className="border-t border-border/60 p-1.5">
                   {ctaLinks.map((l) => (
@@ -221,9 +227,11 @@ export function PublicMobileNavMenu({
             </>
           ) : (
             <>
-              <div className="p-1">
-                <ThemeModeSelector />
-              </div>
+              {themeToggleEnabled !== false ? (
+                <div className="p-1">
+                  <ThemeModeSelector />
+                </div>
+              ) : null}
               <p className="px-3 py-2 text-center text-sm text-muted-foreground">No links</p>
             </>
           )}
