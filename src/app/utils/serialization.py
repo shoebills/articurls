@@ -82,6 +82,10 @@ def public_site_out(db: Session, db_site: models.Site):
         "seo_robots_custom": db_site.seo_robots_custom if db_site.seo_robots_mode == "custom" else None,
         "seo_llms_mode": db_site.seo_llms_mode,
         "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
+        "ga_measurement_id": db_site.ga_measurement_id,
+        "adsense_publisher_id": db_site.adsense_publisher_id,
+        "search_console_property": db_site.search_console_property,
+        "search_console_verification_token": db_site.search_console_verification_token,
     }
     return site.PublicSite(**data)
 
@@ -170,6 +174,10 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "seo_robots_custom": db_site.seo_robots_custom if db_site.seo_robots_mode == "custom" else None,
         "seo_llms_mode": db_site.seo_llms_mode,
         "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
+        "ga_measurement_id": db_site.ga_measurement_id,
+        "adsense_publisher_id": db_site.adsense_publisher_id,
+        "search_console_property": db_site.search_console_property,
+        "search_console_verification_token": db_site.search_console_verification_token,
     }
     
     # check if user is admin

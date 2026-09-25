@@ -150,7 +150,13 @@ class Site(Base):
     custom_head_code = Column(Text, nullable=True, default=None)
     custom_body_code = Column(Text, nullable=True, default=None)
     custom_css = Column(Text, nullable=True, default=None)
-    
+
+    # Google Integrations
+    ga_measurement_id = Column(Text, nullable=True, default=None)
+    adsense_publisher_id = Column(Text, nullable=True, default=None)
+    search_console_property = Column(Text, nullable=True, default=None)
+    search_console_verification_token = Column(Text, nullable=True, default=None)
+
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=True)
 

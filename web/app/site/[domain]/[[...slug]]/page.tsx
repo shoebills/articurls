@@ -83,6 +83,11 @@ function isSiteIndexingOff(site?: PublicSite | null): boolean {
   return site?.seo_indexing_enabled === false;
 }
 
+function resolveGoogleVerification(site?: PublicSite | null): Metadata["verification"] {
+  const token = (site?.search_console_verification_token || "").trim();
+  return token ? { google: token } : undefined;
+}
+
 function resolveRoutingSegments(
   rawSegments: string[],
   customSubpath?: string | null
@@ -291,6 +296,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       robots: resolveNoindex(site.seo_noindex_categories === true || isSiteIndexingOff(site)),
       alternates: { ...alternatesWithFeeds(site), canonical: categoryCanonical },
       icons: faviconIcons(site),
+      verification: resolveGoogleVerification(site),
       openGraph: {
         title,
         description,
@@ -326,6 +332,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       robots: resolveNoindex(author.noindex === true || site.seo_noindex_authors === true || isSiteIndexingOff(site)),
       alternates: { ...alternatesWithFeeds(site), canonical: authorCanonical },
       icons: faviconIcons(site),
+      verification: resolveGoogleVerification(site),
       openGraph: {
         title,
         description,
@@ -358,6 +365,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       robots: resolveNoindex(site.seo_noindex_categories === true || isSiteIndexingOff(site)),
       alternates: { ...alternatesWithFeeds(site), canonical: hubCanonical },
       icons: faviconIcons(site),
+      verification: resolveGoogleVerification(site),
       openGraph: {
         title,
         description,
@@ -401,6 +409,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         robots: resolveNoindex(blog.noindex === true || isSiteIndexingOff(site)),
         alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
+        verification: resolveGoogleVerification(site),
         openGraph: {
           title,
           description,
@@ -436,6 +445,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         robots: resolveNoindex(page.noindex === true || site?.seo_noindex_pages === true || isSiteIndexingOff(site)),
         alternates: alternatesWithFeeds(site),
         icons: faviconIcons(site),
+        verification: resolveGoogleVerification(site),
         openGraph: {
           title,
           description,
@@ -471,6 +481,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     robots: resolveNoindex(isSiteIndexingOff(site)),
     alternates: { ...alternatesWithFeeds(site), canonical: homeCanonical },
     icons: faviconIcons(site),
+    verification: resolveGoogleVerification(site),
     openGraph: {
       title,
       description,

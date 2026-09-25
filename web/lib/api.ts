@@ -15,6 +15,7 @@ import type {
   DomainAddResponse,
   DomainVerifyResponse,
   SeoSettings,
+  IntegrationsSettings,
   PublicBlog,
   PublicBlogSearchResult,
   PublicCategoryBlogsResponse,
@@ -389,6 +390,22 @@ export async function patchSeoSettings(
   body: Partial<SeoSettings>
 ): Promise<SeoSettings> {
   return apiFetch("/user/seo", {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function getIntegrationsSettings(token: string): Promise<IntegrationsSettings> {
+  return apiFetch("/user/integrations", { token });
+}
+
+export async function patchIntegrationsSettings(
+  token: string,
+  body: Partial<IntegrationsSettings>
+): Promise<IntegrationsSettings> {
+  return apiFetch("/user/integrations", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },

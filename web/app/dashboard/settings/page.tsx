@@ -10,6 +10,7 @@ import {
   BookOpen,
   Megaphone,
   Mail,
+  Plug2,
   type LucideIcon,
 } from "lucide-react";
 
@@ -100,6 +101,13 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     title: "Advanced",
     description: "Manage technical configuration and custom code.",
     items: [
+      {
+        id: "integrations",
+        href: "/dashboard/settings/integrations",
+        title: "Integrations",
+        description: "Google Analytics, Search Console and AdSense.",
+        icon: Plug2,
+      },
       {
         id: "code",
         href: "/dashboard/settings/code",

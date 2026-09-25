@@ -244,6 +244,10 @@ export interface PublicSite {
   seo_robots_custom?: string | null;
   seo_llms_mode?: "auto" | "custom";
   seo_llms_custom?: string | null;
+  ga_measurement_id?: string | null;
+  adsense_publisher_id?: string | null;
+  search_console_property?: string | null;
+  search_console_verification_token?: string | null;
 }
 
 export interface UserSettings {
@@ -330,6 +334,10 @@ export interface UserSettings {
   seo_robots_custom?: string | null;
   seo_llms_mode?: "auto" | "custom";
   seo_llms_custom?: string | null;
+  ga_measurement_id?: string | null;
+  adsense_publisher_id?: string | null;
+  search_console_property?: string | null;
+  search_console_verification_token?: string | null;
 }
 
 export interface SiteSummary {
@@ -501,6 +509,13 @@ export interface SeoSettings {
   seo_robots_custom?: string | null;
   seo_llms_mode?: "auto" | "custom";
   seo_llms_custom?: string | null;
+}
+
+export interface IntegrationsSettings {
+  ga_measurement_id?: string | null;
+  adsense_publisher_id?: string | null;
+  search_console_property?: string | null;
+  search_console_verification_token?: string | null;
 }
 
 

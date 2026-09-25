@@ -1,6 +1,7 @@
 import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { loadPublicSite } from "@/lib/public-site";
 import { UmamiTracker } from "@/components/umami-tracker";
+import { GoogleIntegrations } from "@/components/google-integrations";
 
 type Props = {
   children: React.ReactNode;
@@ -28,6 +29,7 @@ export default async function SiteLayout({ children, params }: Props) {
   return (
     <>
       <UmamiTracker site={site} />
+      <GoogleIntegrations site={site} />
       {children}
     </>
   );

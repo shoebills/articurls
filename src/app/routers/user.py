@@ -179,6 +179,23 @@ def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: Backg
     return current_site
 
 
+@router.get("/integrations", response_model=user.IntegrationsSettings, status_code=status.HTTP_200_OK)
+def get_integrations_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    return current_site
+
+
+@router.patch("/integrations", response_model=user.IntegrationsSettings, status_code=status.HTTP_202_ACCEPTED)
+def update_integrations_settings(request: user.IntegrationsSettingsUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    update_data = request.model_dump(exclude_unset=True)
+    if update_data:
+        for key, value in update_data.items():
+            setattr(current_site, key, value)
+        db.commit()
+        db.refresh(current_site)
+        schedule_tenant_purge(background_tasks, current_site)
+    return current_site
+
+
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
     update_data = request.model_dump(exclude_unset=True)

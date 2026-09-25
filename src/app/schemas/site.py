@@ -135,5 +135,10 @@ class PublicSite(BaseModel):
     seo_llms_mode: Literal["auto", "custom"] = "auto"
     seo_llms_custom: Optional[str] = None
 
+    ga_measurement_id: Optional[str] = None
+    adsense_publisher_id: Optional[str] = None
+    search_console_property: Optional[str] = None
+    search_console_verification_token: Optional[str] = None
+
     class Config:
         from_attributes = True

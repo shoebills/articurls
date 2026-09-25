@@ -24,12 +24,12 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   response.headers.set(
     "Content-Security-Policy",
     "default-src 'self'; " +
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline'; " +
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://www.googletagmanager.com https://pagead2.googlesyndication.com; " +
       "style-src 'self' 'unsafe-inline'; " +
       "img-src 'self' https: data: blob:; " +
       "font-src 'self'; " +
-      `connect-src ${connectSrc}; ` +
-      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com; " +
+      `connect-src ${connectSrc} https://www.google-analytics.com https://*.google-analytics.com https://*.analytics.google.com https://*.googlesyndication.com https://pagead2.googlesyndication.com https://*.doubleclick.net; ` +
+      "frame-src 'self' https://www.youtube-nocookie.com https://www.youtube.com https://googleads.g.doubleclick.net; " +
       "frame-ancestors 'none'; " +
       "base-uri 'self'; " +
       "form-action 'self';"
@@ -119,7 +119,7 @@ const APP_ALLOWED_PREFIXES = [
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/atom.xml", "/feed.xml", "/feed.atom", "/script.js", "/llms.txt"];
+const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/atom.xml", "/feed.xml", "/feed.atom", "/script.js", "/llms.txt", "/ads.txt"];
 
 function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));

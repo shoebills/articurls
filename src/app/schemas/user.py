@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from typing import Optional, Literal
+import re
 import uuid
 
 
@@ -102,6 +103,11 @@ class UserSettings(BaseModel):
     seo_llms_mode: Literal["auto", "custom"] = "auto"
     seo_llms_custom: Optional[str] = None
 
+    ga_measurement_id: Optional[str] = None
+    adsense_publisher_id: Optional[str] = None
+    search_console_property: Optional[str] = None
+    search_console_verification_token: Optional[str] = None
+
     class Config:
         from_attributes = True
         
@@ -162,6 +168,75 @@ class SeoSettingsUpdate(BaseModel):
     seo_robots_custom: Optional[str] = Field(None, max_length=10000)
     seo_llms_mode: Optional[Literal["auto", "custom"]] = None
     seo_llms_custom: Optional[str] = Field(None, max_length=10000)
+
+
+class IntegrationsSettings(BaseModel):
+    ga_measurement_id: Optional[str] = None
+    adsense_publisher_id: Optional[str] = None
+    search_console_property: Optional[str] = None
+    search_console_verification_token: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+_GA_ID_RE = re.compile(r"^G-[A-Z0-9]+$")
+_ADSENSE_ID_RE = re.compile(r"^pub-\d{16}$")
+_ADSENSE_CA_ID_RE = re.compile(r"^ca-pub-\d{16}$")
+_GSC_TOKEN_RE = re.compile(r"^[A-Za-z0-9_\-]{10,200}$")
+
+
+class IntegrationsSettingsUpdate(BaseModel):
+    ga_measurement_id: Optional[str] = None
+    adsense_publisher_id: Optional[str] = None
+    search_console_property: Optional[str] = None
+    search_console_verification_token: Optional[str] = None
+
+    @field_validator("ga_measurement_id", mode="before")
+    @classmethod
+    def _normalize_ga(cls, v):
+        if v is None:
+            return v
+        v = str(v).strip()
+        if not v:
+            return None
+        v = v.upper()
+        if not _GA_ID_RE.match(v):
+            raise ValueError("Invalid GA4 measurement ID — expected G- followed by letters and numbers")
+        return v
+
+    @field_validator("adsense_publisher_id", mode="before")
+    @classmethod
+    def _normalize_adsense(cls, v):
+        if v is None:
+            return v
+        v = str(v).strip()
+        if not v:
+            return None
+        if _ADSENSE_CA_ID_RE.match(v):
+            v = v[3:]
+        if not _ADSENSE_ID_RE.match(v):
+            raise ValueError("Invalid AdSense publisher ID — expected pub- followed by 16 digits")
+        return v
+
+    @field_validator("search_console_property", mode="before")
+    @classmethod
+    def _normalize_gsc_property(cls, v):
+        if v is None:
+            return v
+        return str(v).strip() or None
+
+    @field_validator("search_console_verification_token", mode="before")
+    @classmethod
+    def _normalize_gsc_token(cls, v):
+        if v is None:
+            return v
+        v = str(v).strip()
+        if not v:
+            return None
+        if not _GSC_TOKEN_RE.match(v):
+            raise ValueError("Invalid Search Console verification token")
+        return v
 
 
 class StorageUsage(BaseModel):
