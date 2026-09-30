@@ -71,7 +71,7 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
     ],
   },
   {
-    title: "Audience & Growth",
+    title: "Growth",
     description: "Promotions, subscriber collection, and search visibility.",
     items: [
       {
@@ -95,12 +95,6 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         description: "Search engine indexing, metadata and social previews.",
         icon: Search,
       },
-    ],
-  },
-  {
-    title: "Advanced",
-    description: "Manage technical configuration and custom code.",
-    items: [
       {
         id: "integrations",
         href: "/dashboard/settings/integrations",
@@ -108,6 +102,12 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         description: "Google Analytics, Search Console and AdSense.",
         icon: Plug2,
       },
+    ],
+  },
+  {
+    title: "Advanced",
+    description: "Manage technical configuration and custom code.",
+    items: [
       {
         id: "code",
         href: "/dashboard/settings/code",

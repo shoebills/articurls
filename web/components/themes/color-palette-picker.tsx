@@ -1,11 +1,9 @@
 "use client";
-/* eslint-disable react-hooks/set-state-in-effect */
 
 import { type ColorPalette, type DesignSettings } from "@/lib/types";
 import { Check, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useEffect, useRef, useState } from "react";
 
 export const DEFAULT_PALETTES: Record<string, ColorPalette> = {
   base: {
@@ -76,18 +74,7 @@ export function ColorPalettePicker({
     ...(settings.color_palette || {}),
   };
 
-  const [showCustom, setShowCustom] = useState(theme === "custom");
-  const prevThemeRef = useRef(theme);
-
-  useEffect(() => {
-    const prev = prevThemeRef.current;
-    if (theme === "custom" && prev !== "custom") {
-      setShowCustom(true);
-    } else if (theme !== "custom" && prev === "custom") {
-      setShowCustom(false);
-    }
-    prevThemeRef.current = theme;
-  }, [theme]);
+  const showCustom = theme === "custom";
 
   const handlePresetSelect = (key: string) => {
     const presetPalette = DEFAULT_PALETTES[key] || DEFAULT_PALETTES.base;
@@ -113,16 +100,13 @@ export function ColorPalettePicker({
       {/* Quick Select Presets */}
       <div className="flex flex-wrap items-center gap-4">
         {Object.entries(PRESET_META).map(([key, { label, bg }]) => {
-          const isSelected = theme === key && !showCustom;
+          const isSelected = theme === key;
           return (
             <button
               type="button"
               key={key}
               onClick={() => {
-                const wasCustomOpen = showCustom;
-                setShowCustom(false);
-                // Avoid redundant patch if already on this preset and custom panel was closed
-                if (theme === key && !wasCustomOpen) return;
+                if (theme === key) return;
                 handlePresetSelect(key);
               }}
               className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
@@ -152,13 +136,11 @@ export function ColorPalettePicker({
         <button
           type="button"
           onClick={() => {
-            setShowCustom((prev) => !prev);
-            if (theme !== "custom") {
-              onChange({
-                color_theme: "custom",
-                color_palette: activePalette,
-              });
-            }
+            if (theme === "custom") return;
+            onChange({
+              color_theme: "custom",
+              color_palette: activePalette,
+            });
           }}
           className="group flex flex-col items-center gap-1.5 focus:outline-none cursor-pointer"
         >

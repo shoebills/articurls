@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ChevronLeft, Loader2, Webhook } from "lucide-react";
+import { ChevronLeft, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
@@ -186,14 +186,11 @@ export default function NewsletterSettingsPage() {
             </div>
           </div>
 
-          {/* ESP & Webhook Integration */}
+          {/* Webhook Integration */}
           <div className="space-y-5">
-            <div className="flex items-center gap-2">
-              <Webhook className="h-5 w-5 text-muted-foreground" />
-              <h2 className="text-base font-semibold">ESP & Webhook Integration</h2>
-            </div>
+            <h2 className="text-base font-semibold">Webhook Integration</h2>
             <p className="text-xs text-muted-foreground leading-relaxed">
-              When readers subscribe, Articurls will trigger an HTTP POST request to this endpoint with the reader&apos;s email address. Connect your favorite Email Service Provider (ConvertKit, Mailchimp, Loops, Brevo) or automation platform (Zapier, Make).
+              When readers subscribe, it will trigger an HTTP POST request to this endpoint with the reader&apos;s email address.
             </p>
 
             <div className="space-y-2.5">
@@ -209,7 +206,7 @@ export default function NewsletterSettingsPage() {
             </div>
 
             <div className="space-y-2.5">
-              <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token (Optional)</Label>
+              <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token</Label>
               <Input
                 id="newsletter_webhook_token"
                 className="mt-2"
@@ -219,9 +216,7 @@ export default function NewsletterSettingsPage() {
                 onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
                 disabled={saving}
               />
-              <p className="text-[11px] text-muted-foreground">
-                Secure secret token included in request headers for endpoint verification.
-              </p>
+
             </div>
           </div>
 

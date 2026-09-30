@@ -41,23 +41,6 @@ function normalizeIntegrations(data: Partial<IntegrationsSettings> | null | unde
   return form;
 }
 
-function StatusDot({ configured }: { configured: boolean }) {
-  return (
-    <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-medium">
-      <span
-        className={
-          configured
-            ? "h-1.5 w-1.5 rounded-full bg-emerald-500"
-            : "h-1.5 w-1.5 rounded-full bg-muted-foreground/40"
-        }
-      />
-      <span className={configured ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground"}>
-        {configured ? "Configured" : "Not configured"}
-      </span>
-    </span>
-  );
-}
-
 export default function IntegrationsSettings() {
   const { token, refreshUser } = useAuth();
   const [form, setForm] = useState<FormState>(() => {
@@ -140,31 +123,24 @@ export default function IntegrationsSettings() {
     );
   }
 
-  const gaConfigured = !!form.ga_measurement_id.trim();
-  const gscConfigured = !!form.search_console_property.trim() && !!form.search_console_verification_token.trim();
-  const adsenseConfigured = !!form.adsense_publisher_id.trim();
-
   return (
     <>
       <div className="space-y-10">
         <section className="space-y-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Analytics</h2>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                Track visitors with GA4. Find your ID under{" "}
-                <a
-                  href="https://support.google.com/analytics/answer/12270356"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="underline underline-offset-4 hover:text-foreground"
-                >
-                  Admin → Data streams
-                </a>
-                .
-              </p>
-            </div>
-            <StatusDot configured={gaConfigured} />
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Analytics</h2>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Track visitors with GA4. Find your ID under{" "}
+              <a
+                href="https://support.google.com/analytics/answer/12270356"
+                target="_blank"
+                rel="noreferrer"
+                className="underline underline-offset-4 hover:text-foreground"
+              >
+                Admin → Data streams
+              </a>
+              .
+            </p>
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="ga_measurement_id">Measurement ID</Label>
@@ -179,15 +155,12 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Search Console</h2>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                Verify site ownership so you can monitor search performance.
-              </p>
-            </div>
-            <StatusDot configured={gscConfigured} />
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Search Console</h2>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Verify site ownership so you can monitor search performance.
+            </p>
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="search_console_property">Property</Label>
@@ -219,15 +192,12 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Google AdSense</h2>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                Monetize your site with auto ads.
-              </p>
-            </div>
-            <StatusDot configured={adsenseConfigured} />
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Google AdSense</h2>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Monetize your site with auto ads.
+            </p>
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="adsense_publisher_id">Publisher ID</Label>
@@ -245,13 +215,7 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            These tags are added to your public pages automatically. Don&apos;t also paste Google scripts in Code Injection — they would run twice.
-          </p>
-        </section>
-
-        <div className="flex items-center justify-end pt-6 border-t border-border/60">
+        <div className="flex items-center justify-end">
           <Button onClick={onSave} disabled={busy || !dirty} className="min-w-[120px]">
             {busy ? (
               <>
