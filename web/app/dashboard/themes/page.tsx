@@ -115,7 +115,7 @@ export default function ThemesDashboardPage() {
           </section>
 
           {/* Color Mode */}
-          <section className="space-y-4 pt-6 border-t border-border/60">
+          <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Color Mode</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
@@ -128,7 +128,7 @@ export default function ThemesDashboardPage() {
           </section>
 
           {/* Color Palette */}
-          <section className="space-y-4 pt-6 border-t border-border/60">
+          <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Color Palette</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
@@ -141,7 +141,7 @@ export default function ThemesDashboardPage() {
           </section>
 
           {/* Typography */}
-          <section className="space-y-4 pt-6 border-t border-border/60">
+          <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Typography</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
@@ -154,7 +154,7 @@ export default function ThemesDashboardPage() {
           </section>
 
           {/* Button Style */}
-          <section className="space-y-4 pt-6 border-t border-border/60">
+          <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Button Style</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
