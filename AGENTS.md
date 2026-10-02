@@ -74,6 +74,17 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
 8. **Deletion flows must clean external state**: before relying on DB cascades, delete storage objects (R2/local) for media rows. See `delete_site` in `src/app/routers/sites.py` for the reference pattern.
 9. **Known dead/removed things — do not reintroduce**: the `views` table (replaced by Umami), `users.remove_branding`, `email_logs`, and `blogs.notify_subscribers` are gone; no code may reference them.
 
+## Deferred Import Compatibility Contract
+
+- **Do not break these load-bearing fields/enums:** `Blog.title`, `content`, `slug`, `status`, `published_at`, `scheduled_at`, `canonical_url`, `featured_image_url`, `og_image_url`, `author_id`, `meta_title`, `meta_description`, `noindex`, `is_pinned`, `faq_items`, `custom_schema`; `BlogStatus` values must remain exactly `draft|published|archived|scheduled`.
+- **Keep these helper contracts stable:** `slugify`, `unique_blog_slug`, `materialize_content_meta_defaults`, `sanitize_html`, and the existing placeholder-slug-on-publish behavior. Do not rename them, change their signatures, or alter behavior relied on by post creation/publishing.
+- **Preserve content invariants:** store post `content` as sanitized **HTML**, never Markdown; all imported HTML must continue through the existing `nh3`-based `sanitize_html`.
+- **Preserve dedupe semantics:** `canonical_url` is the source URL and the duplicate-detection key; do not repurpose, normalize away, or silently overwrite it in ways that break `canonical_url == source URL` matching.
+- **Preserve the import pipeline shape:** validate → fetch/parse → extract → sanitize → dedupe → preview/edit → create; imports are **Draft by default**, with existing Publish/Schedule flows used for other statuses.
+- **Preserve timestamp semantics:** importing must not publish content implicitly; `published_at` is set only by the existing publish/schedule behavior, and `scheduled_at` only for scheduled posts.
+- **Preserve FK behavior:** imported `author_id` must use existing `Author` match-or-create behavior; categories must use existing `Category` match-or-create behavior; imported pages must use `UserPage` rather than inventing a parallel page model.
+- **This contract applies to every future importer:** single URL, RSS/Atom, sitemap.xml, CSV URLs, XML/WXR, Ghost JSON, and Substack ZIP. Do not add format-specific assumptions or schema/behavior changes that obstruct a shared pipeline; log any change touching these contracts against the deferred import plan.
+
 ## Multi-Tenant Domain Routing
 
 ```
