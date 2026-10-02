@@ -228,6 +228,12 @@ export default function SeoSettings() {
     <>
       <div className="space-y-10">
         <section className="space-y-4">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Metadata</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Default title and description for your site across search engines and social previews.
+            </p>
+          </div>
           <div className="space-y-2.5">
             <Label htmlFor="seo_meta_title">Meta title</Label>
             <Input
@@ -251,7 +257,7 @@ export default function SeoSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
+        <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Open Graph image</h2>
             <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
@@ -304,11 +310,11 @@ export default function SeoSettings() {
           ) : null}
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
+        <section className="space-y-4 pt-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
+            <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Indexing</h2>
-              <p className="text-xs text-muted-foreground sm:text-sm">When off, the entire site is hidden from search engines.</p>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">When off, the entire site is hidden from search engines.</p>
             </div>
             <Switch
               checked={form.seo_indexing_enabled}
@@ -318,8 +324,11 @@ export default function SeoSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <h2 className="text-base font-semibold text-foreground sm:text-lg">Noindex</h2>
+        <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Noindex</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Hide specific page types from search engines.</p>
+          </div>
           <ToggleRow
             title="Category pages"
             checked={form.seo_noindex_categories}
@@ -340,8 +349,11 @@ export default function SeoSettings() {
           />
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <h2 className="text-base font-semibold text-foreground sm:text-lg">Trailing slash</h2>
+        <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Trailing slash</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control trailing-slash consistency in canonical and structured data URLs.</p>
+          </div>
           <ToggleRow
             title="Listing URLs"
             hint="Adds / to category, author and homepage canonicals."
@@ -358,11 +370,11 @@ export default function SeoSettings() {
           />
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
+        <section className="space-y-4 pt-6">
           <div className="flex items-center justify-between gap-4">
-            <div className="space-y-1">
+            <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Sitemap</h2>
-              <p className="text-xs text-muted-foreground sm:text-sm">When off, /sitemap.xml returns 404.</p>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">When off, /sitemap.xml returns 404.</p>
             </div>
             <Switch
               checked={form.seo_sitemap_enabled}
@@ -372,8 +384,11 @@ export default function SeoSettings() {
           </div>
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <h2 className="text-base font-semibold text-foreground sm:text-lg">Robots.txt</h2>
+        <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Robots.txt</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control how crawlers access your site.</p>
+          </div>
           <Select
             value={form.seo_robots_mode}
             onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
@@ -400,8 +415,11 @@ export default function SeoSettings() {
           ) : null}
         </section>
 
-        <section className="space-y-4 pt-6 border-t border-border/60">
-          <h2 className="text-base font-semibold text-foreground sm:text-lg">LLMs.txt</h2>
+        <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">LLMs.txt</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control how AI models access your site content.</p>
+          </div>
           <Select
             value={form.seo_llms_mode}
             onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}

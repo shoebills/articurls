@@ -171,7 +171,7 @@ export default function GeneralSettingsPage() {
   const siteNameValid = siteName.trim().length > 0;
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       {/* Top navigation */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link
@@ -198,110 +198,118 @@ export default function GeneralSettingsPage() {
           <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <div className="space-y-8">
-          {/* Site Name */}
-          <div className="space-y-2.5 max-w-md">
-            <Label htmlFor="site_name">Site Name</Label>
-            <Input
-              id="site_name"
-              className="mt-2"
-              placeholder="My Blog"
-              value={siteName}
-              onChange={(e) => setSiteName(e.target.value)}
-              disabled={busy}
-            />
-            <p className="text-xs text-muted-foreground">
-              Shown in navigation, footer, and browser title.
-            </p>
-          </div>
-
-          {/* Blog favicon */}
-          <div className="space-y-3">
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium">Blog favicon</p>
-              <p className="text-sm text-muted-foreground">
-                Recommended 512×512px, max 256KB.
+        <div className="space-y-10">
+          {/* Site Identity */}
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Site Identity</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Your publication name and favicon shown across your site and the browser.
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
-                {ctxUser?.favicon_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={assetUrl(ctxUser.favicon_url)}
-                    alt="Favicon"
-                    className="h-8 w-8 object-contain"
-                  />
-                ) : (
-                  <Globe className="h-6 w-6 text-muted-foreground/50" />
-                )}
-              </div>
-              <input
-                ref={faviconInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
-                className="sr-only"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file || !token) return;
-                  if (file.size > 256 * 1024) {
-                    setErr("Favicon too large (max 256KB)");
-                    e.target.value = "";
-                    return;
-                  }
-                  setFaviconBusy(true);
-                  setErr(null);
-                  try {
-                    await uploadFavicon(token, file);
-                    await refreshUser();
-                    setSaved("Favicon uploaded");
-                  } catch (ex) {
-                    setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
-                  } finally {
-                    setFaviconBusy(false);
-                    e.target.value = "";
-                  }
-                }}
-                disabled={faviconBusy}
+            <div className="space-y-2.5 max-w-md">
+              <Label htmlFor="site_name">Site Name</Label>
+              <Input
+                id="site_name"
+                className="mt-2"
+                placeholder="My Blog"
+                value={siteName}
+                onChange={(e) => setSiteName(e.target.value)}
+                disabled={busy}
               />
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  disabled={faviconBusy}
-                  onClick={() => faviconInputRef.current?.click()}
-                  title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
-                >
-                  {faviconBusy ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+              <p className="text-xs text-muted-foreground">
+                Shown in navigation, footer, and browser title.
+              </p>
+            </div>
+
+            {/* Blog favicon */}
+            <div className="space-y-3">
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium">Blog favicon</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Recommended 512×512px, max 256KB.
+                </p>
+              </div>
+              <div className="flex items-center gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
+                  {ctxUser?.favicon_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={assetUrl(ctxUser.favicon_url)}
+                      alt="Favicon"
+                      className="h-8 w-8 object-contain"
+                    />
                   ) : (
-                    <Pencil className="h-4 w-4" />
+                    <Globe className="h-6 w-6 text-muted-foreground/50" />
                   )}
-                </Button>
-                {ctxUser?.favicon_url ? (
+                </div>
+                <input
+                  ref={faviconInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                  className="sr-only"
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file || !token) return;
+                    if (file.size > 256 * 1024) {
+                      setErr("Favicon too large (max 256KB)");
+                      e.target.value = "";
+                      return;
+                    }
+                    setFaviconBusy(true);
+                    setErr(null);
+                    try {
+                      await uploadFavicon(token, file);
+                      await refreshUser();
+                      setSaved("Favicon uploaded");
+                    } catch (ex) {
+                      setErr(ex instanceof ApiError ? ex.message : "Favicon upload failed");
+                    } finally {
+                      setFaviconBusy(false);
+                      e.target.value = "";
+                    }
+                  }}
+                  disabled={faviconBusy}
+                />
+                <div className="flex items-center gap-2">
                   <Button
                     type="button"
                     variant="outline"
                     size="icon"
-                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    className="h-10 w-10 shrink-0"
                     disabled={faviconBusy}
-                    onClick={() => setFaviconDeleteOpen(true)}
-                    title="Remove favicon"
+                    onClick={() => faviconInputRef.current?.click()}
+                    title={ctxUser?.favicon_url ? "Change favicon" : "Upload favicon"}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    {faviconBusy ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Pencil className="h-4 w-4" />
+                    )}
                   </Button>
-                ) : null}
+                  {ctxUser?.favicon_url ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                      disabled={faviconBusy}
+                      onClick={() => setFaviconDeleteOpen(true)}
+                      title="Remove favicon"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  ) : null}
+                </div>
               </div>
-            </div>
-          </div>
+              </div>
+          </section>
 
           {/* Hero Section */}
-          <div className="space-y-4">
+          <section className="space-y-4 pt-6">
             <div>
-              <h2 className="text-base font-semibold">Hero Section</h2>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Hero Section</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                 Displayed at the top of your blog. If both fields are left empty, no hero section will be rendered.
               </p>
             </div>
@@ -331,11 +339,16 @@ export default function GeneralSettingsPage() {
                 />
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Language & Region */}
-          <div className="space-y-4">
-            <h2 className="text-base font-semibold">Language & Region</h2>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Language &amp; Region</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Set the primary language used in your site markup and social previews.
+              </p>
+            </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
                 <Label htmlFor="site_language">Site Language (HTML lang)</Label>
@@ -376,11 +389,16 @@ export default function GeneralSettingsPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Content Feeds */}
-          <div className="space-y-4">
-            <h2 className="text-base font-semibold">Content Feeds</h2>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Content Feeds</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Enable syndication feeds so readers can follow your publication.
+              </p>
+            </div>
             <div className="space-y-4 max-w-md">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
@@ -410,18 +428,16 @@ export default function GeneralSettingsPage() {
                 />
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="flex">
-            <Button onClick={handleSaveGeneral} disabled={busy || !generalDirty || !siteNameValid} className="min-w-[120px]">
-              {busy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
+          <div className="flex items-center justify-end pt-6 border-t border-border/60">
+            <Button
+              onClick={handleSaveGeneral}
+              disabled={busy || !generalDirty || !siteNameValid}
+              className="gap-2"
+            >
+              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save Changes
             </Button>
           </div>
         </div>

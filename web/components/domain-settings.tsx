@@ -419,7 +419,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
   if (domainData === undefined || subfolderData === undefined) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-10">
         <Skeleton className="h-32 w-full rounded-2xl" />
         <Skeleton className="h-64 w-full rounded-2xl" />
       </div>
@@ -427,16 +427,16 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       <FloatingErrorToast message={error} onDismiss={() => setError("")} />
       <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
       {/* ── 1. Permanent Subdomain Banner ─────────────────────────────────── */}
-      <div className="space-y-4">
+      <section className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-semibold">Permanent Address</h3>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Permanent Address</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Your default Articurls URL that is always active and online.
             </p>
           </div>
@@ -476,17 +476,17 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
               </Button>
             </div>
           </div>
-        </div>
+        </section>
 
       {/* ── 2. Unified Custom Domain / Subdirectory ───────────────────── */}
-      <div className="space-y-6">
+      <section className="space-y-6 pt-6">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
             {isSubdirectoryActive ? <FolderTree className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
           </div>
           <div>
-            <h3 className="text-base font-semibold">Custom Domain & Subdirectory</h3>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Custom Domain &amp; Subdirectory</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
             </p>
           </div>
@@ -758,7 +758,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
             </div>
           )}
         </div>
-      </div>
+      </section>
     </div>
   );
 }

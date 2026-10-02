@@ -67,7 +67,7 @@ export default function CtaSettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       {/* Top navigation */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link
@@ -96,8 +96,14 @@ export default function CtaSettingsPage() {
           <Skeleton className="h-10 w-full" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-8">
-          <div className="space-y-5">
+        <form onSubmit={handleSave} className="space-y-10">
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Promotion Card</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Customize the message and button shown in the promotion card.
+              </p>
+            </div>
             <div className="space-y-2.5">
               <Label htmlFor="cta_heading">Heading</Label>
               <Input
@@ -151,48 +157,47 @@ export default function CtaSettingsPage() {
               </div>
             </div>
 
-            <hr className="border-border/60" />
+          </section>
 
-            <div className="space-y-3">
-              <p className="text-sm font-medium text-foreground">Display Visibility</p>
-              <div className="space-y-3 max-w-md">
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Show on Blog Posts</p>
-                    <p className="text-xs text-muted-foreground">Appears at the bottom of published articles</p>
-                  </div>
-                  <Switch
-                    checked={design.cta_show_on_posts !== false}
-                    onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_posts: checked })}
-                    disabled={saving}
-                  />
+          {/* Display Visibility */}
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Display Visibility</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Choose where the promotion card is rendered.
+              </p>
+            </div>
+            <div className="space-y-3 max-w-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Show on Blog Posts</p>
+                  <p className="text-xs text-muted-foreground">Appears at the bottom of published articles</p>
                 </div>
+                <Switch
+                  checked={design.cta_show_on_posts !== false}
+                  onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_posts: checked })}
+                  disabled={saving}
+                />
+              </div>
 
-                <div className="flex items-center justify-between gap-4">
-                  <div className="space-y-0.5">
-                    <p className="text-sm font-medium">Show on Custom Pages</p>
-                    <p className="text-xs text-muted-foreground">Appears at the bottom of custom static pages</p>
-                  </div>
-                  <Switch
-                    checked={design.cta_show_on_pages === true}
-                    onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_pages: checked })}
-                    disabled={saving}
-                  />
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Show on Custom Pages</p>
+                  <p className="text-xs text-muted-foreground">Appears at the bottom of custom static pages</p>
                 </div>
+                <Switch
+                  checked={design.cta_show_on_pages === true}
+                  onCheckedChange={(checked) => setDesign({ ...design, cta_show_on_pages: checked })}
+                  disabled={saving}
+                />
               </div>
             </div>
-          </div>
+          </section>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving} className="min-w-[120px]">
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
+          <div className="flex items-center justify-end pt-6 border-t border-border/60">
+            <Button type="submit" disabled={saving} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save Changes
             </Button>
           </div>
         </form>

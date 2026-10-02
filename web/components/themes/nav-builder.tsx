@@ -306,210 +306,232 @@ export function NavBuilder({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* Brand Identity & Logo */}
-      <div className="space-y-6 max-w-md">
-        <div className="space-y-6">
-          <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Header Brand Name</label>
-            <Input
-              value={settings.site_name || ""}
-              onChange={(e) => onChange({ site_name: e.target.value })}
-              placeholder="e.g. My Publication"
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground">
-              Displayed when no logo image is set.
-            </p>
-          </div>
-
-          <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
-            <Input
-              value={settings.logo_link ?? "/"}
-              onChange={(e) => onChange({ logo_link: e.target.value })}
-              placeholder="/"
-              className="mt-2"
-            />
-            <p className="text-xs text-muted-foreground">
-              Destination URL when visitors click your logo or brand title.
-            </p>
-          </div>
+      <section className="space-y-4">
+        <div>
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Branding</h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Brand name, logo image, and click destination shown in your header.
+          </p>
         </div>
-
-        {/* Full Image Logo upload */}
-        <div className="space-y-2.5">
-          <label className="text-sm font-medium text-foreground">Header Logo Image</label>
-          <div className="mt-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
-            <div className="flex items-center gap-4">
-              <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1">
-                {settings.logo_url ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={assetUrl(settings.logo_url)}
-                    alt="Logo"
-                    className="h-full w-full object-contain"
-                  />
-                ) : (
-                  <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
-                )}
-              </div>
-              <div className="space-y-1.5 flex-1 min-w-0">
-                <input
-                  ref={logoInputRef}
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                  className="sr-only"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (file) await handleLogoUpload(file);
-                    e.target.value = "";
-                  }}
-                  disabled={logoBusy}
-                />
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5 text-xs h-8"
-                    disabled={logoBusy}
-                    onClick={() => logoInputRef.current?.click()}
-                  >
-                    {logoBusy ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    ) : (
-                      <Pencil className="h-3.5 w-3.5" />
-                    )}
-                    {settings.logo_url ? "Change Logo" : "Upload Logo"}
-                  </Button>
+        <div className="space-y-6 max-w-md">
+          <div className="space-y-6">
+            <div className="space-y-2.5">
+              <label className="text-sm font-medium text-foreground">Header Brand Name</label>
+              <Input
+                value={settings.site_name || ""}
+                onChange={(e) => onChange({ site_name: e.target.value })}
+                placeholder="e.g. My Publication"
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Displayed when no logo image is set.
+              </p>
+            </div>
+  
+            <div className="space-y-2.5">
+              <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
+              <Input
+                value={settings.logo_link ?? "/"}
+                onChange={(e) => onChange({ logo_link: e.target.value })}
+                placeholder="/"
+                className="mt-2"
+              />
+              <p className="text-xs text-muted-foreground">
+                Destination URL when visitors click your logo or brand title.
+              </p>
+            </div>
+          </div>
+  
+          {/* Full Image Logo upload */}
+          <div className="space-y-2.5">
+            <label className="text-sm font-medium text-foreground">Header Logo Image</label>
+            <div className="mt-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1">
                   {settings.logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={assetUrl(settings.logo_url)}
+                      alt="Logo"
+                      className="h-full w-full object-contain"
+                    />
+                  ) : (
+                    <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+                  )}
+                </div>
+                <div className="space-y-1.5 flex-1 min-w-0">
+                  <input
+                    ref={logoInputRef}
+                    type="file"
+                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                    className="sr-only"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (file) await handleLogoUpload(file);
+                      e.target.value = "";
+                    }}
+                    disabled={logoBusy}
+                  />
+                  <div className="flex items-center gap-2">
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
-                      className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-2 text-xs"
+                      className="gap-1.5 text-xs h-8"
                       disabled={logoBusy}
-                      onClick={handleLogoDelete}
+                      onClick={() => logoInputRef.current?.click()}
                     >
-                      <Trash2 className="h-3.5 w-3.5" />
+                      {logoBusy ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <Pencil className="h-3.5 w-3.5" />
+                      )}
+                      {settings.logo_url ? "Change Logo" : "Upload Logo"}
                     </Button>
-                  ) : null}
+                    {settings.logo_url ? (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-2 text-xs"
+                        disabled={logoBusy}
+                        onClick={handleLogoDelete}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    ) : null}
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    PNG, JPG, WebP or SVG up to 2MB.
+                  </p>
+                  {logoError && (
+                    <p className="text-xs text-destructive">{logoError}</p>
+                  )}
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  PNG, JPG, WebP or SVG up to 2MB.
-                </p>
-                {logoError && (
-                  <p className="text-xs text-destructive">{logoError}</p>
-                )}
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <hr className="border-border/60" />
-
-      {/* Search Toggle */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <Search className="h-4 w-4 text-muted-foreground" />
-            <label className="text-sm font-medium text-foreground">Search in Navigation</label>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            Display a quick search button in your header for visitors to find articles.
+      {/* Header Features */}
+      <section className="space-y-4 pt-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Features</h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Optional utility controls displayed alongside your navigation.
           </p>
         </div>
-        <Switch
-          checked={settings.search_enabled !== false}
-          onCheckedChange={(checked) => onChange({ search_enabled: checked })}
-        />
-      </div>
 
-      {/* Theme Mode Toggle */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="space-y-0.5">
-          <div className="flex items-center gap-2">
-            <SunMoon className="h-4 w-4 text-muted-foreground" />
-            <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
+        {/* Search Toggle */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <Search className="h-4 w-4 text-muted-foreground" />
+              <label className="text-sm font-medium text-foreground">Search in Navigation</label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Display a quick search button in your header for visitors to find articles.
+            </p>
           </div>
-          <p className="text-xs text-muted-foreground">
-            Show a light / dark / system mode switcher in the header.
+          <Switch
+            checked={settings.search_enabled !== false}
+            onCheckedChange={(checked) => onChange({ search_enabled: checked })}
+          />
+        </div>
+  
+        {/* Theme Mode Toggle */}
+        <div className="flex items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <div className="flex items-center gap-2">
+              <SunMoon className="h-4 w-4 text-muted-foreground" />
+              <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Show a light / dark / system mode switcher in the header.
+            </p>
+          </div>
+          <Switch
+            checked={settings.theme_toggle_enabled !== false}
+            onCheckedChange={(checked) => onChange({ theme_toggle_enabled: checked })}
+          />
+        </div>
+
+      </section>
+
+      {/* Header Style */}
+      <section className="space-y-4 pt-6">
+        <div>
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Style</h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Choose how your header is aligned and presented.
           </p>
         </div>
-        <Switch
-          checked={settings.theme_toggle_enabled !== false}
-          onCheckedChange={(checked) => onChange({ theme_toggle_enabled: checked })}
-        />
-      </div>
-
-      <hr className="border-border/60" />
-
-      {/* Alignment & Style */}
-      <div className="space-y-6 max-w-md">
-        <div className="space-y-2.5">
-          <label className="text-sm font-medium text-foreground">Header Alignment</label>
-          <div className="mt-2 flex gap-2">
-            {(
-              [
-                { id: "left", icon: AlignLeft, label: "Left" },
-                { id: "center", icon: AlignCenter, label: "Center" },
-                { id: "right", icon: AlignRight, label: "Right" },
-              ] as const
-            ).map((a) => (
-              <button
-                type="button"
-                key={a.id}
-                onClick={() => onChange({ navbar_alignment: a.id })}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
-                  align === a.id
-                    ? "border-primary bg-primary text-primary-foreground shadow-2xs"
-                    : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
-                }`}
-              >
-                <a.icon className="h-3.5 w-3.5" />
-                <span>{a.label}</span>
-              </button>
-            ))}
+        <div className="space-y-6 max-w-md">
+          <div className="space-y-2.5">
+            <label className="text-sm font-medium text-foreground">Header Alignment</label>
+            <div className="mt-2 flex gap-2">
+              {(
+                [
+                  { id: "left", icon: AlignLeft, label: "Left" },
+                  { id: "center", icon: AlignCenter, label: "Center" },
+                  { id: "right", icon: AlignRight, label: "Right" },
+                ] as const
+              ).map((a) => (
+                <button
+                  type="button"
+                  key={a.id}
+                  onClick={() => onChange({ navbar_alignment: a.id })}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
+                    align === a.id
+                      ? "border-primary bg-primary text-primary-foreground shadow-2xs"
+                      : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
+                  }`}
+                >
+                  <a.icon className="h-3.5 w-3.5" />
+                  <span>{a.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+  
+          <div className="space-y-2.5">
+            <label className="text-sm font-medium text-foreground">Header Style</label>
+            <div className="mt-2 flex gap-2">
+              {(
+                [
+                  { id: "bordered", icon: PanelTop, label: "Bordered" },
+                  { id: "floating", icon: AppWindow, label: "Floating" },
+                ] as const
+              ).map((s) => (
+                <button
+                  type="button"
+                  key={s.id}
+                  onClick={() => onChange({ navbar_style: s.id })}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
+                    displayStyle === s.id
+                      ? "border-primary bg-primary text-primary-foreground shadow-2xs"
+                      : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
+                  }`}
+                >
+                  <s.icon className="h-3.5 w-3.5" />
+                  <span>{s.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 
-        <div className="space-y-2.5">
-          <label className="text-sm font-medium text-foreground">Header Style</label>
-          <div className="mt-2 flex gap-2">
-            {(
-              [
-                { id: "bordered", icon: PanelTop, label: "Bordered" },
-                { id: "floating", icon: AppWindow, label: "Floating" },
-              ] as const
-            ).map((s) => (
-              <button
-                type="button"
-                key={s.id}
-                onClick={() => onChange({ navbar_style: s.id })}
-                className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
-                  displayStyle === s.id
-                    ? "border-primary bg-primary text-primary-foreground shadow-2xs"
-                    : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
-                }`}
-              >
-                <s.icon className="h-3.5 w-3.5" />
-                <span>{s.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <hr className="border-border/60" />
+      </section>
 
       {/* Navigation Links List */}
-      <div className="space-y-3">
+      <section className="space-y-4 pt-6">
         <div className="flex items-center justify-between">
           <div>
-            <label className="text-sm font-medium text-foreground">Custom Navigation Links</label>
-            <p className="text-xs text-muted-foreground">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Navigation Links</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Define the links, custom pages, and CTA buttons shown in your site navigation.
             </p>
           </div>
@@ -551,7 +573,7 @@ export function NavBuilder({
             </SortableContext>
           </DndContext>
         )}
-      </div>
+      </section>
 
       {/* Add / Edit Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>

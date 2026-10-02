@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import { getCodeInjection, updateCodeInjection, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { Loader2, Save, Check } from "lucide-react";
+import { Loader2 } from "lucide-react";
 
 export function CodeInjectionSettings() {
   const { token } = useAuth();
@@ -55,94 +55,91 @@ export function CodeInjectionSettings() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {loading ? (
         <div className="py-8 text-center text-sm text-muted-foreground">
           Loading settings...
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-6">
+        <form onSubmit={handleSave} className="space-y-10">
           {/* Head Code */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="head-code" className="font-semibold text-sm">
-                Header Code Injection (<code className="text-xs text-primary font-mono">&lt;head&gt;</code>)
-              </Label>
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">
+                Header Code Injection (<code className="font-mono text-xs text-primary">&lt;head&gt;</code>)
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Injected into the HTML <code className="font-mono text-xs">&lt;head&gt;</code> tag. Ideal for Google Analytics, Fathom, Meta Pixel, or custom fonts.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Injected into the HTML <code className="font-mono text-xs">&lt;head&gt;</code> tag. Ideal for Google Analytics, Fathom, Meta Pixel, or custom fonts.
-            </p>
-            <textarea
+            <Textarea
               id="head-code"
               rows={4}
               value={headCode}
               onChange={(e) => setHeadCode(e.target.value)}
               placeholder="<!-- Paste your tracking script or head tags here -->"
-              className="mt-2 w-full rounded-md border border-input bg-muted/20 p-3 font-mono text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+              className="font-mono text-xs"
             />
-          </div>
+          </section>
 
           {/* Body Code */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="body-code" className="font-semibold text-sm">
-                Footer Code Injection (<code className="text-xs text-primary font-mono">Before &lt;/body&gt;</code>)
-              </Label>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">
+                Footer Code Injection (<code className="font-mono text-xs text-primary">Before &lt;/body&gt;</code>)
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Injected right before the closing <code className="font-mono text-xs">&lt;/body&gt;</code> tag. Ideal for live chat widgets, cookie consent banners, or heatmaps.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Injected right before the closing <code className="font-mono text-xs">&lt;/body&gt;</code> tag. Ideal for live chat widgets, cookie consent banners, or heatmaps.
-            </p>
-            <textarea
+            <Textarea
               id="body-code"
               rows={4}
               value={bodyCode}
               onChange={(e) => setBodyCode(e.target.value)}
               placeholder="<!-- Paste your body script or widget code here -->"
-              className="mt-2 w-full rounded-md border border-input bg-muted/20 p-3 font-mono text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+              className="font-mono text-xs"
             />
-          </div>
+          </section>
 
           {/* Custom CSS */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="custom-css" className="font-semibold text-sm">
-                Custom CSS Styling (<code className="text-xs text-primary font-mono">&lt;style&gt;</code>)
-              </Label>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">
+                Custom CSS Styling (<code className="font-mono text-xs text-primary">&lt;style&gt;</code>)
+              </h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Custom CSS rules to override theme styles or tweak typography and spacing.
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Custom CSS rules to override theme styles or tweak typography and spacing.
-            </p>
-            <textarea
+            <Textarea
               id="custom-css"
               rows={4}
               value={customCss}
               onChange={(e) => setCustomCss(e.target.value)}
               placeholder="/* .prose-blog h1 { font-weight: 800; } */"
-              className="mt-2 w-full rounded-md border border-input bg-muted/20 p-3 font-mono text-xs text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-y"
+              className="font-mono text-xs"
             />
-          </div>
+          </section>
 
-          <div className="flex items-center justify-between pt-2">
-            <div className="flex items-center gap-2">
-              {saved && (
-                <span className="inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
-                  <Check className="h-3.5 w-3.5" /> Saved successfully
-                </span>
-              )}
-            </div>
+          <div className="flex items-center justify-end pt-6 border-t border-border/60">
             <Button type="submit" disabled={saving} className="gap-2">
-              {saving ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="h-4 w-4" />
-              )}
-              Save Code Changes
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save Changes
             </Button>
           </div>
         </form>
       )}
 
       {error && <FloatingErrorToast message={error} onDismiss={() => setError(null)} />}
+      {saved && !error && (
+        <FloatingErrorToast
+          message="Saved successfully"
+          onDismiss={() => setSaved(false)}
+          autoDismissMs={3000}
+          variant="success"
+        />
+      )}
     </div>
   );
 }

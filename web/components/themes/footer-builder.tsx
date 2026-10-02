@@ -172,7 +172,7 @@ export function FooterBuilder({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-10">
       {/* Footer Enabled Switch */}
       <div className="flex items-center justify-between gap-4">
         <div className="space-y-0.5">
@@ -190,11 +190,11 @@ export function FooterBuilder({
       {footerEnabled ? (
         <>
           {/* Footer Columns Section */}
-          <div className="space-y-4">
+          <section className="space-y-4 pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <label className="text-sm font-medium text-foreground">Footer Columns</label>
-                <p className="text-xs text-muted-foreground">
+                <h2 className="text-base font-semibold text-foreground sm:text-lg">Footer Columns</h2>
+                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
                   Organize your footer into structured link columns (e.g. Product, Company, Resources).
                 </p>
               </div>
@@ -294,33 +294,40 @@ export function FooterBuilder({
                 ))}
               </div>
             )}
-          </div>
-
-          <hr className="border-border/60" />
+          </section>
 
           {/* Footer Description */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Footer Brand Description</label>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Footer Brand Description</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                A brief summary or mission statement shown under your brand in the footer.
+              </p>
+            </div>
             <Textarea
+              aria-label="Footer brand description"
               value={settings.footer_description || ""}
               onChange={(e) => onChange({ footer_description: e.target.value })}
               placeholder="A brief summary or mission statement shown under your brand in the footer..."
               rows={2}
-              className="mt-2"
+              className="mt-2 max-w-xl"
             />
-          </div>
-
-          <hr className="border-border/60" />
+          </section>
 
           {/* Footer System Links */}
-          <div className="space-y-4">
-            <label className="text-sm font-medium text-foreground">Footer Links & Feeds</label>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Footer Links &amp; Feeds</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Toggle the system links shown at the bottom of your footer.
+              </p>
+            </div>
 
             <div className="space-y-3 max-w-md">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">Sitemap Link</p>
-                  <p className="text-[11px] text-muted-foreground">Link to sitemaps</p>
+                  <p className="text-sm font-medium">Sitemap Link</p>
+                  <p className="text-xs text-muted-foreground">Link to sitemaps</p>
                 </div>
                 <Switch
                   checked={settings.footer_show_sitemap !== false}
@@ -330,8 +337,8 @@ export function FooterBuilder({
 
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">RSS Feed Link</p>
-                  <p className="text-[11px] text-muted-foreground">Link to /rss.xml</p>
+                  <p className="text-sm font-medium">RSS Feed Link</p>
+                  <p className="text-xs text-muted-foreground">Link to /rss.xml</p>
                 </div>
                 <Switch
                   checked={settings.footer_show_rss !== false}
@@ -341,8 +348,8 @@ export function FooterBuilder({
 
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
-                  <p className="text-xs font-semibold">Atom Feed Link</p>
-                  <p className="text-[11px] text-muted-foreground">Link to /atom.xml</p>
+                  <p className="text-sm font-medium">Atom Feed Link</p>
+                  <p className="text-xs text-muted-foreground">Link to /atom.xml</p>
                 </div>
                 <Switch
                   checked={settings.footer_show_atom === true}
@@ -350,23 +357,24 @@ export function FooterBuilder({
                 />
               </div>
             </div>
-          </div>
-
-          <hr className="border-border/60" />
+          </section>
 
           {/* Custom Copyright */}
-          <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Custom Copyright / Tagline Text</label>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Custom Copyright</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Optional custom copyright or legal notice rendered at the very bottom of the page.
+              </p>
+            </div>
             <Input
+              aria-label="Custom copyright or tagline text"
               value={copyright}
               onChange={(e) => onChange({ footer_copyright: e.target.value })}
               placeholder="e.g. © 2026 Acme Inc. All rights reserved."
-              className="mt-2"
+              className="mt-2 max-w-xl"
             />
-            <p className="text-xs text-muted-foreground">
-              Optional custom copyright or legal notice rendered at the very bottom of the page.
-            </p>
-          </div>
+          </section>
         </>
       ) : null}
 

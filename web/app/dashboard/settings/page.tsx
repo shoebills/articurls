@@ -143,19 +143,18 @@ function SettingsCard({ item }: { item: SettingCardItem }) {
 
 export default function SettingsPage() {
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
       </div>
 
       <div className="space-y-8 sm:space-y-10">
-        {SETTINGS_SECTIONS.map((section) => (
-          <section key={section.title} className="space-y-4">
-            <div className="space-y-1">
-              <h2 className="text-base font-semibold tracking-tight sm:text-lg">{section.title}</h2>
-              <p className="text-sm text-muted-foreground">{section.description}</p>
+        {SETTINGS_SECTIONS.map((section, idx) => (
+          <section key={section.title} className={idx === 0 ? "space-y-4" : "space-y-4 pt-6"}>
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">{section.title}</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">{section.description}</p>
             </div>
-            <div aria-hidden="true" className="h-px bg-border/70" />
             <div className="grid gap-3 sm:grid-cols-2">
               {section.items.map((item) => (
                 <SettingsCard key={item.id} item={item} />

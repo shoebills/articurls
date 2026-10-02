@@ -79,7 +79,7 @@ export default function NavigationSettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       {/* Top navigation */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link
@@ -91,22 +91,11 @@ export default function NavigationSettingsPage() {
         </Link>
       </div>
 
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Navigation</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure brand name, header style, custom links, and CTA buttons.
-          </p>
-        </div>
-        <Button
-          onClick={handleSave}
-          disabled={saving || loading || !design}
-          size="sm"
-          className="gap-1.5 self-start sm:self-auto"
-        >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
-          Save Changes
-        </Button>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Navigation</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Configure brand name, header style, custom links, and CTA buttons.
+        </p>
       </div>
 
       {loading || !design ? (
@@ -115,14 +104,13 @@ export default function NavigationSettingsPage() {
         <NavBuilder settings={design} onChange={handleUpdate} />
       )}
 
-      <div className="flex justify-end pt-2">
+      <div className="flex items-center justify-end pt-6 border-t border-border/60">
         <Button
           onClick={handleSave}
           disabled={saving || loading || !design}
-          size="sm"
-          className="gap-1.5"
+          className="gap-2"
         >
-          {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+          {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Save Changes
         </Button>
       </div>

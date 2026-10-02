@@ -127,9 +127,9 @@ export default function IntegrationsSettings() {
     <>
       <div className="space-y-10">
         <section className="space-y-4">
-          <div className="space-y-1">
+          <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Analytics</h2>
-            <p className="text-xs text-muted-foreground sm:text-sm">
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Track visitors with GA4. Find your ID under{" "}
               <a
                 href="https://support.google.com/analytics/answer/12270356"
@@ -155,10 +155,10 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="space-y-1">
+        <section className="space-y-4 pt-6">
+          <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Search Console</h2>
-            <p className="text-xs text-muted-foreground sm:text-sm">
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Verify site ownership so you can monitor search performance.
             </p>
           </div>
@@ -192,10 +192,10 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <section className="space-y-4">
-          <div className="space-y-1">
+        <section className="space-y-4 pt-6">
+          <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google AdSense</h2>
-            <p className="text-xs text-muted-foreground sm:text-sm">
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Monetize your site with auto ads.
             </p>
           </div>
@@ -215,16 +215,10 @@ export default function IntegrationsSettings() {
           </div>
         </section>
 
-        <div className="flex items-center justify-end">
-          <Button onClick={onSave} disabled={busy || !dirty} className="min-w-[120px]">
-            {busy ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
-            ) : (
-              "Save"
-            )}
+        <div className="flex items-center justify-end pt-6 border-t border-border/60">
+          <Button onClick={onSave} disabled={busy || !dirty} className="gap-2">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+            Save Changes
           </Button>
         </div>
       </div>

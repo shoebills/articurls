@@ -73,7 +73,7 @@ export default function ContentSettingsPage() {
   };
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       {/* Top navigation */}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <Link
@@ -102,10 +102,15 @@ export default function ContentSettingsPage() {
           <Skeleton className="h-10 w-full" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-8">
+        <form onSubmit={handleSave} className="space-y-10">
           {/* Feed & Pagination */}
-          <div className="space-y-5">
-            <h2 className="text-base font-semibold">Feed & Pagination</h2>
+          <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Feed &amp; Pagination</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Control how many posts appear per page and how readers navigate between them.
+              </p>
+            </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
                 <Label htmlFor="posts_per_page">Posts Per Page</Label>
@@ -151,26 +156,33 @@ export default function ContentSettingsPage() {
                 </p>
               </div>
             </div>
-          </div>
+          </section>
 
           {/* Table of Contents (TOC) */}
-          <div className="flex items-center justify-between gap-4">
-            <div className="space-y-0.5">
-              <h2 className="text-base font-semibold">Table of Contents (TOC)</h2>
-              <p className="text-xs text-muted-foreground">
-                Automatically extracts headings from your articles and shows a quick jump menu. Hides silently when an article has no headings.
-              </p>
+          <section className="pt-6">
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <h2 className="text-base font-semibold text-foreground sm:text-lg">Table of Contents (TOC)</h2>
+                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                  Automatically extracts headings from your articles and shows a quick jump menu. Hides silently when an article has no headings.
+                </p>
+              </div>
+              <Switch
+                checked={design.toc_enabled !== false}
+                onCheckedChange={(checked) => setDesign({ ...design, toc_enabled: checked })}
+                disabled={saving}
+              />
             </div>
-            <Switch
-              checked={design.toc_enabled !== false}
-              onCheckedChange={(checked) => setDesign({ ...design, toc_enabled: checked })}
-              disabled={saving}
-            />
-          </div>
+          </section>
 
           {/* Article & Feed Layout */}
-          <div className="space-y-5">
-            <h2 className="text-base font-semibold">Article & Feed Layout</h2>
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Article &amp; Feed Layout</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Choose how articles are presented across your home and category feeds.
+              </p>
+            </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
                 <Label htmlFor="content_layout">Content layout</Label>
@@ -206,18 +218,12 @@ export default function ContentSettingsPage() {
                 disabled={saving}
               />
             </div>
-          </div>
+          </section>
 
-          <div className="flex justify-end">
-            <Button type="submit" disabled={saving} className="min-w-[120px]">
-              {saving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
-                </>
-              ) : (
-                "Save Changes"
-              )}
+          <div className="flex items-center justify-end pt-6 border-t border-border/60">
+            <Button type="submit" disabled={saving} className="gap-2">
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              Save Changes
             </Button>
           </div>
         </form>
