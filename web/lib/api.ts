@@ -4,6 +4,7 @@ import type {
   PublicAuthorDetail,
   SiteSummary,
   CodeInjectionSettings,
+  RedirectRule,
   AccountUsage,
   BlogDetail,
   BlogListItem,
@@ -828,6 +829,45 @@ export async function getSite(token: string, siteId: string): Promise<SiteSummar
 
 export async function deleteSite(token: string, siteId: string): Promise<void> {
   await apiFetch(`/sites/${siteId}`, { method: "DELETE", token });
+}
+
+export async function purgeSiteCache(
+  token: string
+): Promise<{ revalidated: string[]; failed: string[] }> {
+  return apiFetch("/sites/cache/purge", { method: "POST", token });
+}
+
+export async function listRedirects(token: string): Promise<RedirectRule[]> {
+  return apiFetch("/redirects", { token });
+}
+
+export async function createRedirect(
+  token: string,
+  body: { source_path: string; target_url: string; type: RedirectRule["type"] }
+): Promise<RedirectRule> {
+  return apiFetch("/redirects", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function updateRedirect(
+  token: string,
+  redirectId: string,
+  body: { source_path?: string; target_url?: string; type?: RedirectRule["type"] }
+): Promise<RedirectRule> {
+  return apiFetch(`/redirects/${redirectId}`, {
+    method: "PATCH",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+}
+
+export async function deleteRedirect(token: string, redirectId: string): Promise<void> {
+  await apiFetch(`/redirects/${redirectId}`, { method: "DELETE", token });
 }
 
 export async function getCodeInjection(token: string): Promise<CodeInjectionSettings> {

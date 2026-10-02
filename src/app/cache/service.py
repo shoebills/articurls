@@ -139,4 +139,25 @@ def schedule_tenant_purge(background_tasks: BackgroundTasks, site) -> None:
     for host in _tenant_hosts(site):
         background_tasks.add_task(purge_entire_tenant, host)
     if getattr(site, "subdomain", None):
-        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", "posts-list", "site-settings", "pages-list", "categories-list"])
+        background_tasks.add_task(_revalidate, [f"subdomain-{site.subdomain}", "posts-list", "site-settings", "pages-list", "categories-list", "redirects"])
+
+
+async def purge_tenant_now(site) -> dict:
+    """Synchronous full-tenant purge for the manual Clear Cache action."""
+    revalidated = []
+    failed = []
+
+    for host in _tenant_hosts(site):
+        if await purge_entire_tenant(host):
+            revalidated.append(host)
+        else:
+            failed.append(host)
+
+    if getattr(site, "subdomain", None):
+        tags = [f"subdomain-{site.subdomain}", "posts-list", "site-settings", "pages-list", "categories-list", "redirects"]
+        if await _revalidate(tags):
+            revalidated.append(f"subdomain-{site.subdomain}")
+        else:
+            failed.append(f"subdomain-{site.subdomain}")
+
+    return {"revalidated": revalidated, "failed": failed}

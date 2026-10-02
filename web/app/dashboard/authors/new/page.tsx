@@ -157,7 +157,6 @@ export default function NewAuthorPage() {
           <CardContent className="space-y-6">
             {/* Avatar upload */}
             <div className="space-y-2.5">
-              <Label>Author Photo</Label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="relative">
                   {avatarPreview ? (

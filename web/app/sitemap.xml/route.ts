@@ -25,7 +25,8 @@ import {
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage } from "@/lib/types";
 import { resolveDomainForSeo } from "@/lib/seo-domain";
-import { fetchAuthors } from "@/lib/seo-data";
+import { fetchAuthors, fetchRedirects } from "@/lib/seo-data";
+import type { RedirectRule } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
@@ -173,31 +174,42 @@ async function customDomainSitemap(host: string): Promise<Response> {
   const trailingSlash = site.seo_trailing_slash_listings === true;
   const today = new Date().toISOString().split("T")[0];
 
-  const [blogs, pages, categories, authors] = await Promise.all([
+  const [blogs, pages, categories, authors, redirects] = await Promise.all([
     loadBlogs(subdomain),
     loadPages(subdomain),
     loadCategories(subdomain, true),
     fetchAuthors(subdomain),
+    fetchRedirects(subdomain),
   ]);
+
+  // URLs that are redirected away must not appear in the sitemap.
+  const redirectedSources = new Set(
+    (redirects as RedirectRule[]).map((r) => r.source_path)
+  );
+  const isRedirected = (path: string) => redirectedSources.has(path);
 
   // Sitemap is a contract: only indexable, canonical, same-host URLs.
   const indexableBlogs = blogs.filter(
-    (b) => !b.noindex && !isExternalCanonical(b.canonical_url, siteOrigin)
+    (b) => !b.noindex && !isExternalCanonical(b.canonical_url, siteOrigin) && !isRedirected(`/${b.slug}`)
   );
   const indexablePages = pages.filter(
-    (p) => p.show_in_footer && !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin)
+    (p) => p.show_in_footer && !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin) && !isRedirected(`/${p.slug}`)
   );
-  const indexableCategories = site.seo_noindex_categories ? [] : categories;
+  const indexableCategories = site.seo_noindex_categories
+    ? []
+    : categories.filter((c) => !isRedirected(`/category/${c.slug}`));
   const indexableAuthors = authors.filter(
-    (a) => !a.noindex && !site.seo_noindex_authors
+    (a) => !a.noindex && !site.seo_noindex_authors && !isRedirected(`/author/${a.slug}`)
   );
 
   const entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [];
 
   // Profile / home — custom domain root, no subdomain prefix
-  entries.push({ loc: withTrailingSlash(siteOrigin, trailingSlash), lastmod: today, changefreq: "weekly", priority: "1.0" });
+  if (!isRedirected("/")) {
+    entries.push({ loc: withTrailingSlash(siteOrigin, trailingSlash), lastmod: today, changefreq: "weekly", priority: "1.0" });
+  }
 
-  if (indexableCategories.length > 0) {
+  if (indexableCategories.length > 0 && !isRedirected("/categories")) {
     entries.push({
       loc: withTrailingSlash(`${siteOrigin}/categories`, trailingSlash),
       changefreq: "weekly",

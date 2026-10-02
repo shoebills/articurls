@@ -10,10 +10,11 @@ from .. import models
 from ..database import get_db
 from ..schemas import site as site_schema
 from ..security.oauth2 import get_current_user, get_current_site
-from ..cache.service import schedule_tenant_purge
+from ..cache.service import schedule_tenant_purge, purge_tenant_now
 from ..storage.service import delete_media
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
+from ..utils.rate_limit import check_rate_limit_user
 
 router = APIRouter(
     tags=["Sites"],
@@ -206,6 +207,17 @@ def update_code_injection(
         "custom_body_code": current_site.custom_body_code,
         "custom_css": current_site.custom_css,
     }
+
+
+@router.post("/cache/purge", status_code=status.HTTP_200_OK)
+async def purge_site_cache(
+    current_user: models.User = Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
+):
+    """Manually invalidate all cached copies of this publication (edge + data cache)."""
+    check_rate_limit_user("cache-purge", current_user.user_id, 10, 3600)
+    result = await purge_tenant_now(current_site)
+    return result
 
 
 @router.get("/{site_id}", response_model=site_schema.SiteSummary, status_code=status.HTTP_200_OK)

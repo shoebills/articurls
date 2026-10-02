@@ -186,6 +186,20 @@ const loadContent = cache(async (subdomain: string, slug: string): Promise<Publi
   return res.json();
 });
 
+const loadRedirect = cache(async (subdomain: string, path: string): Promise<{ target_url: string; type: string } | null> => {
+  const res = await fetch(
+    `${API_URL}/${encodeURIComponent(subdomain)}/redirect?path=${encodeURIComponent(path)}`,
+    {
+      next: {
+        revalidate: 86400,
+        tags: [`subdomain-${subdomain}`, "redirects"],
+      },
+    }
+  );
+  if (!res.ok) return null;
+  return res.json();
+});
+
 const loadPages = cache(async (subdomain: string): Promise<UserPage[]> => {
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
     next: {
@@ -548,6 +562,20 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (domainInfo.redirect_to) {
     permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
+  }
+
+  // ── Site-level redirects (checked before content resolution) ────────────
+  const lookupPath = segments.length === 0 ? "/" : `/${segments.join("/")}`;
+  const pathRedirect = await loadRedirect(subdomain, lookupPath);
+  if (pathRedirect) {
+    const target = pathRedirect.target_url;
+    const dest = target.startsWith("/")
+      ? `${siteOrigin}${target === "/" ? "" : target}`
+      : target;
+    if (pathRedirect.type === "temporary") {
+      redirect(dest);
+    }
+    permanentRedirect(dest);
   }
 
   // ── Blog post or Custom page: /[slug] ────────────────────────────────────

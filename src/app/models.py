@@ -430,3 +430,25 @@ class BlogCategory(Base):
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.category_id", ondelete="CASCADE"), nullable=False, index=True)
 
     category = relationship("Category", back_populates="blog_links")
+
+
+class RedirectType(str, enum.Enum):
+    PERMANENT = "permanent"  # 301
+    TEMPORARY = "temporary"  # 302
+
+
+class Redirect(Base):
+    __tablename__ = "redirects"
+    __table_args__ = (
+        UniqueConstraint("site_id", "source_path", name="uq_redirects_site_source_path"),
+        CheckConstraint("source_path <> target_url", name="ck_redirects_no_self_loop"),
+        CheckConstraint("source_path LIKE '/%'", name="ck_redirects_source_slash"),
+    )
+
+    redirect_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    site_id = Column(UUID(as_uuid=True), ForeignKey("sites.site_id", ondelete="CASCADE"), nullable=False)
+    source_path = Column(String(300), nullable=False)
+    target_url = Column(String(2000), nullable=False)
+    type = Column(Enum(RedirectType, name="redirect_type", values_callable=lambda x: [e.value for e in x]), nullable=False, default=RedirectType.PERMANENT, server_default="permanent")
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  ArrowLeftRight,
   ChevronRight,
   Code2,
   Globe,
@@ -114,6 +115,13 @@ const SETTINGS_SECTIONS: SettingsSection[] = [
         title: "Code Injection",
         description: "Add custom head/body scripts and CSS to your site.",
         icon: Code2,
+      },
+      {
+        id: "redirects",
+        href: "/dashboard/settings/redirects",
+        title: "Redirects",
+        description: "Forward old URLs to new ones so links keep working.",
+        icon: ArrowLeftRight,
       },
     ],
   },

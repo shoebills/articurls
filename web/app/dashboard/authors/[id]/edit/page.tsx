@@ -295,7 +295,6 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
           <CardContent className="space-y-6">
             {/* Avatar upload */}
             <div className="space-y-4">
-              <Label>Author Photo</Label>
               <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                 <div className="relative">
                   {avatarPreview ? (

@@ -10,7 +10,7 @@
  */
 
 import { API_URL } from "@/lib/env";
-import type { PublicBlog, UserPage, Category, Author } from "@/lib/types";
+import type { PublicBlog, UserPage, Category, Author, RedirectRule } from "@/lib/types";
 
 export interface RssItem {
   title: string;
@@ -92,6 +92,30 @@ export async function fetchAuthors(subdomain: string): Promise<Author[]> {
     const res = await fetch(
       `${API_URL}/${encodeURIComponent(subdomain)}/authors`,
       { cache: "no-store" }
+    );
+    if (!res.ok) return [];
+    return res.json();
+  } catch {
+    return [];
+  }
+}
+
+// ── Redirects ────────────────────────────────────────────────────────────────
+
+/**
+ * Fetch the site's redirect rules via the internal API so sitemap
+ * generation can exclude URLs that are redirected away.
+ */
+export async function fetchRedirects(subdomain: string): Promise<RedirectRule[]> {
+  try {
+    const res = await fetch(
+      `${API_URL}/internal/redirects?subdomain=${encodeURIComponent(subdomain)}`,
+      {
+        cache: "no-store",
+        headers: {
+          "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
+        },
+      }
     );
     if (!res.ok) return [];
     return res.json();

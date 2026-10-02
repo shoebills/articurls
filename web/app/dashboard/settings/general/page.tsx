@@ -8,6 +8,7 @@ import {
   patchDesignSettings,
   uploadFavicon,
   deleteFavicon,
+  purgeSiteCache,
   ApiError,
   apiCacheHas,
 } from "@/lib/api";
@@ -19,7 +20,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Globe, Loader2, Pencil, Trash2 } from "lucide-react";
+import { ChevronLeft, Globe, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl } from "@/lib/env";
 import {
@@ -77,6 +78,25 @@ export default function GeneralSettingsPage() {
   const faviconInputRef = useRef<HTMLInputElement>(null);
   const [faviconBusy, setFaviconBusy] = useState(false);
   const [faviconDeleteOpen, setFaviconDeleteOpen] = useState(false);
+
+  const [purgeOpen, setPurgeOpen] = useState(false);
+  const [purgeBusy, setPurgeBusy] = useState(false);
+
+  async function handlePurgeCache() {
+    if (!token) return;
+    setPurgeBusy(true);
+    setErr(null);
+    try {
+      const result = await purgeSiteCache(token);
+      const failed = result.failed?.length ?? 0;
+      setSaved(failed > 0 ? "Cache cleared, but some parts could not be revalidated." : "Cache cleared");
+      setPurgeOpen(false);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to clear cache");
+    } finally {
+      setPurgeBusy(false);
+    }
+  }
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -430,6 +450,35 @@ export default function GeneralSettingsPage() {
             </div>
           </section>
 
+          {/* Utilities */}
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Utilities</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Manual maintenance actions for your publication.
+              </p>
+            </div>
+            <div className="space-y-4 max-w-md">
+              <div className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                  <p className="text-sm font-medium">Clear Cache</p>
+                  <p className="text-xs text-muted-foreground">
+                    Invalidates cached copies of your publication. The first load after clearing may be slower.
+                  </p>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={() => setPurgeOpen(true)}
+                  disabled={busy || purgeBusy}
+                  className="gap-2 shrink-0"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                  Clear Cache
+                </Button>
+              </div>
+            </div>
+          </section>
+
           <div className="flex items-center justify-end pt-6 border-t border-border/60">
             <Button
               onClick={handleSaveGeneral}
@@ -455,6 +504,24 @@ export default function GeneralSettingsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setFaviconDeleteOpen(false)} disabled={faviconBusy}>Cancel</Button>
             <Button variant="destructive" onClick={removeFavicon} disabled={faviconBusy}>Remove</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={purgeOpen} onOpenChange={setPurgeOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Clear cache?</DialogTitle>
+            <DialogDescription>
+              Cached copies of your publication will be invalidated and rebuilt on the next visit. The first load after clearing may be slower — cache normally refreshes automatically when you publish or edit.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setPurgeOpen(false)} disabled={purgeBusy}>Cancel</Button>
+            <Button onClick={handlePurgeCache} disabled={purgeBusy} className="gap-2">
+              {purgeBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Clear Cache
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

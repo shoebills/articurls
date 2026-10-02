@@ -359,6 +359,15 @@ export interface CodeInjectionSettings {
   custom_css?: string | null;
 }
 
+export interface RedirectRule {
+  redirect_id: string;
+  source_path: string;
+  target_url: string;
+  type: "permanent" | "temporary";
+  created_at: string | null;
+  updated_at: string | null;
+}
+
 export interface SiteUsageItem {
   site_id: string;
   subdomain: string;
