@@ -13,7 +13,6 @@ import {
   Loader2,
   Globe,
   ExternalLink,
-  Layers,
   FolderTree,
   ShieldCheck,
   Zap,
@@ -54,7 +53,7 @@ const STACK_OPTIONS: StackOption[] = [
     id: "cloudflare",
     name: "Cloudflare Worker",
     filename: "worker.js",
-    instruction: "Deploy this Worker on Cloudflare and bind the route pattern to your domain.",
+    instruction: "Create a Worker with this script and add a route for your domain and subpath.",
   },
   {
     id: "vercel",
@@ -125,106 +124,6 @@ function parseInputUrl(raw: string): {
   }
 
   return { domain: domainPart, subpath: null, type: "apex" };
-}
-
-function generateClientSnippet(
-  stack: StackType,
-  domain: string,
-  subpath: string,
-  subdomain: string
-): string {
-  const cleanSubpath = "/" + subpath.trim().replace(/^\/+/, "").replace(/\/+$/, "");
-  const targetDomain = domain || "example.com";
-  const backend = `https://${subdomain}.${UGC_DOMAIN}`;
-
-  switch (stack) {
-    case "nextjs":
-      return `// next.config.mjs (or next.config.js)
-export default {
-  async rewrites() {
-    return [
-      {
-        source: '${cleanSubpath}',
-        destination: '${backend}${cleanSubpath}',
-      },
-      {
-        source: '${cleanSubpath}/:path*',
-        destination: '${backend}${cleanSubpath}/:path*',
-      },
-    ];
-  },
-};`;
-
-    case "cloudflare":
-      return `// worker.js - Route: ${targetDomain}${cleanSubpath}*
-export default {
-  async fetch(request) {
-    const url = new URL(request.url);
-    if (url.pathname === "${cleanSubpath}" || url.pathname.startsWith("${cleanSubpath}/")) {
-      const proxyUrl = new URL(url.pathname + url.search, "${backend}");
-      const headers = new Headers(request.headers);
-      headers.set("x-original-host", url.hostname);
-      headers.set("x-articurls-basepath", "${cleanSubpath}");
-      return fetch(proxyUrl.toString(), {
-        method: request.method,
-        headers,
-        body: request.body,
-        redirect: "manual",
-      });
-    }
-    return fetch(request);
-  },
-};`;
-
-    case "vercel":
-      return `// vercel.json
-{
-  "rewrites": [
-    {
-      "source": "${cleanSubpath}",
-      "destination": "${backend}${cleanSubpath}"
-    },
-    {
-      "source": "${cleanSubpath}/:match*",
-      "destination": "${backend}${cleanSubpath}/:match*"
-    }
-  ]
-}`;
-
-    case "nginx":
-      return `# Nginx location block
-location ${cleanSubpath} {
-    proxy_pass ${backend}${cleanSubpath};
-    proxy_set_header Host ${targetDomain};
-    proxy_set_header X-Original-Host ${targetDomain};
-    proxy_set_header X-Articurls-Basepath ${cleanSubpath};
-    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-    proxy_set_header X-Forwarded-Proto $scheme;
-    proxy_ssl_server_name on;
-}`;
-
-    case "caddy":
-      return `# Caddyfile
-${targetDomain} {
-    handle_path ${cleanSubpath}* {
-        reverse_proxy ${backend} {
-            header_up Host ${targetDomain}
-            header_up X-Original-Host {host}
-            header_up X-Articurls-Basepath ${cleanSubpath}
-        }
-    }
-}`;
-
-    case "apache":
-      return `# Apache .htaccess or httpd.conf
-RewriteEngine On
-SSLProxyEngine On
-ProxyPreserveHost Off
-RequestHeader set X-Original-Host "${targetDomain}"
-RequestHeader set X-Articurls-Basepath "${cleanSubpath}"
-ProxyPass ${cleanSubpath} ${backend}${cleanSubpath}
-ProxyPassReverse ${cleanSubpath} ${backend}${cleanSubpath}`;
-  }
 }
 
 export function DomainSettings({ subdomain }: { subdomain: string }) {
@@ -312,8 +211,6 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           custom_subpath: parsed.subpath,
         });
         setSubfolderData(updated);
-        const snips = await getSubfolderSnippets(token).catch(() => null);
-        setSnippets(snips);
         setInputUrl("");
         setSuccess("Subdirectory connected successfully! Choose your stack below.");
         await loadAll(token);
@@ -401,21 +298,8 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
   const permanentSubdomainUrl = `https://${encodeURIComponent(subdomain)}.${UGC_DOMAIN}`;
 
   const currentStack = STACK_OPTIONS.find((s) => s.id === selectedStack) || STACK_OPTIONS[0];
-  const activeSnippetCode = useMemo(() => {
-    if (!isSubdirectoryActive) return "";
-    const dom = subfolderData?.custom_domain || "example.com";
-    const path = subfolderData?.custom_subpath || "/blog";
-
-    if (snippets) {
-      if (selectedStack === "nextjs" && snippets.nextjs) return snippets.nextjs;
-      if (selectedStack === "cloudflare" && snippets.cloudflare_worker) return snippets.cloudflare_worker;
-      if (selectedStack === "vercel" && snippets.vercel) return snippets.vercel;
-      if (selectedStack === "nginx" && snippets.nginx) return snippets.nginx;
-      if (selectedStack === "caddy" && snippets.caddy) return snippets.caddy;
-      if (selectedStack === "apache" && snippets.apache) return snippets.apache;
-    }
-    return generateClientSnippet(selectedStack, dom, path, subdomain);
-  }, [isSubdirectoryActive, selectedStack, subfolderData, snippets, subdomain]);
+  // Server is the single source of truth for snippet content (GET /settings/subfolder/snippets).
+  const activeSnippetCode = isSubdirectoryActive ? snippets?.[selectedStack] ?? "" : "";
 
   if (domainData === undefined || subfolderData === undefined) {
     return (
@@ -433,16 +317,11 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
       {/* ── 1. Permanent Subdomain Banner ─────────────────────────────────── */}
       <section className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">Permanent Address</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Your default Articurls URL that is always active and online.
-            </p>
-          </div>
-          <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs font-medium text-muted-foreground">
-            Default
-          </span>
+        <div>
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Permanent Address</h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Your default Articurls URL that is always active and online.
+          </p>
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
             <span className="font-mono text-sm font-medium text-foreground truncate max-w-full">
@@ -480,16 +359,11 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
       {/* ── 2. Unified Custom Domain / Subdirectory ───────────────────── */}
       <section className="space-y-6 pt-6">
-        <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg border border-border/80 bg-muted/40 text-foreground">
-            {isSubdirectoryActive ? <FolderTree className="h-4 w-4" /> : <Globe className="h-4 w-4" />}
-          </div>
-          <div>
-            <h2 className="text-base font-semibold text-foreground sm:text-lg">Custom Domain &amp; Subdirectory</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
-            </p>
-          </div>
+        <div>
+          <h2 className="text-base font-semibold text-foreground sm:text-lg">Custom Domain &amp; Subdirectory</h2>
+          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+            Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
+          </p>
         </div>
 
         <div className="space-y-6">
@@ -604,8 +478,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                 <div className="space-y-4 pt-2">
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                     <div>
-                      <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                        <Layers className="h-4 w-4 text-primary" />
+                      <h3 className="text-sm font-semibold text-foreground">
                         Reverse Proxy Setup
                       </h3>
                       <p className="text-xs text-muted-foreground">
@@ -658,9 +531,15 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
                     <p className="text-xs text-neutral-400">{currentStack.instruction}</p>
 
-                    <pre className="max-h-64 overflow-x-auto font-mono text-xs text-neutral-200 leading-relaxed">
-                      {activeSnippetCode}
-                    </pre>
+                    {activeSnippetCode ? (
+                      <pre className="max-h-64 overflow-x-auto font-mono text-xs text-neutral-200 leading-relaxed">
+                        {activeSnippetCode}
+                      </pre>
+                    ) : (
+                      <p className="text-xs text-neutral-400">
+                        Couldn&apos;t load the snippet. Please refresh the page to try again.
+                      </p>
+                    )}
                   </div>
 
                   <a
@@ -679,8 +558,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
               {isCustomDomainConfigured && domainData?.domain_status === "pending" && (
                 <div className="space-y-4 pt-2">
                   <div className="space-y-1">
-                    <h3 className="text-sm font-semibold flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
+                    <h3 className="text-sm font-semibold">
                       DNS Records
                     </h3>
                     <p className="text-xs text-muted-foreground">
@@ -750,7 +628,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                   ) : null}
 
                   <Button onClick={handleVerify} disabled={verifying} className="w-full gap-2">
-                    {verifying ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                    {verifying && <Loader2 className="h-4 w-4 animate-spin" />}
                     Verify Domain
                   </Button>
                 </div>

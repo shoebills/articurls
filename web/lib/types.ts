@@ -639,17 +639,16 @@ export interface DomainVerifyResponse {
 export interface SubfolderSettings {
   custom_domain: string | null;
   custom_subpath: string | null;
-  cf_connected: boolean;
   is_active: boolean;
 }
 
 export interface SubfolderSnippets {
-  cloudflare_worker: string;
   nextjs: string;
-  vercel?: string;
+  cloudflare: string;
+  vercel: string;
   nginx: string;
   caddy: string;
-  apache?: string;
+  apache: string;
 }
 
 export interface DomainLookupResponse {

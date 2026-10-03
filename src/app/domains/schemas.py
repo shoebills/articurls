@@ -51,14 +51,7 @@ class SubfolderIn(BaseModel):
     custom_subpath: str
 
 
-class CloudflareDeployIn(BaseModel):
-    cf_token: str
-    custom_domain: str
-    custom_subpath: str
-
-
 class SubfolderOut(BaseModel):
     custom_domain: Optional[str] = None
     custom_subpath: Optional[str] = None
-    cf_connected: bool = False
     is_active: bool = False

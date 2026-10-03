@@ -8,9 +8,8 @@ WORKER_SCRIPT_TEMPLATE = """export default {
 
     // Strip trailing slash on subpath for exact match checks
     const normalizedSubpath = subpath.replace(/\\/+$/, "");
-    const isSubpathMatch = url.pathname === normalizedSubpath || 
-                          url.pathname.startsWith(normalizedSubpath + "/") ||
-                          url.pathname === normalizedSubpath + "?";
+    const isSubpathMatch = url.pathname === normalizedSubpath ||
+                           url.pathname.startsWith(normalizedSubpath + "/");
 
     if (isSubpathMatch) {
       const proxyUrl = new URL(url.pathname + url.search, backendOrigin);
