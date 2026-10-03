@@ -76,7 +76,6 @@ class UserSettings(BaseModel):
     is_admin: bool = False
     favicon_url: Optional[str] = None
     og_image_url: Optional[str] = None
-    featured_blogs_enabled: bool = True
     featured_blog_ids: list[str] | None = []
     custom_domain: Optional[str] = None
     content_layout: Literal["grid", "list"] = "grid"

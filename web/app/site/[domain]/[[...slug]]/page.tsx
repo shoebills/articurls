@@ -9,14 +9,15 @@ import {
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
 import { PublicFaqSection } from "@/components/public-faq-section";
-import { PublicDesktopNav } from "@/components/public-desktop-nav";
-import { PublicMobileNavMenu } from "@/components/public-mobile-nav-menu";
+import { PublicNavHeader, getPublicMainSpacing } from "@/components/public-nav-header";
+import { PublicPostCard } from "@/components/public-post-card";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
-import { resolveBlogOgImage, resolveBlogCoverImage } from "@/lib/blog-images";
+import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
-import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl, getPublicPostUrl } from "@/lib/public-url";
+import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
 import { ContentEndCta } from "@/components/content-end-cta";
@@ -29,16 +30,6 @@ import { injectHeadingIds } from "@/lib/toc";
 import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
 import { SaasTemplate } from "@/components/themes/saas/saas-template";
 import { loadPublicSite } from "@/lib/public-site";
-
-function getPublicNavHeaderClass(navbarStyle?: string) {
-  if (navbarStyle === "floating") {
-    return "sticky top-4 z-40 mb-12 rounded-xl border border-border/70 bg-background/80 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm";
-  }
-  if (navbarStyle === "minimal") {
-    return "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
-  }
-  return "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
-}
 
 type Props = { params: Promise<{ domain: string; slug?: string[] }> };
 
@@ -106,23 +97,6 @@ function resolveRoutingSegments(
     };
   }
   return { segments: rawSegments, basePath: `/${base}` };
-}
-
-function resolveNavLinks(site: PublicSite, categories: Category[], basePath: string) {
-  const hasCustomNav = Array.isArray(site.nav_items) && site.nav_items.length > 0;
-  if (hasCustomNav) {
-    return site.nav_items!.map((item) => ({
-      href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
-      label: item.label,
-      is_cta: item.is_cta,
-      open_in_new_tab: item.open_in_new_tab,
-    }));
-  }
-  if (site.nav_menu_enabled === false) return [];
-  return categories.map((c) => ({
-    href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
-    label: c.name,
-  }));
 }
 
 const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupResponse | null> => {
@@ -515,7 +489,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export const viewport = {
-  themeColor: "#f4f5f8",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f5f8" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0b" },
+  ],
   other: {
     preconnect: ["https://images.articurls.com"],
     "dns-prefetch": "https://images.articurls.com",
@@ -596,14 +573,8 @@ export default async function SitePublicationPage({ params }: Props) {
       const blog = content.blog;
       const navBlogName = resolveSiteName(site);
       const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const maxWidth = "max-w-7xl";
       const isNavEnabled = site.navbar_enabled !== false;
-      const containerSpacing = isNavEnabled
-        ? `mx-auto ${maxWidth} px-[26px] pb-[max(2rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-        : `mx-auto ${maxWidth} px-[26px] py-8 pb-[max(2rem,env(safe-area-inset-bottom))] pt-[max(2rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-      
-      const desktopLinks = resolveNavLinks(site, categories, basePath);
-      const hasMobileNav = desktopLinks.length > 0;
+      const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
       const otherBlogs = (allBlogs || []).filter((b) => b.blog_id !== blog.blog_id);
       const currentCatIds = blog.category_ids || [];
@@ -698,40 +669,15 @@ export default async function SitePublicationPage({ params }: Props) {
                 </Link>
               </div>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {relatedBlogs.map((rel) => {
-                  const relUrl = getPublicPostUrl(subdomain, rel.slug, basePath);
-                  const relCover = resolveBlogCoverImage(rel);
-                  return (
-                    <Link
-                      key={rel.blog_id}
-                      href={relUrl}
-                      className="group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-4 shadow-2xs transition-all hover:border-border hover:shadow-xs"
-                    >
-                      <div>
-                        {relCover && (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={transformImageUrl(assetUrl(relCover), { width: 400, height: 220, fit: "cover" })}
-                            alt=""
-                            className="aspect-[16/9] w-full rounded-lg object-cover mb-3"
-                          />
-                        )}
-                        <h4 className="font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
-                          {rel.title}
-                        </h4>
-                      </div>
-                      {rel.published_at && (
-                        <p className="mt-3 text-xs text-muted-foreground">
-                          {new Date(rel.published_at).toLocaleDateString(undefined, {
-                            month: "short",
-                            day: "numeric",
-                            year: "numeric",
-                          })}
-                        </p>
-                      )}
-                    </Link>
-                  );
-                })}
+                {relatedBlogs.map((rel) => (
+                  <PublicPostCard
+                    key={rel.blog_id}
+                    blog={rel}
+                    subdomain={subdomain}
+                    basePath={basePath}
+                    variant="compact"
+                  />
+                ))}
               </div>
             </section>
           )}
@@ -740,7 +686,7 @@ export default async function SitePublicationPage({ params }: Props) {
 
       return (
         <ThemeStyleWrapper site={site}>
-          <article className="min-h-screen bg-background">
+          <article className="min-h-screen bg-background text-foreground">
           <StructuredData data={generateBlogPostingSchema(blog, site, withJsonLdSlash(currentUrl, site))} />
           <StructuredData data={generateBreadcrumbList([
             { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
@@ -755,37 +701,15 @@ export default async function SitePublicationPage({ params }: Props) {
               dangerouslySetInnerHTML={{ __html: JSON.stringify(blog.custom_schema) }}
             />
           )}
-          <main className={containerSpacing}>
-            {isNavEnabled ? (
-              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-                <div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    alignment={site.navbar_alignment || "left"}
-                    basePath={basePath}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    showMenuButton={hasMobileNav}
-                    basePath={basePath}
-                  />
-                </div>
-              </header>
-            ) : null}
+          <main className={mainSpacing}>
+            <PublicNavHeader
+              site={site}
+              categories={categories}
+              basePath={basePath}
+              title={navBlogName}
+              titleHref={titleHref}
+              hasBlogs={relatedBlogs.length > 0}
+            />
             {site.toc_enabled !== false ? (
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
                   <div className="max-w-3xl">
@@ -814,15 +738,9 @@ export default async function SitePublicationPage({ params }: Props) {
       const page = content.page;
       const navBlogName = resolveSiteName(site);
       const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const maxWidth = "max-w-7xl";
       const contentWidth = "max-w-3xl";
       const isNavEnabled = site.navbar_enabled !== false;
-      const mainSpacing = isNavEnabled
-        ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(1rem,env(safe-area-inset-top))] sm:px-6 sm:pb-14 sm:pt-6`
-        : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-      const desktopLinks = resolveNavLinks(site, categories, basePath);
-      const hasMobileNav = desktopLinks.length > 0;
+      const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
       const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
 
@@ -850,36 +768,14 @@ export default async function SitePublicationPage({ params }: Props) {
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(page.custom_schema) }}
               />
             )}
-            {isNavEnabled ? (
-              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-                <div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    alignment={site.navbar_alignment || "left"}
-                    basePath={basePath}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    showMenuButton={hasMobileNav}
-                    basePath={basePath}
-                  />
-                </div>
-              </header>
-            ) : null}
+            <PublicNavHeader
+              site={site}
+              categories={categories}
+              basePath={basePath}
+              title={navBlogName}
+              titleHref={titleHref}
+              hasBlogs={false}
+            />
 
             <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
               <div className="flex items-center justify-between">
@@ -946,14 +842,8 @@ export default async function SitePublicationPage({ params }: Props) {
     const categoryName = data.category.name;
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = isNavEnabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-    const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
+    const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
     const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
 
@@ -966,46 +856,51 @@ export default async function SitePublicationPage({ params }: Props) {
           { name: categoryName, url: withJsonLdSlash(currentUrl, site) },
         ])} />
         <main className={mainSpacing}>
-          {isNavEnabled ? (
-            <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-<div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    alignment={site.navbar_alignment || "left"}
-                    basePath={basePath}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    showMenuButton={hasMobileNav}
-                    basePath={basePath}
-                  />
-                </div>
-            </header>
-          ) : null}
+          <PublicNavHeader
+            site={site}
+            categories={categories}
+            basePath={basePath}
+            title={navBlogName}
+            titleHref={titleHref}
+            hasBlogs={blogs.length > 0}
+          />
+
+          {/* Back link */}
+          <div className="mb-6">
+            <Link
+              href={getPublicProfileUrl(subdomain, basePath)}
+              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+            >
+              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+              Back
+            </Link>
+          </div>
 
           {/* Category Header */}
           <div className="mb-10 text-center sm:mb-12">
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+            <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               {categoryName}
             </h1>
             <p className="mt-2 text-sm text-muted-foreground">
               {blogs.length} {blogs.length === 1 ? "article" : "articles"} in this category
             </p>
           </div>
+
+          {site.newsletter_show_near_header ? (
+            <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
+              <div className="max-w-md mx-auto">
+                <SubscribeToAuthor
+                  subdomain={site.subdomain}
+                  headline={site.newsletter_headline}
+                  text={site.newsletter_text}
+                  disclaimer={site.newsletter_disclaimer}
+                  buttonText={site.newsletter_button_text}
+                  buttonVariant={site.button_variant || "solid"}
+                  className="space-y-4 text-center"
+                />
+              </div>
+            </div>
+          ) : null}
 
           <PublicBlogListSearch
             blogs={blogs}
@@ -1041,14 +936,9 @@ export default async function SitePublicationPage({ params }: Props) {
     const author = data.author;
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = isNavEnabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
+    const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
-    const desktopLinks = resolveNavLinks(site, categories, basePath);
-    const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
     const currentUrl = `https://${host}${basePath}/author/${encodeURIComponent(authorSlug)}`;
     const siteUrl = `https://${host}${basePath}`;
     const authorAvatar = author.profile_image_url ? assetUrl(author.profile_image_url) : null;
@@ -1062,36 +952,25 @@ export default async function SitePublicationPage({ params }: Props) {
             { name: author.name, url: withJsonLdSlash(currentUrl, site) },
           ])} />
           <main className={mainSpacing}>
-            {isNavEnabled ? (
-              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-                <div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    alignment={site.navbar_alignment || "left"}
-                    basePath={basePath}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    showMenuButton={hasMobileNav}
-                    basePath={basePath}
-                  />
-                </div>
-              </header>
-            ) : null}
+            <PublicNavHeader
+              site={site}
+              categories={categories}
+              basePath={basePath}
+              title={navBlogName}
+              titleHref={titleHref}
+              hasBlogs={blogs.length > 0}
+            />
+
+            {/* Back link */}
+            <div className="mb-6">
+              <Link
+                href={getPublicProfileUrl(subdomain, basePath)}
+                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+              >
+                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Back
+              </Link>
+            </div>
 
             {/* Author Profile Header */}
             <div className="mb-12 rounded-2xl border border-border/70 bg-card p-8 sm:p-10 shadow-xs">
@@ -1109,7 +988,7 @@ export default async function SitePublicationPage({ params }: Props) {
                   </div>
                 )}
                 <div className="space-y-3 flex-1 min-w-0">
-                  <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">{author.name}</h1>
+                  <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{author.name}</h1>
                   {author.occupation ? (
                     <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
                       <BriefcaseBusiness className="h-4 w-4 shrink-0 text-muted-foreground" />
@@ -1135,6 +1014,22 @@ export default async function SitePublicationPage({ params }: Props) {
                 </div>
               </div>
             </div>
+
+            {site.newsletter_show_near_header ? (
+              <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
+                <div className="max-w-md mx-auto">
+                  <SubscribeToAuthor
+                    subdomain={site.subdomain}
+                    headline={site.newsletter_headline}
+                    text={site.newsletter_text}
+                    disclaimer={site.newsletter_disclaimer}
+                    buttonText={site.newsletter_button_text}
+                    buttonVariant={site.button_variant || "solid"}
+                    className="space-y-4 text-center"
+                  />
+                </div>
+              </div>
+            ) : null}
 
             <div className="mb-6">
               <h2 className="text-lg font-semibold tracking-tight">Articles by {author.name}</h2>
@@ -1169,14 +1064,8 @@ export default async function SitePublicationPage({ params }: Props) {
 
     const navBlogName = resolveSiteName(site);
     const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const maxWidth = "max-w-7xl";
     const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = isNavEnabled
-      ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-      : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-    const desktopLinks = resolveNavLinks(site, allCategories, basePath);
-    const hasMobileNav = desktopLinks.length > 0;
+    const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
     const currentUrl = `https://${host}${basePath}/categories`;
 
@@ -1189,36 +1078,14 @@ export default async function SitePublicationPage({ params }: Props) {
             { name: "Categories", url: withJsonLdSlash(currentUrl, site) },
           ])} />
           <main className={mainSpacing}>
-            {isNavEnabled ? (
-              <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-                <div className="hidden w-full sm:block">
-                  <PublicDesktopNav
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    alignment={site.navbar_alignment || "left"}
-                    basePath={basePath}
-                  />
-                </div>
-                <div className="sm:hidden">
-                  <PublicMobileNavMenu
-                    title={navBlogName}
-                    titleHref={titleHref}
-                    logoUrl={site.logo_url}
-                    searchEnabled={site.search_enabled !== false}
-                    themeToggleEnabled={site.theme_toggle_enabled !== false}
-                    links={desktopLinks}
-                    subdomain={site.subdomain}
-                    showMenuButton={hasMobileNav}
-                    basePath={basePath}
-                  />
-                </div>
-              </header>
-            ) : null}
+            <PublicNavHeader
+              site={site}
+              categories={allCategories}
+              basePath={basePath}
+              title={navBlogName}
+              titleHref={titleHref}
+              hasBlogs={false}
+            />
 
             {/* Back link */}
             <div className="mb-8">
@@ -1233,7 +1100,7 @@ export default async function SitePublicationPage({ params }: Props) {
 
             {/* Categories Hub Header */}
             <div className="mb-10 text-center sm:mb-12">
-              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
+              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
                 Topics & Categories
               </h1>
               <p className="mt-2 text-sm text-muted-foreground">

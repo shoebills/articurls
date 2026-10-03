@@ -117,7 +117,6 @@ class Site(Base):
     # Content & Presentation
     content_layout = Column(String(16), nullable=False, default="grid", server_default="grid")
     show_preview_in_lists = Column(Boolean, nullable=False, default=True)
-    featured_blogs_enabled = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     posts_per_page = Column(Integer, nullable=False, default=12, server_default="12")
     pagination_type = Column(String(16), nullable=False, default="prev_next", server_default="prev_next")

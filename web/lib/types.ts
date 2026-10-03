@@ -218,7 +218,6 @@ export interface PublicSite {
   newsletter_show_in_footer?: boolean;
   newsletter_webhook_url?: string | null;
   favicon_url?: string | null;
-  featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
   content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
@@ -310,7 +309,6 @@ export interface UserSettings {
   newsletter_webhook_token?: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
-  featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
   content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
@@ -493,7 +491,6 @@ export interface DesignSettings {
   newsletter_webhook_url?: string | null;
   newsletter_webhook_token?: string | null;
 
-  featured_blogs_enabled: boolean;
   featured_blog_ids: string[];
   content_layout: ContentLayout;
   show_preview_in_lists: boolean;

@@ -211,7 +211,7 @@ export function SearchButton({
       {mounted ? (
         <>
           <div
-            className={`fixed inset-0 z-40 bg-black/10 transition-opacity duration-150 ease-out dark:bg-black/40 ${
+            className={`fixed inset-0 z-40 bg-foreground/15 backdrop-blur-xs transition-opacity duration-150 ease-out ${
               visible ? "opacity-100" : "opacity-0"
             }`}
             onClick={closeSearch}

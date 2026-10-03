@@ -6,10 +6,10 @@ import type { PublicBlog, PublicSite, UserPage, Category } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public-site-footer";
-import { PublicDesktopNav, PublicNavDesktopLink } from "@/components/public-desktop-nav";
-import { PublicMobileNavMenu, PublicMobileNavLink } from "@/components/public-mobile-nav-menu";
-import { getPublicCategoryUrl, getPublicPostUrl, getPublicProfileUrl } from "@/lib/public-url";
-import { resolveBlogCoverImage } from "@/lib/blog-images";
+import { PublicNavHeader, getPublicMainSpacing } from "@/components/public-nav-header";
+import { PublicPostCard } from "@/components/public-post-card";
+import { PublicEmptyState } from "@/components/public-empty-state";
+import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 type SaasTemplateProps = {
   site: PublicSite;
@@ -22,49 +22,8 @@ type SaasTemplateProps = {
 export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasTemplateProps) {
   const displayName = (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
   const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
-  const maxWidth = "max-w-7xl";
   const isNavEnabled = site.navbar_enabled !== false;
-  const mainSpacing = isNavEnabled
-    ? `mx-auto ${maxWidth} px-[26px] pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-0 sm:px-6 sm:pb-14 sm:pt-0`
-    : `mx-auto ${maxWidth} px-[26px] py-10 pb-[max(2.5rem,env(safe-area-inset-bottom))] pt-[max(2.5rem,env(safe-area-inset-top))] sm:px-6 sm:py-14 sm:pb-14 sm:pt-14`;
-
-  const hasCustomNav = Array.isArray(site.nav_items) && site.nav_items.length > 0;
-
-  const desktopLinks: PublicNavDesktopLink[] = hasCustomNav
-    ? site.nav_items!.map((item) => ({
-        href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
-        label: item.label,
-        is_cta: item.is_cta,
-        open_in_new_tab: item.open_in_new_tab,
-      }))
-    : site.nav_menu_enabled !== false
-      ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
-          label: c.name,
-        }))
-      : [];
-
-  const mobileLinks: PublicMobileNavLink[] = hasCustomNav
-    ? site.nav_items!.map((item) => ({
-        href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
-        label: item.label,
-        is_cta: item.is_cta,
-        open_in_new_tab: item.open_in_new_tab,
-      }))
-    : site.nav_menu_enabled !== false
-      ? categories.map((c) => ({
-          href: getPublicCategoryUrl(site.subdomain, c.slug, basePath),
-          label: c.name,
-        }))
-      : [];
-
-  const hasMobileNav = desktopLinks.length > 0 || blogs.length > 0;
-
-  const publicNavHeaderClass = site.navbar_style === "floating"
-    ? "sticky top-4 z-40 mb-12 rounded-xl border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm"
-    : site.navbar_style === "minimal"
-      ? "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6"
-      : "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+  const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
   const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
 
@@ -96,36 +55,14 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
   return (
     <div className="min-h-screen bg-background text-foreground">
       <main className={mainSpacing}>
-        {isNavEnabled ? (
-          <header className={publicNavHeaderClass} data-public-nav>
-            <div className="hidden w-full sm:block">
-              <PublicDesktopNav
-                title={displayName}
-                titleHref={titleHref}
-                logoUrl={site.logo_url}
-                searchEnabled={site.search_enabled !== false}
-                themeToggleEnabled={site.theme_toggle_enabled !== false}
-                links={desktopLinks}
-                subdomain={site.subdomain}
-                alignment={site.navbar_alignment || "left"}
-                buttonVariant={site.button_variant || "solid"}
-              />
-            </div>
-            <div className="sm:hidden">
-              <PublicMobileNavMenu
-                title={displayName}
-                titleHref={titleHref}
-                logoUrl={site.logo_url}
-                searchEnabled={site.search_enabled !== false}
-                themeToggleEnabled={site.theme_toggle_enabled !== false}
-                links={mobileLinks}
-                subdomain={site.subdomain}
-                showMenuButton={hasMobileNav}
-                buttonVariant={site.button_variant || "solid"}
-              />
-            </div>
-          </header>
-        ) : null}
+        <PublicNavHeader
+          site={site}
+          categories={categories}
+          basePath={basePath}
+          title={displayName}
+          titleHref={titleHref}
+          hasBlogs={blogs.length > 0}
+        />
 
         {/* SaaS Hero */}
         {hasHero ? (
@@ -199,63 +136,27 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
 
         {/* Feed List */}
         {sortedBlogs.length === 0 ? (
-          <div className="py-24 text-center">
-            <p className="text-base text-muted-foreground">No posts published yet.</p>
-          </div>
+          <PublicEmptyState message="No published posts yet." />
         ) : isGrid ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {pagedBlogs.map((b) => {
-              const postHref = getPublicPostUrl(site.subdomain, b.slug, basePath);
-              const coverImg = resolveBlogCoverImage(b);
-              const firstCat = b.category_ids && b.category_ids.length > 0
-                ? categories.find(c => c.category_id === b.category_ids![0])
-                : null;
-
-              return (
-                <Link
-                  key={b.blog_id}
-                  href={postHref}
-                  className="group flex flex-col h-full bg-card rounded-2xl border border-border/70 overflow-hidden hover:border-primary/50 transition-all shadow-2xs hover:shadow-sm"
-                >
-                  {coverImg ? (
-                    <div className="aspect-[16/9] w-full overflow-hidden bg-muted">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img
-                        src={coverImg}
-                        alt={b.title}
-                        className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                        loading="lazy"
-                      />
-                    </div>
-                  ) : null}
-                  <div className="p-6 flex flex-col flex-1">
-                    {firstCat ? (
-                      <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-3">
-                        {firstCat.name}
-                      </span>
-                    ) : null}
-                    <h3 className="text-xl font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
-                      {b.title}
-                    </h3>
-                    {showPreview && b.excerpt ? (
-                      <p className="text-muted-foreground text-sm line-clamp-3 mb-6 flex-1">
-                        {b.excerpt}
-                      </p>
-                    ) : null}
-
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto pt-4 border-t border-border/40">
-                      <span>{b.author ? b.author.name : site.name}</span>
-                      {b.published_at && (
-                        <time dateTime={b.published_at}>
-                          {new Date(b.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                        </time>
-                      )}
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
+                const firstCat = b.category_ids && b.category_ids.length > 0
+                  ? categories.find((c) => c.category_id === b.category_ids![0])
+                  : null;
+                return (
+                  <PublicPostCard
+                    key={b.blog_id}
+                    blog={b}
+                    subdomain={site.subdomain}
+                    basePath={basePath}
+                    category={firstCat}
+                    authorName={b.author ? b.author.name : site.name}
+                    showPreview={showPreview}
+                    variant="card"
+                  />
+                );
+              })}
             </div>
             {sortedBlogs.length > 0 ? (
               paginationType === "numbered" && totalPages > 1 ? (
@@ -263,6 +164,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
@@ -274,6 +176,8 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                       key={num}
                       variant={num === currentPage ? "default" : "outline"}
                       size="sm"
+                      data-button-radius="true"
+                      data-button-variant={num === currentPage ? (site.button_variant || "solid") : undefined}
                       className="h-8 w-8 min-h-0 p-0 text-xs"
                       onClick={() => setPage(num)}
                     >
@@ -283,6 +187,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
@@ -295,6 +200,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
@@ -307,6 +213,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
@@ -321,57 +228,22 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           <>
             <div className="space-y-0">
               {pagedBlogs.map((b) => {
-              const postHref = getPublicPostUrl(site.subdomain, b.slug, basePath);
-              const coverImg = resolveBlogCoverImage(b);
-              const firstCat = b.category_ids && b.category_ids.length > 0
-                ? categories.find(c => c.category_id === b.category_ids![0])
-                : null;
-
-              return (
-                <Link
-                  key={b.blog_id}
-                  href={postHref}
-                  className="group block py-6 border-b border-border/40 last:border-0"
-                >
-                  <div className="flex items-start gap-4 sm:gap-6">
-                    <div className="min-w-0 flex-1">
-                      {firstCat ? (
-                        <span className="text-xs font-semibold text-primary uppercase tracking-wider mb-2 inline-block">
-                          {firstCat.name}
-                        </span>
-                      ) : null}
-                      <h3 className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors">
-                        {b.title}
-                      </h3>
-                      {showPreview && b.excerpt ? (
-                        <p className="text-muted-foreground text-sm line-clamp-2 mt-2">
-                          {b.excerpt}
-                        </p>
-                      ) : null}
-                      <div className="flex items-center justify-between text-xs text-muted-foreground mt-3">
-                        <span className="truncate">{b.author ? b.author.name : site.name}</span>
-                        {b.published_at && (
-                          <time dateTime={b.published_at} className="shrink-0 ml-2">
-                            {new Date(b.published_at).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                          </time>
-                        )}
-                      </div>
-                    </div>
-                    {coverImg ? (
-                      <div className="shrink-0 w-24 sm:w-56">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src={coverImg}
-                          alt={b.title}
-                          className="aspect-[3/2] w-full object-cover rounded-md border border-border/70"
-                          loading="lazy"
-                        />
-                      </div>
-                    ) : null}
-                  </div>
-                </Link>
-              );
-            })}
+                const firstCat = b.category_ids && b.category_ids.length > 0
+                  ? categories.find((c) => c.category_id === b.category_ids![0])
+                  : null;
+                return (
+                  <PublicPostCard
+                    key={b.blog_id}
+                    blog={b}
+                    subdomain={site.subdomain}
+                    basePath={basePath}
+                    category={firstCat}
+                    authorName={b.author ? b.author.name : site.name}
+                    showPreview={showPreview}
+                    variant="row"
+                  />
+                );
+              })}
             </div>
             {sortedBlogs.length > 0 ? (
               paginationType === "numbered" && totalPages > 1 ? (
@@ -379,6 +251,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
@@ -390,6 +263,8 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                       key={num}
                       variant={num === currentPage ? "default" : "outline"}
                       size="sm"
+                      data-button-radius="true"
+                      data-button-variant={num === currentPage ? (site.button_variant || "solid") : undefined}
                       className="h-8 w-8 min-h-0 p-0 text-xs"
                       onClick={() => setPage(num)}
                     >
@@ -399,6 +274,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}
@@ -411,6 +287,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                     disabled={currentPage <= 1}
@@ -423,6 +300,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
                   <Button
                     variant="outline"
                     size="sm"
+                    data-button-radius="true"
                     className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
                     onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                     disabled={currentPage >= totalPages}

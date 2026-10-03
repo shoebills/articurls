@@ -58,7 +58,6 @@ def public_site_out(db: Session, db_site: models.Site):
         "newsletter_show_in_footer": db_site.newsletter_show_in_footer,
         "newsletter_webhook_url": db_site.newsletter_webhook_url,
         "favicon_url": db_site.favicon_url,
-        "featured_blogs_enabled": db_site.featured_blogs_enabled,
         "featured_blog_ids": [str(bid) for bid in (db_site.featured_blog_ids or [])],
         "content_layout": db_site.content_layout,
         "show_preview_in_lists": db_site.show_preview_in_lists,
@@ -151,7 +150,6 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "newsletter_webhook_token": db_site.newsletter_webhook_token,
         "is_admin": False,  # handled downstream if needed
         "favicon_url": db_site.favicon_url,
-        "featured_blogs_enabled": db_site.featured_blogs_enabled,
         "featured_blog_ids": [str(bid) for bid in (db_site.featured_blog_ids or [])],
         "custom_domain": db_site.custom_domain,
         "content_layout": db_site.content_layout,

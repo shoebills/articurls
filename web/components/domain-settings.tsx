@@ -241,7 +241,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
       if (result.verification_status === "verified" || result.verification_status === "already_verified") {
         await loadAll(token);
         setDnsInstructions([]);
-        setSuccess("Domain verified! Your custom domain is now active.");
+        setSuccess("Domain verified! Your custom domain is now active. SSL is issued automatically — if your browser shows a privacy warning, wait a few minutes and reload.");
       } else {
         if (result.dns_instructions) {
           setDnsInstructions(result.dns_instructions);

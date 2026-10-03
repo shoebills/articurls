@@ -1,12 +1,10 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import type { PublicBlog, PublicSite, ContentLayout } from "@/lib/types";
 import { Button } from "@/components/ui/button";
-import { resolveBlogCoverImage } from "@/lib/blog-images";
-import { getPublicPostUrl } from "@/lib/public-url";
-import { Calendar, Image, Pin } from "lucide-react";
+import { PublicPostCard } from "@/components/public-post-card";
+import { PublicEmptyState } from "@/components/public-empty-state";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -21,203 +19,6 @@ type PublicBlogListSearchProps = {
 
 const POSTS_PER_PAGE = 12;
 
-function BlogListItemRow({
-  blog: b,
-  subdomain,
-  authorName,
-  inGrid = false,
-  largeImage = false,
-  showPreview = true,
-  basePath = "",
-}: {
-  blog: PublicBlog;
-  subdomain: string;
-  authorName?: string;
-  inGrid?: boolean;
-  largeImage?: boolean;
-  showPreview?: boolean;
-  basePath?: string;
-}) {
-  const previewImage = resolveBlogCoverImage(b);
-  return (
-    <li className={inGrid ? "" : "py-5 first:pt-0"}>
-      <div className="rounded-xl py-1">
-        <Link href={getPublicPostUrl(subdomain, b.slug, basePath)} className="group block transition-colors hover:bg-muted/30">
-          <div className="flex items-start gap-4">
-            <div className="min-w-0 flex-1">
-              <h3 className="min-w-0 truncate text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
-                {b.is_pinned && (
-                  <span title="Pinned post" className="inline-flex shrink-0">
-                    <Pin className="h-4 w-4 text-primary rotate-45" />
-                  </span>
-                )}
-                <span className="truncate">{b.title}</span>
-              </h3>
-{showPreview && b.excerpt ? <p className={`mt-2 text-muted-foreground ${largeImage ? "max-sm:line-clamp-2" : "line-clamp-2"}`}>{b.excerpt}</p> : null}
-            </div>
-            {previewImage ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={previewImage}
-                alt=""
-                width={largeImage ? 224 : 96}
-                height={largeImage ? 149 : 64}
-                className={`aspect-[3/2] shrink-0 rounded-md border border-border/70 object-cover w-24 sm:${largeImage ? "w-56" : "w-36"}`}
-              />
-            ) : null}
-          </div>
-        </Link>
-        <div className="mt-3 flex items-center justify-between gap-2">
-          <span className="truncate text-sm text-muted-foreground">{authorName}</span>
-          {b.published_at ? (
-            <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
-              <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
-              {new Date(b.published_at).toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}
-            </time>
-          ) : (
-            <span className="text-sm text-muted-foreground" aria-hidden />
-          )}
-        </div>
-      </div>
-    </li>
-  );
-}
-
-function BlogListAboveTitleItem({
-  blog: b,
-  subdomain,
-  authorName,
-  showPreview = true,
-  basePath = "",
-}: {
-  blog: PublicBlog;
-  subdomain: string;
-  authorName?: string;
-  showPreview?: boolean;
-  basePath?: string;
-}) {
-  const previewImage = resolveBlogCoverImage(b);
-  return (
-    <li className="py-5 first:pt-0">
-      <Link
-        href={getPublicPostUrl(subdomain, b.slug, basePath)}
-        className="group block"
-      >
-        {previewImage ? (
-          <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm mb-4 transition-shadow group-hover:shadow-md">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={previewImage}
-              alt=""
-              width={600}
-              height={400}
-              className="aspect-[3/2] w-full object-cover"
-            />
-          </div>
-        ) : null}
-        <h3 className="text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
-          {b.is_pinned && (
-            <span title="Pinned post" className="inline-flex shrink-0">
-              <Pin className="h-4 w-4 text-primary rotate-45" />
-            </span>
-          )}
-          <span>{b.title}</span>
-        </h3>
-        {showPreview && b.excerpt ? <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p> : null}
-      </Link>
-      <div className="mt-3 flex items-center justify-between gap-2">
-        <span className="truncate text-sm text-muted-foreground">{authorName}</span>
-        {b.published_at ? (
-          <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
-            <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
-            {new Date(b.published_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </time>
-        ) : (
-          <span className="text-sm text-muted-foreground" aria-hidden />
-        )}
-      </div>
-    </li>
-  );
-}
-
-function BlogCardGridItem({
-  blog: b,
-  subdomain,
-  authorName,
-  showPreview = true,
-  basePath = "",
-}: {
-  blog: PublicBlog;
-  subdomain: string;
-  authorName?: string;
-  showPreview?: boolean;
-  basePath?: string;
-}) {
-  const previewImage = resolveBlogCoverImage(b);
-  return (
-    <li className="break-inside-avoid">
-      <Link
-        href={getPublicPostUrl(subdomain, b.slug, basePath)}
-        className="group block"
-      >
-        <div className="overflow-hidden rounded-xl border border-border/70 shadow-sm transition-shadow group-hover:shadow-md">
-          {previewImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={previewImage}
-              alt=""
-              width={600}
-              height={400}
-              className="aspect-[3/2] w-full object-cover"
-            />
-          ) : (
-            <div className="flex aspect-[3/2] w-full items-center justify-center bg-muted/30">
-              {/* eslint-disable-next-line jsx-a11y/alt-text */}
-              <Image className="h-8 w-8 text-muted-foreground/40" />
-            </div>
-          )}
-        </div>
-        <div className="pt-4 pb-3">
-          <h3 className="line-clamp-2 text-xl font-semibold tracking-tight group-hover:text-primary group-hover:underline decoration-primary/30 underline-offset-4 flex items-center gap-1.5">
-            {b.is_pinned && (
-              <span title="Pinned post" className="inline-flex shrink-0">
-                <Pin className="h-4 w-4 text-primary rotate-45" />
-              </span>
-            )}
-            <span>{b.title}</span>
-          </h3>
-          {showPreview && b.excerpt ? (
-            <p className="mt-2 line-clamp-2 text-muted-foreground">{b.excerpt}</p>
-          ) : null}
-        </div>
-      </Link>
-      <div className="flex items-center justify-between gap-2 pb-1">
-        <span className="truncate text-sm text-muted-foreground">{authorName}</span>
-        {b.published_at ? (
-          <time className="inline-flex items-center gap-1 text-sm text-muted-foreground" dateTime={b.published_at}>
-            <Calendar className="h-3 w-3 shrink-0" aria-hidden="true" />
-            {new Date(b.published_at).toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "short",
-              day: "numeric",
-            })}
-          </time>
-        ) : (
-          <span className="text-sm text-muted-foreground" aria-hidden />
-        )}
-      </div>
-    </li>
-  );
-}
-
 export function PublicBlogListSearch({
   blogs,
   subdomain,
@@ -229,15 +30,15 @@ export function PublicBlogListSearch({
 }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
+  const featuredBlogIds = site?.featured_blog_ids;
   const featuredBlogs = useMemo(() => {
     if (hideFeatured) return [];
-    if (!site?.featured_blogs_enabled) return [];
-    if (!site.featured_blog_ids || site.featured_blog_ids.length === 0) return [];
+    if (!featuredBlogIds || featuredBlogIds.length === 0) return [];
     
-    return site.featured_blog_ids
+    return featuredBlogIds
       .map(id => blogs.find(b => b.blog_id === id))
       .filter((b): b is PublicBlog => Boolean(b));
-  }, [site, blogs, hideFeatured]);
+  }, [featuredBlogIds, blogs, hideFeatured]);
   
   const showFeatured = featuredBlogs.length > 0;
 
@@ -264,22 +65,14 @@ export function PublicBlogListSearch({
   }, [sortedBlogs, currentPage, postsPerPage]);
 
   const isGrid = content_layout === "grid";
-
-  let ItemComponent: typeof BlogListItemRow;
-  let listClass = "";
-
-  if (isGrid) {
-    ItemComponent = BlogCardGridItem;
-    listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
-  } else {
-    ItemComponent = function BlogListItemRowLarge(props) { return <BlogListItemRow {...props} largeImage />; };
-    listClass = "";
-  }
+  const listClass = isGrid
+    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+    : "space-y-0";
 
   if (blogs.length === 0) {
     return (
       <section className="mt-5 sm:mt-6">
-        <p className="rounded-xl border border-dashed border-border/80 bg-background px-4 py-3 text-center text-sm leading-relaxed text-muted-foreground">No published posts yet.</p>
+        <PublicEmptyState message="No published posts yet." />
       </section>
     );
   }
@@ -289,35 +82,37 @@ export function PublicBlogListSearch({
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
-          <ul className={listClass}>
-            {featuredBlogs.map(b => (
-                <ItemComponent
-                  key={`featured-${b.blog_id}`}
-                  blog={b}
-                  subdomain={subdomain}
-                  authorName={b.author?.name || site?.name}
-                  showPreview={show_preview_in_lists}
-                  basePath={basePath}
-                />
+          <div className={listClass}>
+            {featuredBlogs.map((b) => (
+              <PublicPostCard
+                key={`featured-${b.blog_id}`}
+                blog={b}
+                subdomain={subdomain}
+                authorName={b.author?.name || site?.name}
+                showPreview={show_preview_in_lists}
+                basePath={basePath}
+                variant={isGrid ? "card" : "row"}
+              />
             ))}
-          </ul>
+          </div>
         </div>
       ) : null}
 
       <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Recent Posts</h2>
 
-      <ul className={listClass}>
+      <div className={listClass}>
         {pagedBlogs.map((b) => (
-          <ItemComponent
+          <PublicPostCard
             key={b.blog_id}
             blog={b}
             subdomain={subdomain}
             authorName={b.author?.name || site?.name}
             showPreview={show_preview_in_lists}
             basePath={basePath}
+            variant={isGrid ? "card" : "row"}
           />
         ))}
-      </ul>
+      </div>
 
       {sortedBlogs.length > 0 ? (
         paginationType === "numbered" && totalPages > 1 ? (
@@ -325,6 +120,7 @@ export function PublicBlogListSearch({
             <Button
               variant="outline"
               size="sm"
+              data-button-radius="true"
               className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
@@ -336,6 +132,8 @@ export function PublicBlogListSearch({
                 key={num}
                 variant={num === currentPage ? "default" : "outline"}
                 size="sm"
+                data-button-radius="true"
+                data-button-variant={num === currentPage ? (site?.button_variant || "solid") : undefined}
                 className="h-8 w-8 min-h-0 p-0 text-xs"
                 onClick={() => setPage(num)}
               >
@@ -345,6 +143,7 @@ export function PublicBlogListSearch({
             <Button
               variant="outline"
               size="sm"
+              data-button-radius="true"
               className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}
@@ -357,6 +156,7 @@ export function PublicBlogListSearch({
             <Button
               variant="outline"
               size="sm"
+              data-button-radius="true"
               className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
@@ -369,6 +169,7 @@ export function PublicBlogListSearch({
             <Button
               variant="outline"
               size="sm"
+              data-button-radius="true"
               className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={currentPage >= totalPages}

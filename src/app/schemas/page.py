@@ -125,7 +125,6 @@ class DesignSettings(BaseModel):
     newsletter_webhook_url: Optional[str] = None
     newsletter_webhook_token: Optional[str] = None
 
-    featured_blogs_enabled: bool = True
     featured_blog_ids: list[str] | None = []
     content_layout: Literal["grid", "list"] = "grid"
     show_preview_in_lists: bool = True

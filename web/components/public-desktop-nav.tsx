@@ -100,12 +100,13 @@ export function PublicDesktopNav({
   }, [regularLinks]);
 
   useLayoutEffect(() => {
-    recompute();
+    const raf = requestAnimationFrame(recompute);
     const slot = navSlotRef.current;
-    if (!slot) return;
+    if (!slot) return () => cancelAnimationFrame(raf);
     const ro = new ResizeObserver(() => recompute());
     ro.observe(slot);
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
     };
   }, [recompute]);

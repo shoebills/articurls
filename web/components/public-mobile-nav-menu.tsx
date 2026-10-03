@@ -115,18 +115,18 @@ export function PublicMobileNavMenu({
               <img
                 src={assetUrl(logoUrl)}
                 alt={title}
-                className="h-7 max-h-7 w-auto object-contain"
+                className="h-8 max-h-8 w-auto object-contain"
               />
             ) : (
-              <span className="font-bold text-2xl tracking-tight truncate">{title}</span>
+              <span className="font-bold text-2xl tracking-tight truncate text-foreground">{title}</span>
             )}
           </Link>
         ) : (
           logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={assetUrl(logoUrl)} alt={title} className="h-7 max-h-7 w-auto object-contain" />
+            <img src={assetUrl(logoUrl)} alt={title} className="h-8 max-h-8 w-auto object-contain" />
           ) : (
-            <p className="font-bold text-2xl tracking-tight truncate">{title}</p>
+            <p className="font-bold text-2xl tracking-tight truncate text-foreground">{title}</p>
           )
         )}
 
