@@ -346,7 +346,7 @@ export function NavBuilder({
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Header Logo Image</label>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                Replaces the site name text in the header when set.
+                Replaces the site name text in the header when set. PNG, JPG, WebP or SVG up to 2MB.
               </p>
             </div>
             <div className="flex flex-col items-start gap-3">
@@ -404,9 +404,6 @@ export function NavBuilder({
                   </Button>
                 ) : null}
               </div>
-              <p className="text-[11px] text-muted-foreground">
-                PNG, JPG, WebP or SVG up to 2MB.
-              </p>
               {logoError && (
                 <p className="text-xs text-destructive">{logoError}</p>
               )}

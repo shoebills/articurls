@@ -201,7 +201,7 @@ export default function GeneralSettingsPage() {
           <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <div className="space-y-10">
+        <div className="space-y-6">
           {/* Hero Section */}
           <section className="space-y-4">
             <div>
@@ -242,9 +242,6 @@ export default function GeneralSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Site Identity</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Your publication favicon shown in the browser tab.
-              </p>
             </div>
 
             {/* Blog favicon */}
@@ -252,7 +249,7 @@ export default function GeneralSettingsPage() {
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">Blog favicon</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">
-                  Recommended 512×512px, max 256KB.
+                  Your publication favicon shown in the browser tab. Recommended 512×512px, max 256KB.
                 </p>
               </div>
               <div className="flex flex-col items-start gap-3">
@@ -262,7 +259,7 @@ export default function GeneralSettingsPage() {
                     <img
                       src={assetUrl(ctxUser.favicon_url)}
                       alt="Favicon"
-                      className="h-24 w-24 object-contain"
+                      className="h-[80%] w-[80%] object-contain"
                     />
                   ) : (
                     <Globe className="h-18 w-18 text-muted-foreground/50" />
@@ -334,9 +331,6 @@ export default function GeneralSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Language &amp; Region</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Set the primary language used in your site markup and social previews.
-              </p>
             </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
@@ -351,7 +345,7 @@ export default function GeneralSettingsPage() {
                   onValueChange={setSiteLanguage}
                   disabled={busy}
                 >
-                  <SelectTrigger id="site_language" className="mt-2">
+                  <SelectTrigger id="site_language" className="mt-2 max-w-1/2">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
@@ -373,7 +367,7 @@ export default function GeneralSettingsPage() {
                 </div>
                 <Input
                   id="og_locale"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   placeholder="e.g. en_US"
                   maxLength={10}
                   value={ogLocale}
@@ -388,11 +382,8 @@ export default function GeneralSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Content Feeds</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Enable syndication feeds so readers can follow your publication.
-              </p>
             </div>
-            <div className="space-y-6 max-w-md">
+            <div className="space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">RSS Feed</p>
@@ -427,11 +418,8 @@ export default function GeneralSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Utilities</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Manual maintenance actions for your publication.
-              </p>
             </div>
-            <div className="space-y-4 max-w-md">
+            <div className="space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Clear Cache</p>
