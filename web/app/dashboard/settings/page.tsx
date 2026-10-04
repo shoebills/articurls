@@ -14,6 +14,7 @@ import {
   Plug2,
   type LucideIcon,
 } from "lucide-react";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 
 interface SettingCardItem {
   id: string;
@@ -152,11 +153,14 @@ function SettingsCard({ item }: { item: SettingCardItem }) {
 export default function SettingsPage() {
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Settings" }]}
+      />
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Settings</h1>
       </div>
 
-      <div className="space-y-8 sm:space-y-10">
+      <div className="space-y-6">
         {SETTINGS_SECTIONS.map((section, idx) => (
           <section key={section.title} className={idx === 0 ? "space-y-4" : "space-y-4 pt-6"}>
             <div>

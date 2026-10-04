@@ -91,7 +91,11 @@ export default function NavigationSettingsPage() {
       </div>
 
       {loading || !design ? (
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       ) : (
         <NavBuilder settings={design} onChange={handleUpdate} />
       )}

@@ -77,37 +77,34 @@ export default function ContentSettingsPage() {
       <SettingsBreadcrumb current="Content & Reading" />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Content & Reading</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure reading widths, article list layouts, pagination, and table of contents.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Content & Reading</h1>
       </div>
 
       {loading || !design ? (
         <div className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-10">
+        <form onSubmit={handleSave} className="space-y-6">
           {/* Feed & Pagination */}
           <section className="space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Feed &amp; Pagination</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Control how many posts appear per page and how readers navigate between them.
-              </p>
             </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
-                <Label htmlFor="posts_per_page">Posts Per Page</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="posts_per_page">Posts Per Page</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Number of articles displayed per page in your home and category feeds (6–48).
+                  </p>
+                </div>
                 <Input
                   id="posts_per_page"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   type="number"
                   min={6}
                   max={48}
@@ -122,19 +119,21 @@ export default function ContentSettingsPage() {
                   }}
                   disabled={saving}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Number of articles displayed per page in your home and category feeds (6–48).
-                </p>
               </div>
 
               <div className="space-y-2.5">
-                <Label htmlFor="pagination_type">Pagination Style</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="pagination_type">Pagination Style</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Controls how visitors navigate through multiple pages of posts.
+                  </p>
+                </div>
                 <Select
                   value={design.pagination_type || "prev_next"}
                   onValueChange={(val) => setDesign({ ...design, pagination_type: val as "prev_next" | "numbered" })}
                   disabled={saving}
                 >
-                  <SelectTrigger id="pagination_type" className="mt-2">
+                  <SelectTrigger id="pagination_type" className="mt-2 max-w-1/2">
                     <SelectValue placeholder="Select style" />
                   </SelectTrigger>
                   <SelectContent>
@@ -142,19 +141,19 @@ export default function ContentSettingsPage() {
                     <SelectItem value="numbered">Numbered Pages (1, 2, 3...)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Controls how visitors navigate through multiple pages of posts.
-                </p>
               </div>
             </div>
           </section>
 
           {/* Table of Contents (TOC) */}
-          <section className="pt-6">
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Table of Contents (TOC)</h2>
+            </div>
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <h2 className="text-base font-semibold text-foreground sm:text-lg">Table of Contents (TOC)</h2>
-                <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                <p className="text-sm font-medium">Show Table of Contents</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   Automatically extracts headings from your articles and shows a quick jump menu. Hides silently when an article has no headings.
                 </p>
               </div>
@@ -170,19 +169,21 @@ export default function ContentSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Article &amp; Feed Layout</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Choose how articles are presented across your home and category feeds.
-              </p>
             </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
-                <Label htmlFor="content_layout">Content layout</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="content_layout">Content layout</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Grid shows cards with image above title, list shows image beside title.
+                  </p>
+                </div>
                 <Select
                   value={design.content_layout || "grid"}
                   onValueChange={(val) => setDesign({ ...design, content_layout: val as ContentLayout })}
                   disabled={saving}
                 >
-                  <SelectTrigger id="content_layout" className="mt-2">
+                  <SelectTrigger id="content_layout" className="mt-2 max-w-1/2">
                     <SelectValue placeholder="Select layout" />
                   </SelectTrigger>
                   <SelectContent>
@@ -190,16 +191,13 @@ export default function ContentSettingsPage() {
                     <SelectItem value="list">List (Image beside)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Grid shows cards with image above title, list shows image beside title.
-                </p>
               </div>
             </div>
 
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Show Excerpt Preview in Lists</p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-muted-foreground sm:text-sm">
                   Display a short preview summary below article titles in feeds.
                 </p>
               </div>

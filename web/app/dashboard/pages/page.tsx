@@ -26,6 +26,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { format } from "date-fns";
 import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, FileText, Filter, MoreVertical, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -196,8 +197,11 @@ export default function PagesDashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px]">
-      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-[1100px] space-y-6">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Pages" }]}
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center justify-between gap-3 sm:block">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your pages</h1>
           <Button

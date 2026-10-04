@@ -71,56 +71,50 @@ export default function NewsletterSettingsPage() {
       <SettingsBreadcrumb current="Newsletter" />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Newsletter</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure subscription form content, placement on your publication, and external webhook delivery.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Newsletter</h1>
       </div>
 
       {loading || !design ? (
         <div className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-10">
+        <form onSubmit={handleSave} className="space-y-6">
           {/* Form Content & Copy */}
           <section className="space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Form Content &amp; Copy</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Customize the copy shown in your subscription form.
-              </p>
             </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="newsletter_headline">Form Headline</Label>
-              <Input
-                id="newsletter_headline"
-                className="mt-2"
-                placeholder="e.g. Subscribe to our newsletter"
-                maxLength={120}
-                value={design.newsletter_headline || ""}
-                onChange={(e) => setDesign({ ...design, newsletter_headline: e.target.value })}
-                disabled={saving}
-              />
-            </div>
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_headline">Form Headline</Label>
+                <Input
+                  id="newsletter_headline"
+                  className="mt-2"
+                  placeholder="e.g. Subscribe to our newsletter"
+                  maxLength={120}
+                  value={design.newsletter_headline || ""}
+                  onChange={(e) => setDesign({ ...design, newsletter_headline: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="newsletter_text">Introduction Text</Label>
-              <Textarea
-                id="newsletter_text"
-                className="mt-2"
-                placeholder="e.g. Get our latest articles and updates delivered directly to your inbox."
-                rows={2}
-                value={design.newsletter_text || ""}
-                onChange={(e) => setDesign({ ...design, newsletter_text: e.target.value })}
-                disabled={saving}
-              />
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_text">Introduction Text</Label>
+                <Textarea
+                  id="newsletter_text"
+                  className="mt-2"
+                  placeholder="e.g. Get our latest articles and updates delivered directly to your inbox."
+                  rows={2}
+                  value={design.newsletter_text || ""}
+                  onChange={(e) => setDesign({ ...design, newsletter_text: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
             </div>
 
             <div className="space-y-6 max-w-md">
@@ -128,7 +122,7 @@ export default function NewsletterSettingsPage() {
                 <Label htmlFor="newsletter_button_text">Button Label</Label>
                 <Input
                   id="newsletter_button_text"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   placeholder="Subscribe"
                   maxLength={50}
                   value={design.newsletter_button_text || ""}
@@ -141,7 +135,7 @@ export default function NewsletterSettingsPage() {
                 <Label htmlFor="newsletter_disclaimer">Disclaimer or Privacy Note</Label>
                 <Input
                   id="newsletter_disclaimer"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   placeholder="e.g. No spam, unsubscribe anytime."
                   value={design.newsletter_disclaimer || ""}
                   onChange={(e) => setDesign({ ...design, newsletter_disclaimer: e.target.value })}
@@ -155,16 +149,13 @@ export default function NewsletterSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Form Placement</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Choose where the subscription form appears on your site.
-              </p>
             </div>
 
-            <div className="space-y-3 max-w-md">
+            <div className="space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Near Header</p>
-                  <p className="text-xs text-muted-foreground">Renders inline below the publication header / hero</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Renders inline below the publication header / hero</p>
                 </div>
                 <Switch
                   checked={design.newsletter_show_near_header === true}
@@ -176,7 +167,7 @@ export default function NewsletterSettingsPage() {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">In Footer</p>
-                  <p className="text-xs text-muted-foreground">Renders a subscription box at the bottom of pages</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Renders a subscription box at the bottom of pages</p>
                 </div>
                 <Switch
                   checked={design.newsletter_show_in_footer !== false}
@@ -191,13 +182,11 @@ export default function NewsletterSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Webhook Integration</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                When readers subscribe, it will trigger an HTTP POST request to this endpoint with the reader&apos;s email address.
-              </p>
             </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="newsletter_webhook_url">Webhook Endpoint URL</Label>
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_webhook_url">Webhook Endpoint URL</Label>
               <Input
                 id="newsletter_webhook_url"
                 className="mt-2"
@@ -206,20 +195,20 @@ export default function NewsletterSettingsPage() {
                 onChange={(e) => setDesign({ ...design, newsletter_webhook_url: e.target.value })}
                 disabled={saving}
               />
-            </div>
+              </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token</Label>
-              <Input
-                id="newsletter_webhook_token"
-                className="mt-2"
-                type="password"
-                placeholder="Secret token sent as Authorization: Bearer <token>"
-                value={design.newsletter_webhook_token || ""}
-                onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
-                disabled={saving}
-              />
-
+              <div className="space-y-2.5">
+                <Label htmlFor="newsletter_webhook_token">Bearer Authorization Token</Label>
+                <Input
+                  id="newsletter_webhook_token"
+                  className="mt-2"
+                  type="password"
+                  placeholder="Secret token sent as Authorization: Bearer <token>"
+                  value={design.newsletter_webhook_token || ""}
+                  onChange={(e) => setDesign({ ...design, newsletter_webhook_token: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
             </div>
           </section>
 

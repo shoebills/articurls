@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { getCodeInjection, updateCodeInjection, ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
@@ -55,23 +57,23 @@ export function CodeInjectionSettings() {
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {loading ? (
-        <div className="py-8 text-center text-sm text-muted-foreground">
-          Loading settings...
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-10">
+        <form onSubmit={handleSave} className="space-y-6">
           {/* Head Code */}
           <section className="space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
                 Header Code Injection (<code className="font-mono text-xs text-primary">&lt;head&gt;</code>)
               </h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Injected into the HTML <code className="font-mono text-xs">&lt;head&gt;</code> tag. Ideal for Google Analytics, Fathom, Meta Pixel, or custom fonts.
-              </p>
             </div>
+            <Label htmlFor="head-code" className="sr-only">Header code</Label>
             <Textarea
               id="head-code"
               rows={4}
@@ -88,10 +90,8 @@ export function CodeInjectionSettings() {
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
                 Footer Code Injection (<code className="font-mono text-xs text-primary">Before &lt;/body&gt;</code>)
               </h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Injected right before the closing <code className="font-mono text-xs">&lt;/body&gt;</code> tag. Ideal for live chat widgets, cookie consent banners, or heatmaps.
-              </p>
             </div>
+            <Label htmlFor="body-code" className="sr-only">Footer code</Label>
             <Textarea
               id="body-code"
               rows={4}
@@ -108,10 +108,8 @@ export function CodeInjectionSettings() {
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
                 Custom CSS Styling (<code className="font-mono text-xs text-primary">&lt;style&gt;</code>)
               </h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Custom CSS rules to override theme styles or tweak typography and spacing.
-              </p>
             </div>
+            <Label htmlFor="custom-css" className="sr-only">Custom CSS</Label>
             <Textarea
               id="custom-css"
               rows={4}

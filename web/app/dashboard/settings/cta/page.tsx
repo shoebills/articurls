@@ -71,54 +71,48 @@ export default function CtaSettingsPage() {
       <SettingsBreadcrumb current="Call to Action" />
 
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Call to Action</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Configure a standalone promotion or subscription card rendered at the end of articles and pages.
-          </p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Call to Action</h1>
       </div>
 
       {loading || !design ? (
         <div className="space-y-4">
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
         </div>
       ) : (
-        <form onSubmit={handleSave} className="space-y-10">
+        <form onSubmit={handleSave} className="space-y-6">
           <section className="space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Promotion Card</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Customize the message and button shown in the promotion card.
-              </p>
             </div>
-            <div className="space-y-2.5">
-              <Label htmlFor="cta_heading">Heading</Label>
-              <Input
-                id="cta_heading"
-                className="mt-2"
-                placeholder="e.g. Enjoyed this article? Join my newsletter"
-                maxLength={120}
-                value={design.cta_heading || ""}
-                onChange={(e) => setDesign({ ...design, cta_heading: e.target.value })}
-                disabled={saving}
-              />
-            </div>
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-2.5">
+                <Label htmlFor="cta_heading">Heading</Label>
+                <Input
+                  id="cta_heading"
+                  className="mt-2"
+                  placeholder="e.g. Enjoyed this article? Join my newsletter"
+                  maxLength={120}
+                  value={design.cta_heading || ""}
+                  onChange={(e) => setDesign({ ...design, cta_heading: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
 
-            <div className="space-y-2.5">
-              <Label htmlFor="cta_description">Description</Label>
-              <Textarea
-                id="cta_description"
-                className="mt-2"
-                placeholder="A short message explaining what readers get when they take action..."
-                rows={3}
-                value={design.cta_description || ""}
-                onChange={(e) => setDesign({ ...design, cta_description: e.target.value })}
-                disabled={saving}
-              />
+              <div className="space-y-2.5">
+                <Label htmlFor="cta_description">Description</Label>
+                <Textarea
+                  id="cta_description"
+                  className="mt-2"
+                  placeholder="A short message explaining what readers get when they take action..."
+                  rows={3}
+                  value={design.cta_description || ""}
+                  onChange={(e) => setDesign({ ...design, cta_description: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
             </div>
 
             <div className="space-y-6 max-w-md">
@@ -126,7 +120,7 @@ export default function CtaSettingsPage() {
                 <Label htmlFor="cta_button_text">Button Text</Label>
                 <Input
                   id="cta_button_text"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   placeholder="e.g. Get Started, Learn More, Subscribe"
                   maxLength={50}
                   value={design.cta_button_text || ""}
@@ -139,7 +133,7 @@ export default function CtaSettingsPage() {
                 <Label htmlFor="cta_button_url">Button Destination URL</Label>
                 <Input
                   id="cta_button_url"
-                  className="mt-2"
+                  className="mt-2 max-w-1/2"
                   placeholder="e.g. https://example.com or /pricing"
                   value={design.cta_button_url || ""}
                   onChange={(e) => setDesign({ ...design, cta_button_url: e.target.value })}
@@ -154,15 +148,12 @@ export default function CtaSettingsPage() {
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Display Visibility</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Choose where the promotion card is rendered.
-              </p>
             </div>
-            <div className="space-y-3 max-w-md">
+            <div className="space-y-6">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Show on Blog Posts</p>
-                  <p className="text-xs text-muted-foreground">Appears at the bottom of published articles</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Appears at the bottom of published articles</p>
                 </div>
                 <Switch
                   checked={design.cta_show_on_posts !== false}
@@ -174,7 +165,7 @@ export default function CtaSettingsPage() {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Show on Custom Pages</p>
-                  <p className="text-xs text-muted-foreground">Appears at the bottom of custom static pages</p>
+                  <p className="text-xs text-muted-foreground sm:text-sm">Appears at the bottom of custom static pages</p>
                 </div>
                 <Switch
                   checked={design.cta_show_on_pages === true}

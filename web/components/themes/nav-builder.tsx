@@ -302,7 +302,7 @@ export function NavBuilder({
   };
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       {/* Brand Identity & Logo */}
       <section className="space-y-4">
         <div>
@@ -669,7 +669,7 @@ export function NavBuilder({
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Highlight as CTA Button</p>
-                <p className="text-xs text-muted-foreground">Renders as a styled primary action button</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">Renders as a styled primary action button</p>
               </div>
               <Switch checked={formIsCta} onCheckedChange={setFormIsCta} />
             </div>
@@ -677,7 +677,7 @@ export function NavBuilder({
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Open in New Tab</p>
-                <p className="text-xs text-muted-foreground">Adds target=&quot;_blank&quot; attribute</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">Adds target=&quot;_blank&quot; attribute</p>
               </div>
               <Switch checked={formNewTab} onCheckedChange={setFormNewTab} />
             </div>

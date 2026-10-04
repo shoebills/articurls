@@ -33,6 +33,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import {
   DndContext,
   DragEndEvent,
@@ -328,7 +329,10 @@ export default function CategoriesDashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
-      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Categories" }]}
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <div className="flex items-center justify-between gap-3 sm:block">
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">

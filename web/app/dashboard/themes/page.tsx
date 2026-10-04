@@ -18,6 +18,7 @@ import { ColorModePicker } from "@/components/themes/color-mode-picker";
 import { ColorPalettePicker } from "@/components/themes/color-palette-picker";
 import { TypographyPairingPicker } from "@/components/themes/typography-pairing-picker";
 import { ButtonStylePicker } from "@/components/themes/button-style-picker";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Loader2 } from "lucide-react";
 
 export default function ThemesDashboardPage() {
@@ -83,6 +84,9 @@ export default function ThemesDashboardPage() {
 
   return (
     <div className="mx-auto max-w-4xl space-y-8 pb-12">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Themes" }]}
+      />
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Themes</h1>

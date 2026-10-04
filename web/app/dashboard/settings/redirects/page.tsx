@@ -174,16 +174,13 @@ export default function RedirectsSettingsPage() {
   }
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       <SettingsBreadcrumb current="Redirects" />
 
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Redirects</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Send visitors from old URLs to new ones. Redirects are checked before content, so old links keep working.
-          </p>
         </div>
         <Button onClick={openAdd} className="gap-2 shrink-0">
           <Plus className="h-4 w-4" />
@@ -275,7 +272,7 @@ export default function RedirectsSettingsPage() {
 
       {/* Add / Edit dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-md rounded-2xl sm:rounded-xl">
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
             <DialogTitle>{editing ? "Edit redirect" : "Add redirect"}</DialogTitle>
             <DialogDescription>
@@ -284,7 +281,12 @@ export default function RedirectsSettingsPage() {
           </DialogHeader>
           <div className="space-y-5">
             <div className="space-y-2.5">
-              <Label htmlFor="redirect_source">Source path</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="redirect_source">Source path</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  The old URL path to redirect from. Trailing slashes are ignored.
+                </p>
+              </div>
               <Input
                 id="redirect_source"
                 className="mt-2 font-mono"
@@ -294,12 +296,14 @@ export default function RedirectsSettingsPage() {
                 onChange={(e) => setForm({ ...form, source_path: e.target.value })}
                 disabled={busy}
               />
-              <p className="text-xs text-muted-foreground">
-                The old URL path to redirect from. Trailing slashes are ignored.
-              </p>
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="redirect_target">Target</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="redirect_target">Target</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  A path on your site like /my-new-post, or a full https:// URL.
+                </p>
+              </div>
               <Input
                 id="redirect_target"
                 className="mt-2 font-mono"
@@ -309,12 +313,14 @@ export default function RedirectsSettingsPage() {
                 onChange={(e) => setForm({ ...form, target_url: e.target.value })}
                 disabled={busy}
               />
-              <p className="text-xs text-muted-foreground">
-                A path on your site like /my-new-post, or a full https:// URL.
-              </p>
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="redirect_type">Type</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="redirect_type">Type</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Permanent tells search engines to update their index. Temporary keeps the old URL indexed.
+                </p>
+              </div>
               <Select
                 value={form.type}
                 onValueChange={(value) => setForm({ ...form, type: value as FormState["type"] })}
@@ -328,9 +334,6 @@ export default function RedirectsSettingsPage() {
                   <SelectItem value="temporary">Temporary</SelectItem>
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
-                Permanent tells search engines to update their index. Temporary keeps the old URL indexed.
-              </p>
             </div>
             {formError && <p className="text-xs text-destructive">{formError}</p>}
           </div>

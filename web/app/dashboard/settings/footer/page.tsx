@@ -84,13 +84,14 @@ export default function FooterSettingsPage() {
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Footer</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Build footer link columns, toggle newsletter subscription, and configure copyright notices.
-        </p>
       </div>
 
       {loading || !design ? (
-        <Skeleton className="h-64 w-full rounded-xl" />
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full max-w-md" />
+          <Skeleton className="h-20 w-full max-w-2xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       ) : (
         <FooterBuilder settings={design} onChange={handleUpdate} />
       )}

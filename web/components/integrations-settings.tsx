@@ -125,25 +125,27 @@ export default function IntegrationsSettings() {
 
   return (
     <>
-      <div className="space-y-10">
+      <div className="space-y-6">
         <section className="space-y-4">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Analytics</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Track visitors with GA4. Find your ID under{" "}
-              <a
-                href="https://support.google.com/analytics/answer/12270356"
-                target="_blank"
-                rel="noreferrer"
-                className="underline underline-offset-4 hover:text-foreground"
-              >
-                Admin → Data streams
-              </a>
-              .
-            </p>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="ga_measurement_id">Measurement ID</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="ga_measurement_id">Measurement ID</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Track visitors with GA4. Find your ID under{" "}
+                <a
+                  href="https://support.google.com/analytics/answer/12270356"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="underline underline-offset-4 hover:text-foreground"
+                >
+                  Admin → Data streams
+                </a>
+                .
+              </p>
+            </div>
             <Input
               id="ga_measurement_id"
               className="mt-2 font-mono"
@@ -158,12 +160,14 @@ export default function IntegrationsSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Search Console</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Verify site ownership so you can monitor search performance.
-            </p>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="search_console_property">Property</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="search_console_property">Property</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Use a URL-prefix property. Domain properties (sc-domain:) require DNS verification and are not supported yet.
+              </p>
+            </div>
             <Input
               id="search_console_property"
               className="mt-2 font-mono"
@@ -172,12 +176,14 @@ export default function IntegrationsSettings() {
               placeholder="https://example.com/"
               disabled={busy}
             />
-            <p className="text-xs text-muted-foreground">
-              Use a URL-prefix property. Domain properties (sc-domain:) require DNS verification and are not supported yet.
-            </p>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="search_console_verification_token">Verification token</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="search_console_verification_token">Verification token</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Copy the content value from Search Console → Ownership verification → HTML tag. After saving, click Verify in Search Console — we add the meta tag to your public pages.
+              </p>
+            </div>
             <Input
               id="search_console_verification_token"
               className="mt-2 font-mono"
@@ -186,21 +192,20 @@ export default function IntegrationsSettings() {
               placeholder="Paste the token from the HTML tag method"
               disabled={busy}
             />
-            <p className="text-xs text-muted-foreground">
-              Copy the content value from Search Console → Ownership verification → HTML tag. After saving, click Verify in Search Console — we add the meta tag to your public pages.
-            </p>
           </div>
         </section>
 
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google AdSense</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Monetize your site with auto ads.
-            </p>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="adsense_publisher_id">Publisher ID</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="adsense_publisher_id">Publisher ID</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Find it under AdSense → Account → Settings → Account information. Auto ads load automatically on your public pages, and /ads.txt is generated for you.
+              </p>
+            </div>
             <Input
               id="adsense_publisher_id"
               className="mt-2 font-mono"
@@ -209,9 +214,6 @@ export default function IntegrationsSettings() {
               placeholder="pub-XXXXXXXXXXXXXXXX"
               disabled={busy}
             />
-            <p className="text-xs text-muted-foreground">
-              Find it under AdSense → Account → Settings → Account information. Auto ads load automatically on your public pages, and /ads.txt is generated for you.
-            </p>
           </div>
         </section>
 

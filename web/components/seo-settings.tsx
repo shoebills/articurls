@@ -23,7 +23,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import type { SeoSettings } from "@/lib/types";
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
-import { Loader2 } from "lucide-react";
+import { Image as ImageIcon, Loader2, Pencil, Trash2 } from "lucide-react";
 
 type FormState = {
   meta_title: string;
@@ -226,13 +226,10 @@ export default function SeoSettings() {
 
   return (
     <>
-      <div className="space-y-10">
+      <div className="space-y-6">
         <section className="space-y-4">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Metadata</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-              Default title and description for your site across search engines and social previews.
-            </p>
           </div>
           <div className="space-y-2.5">
             <Label htmlFor="seo_meta_title">Meta title</Label>
@@ -260,61 +257,80 @@ export default function SeoSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Open Graph image</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Default image for social previews when no post-specific image is set. Recommended 1200×630px.</p>
           </div>
-          <input
-            ref={ogInputRef}
-            type="file"
-            accept="image/*"
-            className="sr-only"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) void handleUploadOgImage(f);
-              e.currentTarget.value = "";
-            }}
-          />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              variant="default"
-              onClick={() => ogInputRef.current?.click()}
-              disabled={ogImageBusy}
-            >
-              {ogImageBusy ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Uploading...
-                </>
-              ) : (
-                "Upload"
-              )}
-            </Button>
-            {form.og_image_url ? (
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={handleRemoveOgImage}
-                disabled={ogImageBusy}
-              >
-                Remove
-              </Button>
-            ) : null}
+          <div className="space-y-2.5">
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium">Social preview image</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Default image for social previews when no post-specific image is set. Recommended 1200×630px.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex aspect-[3/2] w-full max-w-xs items-center justify-center overflow-hidden rounded-lg border border-border/70 bg-background">
+                {form.og_image_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={transformImageUrl(assetUrl(form.og_image_url), { width: 600 })}
+                    alt=""
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
+                )}
+              </div>
+              <input
+                ref={ogInputRef}
+                type="file"
+                accept="image/*"
+                className="sr-only"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void handleUploadOgImage(f);
+                  e.currentTarget.value = "";
+                }}
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  onClick={() => ogInputRef.current?.click()}
+                  disabled={ogImageBusy}
+                  title={form.og_image_url ? "Change image" : "Upload image"}
+                >
+                  {ogImageBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pencil className="h-4 w-4" />
+                  )}
+                </Button>
+                {form.og_image_url ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    onClick={handleRemoveOgImage}
+                    disabled={ogImageBusy}
+                    title="Remove image"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
+              </div>
+            </div>
           </div>
-          {form.og_image_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={transformImageUrl(assetUrl(form.og_image_url), { width: 600 })}
-              alt=""
-              className="aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
-            />
-          ) : null}
         </section>
 
         <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Indexing</h2>
+          </div>
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Indexing</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">When off, the entire site is hidden from search engines.</p>
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">Search engine indexing</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">When off, the entire site is hidden from search engines.</p>
             </div>
             <Switch
               checked={form.seo_indexing_enabled}
@@ -327,7 +343,6 @@ export default function SeoSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Noindex</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Hide specific page types from search engines.</p>
           </div>
           <ToggleRow
             title="Category pages"
@@ -352,7 +367,6 @@ export default function SeoSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Trailing slash</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control trailing-slash consistency in canonical and structured data URLs.</p>
           </div>
           <ToggleRow
             title="Listing URLs"
@@ -371,10 +385,13 @@ export default function SeoSettings() {
         </section>
 
         <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Sitemap</h2>
+          </div>
           <div className="flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Sitemap</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">When off, /sitemap.xml returns 404.</p>
+            <div className="space-y-0.5">
+              <p className="text-sm font-medium">XML sitemap</p>
+              <p className="text-xs text-muted-foreground sm:text-sm">When off, /sitemap.xml returns 404.</p>
             </div>
             <Switch
               checked={form.seo_sitemap_enabled}
@@ -387,74 +404,81 @@ export default function SeoSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Robots.txt</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control how crawlers access your site.</p>
           </div>
-          <Select
-            value={form.seo_robots_mode}
-            onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
-            disabled={busy}
-          >
-            <SelectTrigger id="seo_robots_mode">
-              <SelectValue placeholder="Select mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Automatically managed</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
-          {form.seo_robots_mode === "custom" ? (
-            <Textarea
-              id="seo_robots_custom"
-              className="font-mono text-xs"
-              rows={6}
-              value={form.seo_robots_custom ?? ""}
-              onChange={(e) => patch({ seo_robots_custom: e.target.value })}
-              placeholder={"User-agent: *\nAllow: /"}
+          <div className="space-y-2.5">
+            <Label htmlFor="seo_robots_mode">Robots mode</Label>
+            <Select
+              value={form.seo_robots_mode}
+              onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
               disabled={busy}
-            />
+            >
+              <SelectTrigger id="seo_robots_mode" className="mt-2 max-w-1/2">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Automatically managed</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {form.seo_robots_mode === "custom" ? (
+            <div className="space-y-2.5">
+              <Label htmlFor="seo_robots_custom">Custom robots.txt</Label>
+              <Textarea
+                id="seo_robots_custom"
+                className="mt-2 font-mono text-xs"
+                rows={6}
+                value={form.seo_robots_custom ?? ""}
+                onChange={(e) => patch({ seo_robots_custom: e.target.value })}
+                placeholder={"User-agent: *\nAllow: /"}
+                disabled={busy}
+              />
+            </div>
           ) : null}
         </section>
 
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">LLMs.txt</h2>
-            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">Control how AI models access your site content.</p>
           </div>
-          <Select
-            value={form.seo_llms_mode}
-            onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}
-            disabled={busy}
-          >
-            <SelectTrigger id="seo_llms_mode">
-              <SelectValue placeholder="Select mode" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="auto">Automatically managed</SelectItem>
-              <SelectItem value="custom">Custom</SelectItem>
-            </SelectContent>
-          </Select>
-          {form.seo_llms_mode === "custom" ? (
-            <Textarea
-              id="seo_llms_custom"
-              className="font-mono text-xs"
-              rows={6}
-              value={form.seo_llms_custom ?? ""}
-              onChange={(e) => patch({ seo_llms_custom: e.target.value })}
-              placeholder={"# My site\n> Description"}
+          <div className="space-y-2.5">
+            <Label htmlFor="seo_llms_mode">LLMs.txt mode</Label>
+            <Select
+              value={form.seo_llms_mode}
+              onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}
               disabled={busy}
-            />
+            >
+              <SelectTrigger id="seo_llms_mode" className="mt-2 max-w-1/2">
+                <SelectValue placeholder="Select mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">Automatically managed</SelectItem>
+                <SelectItem value="custom">Custom</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {form.seo_llms_mode === "custom" ? (
+            <div className="space-y-2.5">
+              <Label htmlFor="seo_llms_custom">Custom LLMs.txt</Label>
+              <Textarea
+                id="seo_llms_custom"
+                className="mt-2 font-mono text-xs"
+                rows={6}
+                value={form.seo_llms_custom ?? ""}
+                onChange={(e) => patch({ seo_llms_custom: e.target.value })}
+                placeholder={"# My site\n> Description"}
+                disabled={busy}
+              />
+            </div>
           ) : null}
         </section>
 
         <div className="flex items-center justify-end pt-6 border-t border-border/60">
-          <Button onClick={onSave} disabled={busy || !dirty} className="min-w-[120px]">
+          <Button onClick={onSave} disabled={busy || !dirty} className="gap-2">
             {busy ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
-              </>
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Save"
+              "Save Changes"
             )}
           </Button>
         </div>

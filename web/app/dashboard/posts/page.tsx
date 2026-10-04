@@ -29,6 +29,7 @@ import {
 import { format } from "date-fns";
 import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Pin, Plus, Search, Trash2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 
@@ -210,8 +211,11 @@ export default function PostsPage() {
   }, [filteredBlogs, currentPage]);
 
   return (
-    <div className="mx-auto max-w-[1100px]">
-      <div className="mb-5 flex flex-col gap-4 sm:mb-6 sm:flex-row sm:items-end sm:justify-between">
+    <div className="mx-auto max-w-[1100px] space-y-6">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Posts" }]}
+      />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex items-center justify-between gap-3 sm:block">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Your posts</h1>
           <Button

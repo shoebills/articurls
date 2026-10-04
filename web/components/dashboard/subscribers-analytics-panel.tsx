@@ -22,6 +22,7 @@ import {
 } from "recharts";
 import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
@@ -109,6 +110,9 @@ export function SubscribersAnalyticsPanel() {
   return (
     <>
       <div className="space-y-6">
+        <DashboardBreadcrumb
+          trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Subscribers" }]}
+        />
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Audience</h1>
           <div className="w-auto shrink-0">

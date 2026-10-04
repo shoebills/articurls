@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -303,15 +304,16 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 
   if (domainData === undefined || subfolderData === undefined) {
     return (
-      <div className="space-y-10">
-        <Skeleton className="h-32 w-full rounded-2xl" />
-        <Skeleton className="h-64 w-full rounded-2xl" />
+      <div className="space-y-4">
+        <Skeleton className="h-10 w-full max-w-md" />
+        <Skeleton className="h-20 w-full max-w-2xl" />
+        <Skeleton className="h-24 w-full rounded-xl" />
       </div>
     );
   }
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-6">
       <FloatingErrorToast message={error} onDismiss={() => setError("")} />
       <FloatingErrorToast message={success} onDismiss={() => setSuccess("")} autoDismissMs={3000} variant="success" />
 
@@ -319,11 +321,8 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
       <section className="space-y-4">
         <div>
           <h2 className="text-base font-semibold text-foreground sm:text-lg">Permanent Address</h2>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Your default Articurls URL that is always active and online.
-          </p>
         </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/20 px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-4">
             <span className="font-mono text-sm font-medium text-foreground truncate max-w-full">
               {subdomain}.{UGC_DOMAIN}
             </span>
@@ -358,12 +357,9 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
         </section>
 
       {/* ── 2. Unified Custom Domain / Subdirectory ───────────────────── */}
-      <section className="space-y-6 pt-6">
+      <section className="space-y-4 pt-6">
         <div>
           <h2 className="text-base font-semibold text-foreground sm:text-lg">Custom Domain &amp; Subdirectory</h2>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Connect an apex domain (<span className="font-mono">example.com</span>), subdomain (<span className="font-mono">blog.example.com</span>), or subdirectory (<span className="font-mono">example.com/blog</span>).
-          </p>
         </div>
 
         <div className="space-y-6">
@@ -378,8 +374,12 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           {!isSubdirectoryActive && !isCustomDomainConfigured && (
             <form onSubmit={handleConnect} className="space-y-4">
               <div className="space-y-2.5">
-                <div className="flex flex-col gap-2.5 sm:flex-row">
+                <div className="space-y-1.5">
+                  <Label htmlFor="domain-input">Domain or subdirectory</Label>
+                </div>
+                <div className="flex flex-col gap-2.5 sm:flex-row mt-2">
                   <Input
+                    id="domain-input"
                     type="text"
                     value={inputUrl}
                     onChange={(e) => setInputUrl(e.target.value)}
@@ -400,17 +400,17 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                 {inputUrl.trim() ? (
                   <div className="flex items-center gap-2 pt-1 text-xs">
                     {parsed.type === "subdirectory" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-purple-500/10 px-2.5 py-0.5 font-medium text-purple-600 dark:text-purple-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-purple-500/10 px-2.5 py-1 font-medium text-purple-600 dark:text-purple-400">
                         <FolderTree className="h-3 w-3" />
                         Subdirectory Route (Reverse Proxy under {parsed.subpath})
                       </span>
                     ) : parsed.type === "subdomain" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-0.5 font-medium text-blue-600 dark:text-blue-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/10 px-2.5 py-1 font-medium text-blue-600 dark:text-blue-400">
                         <Globe className="h-3 w-3" />
                         Custom Subdomain (CNAME Record)
                       </span>
                     ) : parsed.type === "apex" ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 font-medium text-emerald-600 dark:text-emerald-400">
+                      <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 font-medium text-emerald-600 dark:text-emerald-400">
                         <Globe className="h-3 w-3" />
                         Apex Custom Domain (A / CNAME Record)
                       </span>
@@ -427,7 +427,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
           {(isSubdirectoryActive || isCustomDomainConfigured) && (
             <div className="space-y-6">
               {/* Connected Header Row */}
-              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-muted/20 p-4">
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2.5">
                     <span className="font-mono text-base font-semibold text-foreground">{activeDomainName}</span>
@@ -440,7 +440,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                       isSubdirectory={isSubdirectoryActive}
                     />
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground sm:text-sm">
                     {isSubdirectoryActive
                       ? `Requests to https://${activeDomainName} are served by your blog.`
                       : domainData?.domain_status === "active"
@@ -481,7 +481,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                       <h3 className="text-sm font-semibold text-foreground">
                         Reverse Proxy Setup
                       </h3>
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground sm:text-sm">
                         Select your technology stack to get the exact configuration snippet.
                       </p>
                     </div>
@@ -561,7 +561,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                     <h3 className="text-sm font-semibold">
                       DNS Records
                     </h3>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground sm:text-sm">
                       Add these records with your DNS provider, then click Verify.
                     </p>
                   </div>
@@ -569,18 +569,18 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                   {dnsInstructions.length > 0 ? (
                     <div className="space-y-3">
                       {dnsInstructions.map((record, idx) => (
-                        <div key={idx} className="rounded-xl border border-border/80 bg-background p-4 space-y-3">
+                        <div key={idx} className="space-y-3">
                           <div className="flex items-center justify-between text-xs">
                             <span className="font-semibold uppercase tracking-wider text-muted-foreground">
                               {record.purpose === "routing" ? "Routing Record" : "Verification Record"}
                             </span>
-                            <span className="rounded-md bg-muted px-2 py-0.5 font-mono text-[11px]">
+                            <span className="rounded-lg bg-muted px-2 py-0.5 font-mono text-[11px]">
                               {record.type}
                             </span>
                           </div>
                           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                             <div className="space-y-1">
-                              <span className="text-[11px] text-muted-foreground">Name / Host</span>
+                              <span className="text-xs text-muted-foreground sm:text-sm">Name / Host</span>
                               <div className="flex items-center gap-1.5">
                                 <code className="flex-1 truncate rounded-lg bg-muted/40 px-2.5 py-1.5 font-mono text-xs">
                                   {record.name}
@@ -601,7 +601,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                               </div>
                             </div>
                             <div className="space-y-1">
-                              <span className="text-[11px] text-muted-foreground">Value / Points to</span>
+                              <span className="text-xs text-muted-foreground sm:text-sm">Value / Points to</span>
                               <div className="flex items-center gap-1.5">
                                 <code className="flex-1 truncate rounded-lg bg-muted/40 px-2.5 py-1.5 font-mono text-xs">
                                   {record.value}
@@ -644,7 +644,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
 function StatusBadge({ status, isSubdirectory }: { status: string; isSubdirectory?: boolean }) {
   if (isSubdirectory) {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+      <span className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
         <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
         Subdirectory Active
       </span>
@@ -660,7 +660,7 @@ function StatusBadge({ status, isSubdirectory }: { status: string; isSubdirector
 
   const s = map[status] || { label: status, className: "bg-muted text-muted-foreground" };
   return (
-    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
+    <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${s.className}`}>
       {s.label}
     </span>
   );

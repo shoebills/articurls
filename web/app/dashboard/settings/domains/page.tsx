@@ -19,15 +19,12 @@ export default function DomainsSettingsPage() {
   const subdomain = user?.subdomain || fetchedSubdomain || "";
 
   return (
-    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
       <SettingsBreadcrumb current="Domains" />
 
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Domains</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Subdomain, custom domains and subfolder publishing.
-        </p>
       </div>
 
       <DomainSettings subdomain={subdomain} />

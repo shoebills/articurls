@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { assetUrl } from "@/lib/env";
 import {
   MoreVertical,
@@ -87,6 +88,9 @@ export default function AuthorsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Authors" }]}
+      />
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>

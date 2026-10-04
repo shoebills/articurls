@@ -111,6 +111,7 @@ import {
   Legend,
 } from "recharts";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
@@ -644,6 +645,9 @@ function NativeAnalytics({ token }: { token: string }) {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+      <DashboardBreadcrumb
+        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Analytics" }]}
+      />
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
@@ -1069,6 +1073,9 @@ export default function AnalyticsPage() {
   if (!token || loading) {
     return (
       <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
+        <DashboardBreadcrumb
+          trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Analytics" }]}
+        />
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
           <Skeleton className="h-10 w-[120px]" />
