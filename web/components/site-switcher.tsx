@@ -28,7 +28,7 @@ export function SiteSwitcher({
   const currentDisplayName = activeSite?.site_name || activeSite?.subdomain || "My Site";
 
   return (
-    <div className={cn("p-2.5 pb-1", className)}>
+    <div className={cn("px-2.5 pb-2 pt-4", className)}>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

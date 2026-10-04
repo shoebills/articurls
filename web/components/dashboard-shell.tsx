@@ -48,8 +48,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!open) return;
     const onDown = (e: MouseEvent) => {
-      const t = e.target as Node;
-      if (mobileHeaderRef.current && !mobileHeaderRef.current.contains(t)) {
+      const t = e.target as Element | null;
+      // Radix dropdown menus (site/account selectors) portal to document.body,
+      // outside the header. Ignoring them here lets the item click complete
+      // (switch site, navigate, toggle theme) instead of unmounting the menu
+      // on mousedown before click fires. Item actions close the tray via onNavigate.
+      if (t && typeof t.closest === "function" && t.closest('[data-radix-popper-content-wrapper], [role="menu"]')) {
+        return;
+      }
+      if (mobileHeaderRef.current && !mobileHeaderRef.current.contains(t as Node)) {
         close();
       }
     };
@@ -60,7 +67,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-dvh w-full bg-background md:justify-center">
       <div className="flex w-full max-w-[1200px] flex-col">
-        <header className="sticky top-0 z-30 hidden h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background px-3 md:flex">
+        <header className="sticky top-0 z-30 hidden h-16 shrink-0 items-center justify-between border-b border-border/70 bg-background px-3 md:flex">
           <BrandLogo href="/dashboard" showIcon={false} />
           <div className="flex items-center gap-2">
             {publicBlogHref ? (

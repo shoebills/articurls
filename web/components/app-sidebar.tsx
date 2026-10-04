@@ -71,7 +71,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
           href={href}
           onClick={() => onNavigate?.()}
           className={cn(
-            "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
+            "flex min-h-9 items-center gap-2.5 rounded-lg px-2.5 text-[15px] font-medium transition-[background-color,color] duration-200 active:bg-sidebar-accent/90",
             active
               ? "bg-sidebar-accent/80 text-sidebar-foreground font-semibold"
               : "text-muted-foreground hover:bg-sidebar-accent/45 hover:text-sidebar-foreground"
@@ -91,7 +91,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
       {/* Trial countdown chip */}
       {trialChip}
 
-      <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-border/70">
+      <div className="flex min-h-0 flex-1 flex-col">
         <nav className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 min-h-0 gap-5">
           {/* Ungrouped Primary Links */}
           <div className="flex flex-col gap-1">
@@ -116,7 +116,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] w-[14.5rem] shrink-0 flex-col bg-background md:sticky md:top-14 md:self-start md:flex">
+    <aside className="hidden h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] w-64 shrink-0 flex-col bg-background md:sticky md:top-16 md:self-start md:flex md:border-r md:border-border/70">
       <DashboardSidebarPanel />
     </aside>
   );
