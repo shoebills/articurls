@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import {
   getMe,
   getDesignSettings,
@@ -15,12 +14,13 @@ import {
 import type { DesignSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { SettingsBreadcrumb } from "@/components/settings-breadcrumb";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ChevronLeft, Globe, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
+import { Globe, Loader2, Pencil, RefreshCw, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { assetUrl } from "@/lib/env";
 import {
@@ -178,16 +178,7 @@ export default function GeneralSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
-      {/* Top navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link
-          href="/dashboard/settings"
-          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors font-medium"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Settings
-        </Link>
-      </div>
+      <SettingsBreadcrumb current="General" />
 
       {/* Header */}
       <div>

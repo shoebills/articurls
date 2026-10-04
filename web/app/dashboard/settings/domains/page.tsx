@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ChevronLeft } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { getMe } from "@/lib/api";
 import { DomainSettings } from "@/components/domain-settings";
+import { SettingsBreadcrumb } from "@/components/settings-breadcrumb";
 
 export default function DomainsSettingsPage() {
   const { user, token } = useAuth();
@@ -21,16 +20,7 @@ export default function DomainsSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
-      {/* Top navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link
-          href="/dashboard/settings"
-          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors font-medium"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Settings
-        </Link>
-      </div>
+      <SettingsBreadcrumb current="Domains" />
 
       {/* Header */}
       <div>

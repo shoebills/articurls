@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
-import { ChevronLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import {
   ApiError,
@@ -19,6 +18,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { SettingsBreadcrumb } from "@/components/settings-breadcrumb";
 
 export default function NewsletterSettingsPage() {
   const { token, refreshUser } = useAuth();
@@ -68,16 +68,7 @@ export default function NewsletterSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
-      {/* Top navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link
-          href="/dashboard/settings"
-          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors font-medium"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Settings
-        </Link>
-      </div>
+      <SettingsBreadcrumb current="Newsletter" />
 
       {/* Header */}
       <div className="flex items-center justify-between">

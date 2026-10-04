@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import {
   ArrowRight,
-  ChevronLeft,
   CornerUpRight,
   Loader2,
   MoreVertical,
@@ -48,6 +46,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { SettingsBreadcrumb } from "@/components/settings-breadcrumb";
 
 const SOFT_LIMIT = 200;
 
@@ -176,16 +175,7 @@ export default function RedirectsSettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
-      {/* Top navigation */}
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <Link
-          href="/dashboard/settings"
-          className="inline-flex items-center gap-1.5 hover:text-foreground transition-colors font-medium"
-        >
-          <ChevronLeft className="h-4 w-4" />
-          Back to Settings
-        </Link>
-      </div>
+      <SettingsBreadcrumb current="Redirects" />
 
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
