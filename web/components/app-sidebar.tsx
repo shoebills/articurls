@@ -116,7 +116,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] w-64 shrink-0 flex-col bg-background md:sticky md:top-16 md:self-start md:flex md:border-r md:border-border/70">
+    <aside className="hidden h-[calc(100dvh-4rem)] max-h-[calc(100dvh-4rem)] w-[14.5rem] shrink-0 flex-col bg-background md:sticky md:top-16 md:self-start md:flex md:border-r md:border-border/70">
       <DashboardSidebarPanel />
     </aside>
   );

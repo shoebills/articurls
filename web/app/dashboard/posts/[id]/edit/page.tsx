@@ -781,7 +781,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       {/* Floating Action Dock */}
       <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-0 right-0 z-30 pointer-events-none">
         <div className="mx-auto flex w-full max-w-[1200px] pointer-events-none">
-          <div className="hidden w-64 shrink-0 md:block" aria-hidden />
+          <div className="hidden w-[14.5rem] shrink-0 md:block" aria-hidden />
           <div className="min-w-0 flex-1 px-4 sm:px-5 md:px-8 pointer-events-none">
             <div className="mx-auto max-w-[1100px] pointer-events-auto">
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/80 bg-background/95 p-2.5 shadow-lg backdrop-blur-md supports-[backdrop-filter]:bg-background/80 sm:px-4 sm:py-3">
