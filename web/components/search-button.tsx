@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import { Loader2, Search, X } from "lucide-react";
 import Link from "next/link";
@@ -34,6 +35,7 @@ export function SearchButton({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const panelRef = useRef<HTMLDivElement | null>(null);
   const resultsRef = useRef<HTMLUListElement | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const offsetRef = useRef(0);
@@ -191,6 +193,18 @@ export function SearchButton({
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [mounted, closeSearch]);
 
+  useEffect(() => {
+    if (!mounted) return;
+    function onPointerDown(e: PointerEvent) {
+      const target = e.target as Node | null;
+      if (target && panelRef.current && !panelRef.current.contains(target)) {
+        closeSearch();
+      }
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, [mounted, closeSearch]);
+
   const trimmed = query.trim();
 
   return (
@@ -208,16 +222,18 @@ export function SearchButton({
         <Search className="h-5 w-5" />
       </button>
 
-      {mounted ? (
-        <>
-          <div
-            className={`fixed inset-0 z-40 bg-foreground/15 transition-opacity duration-150 ease-out ${
-              visible ? "opacity-100" : "opacity-0"
-            }`}
-            onClick={closeSearch}
-          />
+      {mounted
+        ? createPortal(
+            <>
+              <div
+                className={`fixed inset-0 z-50 bg-black/80 transition-opacity duration-150 ease-out ${
+                  visible ? "opacity-100" : "opacity-0"
+                }`}
+                onClick={closeSearch}
+              />
 
           <div
+            ref={panelRef}
             className={`fixed left-1/2 top-20 z-50 w-[32rem] max-w-[calc(100vw-2rem)] -translate-x-1/2 overflow-hidden rounded-2xl border border-border/80 bg-background shadow-xl transition-all duration-150 ease-out ${
               visible ? "scale-100 opacity-100" : "scale-95 opacity-0"
             }`}
@@ -327,8 +343,10 @@ export function SearchButton({
               </>
             )}
           </div>
-        </>
-      ) : null}
+        </>,
+        document.body
+      )
+      : null}
     </>
   );
 }

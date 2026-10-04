@@ -148,7 +148,7 @@ export function PublicMobileNavMenu({
                 onClick={() => setOpen((prev) => !prev)}
                 className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-transparent text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
               >
-                {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
             ) : null}
           </div>
