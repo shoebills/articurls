@@ -132,7 +132,7 @@ def create_site(
         subdomain=cleaned_subdomain,
         site_name=request.site_name.strip() if request.site_name else cleaned_subdomain,
     )
-    if request.template_id in ("saas",):
+    if request.template_id in ("standard",):
         new_site.template_id = request.template_id
     db.add(new_site)
     db.flush()

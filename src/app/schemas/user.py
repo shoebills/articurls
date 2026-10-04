@@ -21,7 +21,7 @@ class UserSettings(BaseModel):
     meta_description: Optional[str] = None
     profile_image_url: Optional[str] = None
 
-    template_id: str = "saas"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     color_palette: Optional[dict] = None

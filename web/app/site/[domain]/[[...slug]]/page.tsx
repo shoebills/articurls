@@ -28,7 +28,7 @@ import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
 import { BlogPostToc } from "@/components/blog-post-toc";
 import { injectHeadingIds } from "@/lib/toc";
 import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
-import { SaasTemplate } from "@/components/themes/saas/saas-template";
+import { StandardTemplate } from "@/components/themes/standard/standard-template";
 import { loadPublicSite } from "@/lib/public-site";
 
 type Props = { params: Promise<{ domain: string; slug?: string[] }> };
@@ -1152,7 +1152,7 @@ export default async function SitePublicationPage({ params }: Props) {
   return (
     <ThemeStyleWrapper site={site}>
       <StructuredData data={generateWebSiteSchema(site, withJsonLdSlash(siteOrigin, site))} />
-      <SaasTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+      <StandardTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
     </ThemeStyleWrapper>
   );
 }

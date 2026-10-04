@@ -4,17 +4,17 @@ import { Check, ExternalLink } from "lucide-react";
 import { UGC_DOMAIN } from "@/lib/env";
 
 export function ThemePicker() {
-  const saasDemoUrl = `https://saas.${UGC_DOMAIN}`;
+  const standardDemoUrl = `https://standard.${UGC_DOMAIN}`;
 
   return (
     <div className="max-w-md">
-      {/* SaaS Template — Active Launch Template */}
+      {/* Standard Template — Active Launch Template */}
       <div
         className="group relative flex flex-col justify-between rounded-xl border-2 border-primary bg-primary/[0.03] p-4 text-left shadow-sm ring-1 ring-primary/20"
       >
         <div>
           <div className="flex items-center justify-between gap-2 mb-3">
-            <h4 className="font-semibold text-foreground text-base">Saas</h4>
+            <h4 className="font-semibold text-foreground text-base">Standard</h4>
 
             <div className="flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
               <Check className="h-3.5 w-3.5" />
@@ -44,7 +44,7 @@ export function ThemePicker() {
 
         <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end">
           <a
-            href={saasDemoUrl}
+            href={standardDemoUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline underline-offset-4"

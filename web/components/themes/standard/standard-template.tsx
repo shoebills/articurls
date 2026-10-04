@@ -11,7 +11,7 @@ import { PublicPostCard } from "@/components/public-post-card";
 import { PublicEmptyState } from "@/components/public-empty-state";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
-type SaasTemplateProps = {
+type StandardTemplateProps = {
   site: PublicSite;
   blogs: PublicBlog[];
   pages: UserPage[];
@@ -19,7 +19,7 @@ type SaasTemplateProps = {
   basePath: string;
 };
 
-export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasTemplateProps) {
+export function StandardTemplate({ site, blogs, pages, categories, basePath }: StandardTemplateProps) {
   const displayName = (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
   const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
@@ -64,7 +64,7 @@ export function SaasTemplate({ site, blogs, pages, categories, basePath }: SaasT
           hasBlogs={blogs.length > 0}
         />
 
-        {/* SaaS Hero */}
+        {/* Hero */}
         {hasHero ? (
           <>
             <div className="mb-20 mt-20 max-w-2xl text-left">

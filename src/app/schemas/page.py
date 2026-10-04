@@ -72,7 +72,7 @@ class UserPageOut(UserPageBase):
 
 
 class DesignSettings(BaseModel):
-    template_id: str = "saas"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     color_palette: Optional[dict] = None

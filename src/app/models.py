@@ -64,7 +64,7 @@ class Site(Base):
     rss_enabled = Column(Boolean, nullable=False, default=False)
 
     # Design / Theme
-    template_id = Column(String(32), nullable=False, default="saas", server_default="saas")
+    template_id = Column(String(32), nullable=False, default="standard", server_default="standard")
     site_mode = Column(String(16), nullable=False, default="system", server_default="system")
     color_theme = Column(String(32), nullable=False, default="base", server_default="base")
     color_palette = Column(JSON, nullable=True, default=None)

@@ -7,7 +7,7 @@ import uuid
 class SiteCreate(BaseModel):
     subdomain: str
     site_name: Optional[str] = None
-    template_id: Optional[str] = "saas"
+    template_id: Optional[str] = "standard"
 
 
 class SiteUpdate(BaseModel):
@@ -55,7 +55,7 @@ class PublicSite(BaseModel):
     meta_title: str
     meta_description: str
     og_image_url: Optional[str] = None
-    template_id: str = "saas"
+    template_id: str = "standard"
     site_mode: str = "system"
     color_theme: str = "base"
     color_palette: Optional[dict] = None

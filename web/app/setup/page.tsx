@@ -108,7 +108,7 @@ function SetupForm() {
     const newSite = await createSite(storedToken, {
       subdomain: cleanSubdomain(subdomain),
       site_name: blogName.trim() || undefined,
-      template_id: "saas",
+      template_id: "standard",
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
     const plan = localStorage.getItem("pendingPlan");
@@ -126,7 +126,7 @@ function SetupForm() {
       subdomain: cleanSubdomain(subdomain),
       name: name.trim(),
       site_name: blogName.trim() || undefined,
-      template_id: "saas",
+      template_id: "standard",
     });
     localStorage.setItem(TOKEN_KEY, access_token);
     localStorage.setItem("articurls_last_login", "google");
