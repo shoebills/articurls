@@ -59,24 +59,26 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-dvh w-full bg-background md:justify-center">
-      <div className="flex w-full max-w-[1200px]">
-        <AppSidebar />
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-10 hidden h-14 shrink-0 items-center justify-end border-b border-border/70 bg-background px-8 md:flex">
+      <div className="flex w-full max-w-[1200px] flex-col">
+        <header className="sticky top-0 z-30 hidden h-14 shrink-0 items-center justify-between border-b border-border/70 bg-background px-3 md:flex">
+          <BrandLogo href="/dashboard" showIcon={false} />
           <div className="flex items-center gap-2">
-               {publicBlogHref ? (
-               <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-foreground">
-                 <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
-                   Visit blog
-                 </a>
-               </Button>
-             ) : (
-               <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-muted-foreground">
-                 Visit blog
-               </Button>
-             )}
+            {publicBlogHref ? (
+              <Button asChild variant="outline" size="sm" className="h-8 rounded-md text-foreground">
+                <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
+                  Visit blog
+                </a>
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" size="sm" className="h-8 rounded-md text-muted-foreground">
+                Visit blog
+              </Button>
+            )}
           </div>
         </header>
+        <div className="flex min-h-0 w-full flex-1">
+          <AppSidebar />
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header
           ref={mobileHeaderRef}
           className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border/70 bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
@@ -130,7 +132,6 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-background">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
-                    showBrand={false}
                     mobileTrayLayout
                     onNavigate={close}
                     className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
@@ -153,6 +154,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           {children}
           {showTrialPopup ? <TrialExpiredPopup /> : null}
         </main>
+        </div>
       </div>
     </div>
     </div>

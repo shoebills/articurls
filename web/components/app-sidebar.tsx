@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BrandLogo } from "@/components/brand-logo";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -39,13 +38,11 @@ type PanelProps = {
   /** Close mobile sheet after navigation */
   onNavigate?: () => void;
   className?: string;
-  /** Show brand title row (desktop sidebar); hide for compact mobile tray */
-  showBrand?: boolean;
   /** Merged nav+footer with 20px above divider (mobile tray only); desktop keeps pinned footer */
   mobileTrayLayout?: boolean;
 };
 
-export function DashboardSidebarPanel({ onNavigate, className, showBrand = true, mobileTrayLayout = false }: PanelProps) {
+export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
   const { isTrial, daysRemaining } = useAuth();
 
@@ -88,17 +85,6 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
-      {showBrand ? (
-        <div className="flex h-14 shrink-0 items-center justify-start border-b border-border/70 bg-background px-3">
-          <BrandLogo
-            href="/dashboard"
-            showIcon={false}
-            className="min-w-0"
-            onClick={() => onNavigate?.()}
-          />
-        </div>
-      ) : null}
-
       {/* Site Switcher */}
       <SiteSwitcher onNavigate={onNavigate} />
 
@@ -130,7 +116,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
 
 export function AppSidebar() {
   return (
-    <aside className="hidden h-dvh max-h-dvh w-[14.5rem] shrink-0 flex-col bg-background md:sticky md:top-0 md:self-start md:flex">
+    <aside className="hidden h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-3.5rem)] w-[14.5rem] shrink-0 flex-col bg-background md:sticky md:top-14 md:self-start md:flex">
       <DashboardSidebarPanel />
     </aside>
   );
