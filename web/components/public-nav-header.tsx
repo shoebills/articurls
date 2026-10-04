@@ -72,7 +72,7 @@ export function PublicNavHeader({
     return null;
   }
 
-  const resolvedTitle = (title || "").trim() || (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
+  const resolvedTitle = (title || "").trim() || (site.site_name || "").trim() || site.subdomain || "My Blog";
   const resolvedTitleHref = titleHref || getPublicProfileUrl(site.subdomain, basePath);
   const resolvedLinks = links || resolveNavLinks(site, categories, basePath);
   const hasMobileNav = resolvedLinks.length > 0 || hasBlogs;

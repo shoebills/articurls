@@ -20,7 +20,7 @@ type StandardTemplateProps = {
 };
 
 export function StandardTemplate({ site, blogs, pages, categories, basePath }: StandardTemplateProps) {
-  const displayName = (site.site_name || "").trim() || site.name || site.subdomain || "My Blog";
+  const displayName = (site.site_name || "").trim() || site.subdomain || "My Blog";
   const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);

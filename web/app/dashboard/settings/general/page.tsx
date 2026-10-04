@@ -60,8 +60,6 @@ export default function GeneralSettingsPage() {
     return !apiCacheHas("/user/me", t);
   });
 
-  const [siteName, setSiteName] = useState("");
-  const [siteNameInitial, setSiteNameInitial] = useState("");
   const [heroTitle, setHeroTitle] = useState("");
   const [heroTitleInitial, setHeroTitleInitial] = useState("");
   const [heroDescription, setHeroDescription] = useState("");
@@ -101,10 +99,7 @@ export default function GeneralSettingsPage() {
   const load = useCallback(async () => {
     if (!token) return;
     try {
-      const [u, d] = await Promise.all([getMe(token), getDesignSettings(token)]);
-      const name = d.site_name || u.site_name || "";
-      setSiteName(name);
-      setSiteNameInitial(name);
+      const [, d] = await Promise.all([getMe(token), getDesignSettings(token)]);
       setHeroTitle(d.hero_title || "");
       setHeroTitleInitial(d.hero_title || "");
       setHeroDescription(d.hero_description || "");
@@ -130,17 +125,11 @@ export default function GeneralSettingsPage() {
 
   async function handleSaveGeneral() {
     if (!token) return;
-    const trimmedName = siteName.trim();
-    if (!trimmedName) {
-      setErr("Site name cannot be empty");
-      return;
-    }
     setBusy(true);
     setErr(null);
     setSaved(null);
     try {
       await patchDesignSettings(token, {
-        site_name: trimmedName,
         hero_title: heroTitle.trim() || null,
         hero_description: heroDescription.trim() || null,
         site_language: siteLanguage || "en",
@@ -148,7 +137,6 @@ export default function GeneralSettingsPage() {
         rss_enabled: rssEnabled,
         atom_enabled: atomEnabled,
       } as DesignSettings);
-      setSiteNameInitial(trimmedName);
       setHeroTitleInitial(heroTitle.trim());
       setHeroDescriptionInitial(heroDescription.trim());
       setSiteLanguageInitial(siteLanguage);
@@ -181,14 +169,12 @@ export default function GeneralSettingsPage() {
   }
 
   const generalDirty =
-    siteName.trim() !== siteNameInitial ||
     heroTitle.trim() !== heroTitleInitial ||
     heroDescription.trim() !== heroDescriptionInitial ||
     siteLanguage !== siteLanguageInitial ||
     ogLocale.trim() !== ogLocaleInitial ||
     rssEnabled !== rssEnabledInitial ||
     atomEnabled !== atomEnabledInitial;
-  const siteNameValid = siteName.trim().length > 0;
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 pb-12 sm:space-y-8">
@@ -206,9 +192,6 @@ export default function GeneralSettingsPage() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">General</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Global settings for your site.
-        </p>
       </div>
 
       {loading ? (
@@ -219,26 +202,48 @@ export default function GeneralSettingsPage() {
         </div>
       ) : (
         <div className="space-y-10">
-          {/* Site Identity */}
+          {/* Hero Section */}
           <section className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Hero Section</h2>
+              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+                Displayed at the top of your blog. If both fields are left empty, no hero section will be rendered.
+              </p>
+            </div>
+            <div className="space-y-6 max-w-2xl">
+              <div className="space-y-2.5">
+                <Label htmlFor="hero_title">Hero Title</Label>
+                <Input
+                  id="hero_title"
+                  className="mt-2"
+                  placeholder="e.g. Ideas, thoughts, and technical essays."
+                  maxLength={120}
+                  value={heroTitle}
+                  onChange={(e) => setHeroTitle(e.target.value)}
+                  disabled={busy}
+                />
+              </div>
+              <div className="space-y-2.5">
+                <Label htmlFor="hero_description">Hero Description</Label>
+                <Textarea
+                  id="hero_description"
+                  className="mt-2"
+                  placeholder="A short introduction or tagline about your publication..."
+                  rows={3}
+                  value={heroDescription}
+                  onChange={(e) => setHeroDescription(e.target.value)}
+                  disabled={busy}
+                />
+              </div>
+            </div>
+          </section>
+
+          {/* Site Identity */}
+          <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Site Identity</h2>
               <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Your publication name and favicon shown across your site and the browser.
-              </p>
-            </div>
-            <div className="space-y-2.5 max-w-md">
-              <Label htmlFor="site_name">Site Name</Label>
-              <Input
-                id="site_name"
-                className="mt-2"
-                placeholder="My Blog"
-                value={siteName}
-                onChange={(e) => setSiteName(e.target.value)}
-                disabled={busy}
-              />
-              <p className="text-xs text-muted-foreground">
-                Shown in navigation, footer, and browser title.
+                Your publication favicon shown in the browser tab.
               </p>
             </div>
 
@@ -250,17 +255,17 @@ export default function GeneralSettingsPage() {
                   Recommended 512×512px, max 256KB.
                 </p>
               </div>
-              <div className="flex items-center gap-4">
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
+              <div className="flex flex-col items-start gap-3">
+                <div className="flex h-42 w-42 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
                   {ctxUser?.favicon_url ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={assetUrl(ctxUser.favicon_url)}
                       alt="Favicon"
-                      className="h-8 w-8 object-contain"
+                      className="h-24 w-24 object-contain"
                     />
                   ) : (
-                    <Globe className="h-6 w-6 text-muted-foreground/50" />
+                    <Globe className="h-18 w-18 text-muted-foreground/50" />
                   )}
                 </div>
                 <input
@@ -325,42 +330,6 @@ export default function GeneralSettingsPage() {
               </div>
           </section>
 
-          {/* Hero Section */}
-          <section className="space-y-4 pt-6">
-            <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Hero Section</h2>
-              <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-                Displayed at the top of your blog. If both fields are left empty, no hero section will be rendered.
-              </p>
-            </div>
-            <div className="space-y-6 max-w-2xl">
-              <div className="space-y-2.5">
-                <Label htmlFor="hero_title">Hero Title</Label>
-                <Input
-                  id="hero_title"
-                  className="mt-2"
-                  placeholder="e.g. Ideas, thoughts, and technical essays."
-                  maxLength={120}
-                  value={heroTitle}
-                  onChange={(e) => setHeroTitle(e.target.value)}
-                  disabled={busy}
-                />
-              </div>
-              <div className="space-y-2.5">
-                <Label htmlFor="hero_description">Hero Description</Label>
-                <Textarea
-                  id="hero_description"
-                  className="mt-2"
-                  placeholder="A short introduction or tagline about your publication..."
-                  rows={3}
-                  value={heroDescription}
-                  onChange={(e) => setHeroDescription(e.target.value)}
-                  disabled={busy}
-                />
-              </div>
-            </div>
-          </section>
-
           {/* Language & Region */}
           <section className="space-y-4 pt-6">
             <div>
@@ -371,7 +340,12 @@ export default function GeneralSettingsPage() {
             </div>
             <div className="space-y-6 max-w-md">
               <div className="space-y-2.5">
-                <Label htmlFor="site_language">Site Language (HTML lang)</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="site_language">Site Language</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Sets the primary &lt;html lang=&quot;...&quot;&gt; attribute.
+                  </p>
+                </div>
                 <Select
                   value={siteLanguage}
                   onValueChange={setSiteLanguage}
@@ -388,13 +362,15 @@ export default function GeneralSettingsPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-muted-foreground">
-                  Sets the primary &lt;html lang=&quot;...&quot;&gt; attribute.
-                </p>
               </div>
 
               <div className="space-y-2.5">
-                <Label htmlFor="og_locale">OpenGraph Locale</Label>
+                <div className="space-y-1.5">
+                  <Label htmlFor="og_locale">OpenGraph Locale</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Optional locale tag for social previews.
+                  </p>
+                </div>
                 <Input
                   id="og_locale"
                   className="mt-2"
@@ -404,9 +380,6 @@ export default function GeneralSettingsPage() {
                   onChange={(e) => setOgLocale(e.target.value)}
                   disabled={busy}
                 />
-                <p className="text-xs text-muted-foreground">
-                  Optional locale tag for social previews (e.g. en_US, es_ES).
-                </p>
               </div>
             </div>
           </section>
@@ -419,11 +392,11 @@ export default function GeneralSettingsPage() {
                 Enable syndication feeds so readers can follow your publication.
               </p>
             </div>
-            <div className="space-y-4 max-w-md">
+            <div className="space-y-6 max-w-md">
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">RSS Feed</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Enables the /rss.xml feed for podcast and blog readers.
                   </p>
                 </div>
@@ -437,7 +410,7 @@ export default function GeneralSettingsPage() {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Atom Feed</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Enables the /atom.xml feed format.
                   </p>
                 </div>
@@ -462,8 +435,8 @@ export default function GeneralSettingsPage() {
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-0.5">
                   <p className="text-sm font-medium">Clear Cache</p>
-                  <p className="text-xs text-muted-foreground">
-                    Invalidates cached copies of your publication. The first load after clearing may be slower.
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Invalidates cached copies of your publication.
                   </p>
                 </div>
                 <Button
@@ -482,7 +455,7 @@ export default function GeneralSettingsPage() {
           <div className="flex items-center justify-end pt-6 border-t border-border/60">
             <Button
               onClick={handleSaveGeneral}
-              disabled={busy || !generalDirty || !siteNameValid}
+              disabled={busy || !generalDirty}
               className="gap-2"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}

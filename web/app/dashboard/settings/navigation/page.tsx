@@ -63,7 +63,11 @@ export default function NavigationSettingsPage() {
     setErr(null);
     setSuccess(null);
     try {
-      const updated = await patchDesignSettings(token, design);
+      const trimmedName = (design.site_name || "").trim();
+      const updated = await patchDesignSettings(token, {
+        ...design,
+        site_name: trimmedName || null,
+      });
       setDesign(updated);
       await refreshUser();
       setSuccess("Navigation settings saved successfully.");
@@ -93,9 +97,6 @@ export default function NavigationSettingsPage() {
 
       <div>
         <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Navigation</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Configure brand name, header style, custom links, and CTA buttons.
-        </p>
       </div>
 
       {loading || !design ? (

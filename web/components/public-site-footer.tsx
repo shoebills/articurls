@@ -26,7 +26,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   const showAtom = site.footer_show_atom === true && site.atom_enabled === true;
   const showNewsletter = site.newsletter_show_in_footer !== false;
   const currentYear = new Date().getFullYear();
-  const copyrightText = site.footer_copyright || `© ${currentYear} ${site.site_name || site.name || site.subdomain}. All rights reserved.`;
+  const copyrightText = site.footer_copyright || `© ${currentYear} ${site.site_name || site.subdomain}. All rights reserved.`;
 
   return (
     <footer className="mt-20 pt-12 pb-16">
@@ -62,7 +62,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
                 />
               ) : null}
               <h3 className="font-bold text-2xl tracking-tight text-foreground">
-                {site.site_name || site.name || "My Blog"}
+                {site.site_name || site.subdomain || "My Blog"}
               </h3>
             </div>
             {site.footer_description ? (
@@ -113,7 +113,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               />
             ) : null}
             <h3 className="font-bold text-2xl tracking-tight text-foreground">
-              {site.site_name || site.name || "My Blog"}
+              {site.site_name || site.subdomain || "My Blog"}
             </h3>
             {site.footer_description ? (
               <p className="text-sm text-muted-foreground leading-relaxed">

@@ -79,7 +79,7 @@ async function customDomainLlms(host: string): Promise<Response> {
     });
   }
 
-  const siteName = (site.site_name || "").trim() || site.name || site.subdomain;
+  const siteName = (site.site_name || "").trim() || site.subdomain;
   const description = (site.meta_description || "").trim();
   const body = `# ${siteName}
 ${description ? `> ${description}\n` : ""}

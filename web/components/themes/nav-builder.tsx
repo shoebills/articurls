@@ -49,9 +49,6 @@ import {
   Pencil,
   Trash2,
   ExternalLink,
-  Megaphone,
-  SunMoon,
-  Search,
   Image as ImageIcon,
   Loader2,
 } from "lucide-react";
@@ -96,12 +93,6 @@ function SortableNavItemRow({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="font-medium text-sm truncate text-foreground">{item.label}</span>
-            {item.is_cta ? (
-              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                <Megaphone className="h-2.5 w-2.5" />
-                CTA Button
-              </span>
-            ) : null}
             {item.open_in_new_tab ? (
               <ExternalLink className="h-3 w-3 text-muted-foreground shrink-0" />
             ) : null}
@@ -110,7 +101,12 @@ function SortableNavItemRow({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+        {item.is_cta ? (
+          <span className="inline-flex items-center rounded-lg bg-primary/10 px-2.5 py-1 text-xs font-semibold text-primary">
+            CTA Button
+          </span>
+        ) : null}
         <Button
           type="button"
           variant="ghost"
@@ -311,106 +307,109 @@ export function NavBuilder({
       <section className="space-y-4">
         <div>
           <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Branding</h2>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Brand name, logo image, and click destination shown in your header.
-          </p>
         </div>
         <div className="space-y-6 max-w-md">
           <div className="space-y-6">
             <div className="space-y-2.5">
-              <label className="text-sm font-medium text-foreground">Header Brand Name</label>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Site Name</label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Shown in navigation, footer, and browser title.
+                </p>
+              </div>
               <Input
                 value={settings.site_name || ""}
                 onChange={(e) => onChange({ site_name: e.target.value })}
                 placeholder="e.g. My Publication"
                 className="mt-2"
               />
-              <p className="text-xs text-muted-foreground">
-                Displayed when no logo image is set.
-              </p>
             </div>
-  
+
             <div className="space-y-2.5">
-              <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
+              <div className="space-y-1.5">
+                <label className="text-sm font-medium text-foreground">Logo Link Destination</label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Destination URL when visitors click your logo or brand title.
+                </p>
+              </div>
               <Input
                 value={settings.logo_link ?? "/"}
                 onChange={(e) => onChange({ logo_link: e.target.value })}
                 placeholder="/"
                 className="mt-2"
               />
-              <p className="text-xs text-muted-foreground">
-                Destination URL when visitors click your logo or brand title.
-              </p>
             </div>
           </div>
   
           {/* Full Image Logo upload */}
           <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Header Logo Image</label>
-            <div className="mt-2 rounded-xl border border-border/80 bg-muted/20 p-4 space-y-3">
-              <div className="flex items-center gap-4">
-                <div className="flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background p-1">
-                  {settings.logo_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={assetUrl(settings.logo_url)}
-                      alt="Logo"
-                      className="h-full w-full object-contain"
-                    />
-                  ) : (
-                    <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
-                  )}
-                </div>
-                <div className="space-y-1.5 flex-1 min-w-0">
-                  <input
-                    ref={logoInputRef}
-                    type="file"
-                    accept="image/png,image/jpeg,image/webp,image/svg+xml"
-                    className="sr-only"
-                    onChange={async (e) => {
-                      const file = e.target.files?.[0];
-                      if (file) await handleLogoUpload(file);
-                      e.target.value = "";
-                    }}
-                    disabled={logoBusy}
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Header Logo Image</label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Replaces the site name text in the header when set.
+              </p>
+            </div>
+            <div className="flex flex-col items-start gap-3">
+              <div className="flex h-32 w-56 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-background">
+                {settings.logo_url ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={assetUrl(settings.logo_url)}
+                    alt="Logo"
+                    className="h-full w-full object-contain"
                   />
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="gap-1.5 text-xs h-8"
-                      disabled={logoBusy}
-                      onClick={() => logoInputRef.current?.click()}
-                    >
-                      {logoBusy ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                      ) : (
-                        <Pencil className="h-3.5 w-3.5" />
-                      )}
-                      {settings.logo_url ? "Change Logo" : "Upload Logo"}
-                    </Button>
-                    {settings.logo_url ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-600 hover:bg-red-50 hover:text-red-700 h-8 px-2 text-xs"
-                        disabled={logoBusy}
-                        onClick={handleLogoDelete}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    ) : null}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    PNG, JPG, WebP or SVG up to 2MB.
-                  </p>
-                  {logoError && (
-                    <p className="text-xs text-destructive">{logoError}</p>
-                  )}
-                </div>
+                ) : (
+                  <ImageIcon className="h-12 w-12 text-muted-foreground/40" />
+                )}
               </div>
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                className="sr-only"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (file) await handleLogoUpload(file);
+                  e.target.value = "";
+                }}
+                disabled={logoBusy}
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="h-10 w-10 shrink-0"
+                  disabled={logoBusy}
+                  onClick={() => logoInputRef.current?.click()}
+                  title={settings.logo_url ? "Change logo" : "Upload logo"}
+                >
+                  {logoBusy ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Pencil className="h-4 w-4" />
+                  )}
+                </Button>
+                {settings.logo_url ? (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0 text-red-600 hover:bg-red-50 hover:text-red-700"
+                    disabled={logoBusy}
+                    onClick={handleLogoDelete}
+                    title="Remove logo"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                ) : null}
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                PNG, JPG, WebP or SVG up to 2MB.
+              </p>
+              {logoError && (
+                <p className="text-xs text-destructive">{logoError}</p>
+              )}
             </div>
           </div>
         </div>
@@ -420,20 +419,14 @@ export function NavBuilder({
       <section className="space-y-4 pt-6">
         <div>
           <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Features</h2>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Optional utility controls displayed alongside your navigation.
-          </p>
         </div>
 
         {/* Search Toggle */}
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <Search className="h-4 w-4 text-muted-foreground" />
-              <label className="text-sm font-medium text-foreground">Search in Navigation</label>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Display a quick search button in your header for visitors to find articles.
+            <label className="text-sm font-medium text-foreground">Search in Navigation</label>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              Display a search button in the navigation bar.
             </p>
           </div>
           <Switch
@@ -445,11 +438,8 @@ export function NavBuilder({
         {/* Theme Mode Toggle */}
         <div className="flex items-center justify-between gap-4">
           <div className="space-y-0.5">
-            <div className="flex items-center gap-2">
-              <SunMoon className="h-4 w-4 text-muted-foreground" />
-              <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
-            </div>
-            <p className="text-xs text-muted-foreground">
+            <label className="text-sm font-medium text-foreground">Mode Switcher in Navigation</label>
+            <p className="text-xs text-muted-foreground sm:text-sm">
               Show a light / dark / system mode switcher in the header.
             </p>
           </div>
@@ -465,13 +455,15 @@ export function NavBuilder({
       <section className="space-y-4 pt-6">
         <div>
           <h2 className="text-base font-semibold text-foreground sm:text-lg">Header Style</h2>
-          <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
-            Choose how your header is aligned and presented.
-          </p>
         </div>
         <div className="space-y-6 max-w-md">
           <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Header Alignment</label>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Header Alignment</label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Align your brand left, center, or right.
+              </p>
+            </div>
             <div className="mt-2 flex gap-2">
               {(
                 [
@@ -484,7 +476,7 @@ export function NavBuilder({
                   type="button"
                   key={a.id}
                   onClick={() => onChange({ navbar_alignment: a.id })}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
+                  className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-all ${
                     align === a.id
                       ? "border-primary bg-primary text-primary-foreground shadow-2xs"
                       : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
@@ -498,7 +490,12 @@ export function NavBuilder({
           </div>
   
           <div className="space-y-2.5">
-            <label className="text-sm font-medium text-foreground">Header Style</label>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Header Style</label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Choose a bordered bar or a floating card.
+              </p>
+            </div>
             <div className="mt-2 flex gap-2">
               {(
                 [
@@ -510,7 +507,7 @@ export function NavBuilder({
                   type="button"
                   key={s.id}
                   onClick={() => onChange({ navbar_style: s.id })}
-                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg border py-2 text-xs font-medium transition-all ${
+                  className={`flex h-10 flex-1 items-center justify-center gap-1.5 rounded-lg border text-xs font-medium transition-all ${
                     displayStyle === s.id
                       ? "border-primary bg-primary text-primary-foreground shadow-2xs"
                       : "border-border/70 bg-background text-muted-foreground hover:border-border hover:text-foreground"
@@ -535,9 +532,9 @@ export function NavBuilder({
               Define the links, custom pages, and CTA buttons shown in your site navigation.
             </p>
           </div>
-          <Button type="button" size="sm" onClick={openAddDialog} className="gap-1.5 h-8">
-            <Plus className="h-3.5 w-3.5" />
-            Add Link
+          <Button type="button" onClick={openAddDialog} className="h-10 w-10 shrink-0 gap-1.5 p-0 sm:w-auto sm:px-4 sm:py-2">
+            <Plus className="h-4 w-4" />
+            <span className="hidden sm:inline">Add Link</span>
           </Button>
         </div>
 

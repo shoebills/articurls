@@ -42,7 +42,7 @@ export const revalidate = 86400;
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveSiteName(site: PublicSite | null | undefined): string {
-  return (site?.site_name || "").trim() || site?.name || site?.subdomain || "My Blog";
+  return (site?.site_name || "").trim() || site?.subdomain || "My Blog";
 }
 
 function resolveSiteOgImage(site: PublicSite | null | undefined): string | undefined {
