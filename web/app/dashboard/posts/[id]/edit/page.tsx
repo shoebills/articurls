@@ -681,7 +681,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     <div className="mx-auto max-w-[1100px] pb-36 sm:pb-40">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-2">
         <Link
-          href="/dashboard"
+          href="/dashboard/posts"
           className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ChevronLeft className="h-4 w-4 shrink-0" />

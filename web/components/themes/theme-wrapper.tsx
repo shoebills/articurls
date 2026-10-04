@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useTheme } from "next-themes";
+import { ThemeProvider } from "next-themes";
 import type { ColorPalette, PublicSite } from "@/lib/types";
 import { DEFAULT_PALETTES } from "./color-palette-picker";
 
@@ -215,16 +215,10 @@ export function ThemeStyleWrapper({
   site: PublicSite;
   children: React.ReactNode;
 }) {
-  const { setTheme } = useTheme();
-  const siteMode = site.site_mode || "system";
-
-  useEffect(() => {
-    // If reader hasn't explicitly chosen a mode in localStorage, apply site's configured mode
-    const stored = typeof window !== "undefined" ? localStorage.getItem("blog-theme") : null;
-    if (!stored) {
-      setTheme(siteMode);
-    }
-  }, [siteMode, setTheme]);
+  // Nested provider so next-themes' pre-paint script resolves
+  // stored preference → site default → system before first pixel.
+  // (The root provider can't know the per-site default.)
+  const siteMode = site.site_mode === "dark" || site.site_mode === "light" ? site.site_mode : "system";
 
   useEffect(() => {
     if (site.site_language) {
@@ -340,18 +334,26 @@ export function ThemeStyleWrapper({
   `;
 
   return (
-    <div className="articurls-theme-scope min-h-screen bg-background text-foreground">
-      <style id="articurls-theme-vars" dangerouslySetInnerHTML={{ __html: cssContent }} />
-      {site.custom_css ? (
-        <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: site.custom_css }} />
-      ) : null}
-      {site.custom_head_code ? (
-        <div id="articurls-custom-head" dangerouslySetInnerHTML={{ __html: site.custom_head_code }} style={{ display: "none" }} />
-      ) : null}
-      {children}
-      {site.custom_body_code ? (
-        <div id="articurls-custom-body" dangerouslySetInnerHTML={{ __html: site.custom_body_code }} style={{ display: "none" }} />
-      ) : null}
-    </div>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme={siteMode}
+      enableSystem
+      storageKey="blog-theme"
+      disableTransitionOnChange
+    >
+      <div className="articurls-theme-scope min-h-screen bg-background text-foreground">
+        <style id="articurls-theme-vars" dangerouslySetInnerHTML={{ __html: cssContent }} />
+        {site.custom_css ? (
+          <style id="articurls-custom-css" dangerouslySetInnerHTML={{ __html: site.custom_css }} />
+        ) : null}
+        {site.custom_head_code ? (
+          <div id="articurls-custom-head" dangerouslySetInnerHTML={{ __html: site.custom_head_code }} style={{ display: "none" }} />
+        ) : null}
+        {children}
+        {site.custom_body_code ? (
+          <div id="articurls-custom-body" dangerouslySetInnerHTML={{ __html: site.custom_body_code }} style={{ display: "none" }} />
+        ) : null}
+      </div>
+    </ThemeProvider>
   );
 }

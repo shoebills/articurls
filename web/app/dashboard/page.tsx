@@ -221,32 +221,19 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {activeSite ? (
-              <>
-                Managing <span className="font-semibold text-foreground">{activeSite.site_name || activeSite.subdomain}</span>{" "}
-                <span className="text-muted-foreground/80 font-mono text-xs">
-                  ({activeSite.custom_domain || `${activeSite.subdomain}.articurls.site`})
-                </span>
-              </>
-            ) : (
-              "Here's an overview of your active site and overall traffic."
-            )}
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button asChild size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-            <Link href="/dashboard/posts/new">
-              <PenLine className="h-3.5 w-3.5" />
-              Write Post
-            </Link>
-          </Button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+          Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          {activeSite ? (
+            <>
+              Managing <span className="font-semibold text-foreground">{activeSite.site_name || activeSite.subdomain}</span>
+            </>
+          ) : (
+            "Here's an overview of your active site and overall traffic."
+          )}
+        </p>
       </div>
 
       {/* Top Metric Cards */}
@@ -351,14 +338,9 @@ export default function DashboardPage() {
 
                   {/* Per-Site Breakdown */}
                   <div className="space-y-3 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                        Site Traffic Breakdown ({usage.sites.length})
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        Plan: <span className="font-semibold text-foreground uppercase">{usage.plan_type}</span>
-                      </span>
-                    </div>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      Site Traffic Breakdown ({usage.sites.length})
+                    </span>
 
                     {usage.sites.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
@@ -508,10 +490,6 @@ export default function DashboardPage() {
                           </div>
                           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{formatDate(post.published_at || post.created_at)}</span>
-                            <span>•</span>
-                            <span className="font-mono text-[11px] text-muted-foreground/80 truncate max-w-[140px] sm:max-w-[200px]">
-                              /{post.slug}
-                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
