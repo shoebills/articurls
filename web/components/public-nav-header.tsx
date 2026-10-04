@@ -5,12 +5,19 @@ import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 export function getPublicNavHeaderClass(navbarStyle?: string): string {
   if (navbarStyle === "floating") {
-    return "sticky top-4 z-40 mb-12 rounded-xl border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm";
+    return "sticky top-4 z-40 mb-8 sm:mb-10 w-full px-4 sm:px-6 pointer-events-none";
   }
   if (navbarStyle === "minimal") {
-    return "sticky top-0 z-40 mb-12 bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+    return "sticky top-0 z-40 mb-8 sm:mb-10 w-full bg-transparent pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pb-5 sm:pt-6";
   }
-  return "sticky top-0 z-40 mb-12 border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:mb-10 sm:pb-5 sm:pt-6";
+  return "sticky top-0 z-40 mb-8 sm:mb-10 w-full border-b border-border/70 bg-background/90 backdrop-blur-md pb-4 pt-[max(1rem,env(safe-area-inset-top))] sm:pb-5 sm:pt-6";
+}
+
+export function getPublicNavInnerClass(navbarStyle?: string, maxWidth = "max-w-7xl"): string {
+  if (navbarStyle === "floating") {
+    return `mx-auto ${maxWidth} rounded-xl border border-border/70 bg-background/90 backdrop-blur-md px-4 sm:px-6 py-2.5 shadow-sm pointer-events-auto`;
+  }
+  return `mx-auto ${maxWidth} px-[26px] sm:px-6`;
 }
 
 export function getPublicMainSpacing(isNavEnabled: boolean, maxWidth = "max-w-7xl"): string {
@@ -48,6 +55,7 @@ export interface PublicNavHeaderProps {
   titleHref?: string;
   links?: PublicNavDesktopLink[];
   hasBlogs?: boolean;
+  maxWidth?: string;
 }
 
 export function PublicNavHeader({
@@ -58,6 +66,7 @@ export function PublicNavHeader({
   titleHref,
   links,
   hasBlogs = false,
+  maxWidth = "max-w-7xl",
 }: PublicNavHeaderProps) {
   if (site.navbar_enabled === false) {
     return null;
@@ -71,33 +80,35 @@ export function PublicNavHeader({
 
   return (
     <header className={getPublicNavHeaderClass(site.navbar_style)} data-public-nav>
-      <div className="hidden w-full sm:block">
-        <PublicDesktopNav
-          title={resolvedTitle}
-          titleHref={resolvedTitleHref}
-          logoUrl={site.logo_url}
-          searchEnabled={site.search_enabled !== false}
-          themeToggleEnabled={site.theme_toggle_enabled !== false}
-          links={resolvedLinks}
-          subdomain={site.subdomain}
-          alignment={site.navbar_alignment || "left"}
-          basePath={basePath}
-          buttonVariant={buttonVariant}
-        />
-      </div>
-      <div className="sm:hidden">
-        <PublicMobileNavMenu
-          title={resolvedTitle}
-          titleHref={resolvedTitleHref}
-          logoUrl={site.logo_url}
-          searchEnabled={site.search_enabled !== false}
-          themeToggleEnabled={site.theme_toggle_enabled !== false}
-          links={resolvedLinks}
-          subdomain={site.subdomain}
-          showMenuButton={hasMobileNav}
-          basePath={basePath}
-          buttonVariant={buttonVariant}
-        />
+      <div className={getPublicNavInnerClass(site.navbar_style, maxWidth)}>
+        <div className="hidden w-full sm:block">
+          <PublicDesktopNav
+            title={resolvedTitle}
+            titleHref={resolvedTitleHref}
+            logoUrl={site.logo_url}
+            searchEnabled={site.search_enabled !== false}
+            themeToggleEnabled={site.theme_toggle_enabled !== false}
+            links={resolvedLinks}
+            subdomain={site.subdomain}
+            alignment={site.navbar_alignment || "left"}
+            basePath={basePath}
+            buttonVariant={buttonVariant}
+          />
+        </div>
+        <div className="sm:hidden">
+          <PublicMobileNavMenu
+            title={resolvedTitle}
+            titleHref={resolvedTitleHref}
+            logoUrl={site.logo_url}
+            searchEnabled={site.search_enabled !== false}
+            themeToggleEnabled={site.theme_toggle_enabled !== false}
+            links={resolvedLinks}
+            subdomain={site.subdomain}
+            showMenuButton={hasMobileNav}
+            basePath={basePath}
+            buttonVariant={buttonVariant}
+          />
+        </div>
       </div>
     </header>
   );

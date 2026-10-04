@@ -54,16 +54,15 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
 
   return (
     <div className="min-h-screen bg-background text-foreground">
+      <PublicNavHeader
+        site={site}
+        categories={categories}
+        basePath={basePath}
+        title={displayName}
+        titleHref={titleHref}
+        hasBlogs={blogs.length > 0}
+      />
       <main className={mainSpacing}>
-        <PublicNavHeader
-          site={site}
-          categories={categories}
-          basePath={basePath}
-          title={displayName}
-          titleHref={titleHref}
-          hasBlogs={blogs.length > 0}
-        />
-
         {/* Hero */}
         {hasHero ? (
           <>

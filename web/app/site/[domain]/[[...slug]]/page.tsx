@@ -701,15 +701,15 @@ export default async function SitePublicationPage({ params }: Props) {
               dangerouslySetInnerHTML={{ __html: JSON.stringify(blog.custom_schema) }}
             />
           )}
+          <PublicNavHeader
+            site={site}
+            categories={categories}
+            basePath={basePath}
+            title={navBlogName}
+            titleHref={titleHref}
+            hasBlogs={relatedBlogs.length > 0}
+          />
           <main className={mainSpacing}>
-            <PublicNavHeader
-              site={site}
-              categories={categories}
-              basePath={basePath}
-              title={navBlogName}
-              titleHref={titleHref}
-              hasBlogs={relatedBlogs.length > 0}
-            />
             {site.toc_enabled !== false ? (
                 <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
                   <div className="max-w-3xl">
@@ -753,29 +753,29 @@ export default async function SitePublicationPage({ params }: Props) {
       return (
         <ThemeStyleWrapper site={site}>
         <div className="min-h-screen bg-background text-foreground">
-          <main className={mainSpacing}>
-            <StructuredData data={generateWebPageSchema(page, site, withJsonLdSlash(currentUrl, site))} />
-            <StructuredData data={generateBreadcrumbList([
-              { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
-              { name: page.title || "Untitled Page", url: withJsonLdSlash(currentUrl, site) },
-            ])} />
-            {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
-              <StructuredData data={generateFaqPageSchema(page.faq_items, withJsonLdSlash(currentUrl, site))} />
-            )}
-            {page.custom_schema && (
-              <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(page.custom_schema) }}
-              />
-            )}
-            <PublicNavHeader
-              site={site}
-              categories={categories}
-              basePath={basePath}
-              title={navBlogName}
-              titleHref={titleHref}
-              hasBlogs={false}
+          <StructuredData data={generateWebPageSchema(page, site, withJsonLdSlash(currentUrl, site))} />
+          <StructuredData data={generateBreadcrumbList([
+            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
+            { name: page.title || "Untitled Page", url: withJsonLdSlash(currentUrl, site) },
+          ])} />
+          {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
+            <StructuredData data={generateFaqPageSchema(page.faq_items, withJsonLdSlash(currentUrl, site))} />
+          )}
+          {page.custom_schema && (
+            <script
+              type="application/ld+json"
+              dangerouslySetInnerHTML={{ __html: JSON.stringify(page.custom_schema) }}
             />
+          )}
+          <PublicNavHeader
+            site={site}
+            categories={categories}
+            basePath={basePath}
+            title={navBlogName}
+            titleHref={titleHref}
+            hasBlogs={false}
+          />
+          <main className={mainSpacing}>
 
             <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
               <div className="flex items-center justify-between">
@@ -855,15 +855,15 @@ export default async function SitePublicationPage({ params }: Props) {
           { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
           { name: categoryName, url: withJsonLdSlash(currentUrl, site) },
         ])} />
+        <PublicNavHeader
+          site={site}
+          categories={categories}
+          basePath={basePath}
+          title={navBlogName}
+          titleHref={titleHref}
+          hasBlogs={blogs.length > 0}
+        />
         <main className={mainSpacing}>
-          <PublicNavHeader
-            site={site}
-            categories={categories}
-            basePath={basePath}
-            title={navBlogName}
-            titleHref={titleHref}
-            hasBlogs={blogs.length > 0}
-          />
 
           {/* Back link */}
           <div className="mb-6">
@@ -951,15 +951,15 @@ export default async function SitePublicationPage({ params }: Props) {
             { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(siteUrl, site) },
             { name: author.name, url: withJsonLdSlash(currentUrl, site) },
           ])} />
+          <PublicNavHeader
+            site={site}
+            categories={categories}
+            basePath={basePath}
+            title={navBlogName}
+            titleHref={titleHref}
+            hasBlogs={blogs.length > 0}
+          />
           <main className={mainSpacing}>
-            <PublicNavHeader
-              site={site}
-              categories={categories}
-              basePath={basePath}
-              title={navBlogName}
-              titleHref={titleHref}
-              hasBlogs={blogs.length > 0}
-            />
 
             {/* Back link */}
             <div className="mb-6">
@@ -1077,15 +1077,15 @@ export default async function SitePublicationPage({ params }: Props) {
             { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
             { name: "Categories", url: withJsonLdSlash(currentUrl, site) },
           ])} />
+          <PublicNavHeader
+            site={site}
+            categories={allCategories}
+            basePath={basePath}
+            title={navBlogName}
+            titleHref={titleHref}
+            hasBlogs={false}
+          />
           <main className={mainSpacing}>
-            <PublicNavHeader
-              site={site}
-              categories={allCategories}
-              basePath={basePath}
-              title={navBlogName}
-              titleHref={titleHref}
-              hasBlogs={false}
-            />
 
             {/* Back link */}
             <div className="mb-8">
