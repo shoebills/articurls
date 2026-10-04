@@ -70,54 +70,73 @@ export function CodeInjectionSettings() {
           <section className="space-y-4">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                Header Code Injection (<code className="font-mono text-xs text-primary">&lt;head&gt;</code>)
+                Header Code Injection
               </h2>
             </div>
-            <Label htmlFor="head-code" className="sr-only">Header code</Label>
-            <Textarea
-              id="head-code"
-              rows={4}
-              value={headCode}
-              onChange={(e) => setHeadCode(e.target.value)}
-              placeholder="<!-- Paste your tracking script or head tags here -->"
-              className="font-mono text-xs"
-            />
+            <div className="space-y-2.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="head-code">Head code</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Loaded on every page. Ideal for analytics, fonts, or verification tags.
+                </p>
+              </div>
+              <Textarea
+                id="head-code"
+                rows={4}
+                value={headCode}
+                onChange={(e) => setHeadCode(e.target.value)}
+                placeholder="<!-- Google Analytics, Meta Pixel, or custom fonts -->"
+                className="mt-2 font-mono text-xs"
+              />
+            </div>
           </section>
 
           {/* Body Code */}
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                Footer Code Injection (<code className="font-mono text-xs text-primary">Before &lt;/body&gt;</code>)
+                Footer Code Injection
               </h2>
             </div>
-            <Label htmlFor="body-code" className="sr-only">Footer code</Label>
-            <Textarea
-              id="body-code"
-              rows={4}
-              value={bodyCode}
-              onChange={(e) => setBodyCode(e.target.value)}
-              placeholder="<!-- Paste your body script or widget code here -->"
-              className="font-mono text-xs"
-            />
+            <div className="space-y-2.5">
+              <div className="space-y-1.5">
+                <Label htmlFor="body-code">Footer code</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Loaded at the end of every page. Ideal for chat widgets or consent banners.
+                </p>
+              </div>
+              <Textarea
+                id="body-code"
+                rows={4}
+                value={bodyCode}
+                onChange={(e) => setBodyCode(e.target.value)}
+                placeholder="<!-- Live chat, cookie banner, or heatmap scripts -->"
+                className="mt-2 font-mono text-xs"
+              />
+            </div>
           </section>
 
           {/* Custom CSS */}
           <section className="space-y-4 pt-6">
             <div>
               <h2 className="text-base font-semibold text-foreground sm:text-lg">
-                Custom CSS Styling (<code className="font-mono text-xs text-primary">&lt;style&gt;</code>)
+                Custom CSS Styling
               </h2>
             </div>
-            <Label htmlFor="custom-css" className="sr-only">Custom CSS</Label>
-            <Textarea
-              id="custom-css"
-              rows={4}
-              value={customCss}
-              onChange={(e) => setCustomCss(e.target.value)}
-              placeholder="/* .prose-blog h1 { font-weight: 800; } */"
-              className="font-mono text-xs"
-            />
+            <div className="space-y-2.5">
+              <Label htmlFor="custom-css">Custom CSS</Label>
+              <Textarea
+                id="custom-css"
+                rows={4}
+                value={customCss}
+                onChange={(e) => setCustomCss(e.target.value)}
+                placeholder="/* Make it yours — buttons, headings, spacing */"
+                className="mt-2 font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Custom CSS rules to override theme styles or tweak typography and spacing.
+              </p>
+            </div>
           </section>
 
           <div className="flex items-center justify-end pt-6 border-t border-border/60">

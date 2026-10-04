@@ -251,7 +251,7 @@ export function FooterBuilder({
                         {col.links.map((link) => (
                           <div
                             key={link.id}
-                            className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 text-xs"
+                            className="flex h-8 items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-2.5 text-xs"
                           >
                             <div className="flex items-center gap-1.5 min-w-0">
                               <span className="truncate font-medium">{link.label}</span>
@@ -302,7 +302,12 @@ export function FooterBuilder({
               <h2 className="text-base font-semibold text-foreground sm:text-lg">Footer Brand Description</h2>
             </div>
             <div className="space-y-2.5">
-              <Label htmlFor="footer_description">Brand description</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="footer_description">Brand description</Label>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Shown under your brand name in the footer.
+                </p>
+              </div>
               <Textarea
                 id="footer_description"
                 value={settings.footer_description || ""}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import {
-  ArrowRight,
   CornerUpRight,
   Loader2,
   MoreVertical,
@@ -182,24 +181,34 @@ export default function RedirectsSettingsPage() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Redirects</h1>
         </div>
-        <Button onClick={openAdd} className="gap-2 shrink-0">
+        <Button onClick={openAdd} className="h-10 w-10 shrink-0 gap-2 p-0 sm:h-9 sm:w-auto sm:px-4 sm:py-2" aria-label="Add redirect">
           <Plus className="h-4 w-4" />
-          Add redirect
+          <span className="hidden sm:inline">Add redirect</span>
         </Button>
       </div>
 
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="flex items-center justify-between gap-2 rounded-md border px-3 py-2">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-4 w-32" />
-                <Skeleton className="h-3 w-3" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
-          ))}
+        <div className="overflow-x-auto rounded-xl border border-border/80">
+          <table className="w-full min-w-[560px] table-fixed">
+            <tbody>
+              {[1, 2, 3].map((i) => (
+                <tr key={i} className="border-b last:border-0">
+                  <td className="px-3 py-2.5">
+                    <Skeleton className="h-4 w-32" />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Skeleton className="h-4 w-48" />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                  </td>
+                  <td className="px-3 py-2.5">
+                    <Skeleton className="h-8 w-8 rounded-md" />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (redirects ?? []).length === 0 ? (
         <div
@@ -222,50 +231,60 @@ export default function RedirectsSettingsPage() {
               You have {(redirects ?? []).length} redirects. Large redirect lists can slow down your site&apos;s first load after changes.
             </p>
           )}
-          <div className="space-y-2">
-            {(redirects ?? []).map((rule) => (
-              <div
-                key={rule.redirect_id}
-                className="flex items-center justify-between gap-2 rounded-md border px-3 py-2 min-w-0"
-              >
-                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
-                  <span className="truncate font-mono text-sm text-foreground">
-                    {rule.source_path}
-                  </span>
-                  <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" aria-hidden />
-                  <span className="truncate font-mono text-sm text-muted-foreground">
-                    {rule.target_url}
-                  </span>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
-                    {rule.type === "permanent" ? "Permanent" : "Temporary"}
-                  </Badge>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        aria-label={`Actions for redirect ${rule.source_path}`}
-                      >
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuItem onClick={() => openEdit(rule)}>
-                        <Pencil className="h-4 w-4" />
-                        Edit
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setDeleteTarget(rule)}>
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            ))}
+          <div className="overflow-x-auto rounded-xl border border-border/80">
+            <table className="w-full min-w-[560px] table-fixed">
+              <thead>
+                <tr className="border-b text-left text-xs font-medium text-muted-foreground">
+                  <th className="px-3 py-2 font-medium">Source</th>
+                  <th className="px-3 py-2 font-medium">Destination</th>
+                  <th className="w-28 px-3 py-2 font-medium">Type</th>
+                  <th className="w-12 px-3 py-2">
+                    <span className="sr-only">Actions</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {(redirects ?? []).map((rule) => (
+                  <tr key={rule.redirect_id} className="border-b last:border-0">
+                    <td className="truncate px-3 py-2.5 font-mono text-sm text-foreground">
+                      {rule.source_path}
+                    </td>
+                    <td className="truncate px-3 py-2.5 font-mono text-sm text-muted-foreground">
+                      {rule.target_url}
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
+                        {rule.type === "permanent" ? "Permanent" : "Temporary"}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            aria-label={`Actions for redirect ${rule.source_path}`}
+                          >
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                          <DropdownMenuItem onClick={() => openEdit(rule)}>
+                            <Pencil className="h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => setDeleteTarget(rule)}>
+                            <Trash2 className="h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
@@ -289,7 +308,7 @@ export default function RedirectsSettingsPage() {
               </div>
               <Input
                 id="redirect_source"
-                className="mt-2 font-mono"
+                className="mt-2"
                 placeholder="/my-old-post"
                 maxLength={300}
                 value={form.source_path}
@@ -306,7 +325,7 @@ export default function RedirectsSettingsPage() {
               </div>
               <Input
                 id="redirect_target"
-                className="mt-2 font-mono"
+                className="mt-2"
                 placeholder="/my-new-post"
                 maxLength={2000}
                 value={form.target_url}

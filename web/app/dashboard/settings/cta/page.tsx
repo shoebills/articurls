@@ -113,6 +113,18 @@ export default function CtaSettingsPage() {
                   disabled={saving}
                 />
               </div>
+
+              <div className="space-y-2.5">
+                <Label htmlFor="cta_button_url">Button Destination URL</Label>
+                <Input
+                  id="cta_button_url"
+                  className="mt-2"
+                  placeholder="e.g. https://example.com or /pricing"
+                  value={design.cta_button_url || ""}
+                  onChange={(e) => setDesign({ ...design, cta_button_url: e.target.value })}
+                  disabled={saving}
+                />
+              </div>
             </div>
 
             <div className="space-y-6 max-w-md">
@@ -121,22 +133,10 @@ export default function CtaSettingsPage() {
                 <Input
                   id="cta_button_text"
                   className="mt-2 max-w-1/2"
-                  placeholder="e.g. Get Started, Learn More, Subscribe"
+                  placeholder="e.g. Get Started"
                   maxLength={50}
                   value={design.cta_button_text || ""}
                   onChange={(e) => setDesign({ ...design, cta_button_text: e.target.value })}
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-2.5">
-                <Label htmlFor="cta_button_url">Button Destination URL</Label>
-                <Input
-                  id="cta_button_url"
-                  className="mt-2 max-w-1/2"
-                  placeholder="e.g. https://example.com or /pricing"
-                  value={design.cta_button_url || ""}
-                  onChange={(e) => setDesign({ ...design, cta_button_url: e.target.value })}
                   disabled={saving}
                 />
               </div>

@@ -148,7 +148,7 @@ export default function IntegrationsSettings() {
             </div>
             <Input
               id="ga_measurement_id"
-              className="mt-2 font-mono"
+              className="mt-2"
               value={form.ga_measurement_id}
               onChange={(e) => patch({ ga_measurement_id: e.target.value })}
               placeholder="G-XXXXXXXXXX"
@@ -165,12 +165,12 @@ export default function IntegrationsSettings() {
             <div className="space-y-1.5">
               <Label htmlFor="search_console_property">Property</Label>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                Use a URL-prefix property. Domain properties (sc-domain:) require DNS verification and are not supported yet.
+                Use a URL-prefix property.
               </p>
             </div>
             <Input
               id="search_console_property"
-              className="mt-2 font-mono"
+              className="mt-2"
               value={form.search_console_property}
               onChange={(e) => patch({ search_console_property: e.target.value })}
               placeholder="https://example.com/"
@@ -181,12 +181,12 @@ export default function IntegrationsSettings() {
             <div className="space-y-1.5">
               <Label htmlFor="search_console_verification_token">Verification token</Label>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                Copy the content value from Search Console → Ownership verification → HTML tag. After saving, click Verify in Search Console — we add the meta tag to your public pages.
+                Copy the token from the HTML tag verification method.
               </p>
             </div>
             <Input
               id="search_console_verification_token"
-              className="mt-2 font-mono"
+              className="mt-2"
               value={form.search_console_verification_token}
               onChange={(e) => patch({ search_console_verification_token: e.target.value })}
               placeholder="Paste the token from the HTML tag method"
@@ -203,12 +203,12 @@ export default function IntegrationsSettings() {
             <div className="space-y-1.5">
               <Label htmlFor="adsense_publisher_id">Publisher ID</Label>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                Find it under AdSense → Account → Settings → Account information. Auto ads load automatically on your public pages, and /ads.txt is generated for you.
+                Find it under AdSense → Account information.
               </p>
             </div>
             <Input
               id="adsense_publisher_id"
-              className="mt-2 font-mono"
+              className="mt-2"
               value={form.adsense_publisher_id}
               onChange={(e) => patch({ adsense_publisher_id: e.target.value })}
               placeholder="pub-XXXXXXXXXXXXXXXX"

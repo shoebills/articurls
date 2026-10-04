@@ -15,7 +15,6 @@ import {
   Globe,
   ExternalLink,
   FolderTree,
-  ShieldCheck,
   Zap,
 } from "lucide-react";
 import {
@@ -346,12 +345,6 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                   </>
                 )}
               </Button>
-              <Button type="button" variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" asChild>
-                <a href={permanentSubdomainUrl} target="_blank" rel="noreferrer">
-                  <ExternalLink className="h-3.5 w-3.5" />
-                  Visit
-                </a>
-              </Button>
             </div>
           </div>
         </section>
@@ -384,7 +377,7 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                     value={inputUrl}
                     onChange={(e) => setInputUrl(e.target.value)}
                     placeholder="e.g. blog.yourdomain.com or yourdomain.com/blog"
-                    className="font-mono text-sm flex-1"
+                    className="flex-1"
                     disabled={connecting}
                     autoCapitalize="none"
                     autoCorrect="off"
@@ -447,9 +440,6 @@ export function DomainSettings({ subdomain }: { subdomain: string }) {
                       ? `Your domain is active and serving traffic.`
                       : `Add the DNS records below at your registrar to verify.`}
                   </p>
-                  <SslStatusBadge
-                    status={isSubdirectoryActive ? "origin" : domainData?.domain_status || "pending"}
-                  />
                 </div>
 
                 {confirmDelete ? (
@@ -663,23 +653,6 @@ function StatusBadge({ status, isSubdirectory }: { status: string; isSubdirector
     <span className={`inline-flex items-center rounded-lg px-2.5 py-1 text-xs font-medium ${s.className}`}>
       {s.label}
     </span>
-  );
-}
-
-function SslStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; className: string }> = {
-    active: { label: "SSL Active", className: "text-emerald-600 dark:text-emerald-400" },
-    grace: { label: "SSL Active", className: "text-emerald-600 dark:text-emerald-400" },
-    pending: { label: "SSL Pending", className: "text-amber-600 dark:text-amber-400" },
-    expired: { label: "SSL Inactive", className: "text-red-600 dark:text-red-400" },
-    origin: { label: "SSL via your origin", className: "text-muted-foreground" },
-  };
-  const s = map[status] || { label: "SSL Pending", className: "text-amber-600 dark:text-amber-400" };
-  return (
-    <p className={`inline-flex items-center gap-1.5 text-xs font-medium ${s.className}`}>
-      <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-      {s.label}
-    </p>
   );
 }
 
