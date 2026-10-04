@@ -93,13 +93,20 @@ export default function AuthorsPage() {
       />
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Authors</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage writers and contributors for your publication.
-          </p>
+        <div className="flex items-center justify-between gap-3 sm:block">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Authors</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Manage writers and contributors for your publication.
+            </p>
+          </div>
+          <Button asChild className="h-10 w-10 shrink-0 p-0 sm:hidden" aria-label="Add author">
+            <Link href="/dashboard/authors/new">
+              <Plus className="h-4 w-4" />
+            </Link>
+          </Button>
         </div>
-        <Button asChild className="gap-2">
+        <Button asChild className="hidden gap-2 sm:inline-flex">
           <Link href="/dashboard/authors/new">
             <Plus className="h-4 w-4" />
             Add Author

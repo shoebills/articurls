@@ -1,10 +1,10 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { PublicBlog, PublicSite, ContentLayout } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { PublicPostCard } from "@/components/public-post-card";
 import { PublicEmptyState } from "@/components/public-empty-state";
+import { PublicPagination, PublicLoadMore } from "@/components/public-pagination";
 
 type PublicBlogListSearchProps = {
   blogs: PublicBlog[];
@@ -56,13 +56,20 @@ export function PublicBlogListSearch({
 
   const postsPerPage = site?.posts_per_page && site.posts_per_page >= 6 ? site.posts_per_page : POSTS_PER_PAGE;
   const paginationType = site?.pagination_type || "prev_next";
+  const isLoadMore = paginationType === "load_more";
 
   const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / postsPerPage));
   const currentPage = Math.min(page, totalPages);
+  const [visibleCount, setVisibleCount] = useState(postsPerPage);
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setVisibleCount(postsPerPage));
+    return () => cancelAnimationFrame(raf);
+  }, [blogs, postsPerPage]);
   const pagedBlogs = useMemo(() => {
+    if (isLoadMore) return sortedBlogs.slice(0, visibleCount);
     const start = (currentPage - 1) * postsPerPage;
     return sortedBlogs.slice(start, start + postsPerPage);
-  }, [sortedBlogs, currentPage, postsPerPage]);
+  }, [sortedBlogs, currentPage, postsPerPage, isLoadMore, visibleCount]);
 
   const isGrid = content_layout === "grid";
   const listClass = isGrid
@@ -115,68 +122,20 @@ export function PublicBlogListSearch({
       </div>
 
       {sortedBlogs.length > 0 ? (
-        paginationType === "numbered" && totalPages > 1 ? (
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-1.5">
-            <Button
-              variant="outline"
-              size="sm"
-              data-button-radius="true"
-              className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-            >
-              Prev
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((num) => (
-              <Button
-                key={num}
-                variant={num === currentPage ? "default" : "outline"}
-                size="sm"
-                data-button-radius="true"
-                data-button-variant={num === currentPage ? (site?.button_variant || "solid") : undefined}
-                className="h-8 w-8 min-h-0 p-0 text-xs"
-                onClick={() => setPage(num)}
-              >
-                {num}
-              </Button>
-            ))}
-            <Button
-              variant="outline"
-              size="sm"
-              data-button-radius="true"
-              className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-2.5 py-1 text-xs"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-            </Button>
-          </div>
+        isLoadMore ? (
+          <PublicLoadMore
+            visibleCount={Math.min(visibleCount, sortedBlogs.length)}
+            totalCount={sortedBlogs.length}
+            onLoadMore={() => setVisibleCount((c) => c + postsPerPage)}
+            buttonVariant={site?.button_variant || "solid"}
+          />
         ) : (
-          <div className="mt-10 flex items-center justify-between">
-            <Button
-              variant="outline"
-              size="sm"
-              data-button-radius="true"
-              className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-            >
-              Prev
-            </Button>
-            <p className="text-xs text-muted-foreground sm:text-sm">
-              Page {currentPage} of {totalPages}
-            </p>
-            <Button
-              variant="outline"
-              size="sm"
-              data-button-radius="true"
-              className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={currentPage >= totalPages}
-            >
-              Next
-            </Button>
-          </div>
+          <PublicPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrev={() => setPage((p) => Math.max(1, p - 1))}
+            onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
+          />
         )
       ) : null}
     </section>

@@ -346,18 +346,21 @@ export default function SeoSettings() {
           </div>
           <ToggleRow
             title="Category pages"
+            hint="Hide category archives from search results."
             checked={form.seo_noindex_categories}
             disabled={busy}
             onCheckedChange={(checked) => patch({ seo_noindex_categories: checked })}
           />
           <ToggleRow
             title="Author pages"
+            hint="Hide author archives from search results."
             checked={form.seo_noindex_authors}
             disabled={busy}
             onCheckedChange={(checked) => patch({ seo_noindex_authors: checked })}
           />
           <ToggleRow
             title="Pages"
+            hint="Hide standalone pages from search results."
             checked={form.seo_noindex_pages}
             disabled={busy}
             onCheckedChange={(checked) => patch({ seo_noindex_pages: checked })}
@@ -406,7 +409,12 @@ export default function SeoSettings() {
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Robots.txt</h2>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="seo_robots_mode">Robots mode</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="seo_robots_mode">Robots mode</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Automatically managed, or switch to Custom to paste your own rules.
+              </p>
+            </div>
             <Select
               value={form.seo_robots_mode}
               onValueChange={(val) => patch({ seo_robots_mode: val as "auto" | "custom" })}
@@ -442,7 +450,12 @@ export default function SeoSettings() {
             <h2 className="text-base font-semibold text-foreground sm:text-lg">LLMs.txt</h2>
           </div>
           <div className="space-y-2.5">
-            <Label htmlFor="seo_llms_mode">LLMs.txt mode</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="seo_llms_mode">LLMs.txt mode</Label>
+              <p className="text-xs text-muted-foreground sm:text-sm">
+                Automatically generated, or switch to Custom to write your own file.
+              </p>
+            </div>
             <Select
               value={form.seo_llms_mode}
               onValueChange={(val) => patch({ seo_llms_mode: val as "auto" | "custom" })}

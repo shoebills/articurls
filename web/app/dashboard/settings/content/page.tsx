@@ -125,12 +125,12 @@ export default function ContentSettingsPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="pagination_type">Pagination Style</Label>
                   <p className="text-xs text-muted-foreground sm:text-sm">
-                    Controls how visitors navigate through multiple pages of posts.
+                    Previous / Next moves between pages; Load More appends more posts below the feed.
                   </p>
                 </div>
                 <Select
                   value={design.pagination_type || "prev_next"}
-                  onValueChange={(val) => setDesign({ ...design, pagination_type: val as "prev_next" | "numbered" })}
+                  onValueChange={(val) => setDesign({ ...design, pagination_type: val as "prev_next" | "load_more" })}
                   disabled={saving}
                 >
                   <SelectTrigger id="pagination_type" className="mt-2 max-w-1/2">
@@ -138,7 +138,7 @@ export default function ContentSettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="prev_next">Previous / Next Buttons</SelectItem>
-                    <SelectItem value="numbered">Numbered Pages (1, 2, 3...)</SelectItem>
+                    <SelectItem value="load_more">Load More Button</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

@@ -33,7 +33,7 @@ export function SiteSwitcher({
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="flex h-12 w-full items-center justify-between gap-2 border-border/70 bg-background px-3 py-2 text-left shadow-2xs hover:bg-sidebar-accent/50"
+            className="flex w-full items-center justify-between gap-2 border-border/70 bg-background p-3 text-left shadow-2xs hover:bg-sidebar-accent/50"
           >
             <div className="flex min-w-0 items-center gap-2.5">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md bg-primary/10 text-primary font-bold text-sm">

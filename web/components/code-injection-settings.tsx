@@ -138,20 +138,16 @@ export function CodeInjectionSettings() {
               </p>
               <ul className="list-disc space-y-1 pl-5 text-xs text-muted-foreground sm:text-sm">
                 <li>
-                  <code className="font-mono text-[11px] text-foreground">.prose-blog h1, h2, p, a, blockquote, pre, code</code>
-                  {" "}— style article headings, links, quotes, and code blocks.
+                  .prose-blog h1, h2, p, a, blockquote, pre, code — style article headings, links, quotes, and code blocks.
                 </li>
                 <li>
-                  <code className="font-mono text-[11px] text-foreground">:root {"{ --background, --primary, --muted, --border, --link }"}</code>
-                  {" "}— recolor site-wide theme tokens.
+                  :root {"{ --background, --primary, --muted, --border, --link }"} — recolor site-wide theme tokens.
                 </li>
                 <li>
-                  <code className="font-mono text-[11px] text-foreground">.dark {"{ --background, --primary, ... }"}</code>
-                  {" "}— override the same tokens for dark mode.
+                  .dark {"{ --background, --primary, ... }"} — override the same tokens for dark mode.
                 </li>
                 <li>
-                  <code className="font-mono text-[11px] text-foreground">--button-radius, --font-heading-family</code>
-                  {" "}— tweak button corners and heading font.
+                  --button-radius, --font-heading-family — tweak button corners and heading font.
                 </li>
               </ul>
             </div>

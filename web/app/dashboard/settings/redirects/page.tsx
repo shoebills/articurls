@@ -178,12 +178,20 @@ export default function RedirectsSettingsPage() {
 
       {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Redirects</h1>
+        <div className="flex items-center justify-between gap-3 sm:block">
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Redirects</h1>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
+              Send visitors from old URLs to new ones.
+            </p>
+          </div>
+          <Button onClick={openAdd} className="h-10 w-10 shrink-0 p-0 sm:hidden" aria-label="Add redirect">
+            <Plus className="h-4 w-4" />
+          </Button>
         </div>
-        <Button onClick={openAdd} className="h-10 w-10 shrink-0 gap-2 p-0 sm:h-9 sm:w-auto sm:px-4 sm:py-2" aria-label="Add redirect">
+        <Button onClick={openAdd} className="hidden gap-2 sm:inline-flex">
           <Plus className="h-4 w-4" />
-          <span className="hidden sm:inline">Add redirect</span>
+          Add redirect
         </Button>
       </div>
 

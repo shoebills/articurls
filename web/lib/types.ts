@@ -222,7 +222,7 @@ export interface PublicSite {
   content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
-  pagination_type?: "prev_next" | "numbered";
+  pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
@@ -313,7 +313,7 @@ export interface UserSettings {
   content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
-  pagination_type?: "prev_next" | "numbered";
+  pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;
   custom_domain?: string | null;
   domain_status?: DomainStatus | null;
@@ -496,7 +496,7 @@ export interface DesignSettings {
   content_layout: ContentLayout;
   show_preview_in_lists: boolean;
   posts_per_page?: number;
-  pagination_type?: "prev_next" | "numbered";
+  pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;
 }
 

@@ -129,7 +129,7 @@ class DesignSettings(BaseModel):
     content_layout: Literal["grid", "list"] = "grid"
     show_preview_in_lists: bool = True
     posts_per_page: int = 12
-    pagination_type: Literal["prev_next", "numbered"] = "prev_next"
+    pagination_type: Literal["prev_next", "load_more"] = "prev_next"
     toc_enabled: bool = True
 
     class Config:
