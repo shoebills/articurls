@@ -1,3 +1,4 @@
+import { ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export function PublicPagination({
@@ -53,18 +54,16 @@ export function PublicLoadMore({
 }) {
   if (visibleCount >= totalCount) return null;
   return (
-    <div className="mt-10 flex flex-col items-center gap-2">
-      <p className="text-xs text-muted-foreground sm:text-sm">
-        Showing {visibleCount} of {totalCount}
-      </p>
+    <div className="mt-10 flex justify-center">
       <Button
         variant="default"
-        size="sm"
+        size="default"
         data-button-radius="true"
         data-button-variant={buttonVariant}
-        className="h-9 gap-1.5 px-5 text-sm"
+        className="font-semibold shadow-xs"
         onClick={onLoadMore}
       >
+        <ChevronDown className="h-4 w-4" />
         Load more
       </Button>
     </div>
