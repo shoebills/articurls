@@ -472,7 +472,7 @@ export default function CategoriesDashboardPage() {
       {categories.length > 0 && <hr className="border-border/80" />}
 
       {categories.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-3 max-w-md">
           <div>
             <h2 className="text-base font-semibold tracking-tight">
               Navigation

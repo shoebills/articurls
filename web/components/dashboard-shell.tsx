@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useId, useRef, useState } from "react";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
 import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
+import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { TrialExpiredPopup } from "@/components/trial-expired-overlay";
 import { useAuth } from "@/lib/auth-context";
@@ -79,7 +79,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
         <header
           ref={mobileHeaderRef}
-          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
+          className="relative sticky top-0 z-30 min-h-14 shrink-0 border-b border-border/70 bg-background pt-[max(0.5rem,env(safe-area-inset-top))] [--mobile-nav-rail-gap:0.5rem] md:hidden"
         >
           <div className="px-3 pt-2 pb-[var(--mobile-nav-rail-gap)]">
             <div className="relative w-full">
@@ -97,13 +97,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                   >
                     <Menu className="h-4 w-4" />
                   </Button>
-                  <Link
+                  <BrandLogo
                     href="/dashboard"
-                    className="min-w-0 truncate text-[1.6875rem] font-semibold tracking-tight transition-opacity duration-200 hover:opacity-80"
+                    showIcon={false}
+                    className="min-w-0 flex-1 [&>span]:min-w-0 [&>span]:truncate"
                     onClick={() => setOpen(false)}
-                  >
-                    Articurls
-                  </Link>
+                  />
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {publicBlogHref ? (
@@ -150,7 +149,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
           ) : null}
         </header>
 
-        <main className="relative flex-1 touch-pan-y bg-background px-4 py-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:py-6 md:p-8 md:pb-10">
+        <main className="relative flex-1 touch-pan-y bg-background px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:pb-6 sm:pt-8 md:p-8 md:pb-10">
           {children}
           {showTrialPopup ? <TrialExpiredPopup /> : null}
         </main>

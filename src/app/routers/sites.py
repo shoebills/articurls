@@ -47,6 +47,7 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
         "domain_status": site.domain_status.value if hasattr(site.domain_status, "value") else str(site.domain_status),
         "site_name": site.site_name,
         "template_id": site.template_id,
+        "favicon_url": site.favicon_url,
         "created_at": site.created_at,
         "post_count": post_count,
         "subscriber_count": subscriber_count,

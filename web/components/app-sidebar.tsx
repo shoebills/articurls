@@ -89,7 +89,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
   return (
     <div className={cn("flex h-full min-h-0 flex-col", className)}>
       {showBrand ? (
-        <div className="flex h-14 shrink-0 items-center justify-start border-b border-sidebar-border/70 bg-background px-3">
+        <div className="flex h-14 shrink-0 items-center justify-start border-b border-border/70 bg-background px-3">
           <BrandLogo
             href="/dashboard"
             showIcon={false}
@@ -105,7 +105,7 @@ export function DashboardSidebarPanel({ onNavigate, className, showBrand = true,
       {/* Trial countdown chip */}
       {trialChip}
 
-      <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-sidebar-border/70">
+      <div className="flex min-h-0 flex-1 flex-col md:border-r md:border-border/70">
         <nav className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 min-h-0 gap-5">
           {/* Ungrouped Primary Links */}
           <div className="flex flex-col gap-1">

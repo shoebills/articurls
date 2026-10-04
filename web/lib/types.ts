@@ -346,6 +346,7 @@ export interface SiteSummary {
   domain_status: DomainStatus;
   site_name?: string | null;
   template_id: string;
+  favicon_url?: string | null;
   created_at?: string | null;
   post_count: number;
   subscriber_count: number;

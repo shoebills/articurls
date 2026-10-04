@@ -25,6 +25,7 @@ class SiteSummary(BaseModel):
     domain_status: str
     site_name: Optional[str] = None
     template_id: str
+    favicon_url: Optional[str] = None
     created_at: Optional[datetime] = None
     post_count: int = 0
     subscriber_count: int = 0
