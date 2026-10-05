@@ -94,7 +94,7 @@ export function StandardHomeLayout({
 
         {/* Pinned post spotlight */}
         {pinnedBlogs.length > 0 ? (
-          <div className="mb-10 space-y-10">
+          <div className="mt-20 mb-20 space-y-10">
             {pinnedBlogs.map((b) => (
               <div key={b.blog_id} className="mx-auto w-full lg:max-w-[70%]">
                 <PublicPostCard

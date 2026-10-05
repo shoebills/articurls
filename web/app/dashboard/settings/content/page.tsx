@@ -154,7 +154,7 @@ export default function ContentSettingsPage() {
               <div className="space-y-0.5">
                 <p className="text-sm font-medium">Show Table of Contents</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">
-                  Automatically extracts headings from your articles and shows a quick jump menu. Hides silently when an article has no headings.
+                  Automatically extracts headings from your articles and pages and shows a quick jump menu. Hides silently when an article has no headings.
                 </p>
               </div>
               <Switch

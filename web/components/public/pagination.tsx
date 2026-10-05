@@ -16,9 +16,9 @@ export function PublicPagination({
     <div className="mt-10 flex items-center justify-between">
       <Button
         variant="outline"
-        size="sm"
+        size="default"
         data-button-radius="true"
-        className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+        className="border-border/80 bg-background font-semibold shadow-sm hover:bg-muted hover:text-foreground"
         onClick={onPrev}
         disabled={currentPage <= 1}
       >
@@ -29,9 +29,9 @@ export function PublicPagination({
       </p>
       <Button
         variant="outline"
-        size="sm"
+        size="default"
         data-button-radius="true"
-        className="border-border/80 bg-background shadow-sm hover:bg-muted hover:text-foreground h-8 min-h-0 px-3 py-1.5"
+        className="border-border/80 bg-background font-semibold shadow-sm hover:bg-muted hover:text-foreground"
         onClick={onNext}
         disabled={currentPage >= totalPages}
       >

@@ -94,6 +94,13 @@ def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current
         status=models.BlogStatus.DRAFT,
     )
 
+    if request.is_pinned:
+        # Single pinned post per site: pinning this post unpins all others.
+        db.query(models.Blog).filter(
+            models.Blog.site_id == current_site.site_id,
+            models.Blog.is_pinned.is_(True),
+        ).update({"is_pinned": False}, synchronize_session=False)
+
     db.add(new_blog)
     db.commit()
     db.refresh(new_blog)
@@ -347,6 +354,14 @@ def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: Backg
 
     if has_meaningful_change:
         db_blog.updated_at = datetime.now(timezone.utc)
+
+    if update_data.get("is_pinned") is True:
+        # Single pinned post per site: pinning this post unpins all others.
+        db.query(models.Blog).filter(
+            models.Blog.site_id == current_site.site_id,
+            models.Blog.is_pinned.is_(True),
+            models.Blog.blog_id != db_blog.blog_id,
+        ).update({"is_pinned": False}, synchronize_session=False)
 
     db.commit()
     db.refresh(db_blog)
