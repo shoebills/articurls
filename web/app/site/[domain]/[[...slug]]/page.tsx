@@ -1,34 +1,21 @@
+/* eslint-disable react-hooks/static-components -- theme layouts are module-scope singletons resolved from the themes registry (stable references, not created during render) */
 import { cache } from "react";
 import { notFound, redirect, permanentRedirect } from "next/navigation";
 import type { Metadata } from "next";
-import Link from "next/link";
 import { API_URL, UGC_ORIGIN, assetUrl } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
 } from "@/lib/request-host";
 import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
-import { PublicFaqSection } from "@/components/public-faq-section";
-import { PublicNavHeader, getPublicMainSpacing } from "@/components/public-nav-header";
-import { PublicPostCard } from "@/components/public-post-card";
-import { PublicBlogListSearch } from "@/components/public-blog-list-search";
-import { PublicSiteFooter } from "@/components/public-site-footer";
 import { resolveBlogOgImage } from "@/lib/blog-images";
-import { sanitizeHtml } from "@/lib/sanitize-html";
-import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
-import { getPublicCategoryUrl, getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
+import { transformImageUrl } from "@/lib/image-transform";
 import { excerptFromHtml } from "@/lib/text";
 import { faviconIcons } from "@/lib/favicon";
-import { ContentEndCta } from "@/components/content-end-cta";
-import { StructuredData } from "@/components/structured-data";
-import { generateWebSiteSchema, generateBlogPostingSchema, generateCollectionPageSchema, generateWebPageSchema, generateAuthorProfileSchema, generateFaqPageSchema, generateBreadcrumbList } from "@/lib/structured-data";
-import { BriefcaseBusiness, Calendar, ChevronLeft, Globe } from "lucide-react";
-import { BlogPostShareMenu } from "@/components/blog-post-share-menu";
-import { BlogPostToc } from "@/components/blog-post-toc";
-import { injectHeadingIds } from "@/lib/toc";
 import { ThemeStyleWrapper } from "@/components/themes/theme-wrapper";
-import { StandardTemplate } from "@/components/themes/standard/standard-template";
+import { getLayout } from "@/components/themes/registry";
 import { loadPublicSite } from "@/lib/public-site";
+import { resolveSiteName, withTrailingSlash } from "@/lib/public-page-helpers";
 
 type Props = { params: Promise<{ domain: string; slug?: string[] }> };
 
@@ -40,10 +27,6 @@ export const revalidate = 86400;
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-function resolveSiteName(site: PublicSite | null | undefined): string {
-  return (site?.site_name || "").trim() || site?.subdomain || "My Blog";
-}
-
 function resolveSiteOgImage(site: PublicSite | null | undefined): string | undefined {
   if (site?.og_image_url) return transformImageUrl(assetUrl(site.og_image_url), { width: 1200, height: 630, fit: "cover" });
   return undefined;
@@ -54,15 +37,6 @@ function resolvePageDescription(page: UserPage): string | undefined {
   if (metaDescription) return metaDescription;
   const contentDescription = excerptFromHtml(page.content || "").trim();
   return contentDescription || undefined;
-}
-
-function withTrailingSlash(url: string, enabled: boolean): string {
-  if (!enabled || url.endsWith("/")) return url;
-  return `${url}/`;
-}
-
-function withJsonLdSlash(url: string, site?: PublicSite | null): string {
-  return withTrailingSlash(url, site?.seo_trailing_slash_jsonld === true);
 }
 
 function resolveNoindex(noindex: boolean): { index: false; follow: true } | undefined {
@@ -554,7 +528,7 @@ export default async function SitePublicationPage({ params }: Props) {
     permanentRedirect(dest);
   }
 
-  // ── Blog post or Custom page: /[slug] ────────────────────────────────────
+// ── Blog post or Custom page: /[slug] ────────────────────────────────────
   if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
     const slug = segments[0];
     const [content, site, pages, categories, allBlogs] = await Promise.all([
@@ -567,256 +541,25 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!site || !content) notFound();
 
+    const themeId = site.template_id;
+    const shared = { site, pages, categories, subdomain, host, basePath };
+
     // Render Blog post if found
     if (content.type === "blog" && content.blog) {
-      const blog = content.blog;
-      const navBlogName = resolveSiteName(site);
-      const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const isNavEnabled = site.navbar_enabled !== false;
-      const mainSpacing = getPublicMainSpacing(isNavEnabled);
-
-      const otherBlogs = (allBlogs || []).filter((b) => b.blog_id !== blog.blog_id);
-      const currentCatIds = blog.category_ids || [];
-      const sameCategoryBlogs = currentCatIds.length > 0
-        ? otherBlogs.filter((b) => b.category_ids?.some((id) => currentCatIds.includes(id)))
-        : [];
-      const remainderBlogs = otherBlogs.filter((b) => !sameCategoryBlogs.some((s) => s.blog_id === b.blog_id));
-      const relatedBlogs = [...sameCategoryBlogs, ...remainderBlogs].slice(0, 3);
-
-      const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
-      const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
-      const featuredImageUrl = featuredBaseUrl
-        ? transformImageUrl(featuredBaseUrl, { width: 1200, fit: "cover" })
-        : null;
-      const featuredImageSrcSet = featuredBaseUrl ? generateSrcSet(featuredBaseUrl, [400, 800, 1200]) : null;
-      const { html: blogHtmlWithIds, headings: tocHeadings } = injectHeadingIds(
-        transformHtmlImages(sanitizeHtml(blog.content))
-      );
-
-      const blogPostContent = (
-        <>
-          <div className="flex items-center justify-between">
-            <Link href={getPublicProfileUrl(subdomain, basePath)} className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Back
-            </Link>
-            <BlogPostShareMenu url={currentUrl} title={blog.title} />
-          </div>
-          <header className="mt-6 sm:mt-8">
-            <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
-              {blog.title}
-            </h1>
-            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-              {blog.author ? (
-                <Link
-                  href={getPublicAuthorUrl(subdomain, blog.author.slug, basePath)}
-                  className="inline-flex items-center gap-2 rounded-md text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
-                >
-                  {blog.author.profile_image_url ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={transformImageUrl(assetUrl(blog.author.profile_image_url), { width: 48, height: 48, fit: "cover" })}
-                      alt={blog.author.name}
-                      className="h-6 w-6 rounded-full object-cover"
-                    />
-                  ) : null}
-                  <span className="truncate font-medium">{blog.author.name}</span>
-                </Link>
-              ) : null}
-              {blog.published_at && (
-                <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
-                  <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
-                </time>
-              )}
-            </div>
-          </header>
-          {featuredImageUrl ? (
-            <figure className="mt-6 sm:mt-8">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={featuredImageUrl}
-                srcSet={featuredImageSrcSet ?? undefined}
-                sizes="(max-width: 1024px) 100vw, 768px"
-                alt={blog.title}
-                loading="eager"
-                decoding="async"
-                className="aspect-[16/9] w-full rounded-2xl object-cover"
-              />
-            </figure>
-          ) : null}
-          <div className={featuredImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
-            <div className="prose-blog" dangerouslySetInnerHTML={{ __html: blogHtmlWithIds }} />
-          </div>
-
-          {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
-            <PublicFaqSection items={blog.faq_items} />
-          )}
-        </>
-      );
-
-      const relatedArticles = relatedBlogs.length > 0 ? (
-        <section className="mt-12 pt-8 border-t border-border/60">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-              Related articles
-            </h3>
-            <Link
-              href={getPublicProfileUrl(subdomain, basePath)}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-            >
-              View all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-            {relatedBlogs.map((rel) => (
-              <PublicPostCard
-                key={rel.blog_id}
-                blog={rel}
-                subdomain={subdomain}
-                basePath={basePath}
-                categories={categories}
-              />
-            ))}
-          </div>
-        </section>
-      ) : null;
-
+      const PostLayout = getLayout(themeId, "post");
       return (
         <ThemeStyleWrapper site={site}>
-          <article className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateBlogPostingSchema(blog, site, withJsonLdSlash(currentUrl, site))} />
-          <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
-            { name: blog.meta_title || blog.title, url: withJsonLdSlash(currentUrl, site) },
-          ])} />
-          {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
-            <StructuredData data={generateFaqPageSchema(blog.faq_items, withJsonLdSlash(currentUrl, site))} />
-          )}
-          {blog.custom_schema && (
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(blog.custom_schema) }}
-            />
-          )}
-          <PublicNavHeader
-            site={site}
-            categories={categories}
-            basePath={basePath}
-            title={navBlogName}
-            titleHref={titleHref}
-            hasBlogs={relatedBlogs.length > 0}
-          />
-          <main className={mainSpacing}>
-            {site.toc_enabled !== false ? (
-                <div className="grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,48rem)_minmax(0,16rem)] lg:justify-center lg:gap-12">
-                  <div className="max-w-3xl">
-                    <div className="mb-5 sm:mb-6 lg:hidden">
-                      <BlogPostToc headings={tocHeadings} collapsible defaultCollapsed />
-                    </div>
-                    {blogPostContent}
-                  </div>
-                  <aside className="hidden lg:block sticky top-24 self-start z-30">
-                    <BlogPostToc headings={tocHeadings} />
-                  </aside>
-                </div>
-            ) : (
-              blogPostContent
-            )}
-            {relatedArticles}
-            <ContentEndCta site={site} />
-            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-          </main>
-        </article>
+          <PostLayout {...shared} blog={content.blog} allBlogs={allBlogs} />
         </ThemeStyleWrapper>
       );
     }
 
     // Render Custom page if found
     if (content.type === "page" && content.page) {
-      const page = content.page;
-      const navBlogName = resolveSiteName(site);
-      const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-      const contentWidth = "max-w-3xl";
-      const isNavEnabled = site.navbar_enabled !== false;
-      const mainSpacing = getPublicMainSpacing(isNavEnabled);
-
-      const currentUrl = `https://${host}${basePath}/${encodeURIComponent(slug)}`;
-
-      const pageFeaturedBaseUrl = page.featured_image_url ? assetUrl(page.featured_image_url) : null;
-      const pageFeaturedImageUrl = pageFeaturedBaseUrl
-        ? transformImageUrl(pageFeaturedBaseUrl, { width: 1200, fit: "cover" })
-        : null;
-      const pageFeaturedSrcSet = pageFeaturedBaseUrl ? generateSrcSet(pageFeaturedBaseUrl, [400, 800, 1200]) : null;
-
+      const PageLayout = getLayout(themeId, "page");
       return (
         <ThemeStyleWrapper site={site}>
-        <div className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateWebPageSchema(page, site, withJsonLdSlash(currentUrl, site))} />
-          <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
-            { name: page.title || "Untitled Page", url: withJsonLdSlash(currentUrl, site) },
-          ])} />
-          {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
-            <StructuredData data={generateFaqPageSchema(page.faq_items, withJsonLdSlash(currentUrl, site))} />
-          )}
-          {page.custom_schema && (
-            <script
-              type="application/ld+json"
-              dangerouslySetInnerHTML={{ __html: JSON.stringify(page.custom_schema) }}
-            />
-          )}
-          <PublicNavHeader
-            site={site}
-            categories={categories}
-            basePath={basePath}
-            title={navBlogName}
-            titleHref={titleHref}
-            hasBlogs={false}
-          />
-          <main className={mainSpacing}>
-
-            <div className={contentWidth ? `mx-auto ${contentWidth}` : ""}>
-              <div className="flex items-center justify-between">
-                <Link
-                  href={getPublicProfileUrl(subdomain, basePath)}
-                  className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-                >
-                  <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  Back
-                </Link>
-                <BlogPostShareMenu url={currentUrl} title={page.title} />
-              </div>
-
-              <header className="mt-6 sm:mt-8">
-                <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
-              </header>
-              {pageFeaturedImageUrl ? (
-                <figure className="mt-6 sm:mt-8">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={pageFeaturedImageUrl}
-                    srcSet={pageFeaturedSrcSet ?? undefined}
-                    sizes="(max-width: 1024px) 100vw, 768px"
-                    alt={page.title}
-                    loading="eager"
-                    decoding="async"
-                    className="aspect-[16/9] w-full rounded-2xl object-cover"
-                  />
-                </figure>
-              ) : null}
-              <article className={pageFeaturedImageUrl ? "mt-8 sm:mt-10" : "mt-12"}>
-                <div className="prose-blog" dangerouslySetInnerHTML={{ __html: transformHtmlImages(sanitizeHtml(page.content)) }} />
-              </article>
-
-              {Array.isArray(page.faq_items) && page.faq_items.length > 0 && (
-                <PublicFaqSection items={page.faq_items} />
-              )}
-            </div>
-            <ContentEndCta site={site} isPage />
-            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-          </main>
-        </div>
+          <PageLayout {...shared} page={content.page} />
         </ThemeStyleWrapper>
       );
     }
@@ -837,64 +580,19 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!site || !data) notFound();
 
-    const blogs = data.blogs;
-    const categoryName = data.category.name;
-    const navBlogName = resolveSiteName(site);
-    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = getPublicMainSpacing(isNavEnabled);
-
-    const currentUrl = `https://${host}${basePath}/category/${encodeURIComponent(categorySlug)}`;
-
+    const CategoryLayout = getLayout(site.template_id, "category");
     return (
       <ThemeStyleWrapper site={site}>
-      <div className="min-h-screen bg-background text-foreground">
-        <StructuredData data={generateCollectionPageSchema(data.category, site, withJsonLdSlash(currentUrl, site))} />
-        <StructuredData data={generateBreadcrumbList([
-          { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
-          { name: categoryName, url: withJsonLdSlash(currentUrl, site) },
-        ])} />
-        <PublicNavHeader
+        <CategoryLayout
           site={site}
+          pages={pages}
           categories={categories}
+          category={data.category}
+          blogs={data.blogs}
+          subdomain={subdomain}
+          host={host}
           basePath={basePath}
-          title={navBlogName}
-          titleHref={titleHref}
-          hasBlogs={blogs.length > 0}
         />
-        <main className={mainSpacing}>
-
-          {/* Back link */}
-          <div className="mb-6">
-            <Link
-              href={getPublicProfileUrl(subdomain, basePath)}
-              className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-            >
-              <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-              Back
-            </Link>
-          </div>
-
-          {/* Category Header */}
-          <div className="mb-10 text-center sm:mb-12">
-            <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
-              {categoryName}
-            </h1>
-          </div>
-
-          <PublicBlogListSearch
-            blogs={blogs}
-            subdomain={site.subdomain}
-            site={site}
-            hideFeatured
-            show_preview_in_lists={site.show_preview_in_lists ?? true}
-            basePath={basePath}
-            categories={categories}
-          />
-
-          <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-        </main>
-      </div>
       </ThemeStyleWrapper>
     );
   }
@@ -912,103 +610,19 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!site || !data) notFound();
 
-    const blogs = data.blogs;
-    const author = data.author;
-    const navBlogName = resolveSiteName(site);
-    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = getPublicMainSpacing(isNavEnabled);
-
-    const currentUrl = `https://${host}${basePath}/author/${encodeURIComponent(authorSlug)}`;
-    const siteUrl = `https://${host}${basePath}`;
-    const authorAvatar = author.profile_image_url ? assetUrl(author.profile_image_url) : null;
-
+    const AuthorLayout = getLayout(site.template_id, "author");
     return (
       <ThemeStyleWrapper site={site}>
-        <div className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateAuthorProfileSchema(author, site, withJsonLdSlash(currentUrl, site), withJsonLdSlash(siteUrl, site))} />
-          <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(siteUrl, site) },
-            { name: author.name, url: withJsonLdSlash(currentUrl, site) },
-          ])} />
-          <PublicNavHeader
-            site={site}
-            categories={categories}
-            basePath={basePath}
-            title={navBlogName}
-            titleHref={titleHref}
-            hasBlogs={blogs.length > 0}
-          />
-          <main className={mainSpacing}>
-
-            {/* Back link */}
-            <div className="mb-6">
-              <Link
-                href={getPublicProfileUrl(subdomain, basePath)}
-                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-              >
-                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Back
-              </Link>
-            </div>
-
-            {/* Author Profile Header */}
-            <div className="mb-12 rounded-2xl border border-border/70 bg-card p-8 sm:p-10 shadow-xs">
-              <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 text-center sm:text-left">
-                {authorAvatar ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={transformImageUrl(authorAvatar, { width: 256, height: 256, fit: "cover" })}
-                    alt={author.name}
-                    className="h-24 w-24 sm:h-28 sm:w-28 rounded-full object-cover border-2 border-border/80 shadow-xs shrink-0"
-                  />
-                ) : (
-                  <div className="flex h-24 w-24 sm:h-28 sm:w-28 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary font-bold text-3xl">
-                    {author.name.slice(0, 1).toUpperCase()}
-                  </div>
-                )}
-                <div className="space-y-3 flex-1 min-w-0">
-                  <h1 className="text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{author.name}</h1>
-                  {author.occupation ? (
-                    <div className="inline-flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
-                      <BriefcaseBusiness className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      {author.occupation}
-                    </div>
-                  ) : null}
-                  {author.bio ? (
-                    <p className="text-sm sm:text-base text-muted-foreground leading-relaxed max-w-2xl">{author.bio}</p>
-                  ) : null}
-                  {author.website_link ? (
-                    <div className="pt-1">
-                      <a
-                        href={author.website_link}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
-                      >
-                        <Globe className="h-3.5 w-3.5" />
-                        Website
-                      </a>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </div>
-
-            <PublicBlogListSearch
-              blogs={blogs}
-              subdomain={site.subdomain}
-              site={site}
-              hideFeatured
-              show_preview_in_lists={site.show_preview_in_lists ?? true}
-              basePath={basePath}
-              categories={categories}
-              recentHeading={`Recent posts by ${author.name}`}
-            />
-
-            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-          </main>
-        </div>
+        <AuthorLayout
+          site={site}
+          pages={pages}
+          categories={categories}
+          author={data.author}
+          blogs={data.blogs}
+          subdomain={subdomain}
+          host={host}
+          basePath={basePath}
+        />
       </ThemeStyleWrapper>
     );
   }
@@ -1023,79 +637,17 @@ export default async function SitePublicationPage({ params }: Props) {
 
     if (!site) notFound();
 
-    const navBlogName = resolveSiteName(site);
-    const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
-    const isNavEnabled = site.navbar_enabled !== false;
-    const mainSpacing = getPublicMainSpacing(isNavEnabled);
-
-    const currentUrl = `https://${host}${basePath}/categories`;
-
+    const CategoriesHubLayout = getLayout(site.template_id, "categoriesHub");
     return (
       <ThemeStyleWrapper site={site}>
-        <div className="min-h-screen bg-background text-foreground">
-          <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, withJsonLdSlash(currentUrl, site))} />
-          <StructuredData data={generateBreadcrumbList([
-            { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
-            { name: "Categories", url: withJsonLdSlash(currentUrl, site) },
-          ])} />
-          <PublicNavHeader
-            site={site}
-            categories={allCategories}
-            basePath={basePath}
-            title={navBlogName}
-            titleHref={titleHref}
-            hasBlogs={false}
-          />
-          <main className={mainSpacing}>
-
-            {/* Back link */}
-            <div className="mb-8">
-              <Link
-                href={getPublicProfileUrl(subdomain, basePath)}
-                className="inline-flex min-h-10 items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
-              >
-                <ChevronLeft className="h-4 w-4 shrink-0" aria-hidden="true" />
-                Back to Home
-              </Link>
-            </div>
-
-            {/* Categories Hub Header */}
-            <div className="mb-10 text-center sm:mb-12">
-              <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
-                Topics & Categories
-              </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                Browse articles by category
-              </p>
-            </div>
-
-            {/* Categories Grid */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3">
-              {allCategories.map((cat) => (
-                <Link
-                  key={cat.category_id}
-                  href={getPublicCategoryUrl(subdomain, cat.slug, basePath)}
-                  className="group rounded-2xl border border-border/70 bg-card p-6 shadow-xs transition-all duration-200 hover:border-primary/40 hover:shadow-sm"
-                >
-                  <h3 className="text-base font-semibold text-foreground group-hover:text-primary transition-colors">
-                    {cat.name}
-                  </h3>
-                  {cat.description ? (
-                    <p className="mt-1.5 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                      {cat.description}
-                    </p>
-                  ) : null}
-                  <div className="mt-4 flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{cat.blog_count ?? 0} {(cat.blog_count ?? 0) === 1 ? "article" : "articles"}</span>
-                    <span className="font-medium text-primary group-hover:translate-x-0.5 transition-transform">Browse →</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-
-            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
-          </main>
-        </div>
+        <CategoriesHubLayout
+          site={site}
+          pages={pages}
+          categories={allCategories}
+          subdomain={subdomain}
+          host={host}
+          basePath={basePath}
+        />
       </ThemeStyleWrapper>
     );
   }
@@ -1110,10 +662,18 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (!site) notFound();
 
+  const HomeLayout = getLayout(site.template_id, "home");
   return (
     <ThemeStyleWrapper site={site}>
-      <StructuredData data={generateWebSiteSchema(site, withJsonLdSlash(siteOrigin, site))} />
-      <StandardTemplate site={site} blogs={blogs} pages={pages} categories={categories} basePath={basePath} />
+      <HomeLayout
+        site={site}
+        blogs={blogs}
+        pages={pages}
+        categories={categories}
+        subdomain={subdomain}
+        host={host}
+        basePath={basePath}
+      />
     </ThemeStyleWrapper>
   );
 }

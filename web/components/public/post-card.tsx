@@ -11,7 +11,7 @@ export type PublicPostCardProps = {
   basePath?: string;
   category?: Category | null;
   categories?: Category[];
-  showPreview?: boolean;
+  showExcerpt?: boolean;
 };
 
 export function PublicPostCard({
@@ -20,7 +20,7 @@ export function PublicPostCard({
   basePath = "",
   category,
   categories = [],
-  showPreview = true,
+  showExcerpt = true,
 }: PublicPostCardProps) {
   const postHref = getPublicPostUrl(subdomain, b.slug, basePath);
   const coverImg = resolveBlogCoverImage(b);
@@ -60,7 +60,7 @@ export function PublicPostCard({
           )}
           <span>{b.title}</span>
         </h3>
-        {showPreview && b.excerpt ? (
+        {showExcerpt && b.excerpt ? (
           <p className="text-muted-foreground text-sm sm:text-base line-clamp-3 mt-2 flex-1">
             {b.excerpt}
           </p>

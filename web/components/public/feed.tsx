@@ -2,17 +2,16 @@
 
 import { useEffect, useMemo, useState } from "react";
 import type { PublicBlog, PublicSite, Category } from "@/lib/types";
-import { PublicPostCard } from "@/components/public-post-card";
-import { PublicEmptyState } from "@/components/public-empty-state";
-import { PublicPagination, PublicLoadMore } from "@/components/public-pagination";
+import { PublicPostCard } from "@/components/public/post-card";
+import { PublicEmptyState } from "@/components/public/empty-state";
+import { PublicPagination, PublicLoadMore } from "@/components/public/pagination";
 
-type PublicBlogListSearchProps = {
+type PublicFeedProps = {
   blogs: PublicBlog[];
   subdomain: string;
-  site?: PublicSite;
+  site: PublicSite;
   hideFeatured?: boolean;
-  siteOrigin?: string;
-  show_preview_in_lists?: boolean;
+  showExcerpt?: boolean;
   basePath?: string;
   recentHeading?: string;
   categories?: Category[];
@@ -20,28 +19,28 @@ type PublicBlogListSearchProps = {
 
 const POSTS_PER_PAGE = 12;
 
-export function PublicBlogListSearch({
+export function PublicFeed({
   blogs,
   subdomain,
   site,
   hideFeatured,
-  show_preview_in_lists = true,
+  showExcerpt = true,
   basePath = "",
-  recentHeading = "Recent Posts",
+  recentHeading,
   categories = [],
-}: PublicBlogListSearchProps) {
+}: PublicFeedProps) {
   const [page, setPage] = useState(1);
 
-  const featuredBlogIds = site?.featured_blog_ids;
+  const featuredBlogIds = site.featured_blog_ids;
   const featuredBlogs = useMemo(() => {
     if (hideFeatured) return [];
     if (!featuredBlogIds || featuredBlogIds.length === 0) return [];
-    
+
     return featuredBlogIds
       .map(id => blogs.find(b => b.blog_id === id))
       .filter((b): b is PublicBlog => Boolean(b));
   }, [featuredBlogIds, blogs, hideFeatured]);
-  
+
   const showFeatured = featuredBlogs.length > 0;
 
   const sortedBlogs = useMemo(() => {
@@ -56,8 +55,8 @@ export function PublicBlogListSearch({
     return rows;
   }, [blogs]);
 
-  const postsPerPage = site?.posts_per_page && site.posts_per_page >= 6 ? site.posts_per_page : POSTS_PER_PAGE;
-  const paginationType = site?.pagination_type || "prev_next";
+  const postsPerPage = site.posts_per_page && site.posts_per_page >= 6 ? site.posts_per_page : POSTS_PER_PAGE;
+  const paginationType = site.pagination_type || "prev_next";
   const isLoadMore = paginationType === "load_more";
 
   const totalPages = Math.max(1, Math.ceil(sortedBlogs.length / postsPerPage));
@@ -73,7 +72,7 @@ export function PublicBlogListSearch({
     return sortedBlogs.slice(start, start + postsPerPage);
   }, [sortedBlogs, currentPage, postsPerPage, isLoadMore, visibleCount]);
 
-  const listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
+  const gridClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
   const firstCatFor = (b: PublicBlog) =>
     b.category_ids && b.category_ids.length > 0
       ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
@@ -92,7 +91,7 @@ export function PublicBlogListSearch({
       {showFeatured ? (
         <div className="mb-10 sm:mb-14">
           <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
-          <div className={listClass}>
+          <div className={gridClass}>
             {featuredBlogs.map((b) => (
               <PublicPostCard
                 key={`featured-${b.blog_id}`}
@@ -100,7 +99,7 @@ export function PublicBlogListSearch({
                 subdomain={subdomain}
                 category={firstCatFor(b)}
                 categories={categories}
-                showPreview={show_preview_in_lists}
+                showExcerpt={showExcerpt}
                 basePath={basePath}
               />
             ))}
@@ -108,9 +107,11 @@ export function PublicBlogListSearch({
         </div>
       ) : null}
 
-      <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">{recentHeading}</h2>
+      {recentHeading ? (
+        <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">{recentHeading}</h2>
+      ) : null}
 
-      <div className={listClass}>
+      <div className={gridClass}>
         {pagedBlogs.map((b) => (
           <PublicPostCard
             key={b.blog_id}
@@ -118,7 +119,7 @@ export function PublicBlogListSearch({
             subdomain={subdomain}
             category={firstCatFor(b)}
             categories={categories}
-            showPreview={show_preview_in_lists}
+            showExcerpt={showExcerpt}
             basePath={basePath}
           />
         ))}
@@ -130,7 +131,7 @@ export function PublicBlogListSearch({
             visibleCount={Math.min(visibleCount, sortedBlogs.length)}
             totalCount={sortedBlogs.length}
             onLoadMore={() => setVisibleCount((c) => c + postsPerPage)}
-            buttonVariant={site?.button_variant || "solid"}
+            buttonVariant={site.button_variant || "solid"}
           />
         ) : (
           <PublicPagination

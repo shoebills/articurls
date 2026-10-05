@@ -217,7 +217,7 @@ export interface PublicSite {
   newsletter_webhook_url?: string | null;
   favicon_url?: string | null;
   featured_blog_ids: string[];
-  show_preview_in_lists?: boolean;
+  show_excerpt?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;
@@ -307,7 +307,7 @@ export interface UserSettings {
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blog_ids: string[];
-  show_preview_in_lists?: boolean;
+  show_excerpt?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;
@@ -489,7 +489,7 @@ export interface DesignSettings {
   newsletter_webhook_token?: string | null;
 
   featured_blog_ids: string[];
-  show_preview_in_lists: boolean;
+  show_excerpt: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";
   toc_enabled?: boolean;

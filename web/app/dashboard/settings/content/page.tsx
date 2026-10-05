@@ -179,8 +179,8 @@ export default function ContentSettingsPage() {
                 </p>
               </div>
               <Switch
-                checked={design.show_preview_in_lists !== false}
-                onCheckedChange={(checked) => setDesign({ ...design, show_preview_in_lists: checked })}
+                checked={design.show_excerpt !== false}
+                onCheckedChange={(checked) => setDesign({ ...design, show_excerpt: checked })}
                 disabled={saving}
               />
             </div>

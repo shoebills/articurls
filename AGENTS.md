@@ -124,11 +124,42 @@ src/                    # FastAPI backend
 web/                    # Next.js 16 frontend (App Router)
   middleware.ts         # Multi-tenant routing, security headers, cache headers
   app/                  # Routes: /[username]/*, /dashboard/*, /custom-domain/[[...slug]], etc.
-  components/           # React components (shadcn/ui + app-specific)
+  components/
+    public/             # Theme-agnostic public building blocks (nav header/footer,
+                        # post card, feed, pagination, TOC, subscribe, CTA, FAQ, search)
+    themes/             # Theme system: registry.ts (ThemeDefinition contract +
+                        # per-layout fallback) and one folder per theme
+                        # (standard/ owns layouts for all 6 public page types)
+    ui/                 # shadcn/ui primitives
   lib/                  # Shared utilities, API client, types, auth context
 alembic/                # Alembic DB migrations
 deploy/umami/           # Docker Compose for self-hosted Umami
 ```
+
+## Theme Architecture
+
+- A theme owns the **layout of every public page**, not just the homepage:
+  `home`, `post`, `page`, `category`, `author`, `categoriesHub` (see
+  `web/components/themes/registry.ts` for the `ThemeLayouts` prop contracts).
+- `app/site/[domain]/[[...slug]]/page.tsx` is a thin dispatcher: it resolves the
+  tenant/redirects, loads data via cached loaders, keeps `generateMetadata`
+  (theme-independent SEO), and renders `getLayout(site.template_id, key)` inside
+  one `ThemeStyleWrapper`. `ThemeStyleWrapper` applies design tokens
+  (color/font/radius/mode) and is theme-agnostic.
+- `getLayout` falls back per-route to the Standard theme, so a new theme can
+  override just the layouts it needs. Registry imports are static (all themes
+  share one bundle — fine at 2–3 themes).
+- Theme layouts must be **Server Components** where possible and receive all
+  data as **serializable props** (SEO safety). Interactive feed state lives in
+  the shared client `PublicFeed` (`components/public/feed.tsx`) — never
+  re-implement sorting/pagination inside a layout.
+- Adding a theme later = new `themes/<name>/` folder + registry entry + backend
+  `template_id` allow-list id (`routers/sites.py`, `routers/oauth.py`) + make
+  `theme-picker.tsx` registry-driven (currently a static card).
+- **Featured posts**: `site.featured_blog_ids` (set via post editor toggle)
+  renders a "Featured Posts" section above the regular feed on the **homepage
+  only** (`PublicFeed` without `hideFeatured`); category/author pass
+  `hideFeatured`. Featured posts also remain in the regular feed (no dedupe).
 
 ## Stack
 

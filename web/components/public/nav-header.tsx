@@ -1,6 +1,6 @@
 import type { PublicSite, Category } from "@/lib/types";
-import { PublicDesktopNav, type PublicNavDesktopLink } from "./public-desktop-nav";
-import { PublicMobileNavMenu } from "./public-mobile-nav-menu";
+import { PublicDesktopNav, type PublicNavDesktopLink } from "./desktop-nav";
+import { PublicMobileNavMenu } from "./mobile-nav-menu";
 import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 export function getPublicNavHeaderClass(navbarStyle?: string): string {

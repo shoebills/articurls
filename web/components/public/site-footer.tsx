@@ -1,7 +1,7 @@
 import Link from "next/link";
 import type { PublicSite, UserPage } from "@/lib/types";
 import { getPublicPageUrl } from "@/lib/public-url";
-import { SubscribeToAuthor } from "@/components/subscribe-to-author";
+import { SubscribeToAuthor } from "@/components/public/subscribe-to-author";
 import { assetUrl } from "@/lib/env";
 import { Rss } from "lucide-react";
 

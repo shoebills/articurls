@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import Link from "next/link";
 import { ExternalLink, Menu, X } from "lucide-react";
-import { SearchButton } from "@/components/search-button";
+import { SearchButton } from "@/components/public/search-button";
 import { ThemeModeSelector } from "@/components/theme-mode-selector";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";

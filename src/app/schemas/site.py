@@ -108,7 +108,7 @@ class PublicSite(BaseModel):
 
     favicon_url: Optional[str] = None
     featured_blog_ids: list[str] | None = []
-    show_preview_in_lists: bool = True
+    show_excerpt: bool = True
     posts_per_page: int = 12
     pagination_type: Literal["prev_next", "load_more"] = "prev_next"
     toc_enabled: bool = True
