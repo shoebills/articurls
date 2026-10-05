@@ -66,7 +66,6 @@ export function StandardCategoryLayout({
           blogs={blogs}
           subdomain={site.subdomain}
           site={site}
-          hideFeatured
           showExcerpt={site.show_excerpt !== false}
           basePath={basePath}
           categories={categories}

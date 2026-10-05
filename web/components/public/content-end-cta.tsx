@@ -10,12 +10,12 @@ export function ContentEndCta({ site, isPage = false }: { site: PublicSite; isPa
   return (
     <section className="mt-14 rounded-2xl border border-border/80 bg-muted/20 p-6 sm:p-8 text-center space-y-4">
       {site.cta_heading ? (
-        <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+        <h3 className="text-2xl font-bold tracking-tight text-foreground">
           {site.cta_heading}
         </h3>
       ) : null}
       {site.cta_description ? (
-        <p className="text-sm sm:text-base text-muted-foreground max-w-xl mx-auto leading-relaxed whitespace-pre-wrap">
+        <p className="text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed whitespace-pre-wrap">
           {site.cta_description}
         </p>
       ) : null}
@@ -23,8 +23,7 @@ export function ContentEndCta({ site, isPage = false }: { site: PublicSite; isPa
         <div className="pt-2">
           <Button
             asChild
-            size="default"
-            className="font-semibold shadow-xs"
+            className="h-10 min-h-10 w-full touch-manipulation font-semibold shadow-xs sm:h-10 sm:min-h-10 sm:w-auto sm:min-w-[7.5rem] sm:shrink-0"
             data-button-variant={site.button_variant || "solid"}
             data-button-radius="true"
           >

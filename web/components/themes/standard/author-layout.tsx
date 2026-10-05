@@ -104,8 +104,7 @@ export function StandardAuthorLayout({
         <PublicFeed
           blogs={blogs}
           subdomain={site.subdomain}
-          site={site}
-          hideFeatured
+              site={site}
               showExcerpt={site.show_excerpt !== false}
           basePath={basePath}
           categories={categories}

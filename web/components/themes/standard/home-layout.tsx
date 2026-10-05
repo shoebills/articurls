@@ -1,14 +1,14 @@
-import Link from "next/link";
 import type { PublicBlog } from "@/lib/types";
 import type { HomeLayoutProps } from "@/components/themes/registry";
-import { PublicFeed } from "@/components/public/feed";
+import { PublicFeaturedPosts } from "@/components/public/feed";
+import { PublicCategoryFilter } from "@/components/public/category-filter";
 import { PublicPostCard } from "@/components/public/post-card";
 import { SubscribeToAuthor } from "@/components/public/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public/site-footer";
 import { PublicNavHeader, getPublicMainSpacing } from "@/components/public/nav-header";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema } from "@/lib/structured-data";
-import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { getPublicProfileUrl } from "@/lib/public-url";
 import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardHomeLayout({
@@ -111,29 +111,18 @@ export function StandardHomeLayout({
           </div>
         ) : null}
 
-        {/* Interactive Category Pills */}
-        {categories.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-border/40">
-            <Link
-              href={getPublicProfileUrl(site.subdomain, basePath)}
-              className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium shrink-0"
-            >
-              All
-            </Link>
-            {categories.map((c) => (
-              <Link
-                key={c.category_id}
-                href={getPublicCategoryUrl(site.subdomain, c.slug, basePath)}
-                className="px-4 py-1.5 rounded-md bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground text-sm font-medium transition-colors shrink-0"
-              >
-                {c.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* Featured */}
+        <PublicFeaturedPosts
+          blogs={blogs}
+          subdomain={subdomain}
+          site={site}
+          basePath={basePath}
+          categories={categories}
+          showExcerpt={site.show_excerpt !== false}
+        />
 
-        {/* Feed */}
-        <PublicFeed
+        {/* Category filter + Feed */}
+        <PublicCategoryFilter
           blogs={blogs}
           subdomain={subdomain}
           site={site}

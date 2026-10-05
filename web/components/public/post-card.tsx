@@ -67,7 +67,7 @@ export function PublicPostCard({
           </p>
         ) : null}
 
-        {allCategories.length > 0 || b.published_at ? (
+        {!large && (allCategories.length > 0 || b.published_at) ? (
           <div className="flex items-center justify-between gap-2 mt-4">
             {allCategories.length > 0 ? (
               <div className="flex flex-wrap items-center gap-1.5 min-w-0">

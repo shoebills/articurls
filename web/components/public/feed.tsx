@@ -10,38 +10,82 @@ type PublicFeedProps = {
   blogs: PublicBlog[];
   subdomain: string;
   site: PublicSite;
-  hideFeatured?: boolean;
   showExcerpt?: boolean;
   basePath?: string;
   recentHeading?: string;
+  categories?: Category[];
+  emptyMessage?: string;
+};
+
+type PublicFeaturedPostsProps = {
+  blogs: PublicBlog[];
+  subdomain: string;
+  site: PublicSite;
+  showExcerpt?: boolean;
+  basePath?: string;
   categories?: Category[];
 };
 
 const POSTS_PER_PAGE = 12;
 
-export function PublicFeed({
+function firstCatForBlog(b: PublicBlog, categories: Category[]) {
+  return b.category_ids && b.category_ids.length > 0
+    ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
+    : null;
+}
+
+export function PublicFeaturedPosts({
   blogs,
   subdomain,
   site,
-  hideFeatured,
   showExcerpt = true,
   basePath = "",
-  recentHeading,
   categories = [],
-}: PublicFeedProps) {
-  const [page, setPage] = useState(1);
-
+}: PublicFeaturedPostsProps) {
   const featuredBlogIds = site.featured_blog_ids;
   const featuredBlogs = useMemo(() => {
-    if (hideFeatured) return [];
     if (!featuredBlogIds || featuredBlogIds.length === 0) return [];
 
     return featuredBlogIds
       .map(id => blogs.find(b => b.blog_id === id))
       .filter((b): b is PublicBlog => Boolean(b));
-  }, [featuredBlogIds, blogs, hideFeatured]);
+  }, [featuredBlogIds, blogs]);
 
-  const showFeatured = featuredBlogs.length > 0;
+  if (featuredBlogs.length === 0) return null;
+
+  const gridClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
+
+  return (
+    <div className="mb-10 sm:mb-14">
+      <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
+      <div className={gridClass}>
+        {featuredBlogs.map((b) => (
+          <PublicPostCard
+            key={`featured-${b.blog_id}`}
+            blog={b}
+            subdomain={subdomain}
+            category={firstCatForBlog(b, categories)}
+            categories={categories}
+            showExcerpt={showExcerpt}
+            basePath={basePath}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function PublicFeed({
+  blogs,
+  subdomain,
+  site,
+  showExcerpt = true,
+  basePath = "",
+  recentHeading,
+  categories = [],
+  emptyMessage = "No published posts yet.",
+}: PublicFeedProps) {
+  const [page, setPage] = useState(1);
 
   const sortedBlogs = useMemo(() => {
     const rows = [...blogs];
@@ -71,40 +115,17 @@ export function PublicFeed({
   }, [sortedBlogs, currentPage, postsPerPage, isLoadMore, visibleCount]);
 
   const gridClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
-  const firstCatFor = (b: PublicBlog) =>
-    b.category_ids && b.category_ids.length > 0
-      ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
-      : null;
 
   if (blogs.length === 0) {
     return (
       <section className="mt-5 sm:mt-6">
-        <PublicEmptyState message="No published posts yet." />
+        <PublicEmptyState message={emptyMessage} />
       </section>
     );
   }
 
   return (
     <section className="mt-5 sm:mt-6">
-      {showFeatured ? (
-        <div className="mb-10 sm:mb-14">
-          <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Featured Posts</h2>
-          <div className={gridClass}>
-            {featuredBlogs.map((b) => (
-              <PublicPostCard
-                key={`featured-${b.blog_id}`}
-                blog={b}
-                subdomain={subdomain}
-                category={firstCatFor(b)}
-                categories={categories}
-                showExcerpt={showExcerpt}
-                basePath={basePath}
-              />
-            ))}
-          </div>
-        </div>
-      ) : null}
-
       {recentHeading ? (
         <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">{recentHeading}</h2>
       ) : null}
@@ -115,7 +136,7 @@ export function PublicFeed({
             key={b.blog_id}
             blog={b}
             subdomain={subdomain}
-            category={firstCatFor(b)}
+            category={firstCatForBlog(b, categories)}
             categories={categories}
             showExcerpt={showExcerpt}
             basePath={basePath}
