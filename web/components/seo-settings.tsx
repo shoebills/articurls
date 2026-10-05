@@ -36,6 +36,7 @@ type FormState = {
   seo_trailing_slash_listings: boolean;
   seo_trailing_slash_jsonld: boolean;
   seo_sitemap_enabled: boolean;
+  categories_hub_enabled: boolean;
   seo_robots_mode: "auto" | "custom";
   seo_robots_custom: string | null;
   seo_llms_mode: "auto" | "custom";
@@ -53,6 +54,7 @@ const DEFAULT_FORM: FormState = {
   seo_trailing_slash_listings: false,
   seo_trailing_slash_jsonld: false,
   seo_sitemap_enabled: true,
+  categories_hub_enabled: true,
   seo_robots_mode: "auto",
   seo_robots_custom: null,
   seo_llms_mode: "auto",
@@ -72,6 +74,7 @@ function normalizeSeoSettings(data: Partial<SeoSettings> | null | undefined): Fo
   form.seo_trailing_slash_listings = data.seo_trailing_slash_listings ?? false;
   form.seo_trailing_slash_jsonld = data.seo_trailing_slash_jsonld ?? false;
   form.seo_sitemap_enabled = data.seo_sitemap_enabled ?? true;
+  form.categories_hub_enabled = data.categories_hub_enabled ?? true;
   form.seo_robots_mode = data.seo_robots_mode ?? "auto";
   form.seo_robots_custom = form.seo_robots_mode === "custom" ? (data.seo_robots_custom ?? null) : null;
   form.seo_llms_mode = data.seo_llms_mode ?? "auto";
@@ -161,6 +164,7 @@ export default function SeoSettings() {
         seo_trailing_slash_listings: form.seo_trailing_slash_listings,
         seo_trailing_slash_jsonld: form.seo_trailing_slash_jsonld,
         seo_sitemap_enabled: form.seo_sitemap_enabled,
+        categories_hub_enabled: form.categories_hub_enabled,
         seo_robots_mode: form.seo_robots_mode,
         seo_robots_custom: form.seo_robots_mode === "custom" ? form.seo_robots_custom || null : null,
         seo_llms_mode: form.seo_llms_mode,
@@ -364,6 +368,19 @@ export default function SeoSettings() {
             checked={form.seo_noindex_pages}
             disabled={busy}
             onCheckedChange={(checked) => patch({ seo_noindex_pages: checked })}
+          />
+        </section>
+
+        <section className="space-y-4 pt-6">
+          <div>
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Categories Hub</h2>
+          </div>
+          <ToggleRow
+            title="Enable categories hub page"
+            hint="Shows a /categories index of all topics. When off, the URL returns 404 and is removed from the sitemap."
+            checked={form.categories_hub_enabled}
+            disabled={busy}
+            onCheckedChange={(checked) => patch({ categories_hub_enabled: checked })}
           />
         </section>
 

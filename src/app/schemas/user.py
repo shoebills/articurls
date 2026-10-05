@@ -141,6 +141,7 @@ class SeoSettings(BaseModel):
     seo_trailing_slash_listings: bool = False
     seo_trailing_slash_jsonld: bool = False
     seo_sitemap_enabled: bool = True
+    categories_hub_enabled: bool = True
     seo_robots_mode: Literal["auto", "custom"] = "auto"
     seo_robots_custom: Optional[str] = None
     seo_llms_mode: Literal["auto", "custom"] = "auto"
@@ -162,6 +163,7 @@ class SeoSettingsUpdate(BaseModel):
     seo_trailing_slash_listings: Optional[bool] = None
     seo_trailing_slash_jsonld: Optional[bool] = None
     seo_sitemap_enabled: Optional[bool] = None
+    categories_hub_enabled: Optional[bool] = None
     seo_robots_mode: Optional[Literal["auto", "custom"]] = None
     seo_robots_custom: Optional[str] = Field(None, max_length=10000)
     seo_llms_mode: Optional[Literal["auto", "custom"]] = None

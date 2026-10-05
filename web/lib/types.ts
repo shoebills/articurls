@@ -507,6 +507,7 @@ export interface SeoSettings {
   seo_trailing_slash_listings?: boolean;
   seo_trailing_slash_jsonld?: boolean;
   seo_sitemap_enabled?: boolean;
+  categories_hub_enabled?: boolean;
   seo_robots_mode?: "auto" | "custom";
   seo_robots_custom?: string | null;
   seo_llms_mode?: "auto" | "custom";

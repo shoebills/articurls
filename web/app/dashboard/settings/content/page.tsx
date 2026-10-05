@@ -186,27 +186,6 @@ export default function ContentSettingsPage() {
             </div>
           </section>
 
-          {/* Categories Hub Page */}
-          <section className="space-y-4 pt-6">
-            <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Categories Hub Page</h2>
-            </div>
-
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-0.5">
-                <p className="text-sm font-medium">Enable Categories Hub</p>
-                <p className="text-xs text-muted-foreground sm:text-sm">
-                  Shows a /categories index of all topics. When off, the URL returns 404 and is removed from the sitemap.
-                </p>
-              </div>
-              <Switch
-                checked={design.categories_hub_enabled !== false}
-                onCheckedChange={(checked) => setDesign({ ...design, categories_hub_enabled: checked })}
-                disabled={saving}
-              />
-            </div>
-          </section>
-
           <div className="flex items-center justify-end pt-6 border-t border-border/60">
             <Button type="submit" disabled={saving} className="gap-2">
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
