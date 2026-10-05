@@ -95,6 +95,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     link: siteOrigin,
     description: site.meta_description || `Latest posts by ${site.name}.`,
     lastBuildDate: sorted[0]?.updated_at || sorted[0]?.published_at || null,
+    imageUrl: site.favicon_url ? assetUrl(site.favicon_url) : null,
     items,
   });
 

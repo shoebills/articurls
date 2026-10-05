@@ -155,7 +155,7 @@ export function PublicDesktopNav({
             className="h-8 max-h-8 w-auto object-contain"
           />
         ) : (
-          <span className="text-2xl font-bold tracking-tight text-foreground hover:opacity-90 transition-opacity truncate">
+          <span className="text-3xl font-bold tracking-tight text-foreground hover:opacity-90 transition-opacity truncate">
             {title}
           </span>
         )}

@@ -15,6 +15,7 @@ type PublicBlogListSearchProps = {
   content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   basePath?: string;
+  recentHeading?: string;
 };
 
 const POSTS_PER_PAGE = 12;
@@ -27,6 +28,7 @@ export function PublicBlogListSearch({
   content_layout = "grid",
   show_preview_in_lists = true,
   basePath = "",
+  recentHeading = "Recent Posts",
 }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
@@ -105,7 +107,7 @@ export function PublicBlogListSearch({
         </div>
       ) : null}
 
-      <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">Recent Posts</h2>
+      <h2 className="mb-6 text-xl font-bold tracking-tight sm:mb-8 sm:text-2xl">{recentHeading}</h2>
 
       <div className={listClass}>
         {pagedBlogs.map((b) => (

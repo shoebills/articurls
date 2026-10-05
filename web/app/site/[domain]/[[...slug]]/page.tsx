@@ -13,7 +13,6 @@ import { PublicNavHeader, getPublicMainSpacing } from "@/components/public-nav-h
 import { PublicPostCard } from "@/components/public-post-card";
 import { PublicBlogListSearch } from "@/components/public-blog-list-search";
 import { PublicSiteFooter } from "@/components/public-site-footer";
-import { SubscribeToAuthor } from "@/components/subscribe-to-author";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/image-transform";
@@ -269,7 +268,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (segments[0] === "category" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
-    if (!site || !data) return { title: "Not found" };
+    if (!site || !data) return { title: "Not found", icons: faviconIcons(site) };
     const categoryName = data.category.name || segments[1];
     const title = data.category.meta_title?.trim() || `${categoryName} — ${site.name}`;
     const description = data.category.meta_description?.trim() || `Browse all ${categoryName} posts by ${site.name}.`;
@@ -305,7 +304,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (segments[0] === "author" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadAuthorBlogs(subdomain, segments[1])]);
-    if (!site || !data) return { title: "Not found" };
+    if (!site || !data) return { title: "Not found", icons: faviconIcons(site) };
     const author = data.author;
     const siteName = resolveSiteName(site);
     const title = author.meta_title?.trim() || `${author.name} — Author at ${siteName}`;
@@ -380,7 +379,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       loadSite(subdomain),
     ]);
 
-    if (!content) return { title: "Not found" };
+    if (!content) return { title: "Not found", icons: faviconIcons(site) };
 
     if (content.type === "blog" && content.blog) {
       const blog = content.blog;
@@ -452,7 +451,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       };
     }
 
-    return { title: "Not found" };
+    return { title: "Not found", icons: faviconIcons(site) };
   }
 
   // Profile / Homepage
@@ -881,26 +880,7 @@ export default async function SitePublicationPage({ params }: Props) {
             <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
               {categoryName}
             </h1>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {blogs.length} {blogs.length === 1 ? "article" : "articles"} in this category
-            </p>
           </div>
-
-          {site.newsletter_show_near_header ? (
-            <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
-              <div className="max-w-md mx-auto">
-                <SubscribeToAuthor
-                  subdomain={site.subdomain}
-                  headline={site.newsletter_headline}
-                  text={site.newsletter_text}
-                  disclaimer={site.newsletter_disclaimer}
-                  buttonText={site.newsletter_button_text}
-                  buttonVariant={site.button_variant || "solid"}
-                  className="space-y-4 text-center"
-                />
-              </div>
-            </div>
-          ) : null}
 
           <PublicBlogListSearch
             blogs={blogs}
@@ -1015,26 +995,6 @@ export default async function SitePublicationPage({ params }: Props) {
               </div>
             </div>
 
-            {site.newsletter_show_near_header ? (
-              <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
-                <div className="max-w-md mx-auto">
-                  <SubscribeToAuthor
-                    subdomain={site.subdomain}
-                    headline={site.newsletter_headline}
-                    text={site.newsletter_text}
-                    disclaimer={site.newsletter_disclaimer}
-                    buttonText={site.newsletter_button_text}
-                    buttonVariant={site.button_variant || "solid"}
-                    className="space-y-4 text-center"
-                  />
-                </div>
-              </div>
-            ) : null}
-
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold tracking-tight">Articles by {author.name}</h2>
-            </div>
-
             <PublicBlogListSearch
               blogs={blogs}
               subdomain={site.subdomain}
@@ -1043,6 +1003,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 content_layout={site.content_layout || "grid"}
               show_preview_in_lists={site.show_preview_in_lists ?? true}
               basePath={basePath}
+              recentHeading={`Recent posts by ${author.name}`}
             />
 
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />

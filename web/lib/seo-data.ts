@@ -156,11 +156,15 @@ export function buildRssXml(input: {
   description: string;
   language?: string;
   lastBuildDate?: string | null;
+  imageUrl?: string | null;
   items: RssItem[];
 }): string {
   const language = input.language || "en-US";
   const lastBuildDate =
     toRfc822Date(input.lastBuildDate) || new Date().toUTCString();
+  const channelImage = (input.imageUrl || "").trim()
+    ? `  <image>\n    <url>${escapeXml((input.imageUrl || "").trim())}</url>\n    <title>${escapeXml(input.title)}</title>\n    <link>${escapeXml(input.link)}</link>\n  </image>\n`
+    : "";
 
   const itemsXml = input.items
     .map((item) => {
@@ -188,7 +192,7 @@ export function buildRssXml(input: {
     })
     .join("\n");
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n  <title>${escapeXml(input.title)}</title>\n  <link>${escapeXml(input.link)}</link>\n  <description>${escapeXml(input.description)}</description>\n  <language>${escapeXml(language)}</language>\n  <lastBuildDate>${escapeXml(lastBuildDate)}</lastBuildDate>\n  <atom:link href="${escapeXml(input.link)}/rss.xml" rel="self" type="application/rss+xml" />\n${itemsXml}\n</channel>\n</rss>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:atom="http://www.w3.org/2005/Atom">\n<channel>\n  <title>${escapeXml(input.title)}</title>\n  <link>${escapeXml(input.link)}</link>\n  <description>${escapeXml(input.description)}</description>\n  <language>${escapeXml(language)}</language>\n  <lastBuildDate>${escapeXml(lastBuildDate)}</lastBuildDate>\n  <atom:link href="${escapeXml(input.link)}/rss.xml" rel="self" type="application/rss+xml" />\n${channelImage}${itemsXml}\n</channel>\n</rss>`;
 }
 
 /**
@@ -200,10 +204,14 @@ export function buildAtomXml(input: {
   description: string;
   authorName?: string;
   updated?: string | null;
+  imageUrl?: string | null;
   items: RssItem[];
 }): string {
   const updatedIso = toIsoDate(input.updated);
   const feedAuthor = input.authorName || input.title;
+  const feedIcon = (input.imageUrl || "").trim()
+    ? `  <icon>${escapeXml((input.imageUrl || "").trim())}</icon>\n`
+    : "";
 
   const entriesXml = input.items
     .map((item) => {
@@ -232,5 +240,5 @@ export function buildAtomXml(input: {
     })
     .join("\n");
 
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n  <title>${escapeXml(input.title)}</title>\n  <subtitle>${escapeXml(input.description)}</subtitle>\n  <link href="${escapeXml(input.link)}" />\n  <link href="${escapeXml(input.link)}/atom.xml" rel="self" type="application/atom+xml" />\n  <id>${escapeXml(input.link)}</id>\n  <updated>${updatedIso}</updated>\n  <author>\n    <name>${escapeXml(feedAuthor)}</name>\n  </author>\n${entriesXml}\n</feed>`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<feed xmlns="http://www.w3.org/2005/Atom">\n  <title>${escapeXml(input.title)}</title>\n  <subtitle>${escapeXml(input.description)}</subtitle>\n  <link href="${escapeXml(input.link)}" />\n  <link href="${escapeXml(input.link)}/atom.xml" rel="self" type="application/atom+xml" />\n  <id>${escapeXml(input.link)}</id>\n  <updated>${updatedIso}</updated>\n${feedIcon}  <author>\n    <name>${escapeXml(feedAuthor)}</name>\n  </author>\n${entriesXml}\n</feed>`;
 }

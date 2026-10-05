@@ -96,6 +96,7 @@ export async function GET(req: NextRequest): Promise<Response> {
     description: site.meta_description || `Latest posts by ${site.name}.`,
     authorName: site.name,
     updated: sorted[0]?.updated_at || sorted[0]?.published_at || null,
+    imageUrl: site.favicon_url ? assetUrl(site.favicon_url) : null,
     items,
   });
 
