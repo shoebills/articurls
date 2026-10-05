@@ -209,7 +209,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
     entries.push({ loc: withTrailingSlash(siteOrigin, trailingSlash), lastmod: today, changefreq: "weekly", priority: "1.0" });
   }
 
-  if (indexableCategories.length > 0 && !isRedirected("/categories")) {
+  if (site.categories_hub_enabled !== false && indexableCategories.length > 0 && !isRedirected("/categories")) {
     entries.push({
       loc: withTrailingSlash(`${siteOrigin}/categories`, trailingSlash),
       changefreq: "weekly",

@@ -82,6 +82,7 @@ class UserSettings(BaseModel):
     posts_per_page: int = 12
     pagination_type: Literal["prev_next", "load_more"] = "prev_next"
     toc_enabled: bool = True
+    categories_hub_enabled: bool = True
     domain_status: Optional[str] = None
     rss_enabled: bool = False
     atom_enabled: bool = False

@@ -314,7 +314,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   if (segments[0] === "categories") {
     const site = await loadSite(subdomain);
-    if (!site) return { title: "Not found" };
+    if (!site || site.categories_hub_enabled === false) return { title: "Not found", icons: faviconIcons(site) };
     const siteName = resolveSiteName(site);
     const title = `Categories — ${siteName}`;
     const description = `Explore all topics and categories on ${siteName}.`;
@@ -635,7 +635,7 @@ export default async function SitePublicationPage({ params }: Props) {
       loadAllCategories(subdomain),
     ]);
 
-    if (!site) notFound();
+    if (!site || site.categories_hub_enabled === false) notFound();
 
     const CategoriesHubLayout = getLayout(site.template_id, "categoriesHub");
     return (

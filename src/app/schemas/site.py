@@ -112,6 +112,7 @@ class PublicSite(BaseModel):
     posts_per_page: int = 12
     pagination_type: Literal["prev_next", "load_more"] = "prev_next"
     toc_enabled: bool = True
+    categories_hub_enabled: bool = True
 
     custom_domain: Optional[str] = None
     domain_status: Optional[str] = None

@@ -83,7 +83,7 @@ async function customDomainLlms(host: string): Promise<Response> {
   const description = (site.meta_description || "").trim();
   const body = `# ${siteName}
 ${description ? `> ${description}\n` : ""}
-${site.seo_noindex_categories ? "" : `- [All categories](${siteOrigin}/categories)`}
+${site.seo_noindex_categories || site.categories_hub_enabled === false ? "" : `- [All categories](${siteOrigin}/categories)`}
 - [Sitemap](${siteOrigin}/sitemap.xml)
 `;
 

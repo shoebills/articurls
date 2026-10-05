@@ -145,10 +145,10 @@ export default function ContentSettingsPage() {
             </div>
           </section>
 
-          {/* Table of Contents (TOC) */}
+          {/* Table of Contents */}
           <section className="space-y-4 pt-6">
             <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Table of Contents (TOC)</h2>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Table of Contents</h2>
             </div>
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
@@ -173,7 +173,7 @@ export default function ContentSettingsPage() {
 
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-0.5">
-                <p className="text-sm font-medium">Show Excerpt Preview in Lists</p>
+                <p className="text-sm font-medium">Show Excerpt</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">
                   Display a short preview summary below article titles in feeds.
                 </p>
@@ -181,6 +181,27 @@ export default function ContentSettingsPage() {
               <Switch
                 checked={design.show_excerpt !== false}
                 onCheckedChange={(checked) => setDesign({ ...design, show_excerpt: checked })}
+                disabled={saving}
+              />
+            </div>
+          </section>
+
+          {/* Categories Hub Page */}
+          <section className="space-y-4 pt-6">
+            <div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Categories Hub Page</h2>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-0.5">
+                <p className="text-sm font-medium">Enable Categories Hub</p>
+                <p className="text-xs text-muted-foreground sm:text-sm">
+                  Shows a /categories index of all topics. When off, the URL returns 404 and is removed from the sitemap.
+                </p>
+              </div>
+              <Switch
+                checked={design.categories_hub_enabled !== false}
+                onCheckedChange={(checked) => setDesign({ ...design, categories_hub_enabled: checked })}
                 disabled={saving}
               />
             </div>

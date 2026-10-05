@@ -120,6 +120,7 @@ class Site(Base):
     posts_per_page = Column(Integer, nullable=False, default=12, server_default="12")
     pagination_type = Column(String(16), nullable=False, default="prev_next", server_default="prev_next")
     toc_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
+    categories_hub_enabled = Column(Boolean, nullable=False, default=True, server_default="true")
 
     # System & Features
     umami_website_id = Column(String(36), nullable=True, default=None, index=True)
