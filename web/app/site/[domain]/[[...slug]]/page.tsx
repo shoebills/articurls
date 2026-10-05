@@ -641,7 +641,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 alt={blog.title}
                 loading="eager"
                 decoding="async"
-                className="block h-auto w-full rounded-2xl"
+                className="aspect-[16/9] w-full rounded-2xl object-cover"
               />
             </figure>
           ) : null}
@@ -802,7 +802,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     alt={page.title}
                     loading="eager"
                     decoding="async"
-                    className="block h-auto w-full rounded-2xl"
+                    className="aspect-[16/9] w-full rounded-2xl object-cover"
                   />
                 </figure>
               ) : null}
@@ -888,7 +888,6 @@ export default async function SitePublicationPage({ params }: Props) {
             subdomain={site.subdomain}
             site={site}
             hideFeatured
-            content_layout={site.content_layout || "grid"}
             show_preview_in_lists={site.show_preview_in_lists ?? true}
             basePath={basePath}
             categories={categories}
@@ -1002,7 +1001,6 @@ export default async function SitePublicationPage({ params }: Props) {
               subdomain={site.subdomain}
               site={site}
               hideFeatured
-                content_layout={site.content_layout || "grid"}
               show_preview_in_lists={site.show_preview_in_lists ?? true}
               basePath={basePath}
               categories={categories}

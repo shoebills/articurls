@@ -759,7 +759,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 <img
                   src={transformImageUrl(assetUrl(featuredImageUrl), { width: 600 })}
                   alt=""
-                  className="mt-2 aspect-[3/2] w-full max-w-xs rounded-lg border border-border/70 object-cover"
+                  className="mt-2 aspect-[16/9] w-full max-w-xs rounded-lg border border-border/70 object-cover"
                 />
               ) : null}
             </div>

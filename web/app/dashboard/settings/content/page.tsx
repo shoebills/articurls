@@ -10,7 +10,7 @@ import {
   getDesignSettings,
   patchDesignSettings,
 } from "@/lib/api";
-import type { DesignSettings, ContentLayout } from "@/lib/types";
+import type { DesignSettings } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -165,33 +165,10 @@ export default function ContentSettingsPage() {
             </div>
           </section>
 
-          {/* Article & Feed Layout */}
+          {/* Article Excerpts */}
           <section className="space-y-4 pt-6">
             <div>
-              <h2 className="text-base font-semibold text-foreground sm:text-lg">Article &amp; Feed Layout</h2>
-            </div>
-            <div className="space-y-6 max-w-md">
-              <div className="space-y-2.5">
-                <div className="space-y-1.5">
-                  <Label htmlFor="content_layout">Content layout</Label>
-                  <p className="text-xs text-muted-foreground sm:text-sm">
-                    Grid shows cards with image above title, list shows image beside title.
-                  </p>
-                </div>
-                <Select
-                  value={design.content_layout || "grid"}
-                  onValueChange={(val) => setDesign({ ...design, content_layout: val as ContentLayout })}
-                  disabled={saving}
-                >
-                  <SelectTrigger id="content_layout" className="mt-2 max-w-1/2">
-                    <SelectValue placeholder="Select layout" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="grid">Grid (Image above)</SelectItem>
-                    <SelectItem value="list">List (Image beside)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <h2 className="text-base font-semibold text-foreground sm:text-lg">Article Excerpts</h2>
             </div>
 
             <div className="flex items-center justify-between gap-4">

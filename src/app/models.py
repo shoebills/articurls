@@ -115,7 +115,6 @@ class Site(Base):
     newsletter_webhook_token = Column(Text, nullable=True)
 
     # Content & Presentation
-    content_layout = Column(String(16), nullable=False, default="grid", server_default="grid")
     show_preview_in_lists = Column(Boolean, nullable=False, default=True)
     featured_blog_ids = Column(JSON, nullable=True, default=[])
     posts_per_page = Column(Integer, nullable=False, default=12, server_default="12")

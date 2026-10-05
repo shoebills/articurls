@@ -123,8 +123,6 @@ export interface PublicBlogSearchResult {
   published_at: string | null;
 }
 
-export type ContentLayout = "grid" | "list";
-
 export type NavItemType = "custom" | "page" | "category";
 
 export interface NavItem {
@@ -219,7 +217,6 @@ export interface PublicSite {
   newsletter_webhook_url?: string | null;
   favicon_url?: string | null;
   featured_blog_ids: string[];
-  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";
@@ -310,7 +307,6 @@ export interface UserSettings {
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blog_ids: string[];
-  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";
@@ -493,7 +489,6 @@ export interface DesignSettings {
   newsletter_webhook_token?: string | null;
 
   featured_blog_ids: string[];
-  content_layout: ContentLayout;
   show_preview_in_lists: boolean;
   posts_per_page?: number;
   pagination_type?: "prev_next" | "load_more";

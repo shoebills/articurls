@@ -12,7 +12,7 @@ export type PublicPostCardProps = {
   category?: Category | null;
   categories?: Category[];
   showPreview?: boolean;
-  variant?: "card" | "row" | "compact";
+  variant?: "card" | "compact";
 };
 
 export function PublicPostCard({
@@ -83,68 +83,6 @@ export function PublicPostCard({
     );
   }
 
-  if (variant === "row") {
-    return (
-      <Link
-        href={postHref}
-        className="group block py-6 transition-colors"
-      >
-        <div className="flex items-start gap-4 sm:gap-8">
-          <div className="min-w-0 flex-1">
-            <h3 className="text-lg font-bold line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5 sm:text-xl">
-              {b.is_pinned && (
-                <span title="Pinned post" className="inline-flex shrink-0">
-                  <Pin className="h-4 w-4 text-primary rotate-45" />
-                </span>
-              )}
-              <span>{b.title}</span>
-            </h3>
-            {showPreview && b.excerpt ? (
-              <p className="text-muted-foreground text-sm line-clamp-2 mt-2">
-                {b.excerpt}
-              </p>
-            ) : null}
-            {allCategories.length > 0 || b.published_at ? (
-              <div className="flex items-center justify-between gap-2 mt-3">
-                {allCategories.length > 0 ? (
-                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                    {allCategories.map((c) => (
-                      <Badge key={c.category_id} className="rounded-full shrink-0 border-transparent bg-primary/10 text-primary shadow-none hover:bg-primary/15">
-                        {c.name}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <span />
-                )}
-                {b.published_at && (
-                  <time dateTime={b.published_at} className="shrink-0 text-xs text-muted-foreground">
-                    {new Date(b.published_at).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                      year: "numeric",
-                    })}
-                  </time>
-                )}
-              </div>
-            ) : null}
-          </div>
-          {coverImg ? (
-            <div className="shrink-0 w-28 sm:w-56 overflow-hidden rounded-xl bg-muted">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={coverImg}
-                alt={b.title}
-                className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
-              />
-            </div>
-          ) : null}
-        </div>
-      </Link>
-    );
-  }
-
   // Default: "card" — borderless editorial card
   return (
     <Link
@@ -172,7 +110,7 @@ export function PublicPostCard({
           <span>{b.title}</span>
         </h3>
         {showPreview && b.excerpt ? (
-          <p className="text-muted-foreground text-sm line-clamp-3 mt-2 flex-1">
+          <p className="text-muted-foreground text-sm sm:text-base line-clamp-3 mt-2 flex-1">
             {b.excerpt}
           </p>
         ) : null}

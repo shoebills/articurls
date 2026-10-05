@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { PublicBlog, PublicSite, Category, ContentLayout } from "@/lib/types";
+import type { PublicBlog, PublicSite, Category } from "@/lib/types";
 import { PublicPostCard } from "@/components/public-post-card";
 import { PublicEmptyState } from "@/components/public-empty-state";
 import { PublicPagination, PublicLoadMore } from "@/components/public-pagination";
@@ -12,7 +12,6 @@ type PublicBlogListSearchProps = {
   site?: PublicSite;
   hideFeatured?: boolean;
   siteOrigin?: string;
-  content_layout?: ContentLayout;
   show_preview_in_lists?: boolean;
   basePath?: string;
   recentHeading?: string;
@@ -26,7 +25,6 @@ export function PublicBlogListSearch({
   subdomain,
   site,
   hideFeatured,
-  content_layout = "grid",
   show_preview_in_lists = true,
   basePath = "",
   recentHeading = "Recent Posts",
@@ -75,10 +73,7 @@ export function PublicBlogListSearch({
     return sortedBlogs.slice(start, start + postsPerPage);
   }, [sortedBlogs, currentPage, postsPerPage, isLoadMore, visibleCount]);
 
-  const isGrid = content_layout === "grid";
-  const listClass = isGrid
-    ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
-    : "space-y-0";
+  const listClass = "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8";
   const firstCatFor = (b: PublicBlog) =>
     b.category_ids && b.category_ids.length > 0
       ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
@@ -107,7 +102,7 @@ export function PublicBlogListSearch({
                 categories={categories}
                 showPreview={show_preview_in_lists}
                 basePath={basePath}
-                variant={isGrid ? "card" : "row"}
+                variant="card"
               />
             ))}
           </div>
@@ -126,7 +121,7 @@ export function PublicBlogListSearch({
             categories={categories}
             showPreview={show_preview_in_lists}
             basePath={basePath}
-            variant={isGrid ? "card" : "row"}
+            variant="card"
           />
         ))}
       </div>

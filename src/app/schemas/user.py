@@ -78,7 +78,6 @@ class UserSettings(BaseModel):
     og_image_url: Optional[str] = None
     featured_blog_ids: list[str] | None = []
     custom_domain: Optional[str] = None
-    content_layout: Literal["grid", "list"] = "grid"
     show_preview_in_lists: bool = True
     posts_per_page: int = 12
     pagination_type: Literal["prev_next", "load_more"] = "prev_next"

@@ -31,7 +31,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
   const postsPerPage = site.posts_per_page && site.posts_per_page >= 6 ? site.posts_per_page : 12;
   const paginationType = site.pagination_type || "prev_next";
   const isLoadMore = paginationType === "load_more";
-  const isGrid = (site.content_layout || "grid") === "grid";
   const showPreview = site.show_preview_in_lists !== false;
 
   const sortedBlogs = useMemo(() => {
@@ -143,7 +142,7 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
         {/* Feed List */}
         {sortedBlogs.length === 0 ? (
           <PublicEmptyState message="No published posts yet." />
-        ) : isGrid ? (
+        ) : (
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {pagedBlogs.map((b) => {
@@ -160,44 +159,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                     categories={categories}
                     showPreview={showPreview}
                     variant="card"
-                  />
-                );
-              })}
-            </div>
-            {sortedBlogs.length > 0 ? (
-              isLoadMore ? (
-                <PublicLoadMore
-                  visibleCount={Math.min(visibleCount, sortedBlogs.length)}
-                  totalCount={sortedBlogs.length}
-                  onLoadMore={() => setVisibleCount((c) => c + postsPerPage)}
-                  buttonVariant={site.button_variant || "solid"}
-                />
-              ) : (
-                <PublicPagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPrev={() => setPage((p) => Math.max(1, p - 1))}
-                  onNext={() => setPage((p) => Math.min(totalPages, p + 1))}
-                />
-              )
-            ) : null}
-          </>
-        ) : (
-          <>
-            <div className="space-y-0">
-              {pagedBlogs.map((b) => {
-                const firstCat = b.category_ids && b.category_ids.length > 0
-                  ? categories.find((c) => c.category_id === b.category_ids![0])
-                  : null;
-                return (
-                  <PublicPostCard
-                    key={b.blog_id}
-                    blog={b}
-                    subdomain={site.subdomain}
-                    basePath={basePath}
-                    category={firstCat}
-                    showPreview={showPreview}
-                    variant="row"
                   />
                 );
               })}
