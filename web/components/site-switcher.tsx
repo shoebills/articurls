@@ -29,7 +29,10 @@ export function SiteSwitcher({
 
   return (
     <div className={cn("px-2.5 pb-2 pt-4", className)}>
-      <DropdownMenu>
+      {/* Non-modal: a modal menu sets body pointer-events to none, which makes
+          the opening tap's click fall through the trigger onto the mobile
+          tray's close-overlay and instantly shut the sidebar. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"

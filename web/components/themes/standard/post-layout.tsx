@@ -184,7 +184,7 @@ export function StandardPostLayout({
         ) : (
           blogPostContent
         )}
-            <div className="mx-auto w-full sm:max-w-[60%]">
+            <div className="mx-auto w-full sm:max-w-[80%]">
               <ContentEndCta site={site} />
             </div>
             {relatedArticles}

@@ -35,7 +35,10 @@ export function SidebarAccountDropdown({ onNavigate }: { onNavigate?: () => void
 
   return (
     <div className="shrink-0 border-t border-sidebar-border/70 bg-background p-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-      <DropdownMenu>
+      {/* Non-modal: a modal menu sets body pointer-events to none, which makes
+          the opening tap's click fall through the trigger onto the mobile
+          tray's close-overlay and instantly shut the sidebar. */}
+      <DropdownMenu modal={false}>
         <DropdownMenuTrigger asChild>
           <Button
             variant="ghost"
