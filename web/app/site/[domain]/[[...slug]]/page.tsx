@@ -652,37 +652,35 @@ export default async function SitePublicationPage({ params }: Props) {
           {Array.isArray(blog.faq_items) && blog.faq_items.length > 0 && (
             <PublicFaqSection items={blog.faq_items} />
           )}
-
-          {/* Related Articles */}
-          {relatedBlogs.length > 0 && (
-            <section className="mt-12 pt-8 border-t border-border/60">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-                  Related articles
-                </h3>
-                <Link
-                  href={getPublicProfileUrl(subdomain, basePath)}
-                  className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                >
-                  View all →
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {relatedBlogs.map((rel) => (
-                  <PublicPostCard
-                    key={rel.blog_id}
-                    blog={rel}
-                    subdomain={subdomain}
-                    basePath={basePath}
-                    categories={categories}
-                    variant="compact"
-                  />
-                ))}
-              </div>
-            </section>
-          )}
         </>
       );
+
+      const relatedArticles = relatedBlogs.length > 0 ? (
+        <section className="mt-12 pt-8 border-t border-border/60">
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+              Related articles
+            </h3>
+            <Link
+              href={getPublicProfileUrl(subdomain, basePath)}
+              className="text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+            {relatedBlogs.map((rel) => (
+              <PublicPostCard
+                key={rel.blog_id}
+                blog={rel}
+                subdomain={subdomain}
+                basePath={basePath}
+                categories={categories}
+              />
+            ))}
+          </div>
+        </section>
+      ) : null;
 
       return (
         <ThemeStyleWrapper site={site}>
@@ -725,6 +723,7 @@ export default async function SitePublicationPage({ params }: Props) {
             ) : (
               blogPostContent
             )}
+            {relatedArticles}
             <ContentEndCta site={site} />
             <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
           </main>

@@ -102,7 +102,6 @@ export function PublicBlogListSearch({
                 categories={categories}
                 showPreview={show_preview_in_lists}
                 basePath={basePath}
-                variant="card"
               />
             ))}
           </div>
@@ -121,7 +120,6 @@ export function PublicBlogListSearch({
             categories={categories}
             showPreview={show_preview_in_lists}
             basePath={basePath}
-            variant="card"
           />
         ))}
       </div>

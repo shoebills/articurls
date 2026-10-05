@@ -12,7 +12,6 @@ export type PublicPostCardProps = {
   category?: Category | null;
   categories?: Category[];
   showPreview?: boolean;
-  variant?: "card" | "compact";
 };
 
 export function PublicPostCard({
@@ -22,7 +21,6 @@ export function PublicPostCard({
   category,
   categories = [],
   showPreview = true,
-  variant = "card",
 }: PublicPostCardProps) {
   const postHref = getPublicPostUrl(subdomain, b.slug, basePath);
   const coverImg = resolveBlogCoverImage(b);
@@ -35,54 +33,7 @@ export function PublicPostCard({
         ? [category]
         : [];
 
-  if (variant === "compact") {
-    return (
-      <Link
-        href={postHref}
-        className="group flex flex-col"
-      >
-        {coverImg ? (
-          <div className="aspect-[16/9] w-full overflow-hidden rounded-xl bg-muted">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={coverImg}
-              alt={b.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="lazy"
-            />
-          </div>
-        ) : null}
-        <h4 className="mt-3 font-semibold text-sm text-foreground group-hover:text-primary transition-colors line-clamp-2">
-          {b.title}
-        </h4>
-        {allCategories.length > 0 || b.published_at ? (
-          <div className="flex items-center justify-between gap-2 mt-2">
-            {allCategories.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                {allCategories.map((c) => (
-                  <Badge key={c.category_id} className="rounded-full shrink-0 border-transparent bg-primary/10 text-primary shadow-none hover:bg-primary/15">
-                    {c.name}
-                  </Badge>
-                ))}
-              </div>
-            ) : (
-              <span />
-            )}
-            {b.published_at && (
-              <time dateTime={b.published_at} className="shrink-0 text-xs text-muted-foreground">
-                {new Date(b.published_at).toLocaleDateString("en-US", {
-                  month: "short",
-                  day: "numeric",
-                  year: "numeric",
-                })}
-              </time>
-            )}
-          </div>
-        ) : null}
-      </Link>
-    );
-  }
-
+  // Default: "card" — borderless editorial card
   // Default: "card" — borderless editorial card
   return (
     <Link

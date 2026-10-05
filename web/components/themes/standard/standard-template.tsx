@@ -158,7 +158,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                     category={firstCat}
                     categories={categories}
                     showPreview={showPreview}
-                    variant="card"
                   />
                 );
               })}
