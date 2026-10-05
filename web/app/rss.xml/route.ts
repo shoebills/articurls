@@ -84,16 +84,16 @@ export async function GET(req: NextRequest): Promise<Response> {
       guid: link,
       pubDate: post.published_at || post.updated_at,
       description: post.meta_description || post.excerpt || "",
-      authorName: post.author?.name || site.name,
+      authorName: post.author?.name || site.owner_name,
       categoryNames,
       imageUrl: post.featured_image_url ? assetUrl(post.featured_image_url) : null,
     };
   });
 
   const xml = buildRssXml({
-    title: site.site_name || site.meta_title || `${site.name} — Articurls`,
+    title: site.site_name || site.meta_title || `${site.owner_name} — Articurls`,
     link: siteOrigin,
-    description: site.meta_description || `Latest posts by ${site.name}.`,
+    description: site.meta_description || `Latest posts by ${site.owner_name}.`,
     lastBuildDate: sorted[0]?.updated_at || sorted[0]?.published_at || null,
     imageUrl: site.favicon_url ? assetUrl(site.favicon_url) : null,
     items,

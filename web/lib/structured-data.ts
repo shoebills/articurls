@@ -143,7 +143,7 @@ export function generatePersonSchema(site: PublicSite, profileUrl: string): Pers
   return {
     "@type": "Person",
     "@id": profileUrl,
-    name: site.name,
+    name: site.owner_name,
     url: profileUrl,
     jobTitle: "Blogger",
   };
@@ -259,7 +259,7 @@ function getSiteUrlFromCanonical(canonicalUrl: string): string {
 
 export function generateBlogPostingSchema(
   blog: PublicBlog,
-  author: PublicSite,
+  site: PublicSite,
   canonicalUrl: string
 ): BlogPosting {
   const title = blog.meta_title || blog.title;
@@ -267,8 +267,8 @@ export function generateBlogPostingSchema(
   const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
   const authorPerson = blog.author
     ? generateAuthorPersonSchema(blog.author, `${siteUrl}/author/${encodeURIComponent(blog.author.slug)}`)
-    : generatePersonSchema(author, siteUrl);
-  const siteName = author.site_name || "My Blog";
+    : generatePersonSchema(site, siteUrl);
+  const siteName = site.site_name || "My Blog";
   
   // Generate multiple image sizes for better SEO
   const images: ImageObject[] = [];
@@ -297,40 +297,40 @@ export function generateBlogPostingSchema(
       "@id": siteUrl,
       name: siteName,
     },
-    publisher: generateOrganizationSchema(siteName, siteUrl, author.favicon_url),
+    publisher: generateOrganizationSchema(siteName, siteUrl, site.favicon_url),
   };
 }
 
 export function generateCollectionPageSchema(
   category: Pick<Category, 'category_id' | 'name' | 'slug'> & Partial<Category>,
-  author: PublicSite,
+  site: PublicSite,
   canonicalUrl: string
 ): CollectionPage {
   const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
-  const authorPerson = generatePersonSchema(author, siteUrl);
-  
+  const authorPerson = generatePersonSchema(site, siteUrl);
+
   return {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: `${category.name} - ${author.name}`,
+    name: `${category.name} - ${site.owner_name}`,
     description: undefined,
     url: canonicalUrl,
     author: authorPerson,
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: author.site_name || "My Blog",
+      name: site.site_name || "My Blog",
     },
   };
 }
 
 export function generateWebPageSchema(
   page: UserPage,
-  author: PublicSite,
+  site: PublicSite,
   canonicalUrl: string
 ): WebPage {
   const siteUrl = getSiteUrlFromCanonical(canonicalUrl);
-  const authorPerson = generatePersonSchema(author, siteUrl);
+  const authorPerson = generatePersonSchema(site, siteUrl);
   
   return {
     "@context": "https://schema.org",
@@ -342,7 +342,7 @@ export function generateWebPageSchema(
     isPartOf: {
       "@type": "WebSite",
       "@id": siteUrl,
-      name: author.site_name || "My Blog",
+      name: site.site_name || "My Blog",
     },
     dateModified: page.updated_at || undefined,
   };

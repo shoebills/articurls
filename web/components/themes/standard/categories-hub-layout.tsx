@@ -26,7 +26,7 @@ export function StandardCategoriesHubLayout({
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.name}`, meta_description: `Explore all topics and categories on ${site.name}.` } as UserPage, site, withJsonLdSlash(currentUrl, site))} />
+      <StructuredData data={generateWebPageSchema({ title: "Categories", slug: "categories", content: "", meta_title: `Categories — ${site.owner_name}`, meta_description: `Explore all topics and categories on ${site.owner_name}.` } as UserPage, site, withJsonLdSlash(currentUrl, site))} />
       <StructuredData data={generateBreadcrumbList([
         { name: resolveSiteName(site) || "Home", url: withJsonLdSlash(`https://${host}${basePath}`, site) },
         { name: "Categories", url: withJsonLdSlash(currentUrl, site) },

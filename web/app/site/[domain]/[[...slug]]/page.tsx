@@ -244,8 +244,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
     if (!site || !data) return { title: "Not found", icons: faviconIcons(site) };
     const categoryName = data.category.name || segments[1];
-    const title = data.category.meta_title?.trim() || `${categoryName} — ${site.name}`;
-    const description = data.category.meta_description?.trim() || `Browse all ${categoryName} posts by ${site.name}.`;
+    const title = data.category.meta_title?.trim() || `${categoryName} — ${site.owner_name}`;
+    const description = data.category.meta_description?.trim() || `Browse all ${categoryName} posts by ${site.owner_name}.`;
     const siteName = resolveSiteName(site);
     const ogImage =
       (data.blogs[0] ? resolveBlogOgImage(data.blogs[0]) : "") ||
@@ -431,7 +431,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // Profile / Homepage
   const site = await loadSite(subdomain);
   if (!site) return { title: "Not found" };
-  const title = site.meta_title || `${site.name} — Articurls`;
+  const title = site.meta_title || `${site.owner_name} — Articurls`;
   const description = site.meta_description || undefined;
   const siteName = resolveSiteName(site);
   const ogImage = resolveSiteOgImage(site);

@@ -35,7 +35,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
           <div className="max-w-md mx-auto">
             <SubscribeToAuthor
               subdomain={site.subdomain}
-              authorName={site.name}
+              authorName={site.owner_name}
               headline={site.newsletter_headline}
               text={site.newsletter_text}
               disclaimer={site.newsletter_disclaimer}
@@ -127,7 +127,6 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               <ul className="mx-auto flex w-full max-w-4xl flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
                 {pages
                   .filter((p) => p.show_in_footer)
-                  .sort((a, b) => (a.footer_order ?? 9999) - (b.footer_order ?? 9999))
                   .map((page) => (
                     <li key={page.page_id}>
                       <Link

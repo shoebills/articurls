@@ -149,7 +149,6 @@ class Site(Base):
     # Google Integrations
     ga_measurement_id = Column(Text, nullable=True, default=None)
     adsense_publisher_id = Column(Text, nullable=True, default=None)
-    search_console_property = Column(Text, nullable=True, default=None)
     search_console_verification_token = Column(Text, nullable=True, default=None)
 
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=True)
@@ -367,7 +366,6 @@ class UserPage(Base):
     status = Column(Enum(PageStatus, name="page_status"), default=PageStatus.DRAFT, nullable=False)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     show_in_footer = Column(Boolean, nullable=False, default=False)
-    footer_order = Column(Integer, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     

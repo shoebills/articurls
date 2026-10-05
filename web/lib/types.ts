@@ -164,7 +164,7 @@ export type ButtonVariant = "solid" | "outline" | "soft";
 export type ButtonStyle = "pill" | "rounded" | "square";
 
 export interface PublicSite {
-  name: string;
+  owner_name: string;
   subdomain: string;
   meta_title: string;
   meta_description: string;
@@ -242,7 +242,6 @@ export interface PublicSite {
   seo_llms_custom?: string | null;
   ga_measurement_id?: string | null;
   adsense_publisher_id?: string | null;
-  search_console_property?: string | null;
   search_console_verification_token?: string | null;
 }
 
@@ -330,7 +329,6 @@ export interface UserSettings {
   seo_llms_custom?: string | null;
   ga_measurement_id?: string | null;
   adsense_publisher_id?: string | null;
-  search_console_property?: string | null;
   search_console_verification_token?: string | null;
 }
 
@@ -424,7 +422,6 @@ export interface UserPage {
   status: PageStatus;
   published_at: string | null;
   show_in_footer: boolean;
-  footer_order: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -516,7 +513,6 @@ export interface SeoSettings {
 export interface IntegrationsSettings {
   ga_measurement_id?: string | null;
   adsense_publisher_id?: string | null;
-  search_console_property?: string | null;
   search_console_verification_token?: string | null;
 }
 

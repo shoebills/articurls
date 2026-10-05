@@ -6,7 +6,7 @@ from ..schemas import user, site
 def public_site_out(db: Session, db_site: models.Site):
     data = {
         "subdomain": db_site.subdomain,
-        "name": db_site.user.name if db_site.user else "",
+        "owner_name": db_site.user.name if db_site.user else "",
         "site_name": db_site.site_name,
         "meta_title": db_site.meta_title or "",
         "meta_description": db_site.meta_description or "",
@@ -82,7 +82,6 @@ def public_site_out(db: Session, db_site: models.Site):
         "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
         "ga_measurement_id": db_site.ga_measurement_id,
         "adsense_publisher_id": db_site.adsense_publisher_id,
-        "search_console_property": db_site.search_console_property,
         "search_console_verification_token": db_site.search_console_verification_token,
     }
     return site.PublicSite(**data)
@@ -172,7 +171,6 @@ def user_settings_out(db: Session, db_user: models.User, db_site: models.Site):
         "seo_llms_custom": db_site.seo_llms_custom if db_site.seo_llms_mode == "custom" else None,
         "ga_measurement_id": db_site.ga_measurement_id,
         "adsense_publisher_id": db_site.adsense_publisher_id,
-        "search_console_property": db_site.search_console_property,
         "search_console_verification_token": db_site.search_console_verification_token,
     }
     

@@ -182,7 +182,7 @@ def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
             models.UserPage.show_in_footer.is_(True),
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
-        .order_by(models.UserPage.footer_order.asc(), models.UserPage.created_at.asc())
+        .order_by(models.UserPage.created_at.asc())
         .all()
     )
 

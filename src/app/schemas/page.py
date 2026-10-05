@@ -63,7 +63,6 @@ class UserPageOut(UserPageBase):
     status: models.PageStatus
     published_at: Optional[datetime] = None
     show_in_footer: bool
-    footer_order: Optional[int] = None
     created_at: datetime
     updated_at: datetime
 

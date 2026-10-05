@@ -20,14 +20,12 @@ import { Loader2 } from "lucide-react";
 type FormState = {
   ga_measurement_id: string;
   adsense_publisher_id: string;
-  search_console_property: string;
   search_console_verification_token: string;
 };
 
 const DEFAULT_FORM: FormState = {
   ga_measurement_id: "",
   adsense_publisher_id: "",
-  search_console_property: "",
   search_console_verification_token: "",
 };
 
@@ -36,7 +34,6 @@ function normalizeIntegrations(data: Partial<IntegrationsSettings> | null | unde
   if (!data) return form;
   form.ga_measurement_id = data.ga_measurement_id || "";
   form.adsense_publisher_id = data.adsense_publisher_id || "";
-  form.search_console_property = data.search_console_property || "";
   form.search_console_verification_token = data.search_console_verification_token || "";
   return form;
 }
@@ -90,7 +87,6 @@ export default function IntegrationsSettings() {
       await patchIntegrationsSettings(token, {
         ga_measurement_id: form.ga_measurement_id.trim() || null,
         adsense_publisher_id: form.adsense_publisher_id.trim() || null,
-        search_console_property: form.search_console_property.trim() || null,
         search_console_verification_token: form.search_console_verification_token.trim() || null,
       });
       await refreshUser();
@@ -160,22 +156,6 @@ export default function IntegrationsSettings() {
         <section className="space-y-4 pt-6">
           <div>
             <h2 className="text-base font-semibold text-foreground sm:text-lg">Google Search Console</h2>
-          </div>
-          <div className="space-y-2.5">
-            <div className="space-y-1.5">
-              <Label htmlFor="search_console_property">Property</Label>
-              <p className="text-xs text-muted-foreground sm:text-sm">
-                Use a URL-prefix property.
-              </p>
-            </div>
-            <Input
-              id="search_console_property"
-              className="mt-2"
-              value={form.search_console_property}
-              onChange={(e) => patch({ search_console_property: e.target.value })}
-              placeholder="https://example.com/"
-              disabled={busy}
-            />
           </div>
           <div className="space-y-2.5">
             <div className="space-y-1.5">

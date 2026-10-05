@@ -49,32 +49,32 @@ def invalidate_domain_lookup_cache(custom_domain: str | None) -> None:
         pass
 
 
-def restore_domain_access(user) -> None:
-    if user.domain_status not in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
+def restore_domain_access(site) -> None:
+    if site.domain_status not in (models.DomainStatus.GRACE, models.DomainStatus.EXPIRED):
         return
-    if not user.custom_domain:
+    if not site.custom_domain:
         return
 
-    user.domain_status = models.DomainStatus.ACTIVE
-    user.grace_started_at = None
-    user.grace_expires_at = None
-    invalidate_domain_lookup_cache(user.custom_domain)
+    site.domain_status = models.DomainStatus.ACTIVE
+    site.grace_started_at = None
+    site.grace_expires_at = None
+    invalidate_domain_lookup_cache(site.custom_domain)
 
 
-def start_domain_grace_period(user, now: datetime | None = None) -> None:
-    if user.domain_status != models.DomainStatus.ACTIVE:
+def start_domain_grace_period(site, now: datetime | None = None) -> None:
+    if site.domain_status != models.DomainStatus.ACTIVE:
         return
 
     current_time = now or datetime.now(timezone.utc)
-    user.domain_status = models.DomainStatus.GRACE
-    user.grace_started_at = current_time
-    user.grace_expires_at = current_time + timedelta(days=14)
-    invalidate_domain_lookup_cache(user.custom_domain)
+    site.domain_status = models.DomainStatus.GRACE
+    site.grace_started_at = current_time
+    site.grace_expires_at = current_time + timedelta(days=14)
+    invalidate_domain_lookup_cache(site.custom_domain)
 
 
-def expire_domain_access(user) -> None:
-    if user.domain_status not in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
+def expire_domain_access(site) -> None:
+    if site.domain_status not in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
         return
 
-    user.domain_status = models.DomainStatus.EXPIRED
-    invalidate_domain_lookup_cache(user.custom_domain)
+    site.domain_status = models.DomainStatus.EXPIRED
+    invalidate_domain_lookup_cache(site.custom_domain)

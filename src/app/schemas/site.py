@@ -50,7 +50,7 @@ class CodeInjectionUpdate(BaseModel):
 
 
 class PublicSite(BaseModel):
-    name: str
+    owner_name: str
     site_name: Optional[str] = None
     subdomain: str
     meta_title: str
@@ -136,7 +136,6 @@ class PublicSite(BaseModel):
 
     ga_measurement_id: Optional[str] = None
     adsense_publisher_id: Optional[str] = None
-    search_console_property: Optional[str] = None
     search_console_verification_token: Optional[str] = None
 
     class Config:

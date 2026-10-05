@@ -103,12 +103,11 @@ class UserSettings(BaseModel):
 
     ga_measurement_id: Optional[str] = None
     adsense_publisher_id: Optional[str] = None
-    search_console_property: Optional[str] = None
     search_console_verification_token: Optional[str] = None
 
     class Config:
         from_attributes = True
-        
+
 
 class PasswordUpdate(BaseModel):
     new_password: str = Field(..., min_length=8)
@@ -171,7 +170,6 @@ class SeoSettingsUpdate(BaseModel):
 class IntegrationsSettings(BaseModel):
     ga_measurement_id: Optional[str] = None
     adsense_publisher_id: Optional[str] = None
-    search_console_property: Optional[str] = None
     search_console_verification_token: Optional[str] = None
 
     class Config:
@@ -187,7 +185,6 @@ _GSC_TOKEN_RE = re.compile(r"^[A-Za-z0-9_\-]{10,200}$")
 class IntegrationsSettingsUpdate(BaseModel):
     ga_measurement_id: Optional[str] = None
     adsense_publisher_id: Optional[str] = None
-    search_console_property: Optional[str] = None
     search_console_verification_token: Optional[str] = None
 
     @field_validator("ga_measurement_id", mode="before")
@@ -216,13 +213,6 @@ class IntegrationsSettingsUpdate(BaseModel):
         if not _ADSENSE_ID_RE.match(v):
             raise ValueError("Invalid AdSense publisher ID — expected pub- followed by 16 digits")
         return v
-
-    @field_validator("search_console_property", mode="before")
-    @classmethod
-    def _normalize_gsc_property(cls, v):
-        if v is None:
-            return v
-        return str(v).strip() or None
 
     @field_validator("search_console_verification_token", mode="before")
     @classmethod
