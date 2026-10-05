@@ -674,6 +674,7 @@ export default async function SitePublicationPage({ params }: Props) {
                     blog={rel}
                     subdomain={subdomain}
                     basePath={basePath}
+                    categories={categories}
                     variant="compact"
                   />
                 ))}
@@ -890,6 +891,7 @@ export default async function SitePublicationPage({ params }: Props) {
             content_layout={site.content_layout || "grid"}
             show_preview_in_lists={site.show_preview_in_lists ?? true}
             basePath={basePath}
+            categories={categories}
           />
 
           <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
@@ -1003,6 +1005,7 @@ export default async function SitePublicationPage({ params }: Props) {
                 content_layout={site.content_layout || "grid"}
               show_preview_in_lists={site.show_preview_in_lists ?? true}
               basePath={basePath}
+              categories={categories}
               recentHeading={`Recent posts by ${author.name}`}
             />
 

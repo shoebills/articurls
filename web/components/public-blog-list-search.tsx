@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { PublicBlog, PublicSite, ContentLayout } from "@/lib/types";
+import type { PublicBlog, PublicSite, Category, ContentLayout } from "@/lib/types";
 import { PublicPostCard } from "@/components/public-post-card";
 import { PublicEmptyState } from "@/components/public-empty-state";
 import { PublicPagination, PublicLoadMore } from "@/components/public-pagination";
@@ -16,6 +16,7 @@ type PublicBlogListSearchProps = {
   show_preview_in_lists?: boolean;
   basePath?: string;
   recentHeading?: string;
+  categories?: Category[];
 };
 
 const POSTS_PER_PAGE = 12;
@@ -29,6 +30,7 @@ export function PublicBlogListSearch({
   show_preview_in_lists = true,
   basePath = "",
   recentHeading = "Recent Posts",
+  categories = [],
 }: PublicBlogListSearchProps) {
   const [page, setPage] = useState(1);
 
@@ -77,6 +79,10 @@ export function PublicBlogListSearch({
   const listClass = isGrid
     ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
     : "space-y-0";
+  const firstCatFor = (b: PublicBlog) =>
+    b.category_ids && b.category_ids.length > 0
+      ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
+      : null;
 
   if (blogs.length === 0) {
     return (
@@ -97,7 +103,8 @@ export function PublicBlogListSearch({
                 key={`featured-${b.blog_id}`}
                 blog={b}
                 subdomain={subdomain}
-                authorName={b.author?.name || site?.name}
+                category={firstCatFor(b)}
+                categories={categories}
                 showPreview={show_preview_in_lists}
                 basePath={basePath}
                 variant={isGrid ? "card" : "row"}
@@ -115,7 +122,8 @@ export function PublicBlogListSearch({
             key={b.blog_id}
             blog={b}
             subdomain={subdomain}
-            authorName={b.author?.name || site?.name}
+            category={firstCatFor(b)}
+            categories={categories}
             showPreview={show_preview_in_lists}
             basePath={basePath}
             variant={isGrid ? "card" : "row"}

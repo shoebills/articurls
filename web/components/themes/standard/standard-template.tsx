@@ -157,7 +157,7 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                     subdomain={site.subdomain}
                     basePath={basePath}
                     category={firstCat}
-                    authorName={b.author ? b.author.name : site.name}
+                    categories={categories}
                     showPreview={showPreview}
                     variant="card"
                   />
@@ -196,7 +196,6 @@ export function StandardTemplate({ site, blogs, pages, categories, basePath }: S
                     subdomain={site.subdomain}
                     basePath={basePath}
                     category={firstCat}
-                    authorName={b.author ? b.author.name : site.name}
                     showPreview={showPreview}
                     variant="row"
                   />
