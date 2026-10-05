@@ -22,27 +22,46 @@ export function ThemePicker() {
             </div>
           </div>
 
-          {/* Wireframe Diagram */}
-          <div className="aspect-[16/9] w-full rounded-lg border border-border/80 bg-muted/20 p-3 flex flex-col justify-between">
-            <div className="flex items-center gap-2">
-              <div className="h-2 w-10 rounded-full bg-primary/40" />
-              <div className="h-2 w-8 rounded-full bg-foreground/15" />
-              <div className="h-2 w-12 rounded-full bg-foreground/15" />
+          {/* Wireframe Diagram — mirrors the Standard homepage: nav, hero, pills, borderless cards */}
+          <div className="aspect-[16/9] w-full rounded-lg border border-border/80 bg-muted/20 p-3 flex flex-col gap-2 overflow-hidden">
+            {/* Nav header */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="h-2 w-10 rounded-full bg-primary/40" />
+                <div className="h-2 w-8 rounded-full bg-foreground/15" />
+                <div className="h-2 w-12 rounded-full bg-foreground/15" />
+              </div>
+              <div className="h-2 w-2 rounded-full bg-foreground/15" />
             </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-md border border-border/60 bg-background/80 p-1.5 shadow-2xs">
-                <div className="aspect-[16/10] w-full rounded-xs bg-foreground/10 mb-1" />
-                <div className="h-1.5 w-3/4 rounded-xs bg-foreground/20" />
-              </div>
-              <div className="rounded-md border border-border/60 bg-background/80 p-1.5 shadow-2xs">
-                <div className="aspect-[16/10] w-full rounded-xs bg-foreground/10 mb-1" />
-                <div className="h-1.5 w-3/4 rounded-xs bg-foreground/20" />
-              </div>
+            {/* Hero */}
+            <div className="space-y-1">
+              <div className="h-2.5 w-3/4 rounded-full bg-foreground/25" />
+              <div className="h-1.5 w-1/2 rounded-full bg-foreground/15" />
+            </div>
+            {/* Category pills */}
+            <div className="flex items-center gap-1.5 overflow-hidden">
+              <div className="h-4 w-10 shrink-0 rounded-md bg-primary" />
+              <div className="h-4 w-12 shrink-0 rounded-md bg-muted" />
+              <div className="h-4 w-10 shrink-0 rounded-md bg-muted" />
+              <div className="h-4 w-14 shrink-0 rounded-md bg-muted" />
+            </div>
+            {/* Borderless cards */}
+            <div className="grid grid-cols-3 gap-2 flex-1 min-h-0">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="min-w-0">
+                  <div className="aspect-[16/10] w-full rounded-md bg-foreground/10 mb-1" />
+                  <div className="h-1.5 w-11/12 rounded-xs bg-foreground/20" />
+                  <div className="mt-1 flex items-center justify-between">
+                    <div className="h-1.5 w-8 rounded-full bg-primary/30" />
+                    <div className="h-1.5 w-6 rounded-full bg-foreground/15" />
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <div className="mt-4 pt-3 border-t border-border/50 flex items-center justify-end">
+        <div className="mt-4 pt-3 flex items-center justify-end">
           <a
             href={standardDemoUrl}
             target="_blank"

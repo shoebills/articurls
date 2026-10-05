@@ -20,7 +20,7 @@ export function PublicFaqSection({ items }: { items: FaqItem[] }) {
   };
 
   return (
-    <section className="mt-14 pt-10 border-t border-border/60">
+    <section className="mt-14 pt-10">
       <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground mb-6">
         Frequently Asked Questions
       </h3>

@@ -67,7 +67,7 @@ export function StandardCategoryLayout({
           subdomain={site.subdomain}
           site={site}
           hideFeatured
-          showExcerpt={site.show_excerpt ?? true}
+          showExcerpt={site.show_excerpt !== false}
           basePath={basePath}
           categories={categories}
           recentHeading="Recent Posts"

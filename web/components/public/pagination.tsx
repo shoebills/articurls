@@ -45,12 +45,10 @@ export function PublicLoadMore({
   visibleCount,
   totalCount,
   onLoadMore,
-  buttonVariant = "solid",
 }: {
   visibleCount: number;
   totalCount: number;
   onLoadMore: () => void;
-  buttonVariant?: string;
 }) {
   if (visibleCount >= totalCount) return null;
   return (
@@ -58,8 +56,6 @@ export function PublicLoadMore({
       <Button
         variant="default"
         size="default"
-        data-button-radius="true"
-        data-button-variant={buttonVariant}
         className="font-semibold shadow-xs"
         onClick={onLoadMore}
       >

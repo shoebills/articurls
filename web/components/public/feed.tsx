@@ -46,8 +46,6 @@ export function PublicFeed({
   const sortedBlogs = useMemo(() => {
     const rows = [...blogs];
     rows.sort((a, b) => {
-      if (a.is_pinned && !b.is_pinned) return -1;
-      if (!a.is_pinned && b.is_pinned) return 1;
       const aDate = a.published_at ? new Date(a.published_at).getTime() : 0;
       const bDate = b.published_at ? new Date(b.published_at).getTime() : 0;
       return bDate - aDate;
@@ -131,7 +129,6 @@ export function PublicFeed({
             visibleCount={Math.min(visibleCount, sortedBlogs.length)}
             totalCount={sortedBlogs.length}
             onLoadMore={() => setVisibleCount((c) => c + postsPerPage)}
-            buttonVariant={site.button_variant || "solid"}
           />
         ) : (
           <PublicPagination

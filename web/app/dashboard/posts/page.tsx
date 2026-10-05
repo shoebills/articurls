@@ -342,12 +342,6 @@ export default function PostsPage() {
                 <CardContent className="space-y-4 p-5 sm:p-6">
                   <div className="min-w-0 space-y-1">
                     <div className="flex items-center gap-2">
-                      {b.is_pinned && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-2 py-0.5 text-[10px] font-semibold text-primary shrink-0">
-                          <Pin className="h-3 w-3" />
-                          Pinned
-                        </span>
-                      )}
                       <h2 className="truncate text-lg font-medium leading-snug tracking-tight text-foreground">
                         {b.title || "Untitled"}
                       </h2>
@@ -376,6 +370,11 @@ export default function PostsPage() {
                           <span className="whitespace-nowrap">Published {format(new Date(b.published_at), "MMM d, yyyy")}</span>
                         ) : (
                           <span className="whitespace-nowrap">Updated {format(new Date(b.updated_at), "MMM d, yyyy")}</span>
+                        )}
+                        {b.is_pinned && (
+                          <span title="Pinned to top" className="inline-flex shrink-0 items-center">
+                            <Pin className="h-3.5 w-3.5 text-primary" />
+                          </span>
                         )}
                       </>
                     )}

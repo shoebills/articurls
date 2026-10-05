@@ -3,7 +3,7 @@ import type { PublicSite, UserPage } from "@/lib/types";
 import { getPublicPageUrl } from "@/lib/public-url";
 import { SubscribeToAuthor } from "@/components/public/subscribe-to-author";
 import { assetUrl } from "@/lib/env";
-import { Rss } from "lucide-react";
+import { Network, Rss } from "lucide-react";
 
 type PublicSiteFooterProps = {
   site: PublicSite;
@@ -29,7 +29,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
   const copyrightText = site.footer_copyright || `© ${currentYear} ${site.site_name || site.subdomain}. All rights reserved.`;
 
   return (
-    <footer className="mt-20 pt-12 pb-16">
+    <footer className="mt-12 pt-8 pb-16 sm:mt-20 sm:pt-12">
       {showNewsletter ? (
         <div className="bg-muted/50 w-screen relative left-1/2 right-1/2 -mx-[50vw] px-4 sm:px-6 py-12 mb-10">
           <div className="max-w-md mx-auto">
@@ -161,8 +161,9 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
             </Link>
           ) : null}
           {showSitemap ? (
-            <Link href={`${basePath}/sitemap.xml`} className="hover:text-foreground">
-              Sitemap
+            <Link href={`${basePath}/sitemap.xml`} className="inline-flex items-center gap-1 hover:text-foreground">
+              <Network className="h-3 w-3" />
+              <span>Sitemap</span>
             </Link>
           ) : null}
         </div>

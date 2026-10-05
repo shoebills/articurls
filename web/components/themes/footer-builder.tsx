@@ -27,7 +27,6 @@ import {
 import {
   Plus,
   Trash2,
-  ExternalLink,
   Pencil,
   FolderPlus,
   Columns3,
@@ -251,29 +250,30 @@ export function FooterBuilder({
                         {col.links.map((link) => (
                           <div
                             key={link.id}
-                            className="flex h-8 items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-2.5 text-xs"
+                            className="flex min-h-10 items-center justify-between gap-2 rounded-lg border border-border/60 bg-muted/30 px-2.5 py-1.5 text-xs"
                           >
                             <div className="flex items-center gap-1.5 min-w-0">
                               <span className="truncate font-medium">{link.label}</span>
-                              {link.open_in_new_tab && (
-                                <ExternalLink className="h-2.5 w-2.5 text-muted-foreground shrink-0" />
-                              )}
                             </div>
-                            <div className="flex items-center gap-0.5 shrink-0">
-                              <button
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
                                 type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                 onClick={() => openEditLinkDialog(col.id, link)}
-                                className="p-1 text-muted-foreground hover:text-foreground"
                               >
-                                <Pencil className="h-3 w-3" />
-                              </button>
-                              <button
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
                                 type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                 onClick={() => handleDeleteLink(col.id, link.id)}
-                                className="p-1 text-muted-foreground hover:text-destructive"
                               >
-                                <Trash2 className="h-3 w-3" />
-                              </button>
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </div>
                         ))}

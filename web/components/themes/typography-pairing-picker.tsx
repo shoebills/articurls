@@ -30,7 +30,7 @@ export function TypographyPairingPicker({
 
   return (
     <div className="max-w-xl">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         {/* Heading Font */}
         <div className="space-y-2.5">
           <Label className="text-sm font-medium text-foreground">Heading Font</Label>

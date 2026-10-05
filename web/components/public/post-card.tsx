@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { Pin } from "lucide-react";
 import type { PublicBlog, Category } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { getPublicPostUrl } from "@/lib/public-url";
@@ -12,6 +11,7 @@ export type PublicPostCardProps = {
   category?: Category | null;
   categories?: Category[];
   showExcerpt?: boolean;
+  large?: boolean;
 };
 
 export function PublicPostCard({
@@ -21,6 +21,7 @@ export function PublicPostCard({
   category,
   categories = [],
   showExcerpt = true,
+  large = false,
 }: PublicPostCardProps) {
   const postHref = getPublicPostUrl(subdomain, b.slug, basePath);
   const coverImg = resolveBlogCoverImage(b);
@@ -33,8 +34,7 @@ export function PublicPostCard({
         ? [category]
         : [];
 
-  // Default: "card" — borderless editorial card
-  // Default: "card" — borderless editorial card
+  // Borderless editorial card
   return (
     <Link
       href={postHref}
@@ -51,17 +51,18 @@ export function PublicPostCard({
           />
         </div>
       ) : null}
-      <div className="pt-5 flex flex-col flex-1">
-        <h3 className="text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors flex items-center gap-1.5">
-          {b.is_pinned && (
-            <span title="Pinned post" className="inline-flex shrink-0">
-              <Pin className="h-4 w-4 text-primary rotate-45" />
-            </span>
-          )}
+      <div className={large ? "pt-6 flex flex-col flex-1" : "pt-5 flex flex-col flex-1"}>
+        <h3 className={large
+          ? "text-2xl sm:text-3xl font-bold line-clamp-2 group-hover:text-primary transition-colors"
+          : "text-xl font-bold line-clamp-2 group-hover:text-primary transition-colors"
+        }>
           <span>{b.title}</span>
         </h3>
         {showExcerpt && b.excerpt ? (
-          <p className="text-muted-foreground text-sm sm:text-base line-clamp-3 mt-2 flex-1">
+          <p className={large
+            ? "text-muted-foreground text-base sm:text-lg line-clamp-3 mt-3 flex-1"
+            : "text-muted-foreground text-sm sm:text-base line-clamp-3 mt-2 flex-1"
+          }>
             {b.excerpt}
           </p>
         ) : null}

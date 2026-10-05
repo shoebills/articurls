@@ -117,7 +117,7 @@ export function StandardPostLayout({
   );
 
   const relatedArticles = relatedBlogs.length > 0 ? (
-    <section className="mt-12 pt-8 border-t border-border/60">
+        <section className="mt-10 pt-6 sm:mt-14 sm:pt-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
           Related articles
@@ -129,7 +129,7 @@ export function StandardPostLayout({
           View all →
         </Link>
       </div>
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 sm:gap-8 lg:grid-cols-3">
         {relatedBlogs.map((rel) => (
           <PublicPostCard
             key={rel.blog_id}
@@ -137,6 +137,7 @@ export function StandardPostLayout({
             subdomain={subdomain}
             basePath={basePath}
             categories={categories}
+            showExcerpt={site.show_excerpt !== false}
           />
         ))}
       </div>
@@ -183,9 +184,11 @@ export function StandardPostLayout({
         ) : (
           blogPostContent
         )}
-        {relatedArticles}
-        <ContentEndCta site={site} />
-        <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
+            <div className="mx-auto w-full sm:max-w-[60%]">
+              <ContentEndCta site={site} />
+            </div>
+            {relatedArticles}
+            <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
       </main>
     </article>
   );

@@ -48,7 +48,7 @@ export function ButtonStylePicker({
   };
 
   return (
-    <div className="space-y-6 max-w-xl" style={previewVars}>
+    <div className="space-y-6 max-w-xl">
       {/* Corner Radius */}
       <div className="space-y-2.5">
         <Label className="text-sm font-semibold text-foreground">Corner Radius</Label>
@@ -129,8 +129,8 @@ export function ButtonStylePicker({
       </div>
 
       {/* Live Interactive Preview */}
-      <div className="rounded-xl border border-border/80 bg-muted/20 p-4 flex items-center justify-between gap-4">
-        <div>
+      <div className="rounded-xl border border-border/80 bg-muted/20 p-4 flex items-center justify-between gap-4" style={previewVars}>
+        <div className="space-y-1.5">
           <div className="text-xs font-semibold text-foreground">Preview</div>
           <div className="text-xs text-muted-foreground">This is how action buttons will appear to your readers.</div>
         </div>

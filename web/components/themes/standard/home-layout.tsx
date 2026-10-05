@@ -1,6 +1,8 @@
 import Link from "next/link";
+import type { PublicBlog } from "@/lib/types";
 import type { HomeLayoutProps } from "@/components/themes/registry";
 import { PublicFeed } from "@/components/public/feed";
+import { PublicPostCard } from "@/components/public/post-card";
 import { SubscribeToAuthor } from "@/components/public/subscribe-to-author";
 import { PublicSiteFooter } from "@/components/public/site-footer";
 import { PublicNavHeader, getPublicMainSpacing } from "@/components/public/nav-header";
@@ -24,6 +26,12 @@ export function StandardHomeLayout({
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
   const hasHero = Boolean((site.hero_title || "").trim() || (site.hero_description || "").trim());
+
+  const pinnedBlogs = blogs.filter((b) => b.is_pinned);
+  const firstCatFor = (b: PublicBlog) =>
+    b.category_ids && b.category_ids.length > 0
+      ? categories.find((c) => c.category_id === b.category_ids![0]) ?? null
+      : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -84,13 +92,30 @@ export function StandardHomeLayout({
           </div>
         ) : null}
 
+        {/* Pinned post spotlight */}
+        {pinnedBlogs.length > 0 ? (
+          <div className="mb-10 space-y-10">
+            {pinnedBlogs.map((b) => (
+              <div key={b.blog_id} className="mx-auto w-full lg:max-w-[70%]">
+                <PublicPostCard
+                  large
+                  blog={b}
+                  subdomain={subdomain}
+                  basePath={basePath}
+                  category={firstCatFor(b)}
+                  categories={categories}
+                  showExcerpt={site.show_excerpt !== false}
+                />
+              </div>
+            ))}
+          </div>
+        ) : null}
+
         {/* Interactive Category Pills */}
         {categories.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-4 mb-8 scrollbar-hide border-b border-border/40">
             <Link
               href={getPublicProfileUrl(site.subdomain, basePath)}
-              data-button-variant={site.button_variant || "solid"}
-              data-button-radius="true"
               className="px-4 py-1.5 rounded-md bg-primary text-primary-foreground text-sm font-medium shrink-0"
             >
               All
