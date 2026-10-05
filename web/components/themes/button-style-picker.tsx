@@ -1,7 +1,9 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { type ButtonStyle, type ButtonVariant, type DesignSettings } from "@/lib/types";
 import { Label } from "@/components/ui/label";
+import { getPaletteTokens } from "./theme-wrapper";
 
 const RADIUS_OPTIONS: { id: ButtonStyle; label: string; previewClass: string }[] = [
   { id: "pill", label: "Pill", previewClass: "rounded-full" },
@@ -25,6 +27,15 @@ export function ButtonStylePicker({
   const radius = (settings.button_style as ButtonStyle) || "rounded";
   const variant = settings.button_variant || "solid";
 
+  // Scope the site's picked palette onto every preview so color (not just
+  // shape) reflects what readers will see. Light tokens: the picker lives
+  // on the dashboard, independent of the site's dark-mode rendering.
+  const sitePalette = getPaletteTokens(settings.color_theme, settings.color_palette).light;
+  const previewVars = {
+    "--primary": sitePalette.primary,
+    "--primary-foreground": sitePalette.primaryForeground,
+  } as CSSProperties;
+
   const getPreviewClasses = (r: ButtonStyle, v: ButtonVariant) => {
     const radClass = r === "pill" ? "rounded-full" : r === "square" ? "rounded-none" : "rounded-lg";
     if (v === "outline") {
@@ -37,7 +48,7 @@ export function ButtonStylePicker({
   };
 
   return (
-    <div className="space-y-6 max-w-xl">
+    <div className="space-y-6 max-w-xl" style={previewVars}>
       {/* Corner Radius */}
       <div className="space-y-2.5">
         <Label className="text-sm font-semibold text-foreground">Corner Radius</Label>

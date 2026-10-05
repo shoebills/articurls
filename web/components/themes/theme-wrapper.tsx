@@ -152,7 +152,7 @@ export const RADIUS_VALUES = {
   square: "0px",
 };
 
-function getPaletteTokens(colorTheme?: string | null, customPalette?: ColorPalette | null) {
+export function getPaletteTokens(colorTheme?: string | null, customPalette?: ColorPalette | null) {
   const key = (colorTheme as keyof typeof COLOR_PALETTES) || "base";
   const defaultBase = COLOR_PALETTES[key] || COLOR_PALETTES.base;
   const defaultTokens = DEFAULT_PALETTES[key] || DEFAULT_PALETTES.base;

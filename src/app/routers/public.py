@@ -144,6 +144,13 @@ def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
     blogs = []
     for db_blog in results:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        cat_ids = [
+            row[0]
+            for row in db.query(models.BlogCategory.category_id)
+            .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+            .all()
+        ]
+        db_blog.category_ids = cat_ids
         blogs.append(db_blog)
 
     return blogs
