@@ -47,7 +47,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
           </div>
         </div>
       ) : null}
-      {showNewsletter ? <div aria-hidden="true" className="h-px bg-border/70 mb-12" /> : null}
+      {showNewsletter ? <div aria-hidden="true" className="h-px bg-border/70 mb-20" /> : null}
       {hasModularColumns ? (
         <div className="grid grid-cols-2 gap-8 md:grid-cols-2 lg:grid-cols-4 lg:gap-12 mb-12">
           {/* Brand Column */}
@@ -143,7 +143,7 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
       )}
 
       {/* Bottom Legal & System Links */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground border-t border-border/40 pt-6">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-muted-foreground pt-6">
         <p>{copyrightText}</p>
 
         <div className="flex items-center gap-4">

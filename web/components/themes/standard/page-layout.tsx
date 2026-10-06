@@ -131,7 +131,9 @@ export function StandardPageLayout({
         ) : (
           pageBodyContent
         )}
-        <ContentEndCta site={site} isPage />
+        <div className="mx-auto w-full sm:max-w-[80%]">
+          <ContentEndCta site={site} isPage />
+        </div>
         <PublicSiteFooter site={site} pages={pages} basePath={basePath} />
       </main>
     </div>
