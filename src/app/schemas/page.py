@@ -31,7 +31,6 @@ class UserPageUpdate(BaseModel):
     noindex: Optional[bool] = None
     custom_schema: Optional[dict] = None
     faq_items: Optional[List[FaqItem]] = None
-    show_in_footer: Optional[bool] = None
 
 
 class PageMediaOut(BaseModel):
@@ -62,7 +61,6 @@ class UserPageOut(UserPageBase):
     faq_items: Optional[List[FaqItem]] = []
     status: models.PageStatus
     published_at: Optional[datetime] = None
-    show_in_footer: bool
     created_at: datetime
     updated_at: datetime
 

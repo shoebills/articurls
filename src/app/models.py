@@ -367,7 +367,6 @@ class UserPage(Base):
     faq_items = Column(JSON, nullable=True, default=list)
     status = Column(Enum(PageStatus, name="page_status"), default=PageStatus.DRAFT, nullable=False)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
-    show_in_footer = Column(Boolean, nullable=False, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
     

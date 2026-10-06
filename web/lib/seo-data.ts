@@ -5,7 +5,7 @@
  * rendering pages — the backend already applies the correct filters:
  *
  *   blogs      → published only (no drafts / archived / scheduled)
- *   pages      → show_in_footer only (hidden pages excluded)
+ *   pages      → published only
  *   categories → show_in_menu only (hidden categories excluded)
  */
 
@@ -47,8 +47,8 @@ export async function fetchPublishedPosts(
 // ── Pages ────────────────────────────────────────────────────────────────────
 
 /**
- * Fetch visible pages for a user.
- * The backend already filters to `show_in_footer === true`.
+ * Fetch published pages for a user.
+ * The backend already filters to `status == "published"`.
  */
 export async function fetchPages(subdomain: string): Promise<UserPage[]> {
   try {

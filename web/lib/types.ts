@@ -425,7 +425,6 @@ export interface UserPage {
   faq_items?: FaqItem[] | null;
   status: PageStatus;
   published_at: string | null;
-  show_in_footer: boolean;
   created_at: string;
   updated_at: string;
 }

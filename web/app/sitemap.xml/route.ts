@@ -193,7 +193,7 @@ async function customDomainSitemap(host: string): Promise<Response> {
     (b) => !b.noindex && !isExternalCanonical(b.canonical_url, siteOrigin) && !isRedirected(`/${b.slug}`)
   );
   const indexablePages = pages.filter(
-    (p) => p.show_in_footer && !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin) && !isRedirected(`/${p.slug}`)
+    (p) => !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin) && !isRedirected(`/${p.slug}`)
   );
   const indexableCategories = site.seo_noindex_categories
     ? []

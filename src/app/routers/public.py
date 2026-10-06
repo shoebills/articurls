@@ -179,7 +179,6 @@ def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
         db.query(models.UserPage)
         .filter(
             models.UserPage.site_id == db_site.site_id,
-            models.UserPage.show_in_footer.is_(True),
             models.UserPage.status == models.PageStatus.PUBLISHED,
         )
         .order_by(models.UserPage.created_at.asc())

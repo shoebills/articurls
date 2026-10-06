@@ -207,7 +207,7 @@ export function FooterBuilder({
               <div className="rounded-xl border border-dashed border-border/80 p-6 text-center">
                 <Columns3 className="h-8 w-8 text-muted-foreground/60 mx-auto mb-2" />
                 <p className="text-xs font-medium text-muted-foreground">
-                  No custom footer columns configured. Published pages marked for footer will be displayed in a flat row.
+                  No custom footer columns configured. Add columns below to organize your footer links.
                 </p>
                 <Button
                   type="button"

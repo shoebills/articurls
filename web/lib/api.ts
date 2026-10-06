@@ -462,7 +462,6 @@ export async function updatePage(
     noindex?: boolean;
     custom_schema?: Record<string, unknown> | null;
     faq_items?: FaqItem[] | null;
-    show_in_footer?: boolean;
   }
 ): Promise<UserPage> {
   return apiFetch(`/pages/id/${pageId}`, {

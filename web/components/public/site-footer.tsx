@@ -122,11 +122,10 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
             ) : null}
           </div>
 
-          {pages.filter((p) => p.show_in_footer).length > 0 ? (
+          {pages.length > 0 ? (
             <nav aria-label="Footer links">
               <ul className="mx-auto flex w-full max-w-4xl flex-wrap justify-center gap-x-6 gap-y-2 text-sm">
                 {pages
-                  .filter((p) => p.show_in_footer)
                   .map((page) => (
                     <li key={page.page_id}>
                       <Link

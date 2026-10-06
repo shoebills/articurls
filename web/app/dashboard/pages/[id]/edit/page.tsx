@@ -9,7 +9,6 @@ import type { UserPage } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { FaqEditor } from "@/components/editor/faq-editor";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,7 +56,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [metaDescDirty, setMetaDescDirty] = useState(false);
   const titleTextareaRef = useRef<HTMLTextAreaElement | null>(null);
   const [metaDesc, setMetaDesc] = useState("");
-  const [showInFooter, setShowInFooter] = useState(false);
   const [featuredImageUrl, setFeaturedImageUrl] = useState("");
   const [uploadingFeatured, setUploadingFeatured] = useState(false);
   const [ogImageUrl, setOgImageUrl] = useState("");
@@ -65,7 +63,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [noindex, setNoindex] = useState(false);
   const [customSchemaStr, setCustomSchemaStr] = useState("");
-  const [modalTab, setModalTab] = useState<"config" | "seo">("config");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
@@ -84,7 +81,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const metaTitleDirtyRef = useRef(metaTitleDirty);
   const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
-  const showInFooterRef = useRef(showInFooter);
   const featuredInputRef = useRef<HTMLInputElement | null>(null);
   const ogInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -106,7 +102,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const descSynced = !p.meta_description || p.meta_description === contentExcerpt;
     setMetaDescDirty(!descSynced);
     setMetaDesc(descSynced ? "" : (p.meta_description || ""));
-    setShowInFooter(p.show_in_footer);
     setFeaturedImageUrl(p.featured_image_url || "");
     setOgImageUrl(p.og_image_url || "");
     setCanonicalUrl(p.canonical_url || "");
@@ -147,7 +142,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   useEffect(() => { metaTitleDirtyRef.current = metaTitleDirty; }, [metaTitleDirty]);
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
-  useEffect(() => { showInFooterRef.current = showInFooter; }, [showInFooter]);
 
   const isDirty = useCallback(() => {
     if (!page) return false;
@@ -177,14 +171,13 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       page.slug !== nextSlug ||
       currentMetaTitle !== nextMetaTitle ||
       currentMetaDesc !== nextMetaDesc ||
-      page.show_in_footer !== showInFooter ||
       featuredDirty ||
       ogDirty ||
       canonicalDirty ||
       noindexDirty ||
       schemaDirty
     );
-  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
+  }, [page, title, content, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   async function save(silent = false) {
     if (!token || !page) return false;
@@ -198,7 +191,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     const nextMetaTitleDirty = metaTitleDirty;
     const nextMetaDesc = metaDesc;
     const nextMetaDescDirty = metaDescDirty;
-    const nextShowInFooter = showInFooter;
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -228,7 +220,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           !nextMetaDescDirty || nextMetaDesc.trim() === getContentExcerpt(nextContent)
             ? null
             : nextMetaDesc.trim() || null,
-        show_in_footer: nextShowInFooter,
         featured_image_url: featuredImageUrl.trim() || null,
         og_image_url: ogImageUrl.trim() || null,
         canonical_url: canonicalUrl.trim() || null,
@@ -244,7 +235,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       const metaTitleChanged = nextMetaTitle !== metaTitleRef.current;
       const metaDescChanged = nextMetaDesc !== metaDescRef.current;
       const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
-      const showInFooterChanged = nextShowInFooter !== showInFooterRef.current;
 
       if (!titleChanged) setTitle(responsePage.title);
       if (!contentChanged) setContent(responsePage.content || "");
@@ -259,9 +249,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (slugEditable && !slugCustomChanged) {
         const derived = slugify(responsePage.title || "", { lower: true, strict: true });
         setSlugCustom(responsePage.slug !== derived ? responsePage.slug : "");
-      }
-      if (!showInFooterChanged) {
-        setShowInFooter(responsePage.show_in_footer);
       }
 
       // Re-derive dirty flags from effective (current) state
@@ -342,7 +329,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
+  }, [page, saving, isDirty, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -396,7 +383,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
         metaTitleDirty?: boolean;
         metaDesc?: string;
         metaDescDirty?: boolean;
-        showInFooter?: boolean;
         featuredImageUrl?: string;
         ogImageUrl?: string;
         canonicalUrl?: string;
@@ -411,7 +397,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       if (typeof draft.metaTitleDirty === "boolean") setMetaTitleDirty(draft.metaTitleDirty);
       if (typeof draft.metaDesc === "string") setMetaDesc(draft.metaDesc);
       if (typeof draft.metaDescDirty === "boolean") setMetaDescDirty(draft.metaDescDirty);
-      if (typeof draft.showInFooter === "boolean") setShowInFooter(draft.showInFooter);
       if (typeof draft.featuredImageUrl === "string") setFeaturedImageUrl(draft.featuredImageUrl);
       if (typeof draft.ogImageUrl === "string") setOgImageUrl(draft.ogImageUrl);
       if (typeof draft.canonicalUrl === "string") setCanonicalUrl(draft.canonicalUrl);
@@ -451,7 +436,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
           metaTitleDirty,
           metaDesc,
           metaDescDirty,
-          showInFooter,
           featuredImageUrl,
           ogImageUrl,
           canonicalUrl,
@@ -461,7 +445,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       );
       setSaveStatus("saved");
     }, 350);
-  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, showInFooter, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
+  }, [page, requiresManualUpdate, dirty, manualDraftKey, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   useEffect(() => {
     return () => {
@@ -702,18 +686,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             </div>
           </DialogHeader>
 
-          <Tabs value={modalTab} onValueChange={(v) => setModalTab(v as "config" | "seo")} className="w-full pt-2">
-            <TabsList className="grid w-full grid-cols-2 mb-2">
-              <TabsTrigger value="config" className="text-xs sm:text-sm">
-                Configuration
-              </TabsTrigger>
-              <TabsTrigger value="seo" className="text-xs sm:text-sm">
-                SEO
-              </TabsTrigger>
-            </TabsList>
-
-            {/* TAB 1: CONFIGURATION */}
-            <TabsContent value="config" className="space-y-6 pt-3 pb-2">
+          <div className="space-y-6 pt-4 pb-2">
             {/* Featured Image */}
             <div className="space-y-2">
               <Label>Featured image</Label>
@@ -774,26 +747,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 />
               ) : null}
             </div>
-
-            {/* Show in Footer */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="page-footer-switch" className="cursor-pointer">
-                  Show in Footer
-                </Label>
-                <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
-              </div>
-              <Switch
-                id="page-footer-switch"
-                className="shrink-0"
-                checked={showInFooter}
-                onCheckedChange={(v) => setShowInFooter(v)}
-              />
-            </div>
-            </TabsContent>
-
-            {/* TAB 2: SEO */}
-            <TabsContent value="seo" className="space-y-6 pt-3 pb-2">
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
@@ -960,8 +913,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 Optional custom JSON-LD schema injected directly into this page. Must be valid JSON.
               </p>
             </div>
-            </TabsContent>
-          </Tabs>
+          </div>
 
           <DialogFooter className="pt-4 border-t border-border flex items-center justify-end">
             <Button type="button" onClick={() => setAdvancedOpen(false)}>
