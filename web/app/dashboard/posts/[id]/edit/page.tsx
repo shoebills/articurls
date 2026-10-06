@@ -117,6 +117,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [allPosts, setAllPosts] = useState<BlogListItem[]>([]);
   const [selectedRelatedIds, setSelectedRelatedIds] = useState<string[]>([]);
   const [relatedSearch, setRelatedSearch] = useState("");
+  const [relatedDropdownOpen, setRelatedDropdownOpen] = useState(false);
+  const [pendingRelatedIds, setPendingRelatedIds] = useState<string[]>([]);
+  const relatedDropdownRef = useRef<HTMLDivElement | null>(null);
+  const relatedTriggerRef = useRef<HTMLButtonElement | null>(null);
   const savedRelatedIdsRef = useRef<string[]>([]);
 
   const applyBlogToForm = useCallback((b: BlogDetail) => {
@@ -192,6 +196,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     document.addEventListener("mousedown", handler);
     return () => document.removeEventListener("mousedown", handler);
   }, [catDropdownOpen]);
+
+  useEffect(() => {
+    if (!relatedDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (relatedDropdownRef.current && !relatedDropdownRef.current.contains(e.target as Node) && !(relatedTriggerRef.current?.contains(e.target as Node))) {
+        setRelatedDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [relatedDropdownOpen]);
 
   useEffect(() => {
     load();
@@ -555,13 +570,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const relatedCandidates = allPosts.filter(
     (p) => !relatedQuery || p.title.toLowerCase().includes(relatedQuery)
   );
-  const relatedOrdered = [
-    ...selectedRelatedIds
-      .map((id) => relatedCandidates.find((p) => p.blog_id === id))
-      .filter((p): p is BlogListItem => !!p),
-    ...relatedCandidates.filter((p) => !selectedRelatedIds.includes(p.blog_id)),
-  ];
-  const relatedLimitReached = selectedRelatedIds.length >= 3;
   const manualDraftKey = `articurls:manual-post-draft:${currentBlogId}`;
 
   const clearManualDraft = useCallback(() => {
@@ -1221,8 +1229,102 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <div className="space-y-2">
                   <Label>Related posts</Label>
                   <p className="text-xs text-muted-foreground pt-1">
-                    Choose up to 3 posts to recommend at the bottom of this post, in the order you pick them. Nothing selected hides the section.
+                    Choose up to 3 posts to recommend at the bottom of this post, in the order you pick them.
                   </p>
+                </div>
+                <div className="relative">
+                  <button
+                    ref={relatedTriggerRef}
+                    type="button"
+                    className="inline-flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    onClick={() => {
+                      if (!relatedDropdownOpen) {
+                        setPendingRelatedIds([...selectedRelatedIds]);
+                        setRelatedSearch("");
+                      }
+                      setRelatedDropdownOpen(!relatedDropdownOpen);
+                    }}
+                  >
+                    <span className="truncate text-muted-foreground">
+                      {selectedRelatedIds.length === 0
+                        ? "Select posts"
+                        : `${selectedRelatedIds.length} of 3 selected`}
+                    </span>
+                    <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${relatedDropdownOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {relatedDropdownOpen && (
+                    <div ref={relatedDropdownRef} className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border border-border bg-popover shadow-lg">
+                      <div className="space-y-2 p-2">
+                        <Input
+                          value={relatedSearch}
+                          onChange={(e) => setRelatedSearch(e.target.value)}
+                          placeholder="Search posts..."
+                        />
+                        <div className="max-h-56 w-full overflow-y-auto">
+                          {relatedCandidates.length === 0 ? (
+                            <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                              {allPosts.length === 0 ? "No other posts yet." : "No posts match your search."}
+                            </p>
+                          ) : (
+                            relatedCandidates.map((p) => {
+                              const isChecked = pendingRelatedIds.includes(p.blog_id);
+                              const order = pendingRelatedIds.indexOf(p.blog_id) + 1;
+                              return (
+                                <button
+                                  key={p.blog_id}
+                                  type="button"
+                                  disabled={!isChecked && pendingRelatedIds.length >= 3}
+                                  className="flex w-full items-start gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                                  onClick={() => {
+                                    setPendingRelatedIds((prev) =>
+                                      isChecked
+                                        ? prev.filter((id) => id !== p.blog_id)
+                                        : [...prev, p.blog_id]
+                                    );
+                                  }}
+                                >
+                                  <span
+                                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                                      isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                                    }`}
+                                  >
+                                    {isChecked && <Check className="h-3 w-3" />}
+                                  </span>
+                                  <span className="min-w-0 flex-1 break-words text-left">{p.title}</span>
+                                  {isChecked && (
+                                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                                      {order}
+                                    </span>
+                                  )}
+                                </button>
+                              );
+                            })
+                          )}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            variant="outline"
+                            className="flex-1"
+                            onClick={() => {
+                              setPendingRelatedIds([...selectedRelatedIds]);
+                              setRelatedDropdownOpen(false);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            className="flex-1"
+                            onClick={() => {
+                              setSelectedRelatedIds([...pendingRelatedIds]);
+                              setRelatedDropdownOpen(false);
+                            }}
+                          >
+                            Done
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 {selectedRelatedIds.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
@@ -1231,14 +1333,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       return (
                         <span
                           key={id}
-                          className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                          className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                         >
-                          <span className="text-foreground">{idx + 1}.</span>
-                          <span className="max-w-40 truncate">{picked ? picked.title : "Unavailable post"}</span>
+                          <span className="shrink-0 text-foreground">{idx + 1}.</span>
+                          <span className="truncate">{picked ? picked.title : "Unavailable post"}</span>
                           <button
                             type="button"
                             aria-label={`Remove ${picked ? picked.title : "unavailable post"}`}
-                            className="inline-flex items-center rounded-full hover:text-foreground"
+                            className="inline-flex shrink-0 items-center rounded-full hover:text-foreground"
                             onClick={() =>
                               setSelectedRelatedIds((prev) => prev.filter((rid) => rid !== id))
                             }
@@ -1250,53 +1352,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     })}
                   </div>
                 )}
-                <div className="space-y-2">
-                  <Input
-                    className="mt-2"
-                    value={relatedSearch}
-                    onChange={(e) => setRelatedSearch(e.target.value)}
-                    placeholder="Search posts..."
-                  />
-                  <div className="max-h-56 overflow-y-auto rounded-md border border-input p-1">
-                    {relatedOrdered.length === 0 ? (
-                      <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                        {allPosts.length === 0 ? "No other posts yet." : "No posts match your search."}
-                      </p>
-                    ) : (
-                      relatedOrdered.map((p) => {
-                        const isChecked = selectedRelatedIds.includes(p.blog_id);
-                        return (
-                          <button
-                            key={p.blog_id}
-                            type="button"
-                            disabled={!isChecked && relatedLimitReached}
-                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                            onClick={() => {
-                              setSelectedRelatedIds((prev) =>
-                                isChecked
-                                  ? prev.filter((rid) => rid !== p.blog_id)
-                                  : [...prev, p.blog_id]
-                              );
-                            }}
-                          >
-                            <span
-                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
-                                isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
-                              }`}
-                            >
-                              {isChecked && <Check className="h-3 w-3" />}
-                            </span>
-                            <span className="min-w-0 flex-1 truncate text-left">{p.title}</span>
-                            <BlogStatusBadge status={p.status} />
-                          </button>
-                        );
-                      })
-                    )}
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    {selectedRelatedIds.length} of 3 selected.
-                  </p>
-                </div>
               </div>
             </TabsContent>
 
