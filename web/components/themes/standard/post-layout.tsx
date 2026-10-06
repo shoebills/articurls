@@ -36,13 +36,14 @@ export function StandardPostLayout({
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 
-  const otherBlogs = (allBlogs || []).filter((b) => b.blog_id !== blog.blog_id);
-  const currentCatIds = blog.category_ids || [];
-  const sameCategoryBlogs = currentCatIds.length > 0
-    ? otherBlogs.filter((b) => b.category_ids?.some((id) => currentCatIds.includes(id)))
-    : [];
-  const remainderBlogs = otherBlogs.filter((b) => !sameCategoryBlogs.some((s) => s.blog_id === b.blog_id));
-  const relatedBlogs = [...sameCategoryBlogs, ...remainderBlogs].slice(0, 3);
+  const relatedIdOrder = ((blog.related_blog_ids || []) as unknown[]).map(String);
+  const relatedById = new Map((allBlogs || []).map((b) => [String(b.blog_id), b]));
+  const relatedBlogs = relatedIdOrder
+    .flatMap((id) => {
+      const match = relatedById.get(id);
+      return match && match.blog_id !== blog.blog_id ? [match] : [];
+    })
+    .slice(0, 3);
 
   const currentUrl = `https://${host}${basePath}/${encodeURIComponent(blog.slug)}`;
   const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
@@ -120,7 +121,7 @@ export function StandardPostLayout({
         <section className="mt-10 pt-6 sm:mt-14 sm:pt-8">
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
-          Related articles
+          Related posts
         </h3>
         <Link
           href={getPublicProfileUrl(subdomain, basePath)}

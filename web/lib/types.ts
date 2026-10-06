@@ -72,6 +72,7 @@ export interface BlogListItem {
   is_pinned?: boolean;
   custom_schema?: Record<string, unknown> | null;
   faq_items?: FaqItem[] | null;
+  related_blog_ids?: string[];
   status: BlogStatus;
   scheduled_at: string | null;
   published_at: string | null;
@@ -102,6 +103,7 @@ export interface PublicBlog {
   is_pinned?: boolean;
   custom_schema?: Record<string, unknown> | null;
   faq_items?: FaqItem[] | null;
+  related_blog_ids?: string[];
   published_at: string | null;
   updated_at: string;
   user_id?: string;

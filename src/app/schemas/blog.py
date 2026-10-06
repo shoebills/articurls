@@ -51,6 +51,7 @@ class GetBlog(BaseModel):
     is_pinned: bool = False
     custom_schema: Optional[dict] = None
     faq_items: Optional[List[FaqItem]] = []
+    related_blog_ids: Optional[List[uuid.UUID]] = []
     status: BlogStatus
     scheduled_at: Optional[datetime] = None
     published_at: Optional[datetime] = None
@@ -85,6 +86,7 @@ class PublicBlog(BaseModel):
     is_pinned: bool = False
     custom_schema: Optional[dict] = None
     faq_items: Optional[List[FaqItem]] = []
+    related_blog_ids: Optional[List[uuid.UUID]] = []
     published_at: Optional[datetime] = None
     updated_at: datetime
     site_id: Optional[uuid.UUID] = None
@@ -136,6 +138,7 @@ class UpdateBlog(BaseModel):
     is_pinned: Optional[bool] = None
     custom_schema: Optional[dict] = None
     faq_items: Optional[List[FaqItem]] = None
+    related_blog_ids: Optional[List[uuid.UUID]] = None
 
 class ScheduleBlog(BaseModel):
     scheduled_at: datetime

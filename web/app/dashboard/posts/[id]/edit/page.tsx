@@ -12,6 +12,7 @@ import {
   unscheduleBlog,
   uploadBlogMedia,
   deleteBlogMediaByUrl,
+  listBlogs,
   listCategories,
   assignBlogCategories,
   listAuthors,
@@ -19,7 +20,7 @@ import {
   ApiError,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { BlogDetail, Category, Author } from "@/lib/types";
+import type { BlogDetail, BlogListItem, Category, Author } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { FaqEditor } from "@/components/editor/faq-editor";
@@ -31,7 +32,6 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { SchedulePublishDialog } from "@/components/schedule-publish-dialog";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -43,7 +43,7 @@ import {
 import { assetUrl } from "@/lib/env";
 import { transformImageUrl } from "@/lib/image-transform";
 import { getContentExcerpt } from "@/lib/utils";
-import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Newspaper, Link2 } from "lucide-react";
+import { ChevronDown, Loader2, Check, ChevronLeft, Settings, X, Link2 } from "lucide-react";
 import { getSitePublicUrl } from "@/lib/public-url";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { EditorSkeleton } from "@/components/editor/editor-skeleton";
@@ -113,6 +113,12 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [authorId, setAuthorId] = useState<string | null>(null);
   const savedAuthorIdRef = useRef<string | null>(null);
 
+  // Related posts state
+  const [allPosts, setAllPosts] = useState<BlogListItem[]>([]);
+  const [selectedRelatedIds, setSelectedRelatedIds] = useState<string[]>([]);
+  const [relatedSearch, setRelatedSearch] = useState("");
+  const savedRelatedIdsRef = useRef<string[]>([]);
+
   const applyBlogToForm = useCallback((b: BlogDetail) => {
     setBlog(b);
     setTitle(b.title);
@@ -148,6 +154,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const bAuthorId = (b as unknown as { author_id?: string | null }).author_id ?? null;
     setAuthorId(bAuthorId);
     savedAuthorIdRef.current = bAuthorId;
+    const bRelatedIds = ((b.related_blog_ids || []) as unknown[]).map(String);
+    setSelectedRelatedIds(bRelatedIds);
+    savedRelatedIdsRef.current = [...bRelatedIds];
   }, []);
 
   const load = useCallback(async () => {
@@ -163,12 +172,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }, [token, blogId, applyBlogToForm]);
 
-  // Load categories and authors for the dropdowns
+  // Load categories, authors, and posts for the dropdowns
   useEffect(() => {
     if (!token) return;
     listCategories(token).then(setAllCategories).catch(() => {});
     listAuthors(token).then(setAllAuthors).catch(() => {});
-  }, [token]);
+    listBlogs(token)
+      .then((posts) => setAllPosts(posts.filter((p) => p.blog_id !== blogId)))
+      .catch(() => {});
+  }, [token, blogId]);
 
   useEffect(() => {
     if (!catDropdownOpen) return;
@@ -227,6 +239,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       savedCatIdsRef.current.length !== selectedCatIds.length ||
       savedCatIdsRef.current.some((id) => !selectedCatIds.includes(id));
     const authorChanged = savedAuthorIdRef.current !== authorId;
+    const relatedDirty =
+      JSON.stringify(savedRelatedIdsRef.current) !== JSON.stringify(selectedRelatedIds);
     const featuredChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
     const isPinnedDirty = isPinned !== (blog.is_pinned ?? false);
     const ogImageDirty = ogImageUrl.trim() !== (blog.og_image_url || "");
@@ -243,6 +257,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       (blog.featured_image_url || null) !== nextFeatured ||
       catDirty ||
       authorChanged ||
+      relatedDirty ||
       featuredChanged ||
       isPinnedDirty ||
       ogImageDirty ||
@@ -250,7 +265,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       noindexDirty ||
       schemaDirty
     );
-  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, user, isPinned, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
+  }, [blog, title, content, slugEditable, slugCustom, slugCustomDirty, metaTitleDirty, metaTitle, metaDescDirty, metaDesc, selectedCatIds, featuredImageUrl, featuredIds, authorId, selectedRelatedIds, user, isPinned, ogImageUrl, canonicalUrl, noindex, customSchemaStr]);
 
   async function save(silent = false) {
     if (!token || !blog) return false;
@@ -266,10 +281,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextFeaturedImageUrl = featuredImageUrl;
     const nextPendingCatIds = pendingCatIds;
     const nextAuthorId = authorId;
+    const nextRelatedIds = selectedRelatedIds;
     const catDirty =
       savedCatIdsRef.current.length !== nextPendingCatIds.length ||
       savedCatIdsRef.current.some((id) => !nextPendingCatIds.includes(id));
     const authorDirty = savedAuthorIdRef.current !== nextAuthorId;
+    const relatedDirty =
+      JSON.stringify(savedRelatedIdsRef.current) !== JSON.stringify(nextRelatedIds);
     setSaving(true);
     setSaveStatus("saving");
     if (!silent) setErr(null);
@@ -299,6 +317,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         is_pinned: isPinned,
         custom_schema: parsedSchema,
       };
+
+      if (relatedDirty) {
+        body.related_blog_ids = [...nextRelatedIds];
+      }
 
       if (slugEditable) {
         const derived = slugify(nextTitle.trim(), { lower: true, strict: true });
@@ -374,6 +396,13 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       }
       if (authorDirty) {
         savedAuthorIdRef.current = nextAuthorId;
+      }
+      if (relatedDirty) {
+        // Sync from the server response: the backend drops duplicates,
+        // self-references, unknown ids, and caps the list at 3.
+        const savedRelated = ((finalBlog.related_blog_ids || []) as unknown[]).map(String);
+        savedRelatedIdsRef.current = [...savedRelated];
+        setSelectedRelatedIds([...savedRelated]);
       }
 
       const featuredIdsChanged = JSON.stringify(featuredIds) !== JSON.stringify(user?.featured_blog_ids);
@@ -522,6 +551,17 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const currentBlogId = blog?.blog_id ?? blogId;
   const requiresManualUpdate = blog ? ["scheduled", "published", "archived"].includes(blog.status) : false;
   const dirty = isDirty();
+  const relatedQuery = relatedSearch.trim().toLowerCase();
+  const relatedCandidates = allPosts.filter(
+    (p) => !relatedQuery || p.title.toLowerCase().includes(relatedQuery)
+  );
+  const relatedOrdered = [
+    ...selectedRelatedIds
+      .map((id) => relatedCandidates.find((p) => p.blog_id === id))
+      .filter((p): p is BlogListItem => !!p),
+    ...relatedCandidates.filter((p) => !selectedRelatedIds.includes(p.blog_id)),
+  ];
+  const relatedLimitReached = selectedRelatedIds.length >= 3;
   const manualDraftKey = `articurls:manual-post-draft:${currentBlogId}`;
 
   const clearManualDraft = useCallback(() => {
@@ -940,10 +980,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
           <Tabs value={modalTab} onValueChange={(v) => setModalTab(v as "config" | "seo")} className="w-full pt-2">
             <TabsList className="grid w-full grid-cols-2 mb-2">
               <TabsTrigger value="config" className="text-xs sm:text-sm">
-                Post Configuration
+                Configuration
               </TabsTrigger>
               <TabsTrigger value="seo" className="text-xs sm:text-sm">
-                SEO & Metadata
+                SEO
               </TabsTrigger>
             </TabsList>
 
@@ -952,7 +992,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               {/* Featured Image */}
               <div className="space-y-2">
                 <Label>Featured image</Label>
-                <p className="text-xs text-muted-foreground pt-1">Used for home preview and share cards. Recommended 1200×630px.</p>
+                <p className="text-xs text-muted-foreground pt-1">Used for home preview and share cards. Recommended 16:9.</p>
                 <input
                   ref={featuredInputRef}
                   type="file"
@@ -1009,8 +1049,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   />
                 ) : null}
               </div>
-
-              <Separator />
 
               {/* Categories */}
               <div className="space-y-2">
@@ -1115,8 +1153,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 )}
               </div>
 
-              <Separator />
-
               {/* Author */}
               <div className="space-y-2">
                 <div className="space-y-2">
@@ -1142,8 +1178,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </div>
               </div>
 
-              <Separator />
-
               {/* Pin to top */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -1161,8 +1195,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   onCheckedChange={setIsPinned}
                 />
               </div>
-
-              <Separator />
 
               {/* Show in Featured Posts */}
               <div className="flex items-center justify-between gap-4">
@@ -1184,17 +1216,87 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 />
               </div>
 
-              <Separator />
-
-              {/* Related Posts */}
-              <div className="rounded-lg border border-border/60 bg-muted/20 p-3.5 space-y-1">
-                <div className="flex items-center gap-2 text-xs font-semibold text-foreground">
-                  <Newspaper className="h-3.5 w-3.5 text-primary" />
-                  Related Posts
+              {/* Related posts */}
+              <div className="space-y-2">
+                <div className="space-y-2">
+                  <Label>Related posts</Label>
+                  <p className="text-xs text-muted-foreground pt-1">
+                    Choose up to 3 posts to recommend at the bottom of this post, in the order you pick them. Nothing selected hides the section.
+                  </p>
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  Up to 3 newest articles from the same categories are automatically recommended at the bottom of this post for your readers.
-                </p>
+                {selectedRelatedIds.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {selectedRelatedIds.map((id, idx) => {
+                      const picked = allPosts.find((p) => p.blog_id === id);
+                      return (
+                        <span
+                          key={id}
+                          className="inline-flex items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
+                        >
+                          <span className="text-foreground">{idx + 1}.</span>
+                          <span className="max-w-40 truncate">{picked ? picked.title : "Unavailable post"}</span>
+                          <button
+                            type="button"
+                            aria-label={`Remove ${picked ? picked.title : "unavailable post"}`}
+                            className="inline-flex items-center rounded-full hover:text-foreground"
+                            onClick={() =>
+                              setSelectedRelatedIds((prev) => prev.filter((rid) => rid !== id))
+                            }
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </span>
+                      );
+                    })}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Input
+                    className="mt-2"
+                    value={relatedSearch}
+                    onChange={(e) => setRelatedSearch(e.target.value)}
+                    placeholder="Search posts..."
+                  />
+                  <div className="max-h-56 overflow-y-auto rounded-md border border-input p-1">
+                    {relatedOrdered.length === 0 ? (
+                      <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                        {allPosts.length === 0 ? "No other posts yet." : "No posts match your search."}
+                      </p>
+                    ) : (
+                      relatedOrdered.map((p) => {
+                        const isChecked = selectedRelatedIds.includes(p.blog_id);
+                        return (
+                          <button
+                            key={p.blog_id}
+                            type="button"
+                            disabled={!isChecked && relatedLimitReached}
+                            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+                            onClick={() => {
+                              setSelectedRelatedIds((prev) =>
+                                isChecked
+                                  ? prev.filter((rid) => rid !== p.blog_id)
+                                  : [...prev, p.blog_id]
+                              );
+                            }}
+                          >
+                            <span
+                              className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-sm border ${
+                                isChecked ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/40"
+                              }`}
+                            >
+                              {isChecked && <Check className="h-3 w-3" />}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-left">{p.title}</span>
+                            <BlogStatusBadge status={p.status} />
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {selectedRelatedIds.length} of 3 selected.
+                  </p>
+                </div>
               </div>
             </TabsContent>
 
@@ -1226,8 +1328,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </p>
               </div>
 
-              <Separator />
-
               {/* Meta Title & Meta Description */}
               <div className="space-y-4">
                 <div className="space-y-3">
@@ -1258,8 +1358,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </div>
               </div>
 
-              <Separator />
-
               {/* Do not index */}
               <div className="flex items-center justify-between gap-4">
                 <div className="space-y-1">
@@ -1277,8 +1375,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   onCheckedChange={setNoindex}
                 />
               </div>
-
-              <Separator />
 
               {/* Social OG Image */}
               <div className="space-y-2">
@@ -1343,8 +1439,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 ) : null}
               </div>
 
-              <Separator />
-
               {/* Canonical URL */}
               <div className="space-y-2">
                 <Label htmlFor="modal-canonical-url">Canonical URL</Label>
@@ -1359,8 +1453,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   Specify if this article was originally published on a different website or domain.
                 </p>
               </div>
-
-              <Separator />
 
               {/* Custom schema */}
               <div className="space-y-2">

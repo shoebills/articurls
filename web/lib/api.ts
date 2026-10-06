@@ -590,6 +590,7 @@ export async function updateBlog(
     is_pinned?: boolean;
     custom_schema?: Record<string, unknown> | null;
     faq_items?: FaqItem[] | null;
+    related_blog_ids?: string[];
   }
 ): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}`, {

@@ -340,12 +340,52 @@ def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: Backg
             for item in update_data["faq_items"]
         ]
 
+    if "related_blog_ids" in update_data:
+        raw_related = update_data["related_blog_ids"] or []
+        if not isinstance(raw_related, list) or len(raw_related) > 3:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="related_blog_ids must be a list of at most 3 blog ids.",
+            )
+        try:
+            parsed_ids = [uuid.UUID(str(bid)) for bid in raw_related]
+        except (ValueError, AttributeError, TypeError):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="related_blog_ids must be a list of valid blog ids.",
+            )
+        # Preserve order, drop duplicates and self-reference.
+        seen: set[uuid.UUID] = set()
+        ordered_ids: list[uuid.UUID] = []
+        for bid in parsed_ids:
+            if bid == db_blog.blog_id or bid in seen:
+                continue
+            seen.add(bid)
+            ordered_ids.append(bid)
+        if ordered_ids:
+            valid_ids = {
+                row[0]
+                for row in db.query(models.Blog.blog_id)
+                .filter(
+                    models.Blog.blog_id.in_(ordered_ids),
+                    models.Blog.site_id == current_site.site_id,
+                )
+                .all()
+            }
+            invalid = [str(bid) for bid in ordered_ids if bid not in valid_ids]
+            if invalid:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Invalid related_blog_ids for this site.",
+                )
+        update_data["related_blog_ids"] = [str(bid) for bid in ordered_ids]
+
     # Separate meaningful content/metadata fields from non-content fields.
     # Only meaningful changes bump updated_at so sitemap lastmod stays accurate.
     MEANINGFUL_FIELDS = {
         "title", "content", "meta_title", "meta_description", "featured_image_url",
         "author_id", "og_image_url", "canonical_url", "noindex", "is_pinned",
-        "custom_schema", "faq_items",
+        "custom_schema", "faq_items", "related_blog_ids",
     }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 

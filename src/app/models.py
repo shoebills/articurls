@@ -227,6 +227,7 @@ class Blog(Base):
     is_pinned = Column(Boolean, nullable=False, default=False, server_default="false")
     custom_schema = Column(JSON, nullable=True)
     faq_items = Column(JSON, nullable=True, default=list)
+    related_blog_ids = Column(JSON, nullable=True, default=list)
     status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)

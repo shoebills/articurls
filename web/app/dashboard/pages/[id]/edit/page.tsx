@@ -706,7 +706,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             {/* Featured Image */}
             <div className="space-y-2">
               <Label>Featured image</Label>
-              <p className="text-xs text-muted-foreground pt-1">Displayed at the top of this page and used for share cards. Recommended 1200×630px.</p>
+              <p className="text-xs text-muted-foreground pt-1">Displayed at the top of this page and used for share cards. Recommended 16:9.</p>
               <input
                 ref={featuredInputRef}
                 type="file"
