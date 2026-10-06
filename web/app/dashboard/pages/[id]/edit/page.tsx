@@ -9,12 +9,12 @@ import type { UserPage } from "@/lib/types";
 import { format } from "date-fns";
 import { BlogEditor } from "@/components/editor/blog-editor";
 import { FaqEditor } from "@/components/editor/faq-editor";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +65,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [canonicalUrl, setCanonicalUrl] = useState("");
   const [noindex, setNoindex] = useState(false);
   const [customSchemaStr, setCustomSchemaStr] = useState("");
+  const [modalTab, setModalTab] = useState<"config" | "seo">("config");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
@@ -618,7 +619,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     : "Saved"}
               </span>
             </div>
-
             <div className="flex flex-wrap items-center gap-2">
               {requiresManualUpdate ? (
                 <>
@@ -702,7 +702,18 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             </div>
           </DialogHeader>
 
-          <div className="space-y-6 pt-4 pb-2">
+          <Tabs value={modalTab} onValueChange={(v) => setModalTab(v as "config" | "seo")} className="w-full pt-2">
+            <TabsList className="grid w-full grid-cols-2 mb-2">
+              <TabsTrigger value="config" className="text-xs sm:text-sm">
+                Configuration
+              </TabsTrigger>
+              <TabsTrigger value="seo" className="text-xs sm:text-sm">
+                SEO
+              </TabsTrigger>
+            </TabsList>
+
+            {/* TAB 1: CONFIGURATION */}
+            <TabsContent value="config" className="space-y-6 pt-3 pb-2">
             {/* Featured Image */}
             <div className="space-y-2">
               <Label>Featured image</Label>
@@ -764,8 +775,25 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               ) : null}
             </div>
 
-            <Separator />
+            {/* Show in Footer */}
+            <div className="flex items-center justify-between gap-4">
+              <div className="space-y-1">
+                <Label htmlFor="page-footer-switch" className="cursor-pointer">
+                  Show in Footer
+                </Label>
+                <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
+              </div>
+              <Switch
+                id="page-footer-switch"
+                className="shrink-0"
+                checked={showInFooter}
+                onCheckedChange={(v) => setShowInFooter(v)}
+              />
+            </div>
+            </TabsContent>
 
+            {/* TAB 2: SEO */}
+            <TabsContent value="seo" className="space-y-6 pt-3 pb-2">
             {/* URL Slug */}
             <div className="space-y-2">
               <Label>URL slug</Label>
@@ -791,8 +819,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                   : "The public URL cannot be changed after the page is published."}
               </p>
             </div>
-
-            <Separator />
 
             <div className="space-y-4">
               <div className="space-y-3">
@@ -823,8 +849,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               </div>
             </div>
 
-            <Separator />
-
             {/* Do not index */}
             <div className="flex items-center justify-between gap-4">
               <div className="space-y-1">
@@ -843,13 +867,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               />
             </div>
 
-            <Separator />
-
             {/* Social OG Image */}
             <div className="space-y-2">
               <Label>Social share image (OG image)</Label>
               <p className="text-xs text-muted-foreground pt-1">
-                Custom image for Twitter, LinkedIn, and social previews. Falls back to featured image if empty.
+                Custom image for Twitter, LinkedIn, and social previews. Recommended 1200×630px. Falls back to featured image if empty.
               </p>
               <input
                 ref={ogInputRef}
@@ -908,8 +930,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               ) : null}
             </div>
 
-            <Separator />
-
             {/* Canonical URL */}
             <div className="space-y-2">
               <Label htmlFor="page-canonical-url">Canonical URL</Label>
@@ -924,8 +944,6 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 Specify if this page was originally published on a different website or domain.
               </p>
             </div>
-
-            <Separator />
 
             {/* Custom schema */}
             <div className="space-y-2">
@@ -942,25 +960,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 Optional custom JSON-LD schema injected directly into this page. Must be valid JSON.
               </p>
             </div>
-
-            <Separator />
-
-            {/* Show in Footer */}
-            <div className="flex items-center justify-between gap-4">
-              <div className="space-y-1">
-                <Label htmlFor="page-footer-switch" className="cursor-pointer">
-                  Show in Footer
-                </Label>
-                <p className="text-xs text-muted-foreground">Add this page to your blog footer menu.</p>
-              </div>
-              <Switch
-                id="page-footer-switch"
-                className="shrink-0"
-                checked={showInFooter}
-                onCheckedChange={(v) => setShowInFooter(v)}
-              />
-            </div>
-          </div>
+            </TabsContent>
+          </Tabs>
 
           <DialogFooter className="pt-4 border-t border-border flex items-center justify-end">
             <Button type="button" onClick={() => setAdvancedOpen(false)}>

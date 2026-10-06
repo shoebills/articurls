@@ -995,7 +995,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               </TabsTrigger>
             </TabsList>
 
-            {/* TAB 1: POST CONFIGURATION */}
+            {/* TAB 1: CONFIGURATION */}
             <TabsContent value="config" className="space-y-6 pt-3 pb-2">
               {/* Featured Image */}
               <div className="space-y-2">
@@ -1073,7 +1073,6 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       if (!catDropdownOpen) setPendingCatIds([...selectedCatIds]);
                       setCatDropdownOpen(!catDropdownOpen);
                     }}
-                    disabled={false}
                   >
                     <span className="truncate text-muted-foreground">
                       {selectedCatIds.length === 0
@@ -1236,7 +1235,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <button
                     ref={relatedTriggerRef}
                     type="button"
-                    className="inline-flex h-10 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex h-10 min-w-[14rem] items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => {
                       if (!relatedDropdownOpen) {
                         setPendingRelatedIds([...selectedRelatedIds]);
@@ -1245,7 +1244,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       setRelatedDropdownOpen(!relatedDropdownOpen);
                     }}
                   >
-                    <span className="truncate text-muted-foreground">
+                    <span className="min-w-0 truncate text-muted-foreground">
                       {selectedRelatedIds.length === 0
                         ? "Select posts"
                         : `${selectedRelatedIds.length} of 3 selected`}
@@ -1253,14 +1252,14 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     <ChevronDown className={`h-4 w-4 shrink-0 opacity-50 transition-transform ${relatedDropdownOpen ? "rotate-180" : ""}`} />
                   </button>
                   {relatedDropdownOpen && (
-                    <div ref={relatedDropdownRef} className="absolute left-0 top-full z-50 mt-2 w-full rounded-xl border border-border bg-popover shadow-lg">
-                      <div className="space-y-2 p-2">
+                    <div ref={relatedDropdownRef} className="absolute left-0 top-full z-50 mt-2 min-w-[14rem] w-full max-w-xs rounded-xl border border-border bg-popover shadow-lg">
+                      <div className="space-y-4 px-2 pb-4 pt-4">
                         <Input
                           value={relatedSearch}
                           onChange={(e) => setRelatedSearch(e.target.value)}
                           placeholder="Search posts..."
                         />
-                        <div className="max-h-56 w-full overflow-y-auto">
+                        <div className="max-h-56 w-full overflow-y-auto pb-0 pt-1">
                           {relatedCandidates.length === 0 ? (
                             <p className="px-3 py-6 text-center text-sm text-muted-foreground">
                               {allPosts.length === 0 ? "No other posts yet." : "No posts match your search."}
@@ -1301,7 +1300,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                             })
                           )}
                         </div>
-                        <div className="flex gap-2">
+                        <div className="flex gap-2 px-3">
                           <Button
                             variant="outline"
                             className="flex-1"
@@ -1336,7 +1335,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                           className="inline-flex max-w-full items-center gap-1.5 rounded-full border bg-muted/50 px-2.5 py-0.5 text-xs font-medium text-muted-foreground"
                         >
                           <span className="shrink-0 text-foreground">{idx + 1}.</span>
-                          <span className="truncate">{picked ? picked.title : "Unavailable post"}</span>
+                          <span className="min-w-0 truncate">{picked ? picked.title : "Unavailable post"}</span>
                           <button
                             type="button"
                             aria-label={`Remove ${picked ? picked.title : "unavailable post"}`}
@@ -1355,7 +1354,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               </div>
             </TabsContent>
 
-            {/* TAB 2: SEO & METADATA */}
+            {/* TAB 2: SEO */}
             <TabsContent value="seo" className="space-y-6 pt-3 pb-2">
               {/* URL Slug */}
               <div className="space-y-2">
@@ -1435,7 +1434,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
               <div className="space-y-2">
                 <Label>Social share image (OG image)</Label>
                 <p className="text-xs text-muted-foreground pt-1">
-                  Custom image for Twitter, LinkedIn, and social previews. Falls back to featured image if empty.
+                  Custom image for Twitter, LinkedIn, and social previews. Recommended 1200×630px. Falls back to featured image if empty.
                 </p>
                 <input
                   ref={ogInputRef}
