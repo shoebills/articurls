@@ -37,6 +37,7 @@ export function GeographyCard({
   period: AnalyticsPeriod;
 }) {
   const [cache, setCache] = useState<Record<string, UmamiMetricsRow[]>>({});
+  const [errors, setErrors] = useState<Record<string, boolean>>({});
   const [view, setView] = useState<{ center: [number, number]; zoom: number }>({
     center: [0, 40],
     zoom: 0.8,
@@ -48,6 +49,7 @@ export function GeographyCard({
 
   const rows = cache[period];
   const loading = rows === undefined;
+  const loadFailed = errors[period] === true;
 
   useEffect(() => {
     if (rows !== undefined) return;
@@ -57,11 +59,13 @@ export function GeographyCard({
       .then((res) => {
         if (!cancelled) {
           setCache((prev) => ({ ...prev, [period]: res.rows || [] }));
+          setErrors((prev) => ({ ...prev, [period]: false }));
         }
       })
       .catch(() => {
         if (!cancelled) {
           setCache((prev) => ({ ...prev, [period]: [] }));
+          setErrors((prev) => ({ ...prev, [period]: true }));
         }
       });
 
@@ -74,10 +78,12 @@ export function GeographyCard({
     const map = new Map<string, number>();
     let max = 0;
     for (const row of rows ?? []) {
-      const iso2 = ISO_COUNTRIES[String(row.x ?? "").trim().toUpperCase()];
-      if (!iso2) continue;
-      const next = (map.get(iso2) ?? 0) + row.y;
-      map.set(iso2, next);
+      // Umami country rows already carry ISO-2 codes; the ISO_COUNTRIES
+      // lookup is only for the map file's ISO-3 feature ids (see below).
+      const code = String(row.x ?? "").trim().toUpperCase();
+      if (!/^[A-Z]{2}$/.test(code)) continue;
+      const next = (map.get(code) ?? 0) + row.y;
+      map.set(code, next);
       if (next > max) max = next;
     }
     return { countryMap: map, maxCount: max };
@@ -187,7 +193,9 @@ export function GeographyCard({
           <Skeleton className="h-64 w-full rounded-lg sm:h-80" />
         ) : countryMap.size === 0 ? (
           <div className="flex h-64 items-center justify-center rounded-lg border border-border/60 bg-muted/20 sm:h-80">
-            <p className="text-xs text-muted-foreground sm:text-sm">No data available.</p>
+            <p className="text-xs text-muted-foreground sm:text-sm">
+              {loadFailed ? "Failed to load map data." : "No data available."}
+            </p>
           </div>
         ) : (
           <div
