@@ -703,7 +703,7 @@ export interface UmamiOverview {
 export interface UmamiOverviewResponse {
   period: string;
   overview: UmamiOverview;
-  change?: Record<string, number>;
+  change?: Record<string, number | null>;
 }
 
 export interface UmamiTimeseriesItem {

@@ -19,7 +19,7 @@ class UmamiOverview(BaseModel):
 class UmamiOverviewResponse(BaseModel):
     period: str
     overview: UmamiOverview
-    change: Optional[Dict[str, float]] = None
+    change: Optional[Dict[str, Optional[float]]] = None
 
 
 class UmamiTimeseriesItem(BaseModel):

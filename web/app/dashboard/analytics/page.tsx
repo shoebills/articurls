@@ -50,6 +50,9 @@ import {
   Building2,
   Radio,
   FileText,
+  ArrowUp,
+  ArrowDown,
+  Minus,
 } from "lucide-react";
 import {
   SiGooglechrome,
@@ -379,14 +382,24 @@ const CARDS_CONFIG: CardConfig[] = [
 function KpiCard({
   title,
   value,
+  change,
+  reverseColors = false,
   description,
   icon: Icon,
 }: {
   title: string;
   value: string | number;
+  change?: number | null;
+  reverseColors?: boolean;
   description?: string;
   icon: React.ElementType;
 }) {
+  const showChange = change !== undefined && change !== null;
+  const isPositive = showChange && change > 0;
+  const isNegative = showChange && change < 0;
+  const isGood = reverseColors ? isNegative : isPositive;
+  const isBad = reverseColors ? isPositive : isNegative;
+
   return (
     <Card>
       <CardContent className="p-3 sm:p-4 lg:p-5">
@@ -398,6 +411,25 @@ function KpiCard({
             <p className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold tracking-tight truncate">
               {value}
             </p>
+            {showChange && (
+              <span
+                className={cn(
+                  "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] sm:text-xs font-semibold mt-2",
+                  isGood && "bg-green-500/10 text-green-700 dark:text-green-400",
+                  isBad && "bg-red-500/10 text-red-700 dark:text-red-400",
+                  !isGood && !isBad && "bg-muted text-muted-foreground"
+                )}
+              >
+                {isPositive ? (
+                  <ArrowUp className="h-3 w-3" />
+                ) : isNegative ? (
+                  <ArrowDown className="h-3 w-3" />
+                ) : (
+                  <Minus className="h-3 w-3" />
+                )}
+                {`${Math.abs(change)}%`}
+              </span>
+            )}
             {description && (
               <p className="text-[11px] sm:text-xs text-muted-foreground mt-1">
                 {description}
@@ -524,13 +556,16 @@ function ExpandedMetricsModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="!w-[min(calc(100vw-2rem),56rem)] !max-w-4xl max-h-[85vh] p-4 sm:p-6 flex flex-col gap-4">
+      <DialogContent
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        className="w-[min(calc(100vw-2rem),56rem)] sm:w-[min(calc(100vw-2rem),56rem)] max-w-4xl h-[542px] max-h-[calc(100dvh-2rem)] p-4 sm:p-6 flex flex-col gap-4 overflow-hidden overflow-y-hidden"
+      >
         <DialogTitle className="sr-only">
           {cardTitle} - {tab.label}
         </DialogTitle>
 
         {/* Top Controls: Search input on left, Download and Close on right */}
-        <div className="flex items-center justify-between gap-3 pt-1">
+        <div className="flex items-center justify-between gap-3 pt-1 shrink-0">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
             <Input
@@ -563,8 +598,8 @@ function ExpandedMetricsModal({
           </div>
         </div>
 
-        {/* Table View: Horizontally scrollable on mobile */}
-        <div className="overflow-x-auto max-h-[60vh] -mx-4 px-4 sm:-mx-6 sm:px-6">
+        {/* Table View: Horizontally scrollable on mobile, vertically scrollable within fixed modal */}
+        <div className="overflow-auto flex-1 min-h-0 -mx-4 px-4 sm:-mx-6 sm:px-6">
           {loading ? (
             <div className="space-y-3 py-4">
               <Skeleton className="h-8 w-full" />
@@ -694,11 +729,11 @@ function AnalyticsMetricsCard({
   }, [rows]);
 
   return (
-    <Card className="flex flex-col justify-between">
-      <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
-        <CardTitle className="text-base sm:text-lg font-semibold">{config.title}</CardTitle>
+    <Card className="flex flex-col justify-between min-w-0 w-full overflow-hidden h-[580px]">
+      <CardHeader className="pb-2 pt-4 px-3 sm:px-6 min-w-0 shrink-0">
+        <CardTitle className="text-base sm:text-lg font-semibold truncate">{config.title}</CardTitle>
         {/* Tabs Row */}
-        <div className="flex items-center gap-4 sm:gap-6 border-b border-border/50 pt-2 pb-0 overflow-x-auto scrollbar-none">
+        <div className="flex items-center gap-4 sm:gap-6 border-b border-border/50 pt-2 pb-2 overflow-x-auto scrollbar-none min-w-0">
           {config.tabs.map((tab) => {
             const isActive = tab.id === activeTabId;
             return (
@@ -707,10 +742,10 @@ function AnalyticsMetricsCard({
                 type="button"
                 onClick={() => setActiveTabId(tab.id)}
                 className={cn(
-                  "text-xs sm:text-sm font-medium pb-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer",
+                  "text-xs sm:text-sm font-medium transition-colors whitespace-nowrap cursor-pointer shrink-0",
                   isActive
-                    ? "border-primary text-foreground font-semibold"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "text-foreground font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {tab.label}
@@ -720,12 +755,12 @@ function AnalyticsMetricsCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0 px-4 sm:px-6 pb-3 flex-1 flex flex-col justify-between">
-        <div>
+      <CardContent className="pt-0 px-3 sm:px-6 pb-3 flex-1 flex flex-col justify-between min-w-0 min-h-0 overflow-hidden">
+        <div className="min-w-0 min-h-0 overflow-hidden">
           {/* Table Header */}
           <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/40 text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide px-2">
-            <span>{activeTabConfig.header}</span>
-            <span>Visitors</span>
+            <span className="truncate pr-2">{activeTabConfig.header}</span>
+            <span className="shrink-0">Visitors</span>
           </div>
 
           {/* Rows List */}
@@ -741,7 +776,7 @@ function AnalyticsMetricsCard({
               No data available.
             </p>
           ) : (
-            <div className="space-y-1">
+            <div className="space-y-1 min-w-0">
               {rows.slice(0, 10).map((row, i) => {
                 const percent = totalVisitors > 0
                   ? Math.round((row.y / totalVisitors) * 100)
@@ -750,7 +785,7 @@ function AnalyticsMetricsCard({
                 return (
                   <div
                     key={i}
-                    className="relative flex items-center justify-between py-1.5 px-2 rounded-md overflow-hidden group hover:bg-muted/30 transition-colors"
+                    className="relative flex items-center justify-between py-1.5 px-2 rounded-md overflow-hidden group hover:bg-muted/30 transition-colors gap-2 min-w-0"
                   >
                     {/* Background Progress Bar */}
                     <div
@@ -759,10 +794,10 @@ function AnalyticsMetricsCard({
                     />
 
                     {/* Left: Icon + Label */}
-                    <div className="relative z-10 flex items-center gap-2 min-w-0 pr-2">
+                    <div className="relative z-10 flex items-center gap-2 min-w-0 flex-1 overflow-hidden pr-1">
                       {renderMetricIcon(activeTabId, row.x)}
                       <span
-                        className="text-xs sm:text-sm truncate font-medium text-foreground"
+                        className="text-xs sm:text-sm truncate font-medium text-foreground block min-w-0 flex-1"
                         title={row.x}
                       >
                         {renderMetricLabel(activeTabId, row.x)}
@@ -771,11 +806,11 @@ function AnalyticsMetricsCard({
 
                     {/* Right: Count + Divider + Percentage */}
                     <div className="relative z-10 flex items-center shrink-0 text-xs sm:text-sm">
-                      <span className="font-semibold text-foreground text-right min-w-[32px]">
+                      <span className="font-semibold text-foreground text-right min-w-[28px] sm:min-w-[32px]">
                         {row.y.toLocaleString()}
                       </span>
-                      <span className="mx-2 text-border text-muted-foreground/40">|</span>
-                      <span className="text-muted-foreground text-right min-w-[32px]">
+                      <span className="mx-1.5 sm:mx-2 text-border text-muted-foreground/40">|</span>
+                      <span className="text-muted-foreground text-right min-w-[28px] sm:min-w-[32px]">
                         {percent}%
                       </span>
                     </div>
@@ -787,7 +822,7 @@ function AnalyticsMetricsCard({
         </div>
 
         {/* Footer: More Button */}
-        <div className="pt-3 mt-2 flex justify-center border-t border-border/40">
+        <div className="pt-3 mt-2 flex justify-center border-t border-border/40 shrink-0">
           <button
             type="button"
             onClick={() => onOpenMore(config.title, activeTabConfig)}
@@ -1067,21 +1102,26 @@ function NativeAnalytics({ token }: { token: string }) {
             <KpiCard
               title="Pageviews"
               value={overview?.overview.pageviews ?? "—"}
+              change={overview?.change?.pageviews ?? null}
               icon={Eye}
             />
             <KpiCard
               title="Visitors"
               value={overview?.overview.visitors ?? "—"}
+              change={overview?.change?.visitors ?? null}
               icon={Users}
             />
             <KpiCard
               title="Bounce Rate"
               value={overview?.overview.bounce_rate != null ? `${overview.overview.bounce_rate}%` : "—"}
+              change={overview?.change?.bounce_rate ?? null}
+              reverseColors
               icon={TrendingDown}
             />
             <KpiCard
               title="Avg Duration"
               value={overview?.overview.avg_visit_time != null ? formatDuration(overview.overview.avg_visit_time) : "—"}
+              change={overview?.change?.avg_visit_time ?? null}
               icon={Clock}
             />
           </div>
@@ -1160,7 +1200,7 @@ function NativeAnalytics({ token }: { token: string }) {
           )}
 
           {/* 4 Umami-style Cards in 2x2 Grid */}
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2 min-w-0">
             {CARDS_CONFIG.map((card) => (
               <AnalyticsMetricsCard
                 key={card.id}

@@ -280,6 +280,8 @@ def get_umami_overview(
             end_at=end_at,
         )
 
+        pageviews = stats.get("pageviews", 0)
+        visitors = stats.get("visitors", 0)
         visits = stats.get("visits", 0)
         bounces = stats.get("bounces", 0)
         totaltime = stats.get("totaltime", 0)
@@ -287,16 +289,58 @@ def get_umami_overview(
         bounce_rate = round((bounces / visits * 100), 1) if visits > 0 else 0
         avg_visit_time = round(totaltime / visits) if visits > 0 else 0
 
+        change = None
+        if period != "all":
+            comp = stats.get("comparison")
+            if not isinstance(comp, dict) or not comp:
+                try:
+                    duration_ms = end_at - start_at
+                    prev_start = start_at - duration_ms
+                    prev_end = start_at
+                    comp = client.get_website_stats_sync(
+                        current_site.umami_website_id,
+                        start_at=prev_start,
+                        end_at=prev_end,
+                    )
+                except Exception:
+                    comp = {}
+
+            if isinstance(comp, dict) and comp:
+                comp_pageviews = comp.get("pageviews", 0)
+                comp_visitors = comp.get("visitors", 0)
+                comp_visits = comp.get("visits", 0)
+                comp_bounces = comp.get("bounces", 0)
+                comp_totaltime = comp.get("totaltime", 0)
+
+                comp_bounce_rate = round((comp_bounces / comp_visits * 100), 1) if comp_visits > 0 else 0
+                comp_avg_visit_time = round(comp_totaltime / comp_visits) if comp_visits > 0 else 0
+
+                def _pct(curr: float, prev: float) -> float | None:
+                    if prev > 0:
+                        return round(((curr - prev) / prev) * 100, 1)
+                    elif curr > 0:
+                        return 100.0
+                    elif curr == 0 and prev == 0:
+                        return 0.0
+                    return None
+
+                change = {
+                    "pageviews": _pct(pageviews, comp_pageviews),
+                    "visitors": _pct(visitors, comp_visitors),
+                    "bounce_rate": _pct(bounce_rate, comp_bounce_rate),
+                    "avg_visit_time": _pct(avg_visit_time, comp_avg_visit_time),
+                }
+
         return {
             "period": period,
             "overview": {
-                "pageviews": stats.get("pageviews", 0),
-                "visitors": stats.get("visitors", 0),
+                "pageviews": pageviews,
+                "visitors": visitors,
                 "visits": visits,
                 "bounce_rate": bounce_rate,
                 "avg_visit_time": avg_visit_time,
             },
-            "change": None,
+            "change": change,
         }
     except UmamiError as exc:
         raise HTTPException(
