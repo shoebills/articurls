@@ -135,12 +135,12 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 )}
                 aria-hidden={!open}
               >
-                <div className="max-h-[min(72dvh,28rem)] overflow-hidden rounded-xl border border-border/80 bg-background">
+                <div className="max-h-[85dvh] overflow-hidden rounded-xl border border-border/80 bg-background">
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
                     mobileTrayLayout
                     onNavigate={close}
-                    className="!h-auto max-h-[min(72dvh,28rem)] min-h-0 pr-0 [&>div:last-child]:!min-h-0 [&>div:last-child]:!flex-1 [&>div:last-child]:!overflow-hidden"
+                    className="!h-auto max-h-[85dvh] min-h-0 pr-0"
                   />
                 </div>
               </div>

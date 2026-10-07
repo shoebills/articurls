@@ -91,8 +91,8 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
       {/* Trial countdown chip */}
       {trialChip}
 
-      <div className="flex min-h-0 flex-1 flex-col">
-        <nav className="flex flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 min-h-0 gap-5">
+      <div className={cn("flex min-h-0 flex-1 flex-col", mobileTrayLayout && "overflow-y-auto overscroll-contain")}>
+        <nav className={cn("flex min-h-0 flex-col p-2.5 gap-5", !mobileTrayLayout && "flex-1 overflow-y-auto overscroll-contain")}>
           {/* Ungrouped Primary Links */}
           <div className="flex flex-col gap-1">
             {renderNavLinks(primaryLinks)}
@@ -107,8 +107,15 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
           </div>
         </nav>
 
-        {/* Footer Account Dropdown */}
-        <SidebarAccountDropdown onNavigate={onNavigate} />
+        {/* Footer Account Dropdown: pinned to panel bottom on desktop;
+            follows content with a capped 20px gap in the mobile tray */}
+        {mobileTrayLayout ? (
+          <div className="px-2.5 pb-2.5 pt-5">
+            <SidebarAccountDropdown onNavigate={onNavigate} />
+          </div>
+        ) : (
+          <SidebarAccountDropdown onNavigate={onNavigate} />
+        )}
       </div>
     </div>
   );
