@@ -10,21 +10,16 @@ import {
   getUmamiTimeseries,
   getUmamiMetrics,
   getUmamiExpandedMetrics,
+  getUmamiRealtime,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
   UmamiMetricsRow,
   UmamiMetricsType,
   UmamiExpandedMetricsRow,
 } from "@/lib/api";
+import { PeriodSelect } from "@/components/dashboard/period-select";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -124,16 +119,6 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
-  { value: "24h", label: "Last 24 hours" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "this_month", label: "This month" },
-  { value: "last_month", label: "Last month" },
-  { value: "this_year", label: "This year" },
-  { value: "1y", label: "Last year" },
-  { value: "all", label: "All time" },
-];
 
 function getCountryFlag(code: string): string {
   const codeUpper = (code || "").toUpperCase();
@@ -237,34 +222,32 @@ function formatDuration(seconds: number): string {
   return `${m}m ${s}s`;
 }
 
-function formatChartLabel(value: string, unit?: string, tz?: string): string {
+/**
+ * Format a bucket key from the timeseries API as a chart label.
+ * Keys are wall-clock strings in the site's timezone, so they are read
+ * positionally (never re-interpreted in the browser's timezone):
+ *   hour  -> "2026-05-22T14"      day  -> "2026-05-22"      month -> "2026-05"
+ */
+function formatChartLabel(value: string, unit?: string, longMonthNames = false): string {
   if (unit === "hour") {
-    try {
-      const date = new Date(value);
-      return date.toLocaleTimeString(undefined, {
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: false,
-        timeZone: tz,
-      });
-    } catch {
-      const timePart = value.replace("T", " ").slice(11, 16);
-      return timePart || value.slice(0, 16);
-    }
+    const hour = value.slice(11, 13);
+    return hour ? `${hour}:00` : value;
   }
 
   if (unit === "month") {
-    try {
-      const date = new Date(value);
-      return date.toLocaleDateString(undefined, { month: "short" });
-    } catch {
-      return value.slice(0, 7);
-    }
+    // "2026-05" -> "May" (or "May '26" for long ranges via longMonthNames)
+    const year = value.slice(0, 4);
+    const month = value.slice(5, 7);
+    if (!year || !month) return value;
+    const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const name = names[Number(month) - 1] || month;
+    return longMonthNames ? `${name} '${year.slice(2)}` : name;
   }
 
+  // Day: "2026-05-22" -> "May 22" (UTC-pinned parse of a date-only string)
   try {
-    const date = new Date(value);
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   } catch {
     return value.slice(0, 10);
   }
@@ -729,7 +712,7 @@ function AnalyticsMetricsCard({
   }, [rows]);
 
   return (
-    <Card className="flex flex-col justify-between min-w-0 w-full overflow-hidden h-[580px]">
+    <Card className="flex flex-col justify-between min-w-0 w-full overflow-hidden md:h-[580px]">
       <CardHeader className="pb-2 pt-4 px-3 sm:px-6 min-w-0 shrink-0">
         <CardTitle className="text-base sm:text-lg font-semibold truncate">{config.title}</CardTitle>
         {/* Tabs Row */}
@@ -755,7 +738,7 @@ function AnalyticsMetricsCard({
         </div>
       </CardHeader>
 
-      <CardContent className="pt-0 px-3 sm:px-6 pb-3 flex-1 flex flex-col justify-between min-w-0 min-h-0 overflow-hidden">
+      <CardContent className="pt-3 sm:pt-0 px-3 sm:px-6 pb-3 flex-1 flex flex-col justify-between min-w-0 min-h-0 overflow-hidden">
         <div className="min-w-0 min-h-0 overflow-hidden">
           {/* Table Header */}
           <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/40 text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide px-2">
@@ -861,14 +844,13 @@ function NativeAnalytics({ token }: { token: string }) {
   });
 
   const [err, setErr] = useState<string | null>(null);
+  const [onlineCount, setOnlineCount] = useState<number | null>(null);
 
   // Modal State for expanded details popup
   const [expandedModal, setExpandedModal] = useState<{
     cardTitle: string;
     tab: TabConfig;
   } | null>(null);
-
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     let cancelled = false;
@@ -897,191 +879,57 @@ function NativeAnalytics({ token }: { token: string }) {
     };
   }, [token, period]);
 
-  const trafficSeries = useMemo(() => {
-    if (!timeseries) return [];
+  useEffect(() => {
+    let cancelled = false;
 
-    const normX = (x: string) => {
-      if (timeseries.unit === "day") return x.slice(0, 10);
-      if (timeseries.unit === "month") return x.slice(0, 7);
-      return x;
-    };
-    const pvMap = new Map(timeseries.pageviews.map((p) => [normX(p.x), p.y]));
-    const viMap = new Map(timeseries.visitors.map((p) => [normX(p.x), p.y]));
-
-    if (timeseries.unit === "hour") {
-      const nowMs = Date.now();
-      const currentHourMs = nowMs - (nowMs % (60 * 60 * 1000));
-      const slots: string[] = [];
-      for (let i = 24; i >= 0; i--) {
-        const slotMs = currentHourMs - i * 60 * 60 * 1000;
-        const d = new Date(slotMs);
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        const dd = String(d.getUTCDate()).padStart(2, "0");
-        const hh = String(d.getUTCHours()).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}-${dd}T${hh}:00:00Z`);
-      }
-
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    const periodSlots: Record<string, number> = {
-      "7d": 7,
+    const fetchRealtime = () => {
+      getUmamiRealtime(token)
+        .then((res) => {
+          if (!cancelled) setOnlineCount(res.active_visitors ?? 0);
+        })
+        .catch(() => {
+          if (!cancelled) setOnlineCount(null);
+        });
     };
 
-    const slotCount = periodSlots[timeseries.period];
+    fetchRealtime();
+    const interval = setInterval(fetchRealtime, 30000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [token]);
 
-    if (timeseries.unit === "day" && slotCount) {
-      const now = new Date();
-      const slots: string[] = [];
-      for (let i = slotCount - 1; i >= 0; i--) {
-        const d = new Date(Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth(),
-          now.getUTCDate() - i,
-        ));
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        const dd = String(d.getUTCDate()).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}-${dd}`);
-      }
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    if (timeseries.unit === "month" && slotCount) {
-      const now = new Date();
-      const slots: string[] = [];
-      for (let i = slotCount - 1; i >= 0; i--) {
-        const d = new Date(Date.UTC(
-          now.getUTCFullYear(),
-          now.getUTCMonth() - i,
-          1,
-        ));
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}`);
-      }
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    if (timeseries.period === "this_year") {
-      const now = new Date();
-      const slots: string[] = [];
-      const currentMonth = now.getUTCMonth();
-      for (let i = 0; i <= currentMonth; i++) {
-        const d = new Date(Date.UTC(now.getUTCFullYear(), i, 1));
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}`);
-      }
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    if (timeseries.period === "1y") {
-      const now = new Date();
-      const slots: string[] = [];
-      const prevYear = now.getUTCFullYear() - 1;
-      for (let i = 0; i < 12; i++) {
-        const d = new Date(Date.UTC(prevYear, i, 1));
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}`);
-      }
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    const allKeys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()]));
-    if (allKeys.length === 0) return [];
-    allKeys.sort();
-    const minKey = allKeys[0];
-    const maxKey = allKeys[allKeys.length - 1];
-
-    if (timeseries.unit === "month") {
-      const [minY, minM] = minKey.split("-").map(Number);
-      const [maxY, maxM] = maxKey.split("-").map(Number);
-      const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
-      const slots: string[] = [];
-      for (let i = 0; i < totalMonths; i++) {
-        const d = new Date(Date.UTC(minY, minM - 1 + i, 1));
-        const yyyy = d.getUTCFullYear();
-        const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-        slots.push(`${yyyy}-${mm}`);
-      }
-      return slots.map((x) => ({
-        x,
-        pageviews: pvMap.get(x) ?? 0,
-        visitors: viMap.get(x) ?? 0,
-      }));
-    }
-
-    const [minY2, minM2, minD2] = minKey.split("-").map(Number);
-    const [maxY2, maxM2, maxD2] = maxKey.split("-").map(Number);
-    const startDate = new Date(Date.UTC(minY2, minM2 - 1, minD2));
-    const endDate = new Date(Date.UTC(maxY2, maxM2 - 1, maxD2));
-    const dayCount =
-      Math.round((endDate.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000)) + 1;
-    const slots: string[] = [];
-    for (let i = 0; i < dayCount; i++) {
-      const d = new Date(Date.UTC(minY2, minM2 - 1, minD2 + i));
-      const yyyy = d.getUTCFullYear();
-      const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
-      const dd = String(d.getUTCDate()).padStart(2, "0");
-      slots.push(`${yyyy}-${mm}-${dd}`);
-    }
-    return slots.map((x) => ({
-      x,
-      pageviews: pvMap.get(x) ?? 0,
-      visitors: viMap.get(x) ?? 0,
-    }));
-  }, [timeseries]);
+  const trafficSeries = timeseries?.series ?? [];
 
   const trafficLabelFormatter = (value: string | number) =>
-    formatChartLabel(String(value), timeseries?.unit, userTz);
+    formatChartLabel(String(value), timeseries?.unit);
   const trafficTooltipLabelFormatter = (label: unknown) =>
-    formatChartLabel(String(label ?? ""), timeseries?.unit, userTz);
+    formatChartLabel(String(label ?? ""), timeseries?.unit);
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
-      <DashboardBreadcrumb
-        trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Analytics" }]}
-      />
+      <div className="flex items-center justify-between gap-3">
+        <DashboardBreadcrumb
+          trail={[{ label: "Dashboard", href: "/dashboard" }, { label: "Analytics" }]}
+        />
+        {onlineCount !== null && (
+          <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-500 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            <span className="font-semibold text-foreground">{onlineCount}</span>
+            Online
+          </span>
+        )}
+      </div>
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Analytics</h1>
         </div>
         <div className="w-auto shrink-0">
-          <Select value={period} onValueChange={(v) => setPeriod(v as AnalyticsPeriod)}>
-            <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Analytics time range">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIOD_OPTIONS.map((o) => (
-                <SelectItem key={o.value} value={o.value}>
-                  {o.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <PeriodSelect value={period} onChange={(v) => setPeriod(v)} />
         </div>
       </div>
 

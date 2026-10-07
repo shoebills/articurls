@@ -4,13 +4,7 @@ import { useEffect, useState } from "react";
 import { subscribersAnalytics, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { PeriodSelect } from "@/components/dashboard/period-select";
 import {
   AreaChart,
   Area,
@@ -24,48 +18,49 @@ import type { SubscribersAnalytics } from "@/lib/types";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
-const PERIODS = ["24h", "7d", "this_month", "last_month", "this_year", "1y", "all"] as const;
 
-const PERIOD_OPTIONS: { value: (typeof PERIODS)[number]; label: string }[] = [
-  { value: "24h", label: "Last 24 hours" },
-  { value: "7d", label: "Last 7 days" },
-  { value: "this_month", label: "This month" },
-  { value: "last_month", label: "Last month" },
-  { value: "this_year", label: "This year" },
-  { value: "1y", label: "Last year" },
-  { value: "all", label: "All time" },
-];
-
-function seriesLabelFormatter(value: string, period: (typeof PERIODS)[number], tz?: string): string {
+/**
+ * Format a bucket key (wall-clock in the site's timezone) as a chart label:
+ *   hour -> "2026-05-22T14"   day -> "2026-05-22"   month -> "2026-05"
+ */
+function seriesLabelFormatter(value: string, unit?: string, longMonthNames = false): string {
+  if (unit === "hour") {
+    const hour = value.slice(11, 13);
+    return hour ? `${hour}:00` : value;
+  }
+  if (unit === "month") {
+    const year = value.slice(0, 4);
+    const month = value.slice(5, 7);
+    if (!year || !month) return value;
+    const names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const name = names[Number(month) - 1] || month;
+    return longMonthNames ? `${name} '${year.slice(2)}` : name;
+  }
   try {
-    const date = new Date(value);
-    if (period === "24h") {
-      return date.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false, timeZone: tz });
-    }
-    if (period === "7d" || period === "this_month" || period === "last_month") {
-      return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-    }
-    if (period === "all") {
-      return date.toLocaleDateString(undefined, { month: "short", year: "numeric" });
-    }
-    return date.toLocaleDateString(undefined, { month: "short" });
+    const date = new Date(`${value.slice(0, 10)}T00:00:00Z`);
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric", timeZone: "UTC" });
   } catch {
-    if (period === "24h") return value.slice(11, 16);
-    if (period === "7d" || period === "this_month" || period === "last_month") return value.slice(0, 10);
-    return value.slice(0, 7);
+    return value.slice(0, 10);
   }
 }
 
 export function SubscribersAnalyticsPanel() {
   const { token, loading: authLoading } = useAuth();
-  const [sPeriod, setSPeriod] = useState<(typeof PERIODS)[number]>("7d");
-  const [chartSubs, setChartSubs] = useState<{ timestamp: string; gained: number }[]>(() => {
+  const [sPeriod, setSPeriod] = useState<string>("7d");
+  const [unit, setUnit] = useState<string | undefined>(() => {
+    if (typeof window === "undefined") return undefined;
+    const t = localStorage.getItem("articurls_token");
+    if (!t) return undefined;
+    const cached = getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t);
+    return cached?.unit;
+  });
+  const [chartSubs, setChartSubs] = useState<{ x: string; gained: number }[]>(() => {
     if (typeof window === "undefined") return [];
     const t = localStorage.getItem("articurls_token");
     if (!t) return [];
     const cached = getCachedApiData<SubscribersAnalytics>("/analytics/subscribers?period=7d", t);
     return cached?.series.map((p) => ({
-      timestamp: p.timestamp,
+      x: p.x,
       gained: p.subscribed,
     })) ?? [];
   });
@@ -76,8 +71,6 @@ export function SubscribersAnalyticsPanel() {
     if (!t) return true;
     return !apiCacheHas("/analytics/subscribers?period=7d", t);
   });
-
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const totalGained = chartSubs.reduce((sum, p) => sum + p.gained, 0);
 
@@ -90,9 +83,10 @@ export function SubscribersAnalyticsPanel() {
       try {
         const data = await subscribersAnalytics(token, sPeriod);
         if (cancelled) return;
+        setUnit(data.unit);
         setChartSubs(
           data.series.map((p) => ({
-            timestamp: p.timestamp,
+            x: p.x,
             gained: p.subscribed,
           }))
         );
@@ -116,18 +110,11 @@ export function SubscribersAnalyticsPanel() {
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Audience</h1>
           <div className="w-auto shrink-0">
-            <Select value={sPeriod} onValueChange={(v) => setSPeriod(v as (typeof PERIODS)[number])}>
-              <SelectTrigger className="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto" aria-label="Subscribers time range">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {PERIOD_OPTIONS.map((o) => (
-                  <SelectItem key={o.value} value={o.value}>
-                    {o.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <PeriodSelect
+              value={sPeriod}
+              onChange={(v) => setSPeriod(v)}
+              triggerClassName="h-10 w-auto min-w-[120px] touch-manipulation sm:h-auto"
+            />
           </div>
         </div>
 
@@ -166,9 +153,9 @@ export function SubscribersAnalyticsPanel() {
                       opacity={0.4}
                     />
                     <XAxis
-                      dataKey="timestamp"
+                      dataKey="x"
                       tick={{ fontSize: 10 }}
-                      tickFormatter={(v) => seriesLabelFormatter(v, sPeriod, userTz)}
+                      tickFormatter={(v) => seriesLabelFormatter(String(v), unit, chartSubs.length > 12)}
                       tickLine={false}
                       axisLine={false}
                       interval={chartSubs.length > 10 ? "preserveStartEnd" : 0}
@@ -181,7 +168,7 @@ export function SubscribersAnalyticsPanel() {
                       width={32}
                     />
                     <Tooltip
-                      labelFormatter={(label) => seriesLabelFormatter(String(label), sPeriod, userTz)}
+                      labelFormatter={(label) => seriesLabelFormatter(String(label), unit, chartSubs.length > 12)}
                       contentStyle={{
                         fontSize: 12,
                         borderRadius: "10px",

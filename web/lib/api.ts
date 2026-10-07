@@ -36,7 +36,6 @@ import type {
   UmamiMetricsResponse,
   UmamiExpandedMetricsRow,
   UmamiExpandedMetricsResponse,
-  UmamiTimeseriesItem,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
   UmamiPagesResponse,
@@ -55,7 +54,6 @@ export type {
   UmamiMetricsResponse,
   UmamiExpandedMetricsRow,
   UmamiExpandedMetricsResponse,
-  UmamiTimeseriesItem,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
   UmamiPagesResponse,
@@ -304,6 +302,7 @@ export async function completeGoogleSignup(data: {
   name: string;
   site_name?: string;
   template_id?: string;
+  timezone?: string;
 }): Promise<{ access_token: string; token_type: string }> {
   return apiFetch("/auth/google/complete", {
     method: "POST",
@@ -821,7 +820,7 @@ export async function checkSubdomainAvailability(
 
 export async function createSite(
   token: string,
-  body: { subdomain: string; site_name?: string; template_id?: string }
+  body: { subdomain: string; site_name?: string; template_id?: string; timezone?: string }
 ): Promise<SiteSummary> {
   return apiFetch("/sites/", {
     method: "POST",
@@ -1028,7 +1027,9 @@ export async function deleteCustomDomain(token: string): Promise<{ message: stri
   });
 }
 
-export type AnalyticsPeriod = "24h" | "7d" | "this_month" | "last_month" | "this_year" | "1y" | "all";
+import type { AnalyticsPeriod } from "./periods";
+
+export type { AnalyticsPeriod } from "./periods";
 
 export async function getUmamiOverview(
   token: string,
@@ -1107,7 +1108,7 @@ export async function getUmamiTech(
 export async function getUmamiRealtime(
   token: string,
 ): Promise<UmamiRealtimeResponse> {
-  return apiFetch("/analytics/umami/realtime", { token });
+  return apiFetch("/analytics/umami/realtime", { token, disableCache: true });
 }
 
 // ── Subfolder API ──────────────────────────────────────────────────────────────

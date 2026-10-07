@@ -93,6 +93,15 @@ function SetupForm() {
     return raw.replace(/[^a-zA-Z0-9-]/g, "").toLowerCase();
   }
 
+  /** Browser IANA timezone, captured once to seed the site's timezone setting. */
+  function browserTimezone(): string {
+    try {
+      return Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+    } catch {
+      return "UTC";
+    }
+  }
+
   function canContinue(): boolean {
     if (step === 0) {
       return flow === "google" ? name.trim().length > 0 : blogName.trim().length > 0;
@@ -109,6 +118,7 @@ function SetupForm() {
       subdomain: cleanSubdomain(subdomain),
       site_name: blogName.trim() || undefined,
       template_id: "standard",
+      timezone: browserTimezone(),
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
     const plan = localStorage.getItem("pendingPlan");
@@ -127,6 +137,7 @@ function SetupForm() {
       name: name.trim(),
       site_name: blogName.trim() || undefined,
       template_id: "standard",
+      timezone: browserTimezone(),
     });
     localStorage.setItem(TOKEN_KEY, access_token);
     localStorage.setItem("articurls_last_login", "google");

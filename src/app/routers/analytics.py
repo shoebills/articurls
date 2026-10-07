@@ -5,8 +5,8 @@ from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
-from datetime import datetime, timedelta, timezone
-from typing import Optional, Literal
+from datetime import datetime, timezone
+from typing import Optional
 from fastapi.responses import StreamingResponse
 from urllib.parse import urlparse
 import io
@@ -29,30 +29,28 @@ def _umami_error_detail(exc_body: str) -> str:
         body = body[:200] + "…"
     return f"Failed to retrieve analytics: {body}"
 
-PERIOD_MAP = {
-    "24h": timedelta(hours=24),
-    "7d": timedelta(days=7),
-}
 
+def _resolve_period_bounds(period: str, current_user, current_site):
+    """Resolve a period token to (start_at_ms, end_at_ms) using the site timezone.
 
-def get_since(period: Optional[str], now: datetime | None = None):
-    if period is None:
-        return None
-    now = now or datetime.now(timezone.utc)
-    if period in PERIOD_MAP:
-        return now - PERIOD_MAP[period]
-    if period == "this_month":
-        return now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-    if period == "last_month":
-        if now.month == 1:
-            return now.replace(year=now.year - 1, month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
-        return now.replace(month=now.month - 1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    if period == "this_year":
-        return now.replace(month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    if period == "1y":
-        return now.replace(year=now.year - 1, month=1, day=1, hour=0, minute=0, second=0, microsecond=0)
-    return None
+    Raises HTTPException 400 for unknown periods.
+    """
+    from ..umami.service import get_umami_period_timestamps
 
+    site_tz = current_site.timezone or None
+    account_ts = None
+    if period == "all" and current_user.created_at is not None:
+        created = current_user.created_at
+        if created.tzinfo is None:
+            created = created.replace(tzinfo=timezone.utc)
+        account_ts = created.timestamp() * 1000
+    try:
+        return get_umami_period_timestamps(period, account_created_at=account_ts, tz=site_tz)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Unknown period: {period}",
+        )
 
 def normalize_referrer_host(value: str) -> str:
     raw = value.strip().lower()
@@ -64,157 +62,66 @@ def normalize_referrer_host(value: str) -> str:
     return host.lower().strip()
 
 
-def _time_unit(period: Optional[str]) -> Literal["hour", "day", "month"]:
-    if period == "24h":
-        return "hour"
-    if period in ("7d", "this_month", "last_month"):
-        return "day"
-    return "month"
-
-
-MONTH_SLOT_COUNTS: dict[str, int] = {}
-DAY_SLOT_COUNTS: dict[str, int] = {"7d": 7}
-HOUR_SLOT_COUNTS: dict[str, int] = {"24h": 25}
-
-
-def _generate_series_slots(start: datetime, unit: str, end: datetime, period: Optional[str] = None) -> list[datetime]:
-    slots: list[datetime] = []
+def _subscriber_bucket_key(ts, unit: str) -> str:
+    """Convert a date_trunc result (wall time in the site's timezone) to a slot key."""
     if unit == "hour":
-        slot_count = HOUR_SLOT_COUNTS.get(period or "", 0)
-        if slot_count and slot_count > 0:
-            anchor = end.replace(minute=0, second=0, microsecond=0)
-            for i in range(slot_count - 1, -1, -1):
-                slots.append(anchor - timedelta(hours=i))
-        else:
-            current = start.replace(minute=0, second=0, microsecond=0)
-            stop = end.replace(minute=59, second=59, microsecond=999999)
-            while current <= stop:
-                slots.append(current)
-                current += timedelta(hours=1)
-    elif unit == "day":
-        slot_count = DAY_SLOT_COUNTS.get(period or "", 0)
-        if slot_count and slot_count > 0:
-            anchor = end.replace(hour=0, minute=0, second=0, microsecond=0)
-            for i in range(slot_count - 1, -1, -1):
-                slots.append(anchor - timedelta(days=i))
-        else:
-            current = start.replace(hour=0, minute=0, second=0, microsecond=0)
-            stop = end.replace(hour=23, minute=59, second=59, microsecond=999999)
-            while current <= stop:
-                slots.append(current)
-                current += timedelta(days=1)
-    else:
-        slot_count = MONTH_SLOT_COUNTS.get(period or "", 0)
-        if slot_count and slot_count > 0:
-            anchor = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            for i in range(slot_count - 1, -1, -1):
-                year = anchor.year
-                month = anchor.month - i
-                while month < 1:
-                    month += 12
-                    year -= 1
-                slots.append(anchor.replace(year=year, month=month))
-        else:
-            current = start.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            stop = end.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-            while current <= stop:
-                slots.append(current)
-                if current.month == 12:
-                    current = current.replace(year=current.year + 1, month=1)
-                else:
-                    current = current.replace(month=current.month + 1)
-    return slots
-
-
-def _build_series(
-    db: Session,
-    site_id: int,
-    unit: str,
-    slots: list[datetime],
-    since: datetime,
-) -> list[dict]:
-    trunc_unit = {"hour": "hour", "day": "day", "month": "month"}[unit]
-
-    sub_rows = (
-        db.query(models.Subscriber)
-        .filter(
-            models.Subscriber.site_id == site_id,
-            models.Subscriber.subscribed_at >= since,
-        )
-        .with_entities(
-            func.date_trunc(trunc_unit, models.Subscriber.subscribed_at).label("ts"),
-            func.count(models.Subscriber.subscriber_id).label("cnt"),
-        )
-        .group_by("ts")
-        .all()
-    )
-
-    sub_map = {}
-    for row in sub_rows:
-        ts = row.ts.replace(tzinfo=timezone.utc) if row.ts.tzinfo is None else row.ts
-        sub_map[ts] = row.cnt
-
-    series = []
-    for slot in slots:
-        slot_aware = slot.replace(tzinfo=timezone.utc)
-        series.append({
-            "timestamp": slot_aware.isoformat(),
-            "subscribed": sub_map.get(slot_aware, 0),
-        })
-    return series
+        return ts.strftime("%Y-%m-%dT%H")
+    if unit == "day":
+        return ts.strftime("%Y-%m-%d")
+    return ts.strftime("%Y-%m")
 
 
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
 
+    from ..umami.service import get_umami_period_unit, generate_period_slots
+
     current_subscribers = db.query(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.site_id == current_site.site_id).scalar()
 
-    unit = _time_unit(period)
-    now = datetime.now(timezone.utc)
-    since = get_since(period, now)
+    site_tz = current_site.timezone or "UTC"
+    start_at, end_at = _resolve_period_bounds(period, current_user, current_site)
+    unit = get_umami_period_unit(period)
+
+    start_dt = datetime.fromtimestamp(start_at / 1000, tz=timezone.utc)
+    end_dt = datetime.fromtimestamp(end_at / 1000, tz=timezone.utc)
 
     sub_query = db.query(models.Subscriber).filter(models.Subscriber.site_id == current_site.site_id)
 
-    if since:
-        until = None
-        if period == "1y":
-            until = since.replace(month=12, day=31, hour=23, minute=59, second=59, microsecond=999999)
-        elif period == "last_month":
-            until = since.replace(day=28) + timedelta(days=4)
-            until = until.replace(day=1) - timedelta(microseconds=1)
-        if until:
-            subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since, models.Subscriber.subscribed_at <= until).scalar()
-        else:
-            subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).filter(models.Subscriber.subscribed_at >= since).scalar()
-    else:
-        subscribed = sub_query.with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
+    subscribed = sub_query.filter(
+        models.Subscriber.subscribed_at >= start_dt,
+        models.Subscriber.subscribed_at <= end_dt,
+    ).with_entities(func.count(models.Subscriber.subscriber_id)).scalar()
 
-    if since is None:
-        account_since = current_user.created_at
-        if account_since and account_since.tzinfo is None:
-            account_since = account_since.replace(tzinfo=timezone.utc)
-        if not account_since:
-            account_since = datetime(2026, 4, 1, 0, 0, 0, tzinfo=timezone.utc)
-        if unit == "month":
-            since = account_since.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
-        elif unit == "day":
-            since = account_since.replace(hour=0, minute=0, second=0, microsecond=0)
-        else:
-            since = account_since.replace(minute=0, second=0, microsecond=0)
+    trunc_unit = {"hour": "hour", "day": "day", "month": "month"}[unit]
 
-    slot_end = now
-    if period == "last_month":
-        slot_end = since.replace(day=28) + timedelta(days=4)
-        slot_end = slot_end.replace(day=1) - timedelta(days=1)
-        slot_end = slot_end.replace(hour=23, minute=59, second=59, microsecond=999999)
-    if period == "1y":
-        slot_end = since.replace(month=12, day=1, hour=0, minute=0, second=0, microsecond=0)
+    # Bucket in the site's timezone: timezone(tz, timestamptz) yields the wall
+    # time in that zone, so days align with the user's local calendar.
+    sub_rows = (
+        sub_query.filter(
+            models.Subscriber.subscribed_at >= start_dt,
+            models.Subscriber.subscribed_at <= end_dt,
+        )
+        .with_entities(
+            func.date_trunc(trunc_unit, func.timezone(site_tz, models.Subscriber.subscribed_at)).label("ts"),
+            func.count(models.Subscriber.subscriber_id).label("cnt"),
+        )
+        .group_by("ts")
+        .all()
+    )
+    sub_map = {
+        _subscriber_bucket_key(row.ts, unit): row.cnt
+        for row in sub_rows
+    }
 
-    slots = _generate_series_slots(since, unit, slot_end, period)
-    series = _build_series(db, current_site.site_id, unit, slots, since)
+    slots = generate_period_slots(start_at, end_at, unit, site_tz)
+    series = [
+        {"x": slot, "subscribed": sub_map.get(slot, 0)}
+        for slot in slots
+    ]
 
     return {
         "period": period,
+        "unit": unit,
         "current_subscribers": current_subscribers,
         "subscribed": subscribed,
         "series": series,
@@ -257,7 +164,6 @@ def get_umami_overview(
 
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
 
     if not current_site.umami_website_id:
         raise HTTPException(
@@ -273,7 +179,7 @@ def get_umami_overview(
         )
 
     try:
-        start_at, end_at = get_umami_period_timestamps(period)
+        start_at, end_at = _resolve_period_bounds(period, current_user, current_site)
         stats = client.get_website_stats_sync(
             current_site.umami_website_id,
             start_at=start_at,
@@ -362,7 +268,11 @@ def get_umami_timeseries(
 
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps, get_umami_period_unit
+    from ..umami.service import (
+        get_umami_period_unit,
+        generate_period_slots,
+        normalize_bucket_key,
+    )
 
     if not current_site.umami_website_id:
         raise HTTPException(
@@ -377,14 +287,10 @@ def get_umami_timeseries(
             detail="Analytics service is not configured.",
         )
 
+    site_tz = current_site.timezone or None
+
     try:
-        account_ts = None
-        if period == "all" and current_user.created_at is not None:
-            created = current_user.created_at
-            if created.tzinfo is None:
-                created = created.replace(tzinfo=timezone.utc)
-            account_ts = created.timestamp() * 1000
-        start_at, end_at = get_umami_period_timestamps(period, account_created_at=account_ts)
+        start_at, end_at = _resolve_period_bounds(period, current_user, current_site)
         unit = get_umami_period_unit(period)
 
         pageviews_data = client.get_website_pageviews_sync(
@@ -392,20 +298,35 @@ def get_umami_timeseries(
             start_at=start_at,
             end_at=end_at,
             unit=unit,
+            timezone=site_tz or None,
         )
 
         # Umami's pageviews endpoint returns `sessions` for the secondary series
-        # in current docs/API versions. Keep exposing `visitors` to the frontend
-        # so we can fix the flat line without changing the chart contract.
+        # in current docs/API versions.
         visitors_series = pageviews_data.get("visitors")
         if visitors_series is None:
             visitors_series = pageviews_data.get("sessions", [])
 
+        # Fill every slot between the period bounds so the chart never has gaps,
+        # regardless of the period or bucket unit.
+        slots = generate_period_slots(start_at, end_at, unit, site_tz)
+        pv_map = {
+            normalize_bucket_key(row.get("x", ""), unit): row.get("y", 0)
+            for row in pageviews_data.get("pageviews", [])
+        }
+        vi_map = {
+            normalize_bucket_key(row.get("x", ""), unit): row.get("y", 0)
+            for row in visitors_series or []
+        }
+        series = [
+            {"x": slot, "pageviews": pv_map.get(slot, 0), "visitors": vi_map.get(slot, 0)}
+            for slot in slots
+        ]
+
         return {
             "period": period,
             "unit": unit,
-            "pageviews": pageviews_data.get("pageviews", []),
-            "visitors": visitors_series,
+            "series": series,
         }
     except UmamiError as exc:
         raise HTTPException(
@@ -445,7 +366,7 @@ def get_umami_metrics(
     current_site: models.Site = Depends(get_current_site),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
+    from ..umami.service import umami_internal_domains
 
     if type not in VALID_METRICS_TYPES:
         raise HTTPException(
@@ -467,7 +388,7 @@ def get_umami_metrics(
         )
 
     try:
-        start_at, end_at = get_umami_period_timestamps(period)
+        start_at, end_at = _resolve_period_bounds(period, current_user, current_site)
         rows = client.get_website_metrics_sync(
             current_site.umami_website_id,
             start_at=start_at,
@@ -525,7 +446,7 @@ def get_umami_metrics_expanded(
     current_site: models.Site = Depends(get_current_site),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
+    from ..umami.service import umami_internal_domains
 
     if type not in VALID_METRICS_TYPES:
         raise HTTPException(
@@ -547,7 +468,7 @@ def get_umami_metrics_expanded(
         )
 
     try:
-        start_at, end_at = get_umami_period_timestamps(period)
+        start_at, end_at = _resolve_period_bounds(period, current_user, current_site)
         rows = client.get_website_expanded_metrics_sync(
             current_site.umami_website_id,
             start_at=start_at,

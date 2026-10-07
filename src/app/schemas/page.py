@@ -1,8 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Literal, Optional
 from datetime import datetime
 import uuid
 from .. import models
+from ..utils.timezones import normalize_timezone
 
 
 class UserPageBase(BaseModel):
@@ -93,9 +94,18 @@ class DesignSettings(BaseModel):
     hero_title: Optional[str] = None
     hero_description: Optional[str] = None
     site_language: str = "en"
+    timezone: Optional[str] = None
     og_locale: Optional[str] = None
     atom_enabled: bool = False
     rss_enabled: bool = False
+
+    @field_validator("timezone")
+    @classmethod
+    def _valid_timezone(cls, v: Optional[str]) -> Optional[str]:
+        normalized = normalize_timezone(v)
+        if v and normalized is None:
+            raise ValueError("Invalid IANA timezone")
+        return normalized
 
     cta_heading: Optional[str] = None
     cta_description: Optional[str] = None

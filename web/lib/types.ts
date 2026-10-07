@@ -344,6 +344,7 @@ export interface SiteSummary {
   domain_status: DomainStatus;
   site_name?: string | null;
   template_id: string;
+  timezone?: string | null;
   favicon_url?: string | null;
   created_at?: string | null;
   post_count: number;
@@ -459,6 +460,7 @@ export interface DesignSettings {
   hero_title?: string | null;
   hero_description?: string | null;
   site_language?: string;
+  timezone?: string | null;
   og_locale?: string | null;
   atom_enabled?: boolean;
   rss_enabled?: boolean;
@@ -548,12 +550,13 @@ export interface TokenResponse {
 }
 
 export interface SubscribersAnalyticsSeriesPoint {
-  timestamp: string;
+  x: string;
   subscribed: number;
 }
 
 export interface SubscribersAnalytics {
   period: string;
+  unit: string;
   current_subscribers: number;
   subscribed: number;
   series: SubscribersAnalyticsSeriesPoint[];
@@ -706,17 +709,16 @@ export interface UmamiOverviewResponse {
   change?: Record<string, number | null>;
 }
 
-export interface UmamiTimeseriesItem {
+export interface UmamiTimeseriesPoint {
   x: string;
-  t?: string;
-  y: number;
+  pageviews: number;
+  visitors: number;
 }
 
 export interface UmamiTimeseriesResponse {
   period: string;
   unit: string;
-  pageviews: UmamiTimeseriesItem[];
-  visitors: UmamiTimeseriesItem[];
+  series: UmamiTimeseriesPoint[];
 }
 
 export interface UmamiPagesResponse {

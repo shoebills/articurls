@@ -22,17 +22,29 @@ class UmamiOverviewResponse(BaseModel):
     change: Optional[Dict[str, Optional[float]]] = None
 
 
-class UmamiTimeseriesItem(BaseModel):
+class UmamiTimeseriesPoint(BaseModel):
     x: str
-    t: Optional[str] = None
-    y: int
+    pageviews: int = 0
+    visitors: int = 0
 
 
 class UmamiTimeseriesResponse(BaseModel):
     period: str
     unit: str
-    pageviews: List[UmamiTimeseriesItem]
-    visitors: List[UmamiTimeseriesItem]
+    series: List[UmamiTimeseriesPoint]
+
+
+class SubscribersSeriesPoint(BaseModel):
+    x: str
+    subscribed: int = 0
+
+
+class SubscribersAnalyticsResponse(BaseModel):
+    period: str
+    unit: str
+    current_subscribers: int
+    subscribed: int
+    series: List[SubscribersSeriesPoint]
 
 
 class UmamiMetricsResponse(BaseModel):

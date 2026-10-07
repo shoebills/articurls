@@ -2,6 +2,13 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* react-day-picker modifier variants (class names applied to Day cells) */
+@custom-variant rdp-selected (&:where(.selected, .selected *));
+@custom-variant rdp-range-start (&:where(.range_start, .range_start *));
+@custom-variant rdp-range-end (&:where(.range_end, .range_end *));
+@custom-variant rdp-range-middle (&:where(.range_middle, .range_middle *));
+@custom-variant rdp-today (&:where(.today, .today *));
+
 :root {
   --background: oklch(0.985 0.004 260);
   --foreground: oklch(0.16 0.028 265);

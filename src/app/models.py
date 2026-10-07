@@ -59,6 +59,7 @@ class Site(Base):
     hero_title = Column(String(120), nullable=True)
     hero_description = Column(Text, nullable=True)
     site_language = Column(String(8), nullable=False, default="en", server_default="en")
+    timezone = Column(String(64), nullable=True, default=None)
     og_locale = Column(String(10), nullable=True)
     atom_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
     rss_enabled = Column(Boolean, nullable=False, default=False)

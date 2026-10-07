@@ -1,4 +1,6 @@
-from pydantic import BaseModel, EmailStr, Field
+from pydantic import BaseModel, EmailStr, Field, field_validator
+
+from ..utils.timezones import normalize_timezone
 
 
 class GoogleUserInfo(BaseModel):
@@ -28,3 +30,12 @@ class CompleteGoogleSignup(BaseModel):
     name: str  # Allow user to edit the name from Google
     site_name: str | None = None
     template_id: str | None = "standard"
+    timezone: str | None = None
+
+    @field_validator("timezone")
+    @classmethod
+    def _valid_timezone(cls, v: str | None) -> str | None:
+        normalized = normalize_timezone(v)
+        if v and normalized is None:
+            raise ValueError("Invalid IANA timezone")
+        return normalized

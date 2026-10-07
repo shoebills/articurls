@@ -48,6 +48,27 @@ const LANGUAGES = [
   { code: "hi", name: "Hindi (hi)" },
 ];
 
+/** All IANA timezones supported by the browser, grouped by region. */
+function getIanaTimezones(): { region: string; zones: string[] }[] {
+  let zones: string[] = [];
+  try {
+    zones = [...Intl.supportedValuesOf("timeZone")];
+  } catch {
+    zones = ["UTC"];
+  }
+  const groups = new Map<string, string[]>();
+  for (const zone of zones) {
+    const region = zone.split("/")[0];
+    if (!groups.has(region)) groups.set(region, []);
+    groups.get(region)!.push(zone);
+  }
+  return Array.from(groups.entries())
+    .map(([region, list]) => ({ region, zones: list }))
+    .sort((a, b) => a.region.localeCompare(b.region));
+}
+
+const TIMEZONE_GROUPS = getIanaTimezones();
+
 export default function GeneralSettingsPage() {
   const { token, refreshUser, refreshSites, user: ctxUser } = useAuth();
   const [err, setErr] = useState<string | null>(null);
@@ -66,6 +87,8 @@ export default function GeneralSettingsPage() {
   const [heroDescriptionInitial, setHeroDescriptionInitial] = useState("");
   const [siteLanguage, setSiteLanguage] = useState("en");
   const [siteLanguageInitial, setSiteLanguageInitial] = useState("en");
+  const [siteTimezone, setSiteTimezone] = useState("");
+  const [siteTimezoneInitial, setSiteTimezoneInitial] = useState("");
   const [ogLocale, setOgLocale] = useState("");
   const [ogLocaleInitial, setOgLocaleInitial] = useState("");
   const [rssEnabled, setRssEnabled] = useState(false);
@@ -106,6 +129,8 @@ export default function GeneralSettingsPage() {
       setHeroDescriptionInitial(d.hero_description || "");
       setSiteLanguage(d.site_language || "en");
       setSiteLanguageInitial(d.site_language || "en");
+      setSiteTimezone(d.timezone || "");
+      setSiteTimezoneInitial(d.timezone || "");
       setOgLocale(d.og_locale || "");
       setOgLocaleInitial(d.og_locale || "");
       setRssEnabled(d.rss_enabled ?? false);
@@ -133,6 +158,7 @@ export default function GeneralSettingsPage() {
         hero_title: heroTitle.trim() || null,
         hero_description: heroDescription.trim() || null,
         site_language: siteLanguage || "en",
+        timezone: siteTimezone.trim() || null,
         og_locale: ogLocale.trim() || null,
         rss_enabled: rssEnabled,
         atom_enabled: atomEnabled,
@@ -140,6 +166,7 @@ export default function GeneralSettingsPage() {
       setHeroTitleInitial(heroTitle.trim());
       setHeroDescriptionInitial(heroDescription.trim());
       setSiteLanguageInitial(siteLanguage);
+      setSiteTimezoneInitial(siteTimezone.trim());
       setOgLocaleInitial(ogLocale.trim());
       setRssEnabledInitial(rssEnabled);
       setAtomEnabledInitial(atomEnabled);
@@ -172,6 +199,7 @@ export default function GeneralSettingsPage() {
     heroTitle.trim() !== heroTitleInitial ||
     heroDescription.trim() !== heroDescriptionInitial ||
     siteLanguage !== siteLanguageInitial ||
+    siteTimezone.trim() !== siteTimezoneInitial ||
     ogLocale.trim() !== ogLocaleInitial ||
     rssEnabled !== rssEnabledInitial ||
     atomEnabled !== atomEnabledInitial;
@@ -344,6 +372,38 @@ export default function GeneralSettingsPage() {
                       <SelectItem key={l.code} value={l.code}>
                         {l.name}
                       </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2.5">
+                <div className="space-y-1.5">
+                  <Label htmlFor="site_timezone">Timezone</Label>
+                  <p className="text-xs text-muted-foreground sm:text-sm">
+                    Used for calendar-based periods (Today, This month, …) and grouping in your analytics charts.
+                  </p>
+                </div>
+                <Select
+                  value={siteTimezone}
+                  onValueChange={setSiteTimezone}
+                  disabled={busy}
+                >
+                  <SelectTrigger id="site_timezone" className="mt-2 max-w-1/2">
+                    <SelectValue placeholder="Select timezone" />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-72">
+                    {TIMEZONE_GROUPS.map((group) => (
+                      <div key={group.region}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          {group.region}
+                        </div>
+                        {group.zones.map((zone) => (
+                          <SelectItem key={zone} value={zone}>
+                            {zone}
+                          </SelectItem>
+                        ))}
+                      </div>
                     ))}
                   </SelectContent>
                 </Select>

@@ -327,6 +327,7 @@ async def complete_google_signup(
         meta_title=f"{name}'s Blog",
         meta_description=f"Explore all the blogs published by {name}.",
         site_name=(request.site_name or "").strip() or None,
+        timezone=request.timezone,
     )
     if request.template_id in ("standard",):
         new_site.template_id = request.template_id

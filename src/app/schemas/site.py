@@ -1,13 +1,24 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from datetime import datetime
 from typing import Optional, List, Literal
 import uuid
+
+from ..utils.timezones import normalize_timezone
 
 
 class SiteCreate(BaseModel):
     subdomain: str
     site_name: Optional[str] = None
     template_id: Optional[str] = "standard"
+    timezone: Optional[str] = None
+
+    @field_validator("timezone")
+    @classmethod
+    def _valid_timezone(cls, v: Optional[str]) -> Optional[str]:
+        normalized = normalize_timezone(v)
+        if v and normalized is None:
+            raise ValueError("Invalid IANA timezone")
+        return normalized
 
 
 class SiteUpdate(BaseModel):
@@ -25,6 +36,7 @@ class SiteSummary(BaseModel):
     domain_status: str
     site_name: Optional[str] = None
     template_id: str
+    timezone: Optional[str] = None
     favicon_url: Optional[str] = None
     created_at: Optional[datetime] = None
     post_count: int = 0
