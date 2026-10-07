@@ -119,6 +119,7 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+import { GeographyCard } from "@/components/dashboard/world-map";
 
 function getCountryFlag(code: string): string {
   const codeUpper = (code || "").toUpperCase();
@@ -1061,6 +1062,9 @@ function NativeAnalytics({ token }: { token: string }) {
               />
             ))}
           </div>
+
+          {/* World Map */}
+          <GeographyCard token={token} period={period} />
         </div>
       )}
 
