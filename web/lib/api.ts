@@ -31,7 +31,11 @@ import type {
   AdminPaymentListItem,
   TokenResponse,
   TransactionOut,
+  UmamiMetricsType,
   UmamiMetricsRow,
+  UmamiMetricsResponse,
+  UmamiExpandedMetricsRow,
+  UmamiExpandedMetricsResponse,
   UmamiTimeseriesItem,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
@@ -46,7 +50,11 @@ import type {
 } from "./types";
 
 export type {
+  UmamiMetricsType,
   UmamiMetricsRow,
+  UmamiMetricsResponse,
+  UmamiExpandedMetricsRow,
+  UmamiExpandedMetricsResponse,
   UmamiTimeseriesItem,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
@@ -1036,6 +1044,28 @@ export async function getUmamiTimeseries(
 ): Promise<UmamiTimeseriesResponse> {
   const q = new URLSearchParams({ period });
   return apiFetch(`/analytics/umami/timeseries?${q.toString()}`, { token });
+}
+
+export async function getUmamiMetrics(
+  token: string,
+  type: UmamiMetricsType,
+  period: AnalyticsPeriod = "7d",
+  limit = 10,
+): Promise<UmamiMetricsResponse> {
+  const q = new URLSearchParams({ type, period, limit: String(limit) });
+  return apiFetch(`/analytics/umami/metrics?${q.toString()}`, { token });
+}
+
+export async function getUmamiExpandedMetrics(
+  token: string,
+  type: UmamiMetricsType,
+  period: AnalyticsPeriod = "7d",
+  limit = 100,
+  search?: string,
+): Promise<UmamiExpandedMetricsResponse> {
+  const q = new URLSearchParams({ type, period, limit: String(limit) });
+  if (search && search.trim()) q.set("search", search.trim());
+  return apiFetch(`/analytics/umami/metrics/expanded?${q.toString()}`, { token });
 }
 
 export async function getUmamiPages(

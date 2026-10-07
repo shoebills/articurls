@@ -35,6 +35,27 @@ class UmamiTimeseriesResponse(BaseModel):
     visitors: List[UmamiTimeseriesItem]
 
 
+class UmamiMetricsResponse(BaseModel):
+    period: str
+    type: str
+    rows: List[MetricsRow]
+
+
+class UmamiExpandedMetricsRow(BaseModel):
+    name: str
+    visitors: int = 0
+    visits: int = 0
+    pageviews: int = 0
+    bounces: Optional[int] = 0
+    totaltime: Optional[int] = 0
+
+
+class UmamiExpandedMetricsResponse(BaseModel):
+    period: str
+    type: str
+    rows: List[UmamiExpandedMetricsRow]
+
+
 class UmamiPagesResponse(BaseModel):
     period: str
     rows: List[MetricsRow]

@@ -8,17 +8,13 @@ import {
   AnalyticsPeriod,
   getUmamiOverview,
   getUmamiTimeseries,
-  getUmamiPages,
-  getUmamiSources,
-  getUmamiGeo,
-  getUmamiTech,
+  getUmamiMetrics,
+  getUmamiExpandedMetrics,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
-  UmamiPagesResponse,
-  UmamiSourcesResponse,
-  UmamiGeoResponse,
-  UmamiTechResponse,
   UmamiMetricsRow,
+  UmamiMetricsType,
+  UmamiExpandedMetricsRow,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +25,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 import {
   Users,
@@ -42,6 +42,14 @@ import {
   ExternalLink,
   Zap,
   Compass,
+  Maximize2,
+  Search,
+  Download,
+  X,
+  MapPin,
+  Building2,
+  Radio,
+  FileText,
 } from "lucide-react";
 import {
   SiGooglechrome,
@@ -113,6 +121,7 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
+
 const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "24h", label: "Last 24 hours" },
   { value: "7d", label: "Last 7 days" },
@@ -123,16 +132,8 @@ const PERIOD_OPTIONS: { value: AnalyticsPeriod; label: string }[] = [
   { value: "all", label: "All time" },
 ];
 
-const COLORS = [
-  "oklch(0.6 0.15 145)",
-  "oklch(0.55 0.2 25)",
-  "oklch(0.58 0.18 280)",
-  "oklch(0.62 0.16 30)",
-  "oklch(0.56 0.17 200)",
-];
-
 function getCountryFlag(code: string): string {
-  const codeUpper = code.toUpperCase();
+  const codeUpper = (code || "").toUpperCase();
   if (codeUpper.length !== 2) return "";
   const offset = 0x1F1E6;
   const first = codeUpper.charCodeAt(0) - 0x41 + offset;
@@ -143,7 +144,7 @@ function getCountryFlag(code: string): string {
 const countryName = new Intl.DisplayNames(["en"], { type: "region" });
 
 function getReferrerIcon(domain: string) {
-  const domainLower = domain.toLowerCase();
+  const domainLower = (domain || "").toLowerCase();
   if (domainLower.includes("google")) return SiGoogle;
   if (domainLower.includes("t.co") || domainLower.includes("twitter") || domainLower.includes("x.com")) return SiX;
   if (domainLower.includes("instagram")) return SiInstagram;
@@ -187,7 +188,7 @@ function getReferrerIcon(domain: string) {
 }
 
 function getBrowserIcon(browser: string) {
-  const browserLower = browser.toLowerCase();
+  const browserLower = (browser || "").toLowerCase();
   if (browserLower.includes("chrome")) return SiGooglechrome;
   if (browserLower.includes("firefox")) return SiFirefox;
   if (browserLower.includes("safari")) return SiSafari;
@@ -197,52 +198,30 @@ function getBrowserIcon(browser: string) {
   if (browserLower.includes("vivaldi")) return SiVivaldi;
   if (browserLower.includes("duckduckgo")) return SiDuckduckgo;
   if (browserLower.includes("samsung")) return SiSamsung;
-  if (browserLower.includes("yandex")) return Compass; // fallback lucide icon
+  if (browserLower.includes("yandex")) return Compass;
   if (browserLower.includes("torbrowser") || browserLower.includes("tor browser") || browserLower.includes("tor ")) return SiTorbrowser;
-  if (browserLower.includes("librewolf")) return Zap; // LibreWolf fork of Firefox, use flame-like icon
-  if (browserLower.includes("uc browser")) return Globe;
-  if (browserLower.includes("maxthon")) return Globe;
-  if (browserLower.includes("puffin")) return Globe;
-  if (browserLower.includes("sleipnir")) return Globe;
-  if (browserLower.includes("palemoon")) return Globe;
-  if (browserLower.includes("waterfox")) return Globe;
-  if (browserLower.includes("falkon")) return Globe;
-  if (browserLower.includes("konqueror")) return Globe;
-  if (browserLower.includes("epiphany")) return Globe;
-  if (browserLower.includes("midori")) return Globe;
-  if (browserLower.includes("luakit")) return Globe;
-  if (browserLower.includes("qutebrowser")) return Globe;
-  if (browserLower.includes("surf")) return Globe;
-  if (browserLower.includes("uzbl")) return Globe;
-  if (browserLower.includes("vimb")) return Globe;
-  if (browserLower.includes("dillo")) return Globe;
-  if (browserLower.includes("netsurf")) return Globe;
+  if (browserLower.includes("librewolf")) return Zap;
   return Globe;
 }
 
 function getOsIcon(os: string) {
-  const osLower = os.toLowerCase();
-  if (osLower === "windows" || osLower.startsWith("windows ")) return MonitorIcon; // use Monitor for Windows
+  const osLower = (os || "").toLowerCase();
+  if (osLower === "windows" || osLower.startsWith("windows ")) return MonitorIcon;
   if (osLower.includes("mac")) return SiApple;
   if (osLower.includes("ubuntu")) return SiUbuntu;
   if (osLower.includes("debian")) return SiDebian;
   if (osLower.includes("fedora")) return SiFedora;
   if (osLower.includes("linux")) return SiLinux;
   if (osLower.includes("android")) return SiAndroid;
-  if (osLower.includes("ios")) return SiIos;
-  if (osLower.includes("ipad")) return SiIos;
-  if (osLower.includes("ipod")) return SiIos;
+  if (osLower.includes("ios") || osLower.includes("ipad") || osLower.includes("ipod")) return SiIos;
   if (osLower.includes("chrome")) return MonitorIcon;
   return Laptop;
 }
 
 function getDeviceIcon(device: string) {
-  const deviceLower = device.toLowerCase();
-  if (deviceLower.includes("mobile")) return Smartphone;
-  if (deviceLower.includes("tablet")) return Smartphone;
-  if (deviceLower.includes("ipad")) return Smartphone;
+  const deviceLower = (device || "").toLowerCase();
+  if (deviceLower.includes("mobile") || deviceLower.includes("tablet") || deviceLower.includes("ipad")) return Smartphone;
   if (deviceLower.includes("desktop")) return MonitorIcon;
-  if (deviceLower.includes("laptop")) return Laptop;
   return Laptop;
 }
 
@@ -287,6 +266,115 @@ function formatChartLabel(value: string, unit?: string, tz?: string): string {
     return value.slice(0, 10);
   }
 }
+
+function renderMetricIcon(type: UmamiMetricsType, value: string) {
+  if (type === "country") {
+    const flag = getCountryFlag(value);
+    if (flag) return <span className="text-base shrink-0 leading-none mr-0.5">{flag}</span>;
+    return <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "region") {
+    return <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "city") {
+    return <Building2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "referrer") {
+    if (!value || value.trim() === "") {
+      return <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+    }
+    const ReferrerIcon = getReferrerIcon(value);
+    return <ReferrerIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "channel") {
+    return <Radio className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "browser") {
+    const BrowserIcon = getBrowserIcon(value);
+    return <BrowserIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "os") {
+    const OsIcon = getOsIcon(value);
+    return <OsIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "device") {
+    const DeviceIcon = getDeviceIcon(value);
+    return <DeviceIcon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />;
+  }
+  if (type === "path" || type === "fullPath" || type === "entry" || type === "exit") {
+    return <FileText className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />;
+  }
+  return null;
+}
+
+function renderMetricLabel(type: UmamiMetricsType, value: string): string {
+  if (!value || value.trim() === "") {
+    if (type === "referrer") return "Direct";
+    return "/";
+  }
+  if (type === "country") {
+    try {
+      return countryName.of(value.toUpperCase()) || value;
+    } catch {
+      return value;
+    }
+  }
+  if (type === "device") {
+    return value.charAt(0).toUpperCase() + value.slice(1);
+  }
+  return value;
+}
+
+interface TabConfig {
+  id: UmamiMetricsType;
+  label: string;
+  header: string;
+}
+
+interface CardConfig {
+  id: string;
+  title: string;
+  tabs: TabConfig[];
+}
+
+const CARDS_CONFIG: CardConfig[] = [
+  {
+    id: "pages",
+    title: "Pages",
+    tabs: [
+      { id: "path", label: "Path", header: "Path" },
+      { id: "fullPath", label: "URL", header: "URL" },
+      { id: "entry", label: "Entry page", header: "Path" },
+      { id: "exit", label: "Exit page", header: "Path" },
+    ],
+  },
+  {
+    id: "sources",
+    title: "Sources",
+    tabs: [
+      { id: "referrer", label: "Referrers", header: "Referrer" },
+      { id: "channel", label: "Channels", header: "Channel" },
+    ],
+  },
+  {
+    id: "environment",
+    title: "Environment",
+    tabs: [
+      { id: "browser", label: "Browsers", header: "Browser" },
+      { id: "os", label: "OS", header: "OS" },
+      { id: "device", label: "Devices", header: "Device" },
+    ],
+  },
+  {
+    id: "location",
+    title: "Location",
+    tabs: [
+      { id: "country", label: "Countries", header: "Country" },
+      { id: "region", label: "Regions", header: "Region" },
+      { id: "city", label: "Cities", header: "City" },
+    ],
+  },
+];
 
 function KpiCard({
   title,
@@ -341,12 +429,376 @@ function KpiCardSkeleton() {
   );
 }
 
-function MetricsTableHeader({ label }: { label: string }) {
+function ExpandedMetricsModal({
+  isOpen,
+  onClose,
+  token,
+  period,
+  cardTitle,
+  tab,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  token: string;
+  period: AnalyticsPeriod;
+  cardTitle: string;
+  tab: TabConfig;
+}) {
+  const [data, setData] = useState<UmamiExpandedMetricsRow[]>([]);
+  const [loadedKey, setLoadedKey] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+
+  const currentKey = `${tab.id}:${period}`;
+  const loading = currentKey !== loadedKey;
+
+  const isSession = ["browser", "os", "device", "country", "region", "city"].includes(tab.id);
+  const isPathTab = ["path", "fullPath", "entry", "exit"].includes(tab.id);
+
+  useEffect(() => {
+    if (!isOpen || !token) return;
+    let cancelled = false;
+
+    getUmamiExpandedMetrics(token, tab.id, period, 100)
+      .then((res) => {
+        if (!cancelled) {
+          setData(res.rows || []);
+          setError(null);
+          setLoadedKey(currentKey);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof ApiError ? err.message : "Failed to load expanded metrics");
+          setLoadedKey(currentKey);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, token, tab.id, period, currentKey]);
+
+  const filteredRows = useMemo(() => {
+    if (!search.trim()) return data;
+    const q = search.trim().toLowerCase();
+    return data.filter((r) => {
+      const label = renderMetricLabel(tab.id, r.name).toLowerCase();
+      const rawName = (r.name || "").toLowerCase();
+      return label.includes(q) || rawName.includes(q);
+    });
+  }, [data, search, tab.id]);
+
+  const handleDownload = () => {
+    if (!filteredRows.length) return;
+    const headers = isSession
+      ? [tab.header, "Visitors", "Visits", "Views", "Bounce rate", "Visit duration"]
+      : [tab.header, "Visitors", "Visits", "Views"];
+
+    const lines = [headers.join(",")];
+    for (const r of filteredRows) {
+      const name = `"${renderMetricLabel(tab.id, r.name).replace(/"/g, '""')}"`;
+      if (isSession) {
+        const bounce = r.visits > 0
+          ? `${Math.round((Math.min(r.visits, r.bounces ?? 0) / r.visits) * 100)}%`
+          : "0%";
+        const duration = r.visits > 0
+          ? formatDuration((r.totaltime ?? 0) / r.visits)
+          : "0s";
+        lines.push([name, r.visitors, r.visits, r.pageviews, `"${bounce}"`, `"${duration}"`].join(","));
+      } else {
+        lines.push([name, r.visitors, r.visits, r.pageviews].join(","));
+      }
+    }
+
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${tab.id}-metrics.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   return (
-    <div className="flex items-center justify-between pb-1 mb-1 border-b text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide">
-      <span>{label}</span>
-      <span>Visitors</span>
-    </div>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="!w-[min(calc(100vw-2rem),56rem)] !max-w-4xl max-h-[85vh] p-4 sm:p-6 flex flex-col gap-4">
+        <DialogTitle className="sr-only">
+          {cardTitle} - {tab.label}
+        </DialogTitle>
+
+        {/* Top Controls: Search input on left, Download and Close on right */}
+        <div className="flex items-center justify-between gap-3 pt-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              placeholder="Search..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-9 text-xs sm:text-sm"
+            />
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 cursor-pointer"
+              onClick={handleDownload}
+              title="Download CSV"
+              disabled={!filteredRows.length}
+            >
+              <Download className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 cursor-pointer"
+              onClick={onClose}
+              title="Close"
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Table View: Horizontally scrollable on mobile */}
+        <div className="overflow-x-auto max-h-[60vh] -mx-4 px-4 sm:-mx-6 sm:px-6">
+          {loading ? (
+            <div className="space-y-3 py-4">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ) : error ? (
+            <p className="text-sm text-destructive py-8 text-center">{error}</p>
+          ) : filteredRows.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-8 text-center">No data available.</p>
+          ) : (
+            <table className="w-full text-left text-xs sm:text-sm min-w-[550px] border-collapse">
+              <thead>
+                <tr className="border-b text-muted-foreground font-medium text-xs">
+                  <th className="py-2 pr-3 font-medium">{tab.header}</th>
+                  <th className="py-2 px-3 font-medium text-right">Visitors</th>
+                  <th className="py-2 px-3 font-medium text-right">Visits</th>
+                  <th className="py-2 px-3 font-medium text-right">Views</th>
+                  {isSession && (
+                    <>
+                      <th className="py-2 px-3 font-medium text-right">Bounce rate</th>
+                      <th className="py-2 pl-3 font-medium text-right">Visit duration</th>
+                    </>
+                  )}
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40">
+                {filteredRows.map((row, i) => {
+                  const bounceRate = row.visits > 0
+                    ? `${Math.round((Math.min(row.visits, row.bounces ?? 0) / row.visits) * 100)}%`
+                    : "0%";
+                  const duration = row.visits > 0
+                    ? formatDuration((row.totaltime ?? 0) / row.visits)
+                    : "0s";
+                  return (
+                    <tr key={i} className="hover:bg-muted/30 transition-colors">
+                      <td className="py-2.5 pr-3 max-w-[280px]">
+                        <div className="flex items-center gap-2 truncate">
+                          {renderMetricIcon(tab.id, row.name)}
+                          <span
+                            className={cn(
+                              "truncate text-foreground",
+                              isPathTab && "hover:underline cursor-pointer"
+                            )}
+                            title={row.name}
+                          >
+                            {renderMetricLabel(tab.id, row.name)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-medium">
+                        {row.visitors.toLocaleString()}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-muted-foreground">
+                        {row.visits.toLocaleString()}
+                      </td>
+                      <td className="py-2.5 px-3 text-right text-muted-foreground">
+                        {row.pageviews.toLocaleString()}
+                      </td>
+                      {isSession && (
+                        <>
+                          <td className="py-2.5 px-3 text-right text-muted-foreground">
+                            {bounceRate}
+                          </td>
+                          <td className="py-2.5 pl-3 text-right text-muted-foreground">
+                            {duration}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AnalyticsMetricsCard({
+  config,
+  token,
+  period,
+  onOpenMore,
+}: {
+  config: CardConfig;
+  token: string;
+  period: AnalyticsPeriod;
+  onOpenMore: (cardTitle: string, tab: TabConfig) => void;
+}) {
+  const [activeTabId, setActiveTabId] = useState<UmamiMetricsType>(config.tabs[0].id);
+  const [cache, setCache] = useState<Record<string, UmamiMetricsRow[]>>({});
+
+  const activeTabConfig = config.tabs.find((t) => t.id === activeTabId) || config.tabs[0];
+  const cacheKey = `${activeTabId}:${period}`;
+  const rows = cache[cacheKey];
+  const loading = rows === undefined;
+
+  useEffect(() => {
+    if (cache[cacheKey] !== undefined) return;
+    let cancelled = false;
+
+    getUmamiMetrics(token, activeTabId, period, 10)
+      .then((res) => {
+        if (!cancelled) {
+          setCache((prev) => ({ ...prev, [cacheKey]: res.rows || [] }));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setCache((prev) => ({ ...prev, [cacheKey]: [] }));
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [token, activeTabId, period, cacheKey, cache]);
+
+  const totalVisitors = useMemo(() => {
+    if (!rows || !rows.length) return 0;
+    return rows.reduce((sum, r) => sum + r.y, 0);
+  }, [rows]);
+
+  return (
+    <Card className="flex flex-col justify-between">
+      <CardHeader className="pb-2 pt-4 px-4 sm:px-6">
+        <CardTitle className="text-base sm:text-lg font-semibold">{config.title}</CardTitle>
+        {/* Tabs Row */}
+        <div className="flex items-center gap-4 sm:gap-6 border-b border-border/50 pt-2 pb-0 overflow-x-auto scrollbar-none">
+          {config.tabs.map((tab) => {
+            const isActive = tab.id === activeTabId;
+            return (
+              <button
+                key={tab.id}
+                type="button"
+                onClick={() => setActiveTabId(tab.id)}
+                className={cn(
+                  "text-xs sm:text-sm font-medium pb-2 border-b-2 transition-colors whitespace-nowrap cursor-pointer",
+                  isActive
+                    ? "border-primary text-foreground font-semibold"
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {tab.label}
+              </button>
+            );
+          })}
+        </div>
+      </CardHeader>
+
+      <CardContent className="pt-0 px-4 sm:px-6 pb-3 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Table Header */}
+          <div className="flex items-center justify-between pb-1.5 mb-2 border-b border-border/40 text-[10px] sm:text-xs text-muted-foreground font-medium uppercase tracking-wide px-2">
+            <span>{activeTabConfig.header}</span>
+            <span>Visitors</span>
+          </div>
+
+          {/* Rows List */}
+          {loading && rows === undefined ? (
+            <div className="space-y-2 py-2">
+              <Skeleton className="h-7 w-full rounded" />
+              <Skeleton className="h-7 w-full rounded" />
+              <Skeleton className="h-7 w-full rounded" />
+              <Skeleton className="h-7 w-full rounded" />
+            </div>
+          ) : !rows || rows.length === 0 ? (
+            <p className="text-xs sm:text-sm text-muted-foreground py-8 text-center">
+              No data available.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {rows.slice(0, 10).map((row, i) => {
+                const percent = totalVisitors > 0
+                  ? Math.round((row.y / totalVisitors) * 100)
+                  : 0;
+
+                return (
+                  <div
+                    key={i}
+                    className="relative flex items-center justify-between py-1.5 px-2 rounded-md overflow-hidden group hover:bg-muted/30 transition-colors"
+                  >
+                    {/* Background Progress Bar */}
+                    <div
+                      className="absolute inset-y-0 left-0 bg-muted/60 dark:bg-muted/40 rounded transition-all duration-300 pointer-events-none"
+                      style={{ width: `${percent}%` }}
+                    />
+
+                    {/* Left: Icon + Label */}
+                    <div className="relative z-10 flex items-center gap-2 min-w-0 pr-2">
+                      {renderMetricIcon(activeTabId, row.x)}
+                      <span
+                        className="text-xs sm:text-sm truncate font-medium text-foreground"
+                        title={row.x}
+                      >
+                        {renderMetricLabel(activeTabId, row.x)}
+                      </span>
+                    </div>
+
+                    {/* Right: Count + Divider + Percentage */}
+                    <div className="relative z-10 flex items-center shrink-0 text-xs sm:text-sm">
+                      <span className="font-semibold text-foreground text-right min-w-[32px]">
+                        {row.y.toLocaleString()}
+                      </span>
+                      <span className="mx-2 text-border text-muted-foreground/40">|</span>
+                      <span className="text-muted-foreground text-right min-w-[32px]">
+                        {percent}%
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer: More Button */}
+        <div className="pt-3 mt-2 flex justify-center border-t border-border/40">
+          <button
+            type="button"
+            onClick={() => onOpenMore(config.title, activeTabConfig)}
+            className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground py-1 px-3 rounded hover:bg-muted/40 transition-colors cursor-pointer"
+          >
+            <Maximize2 className="h-3 w-3" />
+            <span>More</span>
+          </button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -362,69 +814,40 @@ function NativeAnalytics({ token }: { token: string }) {
     const t = localStorage.getItem("articurls_token");
     return t ? getCachedApiData<UmamiTimeseriesResponse>("/analytics/umami/timeseries?period=7d", t) : null;
   });
-  const [pages, setPages] = useState<UmamiPagesResponse | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<UmamiPagesResponse>("/analytics/umami/pages?period=7d&limit=50", t) : null;
-  });
-  const [sources, setSources] = useState<UmamiSourcesResponse | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<UmamiSourcesResponse>("/analytics/umami/sources?period=7d&limit=20", t) : null;
-  });
-  const [geo, setGeo] = useState<UmamiGeoResponse | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<UmamiGeoResponse>("/analytics/umami/geo?period=7d&limit=20", t) : null;
-  });
-  const [tech, setTech] = useState<UmamiTechResponse | null>(() => {
-    if (typeof window === "undefined") return null;
-    const t = localStorage.getItem("articurls_token");
-    return t ? getCachedApiData<UmamiTechResponse>("/analytics/umami/tech?period=7d&limit=20", t) : null;
-  });
+
   const [loading, setLoading] = useState(() => {
     if (typeof window === "undefined") return true;
     const t = localStorage.getItem("articurls_token");
     if (!t) return true;
     return !(
       apiCacheHas("/analytics/umami/overview?period=7d", t) &&
-      apiCacheHas("/analytics/umami/timeseries?period=7d", t) &&
-      apiCacheHas("/analytics/umami/pages?period=7d&limit=50", t) &&
-      apiCacheHas("/analytics/umami/sources?period=7d&limit=20", t) &&
-      apiCacheHas("/analytics/umami/geo?period=7d&limit=20", t) &&
-      apiCacheHas("/analytics/umami/tech?period=7d&limit=20", t)
+      apiCacheHas("/analytics/umami/timeseries?period=7d", t)
     );
   });
-  const [err, setErr] = useState<string | null>(null);
-  const [pagesVisible, setPagesVisible] = useState(10);
-  const [geoVisible, setGeoVisible] = useState(10);
 
-  // Detect browser timezone once — used to display chart labels in local time
+  const [err, setErr] = useState<string | null>(null);
+
+  // Modal State for expanded details popup
+  const [expandedModal, setExpandedModal] = useState<{
+    cardTitle: string;
+    tab: TabConfig;
+  } | null>(null);
+
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   useEffect(() => {
     let cancelled = false;
-    setPagesVisible(10);
-    setGeoVisible(10);
     (async () => {
       setLoading(true);
       setErr(null);
       try {
-        const [o, t, p, s, g, te] = await Promise.all([
+        const [o, t] = await Promise.all([
           getUmamiOverview(token, period),
           getUmamiTimeseries(token, period),
-          getUmamiPages(token, period),
-          getUmamiSources(token, period),
-          getUmamiGeo(token, period),
-          getUmamiTech(token, period),
         ]);
         if (!cancelled) {
           setOverview(o);
           setTimeseries(t);
-          setPages(p);
-          setSources(s);
-          setGeo(g);
-          setTech(te);
         }
       } catch (e) {
         if (!cancelled) {
@@ -434,14 +857,14 @@ function NativeAnalytics({ token }: { token: string }) {
         if (!cancelled) setLoading(false);
       }
     })();
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [token, period]);
 
   const trafficSeries = useMemo(() => {
     if (!timeseries) return [];
 
-    // Umami returns full ISO datetimes for all units (e.g. "2025-06-01T00:00:00Z"
-    // for day/month). Normalize keys so they match the slot format we generate.
     const normX = (x: string) => {
       if (timeseries.unit === "day") return x.slice(0, 10);
       if (timeseries.unit === "month") return x.slice(0, 7);
@@ -451,21 +874,11 @@ function NativeAnalytics({ token }: { token: string }) {
     const viMap = new Map(timeseries.visitors.map((p) => [normX(p.x), p.y]));
 
     if (timeseries.unit === "hour") {
-      // Generate all 25 hourly slots for the full 24h window anchored to
-      // now-24h → now in UTC. Umami buckets by UTC hour (format:
-      // "YYYY-MM-DDTHH:00:00Z") and only returns hours that have data — we fill
-      // the rest with zeros.
-      //
-      // IMPORTANT: snap to UTC hour boundaries, not local time, so the keys
-      // match exactly what Umami returns.
       const nowMs = Date.now();
-      // Round down to the current UTC hour
       const currentHourMs = nowMs - (nowMs % (60 * 60 * 1000));
-
       const slots: string[] = [];
       for (let i = 24; i >= 0; i--) {
         const slotMs = currentHourMs - i * 60 * 60 * 1000;
-        // Produce "YYYY-MM-DDTHH:00:00Z" — exactly what Umami returns
         const d = new Date(slotMs);
         const yyyy = d.getUTCFullYear();
         const mm = String(d.getUTCMonth() + 1).padStart(2, "0");
@@ -481,7 +894,6 @@ function NativeAnalytics({ token }: { token: string }) {
       }));
     }
 
-    // Period → slot count mapping
     const periodSlots: Record<string, number> = {
       "7d": 7,
     };
@@ -489,10 +901,6 @@ function NativeAnalytics({ token }: { token: string }) {
     const slotCount = periodSlots[timeseries.period];
 
     if (timeseries.unit === "day" && slotCount) {
-      // Generate all expected day slots anchored to today in UTC,
-      // because the backend queries Umami without a timezone parameter
-      // so Umami buckets by UTC days. Days with zero data are filled
-      // so keys match exactly what Umami returns.
       const now = new Date();
       const slots: string[] = [];
       for (let i = slotCount - 1; i >= 0; i--) {
@@ -567,8 +975,6 @@ function NativeAnalytics({ token }: { token: string }) {
       }));
     }
 
-    // Fallback for “all” (or any future period) — use data-driven keys,
-    // but still fill gaps between the min and max observed dates.
     const allKeys = Array.from(new Set([...pvMap.keys(), ...viMap.keys()]));
     if (allKeys.length === 0) return [];
     allKeys.sort();
@@ -576,8 +982,6 @@ function NativeAnalytics({ token }: { token: string }) {
     const maxKey = allKeys[allKeys.length - 1];
 
     if (timeseries.unit === "month") {
-      // Expand all months between min and max (local timezone safe —
-      // months always have day=1 so no DST boundary issues).
       const [minY, minM] = minKey.split("-").map(Number);
       const [maxY, maxM] = maxKey.split("-").map(Number);
       const totalMonths = (maxY - minY) * 12 + (maxM - minM) + 1;
@@ -595,12 +999,8 @@ function NativeAnalytics({ token }: { token: string }) {
       }));
     }
 
-    // Day unit or unknown — expand all days between min and max.
-    // Use UTC date arithmetic so keys match Umami's UTC-bucketed output
-    // (the backend queries Umami without a timezone parameter).
     const [minY2, minM2, minD2] = minKey.split("-").map(Number);
     const [maxY2, maxM2, maxD2] = maxKey.split("-").map(Number);
-    // Count days using UTC dates to avoid DST-related off-by-one
     const startDate = new Date(Date.UTC(minY2, minM2 - 1, minD2));
     const endDate = new Date(Date.UTC(maxY2, maxM2 - 1, maxD2));
     const dayCount =
@@ -619,6 +1019,7 @@ function NativeAnalytics({ token }: { token: string }) {
       visitors: viMap.get(x) ?? 0,
     }));
   }, [timeseries]);
+
   const trafficLabelFormatter = (value: string | number) =>
     formatChartLabel(String(value), timeseries?.unit, userTz);
   const trafficTooltipLabelFormatter = (label: unknown) =>
@@ -661,361 +1062,130 @@ function NativeAnalytics({ token }: { token: string }) {
         </div>
       ) : (
         <div className="space-y-4 sm:space-y-6">
-            <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              <KpiCard
-                title="Pageviews"
-                value={overview?.overview.pageviews ?? "—"}
-                icon={Eye}
+          {/* Top KPI Cards */}
+          <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+            <KpiCard
+              title="Pageviews"
+              value={overview?.overview.pageviews ?? "—"}
+              icon={Eye}
+            />
+            <KpiCard
+              title="Visitors"
+              value={overview?.overview.visitors ?? "—"}
+              icon={Users}
+            />
+            <KpiCard
+              title="Bounce Rate"
+              value={overview?.overview.bounce_rate != null ? `${overview.overview.bounce_rate}%` : "—"}
+              icon={TrendingDown}
+            />
+            <KpiCard
+              title="Avg Duration"
+              value={overview?.overview.avg_visit_time != null ? formatDuration(overview.overview.avg_visit_time) : "—"}
+              icon={Clock}
+            />
+          </div>
+
+          {/* Traffic Timeseries Chart */}
+          {timeseries && (
+            <Card>
+              <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
+                <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
+                <CardDescription className="text-xs sm:text-sm">Pageviews and visitors over time.</CardDescription>
+              </CardHeader>
+              <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart
+                    data={trafficSeries}
+                    margin={{ top: 12, right: 8, left: 0, bottom: 8 }}
+                  >
+                    <defs>
+                      <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35}/>
+                        <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.35}/>
+                        <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
+                    <XAxis
+                      dataKey="x"
+                      tick={{ fontSize: 10 }}
+                      tickFormatter={trafficLabelFormatter}
+                      tickLine={false}
+                      axisLine={false}
+                      interval={trafficSeries.length > 10 ? "preserveStartEnd" : 0}
+                    />
+                    <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
+                    <Tooltip
+                      labelFormatter={trafficTooltipLabelFormatter}
+                      contentStyle={{
+                        fontSize: 12,
+                        borderRadius: "10px",
+                        border: "1px solid hsl(var(--border))",
+                        backgroundColor: "hsl(var(--background))",
+                        boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
+                      }}
+                    />
+                    <Legend
+                      wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
+                      iconType="circle"
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="pageviews"
+                      name="Pageviews"
+                      stroke="oklch(0.6 0.15 145)"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorPageviews)"
+                      activeDot={{ r: 5 }}
+                    />
+                    <Area
+                      type="monotone"
+                      dataKey="visitors"
+                      name="Visitors"
+                      stroke="oklch(0.58 0.18 280)"
+                      strokeWidth={3}
+                      fillOpacity={1}
+                      fill="url(#colorVisitors)"
+                      activeDot={{ r: 5 }}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* 4 Umami-style Cards in 2x2 Grid */}
+          <div className="grid gap-4 md:grid-cols-2">
+            {CARDS_CONFIG.map((card) => (
+              <AnalyticsMetricsCard
+                key={card.id}
+                config={card}
+                token={token}
+                period={period}
+                onOpenMore={(cardTitle, tab) => {
+                  setExpandedModal({ cardTitle, tab });
+                }}
               />
-              <KpiCard
-                title="Visitors"
-                value={overview?.overview.visitors ?? "—"}
-                icon={Users}
-              />
-              <KpiCard
-                title="Bounce Rate"
-                value={overview?.overview.bounce_rate != null ? `${overview.overview.bounce_rate}%` : "—"}
-                icon={TrendingDown}
-              />
-              <KpiCard
-                title="Avg Duration"
-                value={overview?.overview.avg_visit_time != null ? formatDuration(overview.overview.avg_visit_time) : "—"}
-                icon={Clock}
-              />
-            </div>
-
-            {timeseries && (
-              <Card>
-                <CardHeader className="px-4 pb-2 pt-4 sm:p-9 sm:pb-2">
-                  <CardTitle className="text-base sm:text-lg">Traffic</CardTitle>
-                  <CardDescription className="text-xs sm:text-sm">Pageviews and visitors over time.</CardDescription>
-                </CardHeader>
-                <CardContent className="h-56 px-2 pt-0 sm:h-64 sm:p-9 sm:pt-0 lg:h-80">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart
-                      data={trafficSeries}
-                      margin={{ top: 12, right: 8, left: 0, bottom: 8 }}
-                    >
-                      <defs>
-                        <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0.35}/>
-                          <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity={0}/>
-                        </linearGradient>
-                        <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0.35}/>
-                          <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} opacity={0.4} />
-                       <XAxis
-                        dataKey="x"
-                        tick={{ fontSize: 10 }}
-                        tickFormatter={trafficLabelFormatter}
-                        tickLine={false}
-                        axisLine={false}
-                        interval={trafficSeries.length > 10 ? "preserveStartEnd" : 0}
-                      />
-                      <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
-                      <Tooltip
-                        labelFormatter={trafficTooltipLabelFormatter}
-                        contentStyle={{
-                          fontSize: 12,
-                          borderRadius: "10px",
-                          border: "1px solid hsl(var(--border))",
-                          backgroundColor: "hsl(var(--background))",
-                          boxShadow: "0 10px 25px -5px hsl(var(--shadow) / 0.1)",
-                        }}
-                      />
-                      <Legend
-                        wrapperStyle={{ fontSize: 12, paddingTop: "8px" }}
-                        iconType="circle"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="pageviews"
-                        name="Pageviews"
-                        stroke="oklch(0.6 0.15 145)"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorPageviews)"
-                        activeDot={{ r: 5 }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="visitors"
-                        name="Visitors"
-                        stroke="oklch(0.58 0.18 280)"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorVisitors)"
-                        activeDot={{ r: 5 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </CardContent>
-              </Card>
-            )}
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              {pages && pages.rows.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <MetricsTableHeader label="Page" />
-                    <div className="space-y-1 sm:space-y-2">
-                      {pages.rows.slice(0, pagesVisible).map((row: UmamiMetricsRow, i: number) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                            {row.x}
-                          </span>
-                          <span className="font-medium text-xs sm:text-sm">
-                            {row.y}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {pages.rows.length > pagesVisible && (
-                      <button
-                        onClick={() => setPagesVisible((p) => p + 10)}
-                        className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
-                      >
-                        Show more
-                      </button>
-                    )}
-                    {pagesVisible > 10 && (
-                      <button
-                        onClick={() => setPagesVisible(10)}
-                        className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
-                      >
-                        Show less
-                      </button>
-                    )}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Pages</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">No data available.</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {sources && sources.referrers.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <MetricsTableHeader label="Source" />
-                    <div className="space-y-1 sm:space-y-2">
-                      {sources.referrers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
-                        const isDirect = !row.x || row.x.trim() === "";
-                        const ReferrerIcon = isDirect ? Globe : getReferrerIcon(row.x);
-                        return (
-                          <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                            <div className="flex items-center gap-2">
-                              <ReferrerIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                              <span className="truncate max-w-[220px] sm:max-w-[180px] text-xs sm:text-sm">
-                                {isDirect ? "Direct" : row.x}
-                              </span>
-                            </div>
-                            <span className="font-medium text-xs sm:text-sm">
-                              {row.y}
-                            </span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Sources</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">No data available.</p>
-                  </CardContent>
-                </Card>
-              )}
-
-              {geo && geo.countries.length > 0 ? (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <MetricsTableHeader label="Country" />
-                    <div className="space-y-1 sm:space-y-2">
-                      {geo.countries.slice(0, geoVisible).map((row: UmamiMetricsRow, i: number) => (
-                        <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg">{getCountryFlag(row.x)}</span>
-                            <span className="text-xs sm:text-sm">
-                              {countryName.of(row.x.toUpperCase()) || row.x}
-                            </span>
-                          </div>
-                          <span className="font-medium text-xs sm:text-sm">
-                            {row.y}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                    {(() => {
-                      const hasMore = geo.countries.length > geoVisible;
-                      return (
-                        <>
-                          {hasMore && (
-                            <button
-                              onClick={() => setGeoVisible((p) => p + 10)}
-                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
-                            >
-                              Show more
-                            </button>
-                          )}
-                          {geoVisible > 10 && (
-                            <button
-                              onClick={() => setGeoVisible(10)}
-                              className="mt-2 text-xs text-muted-foreground hover:underline cursor-pointer"
-                            >
-                              Show less
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-base sm:text-lg">Countries</CardTitle>
-                  </CardHeader>
-                  <CardContent className="pt-0">
-                    <p className="text-sm text-muted-foreground">No data available.</p>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-
-            {tech ? (
-              <div className="grid gap-4 lg:grid-cols-3">
-                {tech.browsers.length > 0 ? (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <MetricsTableHeader label="Browser" />
-                      <div className="space-y-1 sm:space-y-2">
-                        {tech.browsers.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
-                          const BrowserIcon = getBrowserIcon(row.x);
-                          return (
-                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                              <div className="flex items-center gap-2">
-                                <BrowserIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-xs sm:text-sm">{row.x}</span>
-                              </div>
-                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">Browsers</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">No data available.</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {tech.os.length > 0 ? (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <MetricsTableHeader label="OS" />
-                      <div className="space-y-1 sm:space-y-2">
-                        {tech.os.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
-                          const OsIcon = getOsIcon(row.x);
-                          return (
-                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                              <div className="flex items-center gap-2">
-                                <OsIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-xs sm:text-sm">{row.x}</span>
-                              </div>
-                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">OS</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">No data available.</p>
-                    </CardContent>
-                  </Card>
-                )}
-                {tech.devices.length > 0 ? (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <MetricsTableHeader label="Device" />
-                      <div className="space-y-1 sm:space-y-2">
-                        {tech.devices.slice(0, 8).map((row: UmamiMetricsRow, i: number) => {
-                          const DeviceIcon = getDeviceIcon(row.x);
-                          return (
-                            <div key={i} className="flex items-center justify-between py-2 border-b last:border-b-0">
-                              <div className="flex items-center gap-2">
-                                <DeviceIcon className="h-3.5 w-3.5 text-muted-foreground" />
-                                <span className="text-xs sm:text-sm capitalize">{row.x}</span>
-                              </div>
-                              <span className="font-medium text-xs sm:text-sm">{row.y}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ) : (
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-base sm:text-lg">Devices</CardTitle>
-                    </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">No data available.</p>
-                    </CardContent>
-                  </Card>
-                )}
-              </div>
-            ) : (
-              <Card>
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-base sm:text-lg">Browsers / OS / Devices</CardTitle>
-                </CardHeader>
-                <CardContent className="pt-0">
-                  <p className="text-sm text-muted-foreground">No data available.</p>
-                </CardContent>
-              </Card>
-            )}
+            ))}
+          </div>
         </div>
+      )}
+
+      {/* Expanded Metrics Details Popup */}
+      {expandedModal && (
+        <ExpandedMetricsModal
+          isOpen={true}
+          onClose={() => setExpandedModal(null)}
+          token={token}
+          period={period}
+          cardTitle={expandedModal.cardTitle}
+          tab={expandedModal.tab}
+        />
       )}
 
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />

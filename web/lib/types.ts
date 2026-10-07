@@ -652,10 +652,44 @@ export interface DomainLookupResponse {
   custom_subpath?: string | null;
 }
 
+export type UmamiMetricsType =
+  | "path"
+  | "fullPath"
+  | "entry"
+  | "exit"
+  | "referrer"
+  | "channel"
+  | "browser"
+  | "os"
+  | "device"
+  | "country"
+  | "region"
+  | "city";
+
 export interface UmamiMetricsRow {
   x: string;
   y: number;
-  status?: "live" | "archived" | "deleted";
+}
+
+export interface UmamiMetricsResponse {
+  period: string;
+  type: string;
+  rows: UmamiMetricsRow[];
+}
+
+export interface UmamiExpandedMetricsRow {
+  name: string;
+  visitors: number;
+  visits: number;
+  pageviews: number;
+  bounces?: number;
+  totaltime?: number;
+}
+
+export interface UmamiExpandedMetricsResponse {
+  period: string;
+  type: string;
+  rows: UmamiExpandedMetricsRow[];
 }
 
 export interface UmamiOverview {

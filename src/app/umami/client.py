@@ -249,6 +249,35 @@ class UmamiClient:
             params=params,
         )
 
+    def get_website_expanded_metrics_sync(
+        self,
+        website_id: str,
+        *,
+        start_at: int,
+        end_at: int,
+        type: str,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        search: Optional[str] = None,
+    ) -> list[Dict[str, Any]]:
+        """Return expanded metrics by dimension (name, visitors, visits, pageviews, bounces, totaltime)."""
+        params: Dict[str, Any] = {
+            "startAt": start_at,
+            "endAt": end_at,
+            "type": type,
+        }
+        if limit is not None:
+            params["limit"] = limit
+        if offset is not None:
+            params["offset"] = offset
+        if search:
+            params["search"] = search
+        return self._request_sync(
+            "GET",
+            f"/api/websites/{website_id}/metrics/expanded",
+            params=params,
+        )
+
     def get_website_active_sync(self, website_id: str) -> Dict[str, Any]:
         """Return active visitors in the last 5 minutes."""
         return self._request_sync(

@@ -375,64 +375,40 @@ def get_umami_timeseries(
         )
 
 
-@router.get("/umami/pages", status_code=status.HTTP_200_OK)
-def get_umami_pages(
+VALID_METRICS_TYPES = {
+    "path",
+    "fullPath",
+    "entry",
+    "exit",
+    "referrer",
+    "channel",
+    "browser",
+    "os",
+    "device",
+    "country",
+    "region",
+    "city",
+}
+
+
+@router.get("/umami/metrics", status_code=status.HTTP_200_OK)
+def get_umami_metrics(
+    type: str,
     period: str = "7d",
-    limit: int = 20,
+    limit: int = 10,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
-
-):
-    from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
-
-    if not current_site.umami_website_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Umami website not provisioned yet.",
-        )
-
-    client = UmamiClient()
-    if not client.configured:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Analytics service is not configured.",
-        )
-
-    try:
-        start_at, end_at = get_umami_period_timestamps(period)
-        pages = client.get_website_metrics_sync(
-            current_site.umami_website_id,
-            start_at=start_at,
-            end_at=end_at,
-            type="path",
-            limit=limit,
-        )
-
-        return {"period": period, "rows": pages}
-    except UmamiError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=_umami_error_detail(exc.body),
-        )
-    except httpx.HTTPError:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Analytics service temporarily unavailable. Please try again later.",
-        )
-
-
-@router.get("/umami/sources", status_code=status.HTTP_200_OK)
-def get_umami_sources(
-    period: str = "7d",
-    limit: int = 20,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
-
+    current_user = Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import get_umami_period_timestamps, umami_internal_domains
 
+    if type not in VALID_METRICS_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid metric type: {type}",
+        )
+
     if not current_site.umami_website_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -448,38 +424,40 @@ def get_umami_sources(
 
     try:
         start_at, end_at = get_umami_period_timestamps(period)
-        referrers = client.get_website_metrics_sync(
+        rows = client.get_website_metrics_sync(
             current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
-            type="referrer",
-            limit=500,
+            type=type,
+            limit=500 if type == "referrer" else limit,
         )
-        internal_domains = umami_internal_domains()
-        filtered_referrers = [
-            row for row in referrers
-            if normalize_referrer_host(str(row.get("x", ""))) not in internal_domains
-        ]
 
-        try:
-            stats = client.get_website_stats_sync(
-                current_site.umami_website_id,
-                start_at=start_at,
-                end_at=end_at,
-            )
-            total_visitors = stats.get("visitors") or 0
-            if isinstance(total_visitors, dict):
-                total_visitors = total_visitors.get("value", 0)
-            referred_visitors = sum(int(row.get("y", 0)) for row in referrers)
-            direct_count = total_visitors - referred_visitors
-            if direct_count > 0:
-                filtered_referrers = [{"x": "", "y": direct_count}] + filtered_referrers[:limit - 1]
-            else:
-                filtered_referrers = filtered_referrers[:limit]
-        except Exception:
-            filtered_referrers = filtered_referrers[:limit]
+        if type == "referrer":
+            internal_domains = umami_internal_domains()
+            filtered = [
+                row for row in rows
+                if normalize_referrer_host(str(row.get("x", ""))) not in internal_domains
+            ]
+            try:
+                stats = client.get_website_stats_sync(
+                    current_site.umami_website_id,
+                    start_at=start_at,
+                    end_at=end_at,
+                )
+                total_visitors = stats.get("visitors") or 0
+                if isinstance(total_visitors, dict):
+                    total_visitors = total_visitors.get("value", 0)
+                referred_visitors = sum(int(r.get("y", 0)) for r in rows)
+                direct_count = total_visitors - referred_visitors
+                if direct_count > 0:
+                    filtered = [{"x": "", "y": direct_count}] + filtered[:limit - 1]
+                else:
+                    filtered = filtered[:limit]
+            except Exception:
+                filtered = filtered[:limit]
+            rows = filtered
 
-        return {"period": period, "referrers": filtered_referrers}
+        return {"period": period, "type": type, "rows": rows}
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
@@ -492,16 +470,24 @@ def get_umami_sources(
         )
 
 
-@router.get("/umami/geo", status_code=status.HTTP_200_OK)
-def get_umami_geo(
+@router.get("/umami/metrics/expanded", status_code=status.HTTP_200_OK)
+def get_umami_metrics_expanded(
+    type: str,
     period: str = "7d",
-    limit: int = 20,
+    limit: int = 100,
+    search: Optional[str] = None,
     db: Session = Depends(get_db),
-    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
-
+    current_user = Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
 ):
     from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
+    from ..umami.service import get_umami_period_timestamps, umami_internal_domains
+
+    if type not in VALID_METRICS_TYPES:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid metric type: {type}",
+        )
 
     if not current_site.umami_website_id:
         raise HTTPException(
@@ -518,82 +504,23 @@ def get_umami_geo(
 
     try:
         start_at, end_at = get_umami_period_timestamps(period)
-        countries = client.get_website_metrics_sync(
+        rows = client.get_website_expanded_metrics_sync(
             current_site.umami_website_id,
             start_at=start_at,
             end_at=end_at,
-            type="country",
+            type=type,
             limit=limit,
+            search=search,
         )
 
-        return {"period": period, "countries": countries}
-    except UmamiError as exc:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail=_umami_error_detail(exc.body),
-        )
-    except httpx.HTTPError:
-        raise HTTPException(
-            status_code=status.HTTP_502_BAD_GATEWAY,
-            detail="Analytics service temporarily unavailable. Please try again later.",
-        )
+        if type == "referrer":
+            internal_domains = umami_internal_domains()
+            rows = [
+                row for row in rows
+                if normalize_referrer_host(str(row.get("name", ""))) not in internal_domains
+            ]
 
-
-@router.get("/umami/tech", status_code=status.HTTP_200_OK)
-def get_umami_tech(
-    period: str = "7d",
-    limit: int = 20,
-    db: Session = Depends(get_db),
-    current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
-
-):
-    from ..umami.client import UmamiClient, UmamiError
-    from ..umami.service import get_umami_period_timestamps
-
-    if not current_site.umami_website_id:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Umami website not provisioned yet.",
-        )
-
-    client = UmamiClient()
-    if not client.configured:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Analytics service is not configured.",
-        )
-
-    try:
-        start_at, end_at = get_umami_period_timestamps(period)
-
-        browsers = client.get_website_metrics_sync(
-            current_site.umami_website_id,
-            start_at=start_at,
-            end_at=end_at,
-            type="browser",
-            limit=limit,
-        )
-        os_list = client.get_website_metrics_sync(
-            current_site.umami_website_id,
-            start_at=start_at,
-            end_at=end_at,
-            type="os",
-            limit=limit,
-        )
-        devices = client.get_website_metrics_sync(
-            current_site.umami_website_id,
-            start_at=start_at,
-            end_at=end_at,
-            type="device",
-            limit=limit,
-        )
-
-        return {
-            "period": period,
-            "browsers": browsers,
-            "os": os_list,
-            "devices": devices,
-        }
+        return {"period": period, "type": type, "rows": rows}
     except UmamiError as exc:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,
