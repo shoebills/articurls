@@ -222,12 +222,14 @@ def get_umami_overview(
                 comp_avg_visit_time = round(comp_totaltime / comp_visits) if comp_visits > 0 else 0
 
                 def _pct(curr: float, prev: float) -> float | None:
+                    # Mirror Umami's MetricCard: percent changes are truncated
+                    # toward zero to whole integers (JS `Math.abs(~~n)`).
                     if prev > 0:
-                        return round(((curr - prev) / prev) * 100, 1)
+                        return int(((curr - prev) / prev) * 100)
                     elif curr > 0:
-                        return 100.0
+                        return 100
                     elif curr == 0 and prev == 0:
-                        return 0.0
+                        return 0
                     return None
 
                 change = {

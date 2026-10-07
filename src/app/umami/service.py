@@ -226,9 +226,10 @@ def get_umami_period_timestamps(
         hour_start = now.replace(minute=0, second=0, microsecond=0)
         start_at = int((hour_start - timedelta(hours=24)).timestamp() * 1000)
     elif period == "this_week":
-        # ISO week starting Monday in the site's timezone
-        days_since_monday = local_now.weekday()
-        week_start = (local_now - timedelta(days=days_since_monday)).replace(
+        # Umami's DateFilter resolves "This week" via date-fns startOfWeek
+        # with the UI locale; the en-US default starts weeks on Sunday.
+        days_since_sunday = (local_now.weekday() + 1) % 7
+        week_start = (local_now - timedelta(days=days_since_sunday)).replace(
             hour=0, minute=0, second=0, microsecond=0
         )
         start_at = int(week_start.timestamp() * 1000)

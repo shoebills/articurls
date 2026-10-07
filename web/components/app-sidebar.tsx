@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import type { CSSProperties } from "react";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
@@ -38,11 +39,12 @@ type PanelProps = {
   /** Close mobile sheet after navigation */
   onNavigate?: () => void;
   className?: string;
+  style?: CSSProperties;
   /** Merged nav+footer with 20px above divider (mobile tray only); desktop keeps pinned footer */
   mobileTrayLayout?: boolean;
 };
 
-export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout = false }: PanelProps) {
+export function DashboardSidebarPanel({ onNavigate, className, style, mobileTrayLayout = false }: PanelProps) {
   const pathname = usePathname();
   const { isTrial, daysRemaining } = useAuth();
 
@@ -84,7 +86,7 @@ export function DashboardSidebarPanel({ onNavigate, className, mobileTrayLayout 
     });
 
   return (
-    <div className={cn("flex h-full min-h-0 flex-col", className)}>
+    <div className={cn("flex h-full min-h-0 flex-col", className)} style={style}>
       {/* Site Switcher */}
       <SiteSwitcher onNavigate={onNavigate} />
 

@@ -379,7 +379,10 @@ function KpiCard({
   icon: React.ElementType;
 }) {
   const showChange = change !== undefined && change !== null;
-  const isPositive = showChange && change > 0;
+  // Mirror Umami's ChangeLabel: zero counts as positive (green) — and as
+  // negative (red) when reverseColors — and shows no arrow icon.
+  const isZero = showChange && change === 0;
+  const isPositive = showChange && change >= 0;
   const isNegative = showChange && change < 0;
   const isGood = reverseColors ? isNegative : isPositive;
   const isBad = reverseColors ? isPositive : isNegative;
@@ -404,7 +407,7 @@ function KpiCard({
                   !isGood && !isBad && "bg-muted text-muted-foreground"
                 )}
               >
-                {isPositive ? (
+                {isZero ? null : isPositive ? (
                   <ArrowUp className="h-3 w-3" />
                 ) : isNegative ? (
                   <ArrowDown className="h-3 w-3" />
