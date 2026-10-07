@@ -123,7 +123,7 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="w-[calc(100vw-2rem)] max-w-md rounded-2xl sm:max-w-2xl"
+        className="w-fit sm:w-fit max-w-[calc(100vw-2rem)] rounded-2xl"
       >
         <DialogTitle className="sr-only">Select a custom date range</DialogTitle>
 

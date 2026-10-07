@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
+import { withZoneIncluded } from "@/lib/timezones";
 
 const LANGUAGES = [
   { code: "en", name: "English (en)" },
@@ -47,27 +48,6 @@ const LANGUAGES = [
   { code: "ar", name: "Arabic (ar)" },
   { code: "hi", name: "Hindi (hi)" },
 ];
-
-/** All IANA timezones supported by the browser, grouped by region. */
-function getIanaTimezones(): { region: string; zones: string[] }[] {
-  let zones: string[] = [];
-  try {
-    zones = [...Intl.supportedValuesOf("timeZone")];
-  } catch {
-    zones = ["UTC"];
-  }
-  const groups = new Map<string, string[]>();
-  for (const zone of zones) {
-    const region = zone.split("/")[0];
-    if (!groups.has(region)) groups.set(region, []);
-    groups.get(region)!.push(zone);
-  }
-  return Array.from(groups.entries())
-    .map(([region, list]) => ({ region, zones: list }))
-    .sort((a, b) => a.region.localeCompare(b.region));
-}
-
-const TIMEZONE_GROUPS = getIanaTimezones();
 
 export default function GeneralSettingsPage() {
   const { token, refreshUser, refreshSites, user: ctxUser } = useAuth();
@@ -381,7 +361,7 @@ export default function GeneralSettingsPage() {
                 <div className="space-y-1.5">
                   <Label htmlFor="site_timezone">Timezone</Label>
                   <p className="text-xs text-muted-foreground sm:text-sm">
-                    Used for calendar-based periods (Today, This month, …) and grouping in your analytics charts.
+                    Used for calendar-based periods in your analytics charts.
                   </p>
                 </div>
                 <Select
@@ -393,7 +373,7 @@ export default function GeneralSettingsPage() {
                     <SelectValue placeholder="Select timezone" />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {TIMEZONE_GROUPS.map((group) => (
+                    {withZoneIncluded(siteTimezone).map((group) => (
                       <div key={group.region}>
                         <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
                           {group.region}
