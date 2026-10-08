@@ -130,3 +130,18 @@ export function rangeDaySpan(period: string): number {
     (endOfDay(range.end).getTime() - startOfDay(range.start).getTime()) / 86_400_000
   ) + 1;
 }
+
+/**
+ * Deterministic x-axis tick spacing for the analytics charts.
+ *
+ * Hour series get a fixed 3-slot gap (gapped on desktop and mobile alike);
+ * longer series get ~6 evenly spaced ticks aligned to the series start.
+ * Avoids recharts' `preserveStartEnd` auto-thinning, which forces the last
+ * tick and leaves an uneven trailing gap on narrow widths.
+ */
+export function chartTickInterval(unit: string | undefined, length: number): number {
+  if (length <= 1) return 0;
+  if (unit === "hour") return 3;
+  if (length <= 10) return 0;
+  return Math.ceil(length / 6);
+}

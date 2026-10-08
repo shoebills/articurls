@@ -5,6 +5,7 @@ import { subscribersAnalytics, ApiError, apiCacheHas, getCachedApiData } from "@
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PeriodSelect } from "@/components/dashboard/period-select";
+import { chartTickInterval } from "@/lib/periods";
 import {
   AreaChart,
   Area,
@@ -158,7 +159,7 @@ export function SubscribersAnalyticsPanel() {
                       tickFormatter={(v) => seriesLabelFormatter(String(v), unit, chartSubs.length > 12)}
                       tickLine={false}
                       axisLine={false}
-                      interval={chartSubs.length > 10 ? "preserveStartEnd" : 0}
+                      interval={chartTickInterval(unit, chartSubs.length)}
                     />
                     <YAxis
                       tick={{ fontSize: 10 }}

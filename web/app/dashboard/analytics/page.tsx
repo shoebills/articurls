@@ -18,6 +18,7 @@ import {
   UmamiExpandedMetricsRow,
 } from "@/lib/api";
 import { PeriodSelect } from "@/components/dashboard/period-select";
+import { chartTickInterval } from "@/lib/periods";
 import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -1007,7 +1008,7 @@ function NativeAnalytics({ token }: { token: string }) {
                       tickFormatter={trafficLabelFormatter}
                       tickLine={false}
                       axisLine={false}
-                      interval={trafficSeries.length > 10 ? "preserveStartEnd" : 0}
+                      interval={chartTickInterval(timeseries?.unit, trafficSeries.length)}
                     />
                     <YAxis tick={{ fontSize: 10 }} allowDecimals={false} tickLine={false} axisLine={false} width={32} />
                     <Tooltip
