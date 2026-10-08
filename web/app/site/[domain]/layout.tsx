@@ -1,6 +1,7 @@
 import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { loadPublicSite } from "@/lib/public-site";
 import { UmamiTracker } from "@/components/umami-tracker";
+import { UmamiExclusionSync } from "@/components/public/umami-exclusion-sync";
 import { GoogleIntegrations } from "@/components/google-integrations";
 
 type Props = {
@@ -29,6 +30,7 @@ export default async function SiteLayout({ children, params }: Props) {
   return (
     <>
       <UmamiTracker site={site} />
+      <UmamiExclusionSync />
       <GoogleIntegrations site={site} />
       {children}
     </>

@@ -27,6 +27,13 @@ export function UmamiTracker({ site }: { site: PublicSite }) {
         {`
           window.__articurlsUmamiBeforeSend = function(type, payload) {
             try {
+              // One-time opt-out/opt-in handoff from the dashboard toggle: never
+              // count the landing pageview that plants/removes the exclusion flag
+              // (the tracker script may fire before the flag is written).
+              var params = new URLSearchParams(window.location.search);
+              if (params.has("exclude-me") || params.has("include-me")) {
+                return false;
+              }
               var referrer = document.referrer || "";
               var appHost = ${JSON.stringify(appHost)};
               if (referrer && appHost && new URL(referrer).hostname === appHost) {

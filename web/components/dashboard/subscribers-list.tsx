@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { listSubscribers, exportSubscribersCsv, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -78,8 +78,13 @@ export function SubscriberList() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3 px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
-          <CardTitle className="text-base sm:text-lg">Subscribers list</CardTitle>
+        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
+          <div>
+            <CardTitle className="text-base sm:text-lg">Subscribers list</CardTitle>
+            <CardDescription className="text-xs sm:text-sm">
+              Emails collected through your site&apos;s newsletter form, newest first.
+            </CardDescription>
+          </div>
           <Button
             variant="outline"
             className="h-9 w-auto shrink-0 touch-manipulation"
