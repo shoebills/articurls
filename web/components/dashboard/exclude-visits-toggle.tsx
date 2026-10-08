@@ -5,6 +5,7 @@ import { useAuth } from "@/lib/auth-context";
 import { getSitePublicRoot } from "@/lib/public-url";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { EyeOff } from "lucide-react";
 
 function storageKey(siteId: string): string {
   return `articurls:exclude-visits:${siteId}`;
@@ -58,8 +59,11 @@ export function ExcludeVisitsToggle() {
 
   return (
     <Card>
-      <CardContent className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
-        <div className="space-y-0.5">
+      <CardContent className="flex items-center gap-4 p-4 sm:p-6">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground">
+          <EyeOff className="h-5 w-5" />
+        </div>
+        <div className="min-w-0 flex-1 space-y-0.5">
           <p className="text-sm font-medium">Exclude my visits on this browser</p>
           <p className="text-xs text-muted-foreground sm:text-sm">
             Stops counting your own visits in analytics on this browser. Your site opens once to apply it.
@@ -70,6 +74,7 @@ export function ExcludeVisitsToggle() {
           onCheckedChange={onCheckedChange}
           disabled={!root}
           aria-label="Exclude my visits on this browser"
+          className="shrink-0"
         />
       </CardContent>
     </Card>

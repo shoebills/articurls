@@ -6,8 +6,8 @@ export default function AudienceAnalyticsPage() {
   return (
     <div className="space-y-6">
       <SubscribersAnalyticsPanel />
-      <ExcludeVisitsToggle />
       <SubscriberList />
+      <ExcludeVisitsToggle />
     </div>
   );
 }
