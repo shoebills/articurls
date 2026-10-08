@@ -102,14 +102,17 @@ export function periodLabel(period: string): string {
   return "Select period";
 }
 
-/** "22 May – 7 Oct 2026" */
+/** "22 May – 7 Oct 2026", or "22 Dec 2025 – 7 Jan 2026" across years. */
 export function rangeLabel(start: Date, end: Date): string {
   const sameDay =
     start.getFullYear() === end.getFullYear() &&
     start.getMonth() === end.getMonth() &&
     start.getDate() === end.getDate();
   if (sameDay) return formatDay(start, true);
-  return `${formatDay(start, false)} – ${formatDay(end, true)}`;
+  // Omit the start year only when both ends share it — otherwise the
+  // range is ambiguous (e.g. "22 Dec – 7 Jan 2026").
+  const crossYear = start.getFullYear() !== end.getFullYear();
+  return `${formatDay(start, crossYear)} – ${formatDay(end, true)}`;
 }
 
 function formatDay(d: Date, withYear: boolean): string {

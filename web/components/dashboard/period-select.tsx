@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import type { DateRange } from "react-day-picker";
-import { endOfDay } from "date-fns";
+import { addMonths, endOfDay, startOfMonth } from "date-fns";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ export function PeriodSelect({ value, onChange, triggerClassName }: PeriodSelect
         >
           <span className="truncate">{periodLabel(value)}</span>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent hideScrollButtons>
           {PERIOD_GROUPS.map((group, i) => (
             <SelectGroup key={i}>
               {i > 0 && <SelectSeparator />}
@@ -83,26 +83,19 @@ interface DateRangePickerDialogProps {
 }
 
 function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: DateRangePickerDialogProps) {
-  const [mode, setMode] = useState<"single" | "range">(() =>
-    isCustomRange(initialPeriod) && isSingleDay(initialPeriod) ? "single" : "range"
+  const [mode, setMode] = useState<"single" | "range">(() => resolveInitialPicker(initialPeriod).mode);
+  const [singleDate, setSingleDate] = useState<Date | undefined>(
+    () => resolveInitialPicker(initialPeriod).singleDate
   );
-  const [singleDate, setSingleDate] = useState<Date | undefined>(() => {
-    if (isCustomRange(initialPeriod)) {
-      const range = parseRangeValue(initialPeriod);
-      if (range && range.start.getTime() === range.end.getTime()) return range.start;
-    }
-    return new Date();
-  });
-  const [range, setRange] = useState<DateRange | undefined>(() => {
-    if (isCustomRange(initialPeriod)) {
-      const parsed = parseRangeValue(initialPeriod);
-      if (parsed) return { from: parsed.start, to: parsed.end };
-    }
-    const to = new Date();
-    const from = new Date();
-    from.setDate(from.getDate() - 6);
-    return { from, to };
-  });
+  const [range, setRange] = useState<DateRange | undefined>(
+    () => resolveInitialPicker(initialPeriod).range
+  );
+  const [leftMonth, setLeftMonth] = useState<Date>(
+    () => resolveInitialPicker(initialPeriod).leftMonth
+  );
+  const [rightMonth, setRightMonth] = useState<Date>(
+    () => resolveInitialPicker(initialPeriod).rightMonth
+  );
 
   const disabled = { before: MIN_DATE, after: MAX_DATE };
 
@@ -123,7 +116,7 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
         onOpenAutoFocus={(e) => e.preventDefault()}
-        className="w-fit sm:w-fit max-w-[calc(100vw-2rem)] rounded-2xl"
+        className="w-fit sm:w-fit max-w-[calc(100vw-2rem)] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl"
       >
         <DialogTitle className="sr-only">Select a custom date range</DialogTitle>
 
@@ -159,13 +152,30 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
             />
           </div>
         ) : (
-          <div className="mx-auto w-fit">
+          <div className="mx-auto flex w-fit flex-col gap-4 md:flex-row md:gap-6">
+            {/* Two independent single-month calendars (like Umami): each has
+                its own arrows and navigates without moving the other. */}
             <Calendar
               mode="range"
               selected={range}
               onSelect={setRange}
               disabled={disabled}
-              numberOfMonths={2}
+              month={leftMonth}
+              onMonthChange={setLeftMonth}
+              startMonth={startOfMonth(MIN_DATE)}
+              endMonth={startOfMonth(MAX_DATE)}
+              numberOfMonths={1}
+            />
+            <Calendar
+              mode="range"
+              selected={range}
+              onSelect={setRange}
+              disabled={disabled}
+              month={rightMonth}
+              onMonthChange={setRightMonth}
+              startMonth={startOfMonth(MIN_DATE)}
+              endMonth={startOfMonth(MAX_DATE)}
+              numberOfMonths={1}
             />
           </div>
         )}
@@ -183,9 +193,34 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
   );
 }
 
-/** A custom range token covering exactly one calendar day. */
-function isSingleDay(period: string): boolean {
-  const range = parseRangeValue(period);
-  if (!range) return false;
-  return range.start.getTime() === range.end.getTime();
+interface InitialPickerState {
+  mode: "single" | "range";
+  singleDate: Date | undefined;
+  range: DateRange | undefined;
+  leftMonth: Date;
+  rightMonth: Date;
+}
+
+/** Seed all picker state from a period token (used on mount and on open). */
+function resolveInitialPicker(period: string): InitialPickerState {
+  const parsed = isCustomRange(period) ? parseRangeValue(period) : null;
+  const single = !!parsed && parsed.start.getTime() === parsed.end.getTime();
+
+  const defaultTo = new Date();
+  const defaultFrom = new Date();
+  defaultFrom.setDate(defaultFrom.getDate() - 6);
+
+  const from = parsed?.start ?? defaultFrom;
+  const to = parsed?.end ?? defaultTo;
+  const fromMonth = startOfMonth(from);
+  const toMonth = startOfMonth(to);
+
+  return {
+    mode: single ? "single" : "range",
+    singleDate: single && parsed ? parsed.start : new Date(),
+    range: { from, to },
+    leftMonth: fromMonth,
+    // Left shows the from-month, right the to-month; never the same month twice.
+    rightMonth: toMonth > fromMonth ? toMonth : addMonths(fromMonth, 1),
+  };
 }

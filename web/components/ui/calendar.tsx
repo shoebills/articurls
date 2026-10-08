@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils";
 
 /**
  * shadcn-style calendar built on react-day-picker v10.
- * Note: modifier classes (selected/range_*) are applied by rDP to the Day
- * cell, so selection styling lives there (see globals.css custom variants).
+ * Note: rDP v10 applies selection styling via the `modifiersClassNames`
+ * prop (it never adds `selected`/`range_*` classes on its own), so all
+ * selection styling lives there — not in `day` variants.
  */
 function Calendar({
   className,
   classNames,
+  modifiersClassNames,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   return (
@@ -29,15 +31,7 @@ function Calendar({
         weekday: "flex w-9 items-center justify-center text-[0.7rem] font-medium text-muted-foreground",
         weeks: "flex flex-col",
         week: "flex mt-1",
-        day: cn(
-          "flex w-9 items-center justify-center p-0 text-sm",
-          // Selection styles — rDP applies these modifier classes to the Day cell
-          "rdp-range-start:rounded-md rdp-range-start:bg-primary rdp-range-start:text-primary-foreground",
-          "rdp-range-end:rounded-md rdp-range-end:bg-primary rdp-range-end:text-primary-foreground",
-          "rdp-range-middle:rounded-none rdp-range-middle:bg-accent",
-          "rdp-selected:rounded-md rdp-selected:bg-primary rdp-selected:text-primary-foreground",
-          "rdp-today:font-semibold"
-        ),
+        day: "flex w-9 items-center justify-center p-0 text-sm",
         day_button: cn(
           "flex h-9 w-9 items-center justify-center rounded-md text-sm font-normal cursor-pointer text-inherit",
           "transition-colors hover:bg-accent hover:text-accent-foreground",
@@ -56,6 +50,14 @@ function Calendar({
           "disabled:pointer-events-none disabled:opacity-30"
         ),
         ...classNames,
+      }}
+      modifiersClassNames={{
+        selected: "rounded-md bg-primary text-primary-foreground",
+        range_start: "rounded-md bg-primary text-primary-foreground",
+        range_end: "rounded-md bg-primary text-primary-foreground",
+        range_middle: "rounded-none bg-accent",
+        today: "font-semibold",
+        ...modifiersClassNames,
       }}
       components={{
         Chevron: ({ orientation }) =>

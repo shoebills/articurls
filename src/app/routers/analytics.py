@@ -232,11 +232,22 @@ def get_umami_overview(
                         return 0
                     return None
 
+                if visits > 0 and comp_visits > 0:
+                    change_bounce_rate = _pct(bounce_rate, comp_bounce_rate)
+                    change_avg_visit_time = _pct(avg_visit_time, comp_avg_visit_time)
+                else:
+                    # Either window has no visits: Umami's rate for that side
+                    # is NaN (x/0 in WebsiteMetricsBar), which its MetricCard
+                    # renders as 0% — so an empty previous window never shows
+                    # +/-100% on bounce/avg-duration.
+                    change_bounce_rate = 0
+                    change_avg_visit_time = 0
+
                 change = {
                     "pageviews": _pct(pageviews, comp_pageviews),
                     "visitors": _pct(visitors, comp_visitors),
-                    "bounce_rate": _pct(bounce_rate, comp_bounce_rate),
-                    "avg_visit_time": _pct(avg_visit_time, comp_avg_visit_time),
+                    "bounce_rate": change_bounce_rate,
+                    "avg_visit_time": change_avg_visit_time,
                 }
 
         return {
