@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import type { DateRange } from "react-day-picker";
 import { addMonths, endOfDay, startOfMonth } from "date-fns";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectSeparator, SelectTrigger } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -28,10 +27,14 @@ interface PeriodSelectProps {
 
 export function PeriodSelect({ value, onChange, triggerClassName }: PeriodSelectProps) {
   const [pickerOpen, setPickerOpen] = useState(false);
+  // Bumped on every open so the picker remounts with state seeded from the
+  // current period — reopening never shows a stale previous selection.
+  const [pickerKey, setPickerKey] = useState(0);
 
   const handleValueChange = (next: string) => {
     if (next === "__custom__") {
       setPickerOpen(true);
+      setPickerKey((k) => k + 1);
       return;
     }
     onChange(next as AnalyticsPeriod);
@@ -63,6 +66,7 @@ export function PeriodSelect({ value, onChange, triggerClassName }: PeriodSelect
       </Select>
 
       <DateRangePickerDialog
+        key={pickerKey}
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         initialPeriod={value}
@@ -83,32 +87,25 @@ interface DateRangePickerDialogProps {
 }
 
 function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: DateRangePickerDialogProps) {
-  const [mode, setMode] = useState<"single" | "range">(() => resolveInitialPicker(initialPeriod).mode);
-  const [singleDate, setSingleDate] = useState<Date | undefined>(
-    () => resolveInitialPicker(initialPeriod).singleDate
-  );
-  const [range, setRange] = useState<DateRange | undefined>(
-    () => resolveInitialPicker(initialPeriod).range
-  );
-  const [leftMonth, setLeftMonth] = useState<Date>(
-    () => resolveInitialPicker(initialPeriod).leftMonth
-  );
-  const [rightMonth, setRightMonth] = useState<Date>(
-    () => resolveInitialPicker(initialPeriod).rightMonth
-  );
+  // Seeded once on mount (the dialog is remounted on every open).
+  const [initial] = useState(() => resolveInitialPicker(initialPeriod));
+  const [mode, setMode] = useState<"single" | "range">(initial.mode);
+  const [singleDate, setSingleDate] = useState<Date | undefined>(initial.singleDate);
+  const [startDate, setStartDate] = useState<Date>(initial.startDate);
+  const [endDate, setEndDate] = useState<Date>(initial.endDate);
+  const [leftMonth, setLeftMonth] = useState<Date>(initial.leftMonth);
+  const [rightMonth, setRightMonth] = useState<Date>(initial.rightMonth);
 
-  const disabled = { before: MIN_DATE, after: MAX_DATE };
-
-  const canApply =
-    mode === "single" ? singleDate !== undefined : !!(range?.from && range?.to);
+  const invalidRange = startDate.getTime() > endDate.getTime();
+  const canApply = mode === "single" ? singleDate !== undefined : !invalidRange;
 
   const handleApply = () => {
     if (mode === "single" && singleDate) {
       onApply(buildRangeValue(singleDate, singleDate));
       return;
     }
-    if (mode === "range" && range?.from && range?.to) {
-      onApply(buildRangeValue(range.from, range.to));
+    if (mode === "range") {
+      onApply(buildRangeValue(startDate, endDate));
     }
   };
 
@@ -146,37 +143,48 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
             <Calendar
               mode="single"
               selected={singleDate}
-              onSelect={setSingleDate}
-              disabled={disabled}
+              onSelect={(d) => d && setSingleDate(d)}
+              disabled={{ before: MIN_DATE, after: MAX_DATE }}
               numberOfMonths={1}
             />
           </div>
         ) : (
           <div className="mx-auto flex w-fit flex-col gap-4 md:flex-row md:gap-6">
-            {/* Two independent single-month calendars (like Umami): each has
-                its own arrows and navigates without moving the other. */}
-            <Calendar
-              mode="range"
-              selected={range}
-              onSelect={setRange}
-              disabled={disabled}
-              month={leftMonth}
-              onMonthChange={setLeftMonth}
-              startMonth={startOfMonth(MIN_DATE)}
-              endMonth={startOfMonth(MAX_DATE)}
-              numberOfMonths={1}
-            />
-            <Calendar
-              mode="range"
-              selected={range}
-              onSelect={setRange}
-              disabled={disabled}
-              month={rightMonth}
-              onMonthChange={setRightMonth}
-              startMonth={startOfMonth(MIN_DATE)}
-              endMonth={startOfMonth(MAX_DATE)}
-              numberOfMonths={1}
-            />
+            {/* Umami's DatePickerForm model: the left calendar picks the start
+                date and the right calendar the end date. Each navigates its
+                own month independently. */}
+            <div className="flex flex-col">
+              <p className="mb-1 text-center text-xs font-medium text-muted-foreground">
+                Start date
+              </p>
+              <Calendar
+                mode="single"
+                selected={startDate}
+                onSelect={(d) => d && setStartDate(d)}
+                disabled={{ before: MIN_DATE, after: endDate }}
+                month={leftMonth}
+                onMonthChange={setLeftMonth}
+                startMonth={startOfMonth(MIN_DATE)}
+                endMonth={startOfMonth(MAX_DATE)}
+                numberOfMonths={1}
+              />
+            </div>
+            <div className="flex flex-col">
+              <p className="mb-1 text-center text-xs font-medium text-muted-foreground">
+                End date
+              </p>
+              <Calendar
+                mode="single"
+                selected={endDate}
+                onSelect={(d) => d && setEndDate(d)}
+                disabled={{ before: startDate, after: MAX_DATE }}
+                month={rightMonth}
+                onMonthChange={setRightMonth}
+                startMonth={startOfMonth(MIN_DATE)}
+                endMonth={startOfMonth(MAX_DATE)}
+                numberOfMonths={1}
+              />
+            </div>
           </div>
         )}
 
@@ -196,7 +204,8 @@ function DateRangePickerDialog({ open, onOpenChange, initialPeriod, onApply }: D
 interface InitialPickerState {
   mode: "single" | "range";
   singleDate: Date | undefined;
-  range: DateRange | undefined;
+  startDate: Date;
+  endDate: Date;
   leftMonth: Date;
   rightMonth: Date;
 }
@@ -210,17 +219,18 @@ function resolveInitialPicker(period: string): InitialPickerState {
   const defaultFrom = new Date();
   defaultFrom.setDate(defaultFrom.getDate() - 6);
 
-  const from = parsed?.start ?? defaultFrom;
-  const to = parsed?.end ?? defaultTo;
-  const fromMonth = startOfMonth(from);
-  const toMonth = startOfMonth(to);
+  const start = parsed?.start ?? defaultFrom;
+  const end = parsed?.end ?? defaultTo;
+  const startMonth = startOfMonth(start);
+  const endMonth = startOfMonth(end);
 
   return {
     mode: single ? "single" : "range",
-    singleDate: single && parsed ? parsed.start : new Date(),
-    range: { from, to },
-    leftMonth: fromMonth,
-    // Left shows the from-month, right the to-month; never the same month twice.
-    rightMonth: toMonth > fromMonth ? toMonth : addMonths(fromMonth, 1),
+    singleDate: parsed?.start ?? new Date(),
+    startDate: start,
+    endDate: end,
+    leftMonth: startMonth,
+    // Left shows the start month, right the end month; never the same month twice.
+    rightMonth: endMonth > startMonth ? endMonth : addMonths(startMonth, 1),
   };
 }

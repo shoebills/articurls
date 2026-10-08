@@ -36,23 +36,40 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
 
   const close = useCallback(() => setOpen(false), []);
 
-  const [viewportHeight, setViewportHeight] = useState<number | null>(null);
+  const [trayMaxHeight, setTrayMaxHeight] = useState<number | undefined>(undefined);
 
   useEffect(() => {
     if (!open) return;
-    const vv = window.visualViewport;
-    if (!vv) return;
-    const sync = () => setViewportHeight(vv.height);
-    sync();
-    vv.addEventListener("resize", sync);
-    return () => vv.removeEventListener("resize", sync);
-  }, [open ]);
 
-  // Bottom browser toolbars (e.g. Brave) and split-screen can leave CSS dvh
-  // units taller than the visible area, so the tray cap alone won't engage
-  // the inner scrollbar and the footer jams over the nav. Cap the tray to 85%
-  // of the *visible* height instead; CSS 85dvh remains the fallback.
-  const trayMaxHeight = viewportHeight ? Math.floor(viewportHeight * 0.85) : undefined;
+    const syncHeight = () => {
+      const vh = window.visualViewport?.height ?? window.innerHeight;
+      const headerBottom = mobileHeaderRef.current?.getBoundingClientRect().bottom ?? 56;
+      // 16px bottom breathing room before browser bottom bars (e.g. Brave) or screen edge
+      const available = Math.floor(vh - headerBottom - 16);
+      if (available > 0) {
+        setTrayMaxHeight(available);
+      }
+    };
+
+    const rafId = requestAnimationFrame(syncHeight);
+
+    const vv = window.visualViewport;
+    if (vv) {
+      vv.addEventListener("resize", syncHeight);
+      vv.addEventListener("scroll", syncHeight);
+      return () => {
+        cancelAnimationFrame(rafId);
+        vv.removeEventListener("resize", syncHeight);
+        vv.removeEventListener("scroll", syncHeight);
+      };
+    } else {
+      window.addEventListener("resize", syncHeight);
+      return () => {
+        cancelAnimationFrame(rafId);
+        window.removeEventListener("resize", syncHeight);
+      };
+    }
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -154,14 +171,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
                 aria-hidden={!open}
               >
                 <div
-                  className="max-h-[85dvh] overflow-hidden rounded-xl border border-border/80 bg-background"
+                  className="flex max-h-[calc(100svh-4.5rem)] flex-col overflow-hidden rounded-xl border border-border/80 bg-background shadow-xl"
                   style={trayMaxHeight ? { maxHeight: trayMaxHeight } : undefined}
                 >
                   <h2 className="sr-only">App navigation</h2>
                   <DashboardSidebarPanel
-                    mobileTrayLayout
                     onNavigate={close}
-                    className="!h-auto max-h-[85dvh] min-h-0 pr-0"
+                    className="h-auto max-h-[calc(100svh-4.5rem)]"
                     style={trayMaxHeight ? { maxHeight: trayMaxHeight } : undefined}
                   />
                 </div>

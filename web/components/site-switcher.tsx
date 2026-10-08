@@ -28,7 +28,7 @@ export function SiteSwitcher({
   const currentDisplayName = activeSite?.site_name || activeSite?.subdomain || "My Site";
 
   return (
-    <div className={cn("px-2.5 pb-2 pt-4", className)}>
+    <div className={cn("shrink-0 px-2.5 pb-2 pt-4", className)}>
       {/* Non-modal: a modal menu sets body pointer-events to none, which makes
           the opening tap's click fall through the trigger onto the mobile
           tray's close-overlay and instantly shut the sidebar. */}

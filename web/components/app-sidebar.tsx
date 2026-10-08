@@ -44,7 +44,7 @@ type PanelProps = {
   mobileTrayLayout?: boolean;
 };
 
-export function DashboardSidebarPanel({ onNavigate, className, style, mobileTrayLayout = false }: PanelProps) {
+export function DashboardSidebarPanel({ onNavigate, className, style }: PanelProps) {
   const pathname = usePathname();
   const { isTrial, daysRemaining } = useAuth();
 
@@ -52,7 +52,7 @@ export function DashboardSidebarPanel({ onNavigate, className, style, mobileTray
     <Link
       href="/dashboard/billing?plan=pro"
       onClick={() => onNavigate?.()}
-      className="mx-2.5 mb-1 flex items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50/70 px-2.5 py-2 text-xs font-medium leading-tight text-amber-900 transition-colors hover:bg-amber-50"
+      className="mx-2.5 mb-1 flex shrink-0 items-center gap-2 rounded-lg border border-amber-300/60 bg-amber-50/70 px-2.5 py-2 text-xs font-medium leading-tight text-amber-900 transition-colors hover:bg-amber-50"
     >
       <Hourglass className="h-3.5 w-3.5 shrink-0 text-amber-600" />
       {daysRemaining !== null && daysRemaining > 0
@@ -93,32 +93,24 @@ export function DashboardSidebarPanel({ onNavigate, className, style, mobileTray
       {/* Trial countdown chip */}
       {trialChip}
 
-      <div className={cn("flex min-h-0 flex-1 flex-col", mobileTrayLayout && "overflow-y-auto overscroll-contain")}>
-        <nav className={cn("flex min-h-0 flex-col p-2.5 gap-5", !mobileTrayLayout && "flex-1 overflow-y-auto overscroll-contain")}>
-          {/* Ungrouped Primary Links */}
-          <div className="flex flex-col gap-1">
-            {renderNavLinks(primaryLinks)}
-          </div>
+      {/* Navigation links with inside scrollbar */}
+      <nav className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain p-2.5 gap-5">
+        {/* Ungrouped Primary Links */}
+        <div className="flex flex-col gap-1">
+          {renderNavLinks(primaryLinks)}
+        </div>
 
-          {/* Advanced Section */}
-          <div className="flex flex-col gap-1">
-            <p className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 select-none">
-              Advanced
-            </p>
-            {renderNavLinks(advancedLinks)}
-          </div>
-        </nav>
+        {/* Advanced Section */}
+        <div className="flex flex-col gap-1">
+          <p className="px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 select-none">
+            Advanced
+          </p>
+          {renderNavLinks(advancedLinks)}
+        </div>
+      </nav>
 
-        {/* Footer Account Dropdown: pinned to panel bottom on desktop;
-            follows content with a capped 20px gap in the mobile tray */}
-        {mobileTrayLayout ? (
-          <div className="px-2.5 pb-2.5 pt-5">
-            <SidebarAccountDropdown onNavigate={onNavigate} />
-          </div>
-        ) : (
-          <SidebarAccountDropdown onNavigate={onNavigate} />
-        )}
-      </div>
+      {/* Footer Account Dropdown: pinned at bottom */}
+      <SidebarAccountDropdown onNavigate={onNavigate} />
     </div>
   );
 }
