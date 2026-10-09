@@ -121,6 +121,7 @@ import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Skeleton } from "@/components/ui/skeleton";
 import { GeographyCard } from "@/components/dashboard/world-map";
+import { ExcludeVisitsToggle } from "@/components/dashboard/exclude-visits-toggle";
 
 function getCountryFlag(code: string): string {
   const codeUpper = (code || "").toUpperCase();
@@ -1068,6 +1069,9 @@ function NativeAnalytics({ token }: { token: string }) {
 
           {/* World Map */}
           <GeographyCard token={token} period={period} />
+
+          {/* Self-exclusion from analytics on this browser */}
+          <ExcludeVisitsToggle />
         </div>
       )}
 
