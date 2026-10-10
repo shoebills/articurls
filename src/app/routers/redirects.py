@@ -25,6 +25,7 @@ def _redirect_out(db_redirect: models.Redirect) -> dict:
         "source_path": db_redirect.source_path,
         "target_url": db_redirect.target_url,
         "type": db_redirect.type.value if hasattr(db_redirect.type, "value") else str(db_redirect.type),
+        "origin": db_redirect.origin.value if hasattr(db_redirect.origin, "value") else str(db_redirect.origin),
         "created_at": db_redirect.created_at,
         "updated_at": db_redirect.updated_at,
     }

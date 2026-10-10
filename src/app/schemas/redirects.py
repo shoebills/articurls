@@ -20,6 +20,7 @@ BLOCKED_SOURCE_PATHS = frozenset({
 })
 
 RedirectTypeValue = Literal["permanent", "temporary"]
+RedirectOriginValue = Literal["manual", "automatic"]
 
 
 def normalize_source_path(raw: str) -> str:
@@ -60,6 +61,7 @@ class RedirectOut(BaseModel):
     source_path: str
     target_url: str
     type: RedirectTypeValue
+    origin: RedirectOriginValue = "manual"
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

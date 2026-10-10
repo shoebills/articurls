@@ -381,6 +381,9 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                     disabled={submitting}
                   />
                 </div>
+                <p className="text-[11px] text-muted-foreground">
+                  The permalink for this author profile. Changing the author name will not change this URL.
+                </p>
               </div>
             </div>
 

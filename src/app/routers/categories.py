@@ -11,6 +11,7 @@ from ..schemas import blog as blog_schema
 from ..security import oauth2
 from ..security.oauth2 import get_current_user, get_current_site
 from ..utils import make_excerpt
+from ..utils.redirect_sync import sync_slug_change_redirect, cleanup_entity_redirects
 from ..cache.service import schedule_category_purge, schedule_tenant_purge
 from ..config import settings
 
@@ -20,16 +21,19 @@ router = APIRouter(
 )
 
 
-def _unique_category_slug(db: Session, site_id: Any, name: str) -> str:
-    base = slugify(name) or "category"
+def _unique_category_slug(db: Session, site_id: Any, name_or_slug: str, exclude_category_id: Any | None = None) -> str:
+    base = slugify(name_or_slug) or "category"
     candidate = base
     idx = 2
-    while (
-        db.query(models.Category)
-        .filter(models.Category.site_id == site_id, models.Category.slug == candidate)
-        .first()
-        is not None
-    ):
+    while True:
+        query = db.query(models.Category).filter(
+            models.Category.site_id == site_id,
+            models.Category.slug == candidate,
+        )
+        if exclude_category_id is not None:
+            query = query.filter(models.Category.category_id != exclude_category_id)
+        if query.first() is None:
+            break
         candidate = f"{base}-{idx}"
         idx += 1
     return candidate
@@ -87,10 +91,13 @@ def create_category(
             detail="Category name is required",
         )
 
+    slug_source = request.slug.strip() if request.slug and request.slug.strip() else name
+    unique_slug = _unique_category_slug(db, current_site.site_id, slug_source)
+
     new_cat = models.Category(
         site_id=current_site.site_id,
         name=name,
-        slug=_unique_category_slug(db, current_site.site_id, name),
+        slug=unique_slug,
         description=request.description,
         meta_title=(request.meta_title or "").strip() or None,
         meta_description=(request.meta_description or "").strip() or None,
@@ -193,9 +200,22 @@ def update_category(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail="Category name is required",
             )
-        if name != db_cat.name:
-            db_cat.name = name
-            db_cat.slug = _unique_category_slug(db, current_site.site_id, name)
+        db_cat.name = name
+
+    if request.slug is not None:
+        raw_slug = request.slug.strip()
+        if not raw_slug:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail="Category slug cannot be empty",
+            )
+        new_slug = _unique_category_slug(
+            db,
+            current_site.site_id,
+            raw_slug,
+            exclude_category_id=category_id,
+        )
+        db_cat.slug = new_slug
 
     if request.description is not None:
         db_cat.description = request.description
@@ -204,11 +224,16 @@ def update_category(
     if request.meta_description is not None:
         db_cat.meta_description = (request.meta_description or "").strip() or None
 
+    slug_changed = old_slug != db_cat.slug
+    if slug_changed:
+        sync_slug_change_redirect(db, current_site, "category", old_slug, db_cat.slug, background_tasks)
+
     db.commit()
     db.refresh(db_cat)
 
-    schedule_category_purge(background_tasks, current_site, old_slug)
-    schedule_category_purge(background_tasks, current_site, db_cat.slug)
+    if not slug_changed:
+        schedule_category_purge(background_tasks, current_site, db_cat.slug)
+        schedule_tenant_purge(background_tasks, current_site)
 
     return _category_out(db, db_cat)
 
@@ -231,6 +256,7 @@ def delete_category(
     )
     if not db_cat:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Category not found")
+    cleanup_entity_redirects(db, current_site.site_id, "category", db_cat.slug)
     db.delete(db_cat)
     db.commit()
 

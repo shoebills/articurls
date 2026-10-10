@@ -59,6 +59,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import slugify from "slugify";
 
 function SortableNavItem({
   id,
@@ -123,6 +124,8 @@ export default function CategoriesDashboardPage() {
 
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [createName, setCreateName] = useState("");
+  const [createSlug, setCreateSlug] = useState("");
+  const [createSlugCustomized, setCreateSlugCustomized] = useState(false);
   const [createDescription, setCreateDescription] = useState("");
   const [createMetaTitle, setCreateMetaTitle] = useState("");
   const [createMetaDescription, setCreateMetaDescription] = useState("");
@@ -131,6 +134,7 @@ export default function CategoriesDashboardPage() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
+  const [editSlug, setEditSlug] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editMetaTitle, setEditMetaTitle] = useState("");
   const [editMetaDescription, setEditMetaDescription] = useState("");
@@ -187,6 +191,8 @@ export default function CategoriesDashboardPage() {
   useEffect(() => {
     if (!createDialogOpen) {
       setCreateName("");
+      setCreateSlug("");
+      setCreateSlugCustomized(false);
       setCreateDescription("");
       setCreateMetaTitle("");
       setCreateMetaDescription("");
@@ -201,6 +207,7 @@ export default function CategoriesDashboardPage() {
     try {
       await createCategory(token, {
         name: createName.trim(),
+        slug: createSlug.trim() || undefined,
         description: createDescription,
         meta_title: createMetaTitle,
         meta_description: createMetaDescription,
@@ -222,6 +229,7 @@ export default function CategoriesDashboardPage() {
     try {
       await updateCategory(token, editId, {
         name: editName.trim(),
+        slug: editSlug.trim() || undefined,
         description: editDescription,
         meta_title: editMetaTitle,
         meta_description: editMetaDescription,
@@ -427,6 +435,7 @@ export default function CategoriesDashboardPage() {
                     onClick={() => {
                       setEditId(cat.category_id);
                       setEditName(cat.name);
+                      setEditSlug(cat.slug || "");
                       setEditDescription(cat.description ?? "");
                       setEditMetaTitle(cat.meta_title ?? "");
                       setEditMetaDescription(cat.meta_description ?? "");
@@ -529,7 +538,13 @@ export default function CategoriesDashboardPage() {
             <Input
               placeholder="Category name"
               value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCreateName(val);
+                if (!createSlugCustomized) {
+                  setCreateSlug(slugify(val, { lower: true, strict: true }));
+                }
+              }}
               onKeyDown={(e) => {
                 if (e.key === "Enter") handleCreate();
               }}
@@ -550,6 +565,25 @@ export default function CategoriesDashboardPage() {
 
             {createAdvancedOpen ? (
               <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">URL Slug</label>
+                  <div className="flex items-center rounded-md border border-input bg-muted/40 px-3 text-sm focus-within:ring-1 focus-within:ring-ring">
+                    <span className="text-xs text-muted-foreground select-none font-mono">/category/</span>
+                    <input
+                      className="flex-1 bg-transparent py-1.5 pl-1 text-sm focus:outline-none disabled:opacity-50"
+                      placeholder="category-slug"
+                      value={createSlug}
+                      onChange={(e) => {
+                        setCreateSlugCustomized(true);
+                        setCreateSlug(slugify(e.target.value, { lower: true, strict: true }));
+                      }}
+                      disabled={busy}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Auto-generated from name if left empty.
+                  </p>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
                   <Textarea
@@ -633,6 +667,22 @@ export default function CategoriesDashboardPage() {
 
             {editAdvancedOpen ? (
               <div className="space-y-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold uppercase text-muted-foreground">URL Slug</label>
+                  <div className="flex items-center rounded-md border border-input bg-muted/40 px-3 text-sm focus-within:ring-1 focus-within:ring-ring">
+                    <span className="text-xs text-muted-foreground select-none font-mono">/category/</span>
+                    <input
+                      className="flex-1 bg-transparent py-1.5 pl-1 text-sm focus:outline-none disabled:opacity-50"
+                      placeholder="category-slug"
+                      value={editSlug}
+                      onChange={(e) => setEditSlug(slugify(e.target.value, { lower: true, strict: true }))}
+                      disabled={busy}
+                    />
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    The permalink for this category. Changing the category name will not change this URL.
+                  </p>
+                </div>
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold uppercase text-muted-foreground">Description</label>
                   <Textarea

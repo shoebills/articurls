@@ -44,6 +44,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { SettingsBreadcrumb } from "@/components/settings-breadcrumb";
 
@@ -70,6 +75,42 @@ function validateForm(form: FormState): string | null {
     return "Source and target must be different.";
   }
   return null;
+}
+
+function AutoBadgeTooltip() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          onMouseEnter={() => setOpen(true)}
+          onMouseLeave={() => setOpen(false)}
+          onClick={(e) => {
+            e.stopPropagation();
+            setOpen((prev) => !prev);
+          }}
+          className="inline-flex items-center gap-1 rounded-md border border-primary/25 bg-primary/10 px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-primary/15 transition-colors cursor-pointer select-none"
+          aria-label="Automatic redirect details"
+        >
+          <span>Auto</span>
+        </button>
+      </PopoverTrigger>
+      <PopoverContent
+        side="top"
+        align="center"
+        className="w-64 p-3 text-xs text-popover-foreground shadow-lg"
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+      >
+        <p className="font-semibold text-foreground">Automatic Redirect</p>
+        <p className="mt-1 text-muted-foreground leading-relaxed">
+          Created automatically when a URL slug was changed. Preserves search engine rankings and backlinks.
+        </p>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 export default function RedirectsSettingsPage() {
@@ -261,9 +302,12 @@ export default function RedirectsSettingsPage() {
                       {rule.target_url}
                     </td>
                     <td className="px-3 py-2.5">
-                      <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
-                        {rule.type === "permanent" ? "Permanent" : "Temporary"}
-                      </Badge>
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
+                          {rule.type === "permanent" ? "Permanent" : "Temporary"}
+                        </Badge>
+                        {rule.origin === "automatic" && <AutoBadgeTooltip />}
+                      </div>
                     </td>
                     <td className="px-3 py-2.5">
                       <DropdownMenu>
@@ -307,6 +351,14 @@ export default function RedirectsSettingsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-5">
+            {editing?.origin === "automatic" && (
+              <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                <p className="font-semibold">Automatic Redirect</p>
+                <p className="text-muted-foreground leading-relaxed">
+                  This redirect was generated automatically when a URL slug was changed. Modifying the source path or destination may break existing backlinks and search rankings pointing to the original page.
+                </p>
+              </div>
+            )}
             <div className="space-y-2.5">
               <div className="space-y-1.5">
                 <Label htmlFor="redirect_source">Source path</Label>
@@ -385,9 +437,26 @@ export default function RedirectsSettingsPage() {
       >
         <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
           <DialogHeader>
-            <DialogTitle>Delete redirect?</DialogTitle>
-            <DialogDescription>
-              Visitors opening {deleteTarget?.source_path} will no longer be redirected.
+            <DialogTitle>
+              {deleteTarget?.origin === "automatic" ? "Delete automatic redirect?" : "Delete redirect?"}
+            </DialogTitle>
+            <DialogDescription asChild>
+              <div className="space-y-2 text-xs sm:text-sm text-muted-foreground pt-1">
+                {deleteTarget?.origin === "automatic" ? (
+                  <>
+                    <p>
+                      This redirect was created automatically when you changed a URL slug. Deleting it will cause visitors and search engines accessing <code className="font-mono font-semibold text-foreground">{deleteTarget?.source_path}</code> to encounter a <strong>404 Not Found</strong> error.
+                    </p>
+                    <p className="text-destructive font-medium">
+                      Warning: Backlinks, bookmarks, and search results pointing to the old URL will permanently break.
+                    </p>
+                  </>
+                ) : (
+                  <p>
+                    Visitors opening <code className="font-mono text-foreground">{deleteTarget?.source_path}</code> will no longer be redirected to <code className="font-mono text-foreground">{deleteTarget?.target_url}</code>.
+                  </p>
+                )}
+              </div>
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -396,7 +465,7 @@ export default function RedirectsSettingsPage() {
             </Button>
             <Button variant="destructive" onClick={onDelete} disabled={deleteBusy} className="gap-2">
               {deleteBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              Delete
+              {deleteTarget?.origin === "automatic" ? "Delete Anyway" : "Delete"}
             </Button>
           </DialogFooter>
         </DialogContent>

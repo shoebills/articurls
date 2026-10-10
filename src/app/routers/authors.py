@@ -11,6 +11,7 @@ from ..schemas import author as author_schema
 from ..security import oauth2
 from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge
+from ..utils.redirect_sync import sync_slug_change_redirect, cleanup_entity_redirects
 from ..storage.service import save_image_local
 
 router = APIRouter(
@@ -167,6 +168,7 @@ def update_author(
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
+    old_slug = author.slug
     update_data = request.model_dump(exclude_unset=True)
     if "name" in update_data:
         name = (update_data["name"] or "").strip()
@@ -200,10 +202,15 @@ def update_author(
     if "meta_description" in update_data:
         author.meta_description = (update_data["meta_description"] or "").strip() or None
 
+    slug_changed = old_slug != author.slug
+    if slug_changed:
+        sync_slug_change_redirect(db, current_site, "author", old_slug, author.slug, background_tasks)
+
     db.commit()
     db.refresh(author)
 
-    schedule_tenant_purge(background_tasks, current_site)
+    if not slug_changed:
+        schedule_tenant_purge(background_tasks, current_site)
     return _author_out(db, author)
 
 
@@ -225,6 +232,8 @@ def delete_author(
     )
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
+
+    cleanup_entity_redirects(db, current_site.site_id, "author", author.slug)
 
     # Clear the byline on all blogs by this author
     db.query(models.Blog).filter(models.Blog.author_id == author_id).update(

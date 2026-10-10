@@ -6,6 +6,7 @@ import uuid
 
 class CategoryCreate(BaseModel):
     name: str
+    slug: Optional[str] = None
     description: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None
@@ -13,6 +14,7 @@ class CategoryCreate(BaseModel):
 
 class CategoryUpdate(BaseModel):
     name: Optional[str] = None
+    slug: Optional[str] = None
     description: Optional[str] = None
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

@@ -362,6 +362,7 @@ export interface RedirectRule {
   source_path: string;
   target_url: string;
   type: "permanent" | "temporary";
+  origin?: "manual" | "automatic";
   created_at: string | null;
   updated_at: string | null;
 }
