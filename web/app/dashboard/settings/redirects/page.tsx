@@ -238,7 +238,7 @@ export default function RedirectsSettingsPage() {
 
       {loading ? (
         <div className="overflow-x-auto rounded-xl border border-border/80">
-          <table className="w-full min-w-[560px] table-fixed">
+          <table className="w-full min-w-[640px] table-fixed">
             <tbody>
               {[1, 2, 3].map((i) => (
                 <tr key={i} className="border-b last:border-0">
@@ -248,10 +248,13 @@ export default function RedirectsSettingsPage() {
                   <td className="px-3 py-2.5">
                     <Skeleton className="h-4 w-48" />
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="w-28 px-3 py-2.5">
                     <Skeleton className="h-5 w-20 rounded-full" />
                   </td>
-                  <td className="px-3 py-2.5">
+                  <td className="w-24 px-3 py-2.5">
+                    <Skeleton className="h-5 w-16 rounded-full" />
+                  </td>
+                  <td className="w-12 px-3 py-2.5">
                     <Skeleton className="h-8 w-8 rounded-md" />
                   </td>
                 </tr>
@@ -281,12 +284,13 @@ export default function RedirectsSettingsPage() {
             </p>
           )}
           <div className="overflow-x-auto rounded-xl border border-border/80">
-            <table className="w-full min-w-[560px] table-fixed">
+            <table className="w-full min-w-[640px] table-fixed">
               <thead>
                 <tr className="border-b text-left text-xs font-medium text-muted-foreground">
                   <th className="px-3 py-2 font-medium">Source</th>
                   <th className="px-3 py-2 font-medium">Destination</th>
                   <th className="w-28 px-3 py-2 font-medium">Type</th>
+                  <th className="w-24 px-3 py-2 font-medium">Origin</th>
                   <th className="w-12 px-3 py-2">
                     <span className="sr-only">Actions</span>
                   </th>
@@ -302,12 +306,18 @@ export default function RedirectsSettingsPage() {
                       {rule.target_url}
                     </td>
                     <td className="px-3 py-2.5">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
-                          {rule.type === "permanent" ? "Permanent" : "Temporary"}
+                      <Badge variant={rule.type === "permanent" ? "secondary" : "outline"}>
+                        {rule.type === "permanent" ? "Permanent" : "Temporary"}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2.5">
+                      {rule.origin === "automatic" ? (
+                        <AutoBadgeTooltip />
+                      ) : (
+                        <Badge variant="outline" className="font-normal text-muted-foreground">
+                          Manual
                         </Badge>
-                        {rule.origin === "automatic" && <AutoBadgeTooltip />}
-                      </div>
+                      )}
                     </td>
                     <td className="px-3 py-2.5">
                       <DropdownMenu>
