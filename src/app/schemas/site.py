@@ -28,6 +28,10 @@ class SiteUpdate(BaseModel):
     custom_css: Optional[str] = None
 
 
+class SiteOnboardingUpdate(BaseModel):
+    onboarding_completed: bool = True
+
+
 class SiteSummary(BaseModel):
     site_id: uuid.UUID
     subdomain: str
@@ -41,6 +45,7 @@ class SiteSummary(BaseModel):
     created_at: Optional[datetime] = None
     post_count: int = 0
     subscriber_count: int = 0
+    onboarding_completed: bool = False
 
     class Config:
         from_attributes = True

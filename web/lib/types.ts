@@ -349,6 +349,7 @@ export interface SiteSummary {
   created_at?: string | null;
   post_count: number;
   subscriber_count: number;
+  onboarding_completed?: boolean;
 }
 
 export interface CodeInjectionSettings {

@@ -52,6 +52,7 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
         "created_at": site.created_at,
         "post_count": post_count,
         "subscriber_count": subscriber_count,
+        "onboarding_completed": bool(site.onboarding_completed),
     }
 
 
@@ -236,6 +237,27 @@ def get_site(
     )
     if not site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
+    return _site_summary_out(db, site)
+
+
+@router.patch("/{site_id}/onboarding", response_model=site_schema.SiteSummary, status_code=status.HTTP_200_OK)
+def update_site_onboarding(
+    site_id: uuid.UUID,
+    request: site_schema.SiteOnboardingUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    site = (
+        db.query(models.Site)
+        .filter(models.Site.site_id == site_id, models.Site.user_id == current_user.user_id)
+        .first()
+    )
+    if not site:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
+
+    site.onboarding_completed = request.onboarding_completed
+    db.commit()
+    db.refresh(site)
     return _site_summary_out(db, site)
 
 

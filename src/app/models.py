@@ -63,6 +63,7 @@ class Site(Base):
     og_locale = Column(String(10), nullable=True)
     atom_enabled = Column(Boolean, nullable=False, default=False, server_default="false")
     rss_enabled = Column(Boolean, nullable=False, default=False)
+    onboarding_completed = Column(Boolean, nullable=False, default=False, server_default="false")
 
     # Design / Theme
     template_id = Column(String(32), nullable=False, default="standard", server_default="standard")

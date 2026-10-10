@@ -834,6 +834,18 @@ export async function getSite(token: string, siteId: string): Promise<SiteSummar
   return apiFetch(`/sites/${siteId}`, { token });
 }
 
+export async function updateSiteOnboarding(
+  token: string,
+  siteId: string,
+  completed = true
+): Promise<SiteSummary> {
+  return apiFetch(`/sites/${siteId}/onboarding`, {
+    method: "PATCH",
+    token,
+    body: JSON.stringify({ onboarding_completed: completed }),
+  });
+}
+
 export async function deleteSite(token: string, siteId: string): Promise<void> {
   await apiFetch(`/sites/${siteId}`, { method: "DELETE", token });
 }
