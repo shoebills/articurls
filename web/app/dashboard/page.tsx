@@ -348,16 +348,16 @@ export default function DashboardPage() {
         </Card>
       ) : null}
 
-      {/* Traffic & Account Usage Card (Full Width) */}
-      <Card className="rounded-2xl border border-border/70 bg-card shadow-2xs">
-        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-5 sm:p-6 pb-4 sm:pb-4 border-b border-border/40">
+      {/* Traffic & Account Usage (Full Width) */}
+      <section className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <CardTitle className="text-base sm:text-lg font-bold tracking-tight">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">
               Traffic & Account Usage
-            </CardTitle>
-            <CardDescription className="mt-1 text-xs sm:text-sm">
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Aggregate monthly pageview traffic combined across all your owned sites.
-            </CardDescription>
+            </p>
           </div>
           <Button asChild variant="outline" size="sm" className="h-8 w-fit shrink-0 gap-1.5 text-xs font-semibold">
             <Link href="/dashboard/billing">
@@ -365,58 +365,56 @@ export default function DashboardPage() {
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
-        </CardHeader>
+        </div>
 
-        <CardContent className="p-5 sm:p-6 space-y-6">
-          {loading && !usage ? (
-            <div className="space-y-3">
-              <Skeleton className="h-10 w-2/3" />
-              <Skeleton className="h-2.5 w-full rounded-full" />
-            </div>
-          ) : usage ? (
-            <div className="space-y-3">
-              <div className="flex items-baseline justify-between gap-2">
-                <div>
-                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">
-                    {usage.total_pageviews.toLocaleString()}
-                  </span>
-                  <span className="text-muted-foreground text-sm font-medium">
-                    {" "}
-                    / {usage.tier_limit.toLocaleString()} monthly views
-                  </span>
-                </div>
-                <div className="text-right">
-                  <span className="text-sm font-bold tabular-nums text-foreground">
-                    {usage.usage_percentage}%
-                  </span>
-                  <span className="text-xs text-muted-foreground block">
-                    capacity used
-                  </span>
-                </div>
+        {loading && !usage ? (
+          <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <Skeleton className="h-10 w-2/3" />
+            <Skeleton className="h-2.5 w-full rounded-full" />
+          </div>
+        ) : usage ? (
+          <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <div className="flex items-baseline justify-between gap-2">
+              <div>
+                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">
+                  {usage.total_pageviews.toLocaleString()}
+                </span>
+                <span className="text-muted-foreground text-sm font-medium">
+                  {" "}
+                  / {usage.tier_limit.toLocaleString()} monthly views
+                </span>
               </div>
-
-              {/* Progress Bar */}
-              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
-                <div
-                  className={cn(
-                    "h-full transition-all duration-500 rounded-full",
-                    usage.usage_percentage > 90
-                      ? "bg-destructive"
-                      : usage.usage_percentage > 75
-                        ? "bg-amber-500"
-                        : "bg-primary"
-                  )}
-                  style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
-                />
+              <div className="text-right">
+                <span className="text-sm font-bold tabular-nums text-foreground">
+                  {usage.usage_percentage}%
+                </span>
+                <span className="text-xs text-muted-foreground block">
+                  capacity used
+                </span>
               </div>
             </div>
-          ) : (
-            <div className="rounded-xl border border-dashed border-border/80 p-8 text-center text-sm text-muted-foreground">
-              Traffic analytics unavailable for this cycle.
+
+            {/* Progress Bar */}
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
+              <div
+                className={cn(
+                  "h-full transition-all duration-500 rounded-full",
+                  usage.usage_percentage > 90
+                    ? "bg-destructive"
+                    : usage.usage_percentage > 75
+                      ? "bg-amber-500"
+                      : "bg-primary"
+                )}
+                style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
+              />
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </div>
+        ) : (
+          <div className="rounded-xl border border-dashed border-border/80 p-8 text-center text-sm text-muted-foreground">
+            Traffic analytics unavailable for this cycle.
+          </div>
+        )}
+      </section>
 
       {/* Recent Posts & Recent Subscribers Grid */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
