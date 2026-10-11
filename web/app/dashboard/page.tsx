@@ -19,18 +19,16 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { BlogStatusBadge } from "@/components/blog-status-badge";
 import { cn } from "@/lib/utils";
 import {
   FileText,
-  Globe,
   ArrowRight,
   PenLine,
   Mail,
   ChevronRight,
-  Pin,
   Check,
   ExternalLink,
+  Copy,
 } from "lucide-react";
 import type { BlogListItem, AccountUsage, RecentSubscriber, SubscriberListResponse } from "@/lib/types";
 
@@ -80,7 +78,18 @@ export default function DashboardPage() {
   });
   const [err, setErr] = useState<string | null>(null);
   const [dismissingChecklist, setDismissingChecklist] = useState(false);
-  const [localDismissed, setLocalDismissed] = useState(false);
+  const [dismissedSiteIds, setDismissedSiteIds] = useState<Set<string>>(() => new Set());
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [themeVisited, setThemeVisited] = useState(false);
+  const [linkShared, setLinkShared] = useState(false);
+
+  useEffect(() => {
+    if (!activeSite?.site_id) return;
+    const tv = localStorage.getItem(`articurls_theme_onboarded_${activeSite.site_id}`) === "true";
+    const ls = localStorage.getItem(`articurls_share_onboarded_${activeSite.site_id}`) === "true";
+    setThemeVisited(tv);
+    setLinkShared(ls);
+  }, [activeSite?.site_id]);
 
   useEffect(() => {
     if (!token) return;
@@ -138,33 +147,68 @@ export default function DashboardPage() {
 
   if (oauthBusy) return null;
 
-  const isNew = activeSite ? (!activeSite.onboarding_completed && !localDismissed) : false;
+  const isDismissed = activeSite ? dismissedSiteIds.has(String(activeSite.site_id)) : false;
+  const isNew = activeSite ? (!activeSite.onboarding_completed && !isDismissed) : false;
   const publicBlogHref = getSitePublicRoot(activeSite);
   const publishedCount = blogs.filter((b) => b.status === "published").length;
 
   async function handleDismissChecklist() {
     if (!token || !activeSite) return;
+    const currentSiteId = String(activeSite.site_id);
     setDismissingChecklist(true);
-    setLocalDismissed(true);
+    setDismissedSiteIds((prev) => new Set(prev).add(currentSiteId));
     try {
-      await updateSiteOnboarding(token, String(activeSite.site_id), true);
+      await updateSiteOnboarding(token, currentSiteId, true);
       await refreshSites();
     } catch (e) {
-      setLocalDismissed(false);
+      setDismissedSiteIds((prev) => {
+        const next = new Set(prev);
+        next.delete(currentSiteId);
+        return next;
+      });
       setErr(e instanceof ApiError ? e.message : "Failed to update checklist status");
     } finally {
       setDismissingChecklist(false);
     }
   }
 
+  function handleCustomizeTheme() {
+    if (activeSite?.site_id) {
+      localStorage.setItem(`articurls_theme_onboarded_${activeSite.site_id}`, "true");
+      setThemeVisited(true);
+    }
+  }
+
+  async function handleCopyLink() {
+    if (!publicBlogHref) return;
+    try {
+      await navigator.clipboard.writeText(publicBlogHref);
+      setCopiedLink(true);
+      if (activeSite?.site_id) {
+        localStorage.setItem(`articurls_share_onboarded_${activeSite.site_id}`, "true");
+        setLinkShared(true);
+      }
+      setTimeout(() => setCopiedLink(false), 2000);
+    } catch {
+      // Ignore clipboard error
+    }
+  }
+
+  const hasCustomDomain = Boolean(
+    activeSite?.custom_domain &&
+    (activeSite.domain_status === "active" || activeSite.domain_status === "grace")
+  );
+
   const checklistSteps = [
     {
       id: "identity",
-      title: "Set up publication identity",
-      description: "Set your site name, hero title, and publication description.",
+      title: "Publication created & identity set",
+      description: activeSite ? `Live on ${activeSite.subdomain}.articurls.site with default identity.` : "Publication created and default identity set.",
       href: "/dashboard/settings/general",
       actionLabel: "Configure",
-      completed: Boolean(activeSite?.site_name && activeSite.site_name !== activeSite.subdomain),
+      completed: true,
+      isShareStep: false,
+      onAction: undefined,
     },
     {
       id: "theme",
@@ -172,7 +216,9 @@ export default function DashboardPage() {
       description: "Select your preferred color mode, palette, and typography pairing.",
       href: "/dashboard/themes",
       actionLabel: "Customize",
-      completed: false,
+      completed: themeVisited,
+      isShareStep: false,
+      onAction: handleCustomizeTheme,
     },
     {
       id: "post",
@@ -181,17 +227,18 @@ export default function DashboardPage() {
       href: "/dashboard/posts/new",
       actionLabel: "Write Post",
       completed: publishedCount > 0,
+      isShareStep: false,
+      onAction: undefined,
     },
     {
       id: "domain",
-      title: "Connect custom domain or share link",
-      description: "Add a custom domain or share your publication URL with readers.",
+      title: "Share your publication or connect domain",
+      description: "Share your publication link with readers or configure a custom domain.",
       href: "/dashboard/settings/domains",
       actionLabel: "Configure Domain",
-      completed: Boolean(
-        activeSite?.custom_domain &&
-        (activeSite.domain_status === "active" || activeSite.domain_status === "grace")
-      ),
+      completed: linkShared || hasCustomDomain,
+      isShareStep: true,
+      onAction: undefined,
     },
   ];
 
@@ -200,36 +247,29 @@ export default function DashboardPage() {
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
-      {/* Dynamic Header */}
-      {isNew ? (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Get Started
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {activeSite ? (
-                <>
-                  Welcome to Articurls! Complete these steps to launch{" "}
-                  <span className="font-semibold text-foreground">
-                    {activeSite.site_name || activeSite.subdomain}
-                  </span>.
-                </>
-              ) : (
-                "Welcome to Articurls! Complete the checklist below to launch your publication."
-              )}
-            </p>
-          </div>
-          {publicBlogHref ? (
-            <div className="flex items-center gap-2">
-              <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 text-xs font-semibold">
-                <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
-                  Visit site
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            </div>
-          ) : null}
+      {/* Header with FOUC protection */}
+      {loading && !activeSite ? (
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-48 sm:w-64" />
+          <Skeleton className="h-4 w-72 sm:w-96" />
+        </div>
+      ) : isNew ? (
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Get Started
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {activeSite ? (
+              <>
+                Complete these steps to launch{" "}
+                <span className="font-semibold text-foreground">
+                  {activeSite.site_name || activeSite.subdomain}
+                </span>.
+              </>
+            ) : (
+              "Complete these steps to launch your publication."
+            )}
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -306,6 +346,27 @@ export default function DashboardPage() {
                 style={{ width: `${Math.max(4, progressPercent)}%` }}
               />
             </div>
+
+            {/* 100% Celebration Banner */}
+            {completedCount === checklistSteps.length ? (
+              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🎉</span>
+                  <p className="text-xs sm:text-sm font-semibold text-foreground">
+                    All steps complete! Your publication is ready for readers.
+                  </p>
+                </div>
+                <Button
+                  size="sm"
+                  onClick={handleDismissChecklist}
+                  disabled={dismissingChecklist}
+                  className="h-8 shrink-0 text-xs font-semibold gap-1"
+                >
+                  {dismissingChecklist ? "Finalizing..." : "Enter Dashboard"}
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            ) : null}
           </div>
 
           <CardContent className="p-0">
@@ -345,17 +406,55 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  <Button
-                    asChild
-                    variant={step.completed ? "ghost" : "outline"}
-                    size="sm"
-                    className="h-8 shrink-0 text-xs font-semibold self-start sm:self-auto gap-1"
-                  >
-                    <Link href={step.href}>
-                      {step.actionLabel}
-                      <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </Button>
+                  {step.isShareStep ? (
+                    <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
+                      {publicBlogHref ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleCopyLink}
+                          className="h-8 text-xs font-semibold gap-1.5"
+                        >
+                          {copiedLink ? (
+                            <>
+                              <Check className="h-3.5 w-3.5 text-primary" />
+                              Copied!
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="h-3.5 w-3.5" />
+                              Copy Link
+                            </>
+                          )}
+                        </Button>
+                      ) : null}
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                      >
+                        <Link href={step.href}>
+                          Domains
+                          <ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      asChild
+                      variant={step.completed ? "ghost" : "outline"}
+                      size="sm"
+                      onClick={step.onAction}
+                      className="h-8 shrink-0 text-xs font-semibold self-start sm:self-auto gap-1"
+                    >
+                      <Link href={step.href}>
+                        {step.actionLabel}
+                        <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </Button>
+                  )}
                 </li>
               ))}
             </ul>
@@ -384,98 +483,47 @@ export default function DashboardPage() {
 
         <CardContent className="p-5 sm:p-6 space-y-6">
           {loading && !usage ? (
-            <div className="space-y-4">
-              <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-3 w-full rounded-full" />
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2">
-                <Skeleton className="h-16 w-full rounded-xl" />
-                <Skeleton className="h-16 w-full rounded-xl" />
-              </div>
+            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+              <Skeleton className="h-10 w-2/3" />
+              <Skeleton className="h-2.5 w-full rounded-full" />
             </div>
           ) : usage ? (
-            <>
-              {/* Visual Views Meter Bar */}
-              <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
-                <div className="flex items-baseline justify-between gap-2">
-                  <div>
-                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">
-                      {usage.total_pageviews.toLocaleString()}
-                    </span>
-                    <span className="text-muted-foreground text-sm font-medium">
-                      {" "}
-                      / {usage.tier_limit.toLocaleString()} monthly views
-                    </span>
-                  </div>
-                  <div className="text-right">
-                    <span className="text-sm font-bold tabular-nums text-foreground">
-                      {usage.usage_percentage}%
-                    </span>
-                    <span className="text-[11px] text-muted-foreground block">
-                      capacity used
-                    </span>
-                  </div>
+            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+              <div className="flex items-baseline justify-between gap-2">
+                <div>
+                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">
+                    {usage.total_pageviews.toLocaleString()}
+                  </span>
+                  <span className="text-muted-foreground text-sm font-medium">
+                    {" "}
+                    / {usage.tier_limit.toLocaleString()} monthly views
+                  </span>
                 </div>
-
-                {/* Progress Bar */}
-                <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
-                  <div
-                    className={cn(
-                      "h-full transition-all duration-500 rounded-full",
-                      usage.usage_percentage > 90
-                        ? "bg-destructive"
-                        : usage.usage_percentage > 75
-                          ? "bg-amber-500"
-                          : "bg-primary"
-                    )}
-                    style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
-                  />
+                <div className="text-right">
+                  <span className="text-sm font-bold tabular-nums text-foreground">
+                    {usage.usage_percentage}%
+                  </span>
+                  <span className="text-xs text-muted-foreground block">
+                    capacity used
+                  </span>
                 </div>
               </div>
 
-              {/* Per-Site Breakdown */}
-              <div className="space-y-3 pt-1">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Site Traffic Breakdown ({usage.sites.length})
-                </span>
-
-                {usage.sites.length === 0 ? (
-                  <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
-                    No site traffic recorded yet in this cycle.
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                    {usage.sites.map((site) => {
-                      const sitePct =
-                        usage.total_pageviews > 0
-                          ? Math.round((site.pageviews / usage.total_pageviews) * 100)
-                          : 0;
-                      return (
-                        <div
-                          key={site.site_id}
-                          className="flex flex-col justify-between rounded-xl border border-border/70 bg-muted/15 p-3.5 hover:bg-muted/30 transition-colors"
-                        >
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                              <span className="font-semibold text-xs text-foreground truncate">
-                                {site.site_name || site.subdomain}
-                              </span>
-                            </div>
-                            <span className="text-xs font-bold tabular-nums text-foreground shrink-0">
-                              {site.pageviews.toLocaleString()}
-                            </span>
-                          </div>
-                          <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="truncate max-w-[130px]">{site.subdomain}.articurls.site</span>
-                            <span className="tabular-nums font-medium">{sitePct}% of total</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
+              {/* Progress Bar */}
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-500 rounded-full",
+                    usage.usage_percentage > 90
+                      ? "bg-destructive"
+                      : usage.usage_percentage > 75
+                        ? "bg-amber-500"
+                        : "bg-primary"
+                  )}
+                  style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
+                />
               </div>
-            </>
+            </div>
           ) : (
             <div className="rounded-xl border border-dashed border-border/80 p-8 text-center text-sm text-muted-foreground">
               Traffic analytics unavailable for this cycle.
@@ -537,22 +585,14 @@ export default function DashboardPage() {
                         className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 transition-colors hover:bg-muted/50 group"
                       >
                         <div className="min-w-0 flex-1">
-                          <div className="flex items-center gap-1.5">
-                            {post.is_pinned ? (
-                              <Pin className="h-3 w-3 text-primary shrink-0" />
-                            ) : null}
-                            <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
-                              {post.title || "Untitled"}
-                            </p>
-                          </div>
+                          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                            {post.title || "Untitled"}
+                          </p>
                           <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                             <span>{formatDate(post.published_at || post.created_at)}</span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <BlogStatusBadge status={post.status} />
-                          <ChevronRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
-                        </div>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50 group-hover:text-foreground group-hover:translate-x-0.5 transition-all" />
                       </Link>
                     </li>
                   ))}
@@ -600,26 +640,18 @@ export default function DashboardPage() {
                 </div>
               ) : (
                 <ul className="divide-y divide-border/40">
-                  {recentSubscribers.slice(0, 5).map((sub) => {
-                    const initial = sub.email.slice(0, 1).toUpperCase();
-                    return (
-                      <li key={sub.email}>
-                        <div className="flex items-center gap-3 px-3 py-2.5">
-                          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold">
-                            {initial}
-                          </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {sub.email}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Joined {formatDate(sub.subscribed_at)}
-                            </p>
-                          </div>
-                        </div>
-                      </li>
-                    );
-                  })}
+                  {recentSubscribers.slice(0, 5).map((sub) => (
+                    <li key={sub.email}>
+                      <div className="px-3 py-2.5">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {sub.email}
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Joined {formatDate(sub.subscribed_at)}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
                 </ul>
               )}
             </CardContent>

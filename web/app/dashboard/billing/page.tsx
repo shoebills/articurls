@@ -25,6 +25,7 @@ import {
   ArrowUpRight,
   Activity,
   Zap,
+  Globe,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -286,6 +287,50 @@ export default function BillingPage() {
                       style={{ width: `${Math.max(2, usage.usage_percentage)}%` }}
                     />
                   </div>
+                </div>
+
+                {/* Per-Site Breakdown */}
+                <div className="space-y-3 pt-3 border-t border-border/50">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Site Traffic Breakdown ({usage.sites.length})
+                  </span>
+
+                  {usage.sites.length === 0 ? (
+                    <div className="rounded-xl border border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
+                      No site traffic recorded yet in this cycle.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
+                      {usage.sites.map((site) => {
+                        const sitePct =
+                          usage.total_pageviews > 0
+                            ? Math.round((site.pageviews / usage.total_pageviews) * 100)
+                            : 0;
+                        return (
+                          <div
+                            key={site.site_id}
+                            className="flex flex-col justify-between rounded-xl border border-border/70 bg-muted/15 p-3.5 hover:bg-muted/30 transition-colors"
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <Globe className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                                <span className="font-semibold text-xs text-foreground truncate">
+                                  {site.site_name || site.subdomain}
+                                </span>
+                              </div>
+                              <span className="text-xs font-bold tabular-nums text-foreground shrink-0">
+                                {site.pageviews.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground">
+                              <span className="truncate max-w-[130px]">{site.subdomain}.articurls.site</span>
+                              <span className="tabular-nums font-medium">{sitePct}% of total</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -842,6 +842,7 @@ export async function updateSiteOnboarding(
   return apiFetch(`/sites/${siteId}/onboarding`, {
     method: "PATCH",
     token,
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ onboarding_completed: completed }),
   });
 }
