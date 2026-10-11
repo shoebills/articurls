@@ -232,16 +232,7 @@ export default function DashboardPage() {
             Get Started
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {activeSite ? (
-              <>
-                Complete these steps to launch{" "}
-                <span className="font-semibold text-foreground">
-                  {activeSite.site_name || activeSite.subdomain}
-                </span>.
-              </>
-            ) : (
-              "Complete these steps to launch your publication."
-            )}
+            Complete these steps to launch your publication.
           </p>
         </div>
       ) : (
@@ -378,12 +369,12 @@ export default function DashboardPage() {
 
         <CardContent className="p-5 sm:p-6 space-y-6">
           {loading && !usage ? (
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <div className="space-y-3">
               <Skeleton className="h-10 w-2/3" />
               <Skeleton className="h-2.5 w-full rounded-full" />
             </div>
           ) : usage ? (
-            <div className="space-y-3 rounded-2xl border border-border/60 bg-muted/20 p-5">
+            <div className="space-y-3">
               <div className="flex items-baseline justify-between gap-2">
                 <div>
                   <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">

@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { listSubscribers, exportSubscribersCsv, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -77,13 +76,13 @@ export function SubscriberList() {
 
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-start justify-between gap-3 space-y-0 px-4 pb-4 pt-4 sm:px-6 sm:pt-6 sm:pb-4">
+      <section className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
           <div>
-            <CardTitle className="text-base sm:text-lg">Subscribers list</CardTitle>
-            <CardDescription className="text-xs sm:text-sm">
+            <h2 className="text-base font-semibold text-foreground sm:text-lg">Subscribers list</h2>
+            <p className="mt-1 text-xs text-muted-foreground sm:text-sm">
               Emails collected through your site&apos;s newsletter form, newest first.
-            </CardDescription>
+            </p>
           </div>
           <Button
             variant="outline"
@@ -92,8 +91,8 @@ export function SubscriberList() {
           >
             Export CSV
           </Button>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 sm:px-6 sm:pb-6">
+        </div>
+        <div>
           {authLoading || loading ? (
             <div className="overflow-x-auto">
               <table className="w-full table-fixed">
@@ -164,8 +163,8 @@ export function SubscriberList() {
               </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
       <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />
     </>
   );
