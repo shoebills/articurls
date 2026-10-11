@@ -14,7 +14,6 @@ import {
   apiCacheHas,
   getCachedApiData,
 } from "@/lib/api";
-import { getSitePublicRoot } from "@/lib/public-url";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,8 +26,6 @@ import {
   Mail,
   ChevronRight,
   Check,
-  ExternalLink,
-  Copy,
 } from "lucide-react";
 import type { BlogListItem, AccountUsage, RecentSubscriber, SubscriberListResponse } from "@/lib/types";
 
@@ -79,16 +76,12 @@ export default function DashboardPage() {
   const [err, setErr] = useState<string | null>(null);
   const [dismissingChecklist, setDismissingChecklist] = useState(false);
   const [dismissedSiteIds, setDismissedSiteIds] = useState<Set<string>>(() => new Set());
-  const [copiedLink, setCopiedLink] = useState(false);
   const [themeVisited, setThemeVisited] = useState(false);
-  const [linkShared, setLinkShared] = useState(false);
 
   useEffect(() => {
     if (!activeSite?.site_id) return;
     const tv = localStorage.getItem(`articurls_theme_onboarded_${activeSite.site_id}`) === "true";
-    const ls = localStorage.getItem(`articurls_share_onboarded_${activeSite.site_id}`) === "true";
     setThemeVisited(tv);
-    setLinkShared(ls);
   }, [activeSite?.site_id]);
 
   useEffect(() => {
@@ -149,7 +142,6 @@ export default function DashboardPage() {
 
   const isDismissed = activeSite ? dismissedSiteIds.has(String(activeSite.site_id)) : false;
   const isNew = activeSite ? (!activeSite.onboarding_completed && !isDismissed) : false;
-  const publicBlogHref = getSitePublicRoot(activeSite);
   const publishedCount = blogs.filter((b) => b.status === "published").length;
 
   async function handleDismissChecklist() {
@@ -179,21 +171,6 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleCopyLink() {
-    if (!publicBlogHref) return;
-    try {
-      await navigator.clipboard.writeText(publicBlogHref);
-      setCopiedLink(true);
-      if (activeSite?.site_id) {
-        localStorage.setItem(`articurls_share_onboarded_${activeSite.site_id}`, "true");
-        setLinkShared(true);
-      }
-      setTimeout(() => setCopiedLink(false), 2000);
-    } catch {
-      // Ignore clipboard error
-    }
-  }
-
   const hasCustomDomain = Boolean(
     activeSite?.custom_domain &&
     (activeSite.domain_status === "active" || activeSite.domain_status === "grace")
@@ -207,7 +184,6 @@ export default function DashboardPage() {
       href: "/dashboard/settings/general",
       actionLabel: "Configure",
       completed: true,
-      isShareStep: false,
       onAction: undefined,
     },
     {
@@ -217,7 +193,6 @@ export default function DashboardPage() {
       href: "/dashboard/themes",
       actionLabel: "Customize",
       completed: themeVisited,
-      isShareStep: false,
       onAction: handleCustomizeTheme,
     },
     {
@@ -227,17 +202,15 @@ export default function DashboardPage() {
       href: "/dashboard/posts/new",
       actionLabel: "Write Post",
       completed: publishedCount > 0,
-      isShareStep: false,
       onAction: undefined,
     },
     {
       id: "domain",
-      title: "Share your publication or connect domain",
-      description: "Share your publication link with readers or configure a custom domain.",
+      title: "Connect a custom domain",
+      description: "Point your custom domain name to your publication.",
       href: "/dashboard/settings/domains",
-      actionLabel: "Configure Domain",
-      completed: linkShared || hasCustomDomain,
-      isShareStep: true,
+      actionLabel: "Configure",
+      completed: hasCustomDomain,
       onAction: undefined,
     },
   ];
@@ -272,40 +245,10 @@ export default function DashboardPage() {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-              Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {activeSite ? (
-                <>
-                  Managing{" "}
-                  <span className="font-semibold text-foreground">
-                    {activeSite.site_name || activeSite.subdomain}
-                  </span>
-                </>
-              ) : (
-                "Here's an overview of your active site and overall traffic."
-              )}
-            </p>
-          </div>
-          <div className="flex items-center gap-2.5">
-            {publicBlogHref ? (
-              <Button asChild variant="outline" size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-                <a href={publicBlogHref} target="_blank" rel="noopener noreferrer">
-                  Visit blog
-                  <ExternalLink className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            ) : null}
-            <Button asChild size="sm" className="h-9 gap-1.5 text-xs font-semibold">
-              <Link href="/dashboard/posts/new">
-                <PenLine className="h-3.5 w-3.5" />
-                Write Post
-              </Link>
-            </Button>
-          </div>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
+            Welcome back{user?.name ? `, ${user.name.split(" ")[0]}` : ""}!
+          </h1>
         </div>
       )}
 
@@ -334,7 +277,7 @@ export default function DashboardPage() {
                   disabled={dismissingChecklist}
                   className="h-8 text-xs text-muted-foreground hover:text-foreground"
                 >
-                  {dismissingChecklist ? "Dismissing..." : "Dismiss checklist"}
+                  {dismissingChecklist ? "Dismissing..." : "Dismiss"}
                 </Button>
               </div>
             </div>
@@ -349,22 +292,11 @@ export default function DashboardPage() {
 
             {/* 100% Celebration Banner */}
             {completedCount === checklistSteps.length ? (
-              <div className="mt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
-                <div className="flex items-center gap-2">
-                  <span className="text-base">🎉</span>
-                  <p className="text-xs sm:text-sm font-semibold text-foreground">
-                    All steps complete! Your publication is ready for readers.
-                  </p>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={handleDismissChecklist}
-                  disabled={dismissingChecklist}
-                  className="h-8 shrink-0 text-xs font-semibold gap-1"
-                >
-                  {dismissingChecklist ? "Finalizing..." : "Enter Dashboard"}
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
+              <div className="mt-4 flex items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 p-3.5">
+                <span className="text-base">🎉</span>
+                <p className="text-xs sm:text-sm font-semibold text-foreground">
+                  All steps complete! Your publication is ready for readers.
+                </p>
               </div>
             ) : null}
           </div>
@@ -406,55 +338,18 @@ export default function DashboardPage() {
                     </div>
                   </div>
 
-                  {step.isShareStep ? (
-                    <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-auto">
-                      {publicBlogHref ? (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={handleCopyLink}
-                          className="h-8 text-xs font-semibold gap-1.5"
-                        >
-                          {copiedLink ? (
-                            <>
-                              <Check className="h-3.5 w-3.5 text-primary" />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy className="h-3.5 w-3.5" />
-                              Copy Link
-                            </>
-                          )}
-                        </Button>
-                      ) : null}
-                      <Button
-                        asChild
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 text-xs font-semibold text-muted-foreground hover:text-foreground"
-                      >
-                        <Link href={step.href}>
-                          Domains
-                          <ArrowRight className="h-3 w-3" />
-                        </Link>
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      asChild
-                      variant={step.completed ? "ghost" : "outline"}
-                      size="sm"
-                      onClick={step.onAction}
-                      className="h-8 shrink-0 text-xs font-semibold self-start sm:self-auto gap-1"
-                    >
-                      <Link href={step.href}>
-                        {step.actionLabel}
-                        <ArrowRight className="h-3 w-3" />
-                      </Link>
-                    </Button>
-                  )}
+                  <Button
+                    asChild
+                    variant={step.completed ? "ghost" : "outline"}
+                    size="sm"
+                    onClick={step.onAction}
+                    className="h-8 shrink-0 text-xs font-semibold self-start sm:self-auto gap-1"
+                  >
+                    <Link href={step.href}>
+                      {step.actionLabel}
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
                 </li>
               ))}
             </ul>
