@@ -25,6 +25,7 @@ def upgrade() -> None:
     )
     op.execute("DROP TYPE blog_status_old")
 
+    op.execute("ALTER TABLE user_pages ALTER COLUMN status DROP DEFAULT")
     op.execute("ALTER TYPE page_status RENAME TO page_status_old")
     op.execute("CREATE TYPE page_status AS ENUM ('draft', 'published', 'archived')")
     op.execute(
@@ -44,6 +45,7 @@ def downgrade() -> None:
     )
     op.execute("DROP TYPE blog_status_old")
 
+    op.execute("ALTER TABLE user_pages ALTER COLUMN status DROP DEFAULT")
     op.execute("ALTER TYPE page_status RENAME TO page_status_old")
     op.execute("CREATE TYPE page_status AS ENUM ('DRAFT', 'PUBLISHED', 'ARCHIVED')")
     op.execute(
