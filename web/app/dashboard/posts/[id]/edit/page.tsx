@@ -8,6 +8,7 @@ import {
   updateBlog,
   publishBlog,
   archiveBlog,
+  unpublishBlog,
   scheduleBlog,
   unscheduleBlog,
   uploadBlogMedia,
@@ -78,7 +79,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule" | "publish" | "archive" | "unarchive">(null);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "unschedule" | "publish" | "archive" | "unarchive" | "unpublish">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -441,6 +442,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }
 
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
   async function publish() {
     if (!token || !blog) return;
     if (!(await save(true))) return;
@@ -462,6 +466,18 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       applyBlogToForm(b);
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Archive failed");
+    }
+  }
+
+  async function unpublish() {
+    if (!token || !blog) return;
+    if (!(await save(true))) return;
+    try {
+      const b = await unpublishBlog(token, blog.blog_id);
+      clearManualDraft();
+      applyBlogToForm(b);
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Revert to draft failed");
     }
   }
 
@@ -542,7 +558,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     // This prevents flickering between "Saved" → "" → "Saving..." → "Saved"
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
-      void save(true);
+      void saveRef.current(true);
     }, 900);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -553,7 +569,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const flushSave = () => {
       if (blog && ["scheduled", "published", "archived"].includes(blog.status)) return;
       if (isDirty() && !saving) {
-        void save(true);
+        void saveRef.current(true);
       }
     };
     const onBeforeUnload = () => {
@@ -695,6 +711,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (pendingAction === "publish") return { title: "Publish this post now?" };
     if (pendingAction === "archive") return { title: "Archive this post?", description: "Move this post to your archive." };
     if (pendingAction === "unarchive") return { title: "Unarchive this post?", description: "Restore the post so it appears in your published list again." };
+    if (pendingAction === "unpublish") return { title: "Revert this post to draft?", description: "It will be removed from your public blog and moved back to drafts." };
     if (blog.status === "published") return { title: "Save changes?", description: "This will update your live post." };
     if (blog.status === "scheduled") return { title: "Save changes?", description: "This will update your scheduled post." };
     return { title: "Save changes to this archived post?" };
@@ -717,6 +734,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       void archive();
     } else if (pendingAction === "unarchive") {
       void unarchive();
+    } else if (pendingAction === "unpublish") {
+      void unpublish();
     }
     setPendingAction(null);
   }
@@ -918,24 +937,44 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 </>
               )}
               {blog.status === "published" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0 px-3 text-xs"
-                  onClick={() => setPendingAction("archive")}
-                >
-                  Archive
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unpublish")}
+                  >
+                    Revert to draft
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("archive")}
+                  >
+                    Archive
+                  </Button>
+                </>
               )}
               {blog.status === "archived" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0 px-3 text-xs"
-                  onClick={() => setPendingAction("unarchive")}
-                >
-                  Unarchive
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unarchive")}
+                  >
+                    Unarchive
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unpublish")}
+                  >
+                    Revert to draft
+                  </Button>
+                </>
               )}
             </div>
             </div>
@@ -967,7 +1006,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       ? "Archive"
                       : pendingAction === "unarchive"
                         ? "Unarchive"
-                        : "Update blog"}
+                        : pendingAction === "unpublish"
+                          ? "Revert to draft"
+                          : "Update blog"}
             </Button>
           </DialogFooter>
         </DialogContent>

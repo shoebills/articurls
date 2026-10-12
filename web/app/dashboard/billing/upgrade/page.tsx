@@ -11,7 +11,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { SubscriptionOut, AccountUsage } from "@/lib/types";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -24,6 +24,7 @@ import {
 import {
   Check,
   ChevronLeft,
+  Flame,
   Zap,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
@@ -154,6 +155,18 @@ export default function UpgradePlanPage() {
     }
   }
 
+  async function handleBuyLifetime() {
+    if (!token) return;
+    setBusyPlan("lifetime");
+    try {
+      const { checkout_url } = await createCheckout(token, "lifetime");
+      window.location.href = checkout_url;
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
+      setBusyPlan(null);
+    }
+  }
+
   const pro = isProSubscription(sub);
   const selectedTier = VIEW_TIERS[selectedTierIndex] || VIEW_TIERS[0];
   const isCurrentActiveTier =
@@ -184,7 +197,8 @@ export default function UpgradePlanPage() {
       {loading ? (
         <Skeleton className="h-96 w-full rounded-2xl" />
       ) : (
-        <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
+        <>
+          <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
           <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1.5 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
             <Zap className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
           </div>
@@ -287,6 +301,48 @@ export default function UpgradePlanPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Lifetime Deal Card */}
+        <Card className="border-border/70 shadow-xs overflow-hidden">
+          <CardHeader className="bg-gradient-to-r from-amber-500/[0.08] via-transparent to-transparent pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
+                  <Flame className="h-3.5 w-3.5" />
+                  One-Time Purchase
+                </div>
+                <CardTitle className="text-xl font-bold">Lifetime Deal</CardTitle>
+                <CardDescription>
+                  Pay once, get 100,000 monthly pageviews and all Pro features forever.
+                </CardDescription>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-3xl font-extrabold tracking-tight">$99</span>
+                <span className="text-xs text-muted-foreground font-medium">/ once</span>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-2 pb-6 space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-border/50">
+              <p className="text-xs text-muted-foreground">
+                No recurring bills, includes all future updates, custom domains, and analytics.
+              </p>
+              <Button
+                variant={sub?.plan_type === "lifetime" ? "outline" : "default"}
+                disabled={sub?.plan_type === "lifetime" || busyPlan === "lifetime"}
+                onClick={handleBuyLifetime}
+                className="shrink-0 font-semibold"
+              >
+                {sub?.plan_type === "lifetime"
+                  ? "Current Plan"
+                  : busyPlan === "lifetime"
+                    ? "Redirecting…"
+                    : "Buy Lifetime — $99"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+        </>
       )}
 
       {err ? <FloatingErrorToast message={err} onDismiss={() => setErr(null)} /> : null}

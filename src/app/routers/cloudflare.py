@@ -11,6 +11,7 @@ from ..redis_client import redis_client
 from ..security.oauth2 import get_current_site
 from ..domains.schemas import SubfolderIn, SubfolderOut
 from ..cloudflare.worker_template import generate_worker_script
+from ..utils import is_pro_entitled
 
 router = APIRouter(tags=["Subfolder"])
 
@@ -40,6 +41,12 @@ def update_subfolder_settings(
     db: Session = Depends(get_db),
     current_site: models.Site = Depends(get_current_site),
 ):
+    if not is_pro_entitled(current_site.user_id, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Custom subfolder routing requires an active Pro subscription.",
+        )
+
     domain = normalize_hostname(body.custom_domain)
     subpath = normalize_subpath(body.custom_subpath)
 
@@ -48,12 +55,14 @@ def update_subfolder_settings(
 
     existing = db.query(models.Site).filter(
         models.Site.custom_domain == domain,
-        models.Site.custom_subpath == subpath,
         models.Site.site_id != current_site.site_id,
     ).first()
 
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This domain and subfolder path is already in use.")
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This domain is already in use by another publication.",
+        )
 
     current_site.custom_domain = domain
     current_site.custom_subpath = subpath
@@ -63,6 +72,8 @@ def update_subfolder_settings(
 
     try:
         redis_client.delete(f"domain_lookup:{domain}")
+        if current_site.subdomain and settings.ugc_domain:
+            redis_client.delete(f"domain_lookup:{current_site.subdomain}.{settings.ugc_domain}")
     except Exception:
         pass
 
@@ -88,6 +99,8 @@ async def delete_subfolder_settings(
     if old_domain:
         try:
             redis_client.delete(f"domain_lookup:{old_domain}")
+            if current_site.subdomain and settings.ugc_domain:
+                redis_client.delete(f"domain_lookup:{current_site.subdomain}.{settings.ugc_domain}")
         except Exception:
             pass
 
@@ -106,20 +119,26 @@ def get_subfolder_snippets(
 
     cf_worker = generate_worker_script(current_site.subdomain, settings.ugc_domain, clean_subpath)
 
-    nextjs_rewrite = f"""// next.config.mjs (or next.config.js)
-export default {{
-  async rewrites() {{
-    return [
-      {{
-        source: '{clean_subpath}',
-        destination: '{backend}{clean_subpath}',
-      }},
-      {{
-        source: '{clean_subpath}/:path*',
-        destination: '{backend}{clean_subpath}/:path*',
-      }},
-    ];
-  }},
+    nextjs_rewrite = f"""// proxy.ts (Next.js App Router)
+import {{ NextResponse }} from 'next/server';
+import type {{ NextRequest }} from 'next/server';
+
+export function proxy(request: NextRequest) {{
+  const {{ pathname }} = request.nextUrl;
+  const isSubpath = pathname === '{clean_subpath}' || pathname.startsWith('{clean_subpath}/');
+  const isAsset = pathname.startsWith('/_next/');
+
+  if (isSubpath || isAsset) {{
+    const url = new URL(pathname + request.nextUrl.search, '{backend}');
+    const headers = new Headers(request.headers);
+    headers.set('x-original-host', request.headers.get('host') || '{domain}');
+    headers.set('x-articurls-basepath', '{clean_subpath}');
+    return NextResponse.rewrite(url, {{ request: {{ headers }} }});
+  }}
+}}
+
+export const config = {{
+  matcher: ['{clean_subpath}', '{clean_subpath}/:path*', '/_next/:path*'],
 }};"""
 
     vercel_rewrite = f"""// vercel.json
@@ -132,6 +151,10 @@ export default {{
     {{
       "source": "{clean_subpath}/:match*",
       "destination": "{backend}{clean_subpath}/:match*"
+    }},
+    {{
+      "source": "/_next/:path*",
+      "destination": "{backend}/_next/:path*"
     }}
   ]
 }}"""
@@ -139,11 +162,17 @@ export default {{
     nginx_config = f"""# Nginx location block
 location {clean_subpath} {{
     proxy_pass {backend}{clean_subpath};
-    proxy_set_header Host {domain};
-    proxy_set_header X-Original-Host {domain};
+    proxy_set_header Host {current_site.subdomain}.{settings.ugc_domain};
+    proxy_set_header X-Original-Host $host;
     proxy_set_header X-Articurls-Basepath {clean_subpath};
     proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     proxy_set_header X-Forwarded-Proto $scheme;
+    proxy_ssl_server_name on;
+}}
+
+location /_next/ {{
+    proxy_pass {backend}/_next/;
+    proxy_set_header Host {current_site.subdomain}.{settings.ugc_domain};
     proxy_ssl_server_name on;
 }}"""
 
@@ -151,9 +180,14 @@ location {clean_subpath} {{
 {domain} {{
     handle_path {clean_subpath}* {{
         reverse_proxy {backend} {{
-            header_up Host {domain}
-            header_up X-Original-Host {domain}
+            header_up Host {current_site.subdomain}.{settings.ugc_domain}
+            header_up X-Original-Host {{host}}
             header_up X-Articurls-Basepath {clean_subpath}
+        }}
+    }}
+    handle_path /_next/* {{
+        reverse_proxy {backend} {{
+            header_up Host {current_site.subdomain}.{settings.ugc_domain}
         }}
     }}
 }}"""
@@ -165,7 +199,9 @@ ProxyPreserveHost Off
 RequestHeader set X-Original-Host "{domain}"
 RequestHeader set X-Articurls-Basepath "{clean_subpath}"
 ProxyPass {clean_subpath} {backend}{clean_subpath}
-ProxyPassReverse {clean_subpath} {backend}{clean_subpath}"""
+ProxyPassReverse {clean_subpath} {backend}{clean_subpath}
+ProxyPass /_next/ {backend}/_next/
+ProxyPassReverse /_next/ {backend}/_next/"""
 
     return {
         "cloudflare": cf_worker,

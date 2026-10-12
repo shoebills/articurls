@@ -207,6 +207,12 @@ def get_public_content(subdomain: str, slug: str, request: Request, db: Session 
     )
     if db_blog:
         db_blog.excerpt = utils.make_excerpt(db_blog.content)
+        db_blog.category_ids = [
+            row[0]
+            for row in db.query(models.BlogCategory.category_id)
+            .filter(models.BlogCategory.blog_id == db_blog.blog_id)
+            .all()
+        ]
         return {"type": "blog", "blog": db_blog}
 
     # 2. Check static page

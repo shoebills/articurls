@@ -230,7 +230,7 @@ class Blog(Base):
     custom_schema = Column(JSON, nullable=True)
     faq_items = Column(JSON, nullable=True, default=list)
     related_blog_ids = Column(JSON, nullable=True, default=list)
-    status = Column(Enum(BlogStatus, name="blog_status"), default=BlogStatus.DRAFT, nullable=False)
+    status = Column(Enum(BlogStatus, name="blog_status", values_callable=lambda x: [e.value for e in x]), default=BlogStatus.DRAFT, nullable=False)
     scheduled_at = Column(DateTime(timezone=True), index=True, nullable=True)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
@@ -318,6 +318,13 @@ class TransactionStatus(str, enum.Enum):
     REFUNDED = "refunded"
     PARTIALLY_REFUNDED = "partially_refunded"
     REFUND_FAILED = "refund_failed"
+    DISPUTE_OPENED = "dispute_opened"
+    DISPUTE_CHALLENGED = "dispute_challenged"
+    DISPUTE_ACCEPTED = "dispute_accepted"
+    DISPUTE_CANCELLED = "dispute_cancelled"
+    DISPUTE_EXPIRED = "dispute_expired"
+    DISPUTE_WON = "dispute_won"
+    DISPUTE_LOST = "dispute_lost"
 
 
 class Transactions(Base):
@@ -367,7 +374,7 @@ class UserPage(Base):
     noindex = Column(Boolean, nullable=False, default=False, server_default="false")
     custom_schema = Column(JSON, nullable=True)
     faq_items = Column(JSON, nullable=True, default=list)
-    status = Column(Enum(PageStatus, name="page_status"), default=PageStatus.DRAFT, nullable=False)
+    status = Column(Enum(PageStatus, name="page_status", values_callable=lambda x: [e.value for e in x]), default=PageStatus.DRAFT, nullable=False)
     published_at = Column(DateTime(timezone=True), index=True, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

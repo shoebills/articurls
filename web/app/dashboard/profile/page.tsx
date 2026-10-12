@@ -89,9 +89,10 @@ export default function ProfilePage() {
     setErr(null);
     setSaved(null);
     try {
+      const emailChanged = email.trim().toLowerCase() !== (ctxUser?.email ?? "").toLowerCase();
       await patchMe(token, { name, email });
       await refreshUser();
-      setSaved("Saved");
+      setSaved(emailChanged ? "Saved. We sent a verification link to your new email." : "Saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Save failed");
     } finally {

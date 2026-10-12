@@ -68,3 +68,47 @@ def send_trial_deletion_warning_email(to_email: str, blog_name: str, time_left: 
 
     subject = f"Your Articurls account will be deleted in {time_left}"
     send_email(to_email, subject, html)
+
+
+def send_payment_failed_email(to_email: str, name: str):
+    html = (TEMPLATE_DIR / "payment_failed.html").read_text()
+    html = html.replace("{{ name }}", name or "there")
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = "Payment failed for your Articurls subscription"
+    send_email(to_email, subject, html)
+
+
+def send_subscription_cancelled_email(to_email: str, name: str, access_until: str | None = None):
+    html = (TEMPLATE_DIR / "subscription_cancelled.html").read_text()
+    html = html.replace("{{ name }}", name or "there")
+    html = html.replace("{{ access_until }}", access_until or "the end of your current period")
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = "Your Articurls subscription has been cancelled"
+    send_email(to_email, subject, html)
+
+
+def send_domain_grace_period_email(to_email: str, name: str, domain: str, grace_expires: str | None = None):
+    html = (TEMPLATE_DIR / "domain_grace_period.html").read_text()
+    html = html.replace("{{ name }}", name or "there")
+    html = html.replace("{{ domain }}", domain)
+    html = html.replace("{{ grace_expires }}", grace_expires or "14 days")
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = f"Action Required: Your domain {domain} is in grace period"
+    send_email(to_email, subject, html)
+
+
+def send_domain_expired_email(to_email: str, name: str, domain: str):
+    html = (TEMPLATE_DIR / "domain_expired.html").read_text()
+    html = html.replace("{{ name }}", name or "there")
+    html = html.replace("{{ domain }}", domain)
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    subject = f"Your custom domain {domain} has been deactivated"
+    send_email(to_email, subject, html)

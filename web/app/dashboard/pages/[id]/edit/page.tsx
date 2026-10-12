@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, getPage, publishPage, updatePage, uploadPageMedia, deletePageMediaByUrl, MAX_IMAGE_FILE_SIZE } from "@/lib/api";
+import { ApiError, archivePage, getPage, publishPage, unpublishPage, updatePage, uploadPageMedia, deletePageMediaByUrl, MAX_IMAGE_FILE_SIZE } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { format } from "date-fns";
@@ -65,7 +65,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   const [customSchemaStr, setCustomSchemaStr] = useState("");
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive">(null);
+  const [pendingAction, setPendingAction] = useState<null | "undo" | "update" | "publish" | "archive" | "unarchive" | "unpublish">(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
@@ -275,6 +275,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }
 
+  const saveRef = useRef(save);
+  saveRef.current = save;
+
   async function updateStatus(next: "published" | "archived") {
     if (!token || !page) return;
     setErr(null);
@@ -289,6 +292,20 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setSaveStatus("saved");
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to update page status");
+    }
+  }
+
+  async function revertToDraft() {
+    if (!token || !page) return;
+    setErr(null);
+    if (!(await save(true))) return;
+    try {
+      const updated = await unpublishPage(token, page.page_id);
+      clearManualDraft();
+      applyPageToForm(updated);
+      setSaveStatus("saved");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to revert page to draft");
     }
   }
 
@@ -332,7 +349,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     if (!page || saving || !isDirty() || ["published", "archived"].includes(page.status)) return;
     if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     autosaveTimerRef.current = setTimeout(() => {
-      void save(true);
+      void saveRef.current(true);
     }, 900);
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
@@ -342,7 +359,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
   useEffect(() => {
     const flushSave = () => {
       if (page && ["published", "archived"].includes(page.status)) return;
-      if (isDirty() && !saving) void save(true);
+      if (isDirty() && !saving) void saveRef.current(true);
     };
     const onBeforeUnload = () => {
       flushSave();
@@ -478,6 +495,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     if (pendingAction === "publish") return { title: "Publish this page now?" };
     if (pendingAction === "archive") return { title: "Archive this page?", description: "Move this page to your archive." };
     if (pendingAction === "unarchive") return { title: "Unarchive this page?", description: "Restore the page so it appears in your published list again." };
+    if (pendingAction === "unpublish") return { title: "Revert this page to draft?", description: "It will be removed from your public site and moved back to drafts." };
     if (page.status === "published") return { title: "Save changes?", description: "This will update your live page." };
     return { title: "Save changes to this archived page?" };
   }
@@ -497,6 +515,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       void updateStatus("archived");
     } else if (pendingAction === "unarchive") {
       void updateStatus("published");
+    } else if (pendingAction === "unpublish") {
+      void revertToDraft();
     }
     setPendingAction(null);
   }
@@ -647,24 +667,44 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                 </Button>
               )}
               {page.status === "published" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0 px-3 text-xs"
-                  onClick={() => setPendingAction("archive")}
-                >
-                  Archive
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unpublish")}
+                  >
+                    Revert to draft
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("archive")}
+                  >
+                    Archive
+                  </Button>
+                </>
               )}
               {page.status === "archived" && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 min-h-0 px-3 text-xs"
-                  onClick={() => setPendingAction("unarchive")}
-                >
-                  Unarchive
-                </Button>
+                <>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unarchive")}
+                  >
+                    Unarchive
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 min-h-0 px-3 text-xs"
+                    onClick={() => setPendingAction("unpublish")}
+                  >
+                    Revert to draft
+                  </Button>
+                </>
               )}
             </div>
             </div>
@@ -952,7 +992,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     ? "Archive"
                     : pendingAction === "unarchive"
                       ? "Unarchive"
-                      : "Update page"}
+                      : pendingAction === "unpublish"
+                        ? "Revert to draft"
+                        : "Update page"}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { listBlogs, deleteBlog, archiveBlog, publishBlog, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { listBlogs, deleteBlog, archiveBlog, publishBlog, unpublishBlog, ApiError, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { BlogListItem } from "@/lib/types";
@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Pin, Plus, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, Filter, MoreVertical, PenLine, Pencil, Pin, Plus, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { Input } from "@/components/ui/input";
@@ -58,6 +58,7 @@ export default function PostsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
   const [unarchiveId, setUnarchiveId] = useState<string | null>(null);
+  const [unpublishId, setUnpublishId] = useState<string | null>(null);
   const [rowBusyId, setRowBusyId] = useState<string | null>(null);
   const [menuOpenBlogId, setMenuOpenBlogId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
@@ -137,12 +138,31 @@ export default function PostsPage() {
     }
   }
 
+  async function confirmUnpublish() {
+    if (!token || unpublishId == null) return;
+    setRowBusyId(unpublishId);
+    setErr(null);
+    try {
+      await unpublishBlog(token, unpublishId);
+      setUnpublishId(null);
+      await load();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Could not revert post to draft");
+    } finally {
+      setRowBusyId(null);
+    }
+  }
+
   function handleArchive(id: string) {
     setArchiveId(id);
   }
 
   function handlePublishAgain(id: string) {
     setUnarchiveId(id);
+  }
+
+  function handleUnpublish(id: string) {
+    setUnpublishId(id);
   }
 
   function openEditor(blogId: string) {
@@ -410,6 +430,16 @@ export default function PostsPage() {
                         {b.status === "published" && (
                           <DropdownMenuItem
                             data-card-action="true"
+                            onClick={() => handleUnpublish(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                            Revert to draft
+                          </DropdownMenuItem>
+                        )}
+                        {b.status === "published" && (
+                          <DropdownMenuItem
+                            data-card-action="true"
                             onClick={() => handleArchive(b.blog_id)}
                             disabled={rowBusyId === b.blog_id}
                           >
@@ -425,6 +455,16 @@ export default function PostsPage() {
                           >
                             <ArchiveRestore className="h-4 w-4" />
                             Unarchive
+                          </DropdownMenuItem>
+                        )}
+                        {b.status === "archived" && (
+                          <DropdownMenuItem
+                            data-card-action="true"
+                            onClick={() => handleUnpublish(b.blog_id)}
+                            disabled={rowBusyId === b.blog_id}
+                          >
+                            <RotateCcw className="h-4 w-4" />
+                            Revert to draft
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -533,6 +573,22 @@ export default function PostsPage() {
             </Button>
             <Button onClick={confirmUnarchive}>
               Unarchive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unpublishId != null} onOpenChange={(o) => !o && setUnpublishId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revert this post to draft?</DialogTitle>
+            <DialogDescription>It will be removed from your public blog and moved back to drafts.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnpublishId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmUnpublish}>
+              Revert to draft
             </Button>
           </DialogFooter>
         </DialogContent>

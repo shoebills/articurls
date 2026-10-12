@@ -1,7 +1,7 @@
 /**
  * Unified robots.txt handler — serves both articurls.com and custom domains.
  *
- * The middleware exempts /robots.txt from the custom-domain rewrite, so ALL
+ * The proxy exempts /robots.txt from the custom-domain rewrite, so ALL
  * requests for /robots.txt — whether from articurls.com or blog.example.com —
  * land here. resolveTenantHost() reads Host (CF SaaS) or x-original-host (legacy Worker).
  * is used to distinguish the two cases.

@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { assetUrl } from "@/lib/env";
+import { assetUrl, UGC_DOMAIN } from "@/lib/env";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 export function SiteSwitcher({
@@ -56,7 +56,7 @@ export function SiteSwitcher({
                   {currentDisplayName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground leading-tight">
-                  {activeSite?.custom_domain || `${activeSite?.subdomain || ""}.articurls.site`}
+                  {activeSite?.custom_domain || `${activeSite?.subdomain || ""}.${UGC_DOMAIN}`}
                 </p>
               </div>
             </div>
@@ -85,7 +85,7 @@ export function SiteSwitcher({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {site.custom_domain || `${site.subdomain}.articurls.site`}
+                      {site.custom_domain || `${site.subdomain}.${UGC_DOMAIN}`}
                     </p>
                   </div>
                 </div>

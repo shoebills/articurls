@@ -1,7 +1,7 @@
 /**
  * Unified sitemap handler — serves both articurls.com and custom domains.
  *
- * The middleware exempts /sitemap.xml from the custom-domain rewrite, so ALL
+ * The proxy exempts /sitemap.xml from the custom-domain rewrite, so ALL
  * requests for /sitemap.xml — whether from articurls.com or blog.example.com —
  * land here. resolveTenantHost() reads Host (CF SaaS) or x-original-host (legacy Worker).
  * is used to distinguish the two cases.
@@ -69,7 +69,7 @@ async function loadPages(subdomain: string): Promise<UserPage[]> {
 }
 
 interface Category {
-  category_id: number;
+  category_id: string;
   slug: string;
   show_in_menu: boolean;
 }

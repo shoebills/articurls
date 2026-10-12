@@ -78,12 +78,15 @@ def mark_domain_active(db_site: models.Site, hostname: str) -> None:
     from datetime import datetime, timezone
 
     from ..redis_client import redis_client
+    from ..config import settings
 
     db_site.domain_status = models.DomainStatus.ACTIVE
     db_site.verified_at = datetime.now(timezone.utc)
     db_site.domain_dns_instructions = None
     try:
         redis_client.delete(f"domain_lookup:{hostname}")
+        if db_site.subdomain and settings.ugc_domain:
+            redis_client.delete(f"domain_lookup:{db_site.subdomain}.{settings.ugc_domain}")
     except Exception:
         pass
 

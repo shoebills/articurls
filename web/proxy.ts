@@ -125,7 +125,7 @@ function isExemptPath(pathname: string): boolean {
   return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
   const appOrigin = process.env.NEXT_PUBLIC_APP_ORIGIN?.replace(/\/$/, "");
   const marketingOrigin = process.env.NEXT_PUBLIC_MARKETING_ORIGIN?.replace(/\/$/, "");
 
@@ -176,8 +176,18 @@ export function middleware(request: NextRequest) {
       });
     }
 
-    const rewriteUrl = request.nextUrl.clone();
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
+    const lastSegment = "/" + (segments[segments.length - 1] || "");
+
+    if (segments.length > 1 && EXEMPT_EXACT.includes(lastSegment)) {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = lastSegment;
+      return NextResponse.rewrite(rewriteUrl, {
+        request: { headers: tenantHeaders },
+      });
+    }
+
+    const rewriteUrl = request.nextUrl.clone();
     rewriteUrl.pathname =
       segments.length === 0
         ? `/site/${encodeURIComponent(host)}`

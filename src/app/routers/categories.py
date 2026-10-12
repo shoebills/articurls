@@ -48,7 +48,6 @@ def _category_out(db: Session, cat: models.Category) -> dict:
     return {
         "category_id": cat.category_id,
         "site_id": cat.site_id,
-        "user_id": cat.site_id,
         "name": cat.name,
         "slug": cat.slug,
         "description": cat.description,

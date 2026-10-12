@@ -59,7 +59,6 @@ class GetBlog(BaseModel):
     updated_at: datetime
     site_id: Optional[uuid.UUID] = None
     author_id: Optional[uuid.UUID] = None
-    user_id: Optional[uuid.UUID] = None
     author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
     category_ids: List[uuid.UUID] = []
@@ -91,7 +90,6 @@ class PublicBlog(BaseModel):
     updated_at: datetime
     site_id: Optional[uuid.UUID] = None
     author_id: Optional[uuid.UUID] = None
-    user_id: Optional[uuid.UUID] = None
     author: Optional[PublicAuthorSummary] = None
     media: list[BlogMediaOut] = []
     category_ids: List[uuid.UUID] = []

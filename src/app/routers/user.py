@@ -197,27 +197,84 @@ def update_integrations_settings(request: user.IntegrationsSettingsUpdate, backg
 
 
 @router.patch("/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_user(request: user.UpdateUser, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+def update_user(
+    request: user.UpdateUser,
+    response: Response,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user=Depends(oauth2.get_current_user),
+    current_site: models.Site = Depends(get_current_site),
+):
     update_data = request.model_dump(exclude_unset=True)
     if not update_data:
         return user_settings_out(db, current_user, current_site)
 
-    user_fields = ["name", "email"]
-    site_fields = ["meta_title", "meta_description"]
+    new_access_token = None
 
-    for key, value in update_data.items():
-        if key in user_fields:
-            setattr(current_user, key, value)
-        elif key in site_fields:
-            setattr(current_site, key, value)
-        elif key == "profile_image_url":
-            setattr(current_user, key, value)
+    if "email" in update_data and update_data["email"]:
+        new_email = normalize_email(str(update_data["email"]))
+        if new_email != current_user.email:
+            existing = db.query(models.User).filter(
+                models.User.email == new_email,
+                models.User.user_id != current_user.user_id,
+            ).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail="Email is already registered",
+                )
+
+            current_user.email = new_email
+            current_user.email_verified = False
+            current_user.token_version = (current_user.token_version or 0) + 1
+
+            new_access_token = oauth2.create_access_token(
+                data={"sub": current_user.email, "ver": current_user.token_version},
+                expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
+            )
+            new_refresh_token = oauth2.create_refresh_token(current_user.email)
+
+            response.set_cookie(
+                key="refresh_token",
+                value=new_refresh_token,
+                httponly=True,
+                secure=True,
+                samesite="lax",
+                path="/",
+                max_age=settings.refresh_token_expire_days * 24 * 60 * 60,
+            )
+
+            try:
+                verify_token = oauth2.create_new_user_token(data={"email": new_email})
+                send_verify_new_user(new_email, current_user.name, verify_token)
+            except Exception:
+                pass
+
+    if "name" in update_data and update_data["name"] is not None:
+        current_user.name = update_data["name"].strip()
+
+    if "profile_image_url" in update_data:
+        current_user.profile_image_url = update_data["profile_image_url"]
+
+    site_fields = ["meta_title", "meta_description"]
+    site_changed = False
+    for key in site_fields:
+        if key in update_data:
+            setattr(current_site, key, update_data[key])
+            site_changed = True
 
     db.commit()
     db.refresh(current_user)
     db.refresh(current_site)
-    
-    return user_settings_out(db, current_user, current_site)
+
+    if site_changed:
+        schedule_tenant_purge(background_tasks, current_site)
+
+    result = user_settings_out(db, current_user, current_site)
+    if new_access_token:
+        result.access_token = new_access_token
+        result.token_type = "bearer"
+    return result
 
 
 @router.patch("/me/password", response_model=Token, status_code=status.HTTP_200_OK)

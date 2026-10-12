@@ -43,9 +43,9 @@ cd web && npm run lint
 - **Tailwind CSS v4** — uses `@tailwindcss/postcss` plugin, not the v3 `tailwindcss`/`autoprefixer` PostCSS plugins. Config is inline in CSS, not `tailwind.config.ts`.
 - **shadcn/ui base-nova** style variant (`components.json`).
 - **Module alias** `@/*` in `web/tsconfig.json` maps to `web/*`. Not available in Python code.
-- **No trailing slash** anywhere — enforced at both Next.js config (`trailingSlash: false` with 308 redirect) and middleware.
-- **Query params on public content are stripped** with a 301 redirect (middleware). Non-public paths (dashboard, login, api, \_next, etc.) keep query params.
-- **Custom-domain multi-tenant routing**: Middleware rewrites custom-domain requests to `/custom-domain/[[...slug]]` and forwards `x-original-host` header.
+- **No trailing slash** anywhere — enforced at both Next.js config (`trailingSlash: false` with 308 redirect) and proxy.
+- **Query params on public content are stripped** with a 301 redirect (proxy). Non-public paths (dashboard, login, api, \_next, etc.) keep query params.
+- **Custom-domain multi-tenant routing**: Proxy (Next.js 16 convention, `web/proxy.ts`, formerly middleware.ts) rewrites custom-domain requests to `/site/[domain]/[[...slug]]` and forwards `x-original-host` header.
 - **Backend database URL** is assembled in `src/app/database.py`, not in `alembic.ini`. Alembic env.py reads it via Pydantic `settings`.
 - **Alembic target metadata** is `src.app.models.Base`.
 - **Storage backend**: defaults to `local` (uploads/ directory). Set `STORAGE_BACKEND=r2` for Cloudflare R2.
@@ -94,7 +94,7 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
   App domain (app.articurls.com)     →  /dashboard, /login, etc.     (direct)
 ```
 
-The middleware uses `STATIC_INTERNAL_DOMAINS` + runtime env vars (`NEXT_PUBLIC_APP_ORIGIN`, `NEXT_PUBLIC_MARKETING_ORIGIN`) to distinguish internal from custom-domain hosts.
+The proxy uses `STATIC_INTERNAL_DOMAINS` + runtime env vars (`NEXT_PUBLIC_APP_ORIGIN`, `NEXT_PUBLIC_MARKETING_ORIGIN`) to distinguish internal from custom-domain hosts.
 
 ## Known Editor Config Directories
 
@@ -122,8 +122,8 @@ src/                    # FastAPI backend
     redis_client.py     # Redis connection
     schemas/            # Pydantic request/response schemas
 web/                    # Next.js 16 frontend (App Router)
-  middleware.ts         # Multi-tenant routing, security headers, cache headers
-  app/                  # Routes: /[username]/*, /dashboard/*, /custom-domain/[[...slug]], etc.
+  proxy.ts              # Multi-tenant routing, security headers, cache headers
+  app/                  # Routes: /[username]/*, /dashboard/*, /site/[domain]/*, etc.
   components/
     public/             # Theme-agnostic public building blocks (nav header/footer,
                         # post card, feed, pagination, TOC, subscribe, CTA, FAQ, search)

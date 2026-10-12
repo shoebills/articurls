@@ -21,6 +21,7 @@ from .urls import public_blog_home_url, public_post_url
 from .subdomains import (
     permanent_subdomain_redirect,
     resolve_subdomain_to_current,
+    subdomain_validation_failure,
     validate_subdomain_or_raise,
 )
 
@@ -42,6 +43,7 @@ __all__ = [
     "public_site_out",
     "permanent_subdomain_redirect",
     "resolve_subdomain_to_current",
+    "subdomain_validation_failure",
     "unique_blog_slug",
     "unique_page_slug",
     "validate_subdomain_or_raise",

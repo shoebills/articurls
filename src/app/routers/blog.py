@@ -551,6 +551,40 @@ def archive_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session =
     return db_blog
 
 
+@router.post("/{id}/unpublish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
+def unpublish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+
+    db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
+
+    if not db_blog:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Blog with id: {id} not found")
+
+    if db_blog.site_id != current_site.site_id:
+        raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Not authorized to perform this action"
+    )
+
+    if db_blog.status not in (models.BlogStatus.PUBLISHED, models.BlogStatus.ARCHIVED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only published or archived blogs can be reverted to draft"
+    )
+
+    old_updated = db_blog.updated_at
+    db_blog.status = models.BlogStatus.DRAFT
+    db_blog.updated_at = old_updated
+
+    db.commit()
+    db.refresh(db_blog)
+    _attach_category_ids(db, db_blog)
+
+    schedule_post_purge(background_tasks, current_site, db_blog.slug)
+
+    return db_blog
+
+
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
 def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
     check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)

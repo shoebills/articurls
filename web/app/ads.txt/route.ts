@@ -1,7 +1,7 @@
 /**
  * Per-tenant ads.txt — serves custom domains and UGC subdomains.
  *
- * The middleware exempts /ads.txt from the custom-domain rewrite, so ALL
+ * The proxy exempts /ads.txt from the custom-domain rewrite, so ALL
  * requests for /ads.txt land here. resolveTenantHost() reads Host (CF SaaS)
  * or x-original-host (legacy Worker). Only sites with an AdSense publisher ID
  * configured get a file; everything else (including platform hosts) is 404,

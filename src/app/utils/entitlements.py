@@ -21,7 +21,7 @@ PLANS: dict[str, dict] = {
     "lifetime": {
         "label": "Lifetime",
         "has_time_limit": False,
-        "valid_statuses": frozenset({"active", "past_due"}),
+        "valid_statuses": frozenset({"active"}),
     },
 }
 

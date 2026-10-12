@@ -2,12 +2,18 @@
 
 import { useEffect, useRef, useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getSubscription } from "@/lib/api";
 import { Loader2 } from "lucide-react";
 
 function SuccessContent() {
+  const searchParams = useSearchParams();
+  const targetPlan = searchParams.get("target_plan");
+  const targetTier = searchParams.get("target_tier");
+  const subscriptionId = searchParams.get("subscription_id");
+
   const [checking, setChecking] = useState(() => {
     if (typeof window === "undefined") return true;
     return !!localStorage.getItem("articurls_token");
@@ -26,10 +32,29 @@ function SuccessContent() {
       if (cancelled) return;
       try {
         const sub = await getSubscription(token!);
-        if (sub && ["active", "past_due"].includes(sub.status)) {
-          setActivated(true);
-          setChecking(false);
-          return;
+        if (sub) {
+          let matches = false;
+
+          if (targetPlan === "lifetime") {
+            matches = sub.plan_type === "lifetime" && sub.status === "active";
+          } else if (targetPlan === "monthly" || targetPlan === "pro") {
+            if (sub.plan_type === "pro" && ["active", "past_due"].includes(sub.status)) {
+              if (targetTier) {
+                matches = sub.tier === targetTier || (sub.tier === "pro_unlimited" && targetTier === "pro_1m");
+              } else {
+                matches = true;
+              }
+            }
+          } else {
+            // Generic fallback: must NOT be trial, must be active
+            matches = sub.plan_type !== "trial" && ["active", "past_due"].includes(sub.status);
+          }
+
+          if (matches) {
+            setActivated(true);
+            setChecking(false);
+            return;
+          }
         }
       } catch {
         // 404 or network error — keep polling
@@ -37,7 +62,7 @@ function SuccessContent() {
 
       if (cancelled) return;
       attemptsRef.current += 1;
-      if (attemptsRef.current < 15) {
+      if (attemptsRef.current < 20) {
         timer = setTimeout(poll, 2000);
       } else {
         setChecking(false);
@@ -50,7 +75,7 @@ function SuccessContent() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, []);
+  }, [targetPlan, targetTier, subscriptionId]);
 
   return (
     <div className="mx-auto max-w-[1100px] py-12">

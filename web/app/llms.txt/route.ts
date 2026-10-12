@@ -1,8 +1,8 @@
 /**
  * Unified llms.txt handler — serves both articurls.com and custom domains.
  *
- * Mirrors the robots.txt/sitemap.xml tenant resolution: the middleware
- * exempts /llms.txt from the custom-domain rewrite, so all hosts land here.
+* Mirrors the robots.txt/sitemap.xml tenant resolution: the proxy
+* exempts /llms.txt from the custom-domain rewrite, so all hosts land here.
  *
  * ── Custom domain request ────────────────────────────────────────────────────
  *   - active / grace   → auto-generated markdown or user custom text.

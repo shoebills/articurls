@@ -78,7 +78,6 @@ export interface BlogListItem {
   published_at: string | null;
   created_at: string;
   updated_at: string;
-  user_id?: string;
   site_id?: string;
   author_id?: string | null;
   author?: PublicAuthorSummary | null;
@@ -106,7 +105,6 @@ export interface PublicBlog {
   related_blog_ids?: string[];
   published_at: string | null;
   updated_at: string;
-  user_id?: string;
   site_id?: string;
   author_id?: string | null;
   author?: PublicAuthorSummary | null;
@@ -306,6 +304,8 @@ export interface UserSettings {
   newsletter_show_in_footer?: boolean;
   newsletter_webhook_url?: string | null;
   newsletter_webhook_token?: string | null;
+  access_token?: string | null;
+  token_type?: string | null;
   is_admin?: boolean;
   favicon_url?: string | null;
   featured_blog_ids: string[];
@@ -413,7 +413,6 @@ export interface AdminPaymentListItem {
 
 export interface UserPage {
   page_id: string;
-  user_id?: string;
   site_id?: string;
   title: string;
   slug: string;
@@ -578,7 +577,6 @@ export interface SubscriberListResponse {
 
 export interface Category {
   category_id: string;
-  user_id?: string;
   site_id?: string;
   name: string;
   slug: string;

@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Your custom domain is in grace period</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f6f6f6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#f6f6f6;padding:40px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:520px;background-color:#ffffff;border-radius:8px;padding:40px 32px;text-align:left;">
+          <tr>
+            <td>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#111111;">
+                Hi {{ name }},
+              </p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#333333;">
+                Your Pro subscription has lapsed, and your custom domain <strong>{{ domain }}</strong> has entered a <strong>14-day grace period</strong>.
+              </p>
+              <p style="margin:0 0 24px;font-size:16px;line-height:1.5;color:#333333;">
+                Your custom domain will continue to serve traffic normally until <strong>{{ grace_expires }}</strong>. After that date, traffic will be redirected to your permanent Articurls address.
+              </p>
+              <p style="margin:0 0 32px;">
+                <a href="{{ billing_url }}" style="display:inline-block;background-color:#111111;color:#ffffff;text-decoration:none;font-size:15px;font-weight:600;padding:12px 24px;border-radius:6px;">
+                  Reactivate Pro Plan
+                </a>
+              </p>
+            </td>
+          </tr>
+        </table>
+        <p style="margin:24px 0 0;font-size:12px;color:#999999;">
+          Articurls · Writing blogs without the friction
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

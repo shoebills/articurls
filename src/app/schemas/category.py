@@ -23,7 +23,6 @@ class CategoryUpdate(BaseModel):
 class CategoryOut(BaseModel):
     category_id: uuid.UUID
     site_id: Optional[uuid.UUID] = None
-    user_id: Optional[uuid.UUID] = None
     name: str
     slug: str
     description: Optional[str] = None

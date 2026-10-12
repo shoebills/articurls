@@ -50,7 +50,6 @@ class UserPageStatusUpdate(BaseModel):
 class UserPageOut(UserPageBase):
     page_id: uuid.UUID
     site_id: Optional[uuid.UUID] = None
-    user_id: Optional[uuid.UUID] = None
     slug: str
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

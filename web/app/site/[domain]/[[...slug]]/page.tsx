@@ -73,14 +73,6 @@ function resolveRoutingSegments(
 }
 
 const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupResponse | null> => {
-  const ugcHost = new URL(UGC_ORIGIN).hostname;
-  const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
-  if (host.endsWith(`.${ugcHost}`)) {
-    const subdomain = host.split(".")[0];
-    if (subdomain && !RESERVED.has(subdomain)) {
-      return { subdomain: subdomain, domain_status: "active", redirect_to: null, custom_subpath: null };
-    }
-  }
   try {
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,

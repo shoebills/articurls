@@ -340,12 +340,17 @@ export async function patchMe(
     >
   >
 ): Promise<UserSettings> {
-  return apiFetch("/user/me", {
+  const data = await apiFetch<UserSettings>("/user/me", {
     method: "PATCH",
     token,
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
+  if (data.access_token && typeof window !== "undefined") {
+    localStorage.setItem("articurls_token", data.access_token);
+    window.dispatchEvent(new CustomEvent("articurls_token_refreshed", { detail: data.access_token }));
+  }
+  return data;
 }
 
 export async function changePassword(
@@ -490,6 +495,10 @@ export async function archivePage(token: string, pageId: string): Promise<UserPa
   return apiFetch(`/pages/${pageId}/archive`, { method: "POST", token });
 }
 
+export async function unpublishPage(token: string, pageId: string): Promise<UserPage> {
+  return apiFetch(`/pages/${pageId}/unpublish`, { method: "POST", token });
+}
+
 export async function getPublicPages(subdomain: string): Promise<UserPage[]> {
   return apiFetch(`/${encodeURIComponent(subdomain)}/pages`);
 }
@@ -620,6 +629,10 @@ export async function publishBlog(token: string, id: string): Promise<BlogDetail
 
 export async function archiveBlog(token: string, id: string): Promise<BlogDetail> {
   return apiFetch(`/blog/${id}/archive`, { method: "POST", token });
+}
+
+export async function unpublishBlog(token: string, id: string): Promise<BlogDetail> {
+  return apiFetch(`/blog/${id}/unpublish`, { method: "POST", token });
 }
 
 export async function scheduleBlog(token: string, id: string, scheduled_at: string): Promise<BlogDetail> {
@@ -957,9 +970,16 @@ export async function getCustomerPortalLink(token: string): Promise<{ url: strin
   return apiFetch("/billing/customer-portal", { token });
 }
 
+export async function cancelSubscription(token: string): Promise<SubscriptionOut> {
+  return apiFetch("/billing/cancel", {
+    method: "POST",
+    token,
+  });
+}
+
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
-  if (sub.plan_type === "lifetime" && ["active", "past_due"].includes(sub.status)) return true;
+  if (sub.plan_type === "lifetime" && sub.status === "active") return true;
   if (sub.plan_type === "trial") {
     return sub.status === "active" && !!sub.current_period_end && new Date(sub.current_period_end) >= new Date();
   }

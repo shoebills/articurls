@@ -106,6 +106,9 @@ class UserSettings(BaseModel):
     adsense_publisher_id: Optional[str] = None
     search_console_verification_token: Optional[str] = None
 
+    access_token: Optional[str] = None
+    token_type: Optional[str] = None
+
     class Config:
         from_attributes = True
 

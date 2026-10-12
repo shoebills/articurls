@@ -9,14 +9,24 @@ import {
   getCustomerPortalLink,
   getAccountUsage,
   createCheckout,
+  cancelSubscription,
   ApiError,
   isProSubscription,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
+import { UGC_DOMAIN } from "@/lib/env";
 import type { SubscriptionOut, TransactionOut, AccountUsage } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { format } from "date-fns";
 import {
   CalendarDays,
@@ -36,9 +46,25 @@ export default function BillingPage() {
   const [tx, setTx] = useState<TransactionOut[]>([]);
   const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
   const [busyPortal, setBusyPortal] = useState(false);
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const buyLifetime = useCallback(async () => {
+    if (!token) return;
+    setBusyPlan("lifetime");
+    setErr(null);
+    try {
+      const { checkout_url } = await createCheckout(token, "lifetime");
+      window.location.href = checkout_url;
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
+      setBusyPlan(null);
+    }
+  }, [token]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -49,8 +75,10 @@ export default function BillingPage() {
     window.history.replaceState({}, "", clean);
     if (plan === "pro") {
       router.replace("/dashboard/billing/upgrade");
+    } else if (plan === "lifetime") {
+      buyLifetime();
     }
-  }, [router]);
+  }, [router, buyLifetime]);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -95,16 +123,21 @@ export default function BillingPage() {
     }
   }
 
-  async function buyLifetime() {
+  async function handleCancelSubscription() {
     if (!token) return;
-    setBusyPlan("lifetime");
+    setCancelling(true);
     setErr(null);
     try {
-      const { checkout_url } = await createCheckout(token, "lifetime");
-      window.location.href = checkout_url;
+      const updated = await cancelSubscription(token);
+      setSub(updated);
+      setCancelDialogOpen(false);
+      setCancelSuccessMsg(
+        "Subscription cancelled. You will retain Pro access until the end of your current billing period."
+      );
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
-      setBusyPlan(null);
+      setErr(e instanceof ApiError ? e.message : "Failed to cancel subscription");
+    } finally {
+      setCancelling(false);
     }
   }
 
@@ -143,15 +176,16 @@ export default function BillingPage() {
                     Change Plan
                   </Link>
                 </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled
-                  title="Subscription cancellation is currently unavailable"
-                  className="gap-1.5 text-xs text-muted-foreground cursor-not-allowed opacity-60"
-                >
-                  Cancel Subscription
-                </Button>
+                {sub?.plan_type === "pro" && ["active", "past_due"].includes(sub.status) ? (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCancelDialogOpen(true)}
+                    className="gap-1.5 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/30"
+                  >
+                    Cancel Subscription
+                  </Button>
+                ) : null}
                 {sub && sub.plan_type !== "trial" && sub.plan_type !== "lapsed" ? (
                   <Button
                     size="sm"
@@ -333,7 +367,7 @@ export default function BillingPage() {
                               </span>
                             </div>
                             <div className="mt-2.5 flex items-center justify-between text-[11px] text-muted-foreground">
-                              <span className="truncate max-w-[130px]">{site.subdomain}.articurls.site</span>
+                              <span className="truncate max-w-[130px]">{site.subdomain}.{UGC_DOMAIN}</span>
                               <span className="tabular-nums font-medium">{sitePct}% of total</span>
                             </div>
                           </div>
@@ -370,7 +404,7 @@ export default function BillingPage() {
                               row.amount / 100
                             )}
                           </span>
-                          <span className="text-muted-foreground capitalize">{row.status}</span>
+                          <span className="text-muted-foreground capitalize">{row.status.replace(/_/g, " ")}</span>
                           <span className="whitespace-nowrap text-muted-foreground">
                             {row.created_at ? format(new Date(row.created_at), "PPp") : "—"}
                           </span>
@@ -383,6 +417,42 @@ export default function BillingPage() {
             </CardContent>
           </Card>
         </>
+      )}
+
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent className="w-[calc(100vw-2.5rem)] max-w-sm rounded-2xl sm:max-w-md sm:rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Cancel Pro Subscription?</DialogTitle>
+            <DialogDescription className="space-y-2 pt-2 text-xs sm:text-sm">
+              <span>
+                Are you sure you want to cancel? You will keep full access to custom domains, analytics, and all Pro features until{" "}
+                <strong className="text-foreground">
+                  {sub?.current_period_end ? format(new Date(sub.current_period_end), "MMMM d, yyyy") : "the end of your current period"}
+                </strong>.
+              </span>
+              <span className="block text-muted-foreground">
+                After this date, your subscription will not renew and your card will not be charged again.
+              </span>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setCancelDialogOpen(false)} disabled={cancelling}>
+              Keep Subscription
+            </Button>
+            <Button variant="destructive" onClick={handleCancelSubscription} disabled={cancelling}>
+              {cancelling ? "Cancelling…" : "Confirm Cancellation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {cancelSuccessMsg && (
+        <FloatingErrorToast
+          message={cancelSuccessMsg}
+          onDismiss={() => setCancelSuccessMsg(null)}
+          variant="success"
+          autoDismissMs={6000}
+        />
       )}
 
       {err && <FloatingErrorToast message={err} onDismiss={() => setErr(null)} />}

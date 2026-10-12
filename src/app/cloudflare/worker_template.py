@@ -10,8 +10,9 @@ WORKER_SCRIPT_TEMPLATE = """export default {
     const normalizedSubpath = subpath.replace(/\\/+$/, "");
     const isSubpathMatch = url.pathname === normalizedSubpath ||
                            url.pathname.startsWith(normalizedSubpath + "/");
+    const isAssetMatch = url.pathname.startsWith("/_next/");
 
-    if (isSubpathMatch) {
+    if (isSubpathMatch || isAssetMatch) {
       const proxyUrl = new URL(url.pathname + url.search, backendOrigin);
       const newHeaders = new Headers(request.headers);
       newHeaders.set("x-original-host", url.hostname);

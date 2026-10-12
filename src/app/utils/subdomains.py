@@ -9,40 +9,68 @@ from .text import normalize_subdomain
 
 
 SUBDOMAIN_MIN_LEN = 3
-SUBDOMAIN_MAX_LEN = 30
-SUBDOMAIN_RE = re.compile(r"^[a-z0-9_-]+$")
+SUBDOMAIN_MAX_LEN = 48
+SUBDOMAIN_RE = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
 RESERVED_SUBDOMAINS = {
+    "www",
+    "app",
+    "api",
+    "admin",
+    "mail",
+    "support",
+    "auth",
+    "billing",
+    "analytics",
+    "dashboard",
+    "help",
+    "static",
+    "media",
+    "assets",
+    "blog",
+    "site",
+    "sites",
+    "root",
+    "dev",
+    "staging",
+    "test",
+    "demo",
+    "docs",
     "login",
     "signup",
     "verify",
-    "dashboard",
-    "analytics",
-    "billing",
     "settings",
     "forgot-password",
     "reset-password",
-    "api",
     "_next",
     "favicon.ico",
 }
 
 
-def validate_subdomain_or_raise(raw: str | None) -> str:
-    value = normalize_subdomain(raw)
+def subdomain_validation_failure(value: str) -> tuple[str, int] | None:
+    """Return (detail, http_status) when the cleaned subdomain is invalid, else None."""
     if not value:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Subdomain is required")
+        return "Subdomain is required.", status.HTTP_422_UNPROCESSABLE_ENTITY
     if len(value) < SUBDOMAIN_MIN_LEN or len(value) > SUBDOMAIN_MAX_LEN:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Subdomain must be {SUBDOMAIN_MIN_LEN}-{SUBDOMAIN_MAX_LEN} characters.",
+        return (
+            f"Subdomain must be {SUBDOMAIN_MIN_LEN}-{SUBDOMAIN_MAX_LEN} characters.",
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
     if not SUBDOMAIN_RE.fullmatch(value):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Subdomain may only contain lowercase letters, numbers, underscore, and hyphen.",
+        return (
+            "Subdomain can only contain lowercase letters, numbers, and hyphens.",
+            status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
     if value in RESERVED_SUBDOMAINS:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Subdomain is reserved.")
+        return "This subdomain is reserved.", status.HTTP_400_BAD_REQUEST
+    return None
+
+
+def validate_subdomain_or_raise(raw: str | None) -> str:
+    value = normalize_subdomain(raw)
+    failure = subdomain_validation_failure(value)
+    if failure:
+        detail, http_status = failure
+        raise HTTPException(status_code=http_status, detail=detail)
     return value
 
 

@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { cn } from "@/lib/utils";
+import { UGC_DOMAIN } from "@/lib/env";
 import {
   FileText,
   ArrowRight,
@@ -180,7 +181,7 @@ export default function DashboardPage() {
     {
       id: "identity",
       title: "Publication created & identity set",
-      description: activeSite ? `Live on ${activeSite.subdomain}.articurls.site with default identity.` : "Publication created and default identity set.",
+      description: activeSite ? `Live on ${activeSite.subdomain}.${UGC_DOMAIN} with default identity.` : "Publication created and default identity set.",
       href: "/dashboard/settings/general",
       actionLabel: "Configure",
       completed: true,

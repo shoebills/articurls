@@ -39,12 +39,14 @@ def validate_hostname(hostname: str) -> None:
         )
 
 
-def invalidate_domain_lookup_cache(custom_domain: str | None) -> None:
-    if not custom_domain:
-        return
+def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | None = None) -> None:
     try:
         from ..redis_client import redis_client
-        redis_client.delete(f"domain_lookup:{custom_domain}")
+        from ..config import settings
+        if custom_domain:
+            redis_client.delete(f"domain_lookup:{custom_domain}")
+        if subdomain and settings.ugc_domain:
+            redis_client.delete(f"domain_lookup:{subdomain}.{settings.ugc_domain}")
     except Exception:
         pass
 
@@ -58,7 +60,7 @@ def restore_domain_access(site) -> None:
     site.domain_status = models.DomainStatus.ACTIVE
     site.grace_started_at = None
     site.grace_expires_at = None
-    invalidate_domain_lookup_cache(site.custom_domain)
+    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
 
 
 def start_domain_grace_period(site, now: datetime | None = None) -> None:
@@ -69,7 +71,7 @@ def start_domain_grace_period(site, now: datetime | None = None) -> None:
     site.domain_status = models.DomainStatus.GRACE
     site.grace_started_at = current_time
     site.grace_expires_at = current_time + timedelta(days=14)
-    invalidate_domain_lookup_cache(site.custom_domain)
+    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
 
 
 def expire_domain_access(site) -> None:
@@ -77,4 +79,4 @@ def expire_domain_access(site) -> None:
         return
 
     site.domain_status = models.DomainStatus.EXPIRED
-    invalidate_domain_lookup_cache(site.custom_domain)
+    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))

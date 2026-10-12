@@ -7,6 +7,7 @@ from .. import models
 from ..database import get_db
 from ..security.oauth2 import get_current_user
 from ..config import settings
+from ..routers.billing import process_webhook_event
 from ..utils import (
     assert_admin_email,
 )
@@ -146,9 +147,18 @@ def admin_retry_payment_webhook(webhook_id: uuid.UUID, db: Session = Depends(get
     row = db.query(models.PaymentWebhooks).filter(models.PaymentWebhooks.webhook_id == webhook_id).first()
     if not row:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
-    row.processed = False
-    db.commit()
-    return {"detail": "Webhook marked for retry", "webhook_id": webhook_id}
+    
+    payload = row.payload or {}
+    event_data = payload.get("data") if isinstance(payload, dict) else payload
+
+    try:
+        process_webhook_event(db, row.event_type, event_data, row.dodo_event_id)
+        row.processed = True
+        db.commit()
+        return {"detail": "Webhook reprocessed successfully", "webhook_id": webhook_id, "processed": True}
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to reprocess webhook: {e}")
 
 
 @router.get("/domains", status_code=status.HTTP_200_OK)

@@ -98,7 +98,7 @@ export function resolveTenantHostFromHeaders(
   return resolveTenantHost(headers, "", runtimeHosts);
 }
 
-/** Normalize middleware downstream headers for site publication routes. */
+/** Normalize proxy downstream headers for site publication routes. */
 export function withTenantHostHeader(
   requestHeaders: Headers,
   tenantHost: string,

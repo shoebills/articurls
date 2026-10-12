@@ -5,7 +5,7 @@
  * kept in one place so sitemap and robots routes share the same behaviour.
  */
 
-import { API_URL, UGC_DOMAIN } from "@/lib/env";
+import { API_URL } from "@/lib/env";
 import { isCustomDomainHost, buildRuntimeHostsFromEnv } from "@/lib/request-host";
 
 export interface DomainLookupResult {
@@ -31,13 +31,6 @@ export function isCustomDomain(host: string): boolean {
 export async function resolveDomainForSeo(
   host: string
 ): Promise<DomainLookupResult | null> {
-  const RESERVED = new Set(["www", "app", "api", "admin", "mail", "support"]);
-  if (host.endsWith(`.${UGC_DOMAIN}`)) {
-    const subdomain = host.split(".")[0];
-    if (subdomain && !RESERVED.has(subdomain)) {
-      return { subdomain: subdomain, domain_status: "active", custom_domain: host, redirect_to: null, custom_subpath: null };
-    }
-  }
   try {
     const res = await fetch(
       `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,

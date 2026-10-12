@@ -7,6 +7,7 @@ from .celery_app import celery
 from .. import database, models
 from ..config import settings
 from ..domains.utils import expire_domain_access, start_domain_grace_period
+from ..email.service import send_domain_grace_period_email, send_domain_expired_email
 from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, public_blog_home_url, public_post_url
 
 logger = logging.getLogger(__name__)
@@ -68,7 +69,7 @@ def expired_pro_fallback():
         # ── Expired Pro subscriptions ───────────────────────────────────────
         expired_subscriptions = db.query(models.Subscriptions).filter(
             models.Subscriptions.plan_type == "pro",
-            models.Subscriptions.status != "active",
+            models.Subscriptions.status.in_(["active", "past_due", "cancelled"]),
             models.Subscriptions.current_period_end.isnot(None),
             models.Subscriptions.current_period_end < now,
         ).all()
@@ -78,12 +79,21 @@ def expired_pro_fallback():
             for db_site in db_sites:
                 if db_site.domain_status == models.DomainStatus.ACTIVE:
                     start_domain_grace_period(db_site, now=now)
-                elif db_site.domain_status == models.DomainStatus.GRACE:
-                    if db_site.grace_expires_at and db_site.grace_expires_at < now:
-                        expire_domain_access(db_site)
+                    db_user = db.query(models.User).filter(models.User.user_id == sub.user_id).first()
+                    if db_user and db_site.custom_domain:
+                        try:
+                            grace_str = (
+                                db_site.grace_expires_at.strftime("%B %d, %Y")
+                                if db_site.grace_expires_at
+                                else "14 days"
+                            )
+                            send_domain_grace_period_email(
+                                db_user.email, db_user.name, db_site.custom_domain, grace_str
+                            )
+                        except Exception as e:
+                            logger.error("Failed to send grace period email: %s", e)
 
-            if sub.status != "cancelled":
-                sub.status = "lapsed"
+            sub.status = "lapsed"
 
         # ── Grace-period expiry sweep ───────────────────────────────────────
         grace_expired_sites = db.query(models.Site).filter(
@@ -94,6 +104,12 @@ def expired_pro_fallback():
 
         for db_site in grace_expired_sites:
             expire_domain_access(db_site)
+            db_user = db.query(models.User).filter(models.User.user_id == db_site.user_id).first()
+            if db_user and db_site.custom_domain:
+                try:
+                    send_domain_expired_email(db_user.email, db_user.name, db_site.custom_domain)
+                except Exception as e:
+                    logger.error("Failed to send domain expired email: %s", e)
 
         db.commit()
 

@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
 from typing import List
-import re
 import uuid
 
 from .. import models
@@ -15,17 +14,12 @@ from ..storage.service import delete_media
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
 from ..utils.rate_limit import check_rate_limit_user
+from ..utils.subdomains import subdomain_validation_failure
 
 router = APIRouter(
     tags=["Sites"],
     prefix="/sites",
 )
-
-RESERVED_SUBDOMAINS = {
-    "www", "app", "api", "admin", "mail", "support", "auth", "billing",
-    "analytics", "dashboard", "help", "static", "media", "assets", "blog",
-    "site", "sites", "root", "dev", "staging", "test", "demo", "docs",
-}
 
 
 def _site_summary_out(db: Session, site: models.Site) -> dict:
@@ -64,14 +58,10 @@ def check_subdomain_availability(
     raw_subdomain = subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
 
-    if not cleaned_subdomain or len(cleaned_subdomain) < 3 or len(cleaned_subdomain) > 48:
-        return {"available": False, "subdomain": cleaned_subdomain, "reason": "Must be between 3 and 48 characters."}
-
-    if not re.match(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$", cleaned_subdomain):
-        return {"available": False, "subdomain": cleaned_subdomain, "reason": "Can only contain lowercase letters, numbers, and hyphens."}
-
-    if cleaned_subdomain in RESERVED_SUBDOMAINS:
-        return {"available": False, "subdomain": cleaned_subdomain, "reason": "This subdomain is reserved."}
+    failure = subdomain_validation_failure(cleaned_subdomain)
+    if failure:
+        reason, _ = failure
+        return {"available": False, "subdomain": cleaned_subdomain, "reason": reason}
 
     existing_site = db.query(models.Site).filter(models.Site.subdomain == cleaned_subdomain).first()
     if existing_site:
@@ -104,23 +94,10 @@ def create_site(
     raw_subdomain = request.subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
 
-    if not cleaned_subdomain or len(cleaned_subdomain) < 3 or len(cleaned_subdomain) > 48:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Subdomain must be between 3 and 48 alphanumeric characters.",
-        )
-
-    if not re.match(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$", cleaned_subdomain):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Subdomain can only contain lowercase letters, numbers, and hyphens.",
-        )
-
-    if cleaned_subdomain in RESERVED_SUBDOMAINS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Subdomain '{cleaned_subdomain}' is reserved.",
-        )
+    failure = subdomain_validation_failure(cleaned_subdomain)
+    if failure:
+        detail, http_status = failure
+        raise HTTPException(status_code=http_status, detail=detail)
 
     # Check uniqueness
     existing_site = db.query(models.Site).filter(models.Site.subdomain == cleaned_subdomain).first()

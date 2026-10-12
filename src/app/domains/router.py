@@ -140,6 +140,8 @@ async def add_domain(
         )
 
     _invalidate_domain_cache(hostname)
+    if db_site.subdomain and settings.ugc_domain:
+        _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
 
     return DomainAddResponse(
         hostname=hostname,
@@ -235,6 +237,8 @@ async def delete_domain(
     db.commit()
     if old_domain:
         _invalidate_domain_cache(old_domain)
+    if db_site.subdomain and settings.ugc_domain:
+        _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
     return {"message": "Custom domain removed."}
 
 

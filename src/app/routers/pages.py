@@ -433,3 +433,35 @@ def archive_page(
     schedule_page_purge(background_tasks, current_site, db_page.slug)
 
     return db_page
+
+
+@router.post("/{page_id}/unpublish", response_model=page_schema.UserPageOut, status_code=status.HTTP_200_OK)
+def unpublish_page(
+    page_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+    current_user=Depends(get_current_user),
+    current_site: models.Site = Depends(get_current_site),
+):
+    db_page = (
+        db.query(models.UserPage)
+        .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
+        .first()
+    )
+    if not db_page:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Page not found")
+    if db_page.status not in (models.PageStatus.PUBLISHED, models.PageStatus.ARCHIVED):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Only published or archived pages can be reverted to draft",
+        )
+
+    old_updated = db_page.updated_at
+    db_page.status = models.PageStatus.DRAFT
+    db_page.updated_at = old_updated
+    db.commit()
+    db.refresh(db_page)
+
+    schedule_page_purge(background_tasks, current_site, db_page.slug)
+
+    return db_page

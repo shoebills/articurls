@@ -13,16 +13,12 @@ const TOKEN_KEY = "articurls_token";
 
 function VerifyInner() {
   const searchParams = useSearchParams();
-  const [msg, setMsg] = useState("Verifying…");
-  const [err, setErr] = useState<string | null>(null);
+  const token = searchParams.get("token");
+  const [msg, setMsg] = useState(token ? "Verifying…" : "");
+  const [err, setErr] = useState<string | null>(token ? null : "Missing token");
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    if (!token) {
-      setErr("Missing token");
-      setMsg("");
-      return;
-    }
+    if (!token) return;
     (async () => {
       try {
         const res = await verifyEmail(token);
@@ -35,7 +31,7 @@ function VerifyInner() {
         setMsg("");
       }
     })();
-  }, [searchParams]);
+  }, [token]);
 
   return (
     <AuthPageShell>

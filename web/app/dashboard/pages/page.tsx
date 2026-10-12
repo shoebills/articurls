@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ApiError, archivePage, deletePage, listPages, publishPage, apiCacheHas, getCachedApiData } from "@/lib/api";
+import { ApiError, archivePage, deletePage, listPages, publishPage, unpublishPage, apiCacheHas, getCachedApiData } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { UserPage } from "@/lib/types";
@@ -28,7 +28,7 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { DashboardBreadcrumb } from "@/components/settings-breadcrumb";
 import { format } from "date-fns";
-import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, FileText, Filter, MoreVertical, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, ArrowUpDown, Check, ExternalLink, FileText, Filter, MoreVertical, Pencil, Plus, RotateCcw, Search, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { precomputeSearchItem, scoreSearch } from "@/lib/search";
 
@@ -49,6 +49,7 @@ export default function PagesDashboardPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [archiveId, setArchiveId] = useState<string | null>(null);
   const [unarchiveId, setUnarchiveId] = useState<string | null>(null);
+  const [unpublishId, setUnpublishId] = useState<string | null>(null);
   const [rowBusyId, setRowBusyId] = useState<string | null>(null);
   const [menuOpenPageId, setMenuOpenPageId] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -182,12 +183,31 @@ export default function PagesDashboardPage() {
     }
   }
 
+  async function confirmUnpublish() {
+    if (!token || unpublishId == null) return;
+    setRowBusyId(unpublishId);
+    setErr(null);
+    try {
+      await unpublishPage(token, unpublishId);
+      setUnpublishId(null);
+      await load();
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to revert page to draft");
+    } finally {
+      setRowBusyId(null);
+    }
+  }
+
   function onArchive(pageId: string) {
     setArchiveId(pageId);
   }
 
   function onUnarchive(pageId: string) {
     setUnarchiveId(pageId);
+  }
+
+  function onUnpublish(pageId: string) {
+    setUnpublishId(pageId);
   }
 
   function onViewPost(page: UserPage) {
@@ -396,6 +416,16 @@ export default function PagesDashboardPage() {
                               {p.status === "published" && (
                                 <DropdownMenuItem
                                   data-card-action="true"
+                                  onClick={() => void onUnpublish(p.page_id)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                  Revert to draft
+                                </DropdownMenuItem>
+                              )}
+                              {p.status === "published" && (
+                                <DropdownMenuItem
+                                  data-card-action="true"
                                   onClick={() => void onArchive(p.page_id)}
                                   disabled={rowBusyId === p.page_id}
                                 >
@@ -411,6 +441,16 @@ export default function PagesDashboardPage() {
                                 >
                                   <ArchiveRestore className="h-4 w-4" />
                                   Unarchive
+                                </DropdownMenuItem>
+                              )}
+                              {p.status === "archived" && (
+                                <DropdownMenuItem
+                                  data-card-action="true"
+                                  onClick={() => void onUnpublish(p.page_id)}
+                                  disabled={rowBusyId === p.page_id}
+                                >
+                                  <RotateCcw className="h-4 w-4" />
+                                  Revert to draft
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem
@@ -501,6 +541,22 @@ export default function PagesDashboardPage() {
             </Button>
             <Button onClick={confirmUnarchive}>
               Unarchive
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={unpublishId != null} onOpenChange={(o) => !o && setUnpublishId(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Revert this page to draft?</DialogTitle>
+            <DialogDescription>It will be removed from your public site and moved back to drafts.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setUnpublishId(null)}>
+              Cancel
+            </Button>
+            <Button onClick={confirmUnpublish}>
+              Revert to draft
             </Button>
           </DialogFooter>
         </DialogContent>
