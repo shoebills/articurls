@@ -25,17 +25,76 @@ import {
   Check,
   ChevronLeft,
   Zap,
-  Mail,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
-const VIEW_TIERS = [
-  { id: "10k", tierKey: "pro_10k", label: "Up to 10k views", price: 19, views: 10_000 },
-  { id: "100k", tierKey: "pro_100k", label: "Up to 100k views", price: 49, views: 100_000, popular: true },
-  { id: "250k", tierKey: "pro_250k", label: "Up to 250k views", price: 99, views: 250_000 },
-  { id: "500k", tierKey: "pro_500k", label: "Up to 500k views", price: 149, views: 500_000 },
-  { id: "1m", tierKey: "pro_1m", label: "Up to 1M views", price: 249, views: 1_000_000 },
-  { id: "custom", tierKey: null, label: "1M+ views (Custom)", price: null, views: null },
+interface ViewTier {
+  id: string;
+  tierKey: string;
+  name: string;
+  label: string;
+  price: number;
+  views: number | null;
+  viewsText: string;
+  popular?: boolean;
+}
+
+const VIEW_TIERS: ViewTier[] = [
+  {
+    id: "10k",
+    tierKey: "pro_10k",
+    name: "Pro 10K",
+    label: "Pro 10K (10,000 views)",
+    price: 19,
+    views: 10_000,
+    viewsText: "10,000 monthly pageviews",
+  },
+  {
+    id: "50k",
+    tierKey: "pro_50k",
+    name: "Pro 50K",
+    label: "Pro 50K (50,000 views)",
+    price: 39,
+    views: 50_000,
+    viewsText: "50,000 monthly pageviews",
+  },
+  {
+    id: "100k",
+    tierKey: "pro_100k",
+    name: "Pro 100K",
+    label: "Pro 100K (100,000 views)",
+    price: 69,
+    views: 100_000,
+    viewsText: "100,000 monthly pageviews",
+    popular: true,
+  },
+  {
+    id: "250k",
+    tierKey: "pro_250k",
+    name: "Pro 250K",
+    label: "Pro 250K (250,000 views)",
+    price: 119,
+    views: 250_000,
+    viewsText: "250,000 monthly pageviews",
+  },
+  {
+    id: "500k",
+    tierKey: "pro_500k",
+    name: "Pro 500K",
+    label: "Pro 500K (500,000 views)",
+    price: 199,
+    views: 500_000,
+    viewsText: "500,000 monthly pageviews",
+  },
+  {
+    id: "unlimited",
+    tierKey: "pro_unlimited",
+    name: "Pro Unlimited",
+    label: "Pro Unlimited (Unlimited views)",
+    price: 249,
+    views: null,
+    viewsText: "Unlimited monthly pageviews (no quota)",
+  },
 ];
 
 export default function UpgradePlanPage() {
@@ -58,7 +117,14 @@ export default function UpgradePlanPage() {
       setSub(s);
       setUsage(u);
 
-      if (u) {
+      if (s?.tier) {
+        const matchingIdx = VIEW_TIERS.findIndex(
+          (tier) => tier.tierKey === s.tier || (s.tier === "pro_1m" && tier.tierKey === "pro_unlimited")
+        );
+        if (matchingIdx !== -1) {
+          setSelectedTierIndex(matchingIdx);
+        }
+      } else if (u) {
         const matchingIdx = VIEW_TIERS.findIndex((tier) => tier.views === u.tier_limit);
         if (matchingIdx !== -1) {
           setSelectedTierIndex(matchingIdx);
@@ -90,8 +156,13 @@ export default function UpgradePlanPage() {
 
   const pro = isProSubscription(sub);
   const selectedTier = VIEW_TIERS[selectedTierIndex] || VIEW_TIERS[0];
-  const isCustomTier = selectedTier.id === "custom";
-  const isCurrentActiveTier = pro && usage && usage.tier_limit === selectedTier.views;
+  const isCurrentActiveTier =
+    pro &&
+    (sub?.tier
+      ? sub.tier === selectedTier.tierKey || (sub.tier === "pro_1m" && selectedTier.tierKey === "pro_unlimited")
+      : usage
+        ? usage.tier_limit === selectedTier.views
+        : false);
 
   return (
     <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
@@ -144,7 +215,7 @@ export default function UpgradePlanPage() {
                           ) : null}
                         </div>
                         <span className="text-sm font-medium text-muted-foreground">
-                          {tier.price !== null ? `$${tier.price}/mo` : "Custom"}
+                          ${tier.price}/mo
                         </span>
                       </div>
                     </SelectItem>
@@ -157,46 +228,29 @@ export default function UpgradePlanPage() {
             <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 p-5 rounded-2xl bg-muted/40 border border-border/70">
               <div>
                 <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">
-                  {isCustomTier ? "Enterprise Volume" : `Tier: ${selectedTier.label}`}
+                  Plan: {selectedTier.name}
                 </span>
                 <div className="flex items-baseline gap-1.5">
-                  {isCustomTier ? (
-                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                      Custom Pricing
-                    </span>
-                  ) : (
-                    <>
-                      <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                        ${selectedTier.price}
-                      </span>
-                      <span className="text-sm text-muted-foreground font-medium">/ month</span>
-                    </>
-                  )}
+                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                    ${selectedTier.price}
+                  </span>
+                  <span className="text-sm text-muted-foreground font-medium">/ month</span>
                 </div>
               </div>
 
-              {isCustomTier ? (
-                <Button asChild className="h-11 px-6 gap-2">
-                  <Link href="/dashboard/support">
-                    <Mail className="h-4 w-4" />
-                    Contact Us for Enterprise
-                  </Link>
-                </Button>
-              ) : (
-                <Button
-                  size="lg"
-                  className="h-11 px-8 text-sm font-semibold"
-                  variant={isCurrentActiveTier ? "outline" : "default"}
-                  disabled={isCurrentActiveTier || busyPlan === selectedTier.id}
-                  onClick={() => handleUpgrade(selectedTier.id)}
-                >
-                  {isCurrentActiveTier
-                    ? "Current Active Tier"
-                    : busyPlan === selectedTier.id
-                      ? "Redirecting..."
-                      : `Select Plan ($${selectedTier.price}/mo)`}
-                </Button>
-              )}
+              <Button
+                size="lg"
+                className="h-11 px-8 text-sm font-semibold"
+                variant={isCurrentActiveTier ? "outline" : "default"}
+                disabled={isCurrentActiveTier || busyPlan === selectedTier.id}
+                onClick={() => handleUpgrade(selectedTier.id)}
+              >
+                {isCurrentActiveTier
+                  ? "Current Active Tier"
+                  : busyPlan === selectedTier.id
+                    ? "Redirecting..."
+                    : `Select Plan ($${selectedTier.price}/mo)`}
+              </Button>
             </div>
 
             {/* Included Features Grid */}
@@ -207,7 +261,7 @@ export default function UpgradePlanPage() {
               <div className="grid gap-3 sm:grid-cols-2 text-xs">
                 <div className="flex items-center gap-2 text-foreground font-medium">
                   <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>{isCustomTier ? "1,000,000+ monthly views" : `${selectedTier.views?.toLocaleString()} monthly pageviews`}</span>
+                  <span>{selectedTier.viewsText}</span>
                 </div>
                 <div className="flex items-center gap-2 text-foreground">
                   <Check className="h-4 w-4 text-primary shrink-0" />

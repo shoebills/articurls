@@ -50,8 +50,8 @@ class SiteUsageItem(BaseModel):
 
 class AccountUsage(BaseModel):
     total_pageviews: int = 0
-    tier_limit: int = 10000
+    tier_limit: Optional[int] = 10000
     plan_type: str = "trial"
     tier_price_usd: int = 19
-    usage_percentage: float = 0.0
+    usage_percentage: Optional[float] = 0.0
     sites: list[SiteUsageItem] = []

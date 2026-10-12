@@ -28,10 +28,18 @@ router = APIRouter(
 
 TIER_PRODUCT_IDS = {
     "pro_10k": settings.dodopayments_product_id_10k,
+    "pro_50k": settings.dodopayments_product_id_50k,
     "pro_100k": settings.dodopayments_product_id_100k,
     "pro_250k": settings.dodopayments_product_id_250k,
     "pro_500k": settings.dodopayments_product_id_500k,
-    "pro_1m": settings.dodopayments_product_id_1m,
+    "pro_unlimited": settings.dodopayments_product_id_unlimited or settings.dodopayments_product_id_1m,
+    "pro_1m": settings.dodopayments_product_id_unlimited or settings.dodopayments_product_id_1m,
+}
+
+PRODUCT_ID_TO_TIER = {
+    product_id: ("pro_unlimited" if tier == "pro_1m" else tier)
+    for tier, product_id in TIER_PRODUCT_IDS.items()
+    if product_id
 }
 
 
@@ -95,6 +103,20 @@ def _metadata_get(metadata, key):
     if isinstance(metadata, dict):
         return metadata.get(key)
     return getattr(metadata, key, None)
+
+
+def _resolve_effective_tier(event_data):
+    incoming_tier = _metadata_get(getattr(event_data, "metadata", None), "tier")
+    if incoming_tier == "pro_1m":
+        incoming_tier = "pro_unlimited"
+    if not (incoming_tier and incoming_tier in TIER_PRODUCT_IDS):
+        incoming_product_id = getattr(event_data, "product_id", None)
+        if incoming_product_id:
+            incoming_tier = PRODUCT_ID_TO_TIER.get(incoming_product_id)
+
+    if incoming_tier and incoming_tier in TIER_PRODUCT_IDS:
+        return "pro_unlimited" if incoming_tier == "pro_1m" else incoming_tier
+    return None
 
 
 def _resolve_user_from_metadata_or_customer(db: Session, metadata=None, customer=None):
@@ -220,6 +242,8 @@ def create_checkout(
     elif plan == "monthly":
         if not tier:
             tier = "pro_10k"
+        elif tier == "pro_1m":
+            tier = "pro_unlimited"
         product_id = TIER_PRODUCT_IDS.get(tier)
         if not product_id:
             if tier in TIER_PRODUCT_IDS:
@@ -304,7 +328,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                 return {"detail": "already processed"}
 
     try:
-        if event_type == "subscription.active":
+        if event_type in ("subscription.active", "subscription.plan_changed", "subscription.updated"):
             customer = getattr(event.data, "customer", None)
             customer_email = getattr(customer, "email", None) if customer else None
 
@@ -315,11 +339,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                     _capture_dodo_customer_id(event.data, db_user)
 
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
-                    incoming_tier = _metadata_get(getattr(event.data, "metadata", None), "tier")
-                    if incoming_tier and incoming_tier in TIER_PRODUCT_IDS:
-                        effective_tier = incoming_tier
-                    else:
-                        effective_tier = None
+                    effective_tier = _resolve_effective_tier(event.data)
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
@@ -426,6 +446,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                     _capture_dodo_customer_id(event.data, db_user)
 
                     incoming_dodo_sid = getattr(event.data, "subscription_id", None)
+                    effective_tier = _resolve_effective_tier(event.data)
 
                     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
@@ -449,6 +470,8 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 db_sub.status = "active"
                                 db_sub.current_period_start = _to_aware_dt(incoming_start)
                                 db_sub.current_period_end = _to_aware_dt(incoming_end)
+                                if effective_tier:
+                                    db_sub.tier = effective_tier
 
                         else:
                             db_sub = models.Subscriptions(
@@ -456,6 +479,7 @@ async def handle_webhook(request: Request, db: Session = Depends(get_db)):
                                 dodo_subscription_id=incoming_dodo_sid,
                                 plan_type="pro",
                                 status="active",
+                                tier=effective_tier,
                                 current_period_start=_to_aware_dt(getattr(event.data, "previous_billing_date", None)),
                                 current_period_end=_to_aware_dt(getattr(event.data, "next_billing_date", None)),
                             )
@@ -742,15 +766,18 @@ def get_account_usage(
     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
     plan_type = db_sub.plan_type if db_sub else "trial"
     tier_key = (db_sub.tier if db_sub and db_sub.tier else plan_type)
+    if tier_key == "pro_1m":
+        tier_key = "pro_unlimited"
 
     TIERS = {
         "trial": {"limit": 10000, "price": 19},
         "pro": {"limit": 10000, "price": 19},
         "pro_10k": {"limit": 10000, "price": 19},
-        "pro_100k": {"limit": 100000, "price": 49},
-        "pro_250k": {"limit": 250000, "price": 99},
-        "pro_500k": {"limit": 500000, "price": 149},
-        "pro_1m": {"limit": 1000000, "price": 249},
+        "pro_50k": {"limit": 50000, "price": 39},
+        "pro_100k": {"limit": 100000, "price": 69},
+        "pro_250k": {"limit": 250000, "price": 119},
+        "pro_500k": {"limit": 500000, "price": 199},
+        "pro_unlimited": {"limit": None, "price": 249},
         "lifetime": {"limit": 100000, "price": 99},
     }
     tier_info = TIERS.get(tier_key, {"limit": 10000, "price": 19})
@@ -779,11 +806,15 @@ def get_account_usage(
             "pageviews": views,
         })
 
-    usage_pct = min(100.0, round((total_views / tier_info["limit"] * 100), 1)) if tier_info["limit"] > 0 else 0.0
+    tier_limit = tier_info["limit"]
+    if tier_limit is not None and tier_limit > 0:
+        usage_pct = min(100.0, round((total_views / tier_limit * 100), 1))
+    else:
+        usage_pct = None
 
     return {
         "total_pageviews": total_views,
-        "tier_limit": tier_info["limit"],
+        "tier_limit": tier_limit,
         "plan_type": plan_type,
         "tier_price_usd": tier_info["price"],
         "usage_percentage": usage_pct,

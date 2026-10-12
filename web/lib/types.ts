@@ -377,10 +377,10 @@ export interface SiteUsageItem {
 
 export interface AccountUsage {
   total_pageviews: number;
-  tier_limit: number;
+  tier_limit: number | null;
   plan_type: string;
   tier_price_usd: number;
-  usage_percentage: number;
+  usage_percentage: number | null;
   sites: SiteUsageItem[];
 }
 

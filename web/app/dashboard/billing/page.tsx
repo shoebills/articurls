@@ -192,7 +192,7 @@ export default function BillingPage() {
                   ) : (
                     <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5 text-xs font-medium text-emerald-800">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      Active Pro Plan ({usage ? `${usage.tier_limit.toLocaleString()} views` : sub.plan_type})
+                      Active Pro Plan ({usage ? (usage.tier_limit !== null ? `${usage.tier_limit.toLocaleString()} views` : "Unlimited views") : sub.plan_type})
                     </div>
                   )
                 ) : (
@@ -266,27 +266,37 @@ export default function BillingPage() {
                       </span>
                       <span className="text-muted-foreground text-sm">
                         {" "}
-                        / {usage.tier_limit.toLocaleString()} views
+                        {usage.tier_limit !== null
+                          ? `/ ${usage.tier_limit.toLocaleString()} views`
+                          : "views (Unlimited traffic)"}
                       </span>
                     </div>
-                    <span className="text-sm font-semibold tabular-nums text-foreground">
-                      {usage.usage_percentage}% used
-                    </span>
+                    {usage.tier_limit !== null ? (
+                      <span className="text-sm font-semibold tabular-nums text-foreground">
+                        {usage.usage_percentage ?? 0}% used
+                      </span>
+                    ) : (
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700">
+                        No Quota Limit
+                      </span>
+                    )}
                   </div>
 
                   {/* Progress Bar */}
-                  <div className="h-3 w-full overflow-hidden rounded-full bg-muted/60">
-                    <div
-                      className={`h-full transition-all duration-500 rounded-full ${
-                        usage.usage_percentage > 90
-                          ? "bg-destructive"
-                          : usage.usage_percentage > 75
-                            ? "bg-amber-500"
-                            : "bg-primary"
-                      }`}
-                      style={{ width: `${Math.max(2, usage.usage_percentage)}%` }}
-                    />
-                  </div>
+                  {usage.tier_limit !== null && usage.usage_percentage !== null ? (
+                    <div className="h-3 w-full overflow-hidden rounded-full bg-muted/60">
+                      <div
+                        className={`h-full transition-all duration-500 rounded-full ${
+                          usage.usage_percentage > 90
+                            ? "bg-destructive"
+                            : usage.usage_percentage > 75
+                              ? "bg-amber-500"
+                              : "bg-primary"
+                        }`}
+                        style={{ width: `${Math.max(2, usage.usage_percentage)}%` }}
+                      />
+                    </div>
+                  ) : null}
                 </div>
 
                 {/* Per-Site Breakdown */}

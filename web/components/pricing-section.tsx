@@ -21,53 +21,95 @@ type Plan = {
   note?: string;
 };
 
+const PRO_TIERS = [
+  { label: "10K", name: "Pro 10K", price: 19, views: "10,000 monthly pageviews" },
+  { label: "50K", name: "Pro 50K", price: 39, views: "50,000 monthly pageviews" },
+  { label: "100K", name: "Pro 100K", price: 69, views: "100,000 monthly pageviews" },
+  { label: "250K", name: "Pro 250K", price: 119, views: "250,000 monthly pageviews" },
+  { label: "500K", name: "Pro 500K", price: 199, views: "500,000 monthly pageviews" },
+  { label: "Unlimited", name: "Pro Unlimited", price: 249, views: "Unlimited monthly pageviews (no quota)" },
+];
+
 export function PricingSection() {
   const { token } = useAuth();
+  const [selectedTierIdx, setSelectedTierIdx] = useState(0);
   const signupUrl = appAuthHref("/signup");
   const billingUrl = appAuthHref("/dashboard/billing");
   const lifetimeHref = token ? `${billingUrl}?plan=lifetime` : `${signupUrl}?plan=lifetime`;
 
-  const plans: Plan[] = [
+  const currentTier = PRO_TIERS[selectedTierIdx];
+
+  const plans: { plan: Plan; tierSelector?: React.ReactNode }[] = [
     {
-      name: "Pro",
-      tagline: "Grow audience",
-      price: "$19",
-      unit: "/mo",
-      desc: "Due today: $0",
-      features: [
-        "Unlimited posts & pages",
-        "Unlimited media storage",
-        "Custom domain with automatic SSL",
-        "Collect email subscribers",
-        "Pageviews & visitor analytics",
-        "Subscriber analytics",
-        "RSS feed, sitemap & robots.txt",
-        "Custom favicon",
-        "Post scheduling",
-        "Assign categories",
-        "Search engine optimization",
-      ],
-      cta: "Start for free",
-      href: `${signupUrl}?plan=pro`,
-      featured: true,
+      plan: {
+        name: currentTier.name,
+        tagline: "Grow audience",
+        price: `$${currentTier.price}`,
+        unit: "/mo",
+        desc: "Due today: $0 · 7-day free trial",
+        features: [
+          currentTier.views,
+          "Unlimited sites & publications",
+          "Unlimited posts & pages",
+          "Unlimited media storage",
+          "Custom domain with automatic SSL",
+          "Collect email subscribers",
+          "Pageviews & visitor analytics",
+          "Subscriber analytics",
+          "RSS feed, sitemap & robots.txt",
+          "Custom favicon & code injection",
+          "Post scheduling & categories",
+          "Search engine optimization",
+        ],
+        cta: "Start for free",
+        href: `${signupUrl}?plan=pro`,
+        featured: true,
+      },
+      tierSelector: (
+        <div className="mt-4 space-y-1.5">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            <span>Select Traffic Allowance</span>
+            <span className="text-foreground normal-case font-bold">{currentTier.name}</span>
+          </div>
+          <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted/60 p-1 border border-border/60">
+            {PRO_TIERS.map((tier, idx) => (
+              <button
+                key={tier.label}
+                type="button"
+                onClick={() => setSelectedTierIdx(idx)}
+                className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-all ${
+                  selectedTierIdx === idx
+                    ? "bg-background text-foreground shadow-xs font-bold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {tier.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      ),
     },
     {
-      name: "Lifetime",
-      tagline: "Own forever",
-      price: "$99",
-      unit: " once",
-      was: "$149",
-      desc: "Pay one time. Keep Pro for lifetime.",
-      features: [
-        "Everything in Pro",
-        "No recurring charges, ever",
-        "Future Pro features included",
-        "Yours for life",
-      ],
-      cta: "Get Lifetime",
-      href: lifetimeHref,
-      premium: true,
-      note: "Limited time deal",
+      plan: {
+        name: "Lifetime",
+        tagline: "Own forever",
+        price: "$99",
+        unit: " once",
+        was: "$149",
+        desc: "Pay one time. Keep Pro for lifetime.",
+        features: [
+          "100,000 monthly pageviews",
+          "Everything in Pro",
+          "No recurring charges, ever",
+          "Future Pro features included",
+          "Yours for life",
+        ],
+        cta: "Get Lifetime",
+        href: lifetimeHref,
+        premium: true,
+        note: "Limited time deal",
+      },
     },
   ];
 
@@ -83,13 +125,13 @@ export function PricingSection() {
             Start with a 7-day free trial.
           </h2>
           <p className="mt-3 text-base text-muted-foreground">
-            No credit card required. No annual contracts. Cancel anytime.
+            All paid tiers include every feature. Pick the traffic allowance that fits your audience.
           </p>
         </div>
 
         <div className="mx-auto mt-14 grid max-w-3xl items-start gap-5 md:grid-cols-2">
-          {plans.map((plan) => (
-            <PlanCard key={plan.name} plan={plan} />
+          {plans.map(({ plan, tierSelector }) => (
+            <PlanCard key={plan.name} plan={plan} tierSelector={tierSelector} />
           ))}
         </div>
       </div>
@@ -99,7 +141,7 @@ export function PricingSection() {
   );
 }
 
-function PlanCard({ plan }: { plan: Plan }) {
+function PlanCard({ plan, tierSelector }: { plan: Plan; tierSelector?: React.ReactNode }) {
   const base =
     "relative flex flex-col rounded-2xl border p-6 transition-shadow duration-300 sm:p-7";
   const variant = plan.premium
@@ -132,6 +174,8 @@ function PlanCard({ plan }: { plan: Plan }) {
         )}
       </div>
       <p className={`mt-3 text-sm leading-relaxed ${mutedText}`}>{plan.desc}</p>
+
+      {tierSelector}
 
       <Button
         className={`mt-6 h-12 w-full ${

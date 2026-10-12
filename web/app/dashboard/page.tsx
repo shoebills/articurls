@@ -381,33 +381,50 @@ export default function DashboardPage() {
                 </span>
                 <span className="text-muted-foreground text-sm font-medium">
                   {" "}
-                  / {usage.tier_limit.toLocaleString()} monthly views
+                  {usage.tier_limit !== null
+                    ? `/ ${usage.tier_limit.toLocaleString()} monthly views`
+                    : "monthly views (Unlimited)"}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-sm font-bold tabular-nums text-foreground">
-                  {usage.usage_percentage}%
-                </span>
-                <span className="text-xs text-muted-foreground block">
-                  capacity used
-                </span>
+                {usage.tier_limit !== null ? (
+                  <>
+                    <span className="text-sm font-bold tabular-nums text-foreground">
+                      {usage.usage_percentage ?? 0}%
+                    </span>
+                    <span className="text-xs text-muted-foreground block">
+                      capacity used
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <span className="text-sm font-bold tabular-nums text-emerald-600">
+                      Unlimited
+                    </span>
+                    <span className="text-xs text-muted-foreground block">
+                      no traffic limit
+                    </span>
+                  </>
+                )}
               </div>
             </div>
 
             {/* Progress Bar */}
-            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
-              <div
-                className={cn(
-                  "h-full transition-all duration-500 rounded-full",
-                  usage.usage_percentage > 90
-                    ? "bg-destructive"
-                    : usage.usage_percentage > 75
-                      ? "bg-amber-500"
-                      : "bg-primary"
-                )}
-                style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
-              />
-            </div>
+            {usage.tier_limit !== null && usage.usage_percentage !== null ? (
+              <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted/80">
+                <div
+                  className={cn(
+                    "h-full transition-all duration-500 rounded-full",
+                    usage.usage_percentage > 90
+                      ? "bg-destructive"
+                      : usage.usage_percentage > 75
+                        ? "bg-amber-500"
+                        : "bg-primary"
+                  )}
+                  style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
+                />
+              </div>
+            ) : null}
           </div>
         ) : (
           <div className="rounded-xl border border-dashed border-border/80 p-8 text-center text-sm text-muted-foreground">
