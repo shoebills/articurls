@@ -3,7 +3,7 @@
 import { use, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import slugify from "slugify";
-import { ApiError, archivePage, getPage, publishPage, updatePage, uploadPageMedia, deletePageMediaByUrl } from "@/lib/api";
+import { ApiError, archivePage, getPage, publishPage, updatePage, uploadPageMedia, deletePageMediaByUrl, MAX_IMAGE_FILE_SIZE } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { UserPage } from "@/lib/types";
 import { format } from "date-fns";
@@ -294,6 +294,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   async function uploadFeaturedImage(file: File) {
     if (!token || !page) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      return;
+    }
     setUploadingFeatured(true);
     try {
       const media = await uploadPageMedia(token, page.page_id, file);
@@ -308,6 +312,10 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
 
   async function uploadOgImage(file: File) {
     if (!token || !page) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      return;
+    }
     setUploadingOg(true);
     try {
       const media = await uploadPageMedia(token, page.page_id, file);
@@ -694,7 +702,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <input
                 ref={featuredInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];
@@ -829,7 +837,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
               <input
                 ref={ogInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];

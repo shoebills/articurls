@@ -18,6 +18,7 @@ import {
   listAuthors,
   patchDesignSettings,
   ApiError,
+  MAX_IMAGE_FILE_SIZE,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { BlogDetail, BlogListItem, Category, Author } from "@/lib/types";
@@ -501,6 +502,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function uploadFeaturedImage(file: File) {
     if (!token || !blog) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      return;
+    }
     setUploadingFeatured(true);
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
@@ -515,6 +520,10 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
 
   async function uploadOgImage(file: File) {
     if (!token || !blog) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      return;
+    }
     setUploadingOg(true);
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
@@ -1004,7 +1013,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <input
                   ref={featuredInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];
@@ -1439,7 +1448,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                 <input
                   ref={ogInputRef}
                   type="file"
-                  accept="image/*"
+                  accept="image/jpeg,image/png,image/webp"
                   className="sr-only"
                   onChange={(e) => {
                     const f = e.target.files?.[0];

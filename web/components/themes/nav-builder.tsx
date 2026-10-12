@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { listPages, listCategories, uploadLogo, deleteLogo, ApiError } from "@/lib/api";
+import { listPages, listCategories, uploadLogo, deleteLogo, ApiError, MAX_IMAGE_FILE_SIZE } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import type { Category, DesignSettings, NavItem, NavItemType, UserPage } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -150,8 +150,8 @@ export function NavBuilder({
 
   const handleLogoUpload = async (file: File) => {
     if (!token) return;
-    if (file.size > 2 * 1024 * 1024) {
-      setLogoError("Logo too large (max 2MB)");
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setLogoError("Logo too large (max 10MB)");
       return;
     }
     setLogoBusy(true);
@@ -346,7 +346,7 @@ export function NavBuilder({
             <div className="space-y-1.5">
               <label className="text-sm font-medium text-foreground">Header Logo Image</label>
               <p className="text-xs text-muted-foreground sm:text-sm">
-                Replaces the site name text in the header when set. PNG, JPG, WebP or SVG up to 2MB.
+                Replaces the site name text in the header when set. PNG, JPG or WebP up to 10MB.
               </p>
             </div>
             <div className="flex flex-col items-start gap-3">
@@ -365,7 +365,7 @@ export function NavBuilder({
               <input
                 ref={logoInputRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                accept="image/png,image/jpeg,image/webp"
                 className="sr-only"
                 onChange={async (e) => {
                   const file = e.target.files?.[0];

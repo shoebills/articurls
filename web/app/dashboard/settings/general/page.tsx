@@ -10,6 +10,7 @@ import {
   purgeSiteCache,
   ApiError,
   apiCacheHas,
+  MAX_FAVICON_FILE_SIZE,
 } from "@/lib/api";
 import type { DesignSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
@@ -248,7 +249,7 @@ export default function GeneralSettingsPage() {
               <div className="space-y-1.5">
                 <p className="text-sm font-medium">Blog favicon</p>
                 <p className="text-xs text-muted-foreground sm:text-sm">
-                  Your publication favicon shown in the browser tab. Recommended 512×512px, max 256KB.
+                  Your publication favicon shown in the browser tab. Recommended 512×512px, max 1MB.
                 </p>
               </div>
               <div className="flex flex-col items-start gap-3">
@@ -267,13 +268,13 @@ export default function GeneralSettingsPage() {
                 <input
                   ref={faviconInputRef}
                   type="file"
-                  accept="image/png,image/jpeg,image/webp,image/x-icon,image/svg+xml"
+                  accept="image/png,image/jpeg,image/webp,image/x-icon"
                   className="sr-only"
                   onChange={async (e) => {
                     const file = e.target.files?.[0];
                     if (!file || !token) return;
-                    if (file.size > 256 * 1024) {
-                      setErr("Favicon too large (max 256KB)");
+                    if (file.size > MAX_FAVICON_FILE_SIZE) {
+                      setErr("Favicon too large (max 1MB)");
                       e.target.value = "";
                       return;
                     }

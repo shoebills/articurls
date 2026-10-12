@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { createAuthor, uploadAuthorAvatar, ApiError } from "@/lib/api";
+import { createAuthor, uploadAuthorAvatar, ApiError, MAX_IMAGE_FILE_SIZE } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -56,8 +56,8 @@ export default function NewAuthorPage() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Avatar image must be under 2MB");
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setError("Avatar image must be under 10MB");
       return;
     }
 
@@ -208,7 +208,7 @@ export default function NewAuthorPage() {
                     disabled={submitting}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Recommended square image (PNG, JPG or WebP up to 2MB).
+                    Recommended square image (PNG, JPG or WebP up to 10MB).
                   </p>
                 </div>
               </div>

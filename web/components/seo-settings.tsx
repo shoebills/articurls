@@ -9,6 +9,7 @@ import {
   patchSeoSettings,
   uploadOgImage,
   deleteOgImage,
+  MAX_IMAGE_FILE_SIZE,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Input } from "@/components/ui/input";
@@ -182,6 +183,10 @@ export default function SeoSettings() {
 
   async function handleUploadOgImage(file: File) {
     if (!token) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      return;
+    }
     setOgImageBusy(true);
     setErr(null);
     try {
@@ -285,7 +290,7 @@ export default function SeoSettings() {
               <input
                 ref={ogInputRef}
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 onChange={(e) => {
                   const f = e.target.files?.[0];

@@ -9,6 +9,7 @@ import {
   deleteAuthor,
   uploadAuthorAvatar,
   ApiError,
+  MAX_IMAGE_FILE_SIZE,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -116,8 +117,8 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
     const file = e.target.files?.[0];
     if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      setError("Avatar image must be under 2MB");
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setError("Avatar image must be under 10MB");
       return;
     }
 
@@ -346,7 +347,7 @@ export default function EditAuthorPage({ params }: { params: Promise<{ id: strin
                     disabled={submitting}
                   />
                   <p className="text-xs text-muted-foreground">
-                    Recommended square image (PNG, JPG or WebP up to 2MB).
+                    Recommended square image (PNG, JPG or WebP up to 10MB).
                   </p>
                 </div>
               </div>

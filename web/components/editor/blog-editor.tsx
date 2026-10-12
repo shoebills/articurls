@@ -53,6 +53,7 @@ import {
   deletePageMediaByUrl,
   uploadBlogMedia,
   uploadPageMedia,
+  MAX_IMAGE_FILE_SIZE,
 } from "@/lib/api";
 import { assetUrl } from "@/lib/env";
 import { cn } from "@/lib/utils";
@@ -393,10 +394,14 @@ export function BlogEditor({
 
     const input = document.createElement("input");
     input.type = "file";
-    input.accept = "image/*";
+    input.accept = "image/jpeg,image/png,image/webp";
     input.onchange = async () => {
       const file = input.files?.[0];
       if (!file) return;
+      if (file.size > MAX_IMAGE_FILE_SIZE) {
+        setEditorToast("Image too large (max 10MB).");
+        return;
+      }
       try {
         const media = blogId
           ? await uploadBlogMedia(token, blogId, file)

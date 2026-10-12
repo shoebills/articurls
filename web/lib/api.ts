@@ -63,6 +63,9 @@ export type {
   UmamiRealtimeResponse,
 };
 
+export const MAX_IMAGE_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+export const MAX_FAVICON_FILE_SIZE = 1 * 1024 * 1024; // 1MB
+
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -782,17 +785,10 @@ export async function uploadAuthorAvatar(
 ): Promise<{ profile_image_url: string }> {
   const formData = new FormData();
   formData.append("file", file);
-  return apiFetch<{ profile_image_url: string }>(`/_upload/authors/${id}/avatar`, {
+  return apiFetch<{ profile_image_url: string }>(`/authors/${id}/avatar`, {
     method: "POST",
     token,
     body: formData,
-  }).catch(() => {
-    // Direct endpoint fallback
-    return apiFetch<{ profile_image_url: string }>(`/authors/${id}/avatar`, {
-      method: "POST",
-      token,
-      body: formData,
-    });
   });
 }
 

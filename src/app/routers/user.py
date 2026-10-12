@@ -287,7 +287,7 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
 
 
 
-FAVICON_MAX_BYTES = 256 * 1024  # 256KB
+FAVICON_MAX_BYTES = 1 * 1024 * 1024  # 1MB
 FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon"}
 
 
@@ -298,10 +298,7 @@ async def upload_favicon(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    
-    
-
-    data = await file.read()
+    data = await file.read(FAVICON_MAX_BYTES + 1)
     content_type = file.content_type or ""
 
     if content_type not in FAVICON_ALLOWED_TYPES:
@@ -312,7 +309,7 @@ async def upload_favicon(
     if len(data) > FAVICON_MAX_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Favicon too large (max 256KB).",
+            detail="Favicon too large (max 1MB).",
         )
     if not _verify_magic_bytes(data, content_type):
         raise HTTPException(

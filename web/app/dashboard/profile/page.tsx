@@ -9,6 +9,7 @@ import {
   ApiError,
   apiCacheHas,
   getCachedApiData,
+  MAX_IMAGE_FILE_SIZE,
 } from "@/lib/api";
 import type { UserSettings } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
@@ -102,6 +103,11 @@ export default function ProfilePage() {
     const input = e.target;
     const file = input.files?.[0];
     if (!file || !token) return;
+    if (file.size > MAX_IMAGE_FILE_SIZE) {
+      setErr("Image too large (max 10MB)");
+      input.value = "";
+      return;
+    }
     setBusy(true);
     setErr(null);
     try {
@@ -223,7 +229,7 @@ export default function ProfilePage() {
                 ref={pfpInputRef}
                 id="pfp"
                 type="file"
-                accept="image/*"
+                accept="image/jpeg,image/png,image/webp"
                 className="sr-only"
                 onChange={onPfp}
                 disabled={busy}

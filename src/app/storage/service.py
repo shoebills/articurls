@@ -8,17 +8,18 @@ from sqlalchemy.orm import Session
 from ..config import settings
 from .. import models
 ALLOWED_IMAGE_CONTENT_TYPES = {"image/jpeg", "image/png", "image/webp"}
-MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024
+MAX_IMAGE_SIZE_BYTES = 10 * 1024 * 1024
 
 _MAGIC_BYTES: dict[str, tuple[bytes, ...]] = {
     "image/jpeg": (b"\xff\xd8\xff",),
     "image/png": (b"\x89PNG\r\n\x1a\n",),
-    "image/webp": (b"RIFF",),
     "image/x-icon": (b"\x00\x00\x01\x00",),
 }
 
 
 def _verify_magic_bytes(data: bytes, content_type: str) -> bool:
+    if content_type == "image/webp":
+        return len(data) >= 12 and data.startswith(b"RIFF") and data[8:12] == b"WEBP"
     sigs = _MAGIC_BYTES.get(content_type)
     if sigs is None:
         return False
@@ -109,7 +110,7 @@ def _validate_image_upload(file: UploadFile, data: bytes) -> None:
     if len(data) > MAX_IMAGE_SIZE_BYTES:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Image too large (max 2MB)",
+            detail="Image too large (max 10MB)",
         )
     if not _verify_magic_bytes(data, content_type):
         raise HTTPException(
@@ -163,7 +164,7 @@ async def save_media(
     blog_id: Any | None = None,
     db: Session | None = None,
 ) -> StoredMedia:
-    data = await file.read()
+    data = await file.read(MAX_IMAGE_SIZE_BYTES + 1)
     _validate_image_upload(file, data)
 
     ext = _ext_from_content_type(file.content_type or "")
