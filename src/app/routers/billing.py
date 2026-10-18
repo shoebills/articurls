@@ -2,6 +2,7 @@ import json
 import sys
 import traceback
 import uuid
+from itertools import islice
 from typing import List, Any
 from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException, Request, status
@@ -12,35 +13,27 @@ from ..database import get_db
 from ..utils import user_by_email
 from ..utils.rate_limit import check_rate_limit_user
 from ..security.oauth2 import get_current_user
-from ..schemas.billing import SubscriptionOut, TransactionOut, CheckoutResponse, CheckoutRequest, CustomerPortalResponse, AccountUsage
+from ..schemas.billing import (
+    SubscriptionOut,
+    TransactionOut,
+    CheckoutResponse,
+    CheckoutRequest,
+    ChangePlanRequest,
+    ChangePlanResponse,
+    CustomerPortalResponse,
+    AccountUsage,
+)
 from ..payments.client import client as dodo_client
+from ..payments.catalog import TIERS, product_id_for, resolve_product
 from ..config import settings
 from ..domains.utils import restore_domain_access, start_domain_grace_period
 from ..email.service import send_payment_failed_email, send_subscription_cancelled_email
-from typing import List
 
 
 router = APIRouter(
     prefix="/billing", 
     tags=["Billing"]
     )
-
-
-TIER_PRODUCT_IDS = {
-    "pro_10k": settings.dodopayments_product_id_10k,
-    "pro_50k": settings.dodopayments_product_id_50k,
-    "pro_100k": settings.dodopayments_product_id_100k,
-    "pro_250k": settings.dodopayments_product_id_250k,
-    "pro_500k": settings.dodopayments_product_id_500k,
-    "pro_unlimited": settings.dodopayments_product_id_unlimited or settings.dodopayments_product_id_1m,
-    "pro_1m": settings.dodopayments_product_id_unlimited or settings.dodopayments_product_id_1m,
-}
-
-PRODUCT_ID_TO_TIER = {
-    product_id: ("pro_unlimited" if tier == "pro_1m" else tier)
-    for tier, product_id in TIER_PRODUCT_IDS.items()
-    if product_id
-}
 
 
 def _to_aware_dt(value):
@@ -119,18 +112,54 @@ def _metadata_get(metadata, key):
     return _prop_get(metadata, key)
 
 
-def _resolve_effective_tier(event_data):
-    incoming_tier = _metadata_get(_prop_get(event_data, "metadata"), "tier")
-    if incoming_tier == "pro_1m":
-        incoming_tier = "pro_unlimited"
-    if not (incoming_tier and incoming_tier in TIER_PRODUCT_IDS):
-        incoming_product_id = _prop_get(event_data, "product_id")
-        if incoming_product_id:
-            incoming_tier = PRODUCT_ID_TO_TIER.get(incoming_product_id)
+def _resolve_tier_and_cycle(event_data):
+    product_id = _prop_get(event_data, "product_id")
+    tier, cycle = resolve_product(product_id)
+    if tier:
+        return tier, cycle
 
-    if incoming_tier and incoming_tier in TIER_PRODUCT_IDS:
-        return "pro_unlimited" if incoming_tier == "pro_1m" else incoming_tier
-    return None
+    # Fallback for subscriptions created before tier/cycle came from product_id.
+    metadata_tier = _metadata_get(_prop_get(event_data, "metadata"), "tier")
+    if metadata_tier in TIERS:
+        return metadata_tier, None
+    return None, None
+
+
+def _is_in_dodo_trial(sid: str | None) -> bool:
+    """True while a subscription has never been charged real money yet.
+
+    Covers both card-present (one $0 trial payment) and card-less (no payments)
+    free trials: in trial iff no payment has a non-zero total_amount.
+    """
+    if not sid:
+        return False
+    try:
+        items = list(islice(dodo_client.payments.list(subscription_id=sid, page_size=2), 2))
+    except Exception:
+        return False
+    return all(_prop_get(p, "total_amount", 0) == 0 for p in items)
+
+
+def _subscription_has_charge(db: Session, subscription_id) -> bool:
+    return (
+        db.query(models.Transactions)
+        .filter(
+            models.Transactions.subscription_id == subscription_id,
+            models.Transactions.amount > 0,
+            models.Transactions.status == "succeeded",
+        )
+        .first()
+        is not None
+    )
+
+
+def _lapse_subscription_with_grace(db_user, db_sub) -> None:
+    if not db_sub:
+        return
+    db_sub.status = "lapsed"
+    if db_user:
+        for db_site in db_user.sites:
+            start_domain_grace_period(db_site)
 
 
 def _resolve_user_from_metadata_or_customer(db: Session, metadata=None, customer=None, subscription_id=None):
@@ -251,57 +280,144 @@ def create_checkout(
 ):
     plan = body.plan
     tier = body.tier
+    cycle = body.billing_cycle
 
     check_rate_limit_user("checkout", current_user.user_id, 5, 60)
 
-    existing_lifetime = db.query(models.Subscriptions).filter(
-        models.Subscriptions.user_id == current_user.user_id,
-        models.Subscriptions.plan_type == "lifetime",
-        models.Subscriptions.status == "active",
+    db_sub = db.query(models.Subscriptions).filter(
+        models.Subscriptions.user_id == current_user.user_id
     ).first()
-    if existing_lifetime:
+
+    if db_sub and db_sub.plan_type == "lifetime" and db_sub.status == "active":
         raise HTTPException(status_code=409, detail="You already have lifetime access")
 
     if plan == "lifetime":
         product_id = settings.dodopayments_lifetime_product_id
         tier = None
+        cycle = None
         if not product_id:
             raise HTTPException(status_code=503, detail="Lifetime plan is not configured")
-    elif plan == "monthly":
-        if not tier:
-            tier = "pro_10k"
-        elif tier == "pro_1m":
-            tier = "pro_unlimited"
-        product_id = TIER_PRODUCT_IDS.get(tier)
-        if not product_id:
-            if tier in TIER_PRODUCT_IDS:
-                raise HTTPException(status_code=503, detail="This tier is not configured yet")
+    elif plan == "pro":
+        if (
+            db_sub
+            and db_sub.plan_type == "pro"
+            and db_sub.status in ("active", "past_due", "cancelled")
+            and db_sub.dodo_subscription_id
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail="You already have an active subscription. Switch tiers from Billing instead.",
+            )
+        tier = tier or "pro_10k"
+        if tier not in TIERS:
             raise HTTPException(status_code=400, detail="Invalid tier")
+        if cycle not in ("monthly", "yearly"):
+            raise HTTPException(status_code=400, detail="Invalid billing cycle")
+        product_id = product_id_for(tier, cycle)
+        if not product_id:
+            raise HTTPException(status_code=503, detail="This tier is not configured yet")
     else:
         raise HTTPException(status_code=400, detail="Invalid plan")
 
     session = dodo_client.checkout_sessions.create(
-
-        product_cart=[
-            {
-            "product_id": product_id,
-            "quantity": 1
-            }
-        ],
-
-        customer={
-            "customer_id": current_user.dodo_customer_id
-        } if current_user.dodo_customer_id else {
-            "email": current_user.email,
-            "name": current_user.name
-        },
-
-        return_url=f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success?target_plan={plan}&target_tier={tier or ''}",
-
-        metadata={"plan_type": plan, "user_id": str(current_user.user_id), "tier": tier or ""},
+        product_cart=[{"product_id": product_id, "quantity": 1}],
+        customer=(
+            {"customer_id": current_user.dodo_customer_id}
+            if current_user.dodo_customer_id
+            else {"email": current_user.email, "name": current_user.name}
+        ),
+        return_url=(
+            f"{settings.app_base_url.rstrip('/')}/dashboard/billing/success"
+            f"?target_plan={plan}&target_tier={tier or ''}&target_cycle={cycle or ''}"
+        ),
+        metadata={"user_id": str(current_user.user_id)},
     )
 
     return {"checkout_url": session.checkout_url}
+
+
+@router.post("/change-plan", response_model=ChangePlanResponse)
+def change_subscription_plan(
+    body: ChangePlanRequest,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    tier = body.tier
+    cycle = body.billing_cycle
+
+    check_rate_limit_user("change-plan", current_user.user_id, 10, 60)
+
+    if tier not in TIERS:
+        raise HTTPException(status_code=400, detail="Invalid tier")
+    if cycle not in ("monthly", "yearly"):
+        raise HTTPException(status_code=400, detail="Invalid billing cycle")
+
+    db_sub = db.query(models.Subscriptions).filter(
+        models.Subscriptions.user_id == current_user.user_id
+    ).first()
+
+    if not db_sub or db_sub.plan_type != "pro" or not db_sub.dodo_subscription_id:
+        raise HTTPException(status_code=409, detail="No active subscription to change. Start checkout instead.")
+    if db_sub.status == "past_due":
+        raise HTTPException(
+            status_code=409,
+            detail="Your subscription is past due. Update your payment method from the customer portal first.",
+        )
+    if db_sub.status != "active":
+        raise HTTPException(status_code=409, detail="Your subscription is not active.")
+
+    target_product_id = product_id_for(tier, cycle)
+    if not target_product_id:
+        raise HTTPException(status_code=503, detail="This tier is not configured yet")
+
+    if db_sub.tier == tier and (db_sub.billing_cycle or "monthly") == cycle:
+        return ChangePlanResponse(applied=False, scheduled=False)
+
+    in_trial = _is_in_dodo_trial(db_sub.dodo_subscription_id)
+    current_cycle = db_sub.billing_cycle or "monthly"
+
+    if in_trial:
+        mode = "do_not_bill"
+        effective_at = "immediately"
+        scheduled = False
+        on_payment_failure = {}
+    elif current_cycle == "yearly" and cycle == "monthly":
+        mode = "full_immediately"
+        effective_at = "next_billing_date"
+        scheduled = True
+        on_payment_failure = {}
+    else:
+        mode = "difference_immediately"
+        effective_at = "immediately"
+        scheduled = False
+        on_payment_failure = {"on_payment_failure": "prevent_change"}
+
+    try:
+        dodo_client.subscriptions.change_plan(
+            db_sub.dodo_subscription_id,
+            product_id=target_product_id,
+            proration_billing_mode=mode,
+            quantity=1,
+            effective_at=effective_at,
+            **on_payment_failure,
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Plan change failed: {e}")
+
+    if scheduled:
+        db_sub.pending_tier = tier
+        db_sub.pending_billing_cycle = cycle
+    else:
+        db_sub.pending_tier = None
+        db_sub.pending_billing_cycle = None
+
+    db.commit()
+
+    return ChangePlanResponse(
+        applied=not scheduled,
+        scheduled=scheduled,
+        effective_date=db_sub.current_period_end if scheduled else None,
+    )
 
 
 def process_webhook_event(db: Session, event_type: str, event_data: Any, event_id: str | None = None) -> bool:
@@ -316,7 +432,7 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
 
         if db_user:
             _capture_dodo_customer_id(event_data, db_user)
-            effective_tier = _resolve_effective_tier(event_data)
+            effective_tier, effective_cycle = _resolve_tier_and_cycle(event_data)
 
             db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
@@ -326,17 +442,17 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
             else:
                 incoming_start = _prop_get(event_data, "previous_billing_date")
                 incoming_end = _prop_get(event_data, "next_billing_date")
+                cancel_scheduled = bool(_prop_get(event_data, "cancel_at_next_billing_date", False))
+
                 apply_period_update = _should_apply_period_update(
                     db_sub, incoming_dodo_sid, incoming_start, incoming_end
                 )
 
                 if db_sub:
-                    old_sid = db_sub.dodo_subscription_id
-                    if old_sid and incoming_dodo_sid and old_sid != incoming_dodo_sid:
-                        print(f"[billing] Replacing old subscription {old_sid} with new subscription {incoming_dodo_sid}", file=sys.stderr)
-                        _cancel_dodo_subscription(old_sid)
-
-                    if apply_period_update:
+                    if db_sub.status == "cancelled" and cancel_scheduled:
+                        # Cancel-at-period-end already recorded locally; keep it.
+                        pass
+                    elif apply_period_update:
                         db_sub.dodo_subscription_id = incoming_dodo_sid
                         db_sub.plan_type = "pro"
                         db_sub.status = "active"
@@ -344,7 +460,11 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                         db_sub.current_period_end = _to_aware_dt(incoming_end)
                         if effective_tier:
                             db_sub.tier = effective_tier
+                            db_sub.billing_cycle = effective_cycle
 
+                    if event_type == "subscription.plan_changed":
+                        db_sub.pending_tier = None
+                        db_sub.pending_billing_cycle = None
                 else:
                     new_sub = models.Subscriptions(
                         user_id=db_user.user_id,
@@ -352,6 +472,7 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                         plan_type="pro",
                         status="active",
                         tier=effective_tier,
+                        billing_cycle=effective_cycle,
                         current_period_start=_to_aware_dt(incoming_start),
                         current_period_end=_to_aware_dt(incoming_end),
                     )
@@ -391,14 +512,36 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                 .first()
             )
             if db_sub and db_sub.plan_type != "lifetime":
-                db_sub.status = "cancelled"
-                try:
-                    end_str = db_sub.current_period_end.strftime("%B %d, %Y") if db_sub.current_period_end else None
-                    send_subscription_cancelled_email(db_user.email, db_user.name, end_str)
-                except Exception as e:
-                    print(f"[email] subscription.cancelled email send error: {e}", file=sys.stderr)
+                if db_sub.status != "lapsed":
+                    db_sub.status = "cancelled"
+                    try:
+                        end_str = db_sub.current_period_end.strftime("%B %d, %Y") if db_sub.current_period_end else None
+                        send_subscription_cancelled_email(db_user.email, db_user.name, end_str)
+                    except Exception as e:
+                        print(f"[email] subscription.cancelled email send error: {e}", file=sys.stderr)
         else:
             print(f"[subscription] subscription.cancelled could not resolve user sid={incoming_dodo_sid}", file=sys.stderr)
+
+    elif event_type == "subscription.past_due":
+        customer = _prop_get(event_data, "customer")
+        metadata = _prop_get(event_data, "metadata")
+        incoming_dodo_sid = _prop_get(event_data, "subscription_id")
+
+        db_user = _resolve_user_from_metadata_or_customer(
+            db, metadata=metadata, customer=customer, subscription_id=incoming_dodo_sid
+        )
+
+        if db_user:
+            _capture_dodo_customer_id(event_data, db_user)
+            db_sub = _get_user_subscription(db, db_user.user_id)
+            if db_sub and db_sub.plan_type != "lifetime" and db_sub.status in ("active", "past_due"):
+                db_sub.status = "past_due"
+                if incoming_dodo_sid and (
+                    not db_sub.dodo_subscription_id or db_sub.dodo_subscription_id == incoming_dodo_sid
+                ):
+                    db_sub.dodo_subscription_id = incoming_dodo_sid
+        else:
+            print(f"[subscription] subscription.past_due could not resolve user sid={incoming_dodo_sid}", file=sys.stderr)
 
     elif event_type == "subscription.on_hold":
         customer = _prop_get(event_data, "customer")
@@ -418,13 +561,33 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                 if incoming_dodo_sid:
                     _cancel_dodo_subscription(incoming_dodo_sid)
             elif db_sub:
-                db_sub.status = "past_due"
                 if incoming_dodo_sid and (
                     not db_sub.dodo_subscription_id or db_sub.dodo_subscription_id == incoming_dodo_sid
                 ):
                     db_sub.dodo_subscription_id = incoming_dodo_sid
+                _lapse_subscription_with_grace(db_user, db_sub)
         else:
             print(f"[subscription] subscription.on_hold could not resolve user sid={incoming_dodo_sid}", file=sys.stderr)
+
+    elif event_type == "subscription.expired":
+        customer = _prop_get(event_data, "customer")
+        metadata = _prop_get(event_data, "metadata")
+        incoming_dodo_sid = _prop_get(event_data, "subscription_id")
+
+        db_user = _resolve_user_from_metadata_or_customer(
+            db, metadata=metadata, customer=customer, subscription_id=incoming_dodo_sid
+        )
+
+        if db_user:
+            _capture_dodo_customer_id(event_data, db_user)
+            db_sub = _get_user_subscription(db, db_user.user_id)
+            if db_sub and db_sub.plan_type == "lifetime":
+                if incoming_dodo_sid:
+                    _cancel_dodo_subscription(incoming_dodo_sid)
+            elif db_sub:
+                _lapse_subscription_with_grace(db_user, db_sub)
+        else:
+            print(f"[subscription] subscription.expired could not resolve user sid={incoming_dodo_sid}", file=sys.stderr)
 
     elif event_type == "subscription.renewed":
         customer = _prop_get(event_data, "customer")
@@ -438,7 +601,7 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
         if db_user:
             _capture_dodo_customer_id(event_data, db_user)
 
-            effective_tier = _resolve_effective_tier(event_data)
+            effective_tier, effective_cycle = _resolve_tier_and_cycle(event_data)
 
             db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == db_user.user_id).first()
 
@@ -453,11 +616,6 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                 )
 
                 if db_sub:
-                    old_sid = db_sub.dodo_subscription_id
-                    if old_sid and incoming_dodo_sid and old_sid != incoming_dodo_sid:
-                        print(f"[billing] Replacing old subscription {old_sid} with renewed subscription {incoming_dodo_sid}", file=sys.stderr)
-                        _cancel_dodo_subscription(old_sid)
-
                     if apply_period_update:
                         db_sub.dodo_subscription_id = incoming_dodo_sid
                         db_sub.plan_type = "pro"
@@ -466,6 +624,9 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                         db_sub.current_period_end = _to_aware_dt(incoming_end)
                         if effective_tier:
                             db_sub.tier = effective_tier
+                            db_sub.billing_cycle = effective_cycle
+                    db_sub.pending_tier = None
+                    db_sub.pending_billing_cycle = None
 
                 else:
                     db_sub = models.Subscriptions(
@@ -474,6 +635,7 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                         plan_type="pro",
                         status="active",
                         tier=effective_tier,
+                        billing_cycle=effective_cycle,
                         current_period_start=_to_aware_dt(incoming_start),
                         current_period_end=_to_aware_dt(incoming_end),
                     )
@@ -734,10 +896,11 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
 async def handle_webhook(request: Request, db: Session = Depends(get_db)):
 
     raw_body = await request.body()
+    raw_text = raw_body.decode("utf-8", errors="replace")
 
     try:
         event = dodo_client.webhooks.unwrap(
-            raw_body,
+            raw_text,
             headers={
                 "webhook-id": request.headers.get("webhook-id", ""),
                 "webhook-signature": request.headers.get("webhook-signature", ""),
@@ -799,8 +962,17 @@ def get_my_subscription(db: Session = Depends(get_db), current_user: models.User
 
     if not db_sub:
         raise HTTPException(status_code=404, detail="No subscription found")
-    
-    return db_sub
+
+    out = SubscriptionOut.model_validate(db_sub)
+
+    if (
+        db_sub.plan_type == "pro"
+        and db_sub.status == "active"
+        and not _subscription_has_charge(db, db_sub.subscription_id)
+    ):
+        out.trial_ends_at = db_sub.current_period_end
+
+    return out
 
 
 @router.post("/cancel", response_model=SubscriptionOut, status_code=status.HTTP_200_OK)
@@ -817,7 +989,10 @@ def cancel_my_subscription(
 
     if db_sub.dodo_subscription_id:
         try:
-            dodo_client.subscriptions.update(db_sub.dodo_subscription_id, status="cancelled")
+            dodo_client.subscriptions.update(
+                db_sub.dodo_subscription_id,
+                cancel_at_next_billing_date=True,
+            )
         except Exception as e:
             print(f"[billing] error cancelling Dodo subscription {db_sub.dodo_subscription_id}: {e}", file=sys.stderr)
             raise HTTPException(
@@ -865,23 +1040,23 @@ def get_account_usage(
     from ..umami.service import get_umami_period_timestamps
     
     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
-    plan_type = db_sub.plan_type if db_sub else "trial"
-    tier_key = (db_sub.tier if db_sub and db_sub.tier else plan_type)
-    if tier_key == "pro_1m":
-        tier_key = "pro_unlimited"
+    plan_type = db_sub.plan_type if db_sub else "pro"
+    billing_cycle = db_sub.billing_cycle if db_sub and db_sub.billing_cycle else None
+    tier_key = db_sub.tier if db_sub and db_sub.tier else None
 
-    TIERS = {
-        "trial": {"limit": 10000, "price": 19},
-        "pro": {"limit": 10000, "price": 19},
-        "pro_10k": {"limit": 10000, "price": 19},
-        "pro_50k": {"limit": 50000, "price": 39},
-        "pro_100k": {"limit": 100000, "price": 69},
-        "pro_250k": {"limit": 250000, "price": 119},
-        "pro_500k": {"limit": 500000, "price": 199},
-        "pro_unlimited": {"limit": None, "price": 249},
-        "lifetime": {"limit": 100000, "price": 99},
-    }
-    tier_info = TIERS.get(tier_key, {"limit": 10000, "price": 19})
+    if tier_key in TIERS:
+        tier_limit = TIERS[tier_key]["views"]
+        cycle = billing_cycle or "monthly"
+        price = TIERS[tier_key][cycle] if cycle in ("monthly", "yearly") else TIERS[tier_key]["monthly"]
+    elif plan_type == "lifetime":
+        tier_limit = 100_000
+        price = 99
+    else:
+        tier_limit = 10_000
+        price = 19
+
+    # The traffic allowance is a calendar month, independent of the billing cycle.
+    start_at, end_at = get_umami_period_timestamps("this_month")
 
     umami_client = UmamiClient()
 
@@ -893,16 +1068,6 @@ def get_account_usage(
         views = 0
         if site.umami_website_id and umami_client.configured:
             try:
-                if db_sub and db_sub.current_period_start:
-                    now = datetime.now(timezone.utc)
-                    start_at = int(db_sub.current_period_start.timestamp() * 1000)
-                    end_at = (
-                        int(min(now, db_sub.current_period_end).timestamp() * 1000)
-                        if db_sub.current_period_end
-                        else int(now.timestamp() * 1000)
-                    )
-                else:
-                    start_at, end_at = get_umami_period_timestamps("30d")
                 stats = umami_client.get_website_stats_sync(site.umami_website_id, start_at=start_at, end_at=end_at)
                 views = stats.get("pageviews", 0)
             except Exception:
@@ -916,7 +1081,6 @@ def get_account_usage(
             "pageviews": views,
         })
 
-    tier_limit = tier_info["limit"]
     if tier_limit is not None and tier_limit > 0:
         usage_pct = min(100.0, round((total_views / tier_limit * 100), 1))
     else:
@@ -926,7 +1090,8 @@ def get_account_usage(
         "total_pageviews": total_views,
         "tier_limit": tier_limit,
         "plan_type": plan_type,
-        "tier_price_usd": tier_info["price"],
+        "tier_price_usd": price,
+        "billing_cycle": billing_cycle,
         "usage_percentage": usage_pct,
         "sites": site_items,
     }

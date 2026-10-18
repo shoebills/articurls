@@ -344,15 +344,6 @@ async def complete_google_signup(
     db.add(new_author)
     db.flush()
 
-    trial_start = datetime.now(timezone.utc)
-    db.add(models.Subscriptions(
-        user_id=new_user.user_id,
-        plan_type="trial",
-        status="active",
-        current_period_start=trial_start,
-        current_period_end=trial_start + timedelta(days=settings.trial_duration_days),
-    ))
-
     db.commit()
     db.refresh(new_user)
 

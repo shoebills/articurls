@@ -12,6 +12,7 @@ function SuccessContent() {
   const searchParams = useSearchParams();
   const targetPlan = searchParams.get("target_plan");
   const targetTier = searchParams.get("target_tier");
+  const targetCycle = searchParams.get("target_cycle");
   const subscriptionId = searchParams.get("subscription_id");
 
   const [checking, setChecking] = useState(() => {
@@ -37,17 +38,18 @@ function SuccessContent() {
 
           if (targetPlan === "lifetime") {
             matches = sub.plan_type === "lifetime" && sub.status === "active";
-          } else if (targetPlan === "monthly" || targetPlan === "pro") {
+          } else if (targetPlan === "pro" || targetPlan === "monthly") {
             if (sub.plan_type === "pro" && ["active", "past_due"].includes(sub.status)) {
-              if (targetTier) {
-                matches = sub.tier === targetTier || (sub.tier === "pro_unlimited" && targetTier === "pro_1m");
-              } else {
-                matches = true;
-              }
+              const tierMatches = !targetTier || sub.tier === targetTier;
+              const cycleMatches =
+                !targetCycle ||
+                sub.billing_cycle === targetCycle ||
+                (sub.billing_cycle == null && targetCycle === "monthly");
+              matches = tierMatches && cycleMatches;
             }
           } else {
-            // Generic fallback: must NOT be trial, must be active
-            matches = sub.plan_type !== "trial" && ["active", "past_due"].includes(sub.status);
+            // Generic fallback: must be active
+            matches = ["active", "past_due"].includes(sub.status);
           }
 
           if (matches) {
@@ -75,7 +77,7 @@ function SuccessContent() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [targetPlan, targetTier, subscriptionId]);
+  }, [targetPlan, targetTier, targetCycle, subscriptionId]);
 
   return (
     <div className="mx-auto max-w-[1100px] py-12">

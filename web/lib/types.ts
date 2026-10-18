@@ -380,6 +380,7 @@ export interface AccountUsage {
   tier_limit: number | null;
   plan_type: string;
   tier_price_usd: number;
+  billing_cycle: "monthly" | "yearly" | null;
   usage_percentage: number | null;
   sites: SiteUsageItem[];
 }
@@ -531,6 +532,10 @@ export interface SubscriptionOut {
   plan_type: string;
   status: string;
   tier: string | null;
+  billing_cycle: "monthly" | "yearly" | null;
+  pending_tier: string | null;
+  pending_billing_cycle: "monthly" | "yearly" | null;
+  trial_ends_at: string | null;
   current_period_start: string | null;
   current_period_end: string | null;
   created_at: string | null;

@@ -3,6 +3,15 @@
 import { useEffect, useRef, useState } from "react";
 import { Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PRO_TIERS, tierPrice, CYCLE_UNIT, type BillingCycle } from "@/lib/plans";
 import { appAuthHref } from "@/lib/env";
 import { useAuth } from "@/lib/auth-context";
 
@@ -21,34 +30,29 @@ type Plan = {
   note?: string;
 };
 
-const PRO_TIERS = [
-  { label: "10K", name: "Pro 10K", price: 19, views: "10,000 monthly pageviews" },
-  { label: "50K", name: "Pro 50K", price: 39, views: "50,000 monthly pageviews" },
-  { label: "100K", name: "Pro 100K", price: 69, views: "100,000 monthly pageviews" },
-  { label: "250K", name: "Pro 250K", price: 119, views: "250,000 monthly pageviews" },
-  { label: "500K", name: "Pro 500K", price: 199, views: "500,000 monthly pageviews" },
-  { label: "Unlimited", name: "Pro Unlimited", price: 249, views: "Unlimited monthly pageviews (no quota)" },
-];
-
 export function PricingSection() {
   const { token } = useAuth();
   const [selectedTierIdx, setSelectedTierIdx] = useState(0);
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const signupUrl = appAuthHref("/signup");
   const billingUrl = appAuthHref("/dashboard/billing");
   const lifetimeHref = token ? `${billingUrl}?plan=lifetime` : `${signupUrl}?plan=lifetime`;
 
   const currentTier = PRO_TIERS[selectedTierIdx];
+  const price = tierPrice(currentTier, cycle);
+  const proHref = `${signupUrl}?plan=pro&tier=${currentTier.key}&cycle=${cycle}`;
 
   const plans: { plan: Plan; tierSelector?: React.ReactNode }[] = [
     {
       plan: {
         name: currentTier.name,
         tagline: "Grow audience",
-        price: `$${currentTier.price}`,
-        unit: "/mo",
-        desc: "Due today: $0 · 7-day free trial",
+        price: `$${price}`,
+        unit: CYCLE_UNIT[cycle],
+        was: cycle === "yearly" ? `$${currentTier.monthly * 12}` : undefined,
+        desc: "$0 Due today · 7-day free trial",
         features: [
-          currentTier.views,
+          currentTier.viewsText,
           "Unlimited sites & publications",
           "Unlimited posts & pages",
           "Unlimited media storage",
@@ -62,31 +66,30 @@ export function PricingSection() {
           "Search engine optimization",
         ],
         cta: "Start for free",
-        href: `${signupUrl}?plan=pro`,
+        href: proHref,
         featured: true,
       },
       tierSelector: (
         <div className="mt-4 space-y-1.5">
-          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            <span>Select Traffic Allowance</span>
-            <span className="text-foreground normal-case font-bold">{currentTier.name}</span>
+          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Select Traffic Allowance
           </div>
-          <div className="grid grid-cols-3 gap-1 rounded-xl bg-muted/60 p-1 border border-border/60">
-            {PRO_TIERS.map((tier, idx) => (
-              <button
-                key={tier.label}
-                type="button"
-                onClick={() => setSelectedTierIdx(idx)}
-                className={`rounded-lg px-2 py-1.5 text-xs font-medium transition-all ${
-                  selectedTierIdx === idx
-                    ? "bg-background text-foreground shadow-xs font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {tier.label}
-              </button>
-            ))}
-          </div>
+          <Select
+            value={String(selectedTierIdx)}
+            onValueChange={(v) => setSelectedTierIdx(Number(v))}
+          >
+            <SelectTrigger aria-label="Traffic allowance" className="w-full">
+              <SelectValue placeholder="Select traffic allowance" />
+            </SelectTrigger>
+            <SelectContent>
+              {PRO_TIERS.map((tier, idx) => (
+                <SelectItem key={tier.key} value={String(idx)}>
+                  {tier.name} — ${tierPrice(tier, cycle)}
+                  {CYCLE_UNIT[cycle]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       ),
     },
@@ -129,14 +132,28 @@ export function PricingSection() {
           </p>
         </div>
 
-        <div className="mx-auto mt-14 grid max-w-3xl items-start gap-5 md:grid-cols-2">
+        <div className="mt-10 flex justify-center">
+          <Tabs value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
+            <TabsList>
+              <TabsTrigger value="monthly">Monthly</TabsTrigger>
+              <TabsTrigger value="yearly" className="gap-1.5">
+                Yearly
+                <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
+                  Save 17%
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+
+        <div className="mx-auto mt-10 grid max-w-3xl items-start gap-5 md:grid-cols-2">
           {plans.map(({ plan, tierSelector }) => (
             <PlanCard key={plan.name} plan={plan} tierSelector={tierSelector} />
           ))}
         </div>
       </div>
 
-      <StickyCta href={`${signupUrl}?plan=pro`} />
+      <StickyCta href={proHref} />
     </section>
   );
 }

@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { checkSubdomainAvailability, completeGoogleSignup, createSite, ApiError } from "@/lib/api";
+import { checkSubdomainAvailability, completeGoogleSignup, createSite, ApiError, consumePendingCheckout } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -121,12 +121,7 @@ function SetupForm() {
       timezone: browserTimezone(),
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
-    const plan = localStorage.getItem("pendingPlan");
-    localStorage.removeItem("pendingPlan");
-    const targetUrl = (plan === "pro" || plan === "lifetime")
-      ? `/dashboard/billing?plan=${plan}`
-      : "/dashboard";
-    window.location.assign(targetUrl);
+    window.location.assign(consumePendingCheckout());
   }
 
   async function finishGoogleFlow() {
@@ -141,12 +136,7 @@ function SetupForm() {
     });
     localStorage.setItem(TOKEN_KEY, access_token);
     localStorage.setItem("articurls_last_login", "google");
-    const plan = localStorage.getItem("pendingPlan");
-    localStorage.removeItem("pendingPlan");
-    const targetUrl = (plan === "pro" || plan === "lifetime")
-      ? `/dashboard/billing?plan=${plan}`
-      : "/dashboard";
-    window.location.assign(targetUrl);
+    window.location.assign(consumePendingCheckout());
   }
 
   async function handleFinalSubmit(e?: React.FormEvent) {

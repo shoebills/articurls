@@ -8,11 +8,6 @@ from ..security.oauth2 import get_current_user
 
 
 PLANS: dict[str, dict] = {
-    "trial": {
-        "label": "Trial",
-        "has_time_limit": True,
-        "valid_statuses": frozenset({"active"}),
-    },
     "pro": {
         "label": "Pro",
         "has_time_limit": True,

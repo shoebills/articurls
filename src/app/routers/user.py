@@ -108,21 +108,6 @@ def verify_new_user(token: str, db: Session = Depends(get_db)):
 
     db_user.email_verified = True
 
-    # Trial starts at verification — create the 7-day trial now.
-    existing_sub = db.query(models.Subscriptions).filter(
-        models.Subscriptions.user_id == db_user.user_id
-    ).first()
-    if existing_sub is None:
-        trial_start = datetime.now(timezone.utc)
-        trial_end = trial_start + timedelta(days=settings.trial_duration_days)
-        db.add(models.Subscriptions(
-            user_id=db_user.user_id,
-            plan_type="trial",
-            status="active",
-            current_period_start=trial_start,
-            current_period_end=trial_end,
-        ))
-
     db.commit()
     db.refresh(db_user)
 

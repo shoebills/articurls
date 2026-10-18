@@ -3,7 +3,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { SubscriptionOut, UserSettings, SiteSummary } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites, clearApiCache } from "@/lib/api";
+import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites, clearApiCache, consumePendingCheckout } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
 const SITE_KEY = "articurls_site_id";
@@ -29,9 +29,8 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 function getDaysRemaining(sub: SubscriptionOut | null): number | null {
-  if (!sub || !sub.current_period_end) return null;
-  if (sub.plan_type === "lifetime") return null;
-  const end = new Date(sub.current_period_end);
+  if (!sub?.trial_ends_at) return null;
+  const end = new Date(sub.trial_ends_at);
   const now = new Date();
   const days = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
   return days > 0 ? days : 0;
@@ -211,10 +210,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (redirectTo === "/dashboard") {
-        const plan = localStorage.getItem("pendingPlan");
-        localStorage.removeItem("pendingPlan");
-        if (plan === "pro" || plan === "lifetime") {
-          router.push(`/dashboard/billing?plan=${plan}`);
+        const target = consumePendingCheckout();
+        if (target !== "/dashboard") {
+          router.push(target);
           return;
         }
       }
@@ -236,8 +234,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [router]);
 
   const isPro = isProSubscription(subscription);
-  const wasPro = !!(subscription && ["trial", "pro", "lifetime"].includes(subscription.plan_type));
-  const isTrial = subscription?.plan_type === "trial";
+  const wasPro = !!(subscription && ["pro", "lifetime"].includes(subscription.plan_type));
+  const isTrial = !!subscription?.trial_ends_at;
   const daysRemaining = getDaysRemaining(subscription);
 
   const value = useMemo(

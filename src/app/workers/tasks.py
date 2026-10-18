@@ -12,10 +12,7 @@ from ..utils import is_pro_entitled, maybe_replace_placeholder_slug_on_publish, 
 
 logger = logging.getLogger(__name__)
 
-# Trial expiry offsets for warning emails (days since period end), and hard
-# limits: trial accounts are deleted 7 days after expiry, unverified accounts
-# 14 days after creation.
-_TRIAL_DELETE_AFTER_DAYS = 7
+# Unverified accounts are deleted 14 days after creation.
 _UNVERIFIED_DELETE_AFTER_DAYS = 14
 
 
@@ -49,22 +46,6 @@ def expired_pro_fallback():
 
     try:
         now = datetime.now(timezone.utc)
-
-        # ── Expired trials ──────────────────────────────────────────────────
-        expired_trials = db.query(models.Subscriptions).filter(
-            models.Subscriptions.plan_type == "trial",
-            models.Subscriptions.status == "active",
-            models.Subscriptions.current_period_end.isnot(None),
-            models.Subscriptions.current_period_end < now,
-        ).all()
-
-        for sub in expired_trials:
-            db_sites = db.query(models.Site).filter(models.Site.user_id == sub.user_id).all()
-            for db_site in db_sites:
-                # Trial users get no grace — domain expires immediately
-                if db_site.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE):
-                    expire_domain_access(db_site)
-            sub.status = "inactive"
 
         # ── Expired Pro subscriptions ───────────────────────────────────────
         expired_subscriptions = db.query(models.Subscriptions).filter(
@@ -224,71 +205,6 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
 
     db.delete(db_user)
     db.commit()
-
-
-@celery.task
-def trial_deletion_sweep():
-    """Email expired-trial users at day 0/4/6 and hard-delete them at day 7."""
-
-    from ..email.service import send_trial_expired_email, send_trial_deletion_warning_email
-
-    db = database.SessionLocal()
-
-    try:
-        now = datetime.now(timezone.utc)
-
-        expired_trials = db.query(models.Subscriptions).filter(
-            models.Subscriptions.plan_type == "trial",
-            models.Subscriptions.status == "inactive",
-            models.Subscriptions.current_period_end.isnot(None),
-            models.Subscriptions.current_period_end < now,
-        ).all()
-
-        for sub in expired_trials:
-            days_elapsed = (now - sub.current_period_end).days
-
-            db_user = (
-                db.query(models.User).filter(models.User.user_id == sub.user_id).first()
-            )
-            if not db_user:
-                continue
-
-            if days_elapsed >= _TRIAL_DELETE_AFTER_DAYS:
-                logger.info("Hard-deleting account for trial user %s", db_user.user_id)
-                purge_user_account(db, db_user)
-                continue
-
-            stage = sub.warning_stage or 0
-
-            if stage < 1:
-                try:
-                    send_trial_expired_email(db_user.email, db_user.name)
-                except Exception:
-                    logger.warning(
-                        "Trial expired email failed for %s", db_user.email, exc_info=True
-                    )
-                sub.warning_stage = 1
-            elif stage < 2 and days_elapsed >= 4:
-                try:
-                    send_trial_deletion_warning_email(db_user.email, db_user.name, "3 days")
-                except Exception:
-                    logger.warning(
-                        "Trial deletion warning email failed for %s", db_user.email, exc_info=True
-                    )
-                sub.warning_stage = 2
-            elif stage < 3 and days_elapsed >= 6:
-                try:
-                    send_trial_deletion_warning_email(db_user.email, db_user.name, "24 hours")
-                except Exception:
-                    logger.warning(
-                        "Trial deletion warning email failed for %s", db_user.email, exc_info=True
-                    )
-                sub.warning_stage = 3
-
-        db.commit()
-
-    finally:
-        db.close()
 
 
 @celery.task

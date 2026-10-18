@@ -10,7 +10,7 @@ import { PasswordInput } from "@/components/password-input";
 import { Label } from "@/components/ui/label";
 import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ApiError, resendVerificationEmail, exchangeOAuthCode } from "@/lib/api";
+import { ApiError, resendVerificationEmail, exchangeOAuthCode, consumePendingCheckout } from "@/lib/api";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 import { Loader2 } from "lucide-react";
 import { API_URL } from "@/lib/env";
@@ -61,13 +61,7 @@ function LoginForm() {
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
       exchangeOAuthCode(oauthCode).then(() => {
-        const plan = localStorage.getItem("pendingPlan");
-        localStorage.removeItem("pendingPlan");
-        if (plan === "pro" || plan === "lifetime") {
-          router.replace(`/dashboard/billing?plan=${plan}`);
-        } else {
-          router.replace("/dashboard");
-        }
+        router.replace(consumePendingCheckout());
       }).catch(() => {
         router.replace("/login?error=oauth_failed");
       });

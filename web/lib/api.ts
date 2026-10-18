@@ -951,14 +951,34 @@ export async function getSubscription(token: string): Promise<SubscriptionOut | 
 
 export async function createCheckout(
   token: string,
-  plan: "monthly" | "lifetime" = "monthly",
-  tier?: string
+  plan: "pro" | "lifetime" = "pro",
+  tier?: string,
+  billingCycle: "monthly" | "yearly" = "monthly"
 ): Promise<{ checkout_url: string }> {
   return apiFetch("/billing/checkout", {
     method: "POST",
     token,
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ plan, tier: tier ?? null }),
+    body: JSON.stringify({ plan, tier: tier ?? null, billing_cycle: plan === "lifetime" ? null : billingCycle }),
+  });
+}
+
+export interface ChangePlanResult {
+  applied: boolean;
+  scheduled: boolean;
+  effective_date: string | null;
+}
+
+export async function changePlan(
+  token: string,
+  tier: string,
+  billingCycle: "monthly" | "yearly"
+): Promise<ChangePlanResult> {
+  return apiFetch("/billing/change-plan", {
+    method: "POST",
+    token,
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tier, billing_cycle: billingCycle }),
   });
 }
 
@@ -980,13 +1000,39 @@ export async function cancelSubscription(token: string): Promise<SubscriptionOut
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
   if (sub.plan_type === "lifetime" && sub.status === "active") return true;
-  if (sub.plan_type === "trial") {
-    return sub.status === "active" && !!sub.current_period_end && new Date(sub.current_period_end) >= new Date();
-  }
   if (sub.plan_type !== "pro") return false;
   if (!["active", "past_due", "cancelled"].includes(sub.status)) return false;
   if (!sub.current_period_end) return false;
   return new Date(sub.current_period_end) >= new Date();
+}
+
+export function storePendingCheckout(plan: string | null, tier: string | null, cycle: string | null) {
+  if (plan !== "pro" && plan !== "lifetime") return;
+  try {
+    localStorage.setItem(
+      "pendingCheckout",
+      JSON.stringify({ plan, tier: tier || "pro_10k", cycle: cycle || "monthly" })
+    );
+  } catch {
+    /* ignore storage errors */
+  }
+}
+
+export function consumePendingCheckout(): string {
+  const raw = typeof window !== "undefined" ? localStorage.getItem("pendingCheckout") : null;
+  if (typeof window !== "undefined") localStorage.removeItem("pendingCheckout");
+  if (!raw) return "/dashboard";
+  try {
+    const p = JSON.parse(raw);
+    if (p?.plan === "lifetime") return "/dashboard/billing?plan=lifetime";
+    if (p?.plan === "pro") {
+      const params = new URLSearchParams({ plan: "pro", tier: p.tier || "pro_10k", cycle: p.cycle || "monthly" });
+      return `/dashboard/billing?${params.toString()}`;
+    }
+  } catch {
+    /* fall through */
+  }
+  return "/dashboard";
 }
 
 export async function adminListUsers(

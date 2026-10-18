@@ -272,7 +272,6 @@ class Subscriber(Base):
 
 
 class SubscriptionPlanType(str, enum.Enum):
-    TRIAL = "trial"
     PRO = "pro"
     LIFETIME = "lifetime"
 
@@ -285,6 +284,11 @@ class SubscriptionStatus(str, enum.Enum):
     LAPSED = "lapsed"
 
 
+class SubscriptionBillingCycle(str, enum.Enum):
+    MONTHLY = "monthly"
+    YEARLY = "yearly"
+
+
 class Subscriptions(Base):
     __tablename__ = "subscriptions"
     __table_args__ = (
@@ -292,21 +296,19 @@ class Subscriptions(Base):
             "current_period_end IS NULL OR current_period_start IS NULL OR current_period_end >= current_period_start",
             name="ck_subscriptions_period_order",
         ),
-        CheckConstraint(
-            "warning_stage >= 0 AND warning_stage <= 3",
-            name="ck_subscriptions_warning_stage_range",
-        ),
     )
 
     subscription_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), index=True, unique=True, nullable=False)
     dodo_subscription_id = Column(String, unique=True, nullable=True)
-    plan_type = Column(Enum(SubscriptionPlanType, name="subscription_plan_type", values_callable=lambda x: [e.value for e in x]), nullable=False, default=SubscriptionPlanType.TRIAL)
+    plan_type = Column(Enum(SubscriptionPlanType, name="subscription_plan_type", values_callable=lambda x: [e.value for e in x]), nullable=False)
     tier = Column(String, nullable=True, default=None)
+    billing_cycle = Column(Enum(SubscriptionBillingCycle, name="subscription_billing_cycle", values_callable=lambda x: [e.value for e in x]), nullable=True)
+    pending_tier = Column(String, nullable=True, default=None)
+    pending_billing_cycle = Column(Enum(SubscriptionBillingCycle, name="subscription_billing_cycle", values_callable=lambda x: [e.value for e in x]), nullable=True)
     status = Column(Enum(SubscriptionStatus, name="subscription_status", values_callable=lambda x: [e.value for e in x]), nullable=False, default=SubscriptionStatus.INACTIVE)
     current_period_start = Column(DateTime(timezone=True), nullable=True)
     current_period_end = Column(DateTime(timezone=True), nullable=True)
-    warning_stage = Column(Integer, nullable=False, default=0)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

@@ -1,16 +1,19 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
   createCheckout,
+  changePlan,
   getSubscription,
   getAccountUsage,
   ApiError,
   isProSubscription,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { SubscriptionOut, AccountUsage } from "@/lib/types";
+import type { SubscriptionOut } from "@/lib/types";
+import { PRO_TIERS, tierPrice, CYCLE_UNIT, LIFETIME_PRICE, type BillingCycle } from "@/lib/plans";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Check,
   ChevronLeft,
@@ -29,82 +33,15 @@ import {
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
-interface ViewTier {
-  id: string;
-  tierKey: string;
-  name: string;
-  label: string;
-  price: number;
-  views: number | null;
-  viewsText: string;
-  popular?: boolean;
-}
-
-const VIEW_TIERS: ViewTier[] = [
-  {
-    id: "10k",
-    tierKey: "pro_10k",
-    name: "Pro 10K",
-    label: "Pro 10K (10,000 views)",
-    price: 19,
-    views: 10_000,
-    viewsText: "10,000 monthly pageviews",
-  },
-  {
-    id: "50k",
-    tierKey: "pro_50k",
-    name: "Pro 50K",
-    label: "Pro 50K (50,000 views)",
-    price: 39,
-    views: 50_000,
-    viewsText: "50,000 monthly pageviews",
-  },
-  {
-    id: "100k",
-    tierKey: "pro_100k",
-    name: "Pro 100K",
-    label: "Pro 100K (100,000 views)",
-    price: 69,
-    views: 100_000,
-    viewsText: "100,000 monthly pageviews",
-    popular: true,
-  },
-  {
-    id: "250k",
-    tierKey: "pro_250k",
-    name: "Pro 250K",
-    label: "Pro 250K (250,000 views)",
-    price: 119,
-    views: 250_000,
-    viewsText: "250,000 monthly pageviews",
-  },
-  {
-    id: "500k",
-    tierKey: "pro_500k",
-    name: "Pro 500K",
-    label: "Pro 500K (500,000 views)",
-    price: 199,
-    views: 500_000,
-    viewsText: "500,000 monthly pageviews",
-  },
-  {
-    id: "unlimited",
-    tierKey: "pro_unlimited",
-    name: "Pro Unlimited",
-    label: "Pro Unlimited (Unlimited views)",
-    price: 249,
-    views: null,
-    viewsText: "Unlimited monthly pageviews (no quota)",
-  },
-];
-
-export default function UpgradePlanPage() {
+function UpgradePlanContent() {
   const { token } = useAuth();
+  const searchParams = useSearchParams();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
-  const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [selectedTierIndex, setSelectedTierIndex] = useState(0);
+  const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [err, setErr] = useState<string | null>(null);
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [scheduledMsg, setScheduledMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = useCallback(async () => {
@@ -116,41 +53,64 @@ export default function UpgradePlanPage() {
         getAccountUsage(token).catch(() => null),
       ]);
       setSub(s);
-      setUsage(u);
 
-      if (s?.tier) {
-        const matchingIdx = VIEW_TIERS.findIndex(
-          (tier) => tier.tierKey === s.tier || (s.tier === "pro_1m" && tier.tierKey === "pro_unlimited")
-        );
-        if (matchingIdx !== -1) {
-          setSelectedTierIndex(matchingIdx);
-        }
-      } else if (u) {
-        const matchingIdx = VIEW_TIERS.findIndex((tier) => tier.views === u.tier_limit);
-        if (matchingIdx !== -1) {
-          setSelectedTierIndex(matchingIdx);
-        }
+      const queryTier = searchParams.get("tier");
+      const queryCycle = searchParams.get("cycle");
+
+      let tierIdx = -1;
+      if (queryTier) {
+        tierIdx = PRO_TIERS.findIndex((t) => t.key === queryTier);
+      }
+      if (tierIdx === -1 && s?.tier) {
+        tierIdx = PRO_TIERS.findIndex((t) => t.key === s.tier);
+      }
+      if (tierIdx === -1 && u) {
+        tierIdx = PRO_TIERS.findIndex((t) => t.views === u.tier_limit);
+      }
+      if (tierIdx !== -1) setSelectedTierIndex(tierIdx);
+
+      if (queryCycle === "monthly" || queryCycle === "yearly") {
+        setCycle(queryCycle);
+      } else if (s?.billing_cycle === "monthly" || s?.billing_cycle === "yearly") {
+        setCycle(s.billing_cycle);
       }
     } catch {
       setErr("Failed to load subscription info");
     } finally {
       setLoading(false);
     }
-  }, [token]);
+  }, [token, searchParams]);
 
   useEffect(() => {
     load();
   }, [load]);
 
-  async function handleUpgrade(planId = "pro") {
+  async function handleUpgrade() {
     if (!token) return;
-    setBusyPlan(planId);
+    const tier = PRO_TIERS[selectedTierIndex] || PRO_TIERS[0];
+    setBusyPlan(tier.key);
+    setErr(null);
+    setScheduledMsg(null);
     try {
-      const tierKey = VIEW_TIERS[selectedTierIndex]?.tierKey ?? "pro_10k";
-      const { checkout_url } = await createCheckout(token, "monthly", tierKey);
-      window.location.href = checkout_url;
+      if (sub?.plan_type === "pro" && sub.status === "active") {
+        const result = await changePlan(token, tier.key, cycle);
+        if (result.scheduled) {
+          const date = result.effective_date
+            ? new Date(result.effective_date).toLocaleDateString()
+            : "your next billing date";
+          setScheduledMsg(`Plan change scheduled — ${tier.name} starts on ${date}.`);
+        } else if (result.applied) {
+          setScheduledMsg(`${tier.name} is now active.`);
+        }
+      } else {
+        const { checkout_url } = await createCheckout(token, "pro", tier.key, cycle);
+        window.location.href = checkout_url;
+        return;
+      }
+      await load();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to start checkout");
+      setErr(e instanceof ApiError ? e.message : "Failed to change plan");
+    } finally {
       setBusyPlan(null);
     }
   }
@@ -158,6 +118,7 @@ export default function UpgradePlanPage() {
   async function handleBuyLifetime() {
     if (!token) return;
     setBusyPlan("lifetime");
+    setErr(null);
     try {
       const { checkout_url } = await createCheckout(token, "lifetime");
       window.location.href = checkout_url;
@@ -168,14 +129,15 @@ export default function UpgradePlanPage() {
   }
 
   const pro = isProSubscription(sub);
-  const selectedTier = VIEW_TIERS[selectedTierIndex] || VIEW_TIERS[0];
+  const selectedTier = PRO_TIERS[selectedTierIndex] || PRO_TIERS[0];
+  const price = tierPrice(selectedTier, cycle);
+  const canChangePlan = sub?.plan_type === "pro" && sub.status === "active";
+  const isPastDue = sub?.plan_type === "pro" && sub.status === "past_due";
   const isCurrentActiveTier =
     pro &&
-    (sub?.tier
-      ? sub.tier === selectedTier.tierKey || (sub.tier === "pro_1m" && selectedTier.tierKey === "pro_unlimited")
-      : usage
-        ? usage.tier_limit === selectedTier.views
-        : false);
+    sub?.plan_type === "pro" &&
+    sub.tier === selectedTier.key &&
+    (sub.billing_cycle || "monthly") === cycle;
 
   return (
     <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
@@ -199,153 +161,218 @@ export default function UpgradePlanPage() {
       ) : (
         <>
           <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
-          <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1.5 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
-            <Zap className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
-          </div>
+            <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1.5 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
+              <Zap className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
+            </div>
 
-          <CardContent className="p-6 sm:p-8 space-y-8">
-            {/* Views Selector Header */}
-            <div className="space-y-2">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Select Traffic Volume
-              </label>
-              <Select
-                value={String(selectedTierIndex)}
-                onValueChange={(val) => setSelectedTierIndex(Number(val))}
-              >
-                <SelectTrigger className="w-full h-12 bg-background border-border/80 text-foreground">
-                  <SelectValue placeholder="Choose monthly traffic volume" />
-                </SelectTrigger>
-                <SelectContent>
-                  {VIEW_TIERS.map((tier, idx) => (
-                    <SelectItem key={tier.id} value={String(idx)} className="py-2.5 cursor-pointer">
-                      <div className="flex items-center justify-between gap-4 w-full">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-foreground text-sm">{tier.label}</span>
-                          {tier.popular ? (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                              Popular
-                            </span>
-                          ) : null}
+            <CardContent className="p-6 sm:p-8 space-y-8">
+              {/* Billing cycle tabs */}
+              <div className="flex justify-center">
+                <Tabs value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
+                  <TabsList>
+                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                    <TabsTrigger value="yearly" className="gap-1.5">
+                      Yearly
+                      <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
+                        Save 17%
+                      </span>
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
+              </div>
+
+              {/* Views Selector Header */}
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Select Traffic Volume
+                </label>
+                <Select
+                  value={String(selectedTierIndex)}
+                  onValueChange={(val) => setSelectedTierIndex(Number(val))}
+                >
+                  <SelectTrigger className="w-full h-12 bg-background border-border/80 text-foreground">
+                    <SelectValue placeholder="Choose monthly traffic volume" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRO_TIERS.map((tier, idx) => (
+                      <SelectItem key={tier.key} value={String(idx)} className="py-2.5 cursor-pointer">
+                        <div className="flex items-center justify-between gap-4 w-full">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-foreground text-sm">{tier.name}</span>
+                            {tier.key === "pro_100k" ? (
+                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                Popular
+                              </span>
+                            ) : null}
+                          </div>
+                          <span className="text-sm font-medium text-muted-foreground">
+                            ${tierPrice(tier, cycle)}
+                            {CYCLE_UNIT[cycle]}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium text-muted-foreground">
-                          ${tier.price}/mo
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            {/* Price Display */}
-            <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 p-5 rounded-2xl bg-muted/40 border border-border/70">
-              <div>
-                <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">
-                  Plan: {selectedTier.name}
-                </span>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
-                    ${selectedTier.price}
+              {/* Price Display */}
+              <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-4 p-5 rounded-2xl bg-muted/40 border border-border/70">
+                <div>
+                  <span className="text-xs text-muted-foreground font-medium uppercase tracking-wider block mb-1">
+                    Plan: {selectedTier.name}
                   </span>
-                  <span className="text-sm text-muted-foreground font-medium">/ month</span>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="text-3xl sm:text-4xl font-extrabold tracking-tight">
+                      ${price}
+                    </span>
+                    <span className="text-sm text-muted-foreground font-medium">
+                      / {cycle === "monthly" ? "month" : "year"}
+                    </span>
+                    {cycle === "yearly" && (
+                      <span className="text-sm text-muted-foreground line-through">
+                        ${selectedTier.monthly * 12}
+                      </span>
+                    )}
+                  </div>
                 </div>
+
+                <Button
+                  size="lg"
+                  className="h-11 px-8 text-sm font-semibold"
+                  variant={isCurrentActiveTier ? "outline" : "default"}
+                  disabled={isCurrentActiveTier || isPastDue || busyPlan === selectedTier.key}
+                  onClick={handleUpgrade}
+                >
+                  {isCurrentActiveTier
+                    ? "Current Active Tier"
+                    : isPastDue
+                      ? "Past Due — Fix Payment"
+                      : busyPlan === selectedTier.key
+                        ? "Working..."
+                        : canChangePlan
+                          ? `Switch to ${selectedTier.name} ($${price}${CYCLE_UNIT[cycle]})`
+                          : `Select Plan ($${price}${CYCLE_UNIT[cycle]})`}
+                </Button>
               </div>
 
-              <Button
-                size="lg"
-                className="h-11 px-8 text-sm font-semibold"
-                variant={isCurrentActiveTier ? "outline" : "default"}
-                disabled={isCurrentActiveTier || busyPlan === selectedTier.id}
-                onClick={() => handleUpgrade(selectedTier.id)}
-              >
-                {isCurrentActiveTier
-                  ? "Current Active Tier"
-                  : busyPlan === selectedTier.id
-                    ? "Redirecting..."
-                    : `Select Plan ($${selectedTier.price}/mo)`}
-              </Button>
-            </div>
+              {isPastDue ? (
+                <p className="text-xs text-amber-600 dark:text-amber-400">
+                  Your subscription is past due. Update your payment method from the customer portal to change plans.
+                </p>
+              ) : null}
 
-            {/* Included Features Grid */}
-            <div className="space-y-3 pt-2">
-              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Everything Included In Every Plan
-              </p>
-              <div className="grid gap-3 sm:grid-cols-2 text-xs">
-                <div className="flex items-center gap-2 text-foreground font-medium">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>{selectedTier.viewsText}</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>Unlimited sites & publications</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>Custom domains + Cloudflare Subfolder</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>Privacy-friendly Umami Analytics</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>Automated SEO Engine & RSS / Atom feeds</span>
-                </div>
-                <div className="flex items-center gap-2 text-foreground">
-                  <Check className="h-4 w-4 text-primary shrink-0" />
-                  <span>Custom CSS & HTML code injection</span>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              {scheduledMsg ? (
+                <p className="text-xs text-muted-foreground">{scheduledMsg}</p>
+              ) : null}
 
-        {/* Lifetime Deal Card */}
-        <Card className="border-border/70 shadow-xs overflow-hidden">
-          <CardHeader className="bg-gradient-to-r from-amber-500/[0.08] via-transparent to-transparent pb-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <div>
-                <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
-                  <Flame className="h-3.5 w-3.5" />
-                  One-Time Purchase
+              {sub?.pending_tier && sub.pending_billing_cycle ? (
+                <p className="text-xs text-muted-foreground">
+                  Scheduled: switches to {sub.pending_tier.replace("pro_", "Pro ").replace("_", " ")} (
+                  {sub.pending_billing_cycle}) on{" "}
+                  {sub.current_period_end
+                    ? new Date(sub.current_period_end).toLocaleDateString()
+                    : "your next billing date"}
+                  .
+                </p>
+              ) : null}
+
+              {/* Included Features Grid */}
+              <div className="space-y-3 pt-2">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Everything Included In Every Plan
+                </p>
+                <div className="grid gap-3 sm:grid-cols-2 text-xs">
+                  <div className="flex items-center gap-2 text-foreground font-medium">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>{selectedTier.viewsText}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>Unlimited sites & publications</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>Custom domains + Cloudflare Subfolder</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>Privacy-friendly Umami Analytics</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>Automated SEO Engine & RSS / Atom feeds</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-foreground">
+                    <Check className="h-4 w-4 text-primary shrink-0" />
+                    <span>Custom CSS & HTML code injection</span>
+                  </div>
                 </div>
-                <CardTitle className="text-xl font-bold">Lifetime Deal</CardTitle>
-                <CardDescription>
-                  Pay once, get 100,000 monthly pageviews and all Pro features forever.
-                </CardDescription>
               </div>
-              <div className="flex items-baseline gap-1">
-                <span className="text-3xl font-extrabold tracking-tight">$99</span>
-                <span className="text-xs text-muted-foreground font-medium">/ once</span>
+            </CardContent>
+          </Card>
+
+          {/* Lifetime Deal Card */}
+          <Card className="border-border/70 shadow-xs overflow-hidden">
+            <CardHeader className="bg-gradient-to-r from-amber-500/[0.08] via-transparent to-transparent pb-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-0.5 text-xs font-semibold text-amber-800 dark:text-amber-300 mb-1.5">
+                    <Flame className="h-3.5 w-3.5" />
+                    One-Time Purchase
+                  </div>
+                  <CardTitle className="text-xl font-bold">Lifetime Deal</CardTitle>
+                  <CardDescription>
+                    Pay once, get 100,000 monthly pageviews and all Pro features forever.
+                  </CardDescription>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold tracking-tight">${LIFETIME_PRICE}</span>
+                  <span className="text-xs text-muted-foreground font-medium">/ once</span>
+                </div>
               </div>
-            </div>
-          </CardHeader>
-          <CardContent className="pt-2 pb-6 space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-border/50">
-              <p className="text-xs text-muted-foreground">
-                No recurring bills, includes all future updates, custom domains, and analytics.
-              </p>
-              <Button
-                variant={sub?.plan_type === "lifetime" ? "outline" : "default"}
-                disabled={sub?.plan_type === "lifetime" || busyPlan === "lifetime"}
-                onClick={handleBuyLifetime}
-                className="shrink-0 font-semibold"
-              >
-                {sub?.plan_type === "lifetime"
-                  ? "Current Plan"
-                  : busyPlan === "lifetime"
-                    ? "Redirecting…"
-                    : "Buy Lifetime — $99"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+            </CardHeader>
+            <CardContent className="pt-2 pb-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pt-2 border-t border-border/50">
+                <p className="text-xs text-muted-foreground">
+                  No recurring bills, includes all future updates, custom domains, and analytics.
+                </p>
+                <Button
+                  variant={sub?.plan_type === "lifetime" ? "outline" : "default"}
+                  disabled={sub?.plan_type === "lifetime" || busyPlan === "lifetime"}
+                  onClick={handleBuyLifetime}
+                  className="shrink-0 font-semibold"
+                >
+                  {sub?.plan_type === "lifetime"
+                    ? "Current Plan"
+                    : busyPlan === "lifetime"
+                      ? "Redirecting…"
+                      : `Buy Lifetime — $${LIFETIME_PRICE}`}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </>
       )}
 
       {err ? <FloatingErrorToast message={err} onDismiss={() => setErr(null)} /> : null}
     </div>
+  );
+}
+
+function UpgradePlanFallback() {
+  return (
+    <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
+      <Skeleton className="h-24 w-full rounded-2xl" />
+      <Skeleton className="h-96 w-full rounded-2xl" />
+    </div>
+  );
+}
+
+export default function UpgradePlanPage() {
+  return (
+    <Suspense fallback={<UpgradePlanFallback />}>
+      <UpgradePlanContent />
+    </Suspense>
   );
 }

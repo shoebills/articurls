@@ -3,7 +3,7 @@
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { signup as apiSignup, ApiError, resendVerificationEmail } from "@/lib/api";
+import { signup as apiSignup, ApiError, resendVerificationEmail, storePendingCheckout } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PasswordInput } from "@/components/password-input";
@@ -24,10 +24,11 @@ function SignupForm() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    const plan = searchParams.get("plan");
-    if (plan === "pro" || plan === "lifetime") {
-      localStorage.setItem("pendingPlan", plan);
-    }
+    storePendingCheckout(
+      searchParams.get("plan"),
+      searchParams.get("tier"),
+      searchParams.get("cycle")
+    );
   }, [searchParams]);
 
   const [name, setName] = useState("");
@@ -100,7 +101,7 @@ function SignupForm() {
               </p>
             )}
             <p className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-2.5 text-sm leading-relaxed text-amber-900">
-              Your 7-day free trial starts once you verify your email. Unverified accounts are deleted after 14 days.
+              Verify your email to finish signup. Your free trial starts when you choose a plan. Unverified accounts are deleted after 14 days.
             </p>
             <Button
               type="button"

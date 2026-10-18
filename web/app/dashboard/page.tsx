@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { exchangeOAuthCode } from "@/lib/api";
+import { exchangeOAuthCode, consumePendingCheckout } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import {
   listBlogs,
@@ -126,12 +126,11 @@ export default function DashboardPage() {
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
       exchangeOAuthCode(oauthCode).then(() => {
-        const plan = localStorage.getItem("pendingPlan");
-        localStorage.removeItem("pendingPlan");
-        if (plan === "pro" || plan === "lifetime") {
-          window.location.replace(`/dashboard/billing?plan=${plan}`);
-        } else {
+        const target = consumePendingCheckout();
+        if (target === "/dashboard") {
           window.location.reload();
+        } else {
+          window.location.replace(target);
         }
       }).catch(() => {
         router.replace("/login?error=oauth_failed");

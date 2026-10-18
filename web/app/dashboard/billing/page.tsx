@@ -74,7 +74,13 @@ export default function BillingPage() {
     const clean = window.location.pathname;
     window.history.replaceState({}, "", clean);
     if (plan === "pro") {
-      router.replace("/dashboard/billing/upgrade");
+      const tier = params.get("tier");
+      const cycle = params.get("cycle");
+      const q = new URLSearchParams();
+      if (tier) q.set("tier", tier);
+      if (cycle) q.set("cycle", cycle);
+      const qs = q.toString();
+      router.replace(`/dashboard/billing/upgrade${qs ? `?${qs}` : ""}`);
     } else if (plan === "lifetime") {
       buyLifetime();
     }
@@ -144,6 +150,8 @@ export default function BillingPage() {
   const pro = isProSubscription(sub);
   const isLifetime = sub?.plan_type === "lifetime";
   const subStatus = sub?.status?.toLowerCase() ?? "";
+  const cycleLabel =
+    sub?.billing_cycle === "yearly" ? "Yearly" : sub?.billing_cycle === "monthly" ? "Monthly" : "";
 
   return (
     <div className="mx-auto max-w-[1100px] space-y-8">
@@ -186,7 +194,7 @@ export default function BillingPage() {
                     Cancel Subscription
                   </Button>
                 ) : null}
-                {sub && sub.plan_type !== "trial" && sub.plan_type !== "lapsed" ? (
+                {sub && sub.plan_type !== "lapsed" ? (
                   <Button
                     size="sm"
                     variant="ghost"
@@ -202,10 +210,10 @@ export default function BillingPage() {
             </CardHeader>
             <CardContent className="space-y-4 pt-2">
               <div className="flex flex-wrap items-center gap-3">
-                {sub?.plan_type === "trial" && pro ? (
+                {sub?.trial_ends_at ? (
                   <div className="inline-flex items-center gap-2 rounded-lg border border-blue-500/25 bg-blue-500/[0.06] px-3 py-1.5 text-xs font-medium text-blue-800">
                     <Timer className="h-3.5 w-3.5" />
-                    7-Day Free Trial
+                    Free Trial
                   </div>
                 ) : isLifetime ? (
                   <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-800">
@@ -226,7 +234,7 @@ export default function BillingPage() {
                   ) : (
                     <div className="inline-flex items-center gap-2 rounded-lg border border-emerald-500/25 bg-emerald-500/[0.08] px-3 py-1.5 text-xs font-medium text-emerald-800">
                       <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                      Active Pro Plan ({usage ? (usage.tier_limit !== null ? `${usage.tier_limit.toLocaleString()} views` : "Unlimited views") : sub.plan_type})
+                      Active Pro Plan{cycleLabel ? ` · ${cycleLabel}` : ""} ({usage ? (usage.tier_limit !== null ? `${usage.tier_limit.toLocaleString()} views` : "Unlimited views") : sub.plan_type})
                     </div>
                   )
                 ) : (
@@ -240,9 +248,33 @@ export default function BillingPage() {
                 <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
                   <CalendarDays className="h-3.5 w-3.5" />
                   <span>
-                    Billing cycle renews on{" "}
+                    {sub.trial_ends_at
+                      ? "Trial ends on"
+                      : subStatus === "cancelled"
+                        ? "Access ends on"
+                        : "Billing cycle renews on"}{" "}
                     <strong className="font-semibold text-foreground">
-                      {format(new Date(sub.current_period_end), "MMMM d, yyyy")}
+                      {format(
+                        new Date(sub.trial_ends_at ?? sub.current_period_end),
+                        "MMMM d, yyyy"
+                      )}
+                    </strong>
+                  </span>
+                </div>
+              ) : null}
+
+              {sub?.pending_tier && sub?.pending_billing_cycle ? (
+                <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <span>
+                    Scheduled: switches to{" "}
+                    <strong className="font-semibold text-foreground">
+                      {sub.pending_tier.replace("pro_", "Pro ").replace("_", " ")} ({sub.pending_billing_cycle})
+                    </strong>{" "}
+                    on{" "}
+                    <strong className="font-semibold text-foreground">
+                      {sub.current_period_end
+                        ? format(new Date(sub.current_period_end), "MMMM d, yyyy")
+                        : "next billing date"}
                     </strong>
                   </span>
                 </div>
@@ -284,7 +316,7 @@ export default function BillingPage() {
                     <CardTitle className="text-lg sm:text-xl font-semibold">Account Monthly Usage</CardTitle>
                   </div>
                   <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-primary/10 text-primary">
-                    30-Day Cycle
+                    Resets on the 1st
                   </span>
                 </div>
                 <CardDescription>

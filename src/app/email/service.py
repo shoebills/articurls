@@ -45,31 +45,6 @@ def send_password_reset(to_email: str, reset_token: str):
     send_email(to_email, subject, html)
 
 
-def send_trial_expired_email(to_email: str, blog_name: str):
-
-    html = (TEMPLATE_DIR / "trial_expired.html").read_text()
-
-    html = html.replace("{{ blog_name }}", blog_name)
-    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
-    html = html.replace("{{ billing_url }}", billing_url)
-
-    subject = "Your Articurls trial has ended"
-    send_email(to_email, subject, html)
-
-
-def send_trial_deletion_warning_email(to_email: str, blog_name: str, time_left: str):
-
-    html = (TEMPLATE_DIR / "deletion_warning.html").read_text()
-
-    html = html.replace("{{ blog_name }}", blog_name)
-    html = html.replace("{{ time_left }}", time_left)
-    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing?plan=pro"
-    html = html.replace("{{ billing_url }}", billing_url)
-
-    subject = f"Your Articurls account will be deleted in {time_left}"
-    send_email(to_email, subject, html)
-
-
 def send_payment_failed_email(to_email: str, name: str):
     html = (TEMPLATE_DIR / "payment_failed.html").read_text()
     html = html.replace("{{ name }}", name or "there")

@@ -28,11 +28,6 @@ celery.conf.beat_schedule = {
         "schedule": crontab(minute=0),
     },
 
-    "trial-deletion-sweep": {
-        "task": "src.app.workers.tasks.trial_deletion_sweep",
-        "schedule": crontab(minute=0),
-    },
-
     "unverified-account-cleanup": {
         "task": "src.app.workers.tasks.unverified_account_cleanup",
         "schedule": crontab(minute=0),
