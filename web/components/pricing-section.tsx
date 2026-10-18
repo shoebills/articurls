@@ -15,21 +15,6 @@ import { PRO_TIERS, tierPrice, CYCLE_UNIT, type BillingCycle } from "@/lib/plans
 import { appAuthHref } from "@/lib/env";
 import { useAuth } from "@/lib/auth-context";
 
-type Plan = {
-  name: string;
-  tagline: string;
-  price: string;
-  unit: string;
-  was?: string;
-  desc: string;
-  features: string[];
-  cta: string;
-  href: string;
-  featured?: boolean;
-  premium?: boolean;
-  note?: string;
-};
-
 export function PricingSection() {
   const { token } = useAuth();
   const [selectedTierIdx, setSelectedTierIdx] = useState(0);
@@ -41,80 +26,6 @@ export function PricingSection() {
   const currentTier = PRO_TIERS[selectedTierIdx];
   const price = tierPrice(currentTier, cycle);
   const proHref = `${signupUrl}?plan=pro&tier=${currentTier.key}&cycle=${cycle}`;
-
-  const plans: { plan: Plan; tierSelector?: React.ReactNode }[] = [
-    {
-      plan: {
-        name: currentTier.name,
-        tagline: "Grow audience",
-        price: `$${price}`,
-        unit: CYCLE_UNIT[cycle],
-        was: cycle === "yearly" ? `$${currentTier.monthly * 12}` : undefined,
-        desc: "$0 Due today · 7-day free trial",
-        features: [
-          currentTier.viewsText,
-          "Unlimited sites & publications",
-          "Unlimited posts & pages",
-          "Unlimited media storage",
-          "Custom domain with automatic SSL",
-          "Collect email subscribers",
-          "Pageviews & visitor analytics",
-          "Subscriber analytics",
-          "RSS feed, sitemap & robots.txt",
-          "Custom favicon & code injection",
-          "Post scheduling & categories",
-          "Search engine optimization",
-        ],
-        cta: "Start for free",
-        href: proHref,
-        featured: true,
-      },
-      tierSelector: (
-        <div className="mt-4 space-y-1.5">
-          <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Select Traffic Allowance
-          </div>
-          <Select
-            value={String(selectedTierIdx)}
-            onValueChange={(v) => setSelectedTierIdx(Number(v))}
-          >
-            <SelectTrigger aria-label="Traffic allowance" className="w-full">
-              <SelectValue placeholder="Select traffic allowance" />
-            </SelectTrigger>
-            <SelectContent>
-              {PRO_TIERS.map((tier, idx) => (
-                <SelectItem key={tier.key} value={String(idx)}>
-                  {tier.name} — ${tierPrice(tier, cycle)}
-                  {CYCLE_UNIT[cycle]}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-      ),
-    },
-    {
-      plan: {
-        name: "Lifetime",
-        tagline: "Own forever",
-        price: "$99",
-        unit: " once",
-        was: "$149",
-        desc: "Pay one time. Keep Pro for lifetime.",
-        features: [
-          "100,000 monthly pageviews",
-          "Everything in Pro",
-          "No recurring charges, ever",
-          "Future Pro features included",
-          "Yours for life",
-        ],
-        cta: "Get Lifetime",
-        href: lifetimeHref,
-        premium: true,
-        note: "Limited time deal",
-      },
-    },
-  ];
 
   return (
     <section
@@ -146,10 +57,85 @@ export function PricingSection() {
           </Tabs>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-3xl items-start gap-5 md:grid-cols-2">
-          {plans.map(({ plan, tierSelector }) => (
-            <PlanCard key={plan.name} plan={plan} tierSelector={tierSelector} />
-          ))}
+        <div className="mx-auto mt-10 max-w-4xl space-y-6">
+          {/* Pro — two-column: pricing info on the left, benefits on the right */}
+          <div className="relative grid gap-8 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:p-8 lg:grid-cols-2 lg:items-center">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                Grow audience
+              </p>
+              <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">{currentTier.name}</h3>
+
+              <div className="mt-4 flex items-baseline gap-1.5">
+                <span className="text-4xl font-semibold tracking-tight">${price}</span>
+                <span className="text-base font-normal text-muted-foreground">{CYCLE_UNIT[cycle]}</span>
+                {cycle === "yearly" && (
+                  <span className="ml-1 text-sm line-through text-muted-foreground">
+                    ${currentTier.monthly * 12}
+                  </span>
+                )}
+              </div>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                $0 Due today · 7-day free trial
+              </p>
+
+              <div className="mt-4 space-y-1.5">
+                <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Select Traffic Allowance
+                </div>
+                <Select
+                  value={String(selectedTierIdx)}
+                  onValueChange={(v) => setSelectedTierIdx(Number(v))}
+                >
+                  <SelectTrigger aria-label="Traffic allowance" className="w-full">
+                    <SelectValue placeholder="Select traffic allowance" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRO_TIERS.map((tier, idx) => (
+                      <SelectItem key={tier.key} value={String(idx)}>
+                        {tier.name} — ${tierPrice(tier, cycle)}
+                        {CYCLE_UNIT[cycle]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                className="mt-6 h-12 w-full shadow-md shadow-primary/20"
+                variant="default"
+                asChild
+              >
+                <a href={proHref}>Start for free</a>
+              </Button>
+              <p className="mt-2 text-center text-xs text-muted-foreground">
+                No credit card required
+              </p>
+            </div>
+
+            <div className="border-t border-border/60 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+              <FeatureList
+                features={[
+                  currentTier.viewsText,
+                  "Unlimited sites & publications",
+                  "Unlimited posts & pages",
+                  "Unlimited media storage",
+                  "Custom domain with automatic SSL",
+                  "Collect email subscribers",
+                  "Advanced analytics",
+                  "Subscriber analytics",
+                  "RSS feed, sitemap & robots.txt",
+                  "Custom favicon & code injection",
+                  "Search engine optimization",
+                ]}
+                checkColor="text-primary"
+                textClass="text-foreground/80"
+              />
+            </div>
+          </div>
+
+          {/* Lifetime */}
+          <LifetimeCard href={lifetimeHref} />
         </div>
       </div>
 
@@ -158,71 +144,69 @@ export function PricingSection() {
   );
 }
 
-function PlanCard({ plan, tierSelector }: { plan: Plan; tierSelector?: React.ReactNode }) {
-  const base =
-    "relative flex flex-col rounded-2xl border p-6 transition-shadow duration-300 sm:p-7";
-  const variant = plan.premium
-    ? "border-transparent bg-foreground text-background shadow-2xl shadow-black/20"
-    : plan.featured
-      ? "border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card ring-1 ring-primary/20 shadow-xl shadow-primary/10"
-      : "border-border/70 bg-card";
-
-  const mutedText = plan.premium ? "text-background/60" : "text-muted-foreground";
-  const checkColor = plan.premium ? "text-background/70" : plan.featured ? "text-primary" : "text-foreground/50";
-
+function FeatureList({
+  features,
+  checkColor,
+  textClass,
+}: {
+  features: string[];
+  checkColor: string;
+  textClass: string;
+}) {
   return (
-    <div className={`${base} ${variant} ${plan.featured ? "lg:-translate-y-3" : ""}`}>
-      {plan.premium && (
-        <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
-          10 seats left
-        </span>
-      )}
+    <ul className="space-y-3">
+      {features.map((f) => (
+        <li key={f} className="flex items-start gap-2.5 text-sm">
+          <Check className={`mt-0.5 h-4 w-4 shrink-0 ${checkColor}`} aria-hidden />
+          <span className={textClass}>{f}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-      <p className={`text-xs font-semibold uppercase tracking-[0.14em] ${plan.featured ? "text-primary" : mutedText}`}>
-        {plan.tagline}
+function LifetimeCard({ href }: { href: string }) {
+  return (
+    <div className="relative rounded-2xl border-transparent bg-foreground text-background p-6 shadow-2xl shadow-black/20 sm:p-7">
+      <span className="badge-vibrate absolute right-5 top-5 rounded-full bg-white px-2.5 py-1 text-[11px] font-medium text-black">
+        10 seats left
+      </span>
+
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-background/60">
+        Own forever
       </p>
-      <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">{plan.name}</h3>
+      <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">Lifetime</h3>
 
       <div className="mt-4 flex items-baseline gap-1.5">
-        <span className="text-4xl font-semibold tracking-tight">{plan.price}</span>
-        <span className={`text-base font-normal ${mutedText}`}>{plan.unit}</span>
-        {plan.was && (
-          <span className={`ml-1 text-sm line-through ${mutedText}`}>{plan.was}</span>
-        )}
+        <span className="text-4xl font-semibold tracking-tight">$99</span>
+        <span className="text-base font-normal text-background/60"> once</span>
+        <span className="ml-1 text-sm line-through text-background/60">$149</span>
       </div>
-      <p className={`mt-3 text-sm leading-relaxed ${mutedText}`}>{plan.desc}</p>
-
-      {tierSelector}
+      <p className="mt-3 text-sm leading-relaxed text-background/60">
+        Pay one time. Keep Pro for lifetime.
+      </p>
 
       <Button
-        className={`mt-6 h-12 w-full ${
-          plan.premium
-            ? "bg-background text-foreground hover:bg-background/90"
-            : plan.featured
-              ? "shadow-md shadow-primary/20"
-              : ""
-        }`}
-        variant={plan.featured || plan.premium ? "default" : "outline"}
+        className="mt-6 h-12 w-full bg-background text-foreground hover:bg-background/90"
+        variant="default"
         asChild
       >
-        <a href={plan.href}>{plan.cta}</a>
+        <a href={href}>Get Lifetime</a>
       </Button>
-      {plan.note && (
-        <p className={`mt-2 text-center text-xs ${mutedText}`}>{plan.note}</p>
-      )}
-      {!plan.premium && (
-        <p className={`mt-2 text-center text-xs ${mutedText}`}>No credit card required</p>
-      )}
+      <p className="mt-2 text-center text-xs text-background/60">Limited time deal</p>
 
-      <div className={`mt-6 border-t pt-6 ${plan.premium ? "border-background/15" : "border-border/60"}`}>
-        <ul className="space-y-3">
-          {plan.features.map((f) => (
-            <li key={f} className="flex items-start gap-2.5 text-sm">
-              <Check className={`mt-0.5 h-4 w-4 shrink-0 ${checkColor}`} aria-hidden />
-              <span className={plan.premium ? "text-background/90" : "text-foreground/80"}>{f}</span>
-            </li>
-          ))}
-        </ul>
+      <div className="mt-6 border-t border-background/15 pt-6">
+        <FeatureList
+          features={[
+            "100,000 monthly pageviews",
+            "Everything in Pro",
+            "No recurring charges, ever",
+            "Future Pro features included",
+            "Yours for life",
+          ]}
+          checkColor="text-background/70"
+          textClass="text-background/90"
+        />
       </div>
     </div>
   );

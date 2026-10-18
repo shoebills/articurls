@@ -61,7 +61,7 @@ export const PRO_TIERS: ProTier[] = [
     label: "Unlimited",
     name: "Pro Unlimited",
     views: null,
-    viewsText: "Unlimited monthly pageviews (no quota)",
+    viewsText: "Unlimited monthly pageviews",
     monthly: 249,
     yearly: 2490,
   },
