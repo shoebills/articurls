@@ -17,6 +17,19 @@ from ..cache.service import schedule_page_purge, schedule_tenant_purge
 from ..config import settings
 from .. import utils
 from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
+from ..utils.rate_limit import check_rate_limit_user
+
+_PAGE_CREATE_LIMIT = 50
+_PAGE_CREATE_BURST = 20
+_PAGE_UPLOAD_LIMIT = 120
+_PAGE_UPLOAD_BURST = 25
+_PAGE_UPDATE_LIMIT = 50
+_PAGE_UPDATE_BURST = 20
+_PAGE_PUBLISH_LIMIT = 30
+_PAGE_PUBLISH_BURST = 15
+_PAGE_DELETE_LIMIT = 20
+_PAGE_DELETE_BURST = 10
+_PAGE_RATE_WINDOW = 60
 
 router = APIRouter(
     tags=["Pages"],
@@ -32,6 +45,13 @@ async def upload_page_media(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-upload",
+        current_user.user_id,
+        _PAGE_UPLOAD_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_UPLOAD_BURST,
+    )
     if not file:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Image file is required")
 
@@ -81,6 +101,13 @@ def delete_page_media(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-upload",
+        current_user.user_id,
+        _PAGE_UPLOAD_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_UPLOAD_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -115,6 +142,13 @@ def delete_page_media_by_url(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-upload",
+        current_user.user_id,
+        _PAGE_UPLOAD_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_UPLOAD_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -202,6 +236,13 @@ def create_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-create",
+        current_user.user_id,
+        _PAGE_CREATE_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_CREATE_BURST,
+    )
     title = (request.title or "").strip()
     content = sanitize_html(request.content or "")
 
@@ -234,6 +275,13 @@ def delete_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-delete",
+        current_user.user_id,
+        _PAGE_DELETE_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_DELETE_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -274,6 +322,13 @@ def update_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-update",
+        current_user.user_id,
+        _PAGE_UPDATE_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_UPDATE_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -368,6 +423,13 @@ def publish_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-publish",
+        current_user.user_id,
+        _PAGE_PUBLISH_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_PUBLISH_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -411,6 +473,13 @@ def archive_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-publish",
+        current_user.user_id,
+        _PAGE_PUBLISH_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_PUBLISH_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)
@@ -443,6 +512,13 @@ def unpublish_page(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "page-publish",
+        current_user.user_id,
+        _PAGE_PUBLISH_LIMIT,
+        _PAGE_RATE_WINDOW,
+        burst=_PAGE_PUBLISH_BURST,
+    )
     db_page = (
         db.query(models.UserPage)
         .filter(models.UserPage.page_id == page_id, models.UserPage.site_id == current_site.site_id)

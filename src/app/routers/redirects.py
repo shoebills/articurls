@@ -9,14 +9,19 @@ from ..database import get_db
 from ..schemas import redirects as redirect_schema
 from ..security.oauth2 import get_current_site, get_current_user
 from ..cache.service import schedule_tenant_purge
-from ..utils.rate_limit import check_rate_limit_user
+from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
 from ..config import settings
 
 router = APIRouter(tags=["Redirects"])
 
 _REDIRECT_CREATE_LIMIT = 30
+_REDIRECT_WRITE_BURST = 15
 _REDIRECT_RATE_WINDOW = 60
 _MAX_REDIRECT_CHAIN = 5
+
+_PUBLIC_REDIRECT_IP_LIMIT = 600
+_PUBLIC_REDIRECT_IP_WINDOW = 60
+_PUBLIC_REDIRECT_IP_BURST = 150
 
 
 def _redirect_out(db_redirect: models.Redirect) -> dict:
@@ -144,8 +149,16 @@ def update_redirect(
     request: redirect_schema.RedirectUpdate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "redirect-write",
+        current_user.user_id,
+        _REDIRECT_CREATE_LIMIT,
+        _REDIRECT_RATE_WINDOW,
+        burst=_REDIRECT_WRITE_BURST,
+    )
     db_redirect = (
         db.query(models.Redirect)
         .filter(
@@ -183,8 +196,16 @@ def delete_redirect(
     redirect_id: uuid.UUID,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "redirect-write",
+        current_user.user_id,
+        _REDIRECT_CREATE_LIMIT,
+        _REDIRECT_RATE_WINDOW,
+        burst=_REDIRECT_WRITE_BURST,
+    )
     db_redirect = (
         db.query(models.Redirect)
         .filter(
@@ -230,6 +251,13 @@ def resolve_redirect(
     db: Session = Depends(get_db),
 ):
     """Public redirect lookup for the content renderer (exact path match)."""
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_REDIRECT_IP_LIMIT,
+        _PUBLIC_REDIRECT_IP_WINDOW,
+        burst=_PUBLIC_REDIRECT_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)

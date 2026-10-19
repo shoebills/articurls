@@ -23,7 +23,7 @@ from ..utils import (
     user_by_email,
 )
 from ..cache.service import schedule_homepage_purge, schedule_tenant_purge
-from ..utils.rate_limit import check_rate_limit_ip
+from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
 
 router = APIRouter(
     tags=["User"],
@@ -32,6 +32,29 @@ router = APIRouter(
 
 _SIGNUP_IP_LIMIT = 5
 _SIGNUP_IP_WINDOW = 3600  # 1 hour
+
+_VERIFY_EMAIL_IP_LIMIT = 10
+_VERIFY_EMAIL_IP_WINDOW = 900  # 15 minutes
+_VERIFY_EMAIL_IP_BURST = 5
+
+_SETTINGS_WRITE_LIMIT = 30
+_SETTINGS_WRITE_WINDOW = 60
+_SETTINGS_WRITE_BURST = 15
+
+_USER_UPDATE_LIMIT = 20
+_USER_UPDATE_WINDOW = 60
+_USER_UPDATE_BURST = 10
+
+_EMAIL_CHANGE_LIMIT = 3
+_EMAIL_CHANGE_WINDOW = 3600  # 1 hour
+
+_PASSWORD_CHANGE_LIMIT = 5
+_PASSWORD_CHANGE_WINDOW = 3600  # 1 hour
+_PASSWORD_CHANGE_BURST = 3
+
+_USER_MEDIA_LIMIT = 30
+_USER_MEDIA_WINDOW = 60
+_USER_MEDIA_BURST = 10
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_user(request: user.CreateUser, req: Request, db: Session = Depends(get_db)):
@@ -64,7 +87,14 @@ def create_user(request: user.CreateUser, req: Request, db: Session = Depends(ge
     return {"message": "Please check your mailbox to verify your email!"}
 
 @router.get("/verify-new-user", status_code=status.HTTP_200_OK)
-def verify_new_user(token: str, db: Session = Depends(get_db)):
+def verify_new_user(token: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "verify-email",
+        _VERIFY_EMAIL_IP_LIMIT,
+        _VERIFY_EMAIL_IP_WINDOW,
+        burst=_VERIFY_EMAIL_IP_BURST,
+    )
 
     try:
         payload = oauth2.verify_new_user_token(token)
@@ -133,6 +163,13 @@ def get_design_settings(db: Session = Depends(get_db), current_user = Depends(oa
 
 @router.patch("/design", response_model=page_schema.DesignSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_design_settings(request: page_schema.DesignSettings, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    check_rate_limit_user(
+        "site-settings",
+        current_user.user_id,
+        _SETTINGS_WRITE_LIMIT,
+        _SETTINGS_WRITE_WINDOW,
+        burst=_SETTINGS_WRITE_BURST,
+    )
     update_data = request.model_dump(exclude_unset=True)
     if update_data:
         for key, value in update_data.items():
@@ -150,6 +187,13 @@ def get_seo_settings(db: Session = Depends(get_db), current_user=Depends(oauth2.
 
 @router.patch("/seo", response_model=user.SeoSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    check_rate_limit_user(
+        "site-settings",
+        current_user.user_id,
+        _SETTINGS_WRITE_LIMIT,
+        _SETTINGS_WRITE_WINDOW,
+        burst=_SETTINGS_WRITE_BURST,
+    )
     update_data = request.model_dump(exclude_unset=True)
     if update_data:
         for key, value in update_data.items():
@@ -171,6 +215,13 @@ def get_integrations_settings(db: Session = Depends(get_db), current_user=Depend
 
 @router.patch("/integrations", response_model=user.IntegrationsSettings, status_code=status.HTTP_202_ACCEPTED)
 def update_integrations_settings(request: user.IntegrationsSettingsUpdate, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user=Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
+    check_rate_limit_user(
+        "site-settings",
+        current_user.user_id,
+        _SETTINGS_WRITE_LIMIT,
+        _SETTINGS_WRITE_WINDOW,
+        burst=_SETTINGS_WRITE_BURST,
+    )
     update_data = request.model_dump(exclude_unset=True)
     if update_data:
         for key, value in update_data.items():
@@ -190,6 +241,13 @@ def update_user(
     current_user=Depends(oauth2.get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "user-update",
+        current_user.user_id,
+        _USER_UPDATE_LIMIT,
+        _USER_UPDATE_WINDOW,
+        burst=_USER_UPDATE_BURST,
+    )
     update_data = request.model_dump(exclude_unset=True)
     if not update_data:
         return user_settings_out(db, current_user, current_site)
@@ -199,6 +257,12 @@ def update_user(
     if "email" in update_data and update_data["email"]:
         new_email = normalize_email(str(update_data["email"]))
         if new_email != current_user.email:
+            check_rate_limit_user(
+                "email-change",
+                current_user.user_id,
+                _EMAIL_CHANGE_LIMIT,
+                _EMAIL_CHANGE_WINDOW,
+            )
             existing = db.query(models.User).filter(
                 models.User.email == new_email,
                 models.User.user_id != current_user.user_id,
@@ -230,7 +294,7 @@ def update_user(
             )
 
             try:
-                verify_token = oauth2.create_new_user_token(data={"email": new_email})
+                verify_token = oauth2.create_new_user_token(new_email)
                 send_verify_new_user(new_email, current_user.name, verify_token)
             except Exception:
                 pass
@@ -269,6 +333,13 @@ def update_password(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(oauth2.get_current_user),
 ):
+    check_rate_limit_user(
+        "password-change",
+        current_user.user_id,
+        _PASSWORD_CHANGE_LIMIT,
+        _PASSWORD_CHANGE_WINDOW,
+        burst=_PASSWORD_CHANGE_BURST,
+    )
     current_user.password = hashing.get_password_hash(request.new_password)
     current_user.token_version = (current_user.token_version or 0) + 1
     db.commit()
@@ -296,25 +367,15 @@ def update_password(
     }
 
 
-@router.patch("/pro/me", response_model=user.UserSettings, status_code=status.HTTP_202_ACCEPTED)
-def update_pro_user(request: user.UpdateProUser, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site=Depends(get_current_site)):
-    if not utils.is_pro_entitled(current_user.user_id, db):
-        raise HTTPException(status_code=403, detail="Pro subscription required")
-
-    update_data = request.model_dump(exclude_unset=True)
-    if update_data:
-        for key, value in update_data.items():
-            setattr(current_site, key, value)
-        db.commit()
-        db.refresh(current_site)
-        
-        schedule_tenant_purge(background_tasks, current_site)
-    
-    return user_settings_out(db, current_user, current_site)
-
-
 @router.post("/me/profile-image", status_code=status.HTTP_200_OK)
 async def upload_profile_image(file: UploadFile = File(...), background_tasks: BackgroundTasks = BackgroundTasks(), db: Session = Depends(get_db), current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site)):
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
 
     image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
     current_user.profile_image_url = image_url
@@ -340,6 +401,13 @@ async def upload_favicon(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
     data = await file.read(FAVICON_MAX_BYTES + 1)
     content_type = file.content_type or ""
 
@@ -398,6 +466,13 @@ async def delete_favicon(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
     current_site.favicon_url = None
     db.commit()
     db.refresh(current_site)
@@ -414,6 +489,13 @@ async def upload_logo(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
     logo_url = await save_image_local(file=file, category="logos", user_id=current_user.user_id, db=db)
     current_site.logo_url = logo_url
     db.commit()
@@ -430,6 +512,13 @@ async def delete_logo(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
     current_site.logo_url = None
     db.commit()
     db.refresh(current_site)
@@ -446,8 +535,13 @@ async def upload_og_image(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    
-    
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
 
     og_image_url = await save_image_local(file=file, category="og-images", user_id=current_user.user_id, db=db)
     current_site.og_image_url = og_image_url
@@ -465,8 +559,13 @@ async def delete_og_image(
     db: Session = Depends(get_db),
     current_user = Depends(oauth2.get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
-    
-    
+    check_rate_limit_user(
+        "user-media",
+        current_user.user_id,
+        _USER_MEDIA_LIMIT,
+        _USER_MEDIA_WINDOW,
+        burst=_USER_MEDIA_BURST,
+    )
 
     current_site.og_image_url = None
     db.commit()

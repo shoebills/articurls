@@ -125,13 +125,6 @@ class UpdateUser(BaseModel):
     profile_image_url: Optional[str] = None
 
 
-class UpdateProUser(BaseModel):
-    navbar_enabled: Optional[bool] = None
-    site_name: Optional[str] = None
-    nav_menu_enabled: Optional[bool] = None
-    favicon_url: Optional[str] = None
-
-
 class SeoSettings(BaseModel):
     meta_title: Optional[str] = None
     meta_description: Optional[str] = None

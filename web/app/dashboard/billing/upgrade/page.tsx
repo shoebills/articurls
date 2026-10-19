@@ -293,7 +293,7 @@ function UpgradePlanContent() {
                   </div>
                   <div className="flex items-center gap-2 text-foreground">
                     <Check className="h-4 w-4 text-primary shrink-0" />
-                    <span>Custom domains + Cloudflare Subfolder</span>
+                    <span>Custom domains + subdirectory publishing</span>
                   </div>
                   <div className="flex items-center gap-2 text-foreground">
                     <Check className="h-4 w-4 text-primary shrink-0" />

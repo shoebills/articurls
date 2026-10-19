@@ -9,7 +9,7 @@ Endpoints:
 """
 
 import secrets
-from fastapi import APIRouter, HTTPException, status, Response, Depends
+from fastapi import APIRouter, HTTPException, Request, status, Response, Depends
 from fastapi.responses import RedirectResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -21,6 +21,7 @@ from ..schemas.oauth import GoogleUserInfo, GoogleOAuthSession, CompleteGoogleSi
 from ..schemas.token import Token
 from ..security import oauth2, hashing
 from ..redis_client import redis_client
+from ..utils.rate_limit import check_rate_limit_ip
 from ..utils.google_oauth import (
     get_authorization_url,
     validate_state_token,
@@ -44,6 +45,18 @@ class ExchangeTokenRequest(BaseModel):
 
 _OAUTH_EXCHANGE_TTL = 30  # seconds — code is single-use and short-lived
 
+_OAUTH_LOGIN_IP_LIMIT = 15
+_OAUTH_LOGIN_IP_WINDOW = 300
+_OAUTH_LOGIN_IP_BURST = 5
+
+_OAUTH_COMPLETE_IP_LIMIT = 10
+_OAUTH_COMPLETE_IP_WINDOW = 600
+_OAUTH_COMPLETE_IP_BURST = 5
+
+_OAUTH_EXCHANGE_IP_LIMIT = 20
+_OAUTH_EXCHANGE_IP_WINDOW = 60
+_OAUTH_EXCHANGE_IP_BURST = 10
+
 
 router = APIRouter(
     prefix="/auth/google",
@@ -52,7 +65,7 @@ router = APIRouter(
 
 
 @router.get("/login")
-async def google_login():
+async def google_login(request: Request):
     """
     Initiate Google OAuth flow.
     
@@ -61,6 +74,14 @@ async def google_login():
     Returns:
         RedirectResponse: Redirect to Google OAuth authorization URL
     """
+    check_rate_limit_ip(
+        request,
+        "oauth-login",
+        _OAUTH_LOGIN_IP_LIMIT,
+        _OAUTH_LOGIN_IP_WINDOW,
+        burst=_OAUTH_LOGIN_IP_BURST,
+    )
+
     redirect_uri = settings.google_redirect_uri
     
     if not redirect_uri:
@@ -76,6 +97,7 @@ async def google_login():
 
 @router.get("/callback")
 async def google_callback(
+    request: Request,
     code: str | None = None,
     state: str | None = None,
     error: str | None = None,
@@ -98,6 +120,14 @@ async def google_callback(
     Returns:
         RedirectResponse: Redirect to dashboard or onboarding page
     """
+    check_rate_limit_ip(
+        request,
+        "oauth-callback",
+        _OAUTH_LOGIN_IP_LIMIT,
+        _OAUTH_LOGIN_IP_WINDOW,
+        burst=_OAUTH_LOGIN_IP_BURST,
+    )
+
     # Handle OAuth errors
     if error:
         error_url = f"{settings.app_base_url}/login?error=oauth_failed"
@@ -230,6 +260,7 @@ async def google_callback(
 @router.post("/complete", response_model=Token)
 async def complete_google_signup(
     request: CompleteGoogleSignup,
+    req: Request,
     response: Response,
     db: Session = Depends(get_db),
 ):
@@ -250,6 +281,14 @@ async def complete_google_signup(
     Raises:
         HTTPException: If session invalid, subdomain taken, or creation fails
     """
+    check_rate_limit_ip(
+        req,
+        "oauth-complete",
+        _OAUTH_COMPLETE_IP_LIMIT,
+        _OAUTH_COMPLETE_IP_WINDOW,
+        burst=_OAUTH_COMPLETE_IP_BURST,
+    )
+
     # Retrieve OAuth session data
     session_data = get_oauth_session(request.session_id)
     
@@ -422,7 +461,14 @@ async def _login_existing_user(
 
 
 @router.post("/exchange-token", response_model=Token)
-def exchange_token(request: ExchangeTokenRequest):
+def exchange_token(request: ExchangeTokenRequest, req: Request):
+    check_rate_limit_ip(
+        req,
+        "oauth-exchange",
+        _OAUTH_EXCHANGE_IP_LIMIT,
+        _OAUTH_EXCHANGE_IP_WINDOW,
+        burst=_OAUTH_EXCHANGE_IP_BURST,
+    )
     redis_key = f"oauth_exchange:{request.code}"
     access_token = redis_client.get(redis_key)
     if not access_token:

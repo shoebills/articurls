@@ -1,17 +1,18 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 import json
 import logging
-from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from ..database import get_db
 from .. import models
+from ..utils import is_pro_entitled
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
 from ..config import settings
 from ..redis_client import redis_client
+from ..cache.service import purge_domain_lookup_tags
 from .schemas import DomainIn, DomainOut, DomainVerifyOut, DomainLookupOut, DomainAddResponse, DNSRecord
 from .activation import (
     apply_domain_verification,
@@ -20,11 +21,24 @@ from .activation import (
     vercel_sync_required,
 )
 from ..vercel.client import VercelClient, VercelError
+from ..utils.rate_limit import check_rate_limit_user
 from .utils import normalize_hostname, validate_hostname
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["Domain"])
+
+_DOMAIN_WRITE_LIMIT = 10
+_DOMAIN_WRITE_WINDOW = 3600
+_DOMAIN_WRITE_BURST = 5
+
+_DOMAIN_READ_LIMIT = 30
+_DOMAIN_READ_WINDOW = 60
+_DOMAIN_READ_BURST = 10
+
+_DOMAIN_VERIFY_LIMIT = 10
+_DOMAIN_VERIFY_WINDOW = 60
+_DOMAIN_VERIFY_BURST = 2
 
 
 def _invalidate_domain_cache(hostname: str) -> None:
@@ -41,10 +55,7 @@ def _canonical_url_for_subdomain(
         models.DomainStatus.ACTIVE,
         models.DomainStatus.GRACE,
     ):
-        base = f"https://{db_site.custom_domain}"
-        if db_site.custom_subpath:
-            base += db_site.custom_subpath
-        return base
+        return f"https://{db_site.custom_domain}"
     ugc_domain = settings.ugc_domain
     expected = f"{db_site.subdomain}.{ugc_domain}"
     if requested_hostname != expected:
@@ -70,7 +81,7 @@ async def _remove_vercel_domain(hostname: str) -> None:
     await vc.remove_project_domain(hostname)
 
 
-def _cached_dns(db_site: models.User) -> List[DNSRecord] | None:
+def _cached_dns(db_site: models.Site) -> List[DNSRecord] | None:
     if not db_site.domain_dns_instructions:
         return None
     try:
@@ -79,7 +90,7 @@ def _cached_dns(db_site: models.User) -> List[DNSRecord] | None:
         return None
 
 
-async def _load_dns_instructions(db_site: models.User) -> List[DNSRecord] | None:
+async def _load_dns_instructions(db_site: models.Site) -> List[DNSRecord] | None:
     if not db_site.custom_domain:
         return None
 
@@ -90,18 +101,29 @@ async def _load_dns_instructions(db_site: models.User) -> List[DNSRecord] | None
     if db_site.domain_status != models.DomainStatus.PENDING and not vercel_unverified:
         return None
 
-    instructions = build_dns_instructions(db_site.custom_domain, vercel_domain)
-    if instructions:
-        db_site.domain_dns_instructions = [r.model_dump() for r in instructions]
-    return instructions or None
+    return build_dns_instructions(db_site.custom_domain, vercel_domain) or None
 
 
 @router.post("/settings/domain", response_model=DomainAddResponse, status_code=status.HTTP_200_OK)
 async def add_domain(
     body: DomainIn,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "domain-write",
+        current_user.user_id,
+        _DOMAIN_WRITE_LIMIT,
+        _DOMAIN_WRITE_WINDOW,
+        burst=_DOMAIN_WRITE_BURST,
+    )
+    if not is_pro_entitled(current_site.user_id, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Custom domains require an active Pro subscription.",
+        )
+
     hostname = normalize_hostname(body.hostname)
     validate_hostname(hostname)
 
@@ -143,6 +165,11 @@ async def add_domain(
     if db_site.subdomain and settings.ugc_domain:
         _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
 
+    hosts = [hostname]
+    if db_site.subdomain and settings.ugc_domain:
+        hosts.append(f"{db_site.subdomain}.{settings.ugc_domain}")
+    background_tasks.add_task(purge_domain_lookup_tags, hosts)
+
     return DomainAddResponse(
         hostname=hostname,
         domain_status=models.DomainStatus.PENDING,
@@ -155,6 +182,13 @@ async def get_domain(
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "domain-read",
+        current_user.user_id,
+        _DOMAIN_READ_LIMIT,
+        _DOMAIN_READ_WINDOW,
+        burst=_DOMAIN_READ_BURST,
+    )
     db_site = current_site
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -162,9 +196,6 @@ async def get_domain(
     dns_instructions = await _load_dns_instructions(db_site)
     if dns_instructions is None:
         dns_instructions = _cached_dns(db_site) if db_site.domain_status == models.DomainStatus.PENDING else None
-
-    if dns_instructions is not None:
-        db.commit()
 
     return DomainOut(
         custom_domain=db_site.custom_domain,
@@ -178,9 +209,23 @@ async def get_domain(
 
 @router.post("/settings/domain/verify", response_model=DomainVerifyOut, status_code=status.HTTP_200_OK)
 async def verify_domain(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "domain-verify",
+        current_user.user_id,
+        _DOMAIN_VERIFY_LIMIT,
+        _DOMAIN_VERIFY_WINDOW,
+        burst=_DOMAIN_VERIFY_BURST,
+    )
+    if not is_pro_entitled(current_site.user_id, db):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Custom domains require an active Pro subscription.",
+        )
+
     db_site = current_site
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -197,13 +242,18 @@ async def verify_domain(
                 message=None,
             )
 
-    if db_site.updated_at:
-        time_since_update = (datetime.now(timezone.utc) - db_site.updated_at).total_seconds()
-        if time_since_update < 3:
+    verify_key = f"verify_domain:{db_site.site_id}"
+    try:
+        if redis_client.get(verify_key):
             raise HTTPException(
                 status_code=status.HTTP_429_TOO_MANY_REQUESTS,
                 detail="Please wait a few seconds before verifying again.",
             )
+        redis_client.setex(verify_key, 3, "1")
+    except HTTPException:
+        raise
+    except Exception:
+        pass
 
     vc = VercelClient()
     vercel_domain = vc.get_project_domain_sync(db_site.custom_domain) if vc.configured else None
@@ -211,14 +261,29 @@ async def verify_domain(
     cached = _cached_dns(db_site)
     result = apply_domain_verification(db_site, vercel_domain, cached)
     db.commit()
+
+    if result.domain_status == models.DomainStatus.ACTIVE:
+        hosts = [db_site.custom_domain]
+        if db_site.subdomain and settings.ugc_domain:
+            hosts.append(f"{db_site.subdomain}.{settings.ugc_domain}")
+        background_tasks.add_task(purge_domain_lookup_tags, hosts)
+
     return result
 
 
 @router.delete("/settings/domain", status_code=status.HTTP_200_OK)
 async def delete_domain(
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "domain-write",
+        current_user.user_id,
+        _DOMAIN_WRITE_LIMIT,
+        _DOMAIN_WRITE_WINDOW,
+        burst=_DOMAIN_WRITE_BURST,
+    )
     db_site = current_site
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
@@ -239,6 +304,11 @@ async def delete_domain(
         _invalidate_domain_cache(old_domain)
     if db_site.subdomain and settings.ugc_domain:
         _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
+
+    hosts = [h for h in (old_domain, f"{db_site.subdomain}.{settings.ugc_domain}" if db_site.subdomain and settings.ugc_domain else None) if h]
+    if hosts:
+        background_tasks.add_task(purge_domain_lookup_tags, hosts)
+
     return {"message": "Custom domain removed."}
 
 
@@ -284,6 +354,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Domain not found")
 
     if db_site.domain_status not in (
+        models.DomainStatus.PENDING,
         models.DomainStatus.ACTIVE,
         models.DomainStatus.GRACE,
         models.DomainStatus.EXPIRED,

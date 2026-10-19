@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status, BackgroundTasks, Query
+from fastapi import APIRouter, Depends, HTTPException, Request, status, BackgroundTasks, Query
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
@@ -13,13 +13,25 @@ from ..cache.service import schedule_tenant_purge, purge_tenant_now
 from ..storage.service import delete_media
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
-from ..utils.rate_limit import check_rate_limit_user
+from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
 from ..utils.subdomains import subdomain_validation_failure
 
 router = APIRouter(
     tags=["Sites"],
     prefix="/sites",
 )
+
+_SUBDOMAIN_CHECK_IP_LIMIT = 30
+_SUBDOMAIN_CHECK_IP_WINDOW = 60
+_SUBDOMAIN_CHECK_IP_BURST = 10
+
+_SITE_LIFECYCLE_LIMIT = 5
+_SITE_LIFECYCLE_WINDOW = 3600
+_SITE_LIFECYCLE_BURST = 3
+
+_SITE_SETTINGS_LIMIT = 30
+_SITE_SETTINGS_WINDOW = 60
+_SITE_SETTINGS_BURST = 15
 
 
 def _site_summary_out(db: Session, site: models.Site) -> dict:
@@ -52,9 +64,17 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
 
 @router.get("/check-availability", status_code=status.HTTP_200_OK)
 def check_subdomain_availability(
+    request: Request,
     subdomain: str = Query(..., min_length=1),
     db: Session = Depends(get_db),
 ):
+    check_rate_limit_ip(
+        request,
+        "subdomain-check",
+        _SUBDOMAIN_CHECK_IP_LIMIT,
+        _SUBDOMAIN_CHECK_IP_WINDOW,
+        burst=_SUBDOMAIN_CHECK_IP_BURST,
+    )
     raw_subdomain = subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
 
@@ -91,6 +111,13 @@ def create_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user(
+        "site-create",
+        current_user.user_id,
+        _SITE_LIFECYCLE_LIMIT,
+        _SITE_LIFECYCLE_WINDOW,
+        burst=_SITE_LIFECYCLE_BURST,
+    )
     raw_subdomain = request.subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
 
@@ -171,6 +198,13 @@ def update_code_injection(
     current_user: models.User = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "site-settings",
+        current_user.user_id,
+        _SITE_SETTINGS_LIMIT,
+        _SITE_SETTINGS_WINDOW,
+        burst=_SITE_SETTINGS_BURST,
+    )
     update_data = request.model_dump(exclude_unset=True)
     if "custom_head_code" in update_data:
         current_site.custom_head_code = update_data["custom_head_code"]
@@ -196,7 +230,7 @@ async def purge_site_cache(
     current_site: models.Site = Depends(get_current_site),
 ):
     """Manually invalidate all cached copies of this publication (edge + data cache)."""
-    check_rate_limit_user("cache-purge", current_user.user_id, 10, 3600)
+    check_rate_limit_user("cache-purge", current_user.user_id, 10, 3600, burst=5)
     result = await purge_tenant_now(current_site)
     return result
 
@@ -224,6 +258,13 @@ def update_site_onboarding(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user(
+        "site-settings",
+        current_user.user_id,
+        _SITE_SETTINGS_LIMIT,
+        _SITE_SETTINGS_WINDOW,
+        burst=_SITE_SETTINGS_BURST,
+    )
     site = (
         db.query(models.Site)
         .filter(models.Site.site_id == site_id, models.Site.user_id == current_user.user_id)
@@ -245,6 +286,13 @@ def delete_site(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user(
+        "site-delete",
+        current_user.user_id,
+        _SITE_LIFECYCLE_LIMIT,
+        _SITE_LIFECYCLE_WINDOW,
+        burst=_SITE_LIFECYCLE_BURST,
+    )
     total_sites = (
         db.query(func.count(models.Site.site_id))
         .filter(models.Site.user_id == current_user.user_id)

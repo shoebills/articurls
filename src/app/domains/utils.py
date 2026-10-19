@@ -40,15 +40,26 @@ def validate_hostname(hostname: str) -> None:
 
 
 def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | None = None) -> None:
+    hosts: list[str] = []
     try:
         from ..redis_client import redis_client
         from ..config import settings
         if custom_domain:
             redis_client.delete(f"domain_lookup:{custom_domain}")
+            hosts.append(custom_domain)
         if subdomain and settings.ugc_domain:
             redis_client.delete(f"domain_lookup:{subdomain}.{settings.ugc_domain}")
+            hosts.append(f"{subdomain}.{settings.ugc_domain}")
     except Exception:
         pass
+
+    if hosts:
+        try:
+            from ..cache.service import purge_domain_lookup_tags_sync
+
+            purge_domain_lookup_tags_sync(hosts)
+        except Exception:
+            pass
 
 
 def restore_domain_access(site) -> None:

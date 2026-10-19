@@ -657,7 +657,8 @@ def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depen
 
 @router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
 def unschedule_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
     if not db_blog:

@@ -365,22 +365,6 @@ export async function changePassword(
   });
 }
 
-export async function patchProMe(
-  token: string,
-  body: {
-    navbar_enabled?: boolean;
-    site_name?: string | null;
-    nav_menu_enabled?: boolean;
-  }
-): Promise<UserSettings> {
-  return apiFetch("/user/pro/me", {
-    method: "PATCH",
-    token,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
 export async function getDesignSettings(token: string): Promise<DesignSettings> {
   return apiFetch("/user/design", { token });
 }

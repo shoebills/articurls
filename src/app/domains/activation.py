@@ -14,7 +14,7 @@ VERCEL_PENDING_MESSAGE = (
     "(shown below), then click Verify again."
 )
 
-VERCEL_CNAME_TARGET = "7ee24e1b6a5ccf21.vercel-dns-017.com"
+VERCEL_CNAME_TARGET = "cname.vercel-dns.com"
 VERCEL_APEX_IP = "76.76.21.21"
 
 
@@ -103,6 +103,10 @@ def apply_domain_verification(
     hostname = db_site.custom_domain or ""
 
     if not vercel_sync_required():
+        logger.warning(
+            "Vercel is not configured; activating domain %s without DNS verification.",
+            hostname,
+        )
         mark_domain_active(db_site, hostname)
         return DomainVerifyOut(
             verification_status="verified",

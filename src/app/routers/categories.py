@@ -12,6 +12,7 @@ from ..security import oauth2
 from ..security.oauth2 import get_current_user, get_current_site
 from ..utils import make_excerpt
 from ..utils.redirect_sync import sync_slug_change_redirect, cleanup_entity_redirects
+from ..utils.rate_limit import check_rate_limit_user
 from ..cache.service import schedule_category_purge, schedule_tenant_purge
 from ..config import settings
 
@@ -19,6 +20,10 @@ router = APIRouter(
     tags=["Categories"],
     prefix="/categories",
 )
+
+_CATEGORY_WRITE_LIMIT = 30
+_CATEGORY_RATE_WINDOW = 60
+_CATEGORY_WRITE_BURST = 15
 
 
 def _unique_category_slug(db: Session, site_id: Any, name_or_slug: str, exclude_category_id: Any | None = None) -> str:
@@ -83,6 +88,13 @@ def create_category(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "category-write",
+        current_user.user_id,
+        _CATEGORY_WRITE_LIMIT,
+        _CATEGORY_RATE_WINDOW,
+        burst=_CATEGORY_WRITE_BURST,
+    )
     name = request.name.strip()
     if not name:
         raise HTTPException(
@@ -117,6 +129,13 @@ def update_menu_categories(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "category-write",
+        current_user.user_id,
+        _CATEGORY_WRITE_LIMIT,
+        _CATEGORY_RATE_WINDOW,
+        burst=_CATEGORY_WRITE_BURST,
+    )
     raw_ids = payload.get("ordered_category_ids", [])
     if raw_ids is None:
         raw_ids = []
@@ -179,6 +198,13 @@ def update_category(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "category-write",
+        current_user.user_id,
+        _CATEGORY_WRITE_LIMIT,
+        _CATEGORY_RATE_WINDOW,
+        burst=_CATEGORY_WRITE_BURST,
+    )
     db_cat = (
         db.query(models.Category)
         .filter(
@@ -245,6 +271,13 @@ def delete_category(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "category-write",
+        current_user.user_id,
+        _CATEGORY_WRITE_LIMIT,
+        _CATEGORY_RATE_WINDOW,
+        burst=_CATEGORY_WRITE_BURST,
+    )
     db_cat = (
         db.query(models.Category)
         .filter(
@@ -316,6 +349,13 @@ def set_category_blogs(
     current_site: models.Site = Depends(get_current_site),
 ):
     """Replace all blog assignments for this category with the given blog_ids."""
+    check_rate_limit_user(
+        "category-write",
+        current_user.user_id,
+        _CATEGORY_WRITE_LIMIT,
+        _CATEGORY_RATE_WINDOW,
+        burst=_CATEGORY_WRITE_BURST,
+    )
     db_cat = (
         db.query(models.Category)
         .filter(

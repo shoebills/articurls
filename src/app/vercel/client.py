@@ -205,23 +205,3 @@ def vercel_verification_records(
             }
         )
     return rows
-
-
-def append_vercel_dns_instructions(
-    instructions: list,
-    hostname: str,
-) -> list:
-    """Append Vercel TXT verification rows to DNS instructions."""
-    from ..domains.schemas import DNSRecord
-
-    if not settings.vercel_api_token or not settings.vercel_project_name:
-        return instructions
-    vc = VercelClient()
-    vercel_domain = vc.ensure_project_domain_sync(hostname)
-    extra = vercel_verification_records(vercel_domain, hostname)
-    if not extra:
-        return instructions
-    return instructions + [DNSRecord(**row) for row in extra]
-
-
-merge_vercel_dns_instructions = append_vercel_dns_instructions

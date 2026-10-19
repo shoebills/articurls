@@ -12,12 +12,19 @@ from ..security import oauth2
 from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge
 from ..utils.redirect_sync import sync_slug_change_redirect, cleanup_entity_redirects
+from ..utils.rate_limit import check_rate_limit_user
 from ..storage.service import save_image_local
 
 router = APIRouter(
     tags=["Authors"],
     prefix="/authors",
 )
+
+_AUTHOR_WRITE_LIMIT = 30
+_AUTHOR_WRITE_BURST = 15
+_AUTHOR_AVATAR_LIMIT = 30
+_AUTHOR_AVATAR_BURST = 10
+_AUTHOR_RATE_WINDOW = 60
 
 
 def _unique_author_slug(db: Session, site_id: Any, name_or_slug: str, current_author_id: Any | None = None) -> str:
@@ -92,6 +99,13 @@ def create_author(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "author-write",
+        current_user.user_id,
+        _AUTHOR_WRITE_LIMIT,
+        _AUTHOR_RATE_WINDOW,
+        burst=_AUTHOR_WRITE_BURST,
+    )
     name = request.name.strip()
     if not name:
         raise HTTPException(
@@ -157,6 +171,13 @@ def update_author(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "author-write",
+        current_user.user_id,
+        _AUTHOR_WRITE_LIMIT,
+        _AUTHOR_RATE_WINDOW,
+        burst=_AUTHOR_WRITE_BURST,
+    )
     author = (
         db.query(models.Author)
         .filter(
@@ -222,6 +243,13 @@ def delete_author(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "author-write",
+        current_user.user_id,
+        _AUTHOR_WRITE_LIMIT,
+        _AUTHOR_RATE_WINDOW,
+        burst=_AUTHOR_WRITE_BURST,
+    )
     author = (
         db.query(models.Author)
         .filter(
@@ -257,6 +285,13 @@ async def upload_author_avatar(
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "author-avatar",
+        current_user.user_id,
+        _AUTHOR_AVATAR_LIMIT,
+        _AUTHOR_RATE_WINDOW,
+        burst=_AUTHOR_AVATAR_BURST,
+    )
     author = (
         db.query(models.Author)
         .filter(

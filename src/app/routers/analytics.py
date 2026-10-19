@@ -5,6 +5,7 @@ from ..database import get_db
 from .. import models
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
+from ..utils.rate_limit import check_rate_limit_user
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi.responses import StreamingResponse
@@ -18,6 +19,14 @@ router = APIRouter(
     tags=["Analytics"],
     prefix="/analytics"
 )
+
+_ANALYTICS_READ_LIMIT = 120
+_ANALYTICS_READ_WINDOW = 60
+_ANALYTICS_READ_BURST = 35
+
+_ANALYTICS_EXPORT_LIMIT = 5
+_ANALYTICS_EXPORT_WINDOW = 300
+_ANALYTICS_EXPORT_BURST = 2
 
 
 def _umami_error_detail(exc_body: str) -> str:
@@ -73,6 +82,13 @@ def _subscriber_bucket_key(ts, unit: str) -> str:
 
 @router.get("/subscribers", status_code=status.HTTP_200_OK)
 def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
 
     from ..umami.service import get_umami_period_unit, generate_period_slots
 
@@ -130,6 +146,13 @@ def subscribers_analytics(period: Optional[str] = "all", db: Session = Depends(g
 
 @router.get("/export-to-csv", status_code=status.HTTP_200_OK)
 def export_subscribers(db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
+    check_rate_limit_user(
+        "analytics-export",
+        current_user.user_id,
+        _ANALYTICS_EXPORT_LIMIT,
+        _ANALYTICS_EXPORT_WINDOW,
+        burst=_ANALYTICS_EXPORT_BURST,
+    )
 
     db_subscribers = db.query(models.Subscriber).filter(
         models.Subscriber.site_id == current_site.site_id
@@ -163,6 +186,13 @@ def get_umami_overview(
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
     from ..umami.client import UmamiClient, UmamiError
 
     if not current_site.umami_website_id:
@@ -280,6 +310,13 @@ def get_umami_timeseries(
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import (
         get_umami_period_unit,
@@ -378,6 +415,13 @@ def get_umami_metrics(
     current_user = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import umami_internal_domains
 
@@ -458,6 +502,13 @@ def get_umami_metrics_expanded(
     current_user = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
     from ..umami.client import UmamiClient, UmamiError
     from ..umami.service import umami_internal_domains
 
@@ -517,6 +568,13 @@ def get_umami_realtime(
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
 
 ):
+    check_rate_limit_user(
+        "analytics-read",
+        current_user.user_id,
+        _ANALYTICS_READ_LIMIT,
+        _ANALYTICS_READ_WINDOW,
+        burst=_ANALYTICS_READ_BURST,
+    )
     from ..umami.client import UmamiClient, UmamiError
 
     if not current_site.umami_website_id:

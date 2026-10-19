@@ -6,11 +6,20 @@ from ..database import get_db
 from .. import models, utils
 from ..schemas import blog, site
 from ..schemas import page as page_schema
+from ..utils.rate_limit import check_rate_limit_ip
 
 
 router = APIRouter(
     tags=["Public"],
 )
+
+_PUBLIC_SEARCH_IP_LIMIT = 60
+_PUBLIC_SEARCH_IP_WINDOW = 60
+_PUBLIC_SEARCH_IP_BURST = 15
+
+_PUBLIC_READ_IP_LIMIT = 600
+_PUBLIC_READ_IP_WINDOW = 60
+_PUBLIC_READ_IP_BURST = 150
 
 
 @router.get("/{subdomain}/blogs/search", response_model=List[blog.PublicBlogSearchResult], status_code=status.HTTP_200_OK)
@@ -22,6 +31,13 @@ def search_blogs(
     offset: int = Query(0, ge=0),
     db: Session = Depends(get_db),
 ):
+    check_rate_limit_ip(
+        request,
+        "public-search",
+        _PUBLIC_SEARCH_IP_LIMIT,
+        _PUBLIC_SEARCH_IP_WINDOW,
+        burst=_PUBLIC_SEARCH_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -126,6 +142,13 @@ def search_blogs(
 
 @router.get("/{subdomain}/blogs", response_model=List[blog.PublicBlogs], status_code=status.HTTP_200_OK)
 def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
 
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
@@ -157,6 +180,13 @@ def get_blogs(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{subdomain}", response_model=site.PublicSite)
 def get_site(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
 
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
@@ -170,6 +200,13 @@ def get_site(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{subdomain}/pages", response_model=List[page_schema.UserPageOut], status_code=status.HTTP_200_OK)
 def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -188,6 +225,13 @@ def get_pages(subdomain: str, request: Request, db: Session = Depends(get_db)):
 
 @router.get("/{subdomain}/content/{slug}", response_model=blog.PublicResolvedContent, status_code=status.HTTP_200_OK)
 def get_public_content(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -233,6 +277,13 @@ def get_public_content(subdomain: str, slug: str, request: Request, db: Session 
 
 @router.get("/{subdomain}/categories", status_code=status.HTTP_200_OK)
 def get_public_categories(subdomain: str, request: Request, all: bool = False, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -268,6 +319,13 @@ def get_public_categories(subdomain: str, request: Request, all: bool = False, d
 
 @router.get("/{subdomain}/category/{slug}", status_code=status.HTTP_200_OK)
 def get_public_category_blogs(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -321,6 +379,13 @@ def get_public_category_blogs(subdomain: str, slug: str, request: Request, db: S
 
 @router.get("/{subdomain}/authors", status_code=status.HTTP_200_OK)
 def get_public_authors(subdomain: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)
@@ -369,6 +434,13 @@ def get_public_authors(subdomain: str, request: Request, db: Session = Depends(g
 
 @router.get("/{subdomain}/author/{slug}", status_code=status.HTTP_200_OK)
 def get_public_author_blogs(subdomain: str, slug: str, request: Request, db: Session = Depends(get_db)):
+    check_rate_limit_ip(
+        request,
+        "public-read",
+        _PUBLIC_READ_IP_LIMIT,
+        _PUBLIC_READ_IP_WINDOW,
+        burst=_PUBLIC_READ_IP_BURST,
+    )
     db_site, canonical_subdomain = utils.resolve_subdomain_to_current(db, subdomain)
     if db_site and canonical_subdomain != utils.normalize_subdomain(subdomain):
         return utils.permanent_subdomain_redirect(str(request.url.path), canonical_subdomain, request.url.query)

@@ -980,6 +980,7 @@ def cancel_my_subscription(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user("billing-cancel", current_user.user_id, 5, 60, burst=3)
     db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
     if not db_sub or db_sub.plan_type != "pro" or db_sub.status not in ("active", "past_due"):
         raise HTTPException(
@@ -1018,6 +1019,7 @@ def get_customer_portal(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user("billing-portal", current_user.user_id, 10, 60, burst=5)
     if not current_user.dodo_customer_id:
         raise HTTPException(status_code=404, detail="Customer record not found")
 
@@ -1036,6 +1038,7 @@ def get_account_usage(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user),
 ):
+    check_rate_limit_user("billing-usage", current_user.user_id, 30, 60, burst=10)
     from ..umami.client import UmamiClient
     from ..umami.service import get_umami_period_timestamps
     
