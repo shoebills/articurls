@@ -134,8 +134,9 @@ export function PricingSection() {
             </div>
           </div>
 
-          {/* Lifetime */}
-          <LifetimeCard href={lifetimeHref} />
+          <div className="mx-auto max-w-sm">
+            <LifetimeCard href={lifetimeHref} />
+          </div>
         </div>
       </div>
 
