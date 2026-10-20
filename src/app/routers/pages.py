@@ -12,7 +12,12 @@ from ..database import get_db
 from ..utils.html_sanitizer import sanitize_html
 from ..schemas import page as page_schema
 from ..security.oauth2 import get_current_user, get_current_site
-from ..storage.service import delete_media, save_media
+from ..storage.service import (
+    delete_media,
+    matches_media_url,
+    reconcile_entity_media,
+    save_media,
+)
 from ..cache.service import schedule_page_purge, schedule_tenant_purge
 from ..config import settings
 from .. import utils
@@ -68,9 +73,8 @@ async def upload_page_media(
     stored = await save_media(
         file=file,
         category="pages",
-        user_id=current_user.user_id,
-        blog_id=db_page.page_id,
-        db=db,
+        site_id=current_site.site_id,
+        entity_id=db_page.page_id,
     )
 
     max_sort_order = (
@@ -170,11 +174,7 @@ def delete_page_media_by_url(
         .all()
     )
     target = next(
-        (
-            m
-            for m in db_media
-            if m.url == url or url.endswith(m.url) or m.url.endswith(url)
-        ),
+        (m for m in db_media if matches_media_url(m, url)),
         None,
     )
     if not target:
@@ -408,8 +408,25 @@ def update_page(
     }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 
+    old_media_refs = "\n".join(
+        filter(None, [db_page.content, db_page.featured_image_url, db_page.og_image_url])
+    )
     for key, value in update_data.items():
         setattr(db_page, key, value)
+
+    if update_data.keys() & {"content", "featured_image_url", "og_image_url"}:
+        new_media_refs = "\n".join(
+            filter(None, [db_page.content, db_page.featured_image_url, db_page.og_image_url])
+        )
+        media_rows = (
+            db.query(models.PageMedia)
+            .filter(
+                models.PageMedia.page_id == db_page.page_id,
+                models.PageMedia.site_id == current_site.site_id,
+            )
+            .all()
+        )
+        reconcile_entity_media(db, media_rows, old_media_refs, new_media_refs)
 
     if has_meaningful_change:
         db_page.updated_at = datetime.now(timezone.utc)

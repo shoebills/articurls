@@ -309,17 +309,31 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     }
   }
 
+  function isUnsavedPageMediaUrl(url: string): boolean {
+    if (!url || !page) return false;
+    return (
+      url !== (page.featured_image_url || "") &&
+      url !== (page.og_image_url || "") &&
+      !(page.content || "").includes(url) &&
+      !content.includes(url)
+    );
+  }
+
   async function uploadFeaturedImage(file: File) {
     if (!token || !page) return;
     if (file.size > MAX_IMAGE_FILE_SIZE) {
       setErr("Image too large (max 10MB)");
       return;
     }
+    const prevFeatured = featuredImageUrl;
     setUploadingFeatured(true);
     try {
       const media = await uploadPageMedia(token, page.page_id, file);
       setFeaturedImageUrl(media.url);
       setSaveStatus("idle");
+      if (prevFeatured && prevFeatured !== media.url && prevFeatured !== ogImageUrl && isUnsavedPageMediaUrl(prevFeatured)) {
+        void deletePageMediaByUrl(token, page.page_id, prevFeatured).catch(() => {});
+      }
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
@@ -333,11 +347,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       setErr("Image too large (max 10MB)");
       return;
     }
+    const prevOg = ogImageUrl;
     setUploadingOg(true);
     try {
       const media = await uploadPageMedia(token, page.page_id, file);
       setOgImageUrl(media.url);
       setSaveStatus("idle");
+      if (prevOg && prevOg !== media.url && prevOg !== featuredImageUrl && isUnsavedPageMediaUrl(prevOg)) {
+        void deletePageMediaByUrl(token, page.page_id, prevOg).catch(() => {});
+      }
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "OG image upload failed");
     } finally {
@@ -771,14 +789,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     type="button"
                     variant="ghost"
                     onClick={async () => {
-                      if (token && page && featuredImageUrl && !content.includes(featuredImageUrl)) {
+                      const toRemove = featuredImageUrl;
+                      setFeaturedImageUrl("");
+                      if (token && page && toRemove && toRemove !== ogImageUrl && isUnsavedPageMediaUrl(toRemove)) {
                         try {
-                          await deletePageMediaByUrl(token, page.page_id, featuredImageUrl);
+                          await deletePageMediaByUrl(token, page.page_id, toRemove);
                         } catch {
                           // Do not block local removal if cleanup fails.
                         }
                       }
-                      setFeaturedImageUrl("");
                     }}
                     disabled={uploadingFeatured}
                   >
@@ -906,14 +925,15 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     type="button"
                     variant="ghost"
                     onClick={async () => {
-                      if (token && page && ogImageUrl && !content.includes(ogImageUrl)) {
+                      const toRemove = ogImageUrl;
+                      setOgImageUrl("");
+                      if (token && page && toRemove && toRemove !== featuredImageUrl && isUnsavedPageMediaUrl(toRemove)) {
                         try {
-                          await deletePageMediaByUrl(token, page.page_id, ogImageUrl);
+                          await deletePageMediaByUrl(token, page.page_id, toRemove);
                         } catch {
                           // Do not block local removal if cleanup fails.
                         }
                       }
-                      setOgImageUrl("");
                     }}
                     disabled={uploadingOg}
                   >

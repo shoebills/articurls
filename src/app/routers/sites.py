@@ -10,7 +10,7 @@ from ..database import get_db
 from ..schemas import site as site_schema
 from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge, purge_tenant_now
-from ..storage.service import delete_media
+from ..storage.service import delete_media, delete_media_by_url
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
 from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
@@ -325,6 +325,10 @@ def delete_site(
             delete_media(media.storage_key)
         except Exception:
             pass
+    for author in db.query(models.Author).filter(models.Author.site_id == site.site_id).all():
+        delete_media_by_url(author.profile_image_url)
+    for branding_url in (site.logo_url, site.favicon_url, site.og_image_url):
+        delete_media_by_url(branding_url)
 
     # Remaining children (blogs, pages, categories, blog_categories, media,
     # subscribers, authors) are removed by ON DELETE CASCADE.

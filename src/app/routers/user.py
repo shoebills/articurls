@@ -15,9 +15,10 @@ from datetime import datetime, timedelta, timezone
 from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import (
-    _verify_magic_bytes,
+    delete_media_by_url,
     get_user_storage_usage_bytes,
-    save_image_local,
+    save_favicon,
+    save_image,
 )
 from ..utils import (
     normalize_email,
@@ -382,21 +383,17 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
         burst=_USER_MEDIA_BURST,
     )
 
-    image_url = await save_image_local(file=file, category="users", user_id=current_user.user_id, db=db)
+    old_url = current_user.profile_image_url
+    image_url = await save_image(file=file, category="avatar", user_id=current_user.user_id)
     current_user.profile_image_url = image_url
     db.commit()
     db.refresh(current_user)
+    if old_url and old_url != image_url:
+        delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
     return {"profile_image_url": current_user.profile_image_url}
-
-
-
-
-
-FAVICON_MAX_BYTES = 1 * 1024 * 1024  # 1MB
-FAVICON_ALLOWED_TYPES = {"image/png", "image/jpeg", "image/webp", "image/x-icon"}
 
 
 @router.post("/me/favicon", status_code=status.HTTP_200_OK)
@@ -413,39 +410,17 @@ async def upload_favicon(
         _USER_MEDIA_WINDOW,
         burst=_USER_MEDIA_BURST,
     )
-    data = await file.read(FAVICON_MAX_BYTES + 1)
-    content_type = file.content_type or ""
-
-    if content_type not in FAVICON_ALLOWED_TYPES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Only png, jpg, webp, and ico images are allowed for favicons.",
-        )
-    if len(data) > FAVICON_MAX_BYTES:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Favicon too large (max 1MB).",
-        )
-    if not _verify_magic_bytes(data, content_type):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="File content does not match the claimed image type",
-        )
-
-    from uuid import uuid4
-    from ..storage.service import _get_storage_provider, _ext_from_content_type, StoredMedia
-
-    ext_map = {"image/png": ".png", "image/jpeg": ".jpg", "image/webp": ".webp", "image/x-icon": ".ico"}
-    ext = ext_map.get(content_type, _ext_from_content_type(content_type))
-    filename = f"{uuid4().hex}{ext}"
-    storage_key = f"favicons/{current_user.user_id}/{filename}"
-
-    provider = _get_storage_provider()
-    stored = provider.save(data=data, storage_key=storage_key)
+    old_url = current_site.favicon_url
+    stored = await save_favicon(
+        file=file,
+        site_id=current_site.site_id,
+    )
 
     current_site.favicon_url = stored.url
     db.commit()
     db.refresh(current_site)
+    if old_url and old_url != stored.url:
+        delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
@@ -478,9 +453,11 @@ async def delete_favicon(
         _USER_MEDIA_WINDOW,
         burst=_USER_MEDIA_BURST,
     )
+    old_url = current_site.favicon_url
     current_site.favicon_url = None
     db.commit()
     db.refresh(current_site)
+    delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
@@ -501,10 +478,17 @@ async def upload_logo(
         _USER_MEDIA_WINDOW,
         burst=_USER_MEDIA_BURST,
     )
-    logo_url = await save_image_local(file=file, category="logos", user_id=current_user.user_id, db=db)
+    old_url = current_site.logo_url
+    logo_url = await save_image(
+        file=file,
+        category="logos",
+        site_id=current_site.site_id,
+    )
     current_site.logo_url = logo_url
     db.commit()
     db.refresh(current_site)
+    if old_url and old_url != logo_url:
+        delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
@@ -524,9 +508,11 @@ async def delete_logo(
         _USER_MEDIA_WINDOW,
         burst=_USER_MEDIA_BURST,
     )
+    old_url = current_site.logo_url
     current_site.logo_url = None
     db.commit()
     db.refresh(current_site)
+    delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
@@ -548,10 +534,17 @@ async def upload_og_image(
         burst=_USER_MEDIA_BURST,
     )
 
-    og_image_url = await save_image_local(file=file, category="og-images", user_id=current_user.user_id, db=db)
+    old_url = current_site.og_image_url
+    og_image_url = await save_image(
+        file=file,
+        category="og-images",
+        site_id=current_site.site_id,
+    )
     current_site.og_image_url = og_image_url
     db.commit()
     db.refresh(current_site)
+    if old_url and old_url != og_image_url:
+        delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 
@@ -572,9 +565,11 @@ async def delete_og_image(
         burst=_USER_MEDIA_BURST,
     )
 
+    old_url = current_site.og_image_url
     current_site.og_image_url = None
     db.commit()
     db.refresh(current_site)
+    delete_media_by_url(old_url)
 
     schedule_tenant_purge(background_tasks, current_site)
 

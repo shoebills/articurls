@@ -13,7 +13,7 @@ from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge
 from ..utils.redirect_sync import sync_slug_change_redirect, cleanup_entity_redirects
 from ..utils.rate_limit import check_rate_limit_user
-from ..storage.service import save_image_local
+from ..storage.service import delete_media_by_url, save_image
 
 router = APIRouter(
     tags=["Authors"],
@@ -190,6 +190,7 @@ def update_author(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
     old_slug = author.slug
+    old_avatar_url = author.profile_image_url
     update_data = request.model_dump(exclude_unset=True)
     if "name" in update_data:
         name = (update_data["name"] or "").strip()
@@ -229,6 +230,8 @@ def update_author(
 
     db.commit()
     db.refresh(author)
+    if old_avatar_url and old_avatar_url != author.profile_image_url:
+        delete_media_by_url(old_avatar_url)
 
     if not slug_changed:
         schedule_tenant_purge(background_tasks, current_site)
@@ -261,6 +264,7 @@ def delete_author(
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
+    old_avatar_url = author.profile_image_url
     cleanup_entity_redirects(db, current_site.site_id, "author", author.slug)
 
     # Clear the byline on all blogs by this author
@@ -271,6 +275,7 @@ def delete_author(
 
     db.delete(author)
     db.commit()
+    delete_media_by_url(old_avatar_url)
 
     schedule_tenant_purge(background_tasks, current_site)
     return {"message": "Author deleted"}
@@ -303,10 +308,18 @@ async def upload_author_avatar(
     if not author:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Author not found")
 
-    image_url = await save_image_local(file=file, category="authors", user_id=current_user.user_id, db=db)
+    old_avatar_url = author.profile_image_url
+    image_url = await save_image(
+        file=file,
+        category="authors",
+        site_id=current_site.site_id,
+        entity_id=author.author_id,
+    )
     author.profile_image_url = image_url
     db.commit()
     db.refresh(author)
+    if old_avatar_url and old_avatar_url != image_url:
+        delete_media_by_url(old_avatar_url)
 
     schedule_tenant_purge(background_tasks, current_site)
     return {"profile_image_url": author.profile_image_url}

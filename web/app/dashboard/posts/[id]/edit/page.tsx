@@ -100,6 +100,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   const metaDescDirtyRef = useRef(metaDescDirty);
   const metaDescRef = useRef(metaDesc);
   const featuredImageUrlRef = useRef(featuredImageUrl);
+  const ogImageUrlRef = useRef(ogImageUrl);
   const savedCatIdsRef = useRef<string[]>([]);
 
   // Category assignment state
@@ -234,6 +235,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
   useEffect(() => { metaDescDirtyRef.current = metaDescDirty; }, [metaDescDirty]);
   useEffect(() => { metaDescRef.current = metaDesc; }, [metaDesc]);
   useEffect(() => { featuredImageUrlRef.current = featuredImageUrl; }, [featuredImageUrl]);
+  useEffect(() => { ogImageUrlRef.current = ogImageUrl; }, [ogImageUrl]);
 
   const slugEditable = blog ? blog.status === "draft" || blog.status === "scheduled" : false;
 
@@ -296,6 +298,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     const nextMetaDesc = metaDesc;
     const nextMetaDescDirty = metaDescDirty;
     const nextFeaturedImageUrl = featuredImageUrl;
+    const nextOgImageUrl = ogImageUrl;
     const nextPendingCatIds = pendingCatIds;
     const nextAuthorId = authorId;
     const nextRelatedIds = selectedRelatedIds;
@@ -328,7 +331,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         content: nextContent,
         author_id: nextAuthorId,
         featured_image_url: nextFeaturedImageUrl.trim() || null,
-        og_image_url: ogImageUrl.trim() || null,
+        og_image_url: nextOgImageUrl.trim() || null,
         canonical_url: canonicalUrl.trim() || null,
         noindex,
         is_pinned: isPinned,
@@ -376,6 +379,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       const metaDescChanged = nextMetaDesc !== metaDescRef.current;
       const slugCustomChanged = nextSlugCustom !== slugCustomRef.current;
       const featuredChanged = nextFeaturedImageUrl !== featuredImageUrlRef.current;
+      const ogChanged = nextOgImageUrl !== ogImageUrlRef.current;
 
       if (!titleChanged) setTitle(finalBlog.title);
       if (!contentChanged) setContent(finalBlog.content || "");
@@ -392,6 +396,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
         setSlugCustom(finalBlog.slug !== derived ? finalBlog.slug : "");
       }
       if (!featuredChanged) setFeaturedImageUrl(finalBlog.featured_image_url || "");
+      if (!ogChanged) setOgImageUrl(finalBlog.og_image_url || "");
 
       // Re-derive dirty flags from effective (current) state
       const effectiveTitle = titleChanged ? titleRef.current : finalBlog.title;
@@ -516,17 +521,31 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     }
   }
 
+  function isUnsavedBlogMediaUrl(url: string): boolean {
+    if (!url || !blog) return false;
+    return (
+      url !== (blog.featured_image_url || "") &&
+      url !== (blog.og_image_url || "") &&
+      !(blog.content || "").includes(url) &&
+      !content.includes(url)
+    );
+  }
+
   async function uploadFeaturedImage(file: File) {
     if (!token || !blog) return;
     if (file.size > MAX_IMAGE_FILE_SIZE) {
       setErr("Image too large (max 10MB)");
       return;
     }
+    const prevFeatured = featuredImageUrl;
     setUploadingFeatured(true);
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
       setFeaturedImageUrl(media.url);
       setSaveStatus("idle");
+      if (prevFeatured && prevFeatured !== media.url && prevFeatured !== ogImageUrl && isUnsavedBlogMediaUrl(prevFeatured)) {
+        void deleteBlogMediaByUrl(token, blog.blog_id, prevFeatured).catch(() => {});
+      }
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Featured image upload failed");
     } finally {
@@ -540,11 +559,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       setErr("Image too large (max 10MB)");
       return;
     }
+    const prevOg = ogImageUrl;
     setUploadingOg(true);
     try {
       const media = await uploadBlogMedia(token, blog.blog_id, file);
       setOgImageUrl(media.url);
       setSaveStatus("idle");
+      if (prevOg && prevOg !== media.url && prevOg !== featuredImageUrl && isUnsavedBlogMediaUrl(prevOg)) {
+        void deleteBlogMediaByUrl(token, blog.blog_id, prevOg).catch(() => {});
+      }
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "OG image upload failed");
     } finally {
@@ -563,7 +586,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     return () => {
       if (autosaveTimerRef.current) clearTimeout(autosaveTimerRef.current);
     };
-  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, featuredImageUrl, isDirty, saving]);
+  }, [blog, title, content, slugCustom, slugCustomDirty, metaTitle, metaTitleDirty, metaDesc, metaDescDirty, featuredImageUrl, ogImageUrl, canonicalUrl, noindex, isPinned, customSchemaStr, isDirty, saving]);
 
   useEffect(() => {
     const flushSave = () => {
@@ -1083,14 +1106,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       type="button"
                       variant="ghost"
                       onClick={async () => {
-                        if (token && blog && featuredImageUrl && !content.includes(featuredImageUrl)) {
+                        const toRemove = featuredImageUrl;
+                        setFeaturedImageUrl("");
+                        if (token && blog && toRemove && toRemove !== ogImageUrl && isUnsavedBlogMediaUrl(toRemove)) {
                           try {
-                            await deleteBlogMediaByUrl(token, blog.blog_id, featuredImageUrl);
+                            await deleteBlogMediaByUrl(token, blog.blog_id, toRemove);
                           } catch {
                             // Do not block local removal if cleanup fails.
                           }
                         }
-                        setFeaturedImageUrl("");
                       }}
                       disabled={uploadingFeatured}
                     >
@@ -1518,14 +1542,15 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       type="button"
                       variant="ghost"
                       onClick={async () => {
-                        if (token && blog && ogImageUrl && !content.includes(ogImageUrl)) {
+                        const toRemove = ogImageUrl;
+                        setOgImageUrl("");
+                        if (token && blog && toRemove && toRemove !== featuredImageUrl && isUnsavedBlogMediaUrl(toRemove)) {
                           try {
-                            await deleteBlogMediaByUrl(token, blog.blog_id, ogImageUrl);
+                            await deleteBlogMediaByUrl(token, blog.blog_id, toRemove);
                           } catch {
                             // Do not block local removal if cleanup fails.
                           }
                         }
-                        setOgImageUrl("");
                       }}
                       disabled={uploadingOg}
                     >

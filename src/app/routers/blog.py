@@ -15,7 +15,12 @@ from ..schemas import blog
 from ..schemas import category as cat_schema
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
-from ..storage.service import save_media, delete_media
+from ..storage.service import (
+    delete_media,
+    matches_media_url,
+    reconcile_entity_media,
+    save_media,
+)
 from ..cache.service import schedule_post_purge
 from ..config import settings
 from ..utils.rate_limit import check_rate_limit_user
@@ -160,9 +165,8 @@ async def upload_blog_media(id: uuid.UUID, file: UploadFile = File(...), db: Ses
     stored = await save_media(
         file=file,
         category="blogs",
-        user_id=current_user.user_id,
-        blog_id=db_blog.blog_id,
-        db=db,
+        site_id=current_site.site_id,
+        entity_id=db_blog.blog_id,
     )
 
     max_sort_order = (
@@ -248,11 +252,7 @@ def delete_blog_media_by_url(
         .all()
     )
     target = next(
-        (
-            m
-            for m in db_media
-            if m.url == url or url.endswith(m.url) or m.url.endswith(url)
-        ),
+        (m for m in db_media if matches_media_url(m, url)),
         None,
     )
     if not target:
@@ -396,8 +396,25 @@ def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: Backg
     }
     has_meaningful_change = bool(update_data.keys() & MEANINGFUL_FIELDS)
 
+    old_media_refs = "\n".join(
+        filter(None, [db_blog.content, db_blog.featured_image_url, db_blog.og_image_url])
+    )
     for key, value in update_data.items():
         setattr(db_blog, key, value)
+
+    if update_data.keys() & {"content", "featured_image_url", "og_image_url"}:
+        new_media_refs = "\n".join(
+            filter(None, [db_blog.content, db_blog.featured_image_url, db_blog.og_image_url])
+        )
+        media_rows = (
+            db.query(models.BlogMedia)
+            .filter(
+                models.BlogMedia.blog_id == db_blog.blog_id,
+                models.BlogMedia.site_id == current_site.site_id,
+            )
+            .all()
+        )
+        reconcile_entity_media(db, media_rows, old_media_refs, new_media_refs)
 
     if has_meaningful_change:
         db_blog.updated_at = datetime.now(timezone.utc)

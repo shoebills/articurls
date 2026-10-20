@@ -159,7 +159,7 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
     objects with no DB row left behind must be cleaned first — see `delete_site`
     in src/app/routers/sites.py for the reference pattern.
     """
-    from ..storage.service import delete_media
+    from ..storage.service import delete_media, delete_media_by_url
     from ..umami.client import UmamiClient
     from ..cache.service import purge_tenant
     from ..domains.router import _remove_vercel_domain
@@ -177,6 +177,10 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
                 delete_media(media.storage_key)
             except Exception:
                 pass
+        for author in db.query(models.Author).filter(models.Author.site_id == site.site_id).all():
+            delete_media_by_url(author.profile_image_url)
+        for branding_url in (site.logo_url, site.favicon_url, site.og_image_url):
+            delete_media_by_url(branding_url)
 
         if site.custom_domain:
             try:
@@ -203,6 +207,7 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
             except Exception:
                 pass
 
+    delete_media_by_url(db_user.profile_image_url)
     db.delete(db_user)
     db.commit()
 

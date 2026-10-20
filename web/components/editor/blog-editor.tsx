@@ -166,18 +166,6 @@ function ToolbarSection({
   );
 }
 
-function extractImageSrcsFromHtml(html: string): Set<string> {
-  const urls = new Set<string>();
-  const re = /<img[^>]*\ssrc=["']([^"']+)["'][^>]*>/gi;
-  let match: RegExpExecArray | null = re.exec(html);
-  while (match) {
-    const src = (match[1] || "").trim();
-    if (src) urls.add(src);
-    match = re.exec(html);
-  }
-  return urls;
-}
-
 type BlogEditorProps = {
   content: string;
   onChange: (html: string) => void;
@@ -198,8 +186,6 @@ export function BlogEditor({
   className,
 }: BlogEditorProps) {
   const [selectionTick, setSelectionTick] = useState(0);
-  const prevImageSrcsRef = useRef<Set<string>>(extractImageSrcsFromHtml(content || ""));
-  const deletingSrcsRef = useRef<Set<string>>(new Set());
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -241,41 +227,7 @@ export function BlogEditor({
       },
     },
     onUpdate: ({ editor: ed }) => {
-      const nextHtml = ed.getHTML();
-      
-      onChange(nextHtml);
-
-      if ((blogId || pageId) && token) {
-        const nextSet = extractImageSrcsFromHtml(nextHtml);
-        const removed: string[] = [];
-        prevImageSrcsRef.current.forEach((src) => {
-          if (!nextSet.has(src) && !deletingSrcsRef.current.has(src)) {
-            removed.push(src);
-          }
-        });
-        prevImageSrcsRef.current = nextSet;
-
-        if (removed.length > 0) {
-          removed.forEach((src) => deletingSrcsRef.current.add(src));
-          void Promise.all(
-            removed.map(async (src) => {
-              try {
-                if (blogId) {
-                  await deleteBlogMediaByUrl(token, blogId, src);
-                } else if (pageId) {
-                  await deletePageMediaByUrl(token, pageId, src);
-                }
-              } catch {
-                // Best effort only; editor UX should not fail on cleanup issues.
-              } finally {
-                deletingSrcsRef.current.delete(src);
-              }
-            })
-          );
-        }
-      } else {
-        prevImageSrcsRef.current = extractImageSrcsFromHtml(nextHtml);
-      }
+      onChange(ed.getHTML());
     },
     onSelectionUpdate: () => {
       // Force a lightweight re-render so toolbar disabled states reflect node selection changes.
@@ -357,7 +309,6 @@ export function BlogEditor({
     if (!editor) return;
     
     const current = editor.getHTML();
-    prevImageSrcsRef.current = extractImageSrcsFromHtml(content || "");
     
     if (content !== current && !isEditorFocusedRef.current) {
       editor.commands.setContent(content || "<p></p>", { emitUpdate: false });
@@ -473,6 +424,25 @@ export function BlogEditor({
     [editor, altDialogMode]
   );
 
+  const handleAltDialogOpenChange = useCallback(
+    (open: boolean) => {
+      setAltDialogOpen(open);
+      if (!open && altDialogMode === "new" && pendingImageUploadRef.current) {
+        const abandonedUrl = pendingImageUploadRef.current.originalUrl;
+        pendingImageUploadRef.current = null;
+        if (token && abandonedUrl) {
+          void (blogId
+            ? deleteBlogMediaByUrl(token, blogId, abandonedUrl)
+            : pageId
+              ? deletePageMediaByUrl(token, pageId, abandonedUrl)
+              : Promise.resolve()
+          ).catch(() => {});
+        }
+      }
+    },
+    [altDialogMode, blogId, pageId, token]
+  );
+
   const editSelectedImageAlt = useCallback(() => {
     if (!editor || !isImageSelected) return;
     const attrs = editor.getAttributes("image");
@@ -495,23 +465,10 @@ export function BlogEditor({
     [editor]
   );
 
-  const removeSelectedImage = useCallback(async () => {
+  const removeSelectedImage = useCallback(() => {
     if (!editor || !isImageSelected) return;
-    const attrs = editor.getAttributes("image");
-    const src = typeof attrs?.src === "string" ? attrs.src : "";
-    if ((blogId || pageId) && token && src) {
-      try {
-        if (blogId) {
-          await deleteBlogMediaByUrl(token, blogId, src);
-        } else if (pageId) {
-          await deletePageMediaByUrl(token, pageId, src);
-        }
-      } catch {
-        // Keep UX smooth; content removal should still work even if media cleanup fails.
-      }
-    }
     editor.chain().focus().deleteSelection().run();
-  }, [editor, isImageSelected, blogId, pageId, token]);
+  }, [editor, isImageSelected]);
 
   if (!editor) {
     return <div className="min-h-[320px] animate-pulse rounded-md border border-dashed border-border bg-muted/30" />;
@@ -851,7 +808,7 @@ export function BlogEditor({
       {/* Alt Text Dialog */}
       <PromptDialog
         open={altDialogOpen}
-        onOpenChange={setAltDialogOpen}
+        onOpenChange={handleAltDialogOpenChange}
         title={altDialogMode === "new" ? "Image Alt Text" : "Edit Alt Text"}
         description="Describe the image for accessibility (optional)."
         placeholder="Describe the image"
