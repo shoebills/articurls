@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense, useEffect } from "react";
+import { useState, Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { checkSubdomainAvailability, completeGoogleSignup, createSite, ApiError, consumePendingCheckout } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ function SetupForm() {
   const [step, setStep] = useState(0);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const submitLockRef = useRef(false);
 
   const flow: Flow = sessionId ? "google" : "email";
   const totalSteps = 2;
@@ -141,7 +142,8 @@ function SetupForm() {
 
   async function handleFinalSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    if (busy) return;
+    if (busy || submitLockRef.current) return;
+    submitLockRef.current = true;
 
     setErr(null);
     setBusy(true);
@@ -151,7 +153,9 @@ function SetupForm() {
       } else {
         await finishEmailFlow();
       }
+      // Success: keep the lock engaged — we are navigating away.
     } catch (ex) {
+      submitLockRef.current = false;
       setErr(ex instanceof ApiError ? ex.message : "Failed to create your site");
     } finally {
       setBusy(false);

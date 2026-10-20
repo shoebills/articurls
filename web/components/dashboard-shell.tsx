@@ -8,14 +8,11 @@ import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { TrialExpiredPopup } from "@/components/trial-expired-overlay";
 import { QuotaExceededPopup, TrafficAlertBanner } from "@/components/traffic-quota-overlay";
+import { DASHBOARD_EXEMPT_PREFIXES } from "@/components/dashboard-gate";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
 import { getSitePublicRoot } from "@/lib/public-url";
 import { cn } from "@/lib/utils";
-
-// The popup must never block the pages a user needs to actually pay or ask
-// for help — those routes stay usable.
-const POPUP_EXEMPT_PREFIXES = ["/dashboard/billing", "/dashboard/support"];
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -32,7 +29,7 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         : null;
 
   const isLocked = !isPro && !!subscription && !loading;
-  const isPopupExempt = POPUP_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const isPopupExempt = DASHBOARD_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const showTrialPopup = isLocked && !isPopupExempt;
 
   const quotaLocked = usage?.quota_status === "locked";

@@ -205,12 +205,13 @@ def store_oauth_session(session_id: str, data: Dict[str, Any], ttl: int = 900) -
         raise
 
 
-def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
+def get_oauth_session(session_id: str, *, consume: bool = False) -> Dict[str, Any] | None:
     """
-    Retrieve and consume OAuth session data from Redis.
+    Retrieve OAuth session data from Redis.
     
     Args:
         session_id: Session identifier
+        consume: Whether to delete the session immediately upon retrieval
         
     Returns:
         dict | None: Session data if found, None otherwise
@@ -222,8 +223,8 @@ def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
         data = redis_client.get(key)
         
         if data:
-            # Consume the session (delete it)
-            redis_client.delete(key)
+            if consume:
+                redis_client.delete(key)
             return json.loads(data)
         else:
             return None
@@ -232,6 +233,16 @@ def get_oauth_session(session_id: str) -> Dict[str, Any] | None:
         import traceback
         print(f"[OAuth] Traceback: {traceback.format_exc()}")
         return None
+
+
+def delete_oauth_session(session_id: str) -> None:
+    """Delete an OAuth onboarding session from Redis after completion."""
+    if not session_id:
+        return
+    try:
+        redis_client.delete(f"oauth_session:{session_id}")
+    except Exception:
+        pass
 
 
 def generate_session_id() -> str:

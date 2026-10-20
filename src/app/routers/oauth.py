@@ -29,6 +29,7 @@ from ..utils.google_oauth import (
     get_google_user_info,
     store_oauth_session,
     get_oauth_session,
+    delete_oauth_session,
     generate_session_id,
 )
 from ..utils import (
@@ -301,64 +302,80 @@ async def complete_google_signup(
         burst=_OAUTH_COMPLETE_IP_BURST,
     )
 
-    # Retrieve OAuth session data
+    # Peek (do not consume) the OAuth session so a retry after a partial
+    # failure — or a duplicate form submission — can still resolve the user.
     session_data = get_oauth_session(request.session_id)
-    
+
     if not session_data:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid or expired session"
         )
-    
+
     # Validate session data
     google_id = session_data.get("google_id")
     email = session_data.get("email")
     picture = session_data.get("picture")
     email_verified = session_data.get("email_verified", False)
-    
+
     if not google_id or not email or not email_verified:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Invalid session data"
         )
-    
+
+    # Idempotency: a duplicate submit (double-click) or a retry after the first
+    # request already created the account must log in instead of erroring out.
+    existing_google = db.query(models.User).filter(
+        models.User.google_id == google_id
+    ).first()
+    if existing_google:
+        delete_oauth_session(request.session_id)
+        access_token = oauth2.create_access_token(
+            data={"sub": existing_google.email, "ver": existing_google.token_version},
+            expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
+        )
+        refresh_token = oauth2.create_refresh_token(existing_google.email)
+        response.set_cookie(
+            key="refresh_token",
+            value=refresh_token,
+            httponly=True,
+            secure=True,
+            samesite="lax",
+            path="/",
+            max_age=settings.refresh_token_expire_days * 24 * 60 * 60
+        )
+        return {
+            "access_token": access_token,
+            "token_type": "bearer"
+        }
+
     # Use the name from the request (user may have edited it)
     name = request.name
-    
+
     # Validate subdomain
     subdomain = validate_subdomain_or_raise(request.subdomain)
-    
-    # Check if subdomain is taken
-    existing_subdomain = db.query(models.Site).filter(
-        models.Site.subdomain == subdomain
-    ).first()
-    
-    if existing_subdomain:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Subdomain already taken"
-        )
-    
+
     # Check if email is now taken (race condition protection)
     existing_email = user_by_email(db, email)
-    
+
     if existing_email:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Email already registered"
         )
-    
-    # Check if google_id is now taken (race condition protection)
-    existing_google = db.query(models.User).filter(
-        models.User.google_id == google_id
+
+    # Check if subdomain is taken
+    existing_subdomain = db.query(models.Site).filter(
+        models.Site.subdomain == subdomain
     ).first()
-    
-    if existing_google:
+
+    if existing_subdomain:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Google account already linked"
+            detail="Subdomain already taken"
         )
-    
+
     # Create new user (passwordless Google account)
     new_user = models.User(
         name=name,
@@ -367,10 +384,10 @@ async def complete_google_signup(
         google_id=google_id,
         email_verified=True,  # Google verified the email
     )
-    
+
     db.add(new_user)
     db.flush()
-    
+
     # Create default Site
     new_site = models.Site(
         user_id=new_user.user_id,
@@ -394,34 +411,44 @@ async def complete_google_signup(
     db.add(new_author)
     db.flush()
 
+    # Best-effort profile picture sync — never let a remote fetch or storage
+    # failure break account creation.
     if picture:
-        remote_img = await fetch_remote_image(picture)
-        if remote_img:
-            img_bytes, ct = remote_img
-            user_stored = save_media_bytes(
-                img_bytes,
-                category="avatar",
-                content_type=ct,
-                user_id=new_user.user_id,
-            )
-            new_user.profile_image_url = user_stored.url
+        try:
+            remote_img = await fetch_remote_image(picture)
+            if remote_img:
+                img_bytes, ct = remote_img
+                user_stored = save_media_bytes(
+                    img_bytes,
+                    category="avatar",
+                    content_type=ct,
+                    user_id=new_user.user_id,
+                )
+                new_user.profile_image_url = user_stored.url
 
-            author_stored = save_media_bytes(
-                img_bytes,
-                category="authors",
-                content_type=ct,
-                site_id=new_site.site_id,
-                entity_id=new_author.author_id,
-            )
-            new_author.profile_image_url = author_stored.url
-        else:
+                author_stored = save_media_bytes(
+                    img_bytes,
+                    category="authors",
+                    content_type=ct,
+                    site_id=new_site.site_id,
+                    entity_id=new_author.author_id,
+                )
+                new_author.profile_image_url = author_stored.url
+            else:
+                new_user.profile_image_url = picture
+                new_author.profile_image_url = picture
+        except Exception as e:
+            print(f"[oauth] profile picture sync failed: {e}")
             new_user.profile_image_url = picture
-            new_author.profile_image_url = picture
+            new_author.profile_image_url = picture or settings.default_profile_image_url
     elif settings.default_profile_image_url:
         new_author.profile_image_url = settings.default_profile_image_url
 
     db.commit()
     db.refresh(new_user)
+
+    # Consume the session only once the account has been fully created.
+    delete_oauth_session(request.session_id)
 
     from ..umami.service import enqueue_umami_provision
 
@@ -432,9 +459,9 @@ async def complete_google_signup(
         data={"sub": new_user.email, "ver": new_user.token_version},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
     )
-    
+
     refresh_token = oauth2.create_refresh_token(new_user.email)
-    
+
     response.set_cookie(
         key="refresh_token",
         value=refresh_token,
@@ -444,7 +471,7 @@ async def complete_google_signup(
         path="/",
         max_age=settings.refresh_token_expire_days * 24 * 60 * 60
     )
-    
+
     return {
         "access_token": access_token,
         "token_type": "bearer"
