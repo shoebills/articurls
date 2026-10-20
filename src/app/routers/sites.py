@@ -10,7 +10,13 @@ from ..database import get_db
 from ..schemas import site as site_schema
 from ..security.oauth2 import get_current_user, get_current_site
 from ..cache.service import schedule_tenant_purge, purge_tenant_now
-from ..storage.service import delete_media, delete_media_by_url
+from ..storage.service import (
+    delete_media,
+    delete_media_by_url,
+    fetch_remote_image,
+    get_media_data,
+    save_media_bytes,
+)
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
 from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
@@ -105,7 +111,7 @@ def list_sites(
 
 
 @router.post("/", response_model=site_schema.SiteSummary, status_code=status.HTTP_201_CREATED)
-def create_site(
+async def create_site(
     request: site_schema.SiteCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -153,6 +159,33 @@ def create_site(
     )
     db.add(new_author)
     db.flush()
+
+    if current_user.profile_image_url:
+        stored_data = get_media_data(current_user.profile_image_url)
+        if stored_data:
+            img_bytes, ct = stored_data
+            author_stored = save_media_bytes(
+                img_bytes,
+                category="authors",
+                content_type=ct or "image/jpeg",
+                site_id=new_site.site_id,
+                entity_id=new_author.author_id,
+            )
+            new_author.profile_image_url = author_stored.url
+        elif current_user.profile_image_url.startswith(("http://", "https://")):
+            remote_img = await fetch_remote_image(current_user.profile_image_url)
+            if remote_img:
+                img_bytes, ct = remote_img
+                author_stored = save_media_bytes(
+                    img_bytes,
+                    category="authors",
+                    content_type=ct,
+                    site_id=new_site.site_id,
+                    entity_id=new_author.author_id,
+                )
+                new_author.profile_image_url = author_stored.url
+            else:
+                new_author.profile_image_url = current_user.profile_image_url
 
     # Provision Umami Analytics if enabled
     try:

@@ -37,6 +37,7 @@ from ..utils import (
     validate_subdomain_or_raise,
 )
 from .. import models
+from ..storage.service import fetch_remote_image, save_media_bytes
 
 
 class ExchangeTokenRequest(BaseModel):
@@ -215,7 +216,18 @@ async def google_callback(
                 
                 # Update account profile picture if not set
                 if picture and not existing_user_by_email.profile_image_url:
-                    existing_user_by_email.profile_image_url = picture
+                    remote_img = await fetch_remote_image(picture)
+                    if remote_img:
+                        img_bytes, ct = remote_img
+                        user_stored = save_media_bytes(
+                            img_bytes,
+                            category="avatar",
+                            content_type=ct,
+                            user_id=existing_user_by_email.user_id,
+                        )
+                        existing_user_by_email.profile_image_url = user_stored.url
+                    else:
+                        existing_user_by_email.profile_image_url = picture
                 
                 db.commit()
                 db.refresh(existing_user_by_email)
@@ -378,10 +390,35 @@ async def complete_google_signup(
         site_id=new_site.site_id,
         name=name,
         slug=subdomain,
-        profile_image_url=picture or settings.default_profile_image_url,
     )
     db.add(new_author)
     db.flush()
+
+    if picture:
+        remote_img = await fetch_remote_image(picture)
+        if remote_img:
+            img_bytes, ct = remote_img
+            user_stored = save_media_bytes(
+                img_bytes,
+                category="avatar",
+                content_type=ct,
+                user_id=new_user.user_id,
+            )
+            new_user.profile_image_url = user_stored.url
+
+            author_stored = save_media_bytes(
+                img_bytes,
+                category="authors",
+                content_type=ct,
+                site_id=new_site.site_id,
+                entity_id=new_author.author_id,
+            )
+            new_author.profile_image_url = author_stored.url
+        else:
+            new_user.profile_image_url = picture
+            new_author.profile_image_url = picture
+    elif settings.default_profile_image_url:
+        new_author.profile_image_url = settings.default_profile_image_url
 
     db.commit()
     db.refresh(new_user)

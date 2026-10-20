@@ -16,9 +16,11 @@ from ..config import settings
 from fastapi import UploadFile, File
 from ..storage.service import (
     delete_media_by_url,
+    get_media_data,
     get_user_storage_usage_bytes,
     save_favicon,
     save_image,
+    save_media_bytes,
 )
 from ..utils import (
     normalize_email,
@@ -308,6 +310,7 @@ def update_user(
     if "name" in update_data and update_data["name"] is not None:
         current_user.name = update_data["name"].strip()
 
+    old_profile_image_url = current_user.profile_image_url
     if "profile_image_url" in update_data:
         current_user.profile_image_url = update_data["profile_image_url"]
 
@@ -321,6 +324,9 @@ def update_user(
     db.commit()
     db.refresh(current_user)
     db.refresh(current_site)
+
+    if "profile_image_url" in update_data and old_profile_image_url and old_profile_image_url != current_user.profile_image_url:
+        delete_media_by_url(old_profile_image_url)
 
     if site_changed:
         schedule_tenant_purge(background_tasks, current_site)
@@ -390,6 +396,30 @@ async def upload_profile_image(file: UploadFile = File(...), background_tasks: B
     db.refresh(current_user)
     if old_url and old_url != image_url:
         delete_media_by_url(old_url)
+
+    # Seed the site's default author avatar into authors storage if they don't have one yet
+    default_author = (
+        db.query(models.Author)
+        .filter(
+            models.Author.site_id == current_site.site_id,
+            models.Author.slug == current_site.subdomain,
+        )
+        .first()
+    )
+    if default_author and not default_author.profile_image_url:
+        stored_data = get_media_data(image_url)
+        if stored_data:
+            img_bytes, ct = stored_data
+            author_stored = save_media_bytes(
+                img_bytes,
+                category="authors",
+                content_type=ct or "image/jpeg",
+                site_id=current_site.site_id,
+                entity_id=default_author.author_id,
+            )
+            default_author.profile_image_url = author_stored.url
+            db.commit()
+            db.refresh(default_author)
 
     schedule_tenant_purge(background_tasks, current_site)
 

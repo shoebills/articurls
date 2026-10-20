@@ -58,6 +58,21 @@ class LocalStorageProvider:
         if abs_path.exists():
             abs_path.unlink()
 
+    def get(self, storage_key: str) -> tuple[bytes, str] | None:
+        abs_path = Path(settings.uploads_dir) / storage_key
+        if abs_path.is_file():
+            data = abs_path.read_bytes()
+            suffix = abs_path.suffix.lower()
+            ct = {
+                ".jpg": "image/jpeg",
+                ".jpeg": "image/jpeg",
+                ".png": "image/png",
+                ".webp": "image/webp",
+                ".ico": "image/x-icon",
+            }.get(suffix, "image/jpeg")
+            return data, ct
+        return None
+
 
 class R2StorageProvider:
     def __init__(self) -> None:
@@ -112,6 +127,15 @@ class R2StorageProvider:
 
     def delete(self, storage_key: str) -> None:
         self.client.delete_object(Bucket=self.bucket, Key=storage_key)
+
+    def get(self, storage_key: str) -> tuple[bytes, str] | None:
+        try:
+            resp = self.client.get_object(Bucket=self.bucket, Key=storage_key)
+            data = resp["Body"].read()
+            ct = resp.get("ContentType", "image/jpeg")
+            return data, ct
+        except Exception:
+            return None
 
 
 def _validate_image_upload(
@@ -373,3 +397,63 @@ async def save_image(
         entity_id=entity_id,
     )
     return stored.url
+
+
+def save_media_bytes(
+    data: bytes,
+    category: str,
+    *,
+    content_type: str = "image/jpeg",
+    user_id: Any | None = None,
+    site_id: Any | None = None,
+    entity_id: Any | None = None,
+) -> StoredMedia:
+    ext = _ext_from_content_type(content_type) or ".jpg"
+    filename = f"{uuid4().hex}{ext}"
+    storage_key = build_storage_key(
+        category,
+        filename,
+        user_id=user_id,
+        site_id=site_id,
+        entity_id=entity_id,
+    )
+    provider = _get_storage_provider()
+    return provider.save(data=data, storage_key=storage_key, content_type=content_type)
+
+
+def get_media_data(url: str | None) -> tuple[bytes, str] | None:
+    """Fetch stored bytes and content type for an owned storage URL."""
+    key = extract_storage_key_from_url(url)
+    if not key:
+        return None
+    try:
+        provider = _get_storage_provider()
+        return provider.get(key)
+    except Exception:
+        return None
+
+
+async def fetch_remote_image(url: str | None) -> tuple[bytes, str] | None:
+    """Download a remote public image (e.g. Google OAuth avatar) safely."""
+    if not url or not isinstance(url, str):
+        return None
+    cleaned = url.strip()
+    if not (cleaned.startswith("http://") or cleaned.startswith("https://")):
+        return None
+    try:
+        import httpx
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            resp = await client.get(cleaned, follow_redirects=True)
+            if resp.status_code == 200 and resp.content:
+                data = resp.content
+                if len(data) > MAX_IMAGE_SIZE_BYTES:
+                    return None
+                ct = resp.headers.get("content-type", "").split(";")[0].strip().lower()
+                if ct in ALLOWED_IMAGE_CONTENT_TYPES and _verify_magic_bytes(data, ct):
+                    return data, ct
+                for test_ct in ("image/jpeg", "image/png", "image/webp"):
+                    if _verify_magic_bytes(data, test_ct):
+                        return data, test_ct
+    except Exception:
+        pass
+    return None
