@@ -29,8 +29,6 @@ import {
   Check,
   ChevronLeft,
   Flame,
-  Sparkles,
-  Zap,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -208,7 +206,7 @@ function UpgradePlanContent() {
   };
 
   return (
-    <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       {/* Back link & Header */}
       <div>
         <Link
@@ -228,11 +226,7 @@ function UpgradePlanContent() {
         <Skeleton className="h-96 w-full rounded-2xl" />
       ) : (
         <>
-          <Card className="relative overflow-hidden border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
-            <div className="absolute top-0 right-0 bg-primary/10 text-primary px-4 py-1.5 rounded-bl-xl text-xs font-semibold flex items-center gap-1.5">
-              <Zap className="h-3.5 w-3.5" /> Simple, Traffic-Based Pricing
-            </div>
-
+          <Card className="border-2 border-primary/40 bg-gradient-to-b from-card to-muted/10 shadow-sm rounded-2xl">
             <CardContent className="p-6 sm:p-8 space-y-8">
               {/* Billing cycle tabs */}
               <div className="flex justify-center">
@@ -273,7 +267,6 @@ function UpgradePlanContent() {
                   <SelectContent>
                     {PRO_TIERS.map((tier, idx) => {
                       const exceeded = isExceededTier(tier.key);
-                      const recommended = usage?.recommended_tier === tier.key;
                       return (
                         <SelectItem
                           key={tier.key}
@@ -284,17 +277,6 @@ function UpgradePlanContent() {
                           <div className="flex items-center justify-between gap-4 w-full">
                             <div className="flex items-center gap-2">
                               <span className="font-semibold text-foreground text-sm">{tier.name}</span>
-                              {tier.key === "pro_100k" && !exceeded ? (
-                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                                  Popular
-                                </span>
-                              ) : null}
-                              {recommended && !exceeded ? (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-                                  <Sparkles className="h-2.5 w-2.5" />
-                                  Recommended
-                                </span>
-                              ) : null}
                             </div>
                             <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                               {exceeded ? (
@@ -472,7 +454,7 @@ function UpgradePlanContent() {
 
 function UpgradePlanFallback() {
   return (
-    <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
+    <div className="mx-auto max-w-[1100px] space-y-6 sm:space-y-8">
       <Skeleton className="h-24 w-full rounded-2xl" />
       <Skeleton className="h-96 w-full rounded-2xl" />
     </div>

@@ -39,7 +39,7 @@ class CheckoutResponse(BaseModel):
 class CheckoutRequest(BaseModel):
     plan: str = "pro"
     tier: Optional[str] = None
-    billing_cycle: str = "monthly"
+    billing_cycle: Optional[str] = "monthly"
 
 
 class ChangePlanRequest(BaseModel):
