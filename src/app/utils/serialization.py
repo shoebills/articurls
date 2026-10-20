@@ -65,6 +65,7 @@ def public_site_out(db: Session, db_site: models.Site):
         "toc_enabled": db_site.toc_enabled,
         "categories_hub_enabled": db_site.categories_hub_enabled,
         "custom_domain": db_site.custom_domain,
+        "custom_subpath": db_site.custom_subpath,
         "domain_status": db_site.domain_status,
         "umami_website_id": db_site.umami_website_id,
         "custom_head_code": db_site.custom_head_code,

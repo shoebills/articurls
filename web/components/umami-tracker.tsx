@@ -1,11 +1,18 @@
 import Script from "next/script";
+import { hasActiveCustomDomain } from "@/lib/custom-domain-redirect";
 import { buildUmamiDomains } from "@/lib/umami-domains";
-import { isUmamiProxyConfigured } from "@/lib/umami-server";
+import { isUmamiProxyConfigured, UMAMI_SCRIPT_PATH } from "@/lib/umami-server";
 import { APP_ORIGIN } from "@/lib/env";
 import type { PublicSite } from "@/lib/types";
 
 /** First-party Umami pageview tracker (Plan B — all public tenants). Server component only. */
-export function UmamiTracker({ site }: { site: PublicSite }) {
+export function UmamiTracker({
+  site,
+  customSubpath,
+}: {
+  site: PublicSite;
+  customSubpath?: string | null;
+}) {
   if (!isUmamiProxyConfigured()) return null;
 
   const websiteId = site.umami_website_id?.trim();
@@ -13,6 +20,14 @@ export function UmamiTracker({ site }: { site: PublicSite }) {
 
   const domains = buildUmamiDomains(site);
   if (!domains) return null;
+
+  const effectiveSubpath = customSubpath ?? site.custom_subpath;
+  const rawSubpath = hasActiveCustomDomain(site)
+    ? (effectiveSubpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "")
+    : "";
+  const basePath = rawSubpath ? `/${rawSubpath}` : "";
+  const scriptSrc = `${basePath}${UMAMI_SCRIPT_PATH}`;
+
   const appHost = (() => {
     try {
       return new URL(APP_ORIGIN).hostname;
@@ -45,10 +60,11 @@ export function UmamiTracker({ site }: { site: PublicSite }) {
         `}
       </Script>
       <Script
-        src="/script.js"
+        src={scriptSrc}
         strategy="afterInteractive"
         data-website-id={websiteId}
         data-domains={domains}
+        data-host-url={basePath || undefined}
         data-before-send="__articurlsUmamiBeforeSend"
       />
     </>

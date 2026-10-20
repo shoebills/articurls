@@ -10,6 +10,8 @@ import uuid
 BLOCKED_SOURCE_PATHS = frozenset({
     "/_next",
     "/api",
+    "/vitals.js",
+    "/site-vitals",
     "/dashboard",
     "/login",
     "/signup",

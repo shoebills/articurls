@@ -29,7 +29,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      ANALYTICS_HOSTNAME: analytics.articurls.com
+      ANALYTICS_HOSTNAME: vitals.articurls.com
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data

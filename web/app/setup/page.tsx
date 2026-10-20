@@ -10,7 +10,7 @@ import { AuthPageShell } from "@/components/auth-page-shell";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Check, Loader2, X } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
-import { UGC_DOMAIN } from "@/lib/env";
+import { UGC_DOMAIN, MARKETING_ORIGIN } from "@/lib/env";
 import { cn } from "@/lib/utils";
 
 /** Label → control spacing; same for text inputs. */
@@ -378,7 +378,24 @@ function SetupForm() {
             )}
           </form>
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            By continuing, you agree to our Terms of Service and Privacy Policy
+            By continuing, you agree to our{" "}
+            <a
+              href={`${MARKETING_ORIGIN}/terms`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Terms of Service
+            </a>{" "}
+            and{" "}
+            <a
+              href={`${MARKETING_ORIGIN}/privacy`}
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-foreground underline underline-offset-4 hover:text-primary"
+            >
+              Privacy Policy
+            </a>
           </p>
         </CardContent>
       </Card>

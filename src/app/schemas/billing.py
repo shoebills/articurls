@@ -71,4 +71,7 @@ class AccountUsage(BaseModel):
     tier_price_usd: int = 19
     billing_cycle: Optional[str] = None
     usage_percentage: Optional[float] = 0.0
+    # ok | warning | over_limit | locked
+    quota_status: str = "ok"
+    recommended_tier: Optional[str] = None
     sites: list[SiteUsageItem] = []

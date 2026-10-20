@@ -981,6 +981,13 @@ export async function cancelSubscription(token: string): Promise<SubscriptionOut
   });
 }
 
+export async function cancelScheduledPlanChange(token: string): Promise<SubscriptionOut> {
+  return apiFetch("/billing/change-plan/scheduled", {
+    method: "DELETE",
+    token,
+  });
+}
+
 export function isProSubscription(sub: SubscriptionOut | null): boolean {
   if (!sub) return false;
   if (sub.plan_type === "lifetime" && sub.status === "active") return true;

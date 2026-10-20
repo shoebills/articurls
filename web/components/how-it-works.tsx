@@ -1,28 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AtSign, BarChart3, Check, PenLine } from "lucide-react";
+import { Check, Globe, PenLine, TrendingUp } from "lucide-react";
 
 const STEPS = [
   {
     n: "01",
-    title: "Claim your subdomain",
-    body: "Pick your handle and your blog is live in seconds, on your own domain when you're ready.",
-    icon: AtSign,
+    title: "Connect your domain or /blog",
+    body: "Start on a free .articurls.site address, then go live on your apex domain, subdomain, or a /blog subdirectory with copy-paste config for any stack.",
+    icon: Globe,
     visual: <ClaimVisual />,
   },
   {
     n: "02",
-    title: "Write & publish",
-    body: "Draft in a calm editor, schedule it, and ship. No plugins, no setup, no maintenance.",
+    title: "Write, structure & optimize",
+    body: "Draft in a rich editor with auto-optimized images, FAQ schema, categories, and multi-author profiles. Technical SEO is handled as you type.",
     icon: PenLine,
     visual: <WriteVisual />,
   },
   {
     n: "03",
-    title: "Own & grow",
-    body: "Your domain, your subscribers, your analytics. Watch readers arrive and keep them.",
-    icon: BarChart3,
+    title: "Rank, convert & scale",
+    body: "Auto sitemaps, llms.txt, and JSON-LD bring search traffic. Conversion CTAs, newsletter webhooks, and real-time analytics turn it into growth.",
+    icon: TrendingUp,
     visual: <GrowVisual />,
   },
 ] as const;
@@ -60,6 +60,10 @@ export function HowItWorks() {
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
             Live in three steps
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            From zero to a ranking, conversion-ready publication — no plugins, servers, or engineering
+            sprints.
+          </p>
         </div>
 
         <div className="relative mt-16">
@@ -149,21 +153,29 @@ function Chrome({ label }: { label: string }) {
 function ClaimVisual() {
   return (
     <div aria-hidden>
-      <Chrome label="Create your blog" />
+      <Chrome label="Connect your domain" />
       <div className="space-y-3 p-5">
-        <p className="text-xs font-medium text-muted-foreground">Your address</p>
+        <p className="text-xs font-medium text-muted-foreground">Subdirectory route</p>
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
           <span className="flex h-11 items-center bg-muted/60 pl-3 pr-1 text-sm font-medium text-foreground">
-            yourname
+            acme.com
             <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-px bg-primary group-hover:animate-pulse" />
-            .
+            /
           </span>
-          <span className="flex h-11 flex-1 items-center pr-3 text-sm text-muted-foreground">
-            articurls.site
-          </span>
+          <span className="flex h-11 flex-1 items-center pr-3 text-sm text-muted-foreground">blog</span>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          {["Next.js", "Cloudflare", "Vercel", "Nginx"].map((s) => (
+            <span
+              key={s}
+              className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
+            >
+              {s}
+            </span>
+          ))}
         </div>
         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
-          <Check className="h-3.5 w-3.5" /> Available
+          <Check className="h-3.5 w-3.5" /> Live with automatic SSL
         </div>
       </div>
     </div>
@@ -176,14 +188,26 @@ function WriteVisual() {
       <Chrome label="Editor" />
       <div className="space-y-3 p-5">
         <div className="text-base font-semibold tracking-tight text-foreground">
-          My first post
+          Our SEO growth playbook
           <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-primary group-hover:animate-pulse" />
         </div>
         <div className="h-2.5 w-full rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-[90%] rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-2/3 rounded-full bg-foreground/[0.07]" />
-        <div className="mt-4 flex items-center justify-between border-t border-border/60 pt-3">
-          <span className="text-[11px] font-medium text-muted-foreground">Draft saved</span>
+        <div className="mt-4 rounded-xl border border-border/60 bg-muted/25 p-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground">FAQ schema</span>
+            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+              Auto-generated
+            </span>
+          </div>
+          <div className="mt-2 space-y-1.5">
+            <div className="h-2 w-3/4 rounded-full bg-foreground/[0.09]" />
+            <div className="h-2 w-2/3 rounded-full bg-foreground/[0.06]" />
+          </div>
+        </div>
+        <div className="flex items-center justify-between border-t border-border/60 pt-3">
+          <span className="text-[11px] font-medium text-muted-foreground">Draft saved · SEO ready</span>
           <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-transform group-hover:-translate-y-0.5">
             Publish
           </span>
@@ -202,17 +226,17 @@ function GrowVisual() {
       <div className="p-4 sm:p-5">
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="text-[10px] font-medium text-muted-foreground">Pageviews</p>
-            <p className="text-lg font-bold tracking-tight">3,942</p>
+            <p className="text-[10px] font-medium text-muted-foreground">Organic visitors</p>
+            <p className="text-lg font-bold tracking-tight">4,812</p>
           </div>
           <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="text-[10px] font-medium text-muted-foreground">Visitors</p>
-            <p className="text-lg font-bold tracking-tight">2,481</p>
+            <p className="text-[10px] font-medium text-muted-foreground">Conversion rate</p>
+            <p className="text-lg font-bold tracking-tight">4.7%</p>
           </div>
         </div>
 
         <div className="mt-3">
-          <p className="text-[11px] font-medium text-muted-foreground">Traffic · Last 7 days</p>
+          <p className="text-[11px] font-medium text-muted-foreground">Search traffic · Last 7 days</p>
           <svg viewBox="0 0 320 120" className="mt-1 h-24 w-full overflow-visible" preserveAspectRatio="none">
             <defs>
               <linearGradient id="hiw-pv" x1="0" y1="0" x2="0" y2="1">
@@ -234,10 +258,10 @@ function GrowVisual() {
           </svg>
           <div className="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.6_0.15_145)]" /> Pageviews
+              <span className="h-2 w-2 rounded-full bg-[oklch(0.6_0.15_145)]" /> Visitors
             </span>
             <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.58_0.18_280)]" /> Visitors
+              <span className="h-2 w-2 rounded-full bg-[oklch(0.58_0.18_280)]" /> Subscribers
             </span>
           </div>
         </div>

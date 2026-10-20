@@ -10,6 +10,7 @@ import {
   getAccountUsage,
   createCheckout,
   cancelSubscription,
+  cancelScheduledPlanChange,
   ApiError,
   isProSubscription,
 } from "@/lib/api";
@@ -49,6 +50,7 @@ export default function BillingPage() {
   const [cancelSuccessMsg, setCancelSuccessMsg] = useState<string | null>(null);
   const [busyPortal, setBusyPortal] = useState(false);
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
+  const [busyCancelScheduled, setBusyCancelScheduled] = useState(false);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -147,8 +149,23 @@ export default function BillingPage() {
     }
   }
 
+  async function handleCancelScheduledChange() {
+    if (!token) return;
+    setBusyCancelScheduled(true);
+    setErr(null);
+    try {
+      const updated = await cancelScheduledPlanChange(token);
+      setSub(updated);
+      setCancelSuccessMsg("Scheduled plan change cancelled. Your current plan stays active.");
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : "Failed to cancel scheduled change");
+    } finally {
+      setBusyCancelScheduled(false);
+    }
+  }
+
   const pro = isProSubscription(sub);
-  const isLifetime = sub?.plan_type === "lifetime";
+  const isLifetime = sub?.plan_type === "lifetime" && sub.status === "active";
   const subStatus = sub?.status?.toLowerCase() ?? "";
   const cycleLabel =
     sub?.billing_cycle === "yearly" ? "Yearly" : sub?.billing_cycle === "monthly" ? "Monthly" : "";
@@ -178,12 +195,14 @@ export default function BillingPage() {
                 <CardDescription>Your current subscription tier & billing status.</CardDescription>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button asChild size="sm" className="gap-1.5 text-xs font-semibold">
-                  <Link href="/dashboard/billing/upgrade">
-                    <Zap className="h-3.5 w-3.5" />
-                    Change Plan
-                  </Link>
-                </Button>
+                {!isLifetime ? (
+                  <Button asChild size="sm" className="gap-1.5 text-xs font-semibold">
+                    <Link href="/dashboard/billing/upgrade">
+                      <Zap className="h-3.5 w-3.5" />
+                      Change Plan
+                    </Link>
+                  </Button>
+                ) : null}
                 {sub?.plan_type === "pro" && ["active", "past_due"].includes(sub.status) ? (
                   <Button
                     size="sm"
@@ -218,7 +237,7 @@ export default function BillingPage() {
                 ) : isLifetime ? (
                   <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-800">
                     <Flame className="h-3.5 w-3.5" />
-                    Lifetime Plan
+                    Lifetime Plan · Unlimited views
                   </div>
                 ) : pro && sub ? (
                   subStatus === "past_due" ? (
@@ -264,7 +283,7 @@ export default function BillingPage() {
               ) : null}
 
               {sub?.pending_tier && sub?.pending_billing_cycle ? (
-                <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>
                     Scheduled: switches to{" "}
                     <strong className="font-semibold text-foreground">
@@ -277,6 +296,15 @@ export default function BillingPage() {
                         : "next billing date"}
                     </strong>
                   </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 rounded-md px-2 text-xs text-muted-foreground hover:text-destructive"
+                    disabled={busyCancelScheduled}
+                    onClick={handleCancelScheduledChange}
+                  >
+                    {busyCancelScheduled ? "Cancelling…" : "Cancel scheduled change"}
+                  </Button>
                 </div>
               ) : null}
             </CardContent>
@@ -291,7 +319,7 @@ export default function BillingPage() {
                   <CardTitle className="text-lg sm:text-xl font-semibold">Go Lifetime</CardTitle>
                 </div>
                 <CardDescription>
-                  Pay once — $99. Keep Pro features and 100k monthly views forever, no recurring billing.
+                  Pay once — $99. Keep all Pro features and unlimited monthly views forever, no recurring billing.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -359,7 +387,7 @@ export default function BillingPage() {
                               ? "bg-amber-500"
                               : "bg-primary"
                         }`}
-                        style={{ width: `${Math.max(2, usage.usage_percentage)}%` }}
+                        style={{ width: `${Math.max(2, Math.min(100, usage.usage_percentage))}%` }}
                       />
                     </div>
                   ) : null}

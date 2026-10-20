@@ -6,6 +6,7 @@ from .. import models, utils
 from ..security import hashing, oauth2
 from ..security.oauth2 import get_current_site
 from ..utils.serialization import user_settings_out
+from ..utils.seo_text import normalize_seo_text
 from ..schemas import user
 from ..schemas.token import Token
 from ..schemas import page as page_schema
@@ -200,8 +201,12 @@ def update_seo_settings(request: user.SeoSettingsUpdate, background_tasks: Backg
             setattr(current_site, key, value)
         if current_site.seo_robots_mode != "custom":
             current_site.seo_robots_custom = None
+        else:
+            current_site.seo_robots_custom = normalize_seo_text(current_site.seo_robots_custom)
         if current_site.seo_llms_mode != "custom":
             current_site.seo_llms_custom = None
+        else:
+            current_site.seo_llms_custom = normalize_seo_text(current_site.seo_llms_custom)
         db.commit()
         db.refresh(current_site)
         schedule_tenant_purge(background_tasks, current_site)

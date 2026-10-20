@@ -29,7 +29,7 @@ export default async function SiteLayout({ children, params }: Props) {
 
   return (
     <>
-      <UmamiTracker site={site} />
+      <UmamiTracker site={site} customSubpath={domainInfo.custom_subpath} />
       <UmamiExclusionSync />
       <GoogleIntegrations site={site} />
       {children}

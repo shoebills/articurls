@@ -7,7 +7,8 @@ import {
   buildRuntimeHostsFromEnv,
   isInternalHost,
 } from "@/lib/request-host";
-import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, DomainLookupResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
+import type { PublicBlog, PublicSite, UserPage, Category, PublicCategoryBlogsResponse, PublicAuthorDetail, PublicResolvedContent } from "@/lib/types";
+import { resolveDomainForSeo } from "@/lib/seo-domain";
 import { resolveBlogOgImage } from "@/lib/blog-images";
 import { transformImageUrl } from "@/lib/image-transform";
 import { excerptFromHtml } from "@/lib/text";
@@ -55,7 +56,7 @@ function resolveGoogleVerification(site?: PublicSite | null): Metadata["verifica
 function resolveRoutingSegments(
   rawSegments: string[],
   customSubpath?: string | null
-): { segments: string[]; basePath: string } {
+): { segments: string[]; basePath: string } | null {
   const base = (customSubpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
   if (!base) {
     return { segments: rawSegments, basePath: "" };
@@ -63,39 +64,14 @@ function resolveRoutingSegments(
 
   const baseParts = base.split("/");
   const matches = baseParts.every((part, idx) => rawSegments[idx] === part);
-  if (matches) {
-    return {
-      segments: rawSegments.slice(baseParts.length),
-      basePath: `/${base}`,
-    };
-  }
-  return { segments: rawSegments, basePath: `/${base}` };
-}
-
-const resolveDomainInfo = cache(async (host: string): Promise<DomainLookupResponse | null> => {
-  try {
-    const res = await fetch(
-      `${API_URL}/internal/domain-lookup?hostname=${encodeURIComponent(host)}`,
-      {
-        next: {
-          revalidate: 86400,
-          tags: [`domain-${host}`, "domains"],
-        },
-        headers: { "x-internal-secret": process.env.INTERNAL_API_SECRET || "" },
-      }
-    );
-    if (!res.ok) return null;
-    const data = await res.json();
-    return {
-      subdomain: data.subdomain,
-      domain_status: data.domain_status,
-      redirect_to: data.redirect_to ?? null,
-      custom_subpath: data.custom_subpath ?? null,
-    };
-  } catch {
+  if (!matches) {
     return null;
   }
-});
+  return {
+    segments: rawSegments.slice(baseParts.length),
+    basePath: `/${base}`,
+  };
+}
 
 const loadSite = loadPublicSite;
 
@@ -103,7 +79,7 @@ const loadBlogs = cache(async (subdomain: string): Promise<PublicBlog[]> => {
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, {
     next: {
       revalidate: 86400,
-      tags: [`subdomain-${subdomain}`, "posts-list", "home"],
+      tags: [`subdomain-${subdomain}`, `posts-list-${subdomain}`, `home-${subdomain}`],
     },
   });
   if (!res.ok) return [];
@@ -116,7 +92,7 @@ const loadContent = cache(async (subdomain: string, slug: string): Promise<Publi
     {
       next: {
         revalidate: 86400,
-        tags: [`subdomain-${subdomain}`, `post-${slug}`, `page-${slug}`, "posts-list"],
+        tags: [`subdomain-${subdomain}`, `post-${subdomain}-${slug}`, `page-${subdomain}-${slug}`, `posts-list-${subdomain}`],
       },
     }
   );
@@ -131,7 +107,7 @@ const loadRedirect = cache(async (subdomain: string, path: string): Promise<{ ta
     {
       next: {
         revalidate: 86400,
-        tags: [`subdomain-${subdomain}`, "redirects"],
+        tags: [`subdomain-${subdomain}`, `redirects-${subdomain}`],
       },
     }
   );
@@ -143,7 +119,7 @@ const loadPages = cache(async (subdomain: string): Promise<UserPage[]> => {
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
     next: {
       revalidate: 86400,
-      tags: [`subdomain-${subdomain}`, "pages-list", "posts-list"],
+      tags: [`subdomain-${subdomain}`, `pages-list-${subdomain}`, `posts-list-${subdomain}`],
     },
   });
   if (!res.ok) return [];
@@ -154,7 +130,7 @@ const loadCategories = cache(async (subdomain: string): Promise<Category[]> => {
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories`, {
     next: {
       revalidate: 86400,
-      tags: [`subdomain-${subdomain}`, "categories-list", "posts-list"],
+      tags: [`subdomain-${subdomain}`, `categories-list-${subdomain}`, `posts-list-${subdomain}`],
     },
   });
   if (!res.ok) return [];
@@ -167,7 +143,7 @@ const loadCategoryBlogs = cache(async (subdomain: string, slug: string): Promise
     {
       next: {
         revalidate: 86400,
-        tags: [`subdomain-${subdomain}`, `category-${slug}`, "posts-list"],
+        tags: [`subdomain-${subdomain}`, `category-${subdomain}-${slug}`, `posts-list-${subdomain}`],
       },
     }
   );
@@ -182,7 +158,7 @@ const loadAuthorBlogs = cache(async (subdomain: string, slug: string): Promise<P
     {
       next: {
         revalidate: 86400,
-        tags: [`subdomain-${subdomain}`, `author-${slug}`, "posts-list"],
+        tags: [`subdomain-${subdomain}`, `author-${subdomain}-${slug}`, `posts-list-${subdomain}`],
       },
     }
   );
@@ -197,7 +173,7 @@ const loadAllCategories = cache(async (subdomain: string): Promise<Category[]> =
     {
       next: {
         revalidate: 86400,
-        tags: [`subdomain-${subdomain}`, "categories-list"],
+        tags: [`subdomain-${subdomain}`, `categories-list-${subdomain}`],
       },
     }
   );
@@ -213,12 +189,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const runtimeHosts = buildRuntimeHostsFromEnv();
   if (isInternalHost(host, runtimeHosts)) return {};
 
-  const domainInfo = await resolveDomainInfo(host);
+  const domainInfo = await resolveDomainForSeo(host);
   if (!domainInfo) return {};
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") return {};
   const subdomain = domainInfo.subdomain;
 
-  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
+  const routing = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
+  if (!routing) return { title: "Not found" };
+  const { segments, basePath } = routing;
 
   const canonical = `https://${host}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
   const alternatesWithFeeds = (site?: PublicSite | null) => {
@@ -232,7 +210,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return Object.keys(types).length > 0 ? { canonical, types } : { canonical };
   };
 
-  if (segments[0] === "category" && segments[1]) {
+  if (segments.length === 2 && segments[0] === "category" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadCategoryBlogs(subdomain, segments[1])]);
     if (!site || !data) return { title: "Not found", icons: faviconIcons(site) };
     const categoryName = data.category.name || segments[1];
@@ -268,7 +246,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  if (segments[0] === "author" && segments[1]) {
+  if (segments.length === 2 && segments[0] === "author" && segments[1]) {
     const [site, data] = await Promise.all([loadSite(subdomain), loadAuthorBlogs(subdomain, segments[1])]);
     if (!site || !data) return { title: "Not found", icons: faviconIcons(site) };
     const author = data.author;
@@ -304,7 +282,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     };
   }
 
-  if (segments[0] === "categories") {
+  if (segments.length === 1 && segments[0] === "categories") {
     const site = await loadSite(subdomain);
     if (!site || site.categories_hub_enabled === false) return { title: "Not found", icons: faviconIcons(site) };
     const siteName = resolveSiteName(site);
@@ -420,7 +398,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     return { title: "Not found", icons: faviconIcons(site) };
   }
 
-  // Profile / Homepage
+  // Profile / Homepage — only reachable when there are no path segments left.
+  if (segments.length !== 0) return { title: "Not found" };
+
   const site = await loadSite(subdomain);
   if (!site) return { title: "Not found" };
   const title = site.meta_title || `${site.owner_name} — Articurls`;
@@ -473,7 +453,7 @@ export default async function SitePublicationPage({ params }: Props) {
 
   if (isInternalHost(host, runtimeHosts)) notFound();
 
-  const domainInfo = await resolveDomainInfo(host);
+  const domainInfo = await resolveDomainForSeo(host);
   
   if (!domainInfo) {
     notFound();
@@ -497,14 +477,22 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   const subdomain = domainInfo.subdomain;
-  const { segments, basePath } = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
 
-  const pathname = `${basePath}${segments.length === 0 ? "" : `/${segments.join("/")}`}`;
-  const siteOrigin = `https://${host}${basePath}`;
-
+  // Canonical domain consolidation runs before subpath validation so the
+  // default subdomain always redirects to the custom domain (including its
+  // configured subpath), even when the incoming URL lacks the subpath prefix.
   if (domainInfo.redirect_to) {
+    const configuredBase = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
+    const basePath = configuredBase ? `/${configuredBase}` : "";
+    const pathname = `${basePath}${rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`}`;
     permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
   }
+
+  const routing = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
+  if (!routing) notFound();
+  const { segments, basePath } = routing;
+
+  const siteOrigin = `https://${host}${basePath}`;
 
   // ── Site-level redirects (checked before content resolution) ────────────
   const lookupPath = segments.length === 0 ? "/" : `/${segments.join("/")}`;
@@ -560,8 +548,7 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   // ── Category page: /category/[slug] ───────────────────────────────────────
-  if (segments[0] === "category") {
-    if (!segments[1]) notFound();
+  if (segments.length === 2 && segments[0] === "category") {
     const categorySlug = segments[1];
     const [site, pages, categories, data] = await Promise.all([
       loadSite(subdomain),
@@ -590,8 +577,7 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   // ── Author page: /author/[slug] ───────────────────────────────────────────
-  if (segments[0] === "author") {
-    if (!segments[1]) notFound();
+  if (segments.length === 2 && segments[0] === "author") {
     const authorSlug = segments[1];
     const [site, pages, categories, data] = await Promise.all([
       loadSite(subdomain),
@@ -620,7 +606,7 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   // ── Categories Hub page: /categories ──────────────────────────────────────
-  if (segments[0] === "categories") {
+  if (segments.length === 1 && segments[0] === "categories") {
     const [site, pages, allCategories] = await Promise.all([
       loadSite(subdomain),
       loadPages(subdomain),
@@ -645,6 +631,8 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   // ── Publication homepage: / ───────────────────────────────────────────────
+  if (segments.length !== 0) notFound();
+
   const [site, blogs, pages, categories] = await Promise.all([
     loadSite(subdomain),
     loadBlogs(subdomain),

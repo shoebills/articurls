@@ -6,6 +6,7 @@ from .. import models
 from ..security.oauth2 import get_current_user
 from ..security.oauth2 import get_current_site
 from ..utils.rate_limit import check_rate_limit_user
+from ..utils.traffic_quota import require_within_traffic_quota
 from datetime import datetime, timezone
 from typing import Optional
 from fastapi.responses import StreamingResponse
@@ -17,7 +18,8 @@ import httpx
 
 router = APIRouter(
     tags=["Analytics"],
-    prefix="/analytics"
+    prefix="/analytics",
+    dependencies=[Depends(require_within_traffic_quota)],
 )
 
 _ANALYTICS_READ_LIMIT = 120

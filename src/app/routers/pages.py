@@ -18,6 +18,7 @@ from ..config import settings
 from .. import utils
 from ..utils import maybe_replace_placeholder_page_slug_on_publish, unique_page_slug
 from ..utils.rate_limit import check_rate_limit_user
+from ..utils.traffic_quota import require_within_traffic_quota
 
 _PAGE_CREATE_LIMIT = 50
 _PAGE_CREATE_BURST = 20
@@ -44,6 +45,7 @@ async def upload_page_media(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-upload",
@@ -100,6 +102,7 @@ def delete_page_media(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-upload",
@@ -141,6 +144,7 @@ def delete_page_media_by_url(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-upload",
@@ -235,6 +239,7 @@ def create_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-create",
@@ -274,6 +279,7 @@ def delete_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-delete",
@@ -321,6 +327,7 @@ def update_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-update",
@@ -422,6 +429,7 @@ def publish_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-publish",
@@ -472,6 +480,7 @@ def archive_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-publish",
@@ -511,6 +520,7 @@ def unpublish_page(
     db: Session = Depends(get_db),
     current_user=Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
     check_rate_limit_user(
         "page-publish",

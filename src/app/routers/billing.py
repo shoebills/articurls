@@ -24,10 +24,20 @@ from ..schemas.billing import (
     AccountUsage,
 )
 from ..payments.client import client as dodo_client
-from ..payments.catalog import TIERS, product_id_for, resolve_product
+from ..payments.catalog import TIERS, TIER_KEYS, product_id_for, resolve_product
 from ..config import settings
 from ..domains.utils import restore_domain_access, start_domain_grace_period
 from ..email.service import send_payment_failed_email, send_subscription_cancelled_email
+from ..utils.traffic_quota import (
+    QUOTA_STATUS_LOCKED,
+    QUOTA_STATUS_OVER_LIMIT,
+    compute_account_usage,
+)
+
+
+def _tier_rank(tier_key: str | None) -> int:
+    """Position of a tier in the catalog (ascending allowance). Unknown -> -1."""
+    return TIER_KEYS.index(tier_key) if tier_key in TIER_KEYS else -1
 
 
 router = APIRouter(
@@ -123,6 +133,44 @@ def _resolve_tier_and_cycle(event_data):
     if metadata_tier in TIERS:
         return metadata_tier, None
     return None, None
+
+
+def _extract_scheduled_change(event_data):
+    """Return ``(present, value)`` for ``scheduled_change`` in a subscription payload.
+
+    Webhook payloads are typed SDK models (or raw dicts); absent vs explicit
+    null vs populated must never be conflated: an absent field says nothing
+    about a pending change, an explicit null says "no pending change".
+    """
+    if isinstance(event_data, dict):
+        return ("scheduled_change" in event_data), event_data.get("scheduled_change")
+    fields_set = getattr(event_data, "model_fields_set", None)
+    if fields_set is not None and "scheduled_change" not in fields_set:
+        return False, None
+    return True, _prop_get(event_data, "scheduled_change")
+
+
+def _sync_pending_change(db_sub, event_data, *, clear_when_absent: bool = False) -> None:
+    """Mirror Dodo's live ``scheduled_change`` into pending_tier/pending_billing_cycle.
+
+    ``clear_when_absent`` is used for terminal events (plan_changed/renewed)
+    where an absent field means "no schedule remains"; plain sync events
+    (active/updated) only react to explicit payloads.
+    """
+    present, scheduled = _extract_scheduled_change(event_data)
+
+    if scheduled is not None and scheduled is not False:
+        product_id = _prop_get(scheduled, "product_id")
+        tier, cycle = resolve_product(product_id)
+        if tier:
+            db_sub.pending_tier = tier
+            if cycle:
+                db_sub.pending_billing_cycle = cycle
+        return
+
+    if present or clear_when_absent:
+        db_sub.pending_tier = None
+        db_sub.pending_billing_cycle = None
 
 
 def _is_in_dodo_trial(sid: str | None) -> bool:
@@ -261,6 +309,10 @@ def _revoke_current_lifetime_access(db_user, db_sub) -> bool:
     for db_site in db_user.sites:
         start_domain_grace_period(db_site)
     db_sub.status = "lapsed"
+    db_sub.tier = None
+    db_sub.billing_cycle = None
+    db_sub.pending_tier = None
+    db_sub.pending_billing_cycle = None
     db_sub.dodo_subscription_id = None
     db_sub.current_period_start = None
     db_sub.current_period_end = None
@@ -370,27 +422,69 @@ def change_subscription_plan(
     if not target_product_id:
         raise HTTPException(status_code=503, detail="This tier is not configured yet")
 
-    if db_sub.tier == tier and (db_sub.billing_cycle or "monthly") == cycle:
-        return ChangePlanResponse(applied=False, scheduled=False)
-
-    in_trial = _is_in_dodo_trial(db_sub.dodo_subscription_id)
+    current_tier = db_sub.tier if db_sub.tier in TIER_KEYS else None
     current_cycle = db_sub.billing_cycle or "monthly"
 
-    if in_trial:
+    if current_tier == tier and current_cycle == cycle:
+        # Already on the target plan.
+        return ChangePlanResponse(applied=False, scheduled=False)
+
+    if db_sub.pending_tier == tier and (db_sub.pending_billing_cycle or "monthly") == cycle:
+        # A scheduled change to the same plan is already pending.
+        return ChangePlanResponse(
+            applied=False,
+            scheduled=True,
+            effective_date=db_sub.current_period_end,
+        )
+
+    # Traffic-quota guards: never let customers pick a plan they have already
+    # outgrown this month, and never let them escape to Monthly while over limit.
+    usage = compute_account_usage(db, current_user)
+    total_views = usage["total_pageviews"]
+    target_limit = TIERS[tier]["views"]
+    if target_limit is not None and total_views >= target_limit:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already used more traffic than this plan allows this month. Choose a higher tier.",
+        )
+    if (
+        current_cycle == "yearly"
+        and cycle == "monthly"
+        and usage["quota_status"] in (QUOTA_STATUS_OVER_LIMIT, QUOTA_STATUS_LOCKED)
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail="Switching from yearly to monthly is unavailable while you are over your traffic limit. Upgrade to a higher yearly tier instead.",
+        )
+
+    is_upgrade_or_equal = current_tier is None or _tier_rank(tier) >= _tier_rank(current_tier)
+
+    # Dodo change_plan state machine (verified against dodopayments>=1.121 API
+    # constraints; keep_cycle cannot combine with next_billing_date and cannot
+    # shorten intervals, and prorated_immediately must use effective_at="immediately").
+    if _is_in_dodo_trial(db_sub.dodo_subscription_id):
         mode = "do_not_bill"
         effective_at = "immediately"
-        scheduled = False
-        on_payment_failure = {}
+        charge_guarded = False
     elif current_cycle == "yearly" and cycle == "monthly":
+        # Interval change: schedule for the day the paid year ends.
         mode = "full_immediately"
         effective_at = "next_billing_date"
-        scheduled = True
-        on_payment_failure = {}
-    else:
-        mode = "difference_immediately"
+        charge_guarded = False
+    elif is_upgrade_or_equal:
+        if current_cycle == "monthly" and cycle == "yearly":
+            # Longer interval resets the billing anchor and bills the prorated diff.
+            mode = "prorated_immediately"
+        else:
+            # Same-cycle tier upgrade: charge the prorated diff but keep the anchor.
+            mode = "prorated_immediately_keep_cycle"
         effective_at = "immediately"
-        scheduled = False
-        on_payment_failure = {"on_payment_failure": "prevent_change"}
+        charge_guarded = True
+    else:
+        # Any downgrade: apply on the next renewal, never refund/credit immediately.
+        mode = "full_immediately"
+        effective_at = "next_billing_date"
+        charge_guarded = False
 
     try:
         dodo_client.subscriptions.change_plan(
@@ -399,25 +493,106 @@ def change_subscription_plan(
             proration_billing_mode=mode,
             quantity=1,
             effective_at=effective_at,
-            **on_payment_failure,
+            **({"on_payment_failure": "prevent_change"} if charge_guarded else {}),
         )
     except Exception as e:
+        if type(e).__name__ == "ConflictError":
+            raise HTTPException(
+                status_code=409,
+                detail="A plan change is already processing for this subscription. Try again in a few minutes.",
+            )
         raise HTTPException(status_code=502, detail=f"Plan change failed: {e}")
+
+    scheduled = effective_at == "next_billing_date"
 
     if scheduled:
         db_sub.pending_tier = tier
         db_sub.pending_billing_cycle = cycle
+        applied = False
+        effective_date = db_sub.current_period_end
     else:
-        db_sub.pending_tier = None
-        db_sub.pending_billing_cycle = None
+        # A "200 OK" only means Dodo accepted the request. Confirm remotely that
+        # the subscription's active product really moved before we unlock the
+        # target tier; otherwise a failed/settling charge leaves the old plan.
+        applied = False
+        effective_date = None
+        try:
+            remote_sub = dodo_client.subscriptions.retrieve(db_sub.dodo_subscription_id)
+            applied = _prop_get(remote_sub, "product_id") == target_product_id
+        except Exception as retrieve_err:
+            print(
+                f"[billing] change-plan verify retrieve failed sid={db_sub.dodo_subscription_id}: {retrieve_err}",
+                file=sys.stderr,
+            )
+        if applied:
+            db_sub.tier = tier
+            db_sub.billing_cycle = cycle
+            db_sub.pending_tier = None
+            db_sub.pending_billing_cycle = None
+        # else: the charge is still settling; subscription.plan_changed will apply it.
 
     db.commit()
 
     return ChangePlanResponse(
-        applied=not scheduled,
+        applied=applied,
         scheduled=scheduled,
-        effective_date=db_sub.current_period_end if scheduled else None,
+        effective_date=effective_date,
     )
+
+
+@router.delete("/change-plan/scheduled", response_model=SubscriptionOut)
+def cancel_scheduled_plan_change(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    check_rate_limit_user("change-plan-cancel", current_user.user_id, 5, 60, burst=3)
+
+    db_sub = db.query(models.Subscriptions).filter(
+        models.Subscriptions.user_id == current_user.user_id
+    ).first()
+
+    if (
+        not db_sub
+        or db_sub.plan_type != "pro"
+        or not db_sub.dodo_subscription_id
+        or db_sub.status != "active"
+    ):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No active subscription.")
+    if not db_sub.pending_tier:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No scheduled plan change to cancel.")
+
+    try:
+        dodo_client.subscriptions.cancel_change_plan(db_sub.dodo_subscription_id)
+    except Exception as e:
+        print(
+            f"[billing] cancel_change_plan failed sid={db_sub.dodo_subscription_id}: {e}",
+            file=sys.stderr,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to cancel the scheduled plan change with the payment provider.",
+        )
+
+    try:
+        remote_sub = dodo_client.subscriptions.retrieve(db_sub.dodo_subscription_id)
+        if _prop_get(remote_sub, "scheduled_change"):
+            raise HTTPException(
+                status_code=status.HTTP_502_BAD_GATEWAY,
+                detail="The scheduled plan change could not be cancelled. Please try again shortly.",
+            )
+    except HTTPException:
+        raise
+    except Exception as retrieve_err:
+        print(
+            f"[billing] cancel verify retrieve failed sid={db_sub.dodo_subscription_id}: {retrieve_err}",
+            file=sys.stderr,
+        )
+
+    db_sub.pending_tier = None
+    db_sub.pending_billing_cycle = None
+    db.commit()
+    db.refresh(db_sub)
+    return db_sub
 
 
 def process_webhook_event(db: Session, event_type: str, event_data: Any, event_id: str | None = None) -> bool:
@@ -452,19 +627,32 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                     if db_sub.status == "cancelled" and cancel_scheduled:
                         # Cancel-at-period-end already recorded locally; keep it.
                         pass
-                    elif apply_period_update:
-                        db_sub.dodo_subscription_id = incoming_dodo_sid
-                        db_sub.plan_type = "pro"
-                        db_sub.status = "active"
-                        db_sub.current_period_start = _to_aware_dt(incoming_start)
-                        db_sub.current_period_end = _to_aware_dt(incoming_end)
-                        if effective_tier:
-                            db_sub.tier = effective_tier
-                            db_sub.billing_cycle = effective_cycle
+                    else:
+                        if apply_period_update:
+                            db_sub.dodo_subscription_id = incoming_dodo_sid
+                            db_sub.plan_type = "pro"
+                            db_sub.status = "active"
+                            db_sub.current_period_start = _to_aware_dt(incoming_start)
+                            db_sub.current_period_end = _to_aware_dt(incoming_end)
 
-                    if event_type == "subscription.plan_changed":
-                        db_sub.pending_tier = None
-                        db_sub.pending_billing_cycle = None
+                        # Apply tier/cycle even when the period doesn't move:
+                        # keep-cycle upgrades, do_not_bill changes, and scheduled
+                        # plan changes all keep next_billing_date unchanged, and
+                        # a completed precedence change arrives as plan_changed.
+                        if effective_tier and (
+                            apply_period_update or event_type == "subscription.plan_changed"
+                        ):
+                            db_sub.tier = effective_tier
+                            if effective_cycle:
+                                db_sub.billing_cycle = effective_cycle
+
+                        # Stale replays (older period than current, no plan_changed)
+                        # skip tier sync above, so a late event cannot regress tier.
+                        _sync_pending_change(
+                            db_sub,
+                            event_data,
+                            clear_when_absent=event_type == "subscription.plan_changed",
+                        )
                 else:
                     new_sub = models.Subscriptions(
                         user_id=db_user.user_id,
@@ -624,9 +812,11 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                         db_sub.current_period_end = _to_aware_dt(incoming_end)
                         if effective_tier:
                             db_sub.tier = effective_tier
-                            db_sub.billing_cycle = effective_cycle
-                    db_sub.pending_tier = None
-                    db_sub.pending_billing_cycle = None
+                            if effective_cycle:
+                                db_sub.billing_cycle = effective_cycle
+                    # A scheduled downgrade completes on renewal; sync any change
+                    # Dodo still has queued instead of blindly clearing pending.
+                    _sync_pending_change(db_sub, event_data, clear_when_absent=True)
 
                 else:
                     db_sub = models.Subscriptions(
@@ -721,6 +911,8 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                                 transaction.subscription_id = tx_sub.subscription_id
 
                 if is_lifetime:
+                    # A one-time lifetime purchase means no Dodo subscription
+                    # stream applies to the account anymore.
                     if db_sub and db_sub.dodo_subscription_id:
                         _cancel_dodo_subscription(db_sub.dodo_subscription_id)
 
@@ -729,6 +921,10 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                     if db_sub:
                         db_sub.plan_type = "lifetime"
                         db_sub.tier = None
+                        db_sub.billing_cycle = None
+                        db_sub.dodo_subscription_id = None
+                        db_sub.pending_tier = None
+                        db_sub.pending_billing_cycle = None
                         db_sub.status = "active"
                         db_sub.current_period_end = None
                     else:
@@ -738,6 +934,7 @@ def process_webhook_event(db: Session, event_type: str, event_data: Any, event_i
                             plan_type="lifetime",
                             status="active",
                             tier=None,
+                            billing_cycle=None,
                             current_period_start=_to_aware_dt(_prop_get(event_data, "created_at")),
                             current_period_end=None,
                         )
@@ -1039,62 +1236,4 @@ def get_account_usage(
     current_user: models.User = Depends(get_current_user),
 ):
     check_rate_limit_user("billing-usage", current_user.user_id, 30, 60, burst=10)
-    from ..umami.client import UmamiClient
-    from ..umami.service import get_umami_period_timestamps
-    
-    db_sub = db.query(models.Subscriptions).filter(models.Subscriptions.user_id == current_user.user_id).first()
-    plan_type = db_sub.plan_type if db_sub else "pro"
-    billing_cycle = db_sub.billing_cycle if db_sub and db_sub.billing_cycle else None
-    tier_key = db_sub.tier if db_sub and db_sub.tier else None
-
-    if tier_key in TIERS:
-        tier_limit = TIERS[tier_key]["views"]
-        cycle = billing_cycle or "monthly"
-        price = TIERS[tier_key][cycle] if cycle in ("monthly", "yearly") else TIERS[tier_key]["monthly"]
-    elif plan_type == "lifetime":
-        tier_limit = 100_000
-        price = 99
-    else:
-        tier_limit = 10_000
-        price = 19
-
-    # The traffic allowance is a calendar month, independent of the billing cycle.
-    start_at, end_at = get_umami_period_timestamps("this_month")
-
-    umami_client = UmamiClient()
-
-    sites = db.query(models.Site).filter(models.Site.user_id == current_user.user_id).all()
-    site_items = []
-    total_views = 0
-
-    for site in sites:
-        views = 0
-        if site.umami_website_id and umami_client.configured:
-            try:
-                stats = umami_client.get_website_stats_sync(site.umami_website_id, start_at=start_at, end_at=end_at)
-                views = stats.get("pageviews", 0)
-            except Exception:
-                views = 0
-
-        total_views += views
-        site_items.append({
-            "site_id": site.site_id,
-            "subdomain": site.subdomain,
-            "site_name": site.site_name or site.subdomain,
-            "pageviews": views,
-        })
-
-    if tier_limit is not None and tier_limit > 0:
-        usage_pct = min(100.0, round((total_views / tier_limit * 100), 1))
-    else:
-        usage_pct = None
-
-    return {
-        "total_pageviews": total_views,
-        "tier_limit": tier_limit,
-        "plan_type": plan_type,
-        "tier_price_usd": price,
-        "billing_cycle": billing_cycle,
-        "usage_percentage": usage_pct,
-        "sites": site_items,
-    }
+    return AccountUsage.model_validate(compute_account_usage(db, current_user))

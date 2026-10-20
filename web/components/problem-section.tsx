@@ -1,18 +1,24 @@
 import { ArrowDown, ArrowRight } from "lucide-react";
 
 const SCATTERED = [
-  { label: "WordPress", x: "left-0 top-0", rotate: "-rotate-3" },
-  { label: "Maintenance", x: "right-2 top-1", rotate: "rotate-2" },
-  { label: "Media", x: "left-10 top-16", rotate: "rotate-1" },
-  { label: "Plugins", x: "right-0 top-20", rotate: "-rotate-2" },
-  { label: "Hosting", x: "left-2 top-32", rotate: "rotate-3" },
-  { label: "SSL", x: "right-10 top-32", rotate: "-rotate-1" },
-  { label: "Newsletter", x: "left-16 top-48", rotate: "rotate-2" },
-  { label: "Analytics", x: "right-4 top-52", rotate: "-rotate-3" },
-  { label: "DNS", x: "left-4 top-64", rotate: "rotate-1" },
+  { label: "WordPress & plugins", x: "left-0 top-0", rotate: "-rotate-3" },
+  { label: "Security patches", x: "right-2 top-1", rotate: "rotate-2" },
+  { label: "/blog reverse proxy", x: "left-6 top-16", rotate: "rotate-1" },
+  { label: "Manual schema markup", x: "right-0 top-20", rotate: "-rotate-2" },
+  { label: "Broken redirects", x: "left-1 top-32", rotate: "rotate-3" },
+  { label: "Slow Core Web Vitals", x: "right-8 top-32", rotate: "-rotate-1" },
+  { label: "Separate analytics", x: "left-12 top-48", rotate: "rotate-2" },
+  { label: "Hosting & SSL", x: "right-2 top-52", rotate: "-rotate-3" },
+  { label: "Newsletter forms", x: "left-2 top-64", rotate: "rotate-1" },
 ] as const;
 
-const CALM = ["One dashboard", "One editor", "One audience", "One workflow", "One subscription"] as const;
+const CALM = [
+  { title: "Domain or /blog in minutes", sub: "Apex, subdomain, or subdirectory — auto SSL, zero config." },
+  { title: "Automatic technical SEO", sub: "Sitemaps, canonicals, JSON-LD, and AI-ready llms.txt." },
+  { title: "Auto 301 redirects", sub: "Slug changes never break rankings or backlinks." },
+  { title: "Conversion CTAs", sub: "End-of-post banners and newsletter webhooks built in." },
+  { title: "Real-time analytics", sub: "Visitors, referrers, and geo — privacy-friendly, no setup." },
+] as const;
 
 export function ProblemSection() {
   return (
@@ -21,10 +27,14 @@ export function ProblemSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">The real problem</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            You don&apos;t want another tool.
+            Your blog shouldn&apos;t be a
             <br />
-            <span className="text-muted-foreground">You want less work.</span>
+            <span className="text-muted-foreground">nine-tool engineering project.</span>
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            Marketing teams juggle plugins, developers, and scattered analytics just to publish content that
+            ranks. Articurls replaces the whole stack with one SEO-native platform.
+          </p>
         </div>
 
         <div className="mt-14 grid items-stretch gap-6 lg:grid-cols-[1fr_auto_1fr] lg:gap-4">
@@ -58,15 +68,16 @@ export function ProblemSection() {
             <p className="relative inline-flex items-center gap-2 text-sm font-medium text-primary">
               With Articurls
             </p>
-            <p className="relative mt-1 text-lg font-semibold tracking-tight">One calm place</p>
+            <p className="relative mt-1 text-lg font-semibold tracking-tight">One SEO-native platform</p>
 
             <ul className="relative mt-6 flex h-[19rem] flex-col justify-center gap-3">
               {CALM.map((item) => (
                 <li
-                  key={item}
-                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3 text-base font-medium"
+                  key={item.title}
+                  className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-background/70 px-4 py-3"
                 >
-                  {item}
+                  <span className="text-base font-medium">{item.title}</span>
+                  <span className="text-xs leading-relaxed text-muted-foreground">{item.sub}</span>
                 </li>
               ))}
             </ul>

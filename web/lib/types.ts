@@ -223,6 +223,7 @@ export interface PublicSite {
   toc_enabled?: boolean;
   categories_hub_enabled?: boolean;
   custom_domain?: string | null;
+  custom_subpath?: string | null;
   domain_status?: DomainStatus | null;
   rss_enabled?: boolean;
   custom_head_code?: string | null;
@@ -375,6 +376,8 @@ export interface SiteUsageItem {
   pageviews: number;
 }
 
+export type QuotaStatus = "ok" | "warning" | "over_limit" | "locked";
+
 export interface AccountUsage {
   total_pageviews: number;
   tier_limit: number | null;
@@ -382,6 +385,8 @@ export interface AccountUsage {
   tier_price_usd: number;
   billing_cycle: "monthly" | "yearly" | null;
   usage_percentage: number | null;
+  quota_status: QuotaStatus;
+  recommended_tier: string | null;
   sites: SiteUsageItem[];
 }
 
@@ -651,13 +656,6 @@ export interface SubfolderSnippets {
   nginx: string;
   caddy: string;
   apache: string;
-}
-
-export interface DomainLookupResponse {
-  subdomain: string;
-  domain_status: string;
-  redirect_to: string | null;
-  custom_subpath?: string | null;
 }
 
 export type UmamiMetricsType =

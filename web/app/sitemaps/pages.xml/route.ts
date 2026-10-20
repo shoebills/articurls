@@ -49,12 +49,30 @@ export async function GET(_req: NextRequest): Promise<Response> {
       changefreq: "daily",
       priority: "1.0",
     },
-    // Add more marketing pages here as they're created:
-    // { loc: `${MARKETING_ORIGIN}/pricing`, lastmod: today, changefreq: "weekly", priority: "0.9" },
-    // { loc: `${MARKETING_ORIGIN}/features`, lastmod: today, changefreq: "weekly", priority: "0.9" },
-    // { loc: `${MARKETING_ORIGIN}/about`, lastmod: today, changefreq: "monthly", priority: "0.7" },
-    // { loc: `${MARKETING_ORIGIN}/terms`, lastmod: today, changefreq: "monthly", priority: "0.5" },
-    // { loc: `${MARKETING_ORIGIN}/privacy`, lastmod: today, changefreq: "monthly", priority: "0.5" },
+    {
+      loc: `${MARKETING_ORIGIN}/about`,
+      lastmod: today,
+      changefreq: "monthly",
+      priority: "0.7",
+    },
+    {
+      loc: `${MARKETING_ORIGIN}/contact`,
+      lastmod: today,
+      changefreq: "monthly",
+      priority: "0.7",
+    },
+    {
+      loc: `${MARKETING_ORIGIN}/terms`,
+      lastmod: today,
+      changefreq: "monthly",
+      priority: "0.5",
+    },
+    {
+      loc: `${MARKETING_ORIGIN}/privacy`,
+      lastmod: today,
+      changefreq: "monthly",
+      priority: "0.5",
+    },
   ];
 
   return new Response(buildXml(entries), {

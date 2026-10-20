@@ -58,16 +58,13 @@ class VercelClient:
                 if response.status_code in (200, 201):
                     return response.json()
                 if response.status_code == 409:
-                    return await self.get_project_domain(name)
+                    return self.get_project_domain_sync(name)
                 raise VercelError(response.status_code, response.text)
         except VercelError:
             raise
         except Exception as exc:
             logger.warning("Vercel add_project_domain failed for %s: %s", name, exc)
             return None
-
-    async def get_project_domain(self, name: str) -> Optional[Dict[str, Any]]:
-        return self.get_project_domain_sync(name)
 
     def get_project_domain_sync(self, name: str) -> Optional[Dict[str, Any]]:
         if not self.configured:
@@ -94,25 +91,6 @@ class VercelClient:
     def is_project_domain_verified_sync(self, name: str) -> bool:
         domain = self.get_project_domain_sync(name)
         return bool(domain and domain.get("verified"))
-
-    async def verify_project_domain(self, name: str) -> Optional[Dict[str, Any]]:
-        if not self.configured:
-            return None
-        url = (
-            f"{self.base_url}/v9/projects/{self.project}/domains/"
-            f"{name.lower().strip()}/verify"
-        )
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
-                response = await client.post(
-                    url, headers=self._headers(), params=self._query()
-                )
-                if response.status_code in (200, 201):
-                    return response.json()
-                return None
-        except Exception as exc:
-            logger.warning("Vercel verify_project_domain failed for %s: %s", name, exc)
-            return None
 
     async def remove_project_domain(self, name: str) -> bool:
         if not self.configured:

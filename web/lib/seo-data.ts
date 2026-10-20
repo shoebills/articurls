@@ -9,8 +9,8 @@
  *   categories → show_in_menu only (hidden categories excluded)
  */
 
-import { API_URL } from "@/lib/env";
-import type { PublicBlog, UserPage, Category, Author, RedirectRule } from "@/lib/types";
+import { API_URL, assetUrl } from "@/lib/env";
+import type { PublicBlog, UserPage, Category, Author, RedirectRule, PublicSite } from "@/lib/types";
 
 export interface RssItem {
   title: string;
@@ -35,7 +35,12 @@ export async function fetchPublishedPosts(
   try {
     const res = await fetch(
       `${API_URL}/${encodeURIComponent(subdomain)}/blogs`,
-      { cache: "no-store" }
+      {
+        next: {
+          revalidate: 86400,
+          tags: [`subdomain-${subdomain}`, `posts-list-${subdomain}`],
+        },
+      }
     );
     if (!res.ok) return [];
     return res.json();
@@ -54,7 +59,12 @@ export async function fetchPages(subdomain: string): Promise<UserPage[]> {
   try {
     const res = await fetch(
       `${API_URL}/${encodeURIComponent(subdomain)}/pages`,
-      { cache: "no-store" }
+      {
+        next: {
+          revalidate: 86400,
+          tags: [`subdomain-${subdomain}`, `pages-list-${subdomain}`],
+        },
+      }
     );
     if (!res.ok) return [];
     return res.json();
@@ -73,7 +83,12 @@ export async function fetchCategories(subdomain: string, all = false): Promise<C
     const q = all ? "?all=true" : "";
     const res = await fetch(
       `${API_URL}/${encodeURIComponent(subdomain)}/categories${q}`,
-      { cache: "no-store" }
+      {
+        next: {
+          revalidate: 86400,
+          tags: [`subdomain-${subdomain}`, `categories-list-${subdomain}`],
+        },
+      }
     );
     if (!res.ok) return [];
     return res.json();
@@ -91,7 +106,12 @@ export async function fetchAuthors(subdomain: string): Promise<Author[]> {
   try {
     const res = await fetch(
       `${API_URL}/${encodeURIComponent(subdomain)}/authors`,
-      { cache: "no-store" }
+      {
+        next: {
+          revalidate: 86400,
+          tags: [`subdomain-${subdomain}`],
+        },
+      }
     );
     if (!res.ok) return [];
     return res.json();
@@ -111,7 +131,10 @@ export async function fetchRedirects(subdomain: string): Promise<RedirectRule[]>
     const res = await fetch(
       `${API_URL}/internal/redirects?subdomain=${encodeURIComponent(subdomain)}`,
       {
-        cache: "no-store",
+        next: {
+          revalidate: 86400,
+          tags: [`subdomain-${subdomain}`, `redirects-${subdomain}`],
+        },
         headers: {
           "x-internal-secret": process.env.INTERNAL_API_SECRET || "",
         },
@@ -122,6 +145,54 @@ export async function fetchRedirects(subdomain: string): Promise<RedirectRule[]>
   } catch {
     return [];
   }
+}
+
+function toTimestamp(value: string | null | undefined): number {
+  if (!value) return 0;
+  const t = new Date(value).getTime();
+  return Number.isNaN(t) ? 0 : t;
+}
+
+/**
+ * Build the sorted, filtered feed items shared by the RSS and Atom routes.
+ */
+export function buildFeedItems(
+  posts: PublicBlog[],
+  categories: Category[],
+  site: PublicSite,
+  siteOrigin: string,
+  maxItems = 100,
+): { items: RssItem[]; lastBuildDate: string | null } {
+  const catMap = new Map(categories.map((c) => [c.category_id, c.name]));
+
+  const sorted = [...posts]
+    .filter((p) => !p.noindex)
+    .sort(
+      (a, b) => toTimestamp(b.published_at || b.updated_at) - toTimestamp(a.published_at || a.updated_at),
+    );
+
+  const items: RssItem[] = sorted.slice(0, maxItems).map((post) => {
+    const link = `${siteOrigin}/${encodeURIComponent(post.slug)}`;
+    const categoryNames = (post.category_ids || [])
+      .map((id) => catMap.get(id))
+      .filter((name): name is string => !!name);
+
+    return {
+      title: post.title || "Untitled post",
+      link,
+      guid: link,
+      pubDate: post.published_at || post.updated_at,
+      description: post.meta_description || post.excerpt || "",
+      authorName: post.author?.name || site.owner_name,
+      categoryNames,
+      imageUrl: post.featured_image_url ? assetUrl(post.featured_image_url) : null,
+    };
+  });
+
+  return {
+    items,
+    lastBuildDate: sorted[0]?.updated_at || sorted[0]?.published_at || null,
+  };
 }
 
 function escapeXml(value: string): string {

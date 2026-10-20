@@ -1,5 +1,4 @@
 import { AudienceSection } from "@/components/audience-section";
-import { CustomizeSection } from "@/components/customize-section";
 import { FaqSection } from "@/components/faq-section";
 import { HeroShowcase } from "@/components/hero-showcase";
 import { HowItWorks } from "@/components/how-it-works";
@@ -30,24 +29,34 @@ export default function MarketingPage() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-[calc(3.5rem+0.75rem+4rem+env(safe-area-inset-top))] sm:px-6 sm:pt-[calc(4rem+1rem+4rem)] lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-[calc(4rem+1rem+5rem)]">
             <div className="min-w-0">
-              <h1 className="max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
-                Publish your own blog in minutes
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                </span>
+                Built for SEO-driven B2B &amp; B2C teams
+              </div>
+              <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+                The blog platform that&nbsp;ranks &amp; converts
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Everything your blog needs. Nothing you need to maintain.
-                No servers, plugins or updates.
+                Launch on your custom domain or a <span className="font-medium text-foreground">/blog subdirectory</span> in
+                minutes. Technical SEO, AI search, structured data, conversion CTAs, and real-time
+                analytics — zero maintenance.
               </p>
               <div className="mt-16 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>
-                  <a href={signupUrl}>Start free</a>
+                  <a href={signupUrl}>Start for free</a>
                 </Button>
                 <Button size="lg" variant="outline" className="h-12 min-h-12 bg-background/80" asChild>
-                  <a href="#customize">See examples</a>
+                  <a href="#features">Explore features</a>
                 </Button>
               </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                No credit card required
-              </p>
+              <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                <span>No credit card required</span>
+                <span className="text-muted-foreground/40" aria-hidden>·</span>
+                <span>7-day free Pro trial</span>
+              </div>
             </div>
 
             <div className="relative w-full pt-4 lg:pt-0">
@@ -61,8 +70,6 @@ export default function MarketingPage() {
         <HowItWorks />
 
         <ProductShowcase />
-
-        <CustomizeSection />
 
         <AudienceSection />
 
@@ -79,15 +86,16 @@ export default function MarketingPage() {
               className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 select-none bg-gradient-to-b from-white/[0.06] to-transparent bg-clip-text text-[22vw] font-semibold leading-none tracking-tighter text-transparent sm:text-[16rem]"
               aria-hidden
             >
-              Own it
+              Rank
             </p>
 
             <div className="relative">
               <h2 className="mx-auto max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl">
-                Own your words.<br />Own your audience.
+                Own your content.<br />Own your traffic.
               </h2>
               <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/60 sm:text-lg">
-                Your writing deserves more than a profile.
+                Stop renting reach from social feeds. Build an asset that compounds in search — and keeps
+                working for you.
               </p>
               <div className="mt-10 flex justify-center">
                 <Button
@@ -95,10 +103,10 @@ export default function MarketingPage() {
                   className="h-14 bg-white px-10 text-base text-neutral-950 shadow-2xl shadow-primary/20 hover:bg-white/90"
                   asChild
                 >
-                  <a href={signupUrl}>Start Free</a>
+                  <a href={signupUrl}>Start for free</a>
                 </Button>
               </div>
-              <p className="mt-5 text-sm text-white/40">No credit card required</p>
+              <p className="mt-5 text-sm text-white/40">No credit card required · 7-day free trial</p>
             </div>
           </div>
         </section>

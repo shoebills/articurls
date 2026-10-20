@@ -118,15 +118,16 @@ export function PricingSection() {
                 features={[
                   currentTier.viewsText,
                   "Unlimited sites & publications",
-                  "Unlimited posts & pages",
-                  "Unlimited media storage",
-                  "Custom domain with automatic SSL",
-                  "Collect email subscribers",
-                  "Advanced analytics",
-                  "Subscriber analytics",
-                  "RSS feed, sitemap & robots.txt",
-                  "Custom favicon & code injection",
-                  "Search engine optimization",
+                  "Unlimited posts, pages & authors",
+                  "Custom domain & /blog subdirectory",
+                  "Automatic SSL on every domain",
+                  "Technical SEO & AI search (llms.txt)",
+                  "JSON-LD, FAQ schema & auto 301s",
+                  "Newsletter capture & webhook sync",
+                  "Conversion CTAs on posts & pages",
+                  "Real-time analytics & world map",
+                  "GA4, Search Console & AdSense",
+                  "RSS, Atom, sitemap & robots.txt",
                 ]}
                 checkColor="text-primary"
                 textClass="text-foreground/80"
@@ -199,7 +200,7 @@ function LifetimeCard({ href }: { href: string }) {
       <div className="mt-6 border-t border-background/15 pt-6">
         <FeatureList
           features={[
-            "100,000 monthly pageviews",
+            "Unlimited monthly pageviews",
             "Everything in Pro",
             "No recurring charges, ever",
             "Future Pro features included",
@@ -241,7 +242,7 @@ function StickyCta({ href }: { href: string }) {
             <p className="truncate text-xs text-muted-foreground">No credit card required</p>
           </div>
           <Button className="h-11 shrink-0 px-5 shadow-md shadow-primary/20" asChild>
-            <a href={href}>Start trial</a>
+            <a href={href}>Start for free</a>
           </Button>
         </div>
       </div>

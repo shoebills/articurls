@@ -48,7 +48,7 @@ function withSecurityHeaders(response: NextResponse): NextResponse {
   return response;
 }
 
-/** Add cache headers with granular Cache-Tags for multi-tenant purging */
+/** Add cache headers with a tenant-scoped Cache-Tag for multi-tenant purging */
 function withCacheHeaders(
   response: NextResponse,
   host: string,
@@ -59,42 +59,19 @@ function withCacheHeaders(
     !pathname.startsWith("/dashboard") &&
     !pathname.startsWith("/login") &&
     !pathname.startsWith("/signup") &&
+    !pathname.startsWith("/setup") &&
+    !pathname.startsWith("/verify") &&
+    !pathname.startsWith("/forgot-password") &&
+    !pathname.startsWith("/reset-password") &&
     !pathname.startsWith("/api") &&
     !pathname.startsWith("/_next") &&
     !pathname.startsWith("/internal");
 
   if (!isPublicContent) return response;
 
-  // Generate cache tags
-  const tenantTag = `tenant-${host}`;
-  const tags: string[] = [tenantTag];
-
-  // Extract content-specific tags based on path pattern
-  const categoryMatch = pathname.match(/\/category\/([^\/]+)/);
-  const authorMatch = pathname.match(/\/author\/([^\/]+)/);
-
-  if (pathname === "/" || pathname === "" || pathname === "/categories") {
-    // Home/profile or categories index page - also a listing page
-    tags.push("home");
-    tags.push("posts-list");
-  } else if (categoryMatch) {
-    // Category listing page - add posts-list for cascade purging
-    tags.push(`category-${categoryMatch[1]}`);
-    tags.push("posts-list");
-  } else if (authorMatch) {
-    // Author page
-    tags.push(`author-${authorMatch[1]}`);
-    tags.push("posts-list");
-  } else {
-    // Direct slug (e.g. /my-post, /about, /blog/my-post, /page/about)
-    const segments = pathname.split("/").filter(Boolean);
-    const slug = segments[segments.length - 1];
-    if (slug) {
-      tags.push(`post-${slug}`);
-      tags.push(`page-${slug}`);
-      tags.push("posts-list");
-    }
-  }
+  // Single tenant-scoped edge tag; the backend purges with revalidateTag on
+  // `tenant-{host}`, so granular tags here would never be invalidated.
+  const tags: string[] = [`tenant-${host}`];
 
   // Set cache tags for targeted purging via backend (Vercel API + Next.js revalidateTag).
   response.headers.set("Vercel-Cache-Tag", tags.join(","));
@@ -119,10 +96,23 @@ const APP_ALLOWED_PREFIXES = [
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const EXEMPT_EXACT = ["/favicon.ico", "/robots.txt", "/sitemap.xml", "/rss.xml", "/atom.xml", "/feed.xml", "/feed.atom", "/script.js", "/llms.txt", "/ads.txt"];
+const SHARED_EXACT = ["/favicon.ico", "/vitals.js", "/site-vitals"];
 
-function isExemptPath(pathname: string): boolean {
-  return EXEMPT_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
+// Tenant-specific SEO/feed files, rewritten to /site/[domain]/<file> with the
+// original path prefix passed via x-articurls-basepath for subpath validation.
+const TENANT_SEO_FILES = new Set([
+  "robots.txt",
+  "ads.txt",
+  "sitemap.xml",
+  "llms.txt",
+  "rss.xml",
+  "atom.xml",
+  "feed.xml",
+  "feed.atom",
+]);
+
+function isSharedPath(pathname: string): boolean {
+  return SHARED_EXACT.includes(pathname) || EXEMPT_PREFIXES.some((p) => pathname.startsWith(p));
 }
 
 export function proxy(request: NextRequest) {
@@ -170,20 +160,25 @@ export function proxy(request: NextRequest) {
   if (!isInternalHost(host, runtimeHosts)) {
     const tenantHeaders = withTenantHostHeader(request.headers, host);
 
-    if (isExemptPath(pathname)) {
+    if (isSharedPath(pathname)) {
       return NextResponse.next({
         request: { headers: tenantHeaders },
       });
     }
 
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
-    const lastSegment = "/" + (segments[segments.length - 1] || "");
+    const last = segments[segments.length - 1] || "";
 
-    if (segments.length > 1 && EXEMPT_EXACT.includes(lastSegment)) {
+    // Tenant SEO/feed files: rewrite to /site/[domain]/<file>, passing the
+    // requested prefix so the handler can validate it against the subpath.
+    if (last && TENANT_SEO_FILES.has(last)) {
+      const prefix = segments.slice(0, -1).join("/");
+      const headers = new Headers(tenantHeaders);
+      headers.set("x-articurls-basepath", prefix ? `/${prefix}` : "");
       const rewriteUrl = request.nextUrl.clone();
-      rewriteUrl.pathname = lastSegment;
+      rewriteUrl.pathname = `/site/${encodeURIComponent(host)}/${last}`;
       return NextResponse.rewrite(rewriteUrl, {
-        request: { headers: tenantHeaders },
+        request: { headers },
       });
     }
 
@@ -193,16 +188,21 @@ export function proxy(request: NextRequest) {
         ? `/site/${encodeURIComponent(host)}`
         : `/site/${encodeURIComponent(host)}/${segments.join("/")}`;
 
-    return withCacheHeaders(
+    const response = withCacheHeaders(
       withSecurityHeaders(NextResponse.rewrite(rewriteUrl, {
         request: { headers: tenantHeaders },
       })),
       host,
       pathname
     );
+    response.headers.set(
+      "Link",
+      '</llms.txt>; rel="describedby"; type="text/markdown"'
+    );
+    return response;
   }
 
-  // Marketing domain — /[subdomain], /[subdomain]/blog/[slug], etc.
+  // Marketing domain — marketing pages only (user content lives on tenant hosts).
   let appHost = "";
   try {
     appHost = new URL(appOrigin).hostname;
@@ -219,19 +219,16 @@ export function proxy(request: NextRequest) {
   }
 
   // App domain — dashboard/auth only; redirect public paths to marketing.
-  if (isExemptPath(pathname)) return NextResponse.next();
+  if (isSharedPath(pathname)) return NextResponse.next();
 
   const allowedOnAppHost = APP_ALLOWED_PREFIXES.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
 
   if (allowedOnAppHost) return withSecurityHeaders(NextResponse.next());
-  // Public paths on app host (marketing domain blog/user pages) get cached
-  return withCacheHeaders(
-    withSecurityHeaders(NextResponse.next()),
-    host,
-    pathname
-  );
+
+  const url = new URL(pathname, marketingOrigin);
+  return NextResponse.redirect(url, 308);
 }
 
 export const config = {

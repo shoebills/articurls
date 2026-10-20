@@ -74,21 +74,12 @@ def build_dns_instructions(hostname: str, vercel_domain_info: Optional[dict] = N
     return instructions
 
 
-def mark_domain_active(db_site: models.Site, hostname: str) -> None:
+def mark_domain_active(db_site: models.Site) -> None:
     from datetime import datetime, timezone
-
-    from ..redis_client import redis_client
-    from ..config import settings
 
     db_site.domain_status = models.DomainStatus.ACTIVE
     db_site.verified_at = datetime.now(timezone.utc)
     db_site.domain_dns_instructions = None
-    try:
-        redis_client.delete(f"domain_lookup:{hostname}")
-        if db_site.subdomain and settings.ugc_domain:
-            redis_client.delete(f"domain_lookup:{db_site.subdomain}.{settings.ugc_domain}")
-    except Exception:
-        pass
 
     from ..umami.service import enqueue_umami_domain_sync
 
@@ -107,7 +98,7 @@ def apply_domain_verification(
             "Vercel is not configured; activating domain %s without DNS verification.",
             hostname,
         )
-        mark_domain_active(db_site, hostname)
+        mark_domain_active(db_site)
         return DomainVerifyOut(
             verification_status="verified",
             domain_status=models.DomainStatus.ACTIVE,
@@ -115,9 +106,8 @@ def apply_domain_verification(
             message=None,
         )
 
-    try_vercel_verify(hostname, vercel_domain)
-    if is_vercel_verified(hostname):
-        mark_domain_active(db_site, hostname)
+    if try_vercel_verify(hostname, vercel_domain):
+        mark_domain_active(db_site)
         return DomainVerifyOut(
             verification_status="verified",
             domain_status=models.DomainStatus.ACTIVE,

@@ -1,107 +1,17 @@
 /**
- * Unified sitemap handler — serves both articurls.com and custom domains.
- *
- * The proxy exempts /sitemap.xml from the custom-domain rewrite, so ALL
- * requests for /sitemap.xml — whether from articurls.com or blog.example.com —
- * land here. resolveTenantHost() reads Host (CF SaaS) or x-original-host (legacy Worker).
- * is used to distinguish the two cases.
- *
- * ── Custom domain request (x-original-host is a non-internal hostname) ──────
- *   - Resolves the domain to a subdomain via /internal/domain-lookup.
- *   - Returns 404 for pending/expired/none (don't index unverified domains).
- *   - All URLs use https://{custom_domain}/... — NEVER articurls.com.
- *
- * ── Marketing domain request (no x-original-host, or internal hostname) ─────
- *   - Returns platform-level marketing pages sitemap index only.
- *   - User content is never indexed on articurls.com in the new policy.
+ * Platform sitemap — serves articurls.com (marketing) and articurls.site
+ * (UGC landing). Tenant sitemaps live under /site/[domain]/sitemap.xml and
+ * are reached via the proxy rewrite.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { API_URL, MARKETING_ORIGIN, UGC_ORIGIN } from "@/lib/env";
+import { MARKETING_ORIGIN, UGC_DOMAIN, UGC_ORIGIN } from "@/lib/env";
 import {
   buildRuntimeHostsFromEnv,
-  isInternalHost,
   resolveTenantHostFromRequest,
 } from "@/lib/request-host";
-import type { PublicBlog, PublicSite, UserPage } from "@/lib/types";
-import { resolveDomainForSeo } from "@/lib/seo-domain";
-import { fetchAuthors, fetchRedirects } from "@/lib/seo-data";
-import type { RedirectRule } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
-
-// ── Data loaders ──────────────────────────────────────────────────────────────
-
-async function loadSite(subdomain: string): Promise<PublicSite | null> {
-  try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return null;
-    return res.json();
-  } catch {
-    return null;
-  }
-}
-
-async function loadBlogs(subdomain: string): Promise<PublicBlog[]> {
-  try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-async function loadPages(subdomain: string): Promise<UserPage[]> {
-  try {
-    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-interface Category {
-  category_id: string;
-  slug: string;
-  show_in_menu: boolean;
-}
-
-async function loadCategories(subdomain: string, all = false): Promise<Category[]> {
-  try {
-    const q = all ? "?all=true" : "";
-    const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories${q}`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return [];
-    return res.json();
-  } catch {
-    return [];
-  }
-}
-
-function withTrailingSlash(url: string, enabled: boolean): string {
-  if (!enabled || url.endsWith("/")) return url;
-  return `${url}/`;
-}
-
-function isExternalCanonical(canonicalUrl: string | null | undefined, siteOrigin: string): boolean {
-  if (!canonicalUrl) return false;
-  try {
-    return new URL(canonicalUrl).origin !== new URL(siteOrigin).origin;
-  } catch {
-    return false;
-  }
-}
-
-// ── XML builder ───────────────────────────────────────────────────────────────
 
 function buildXml(
   entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[],
@@ -131,150 +41,10 @@ function buildSitemapIndex(sitemaps: { loc: string; lastmod?: string }[]): strin
   return `<?xml version="1.0" encoding="UTF-8"?>\n<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${items}\n</sitemapindex>`;
 }
 
-function isoDate(dateStr: string | null | undefined): string | undefined {
-  if (!dateStr) return undefined;
-  try {
-    return new Date(dateStr).toISOString().split("T")[0];
-  } catch {
-    return undefined;
-  }
-}
-
-// ── Custom domain sitemap ─────────────────────────────────────────────────────
-
-async function customDomainSitemap(host: string): Promise<Response> {
-  const domainInfo = await resolveDomainForSeo(host);
-
-  if (!domainInfo) return new NextResponse(null, { status: 404 });
-
-  // Only active and grace domains get a sitemap.
-  // pending → not verified yet, don't index.
-  // expired → 301 redirects to articurls, don't index here.
-  if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  if (domainInfo.redirect_to) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const { subdomain } = domainInfo;
-  const site = await loadSite(subdomain);
-
-  if (!site) return new NextResponse(null, { status: 404 });
-
-  // Site-level kill switches: sitemap disabled or indexing off → no sitemap.
-  if (site.seo_sitemap_enabled === false || site.seo_indexing_enabled === false) {
-    return new NextResponse(null, { status: 404 });
-  }
-
-  const customSubpath = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
-  const basePath = customSubpath ? `/${customSubpath}` : "";
-  const siteOrigin = `https://${host}${basePath}`;
-  const trailingSlash = site.seo_trailing_slash_listings === true;
-  const today = new Date().toISOString().split("T")[0];
-
-  const [blogs, pages, categories, authors, redirects] = await Promise.all([
-    loadBlogs(subdomain),
-    loadPages(subdomain),
-    loadCategories(subdomain, true),
-    fetchAuthors(subdomain),
-    fetchRedirects(subdomain),
-  ]);
-
-  // URLs that are redirected away must not appear in the sitemap.
-  const redirectedSources = new Set(
-    (redirects as RedirectRule[]).map((r) => r.source_path)
-  );
-  const isRedirected = (path: string) => redirectedSources.has(path);
-
-  // Sitemap is a contract: only indexable, canonical, same-host URLs.
-  const indexableBlogs = blogs.filter(
-    (b) => !b.noindex && !isExternalCanonical(b.canonical_url, siteOrigin) && !isRedirected(`/${b.slug}`)
-  );
-  const indexablePages = pages.filter(
-    (p) => !p.noindex && !site.seo_noindex_pages && !isExternalCanonical(p.canonical_url, siteOrigin) && !isRedirected(`/${p.slug}`)
-  );
-  const indexableCategories = site.seo_noindex_categories
-    ? []
-    : categories.filter((c) => !isRedirected(`/category/${c.slug}`));
-  const indexableAuthors = authors.filter(
-    (a) => !a.noindex && !site.seo_noindex_authors && !isRedirected(`/author/${a.slug}`)
-  );
-
-  const entries: { loc: string; lastmod?: string; changefreq?: string; priority?: string }[] = [];
-
-  // Profile / home — custom domain root, no subdomain prefix
-  if (!isRedirected("/")) {
-    entries.push({ loc: withTrailingSlash(siteOrigin, trailingSlash), lastmod: today, changefreq: "weekly", priority: "1.0" });
-  }
-
-  if (site.categories_hub_enabled !== false && indexableCategories.length > 0 && !isRedirected("/categories")) {
-    entries.push({
-      loc: withTrailingSlash(`${siteOrigin}/categories`, trailingSlash),
-      changefreq: "weekly",
-      priority: "0.6",
-    });
-  }
-
-  for (const blog of indexableBlogs) {
-    entries.push({
-      loc: `${siteOrigin}/${encodeURIComponent(blog.slug)}`,
-      lastmod: isoDate(blog.updated_at) ?? isoDate(blog.published_at),
-      changefreq: "monthly",
-      priority: "0.8",
-    });
-  }
-
-  for (const page of indexablePages) {
-    entries.push({
-      loc: `${siteOrigin}/${encodeURIComponent(page.slug)}`,
-      lastmod: isoDate(page.updated_at),
-      changefreq: "monthly",
-      priority: "0.6",
-    });
-  }
-
-  for (const cat of indexableCategories) {
-    entries.push({
-      loc: withTrailingSlash(`${siteOrigin}/category/${encodeURIComponent(cat.slug)}`, trailingSlash),
-      changefreq: "weekly",
-      priority: "0.5",
-    });
-  }
-
-  for (const author of indexableAuthors) {
-    entries.push({
-      loc: withTrailingSlash(`${siteOrigin}/author/${encodeURIComponent(author.slug)}`, trailingSlash),
-      changefreq: "weekly",
-      priority: "0.5",
-    });
-  }
-
-  return new Response(buildXml(entries), {
-    headers: {
-      "Content-Type": "application/xml; charset=utf-8",
-      "Cache-Control": "public, max-age=300, stale-while-revalidate=3600",
-      "Vary": "x-original-host",
-    },
-  });
-}
-
-// ── Marketing domain sitemap ──────────────────────────────────────────────────
-
-/**
- * Root sitemap index for articurls.com.
- *
- * Returns a sitemap index pointing only to:
- * - /sitemaps/pages.xml (marketing pages)
- *
- * Fallback: If anything fails, returns a basic sitemap with homepage only.
- */
 async function marketingDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
   try {
-    // Return sitemap index pointing only to marketing pages
     const sitemaps = [
       {
         loc: `${MARKETING_ORIGIN}/sitemaps/pages.xml`,
@@ -290,11 +60,9 @@ async function marketingDomainSitemap(): Promise<Response> {
       },
     });
   } catch (error) {
-    // Unexpected error — fall through to fallback
     console.error("Failed to generate sitemap index:", error);
   }
 
-  // Fallback: Return basic sitemap with platform homepage only
   const entries = [
     { loc: `${MARKETING_ORIGIN}/`, lastmod: today, changefreq: "weekly", priority: "1.0" },
   ];
@@ -308,12 +76,6 @@ async function marketingDomainSitemap(): Promise<Response> {
   });
 }
 
-// ── UGC domain sitemap ────────────────────────────────────────────────────────
-
-/**
- * Sitemap for articurls.site — landing page only.
- * User content is on subdomains ({subdomain}.articurls.site/sitemap.xml).
- */
 async function ugcDomainSitemap(): Promise<Response> {
   const today = new Date().toISOString().split("T")[0];
 
@@ -329,17 +91,11 @@ async function ugcDomainSitemap(): Promise<Response> {
   });
 }
 
-// ── Route handler ─────────────────────────────────────────────────────────────
-
 export async function GET(req: NextRequest): Promise<Response> {
   const runtimeHosts = buildRuntimeHostsFromEnv();
   const tenantHost = resolveTenantHostFromRequest(req, runtimeHosts);
 
-  if (!isInternalHost(tenantHost, runtimeHosts)) {
-    return customDomainSitemap(tenantHost);
-  }
-
-  if (tenantHost.toLowerCase() === "articurls.site") {
+  if (tenantHost.toLowerCase() === UGC_DOMAIN) {
     return ugcDomainSitemap();
   }
 

@@ -7,6 +7,7 @@ import { AppSidebar, DashboardSidebarPanel } from "@/components/app-sidebar";
 import { BrandLogo } from "@/components/brand-logo";
 import { Button } from "@/components/ui/button";
 import { TrialExpiredPopup } from "@/components/trial-expired-overlay";
+import { QuotaExceededPopup, TrafficAlertBanner } from "@/components/traffic-quota-overlay";
 import { useAuth } from "@/lib/auth-context";
 import { UGC_DOMAIN } from "@/lib/env";
 import { getSitePublicRoot } from "@/lib/public-url";
@@ -19,7 +20,7 @@ const POPUP_EXEMPT_PREFIXES = ["/dashboard/billing", "/dashboard/support"];
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
-  const { user, activeSite, isPro, subscription, loading } = useAuth();
+  const { user, activeSite, isPro, subscription, usage, loading } = useAuth();
   const mobileHeaderRef = useRef<HTMLElement | null>(null);
   const mobileMenuId = useId();
   const publicBlogHref = activeSite
@@ -33,6 +34,15 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
   const isLocked = !isPro && !!subscription && !loading;
   const isPopupExempt = POPUP_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
   const showTrialPopup = isLocked && !isPopupExempt;
+
+  const quotaLocked = usage?.quota_status === "locked";
+  const quotaAlert =
+    !!usage &&
+    (usage.quota_status === "warning" || usage.quota_status === "over_limit") &&
+    !isLocked &&
+    !quotaLocked;
+  const showQuotaPopup = !!quotaLocked && !isPopupExempt;
+  const showQuotaBanner = quotaAlert && !isPopupExempt;
 
   const close = useCallback(() => setOpen(false), []);
 
@@ -195,8 +205,14 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         </header>
 
         <main className="relative flex-1 touch-pan-y bg-background px-4 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-8 sm:px-5 sm:pb-6 sm:pt-8 md:p-8 md:pb-10">
+          {showQuotaBanner && usage ? (
+            <div className="mb-6">
+              <TrafficAlertBanner usage={usage} />
+            </div>
+          ) : null}
           {children}
           {showTrialPopup ? <TrialExpiredPopup /> : null}
+          {showQuotaPopup && usage ? <QuotaExceededPopup usage={usage} /> : null}
         </main>
         </div>
       </div>

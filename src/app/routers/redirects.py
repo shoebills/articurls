@@ -124,7 +124,13 @@ def create_redirect(
     current_user: models.User = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
-    check_rate_limit_user("redirect-create", current_user.user_id, _REDIRECT_CREATE_LIMIT, _REDIRECT_RATE_WINDOW)
+    check_rate_limit_user(
+        "redirect-write",
+        current_user.user_id,
+        _REDIRECT_CREATE_LIMIT,
+        _REDIRECT_RATE_WINDOW,
+        burst=_REDIRECT_WRITE_BURST,
+    )
 
     _reject_self_loop(request.source_path, request.target_url)
     _ensure_no_conflict(db, current_site.site_id, request.source_path)

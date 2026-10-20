@@ -26,6 +26,22 @@ class UmamiError(Exception):
 class UmamiClient:
     _token: Optional[str] = None
     _login_lock = threading.Lock()
+    _http_client: Optional[httpx.Client] = None
+    _client_lock = threading.Lock()
+
+    @classmethod
+    def _get_http_client(cls) -> httpx.Client:
+        if cls._http_client is None or cls._http_client.is_closed:
+            with cls._client_lock:
+                if cls._http_client is None or cls._http_client.is_closed:
+                    cls._http_client = httpx.Client(
+                        timeout=15.0,
+                        limits=httpx.Limits(
+                            max_keepalive_connections=20,
+                            max_connections=50,
+                        ),
+                    )
+        return cls._http_client
 
     @property
     def configured(self) -> bool:
@@ -46,16 +62,16 @@ class UmamiClient:
             "username": settings.umami_api_username,
             "password": settings.umami_api_password,
         }
-        with httpx.Client(timeout=30.0) as client:
-            response = client.post(url, json=payload)
-            if response.status_code != 200:
-                raise UmamiError(response.status_code, response.text)
-            data = response.json()
-            token = data.get("token")
-            if not token:
-                raise UmamiError(response.status_code, "Missing token in login response")
-            cls._token = token
-            return token
+        client = cls._get_http_client()
+        response = client.post(url, json=payload)
+        if response.status_code != 200:
+            raise UmamiError(response.status_code, response.text)
+        data = response.json()
+        token = data.get("token")
+        if not token:
+            raise UmamiError(response.status_code, "Missing token in login response")
+        cls._token = token
+        return token
 
     @classmethod
     def _auth_headers_sync(cls, force_login: bool = False) -> Dict[str, str]:
@@ -78,40 +94,40 @@ class UmamiClient:
         json: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         url = f"{self.base_url}{path}"
-        with httpx.Client(timeout=30.0) as client:
-            kwargs: Dict[str, Any] = {}
+        client = self.__class__._get_http_client()
+        kwargs: Dict[str, Any] = {}
+        if params:
+            kwargs["params"] = params
+        # For backwards compatibility, if json is provided and no params, treat as params for GET
+        if method.upper() == "GET" and json and not params:
+            kwargs["params"] = json
+        elif json and not params:
+            kwargs["json"] = json
+        response = client.request(
+            method,
+            url,
+            headers=self.__class__._auth_headers_sync(),
+            **kwargs,
+        )
+        if response.status_code == 401:
+            kwargs_retry: Dict[str, Any] = {}
             if params:
-                kwargs["params"] = params
-            # For backwards compatibility, if json is provided and no params, treat as params for GET
+                kwargs_retry["params"] = params
             if method.upper() == "GET" and json and not params:
-                kwargs["params"] = json
+                kwargs_retry["params"] = json
             elif json and not params:
-                kwargs["json"] = json
+                kwargs_retry["json"] = json
             response = client.request(
                 method,
                 url,
-                headers=self.__class__._auth_headers_sync(),
-                **kwargs,
+                headers=self.__class__._auth_headers_sync(force_login=True),
+                **kwargs_retry,
             )
-            if response.status_code == 401:
-                kwargs_retry: Dict[str, Any] = {}
-                if params:
-                    kwargs_retry["params"] = params
-                if method.upper() == "GET" and json and not params:
-                    kwargs_retry["params"] = json
-                elif json and not params:
-                    kwargs_retry["json"] = json
-                response = client.request(
-                    method,
-                    url,
-                    headers=self.__class__._auth_headers_sync(force_login=True),
-                    **kwargs_retry,
-                )
-            if response.status_code >= 400:
-                raise UmamiError(response.status_code, response.text)
-            if not response.content:
-                return {}
-            return response.json()
+        if response.status_code >= 400:
+            raise UmamiError(response.status_code, response.text)
+        if not response.content:
+            return {}
+        return response.json()
 
     def create_website_sync(self, *, name: str, domain: str) -> Dict[str, Any]:
         return self._request_sync(
@@ -144,48 +160,6 @@ class UmamiClient:
             f"/api/websites/{website_id}",
             json=payload,
         )
-
-    def get_share_sync(self, website_id: str) -> Optional[str]:
-        """Return the share URL for the first existing share of a website, or None."""
-        try:
-            data = self._request_sync("GET", f"/api/websites/{website_id}/shares")
-            shares = data.get("data", [])
-            if not shares:
-                return None
-            slug = shares[0].get("slug")
-            if not slug:
-                return None
-            return f"{self.base_url}/share/{slug}"
-        except UmamiError as exc:
-            if exc.status_code == 404:
-                return None
-            raise
-
-    def enable_share_sync(self, website_id: str, name: str = "Analytics") -> str:
-        """Create a share page for a website and return the share URL."""
-        data = self._request_sync(
-            "POST",
-            f"/api/websites/{website_id}/shares",
-            json={
-                "name": name,
-                "parameters": {
-                    "overview": True,
-                    "events": True,
-                    "sessions": True,
-                },
-            },
-        )
-        slug = data.get("slug")
-        if not slug:
-            raise UmamiError(500, "Missing slug in Umami share response")
-        return f"{self.base_url}/share/{slug}"
-
-    def get_or_create_share_sync(self, website_id: str, name: str = "Analytics") -> str:
-        """Return the share URL, creating a share page if none exists."""
-        existing = self.get_share_sync(website_id)
-        if existing:
-            return existing
-        return self.enable_share_sync(website_id, name=name)
 
     def get_website_stats_sync(
         self,

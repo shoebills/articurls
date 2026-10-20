@@ -22,7 +22,7 @@ from .activation import (
 )
 from ..vercel.client import VercelClient, VercelError
 from ..utils.rate_limit import check_rate_limit_user
-from .utils import normalize_hostname, validate_hostname
+from .utils import invalidate_domain_lookup_cache, normalize_hostname, reset_domain_columns, validate_hostname
 
 logger = logging.getLogger(__name__)
 
@@ -39,13 +39,6 @@ _DOMAIN_READ_BURST = 10
 _DOMAIN_VERIFY_LIMIT = 10
 _DOMAIN_VERIFY_WINDOW = 60
 _DOMAIN_VERIFY_BURST = 2
-
-
-def _invalidate_domain_cache(hostname: str) -> None:
-    try:
-        redis_client.delete(f"domain_lookup:{hostname}")
-    except Exception:
-        pass
 
 
 def _canonical_url_for_subdomain(
@@ -144,7 +137,12 @@ async def add_domain(
         vercel_domain = vc.get_project_domain_sync(hostname) if vc.configured else None
     dns_instructions = build_dns_instructions(hostname, vercel_domain)
 
+    old_domain = db_site.custom_domain
+    if old_domain and old_domain != hostname:
+        await _remove_vercel_domain(old_domain)
+
     db_site.custom_domain = hostname
+    db_site.custom_subpath = None
     db_site.domain_status = models.DomainStatus.PENDING
     db_site.domain_dns_instructions = [r.model_dump() for r in dns_instructions]
     db_site.verified_at = None
@@ -161,14 +159,11 @@ async def add_domain(
             detail="This domain is already in use by another account.",
         )
 
-    _invalidate_domain_cache(hostname)
-    if db_site.subdomain and settings.ugc_domain:
-        _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
-
-    hosts = [hostname]
-    if db_site.subdomain and settings.ugc_domain:
-        hosts.append(f"{db_site.subdomain}.{settings.ugc_domain}")
-    background_tasks.add_task(purge_domain_lookup_tags, hosts)
+    hosts = invalidate_domain_lookup_cache(hostname, db_site.subdomain)
+    if old_domain and old_domain != hostname:
+        hosts.extend(invalidate_domain_lookup_cache(old_domain, None))
+    if hosts:
+        background_tasks.add_task(purge_domain_lookup_tags, hosts)
 
     return DomainAddResponse(
         hostname=hostname,
@@ -263,10 +258,9 @@ async def verify_domain(
     db.commit()
 
     if result.domain_status == models.DomainStatus.ACTIVE:
-        hosts = [db_site.custom_domain]
-        if db_site.subdomain and settings.ugc_domain:
-            hosts.append(f"{db_site.subdomain}.{settings.ugc_domain}")
-        background_tasks.add_task(purge_domain_lookup_tags, hosts)
+        hosts = invalidate_domain_lookup_cache(db_site.custom_domain, db_site.subdomain)
+        if hosts:
+            background_tasks.add_task(purge_domain_lookup_tags, hosts)
 
     return result
 
@@ -291,23 +285,15 @@ async def delete_domain(
     if old_domain := db_site.custom_domain:
         await _remove_vercel_domain(old_domain)
 
-    db_site.custom_domain = None
-    db_site.custom_subpath = None
-    db_site.domain_status = models.DomainStatus.NONE
-    db_site.domain_dns_instructions = None
-    db_site.verified_at = None
-    db_site.grace_started_at = None
-    db_site.grace_expires_at = None
-
+    reset_domain_columns(db_site)
     db.commit()
-    if old_domain:
-        _invalidate_domain_cache(old_domain)
-    if db_site.subdomain and settings.ugc_domain:
-        _invalidate_domain_cache(f"{db_site.subdomain}.{settings.ugc_domain}")
-
-    hosts = [h for h in (old_domain, f"{db_site.subdomain}.{settings.ugc_domain}" if db_site.subdomain and settings.ugc_domain else None) if h]
+    hosts = invalidate_domain_lookup_cache(old_domain, db_site.subdomain)
     if hosts:
         background_tasks.add_task(purge_domain_lookup_tags, hosts)
+
+    from ..umami.service import enqueue_umami_domain_sync
+
+    enqueue_umami_domain_sync(db_site.user_id)
 
     return {"message": "Custom domain removed."}
 
@@ -336,7 +322,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         ugc_domain = settings.ugc_domain
         if ugc_domain and normalized.endswith(f".{ugc_domain}"):
             subdomain = normalized[: -len(f".{ugc_domain}")]
-            RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support"}
+            RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support", "analytics", "vitals"}
             if subdomain and subdomain not in RESERVED_SUBDOMAINS:
                 db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
                 if db_site:
@@ -374,33 +360,3 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
         pass
 
     return result
-
-
-@router.get("/internal/sitemap-sites", status_code=status.HTTP_200_OK)
-def sitemap_sites(request: Request, db: Session = Depends(get_db)):
-    secret = settings.internal_api_secret
-    if not secret or request.headers.get("x-internal-secret") != secret:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    rows = (
-        db.query(models.Site).filter(~models.Site.domain_status.in_((models.DomainStatus.ACTIVE, models.DomainStatus.GRACE))).order_by(models.Site.subdomain.asc().nulls_last()).all()
-    )
-
-    return [
-        {"subdomain": u.subdomain, "updated_at": u.updated_at.isoformat() if u.updated_at else None}
-        for u in rows
-    ]
-
-
-@router.get("/internal/site-seo-eligibility", status_code=status.HTTP_200_OK)
-def site_seo_eligibility(subdomain: str, request: Request, db: Session = Depends(get_db)):
-    secret = settings.internal_api_secret
-    if not secret or request.headers.get("x-internal-secret") != secret:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Forbidden")
-
-    db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
-    if not db_site:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Site not found")
-
-    has_active_custom_domain = db_site.domain_status in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
-    return {"can_index_on_ugc": bool(not has_active_custom_domain)}

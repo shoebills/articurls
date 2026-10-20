@@ -161,7 +161,7 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
     """
     from ..storage.service import delete_media
     from ..umami.client import UmamiClient
-    from ..cache.service import purge_entire_tenant
+    from ..cache.service import purge_tenant
     from ..domains.router import _remove_vercel_domain
 
     sites = db.query(models.Site).filter(models.Site.user_id == db_user.user_id).all()
@@ -199,7 +199,7 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
         hosts = [h for h in (site.custom_domain, f"{site.subdomain}.{settings.ugc_domain}") if h]
         for host in hosts:
             try:
-                asyncio.run(purge_entire_tenant(host))
+                asyncio.run(purge_tenant(host))
             except Exception:
                 pass
 
@@ -226,6 +226,79 @@ def unverified_account_cleanup():
         for db_user in stale_users:
             logger.info("Deleting unverified account %s", db_user.user_id)
             purge_user_account(db, db_user)
+
+    finally:
+        db.close()
+
+
+_QUOTA_EMAIL_TEMPLATE_NAMES = {
+    "warning": ("traffic_warning_80_email", "warning80"),
+    "over_limit": ("traffic_limit_100_email", "limit100"),
+    "locked": ("traffic_locked_email", "locked"),
+}
+
+
+@celery.task
+def check_traffic_quota_alerts():
+    """Hourly sweep: send 80%/100%/locked traffic-quota emails once per month.
+
+    Dedupes via Redis (per user+tier+stage); silently skips a send when Redis
+    is unavailable rather than risking hourly duplicate emails. Spike months
+    are recorded inside compute_account_usage so the yearly-plan
+    two-consecutive-months lock can unlock correctly next month. Lifetime
+    accounts are unlimited-traffic and are excluded by the Pro filter below.
+    """
+
+    from ..email import service as email_service
+    from ..utils import traffic_quota as tq
+
+    db = database.SessionLocal()
+
+    try:
+        db_subscriptions = (
+            db.query(models.Subscriptions)
+            .filter(
+                models.Subscriptions.plan_type == "pro",
+                models.Subscriptions.status == "active",
+            )
+            .all()
+        )
+
+        for db_sub in db_subscriptions:
+            db_user = db.query(models.User).filter(models.User.user_id == db_sub.user_id).first()
+            if not db_user or not db_user.email:
+                continue
+
+            try:
+                usage = tq.compute_account_usage(db, db_user)
+            except Exception:
+                logger.exception("Traffic quota sweep failed for user %s", db_user.user_id)
+                continue
+
+            quota_status = usage["quota_status"]
+            if quota_status not in _QUOTA_EMAIL_TEMPLATE_NAMES:
+                continue
+
+            tier_limit = usage["tier_limit"]
+            if not tier_limit:
+                continue
+
+            sender_name, stage = _QUOTA_EMAIL_TEMPLATE_NAMES[quota_status]
+            if not tq.claim_quota_email_slot(db_user.user_id, tier_limit, stage):
+                continue
+
+            try:
+                sender = getattr(email_service, sender_name)
+                sender(
+                    db_user.email,
+                    db_user.name,
+                    usage["total_pageviews"],
+                    tier_limit,
+                )
+            except Exception:
+                logger.exception(
+                    "Quota email send failed for user %s stage=%s", db_user.user_id, stage
+                )
 
     finally:
         db.close()

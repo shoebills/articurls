@@ -1,12 +1,9 @@
 /**
- * Domain resolution helpers for SEO (sitemap / robots.txt).
- *
- * The lookup logic mirrors the custom-domain page's `resolveDomainInfo` —
- * kept in one place so sitemap and robots routes share the same behaviour.
+ * Domain resolution helper shared by the tenant publication page, its layout,
+ * and the tenant SEO/feed route handlers (sitemap / robots.txt / llms.txt).
  */
 
 import { API_URL } from "@/lib/env";
-import { isCustomDomainHost, buildRuntimeHostsFromEnv } from "@/lib/request-host";
 
 export interface DomainLookupResult {
   subdomain: string;
@@ -14,11 +11,6 @@ export interface DomainLookupResult {
   custom_domain: string | null;
   redirect_to: string | null;
   custom_subpath?: string | null;
-}
-
-/** True when host is a customer domain, not articurls platform infrastructure. */
-export function isCustomDomain(host: string): boolean {
-  return isCustomDomainHost(host, buildRuntimeHostsFromEnv());
 }
 
 /**

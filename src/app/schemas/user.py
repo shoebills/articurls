@@ -98,9 +98,9 @@ class UserSettings(BaseModel):
     seo_trailing_slash_jsonld: bool = False
     seo_sitemap_enabled: bool = True
     seo_robots_mode: Literal["auto", "custom"] = "auto"
-    seo_robots_custom: Optional[str] = None
+    seo_robots_custom: Optional[str] = Field(None, max_length=10000)
     seo_llms_mode: Literal["auto", "custom"] = "auto"
-    seo_llms_custom: Optional[str] = None
+    seo_llms_custom: Optional[str] = Field(None, max_length=10000)
 
     ga_measurement_id: Optional[str] = None
     adsense_publisher_id: Optional[str] = None
@@ -139,9 +139,9 @@ class SeoSettings(BaseModel):
     seo_sitemap_enabled: bool = True
     categories_hub_enabled: bool = True
     seo_robots_mode: Literal["auto", "custom"] = "auto"
-    seo_robots_custom: Optional[str] = None
+    seo_robots_custom: Optional[str] = Field(None, max_length=10000)
     seo_llms_mode: Literal["auto", "custom"] = "auto"
-    seo_llms_custom: Optional[str] = None
+    seo_llms_custom: Optional[str] = Field(None, max_length=10000)
 
     class Config:
         from_attributes = True

@@ -107,6 +107,34 @@ function ToggleRow({
   );
 }
 
+const ROBOTS_DIRECTIVES = new Set([
+  "user-agent",
+  "allow",
+  "disallow",
+  "sitemap",
+  "crawl-delay",
+]);
+
+function robotsWarnings(value: string): string[] {
+  const warnings: string[] = [];
+  for (const raw of value.split(/\r?\n/)) {
+    const line = raw.trim();
+    if (!line || line.startsWith("#")) continue;
+    const directive = line.split(":")[0].trim().toLowerCase();
+    if (directive && !ROBOTS_DIRECTIVES.has(directive)) {
+      warnings.push(`Unrecognized directive "${directive}"`);
+    }
+  }
+  return warnings;
+}
+
+function llmsWarnings(value: string): string[] {
+  const warnings: string[] = [];
+  const hasH1 = value.split(/\r?\n/).some((line) => /^#\s+/.test(line.trim()));
+  if (!hasH1) warnings.push("Missing H1 heading (# Title)");
+  return warnings;
+}
+
 export default function SeoSettings() {
   const { token, refreshUser } = useAuth();
   const [form, setForm] = useState<FormState>(() => {
@@ -145,6 +173,15 @@ export default function SeoSettings() {
   }, [token]);
 
   const dirty = JSON.stringify(form) !== JSON.stringify(original);
+
+  const robotsNotes =
+    form.seo_robots_mode === "custom" && form.seo_robots_custom
+      ? robotsWarnings(form.seo_robots_custom)
+      : [];
+  const llmsNotes =
+    form.seo_llms_mode === "custom" && form.seo_llms_custom
+      ? llmsWarnings(form.seo_llms_custom)
+      : [];
 
   const patch = (partial: Partial<FormState>) => {
     setForm((s) => ({ ...s, ...partial }));
@@ -463,6 +500,15 @@ export default function SeoSettings() {
                 placeholder={"User-agent: *\nAllow: /"}
                 disabled={busy}
               />
+              {robotsNotes.length > 0 ? (
+                <div className="space-y-1">
+                  {robotsNotes.map((note) => (
+                    <p key={note} className="text-xs text-amber-600 dark:text-amber-400">
+                      {note}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>
@@ -504,6 +550,15 @@ export default function SeoSettings() {
                 placeholder={"# My site\n> Description"}
                 disabled={busy}
               />
+              {llmsNotes.length > 0 ? (
+                <div className="space-y-1">
+                  {llmsNotes.map((note) => (
+                    <p key={note} className="text-xs text-amber-600 dark:text-amber-400">
+                      {note}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </section>

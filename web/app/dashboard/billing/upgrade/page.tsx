@@ -1,8 +1,8 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   createCheckout,
   changePlan,
@@ -12,7 +12,7 @@ import {
   isProSubscription,
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
-import type { SubscriptionOut } from "@/lib/types";
+import type { AccountUsage, SubscriptionOut } from "@/lib/types";
 import { PRO_TIERS, tierPrice, CYCLE_UNIT, LIFETIME_PRICE, type BillingCycle } from "@/lib/plans";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,30 +29,38 @@ import {
   Check,
   ChevronLeft,
   Flame,
+  Sparkles,
   Zap,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 function UpgradePlanContent() {
-  const { token } = useAuth();
+  const { token, refreshUser } = useAuth();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
+  const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [selectedTierIndex, setSelectedTierIndex] = useState(0);
   const [cycle, setCycle] = useState<BillingCycle>("monthly");
   const [err, setErr] = useState<string | null>(null);
   const [busyPlan, setBusyPlan] = useState<string | null>(null);
   const [scheduledMsg, setScheduledMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadCountRef = useRef(0);
 
   const load = useCallback(async () => {
     if (!token) return;
+    loadCountRef.current += 1;
+    const attempt = loadCountRef.current;
     setErr(null);
     try {
       const [s, u] = await Promise.all([
         getSubscription(token).catch(() => null),
         getAccountUsage(token).catch(() => null),
       ]);
+      if (attempt !== loadCountRef.current) return;
       setSub(s);
+      setUsage(u);
 
       const queryTier = searchParams.get("tier");
       const queryCycle = searchParams.get("cycle");
@@ -61,29 +69,47 @@ function UpgradePlanContent() {
       if (queryTier) {
         tierIdx = PRO_TIERS.findIndex((t) => t.key === queryTier);
       }
+      // When a tier must be higher than this month's traffic, lead with the
+      // recommendation instead of the current (likely outgrown) plan.
+      if (tierIdx === -1 && u?.recommended_tier) {
+        tierIdx = PRO_TIERS.findIndex((t) => t.key === u.recommended_tier);
+      }
+      if (tierIdx === -1 && u?.tier_limit !== null && u?.tier_limit !== undefined) {
+        tierIdx = PRO_TIERS.findIndex((t) => t.views === u.tier_limit);
+      }
       if (tierIdx === -1 && s?.tier) {
         tierIdx = PRO_TIERS.findIndex((t) => t.key === s.tier);
       }
-      if (tierIdx === -1 && u) {
-        tierIdx = PRO_TIERS.findIndex((t) => t.views === u.tier_limit);
-      }
       if (tierIdx !== -1) setSelectedTierIndex(tierIdx);
 
+      const overLimit =
+        u && (u.quota_status === "over_limit" || u.quota_status === "locked");
+      const monthlyLocked =
+        overLimit && u?.billing_cycle === "yearly";
+
       if (queryCycle === "monthly" || queryCycle === "yearly") {
-        setCycle(queryCycle);
+        setCycle(queryCycle === "monthly" && monthlyLocked ? "yearly" : queryCycle);
       } else if (s?.billing_cycle === "monthly" || s?.billing_cycle === "yearly") {
-        setCycle(s.billing_cycle);
+        setCycle(s.billing_cycle === "monthly" && monthlyLocked ? "yearly" : s.billing_cycle);
       }
     } catch {
       setErr("Failed to load subscription info");
     } finally {
-      setLoading(false);
+      if (attempt === loadCountRef.current) setLoading(false);
     }
   }, [token, searchParams]);
 
   useEffect(() => {
     load();
   }, [load]);
+
+  // Lifetime is a terminal plan: it owns unlimited traffic and has no tier to
+  // switch to, so an active lifetime user has nothing to pick here.
+  useEffect(() => {
+    if (!loading && sub?.plan_type === "lifetime" && sub.status === "active") {
+      router.replace("/dashboard/billing");
+    }
+  }, [loading, sub, router]);
 
   async function handleUpgrade() {
     if (!token) return;
@@ -100,14 +126,40 @@ function UpgradePlanContent() {
             : "your next billing date";
           setScheduledMsg(`Plan change scheduled — ${tier.name} starts on ${date}.`);
         } else if (result.applied) {
+          await refreshUser();
+          await load();
           setScheduledMsg(`${tier.name} is now active.`);
+        } else {
+          // The request was accepted but the prorated charge is still settling;
+          // Dodo confirms via webhooks. Poll briefly so the tier lands without
+          // the user needing to refresh.
+          setScheduledMsg(`Charging the plan difference for ${tier.name}…`);
+          const deadline = Date.now() + 45_000;
+          let landed = false;
+          while (Date.now() < deadline) {
+            await new Promise((r) => setTimeout(r, 3_000));
+            const polled = await getSubscription(token).catch(() => null);
+            if (
+              polled?.tier === tier.key &&
+              (polled.billing_cycle || "monthly") === cycle
+            ) {
+              landed = true;
+              break;
+            }
+          }
+          await load();
+          setScheduledMsg(
+            landed
+              ? `${tier.name} is now active.`
+              : `Your change to ${tier.name} is still processing. Refresh in a minute if it hasn't switched yet.`
+          );
+          await refreshUser();
         }
       } else {
         const { checkout_url } = await createCheckout(token, "pro", tier.key, cycle);
         window.location.href = checkout_url;
         return;
       }
-      await load();
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : "Failed to change plan");
     } finally {
@@ -139,6 +191,22 @@ function UpgradePlanContent() {
     sub.tier === selectedTier.key &&
     (sub.billing_cycle || "monthly") === cycle;
 
+  const overLimit =
+    !!usage && (usage.quota_status === "over_limit" || usage.quota_status === "locked");
+  const monthlyLocked = overLimit && usage?.billing_cycle === "yearly";
+
+  const isExceededTier = (tierKey: string): boolean =>
+    !!usage &&
+    PRO_TIERS.some((t) => t.key === tierKey && t.views !== null && usage.total_pageviews >= t.views);
+
+  const selectedExceeded =
+    selectedTier.views !== null && !!usage && usage.total_pageviews >= selectedTier.views;
+
+  const handleCycleChange = (v: string) => {
+    if (v === "monthly" && monthlyLocked) return;
+    setCycle(v as BillingCycle);
+  };
+
   return (
     <div className="mx-auto max-w-[800px] space-y-6 sm:space-y-8">
       {/* Back link & Header */}
@@ -168,9 +236,11 @@ function UpgradePlanContent() {
             <CardContent className="p-6 sm:p-8 space-y-8">
               {/* Billing cycle tabs */}
               <div className="flex justify-center">
-                <Tabs value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
+                <Tabs value={cycle} onValueChange={handleCycleChange}>
                   <TabsList>
-                    <TabsTrigger value="monthly">Monthly</TabsTrigger>
+                    <TabsTrigger value="monthly" disabled={monthlyLocked}>
+                      Monthly
+                    </TabsTrigger>
                     <TabsTrigger value="yearly" className="gap-1.5">
                       Yearly
                       <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
@@ -180,6 +250,13 @@ function UpgradePlanContent() {
                   </TabsList>
                 </Tabs>
               </div>
+
+              {monthlyLocked ? (
+                <p className="text-center text-xs text-amber-600 dark:text-amber-400">
+                  Switching to monthly billing is unavailable while you are over
+                  your traffic limit. Choose a higher yearly tier instead.
+                </p>
+              ) : null}
 
               {/* Views Selector Header */}
               <div className="space-y-2">
@@ -194,24 +271,44 @@ function UpgradePlanContent() {
                     <SelectValue placeholder="Choose monthly traffic volume" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRO_TIERS.map((tier, idx) => (
-                      <SelectItem key={tier.key} value={String(idx)} className="py-2.5 cursor-pointer">
-                        <div className="flex items-center justify-between gap-4 w-full">
-                          <div className="flex items-center gap-2">
-                            <span className="font-semibold text-foreground text-sm">{tier.name}</span>
-                            {tier.key === "pro_100k" ? (
-                              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
-                                Popular
-                              </span>
-                            ) : null}
+                    {PRO_TIERS.map((tier, idx) => {
+                      const exceeded = isExceededTier(tier.key);
+                      const recommended = usage?.recommended_tier === tier.key;
+                      return (
+                        <SelectItem
+                          key={tier.key}
+                          value={String(idx)}
+                          disabled={exceeded}
+                          className="py-2.5 cursor-pointer"
+                        >
+                          <div className="flex items-center justify-between gap-4 w-full">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold text-foreground text-sm">{tier.name}</span>
+                              {tier.key === "pro_100k" && !exceeded ? (
+                                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                                  Popular
+                                </span>
+                              ) : null}
+                              {recommended && !exceeded ? (
+                                <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-700">
+                                  <Sparkles className="h-2.5 w-2.5" />
+                                  Recommended
+                                </span>
+                              ) : null}
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+                              {exceeded ? (
+                                <span className="rounded-full bg-red-500/10 px-2 py-0.5 text-[10px] font-semibold text-red-600">
+                                  Exceeded this month
+                                </span>
+                              ) : null}
+                              ${tierPrice(tier, cycle)}
+                              {CYCLE_UNIT[cycle]}
+                            </span>
                           </div>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            ${tierPrice(tier, cycle)}
-                            {CYCLE_UNIT[cycle]}
-                          </span>
-                        </div>
-                      </SelectItem>
-                    ))}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -241,19 +338,32 @@ function UpgradePlanContent() {
                   size="lg"
                   className="h-11 px-8 text-sm font-semibold"
                   variant={isCurrentActiveTier ? "outline" : "default"}
-                  disabled={isCurrentActiveTier || isPastDue || busyPlan === selectedTier.key}
+                  disabled={
+                    isCurrentActiveTier ||
+                    isPastDue ||
+                    busyPlan === selectedTier.key ||
+                    selectedExceeded
+                  }
                   onClick={handleUpgrade}
                 >
-                  {isCurrentActiveTier
-                    ? "Current Active Tier"
-                    : isPastDue
-                      ? "Past Due — Fix Payment"
-                      : busyPlan === selectedTier.key
-                        ? "Working..."
-                        : canChangePlan
-                          ? `Switch to ${selectedTier.name} ($${price}${CYCLE_UNIT[cycle]})`
-                          : `Select Plan ($${price}${CYCLE_UNIT[cycle]})`}
+                  {selectedExceeded
+                    ? "Plan too small for this month's traffic"
+                    : isCurrentActiveTier
+                      ? "Current Active Tier"
+                      : isPastDue
+                        ? "Past Due — Fix Payment"
+                        : busyPlan === selectedTier.key
+                          ? "Working..."
+                          : canChangePlan
+                            ? `Switch to ${selectedTier.name} ($${price}${CYCLE_UNIT[cycle]})`
+                            : `Select Plan ($${price}${CYCLE_UNIT[cycle]})`}
                 </Button>
+
+                {isCurrentActiveTier && selectedTier.views !== null && usage && usage.total_pageviews >= selectedTier.views ? (
+                  <p className="text-xs text-red-600 dark:text-red-400">
+                    You have outgrown {selectedTier.name} this month. Pick a bigger plan to restore full dashboard access.
+                  </p>
+                ) : null}
               </div>
 
               {isPastDue ? (
@@ -323,7 +433,7 @@ function UpgradePlanContent() {
                   </div>
                   <CardTitle className="text-xl font-bold">Lifetime Deal</CardTitle>
                   <CardDescription>
-                    Pay once, get 100,000 monthly pageviews and all Pro features forever.
+                    Pay once, get unlimited monthly pageviews and all Pro features forever.
                   </CardDescription>
                 </div>
                 <div className="flex items-baseline gap-1">

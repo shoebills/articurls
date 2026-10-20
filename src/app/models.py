@@ -40,6 +40,8 @@ class Site(Base):
         CheckConstraint("posts_per_page >= 6 AND posts_per_page <= 48", name="ck_sites_posts_per_page"),
         CheckConstraint("seo_robots_mode IN ('auto', 'custom')", name="ck_sites_seo_robots_mode"),
         CheckConstraint("seo_llms_mode IN ('auto', 'custom')", name="ck_sites_seo_llms_mode"),
+        CheckConstraint("length(seo_robots_custom) <= 10000", name="ck_sites_seo_robots_custom_len"),
+        CheckConstraint("length(seo_llms_custom) <= 10000", name="ck_sites_seo_llms_custom_len"),
     )
 
     site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)

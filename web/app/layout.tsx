@@ -36,10 +36,11 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "Articurls — Write in public",
+    default: "Articurls — The SEO-native blogging platform for brands & creators",
     template: "%s · Articurls",
   },
-  description: "A modern blogging platform with analytics, subscribers, and scheduling.",
+  description:
+    "Publish a fast, SEO-native blog on your custom domain or /blog subdirectory with built-in analytics, structured data, AI search optimization, subscriber capture, and zero maintenance.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "any" },

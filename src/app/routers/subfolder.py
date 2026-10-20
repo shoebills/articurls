@@ -8,10 +8,16 @@ from sqlalchemy.orm import Session
 from .. import models
 from ..config import settings
 from ..database import get_db
-from ..domains.utils import normalize_hostname, validate_hostname
-from ..redis_client import redis_client
+from ..domains.utils import (
+    invalidate_domain_lookup_cache,
+    normalize_hostname,
+    purge_domain_lookup_cache,
+    reset_domain_columns,
+    validate_hostname,
+)
+from ..domains.router import _remove_vercel_domain
 from ..security.oauth2 import get_current_site
-from ..domains.schemas import SubfolderIn, SubfolderOut
+from ..subfolder.schemas import SubfolderIn, SubfolderOut
 from ..subfolder.snippets import (
     apache_config,
     caddy_config,
@@ -20,7 +26,7 @@ from ..subfolder.snippets import (
     nginx_config,
     vercel_rewrite,
 )
-from ..cache.service import purge_domain_lookup_tags, purge_domain_lookup_tags_sync
+from ..cache.service import purge_domain_lookup_tags
 from ..utils import is_pro_entitled
 from ..utils.rate_limit import check_rate_limit_user
 
@@ -67,7 +73,7 @@ def get_subfolder_settings(
 
 
 @router.post("/settings/subfolder", response_model=SubfolderOut, status_code=status.HTTP_200_OK)
-def update_subfolder_settings(
+async def update_subfolder_settings(
     body: SubfolderIn,
     db: Session = Depends(get_db),
     current_site: models.Site = Depends(get_current_site),
@@ -101,22 +107,29 @@ def update_subfolder_settings(
             detail="This domain is already in use by another publication.",
         )
 
+    # Subfolder mode is self-hosted by the customer (reverse proxy), so any
+    # prior Vercel registration for the domain is stale and must be removed.
+    old_domain = current_site.custom_domain
+    if old_domain:
+        await _remove_vercel_domain(old_domain)
+
     current_site.custom_domain = domain
     current_site.custom_subpath = subpath
     current_site.domain_status = models.DomainStatus.ACTIVE
+    current_site.domain_dns_instructions = None
+    current_site.verified_at = None
+    current_site.grace_started_at = None
+    current_site.grace_expires_at = None
     db.commit()
     db.refresh(current_site)
 
-    hosts = [domain]
-    try:
-        redis_client.delete(f"domain_lookup:{domain}")
-        if current_site.subdomain and settings.ugc_domain:
-            redis_client.delete(f"domain_lookup:{current_site.subdomain}.{settings.ugc_domain}")
-            hosts.append(f"{current_site.subdomain}.{settings.ugc_domain}")
-    except Exception:
-        pass
+    purge_domain_lookup_cache(domain, current_site.subdomain)
+    if old_domain and old_domain != domain:
+        purge_domain_lookup_cache(old_domain, None)
 
-    purge_domain_lookup_tags_sync(hosts)
+    from ..umami.service import enqueue_umami_domain_sync
+
+    enqueue_umami_domain_sync(current_site.user_id)
 
     return SubfolderOut(
         custom_domain=current_site.custom_domain,
@@ -139,28 +152,19 @@ async def delete_subfolder_settings(
         burst=_SUBFOLDER_WRITE_BURST,
     )
     old_domain = current_site.custom_domain
-    current_site.custom_domain = None
-    current_site.custom_subpath = None
-    current_site.domain_status = models.DomainStatus.NONE
+    if old_domain:
+        await _remove_vercel_domain(old_domain)
 
+    reset_domain_columns(current_site)
     db.commit()
 
-    hosts: list[str] = []
-    if old_domain:
-        hosts.append(old_domain)
-        try:
-            redis_client.delete(f"domain_lookup:{old_domain}")
-        except Exception:
-            pass
-    if current_site.subdomain and settings.ugc_domain:
-        hosts.append(f"{current_site.subdomain}.{settings.ugc_domain}")
-        try:
-            redis_client.delete(f"domain_lookup:{current_site.subdomain}.{settings.ugc_domain}")
-        except Exception:
-            pass
-
+    hosts = invalidate_domain_lookup_cache(old_domain, current_site.subdomain)
     if hosts:
         background_tasks.add_task(purge_domain_lookup_tags, hosts)
+
+    from ..umami.service import enqueue_umami_domain_sync
+
+    enqueue_umami_domain_sync(current_site.user_id)
 
     return {"message": "Subfolder settings removed."}
 

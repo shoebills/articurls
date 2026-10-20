@@ -64,7 +64,7 @@ export function MarketingNav() {
             href={signupUrl}
             className="inline-flex h-9 items-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-md shadow-primary/15 outline-none transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-primary/92 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
           >
-            Start Free
+            Start for free
           </a>
         </div>
 
@@ -113,7 +113,7 @@ export function MarketingNav() {
                 className="flex min-h-12 w-full items-center justify-center rounded-xl bg-primary px-4 text-[0.95rem] font-medium text-primary-foreground transition-colors duration-200 hover:bg-primary/92 active:scale-[0.99] motion-reduce:active:scale-100"
                 onClick={() => setOpen(false)}
               >
-                Start Free
+                Start for free
               </a>
             </div>
           </div>

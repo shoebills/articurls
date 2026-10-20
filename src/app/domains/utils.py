@@ -39,7 +39,19 @@ def validate_hostname(hostname: str) -> None:
         )
 
 
-def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | None = None) -> None:
+def reset_domain_columns(site) -> None:
+    """Clear every custom-domain column back to the default subdomain-only mode."""
+    site.custom_domain = None
+    site.custom_subpath = None
+    site.domain_status = models.DomainStatus.NONE
+    site.domain_dns_instructions = None
+    site.verified_at = None
+    site.grace_started_at = None
+    site.grace_expires_at = None
+
+
+def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | None = None) -> list[str]:
+    """Delete Redis `domain_lookup` entries and return the affected hostnames."""
     hosts: list[str] = []
     try:
         from ..redis_client import redis_client
@@ -52,7 +64,12 @@ def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | N
             hosts.append(f"{subdomain}.{settings.ugc_domain}")
     except Exception:
         pass
+    return hosts
 
+
+def purge_domain_lookup_cache(custom_domain: str | None, subdomain: str | None = None) -> None:
+    """Invalidate Redis and Next.js caches synchronously (Celery / sync webhook paths)."""
+    hosts = invalidate_domain_lookup_cache(custom_domain, subdomain)
     if hosts:
         try:
             from ..cache.service import purge_domain_lookup_tags_sync
@@ -71,7 +88,11 @@ def restore_domain_access(site) -> None:
     site.domain_status = models.DomainStatus.ACTIVE
     site.grace_started_at = None
     site.grace_expires_at = None
-    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
+    purge_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
+    if getattr(site, "user_id", None):
+        from ..umami.service import enqueue_umami_domain_sync
+
+        enqueue_umami_domain_sync(site.user_id)
 
 
 def start_domain_grace_period(site, now: datetime | None = None) -> None:
@@ -82,7 +103,7 @@ def start_domain_grace_period(site, now: datetime | None = None) -> None:
     site.domain_status = models.DomainStatus.GRACE
     site.grace_started_at = current_time
     site.grace_expires_at = current_time + timedelta(days=14)
-    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
+    purge_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
 
 
 def expire_domain_access(site) -> None:
@@ -90,4 +111,8 @@ def expire_domain_access(site) -> None:
         return
 
     site.domain_status = models.DomainStatus.EXPIRED
-    invalidate_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
+    purge_domain_lookup_cache(site.custom_domain, getattr(site, "subdomain", None))
+    if getattr(site, "user_id", None):
+        from ..umami.service import enqueue_umami_domain_sync
+
+        enqueue_umami_domain_sync(site.user_id)

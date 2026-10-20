@@ -32,4 +32,9 @@ celery.conf.beat_schedule = {
         "task": "src.app.workers.tasks.unverified_account_cleanup",
         "schedule": crontab(minute=0),
     },
+
+    "traffic-quota-alerts": {
+        "task": "src.app.workers.tasks.check_traffic_quota_alerts",
+        "schedule": crontab(minute=0),
+    },
 }

@@ -53,7 +53,7 @@ end
 
 local deficit = math.max(0.0, capacity - tokens)
 local ttl_ms = math.max(1000, math.ceil((deficit / refill_rate_per_ms) + 1000))
-redis.call('SET', key, tostring(tokens) .. ":" .. tostring(last_refill), 'PX', ttl_ms)
+redis.call('SET', key, string.format("%.6f:%d", tokens, last_refill), 'PX', ttl_ms)
 
 return { allowed, retry_after_sec }
 """

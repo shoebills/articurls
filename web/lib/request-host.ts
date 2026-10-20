@@ -2,14 +2,18 @@
  * Resolve the tenant/custom hostname from incoming request headers.
  *
  * CF SSL for SaaS (no Worker): customer Host is preserved end-to-end.
- * Legacy Worker path: Host is blogs/fallback; x-original-host holds the tenant.
+ * Subfolder reverse proxies point at our UGC subdomain and carry the real
+ * customer host in `x-original-host`, which we only trust on that path.
  */
+
+import { UGC_DOMAIN } from "@/lib/env";
 
 const STATIC_INTERNAL_DOMAINS = new Set([
   "articurls.com",
   "articurls.site",
   "app.articurls.com",
   "api.articurls.com",
+  "vitals.articurls.com",
 ]);
 
 export function firstHeaderHost(raw: string | null): string {
@@ -60,6 +64,14 @@ export function isCustomDomainHost(host: string, runtimeHosts: string[] = []): b
   return Boolean(host) && !isInternalHost(host, runtimeHosts);
 }
 
+/** True when `host` is a subdomain of the UGC apex (e.g. `john.articurls.site`). */
+export function isUgcSubdomainHost(host: string): boolean {
+  const h = (host || "").toLowerCase();
+  if (!h) return false;
+  const ugc = UGC_DOMAIN.toLowerCase();
+  return h.endsWith(`.${ugc}`) && h !== ugc;
+}
+
 export function resolveTenantHost(
   headers: Headers,
   fallbackHostname = "",
@@ -69,17 +81,25 @@ export function resolveTenantHost(
   const xOriginal = firstHeaderHost(headers.get("x-original-host"));
   const forwarded = firstHeaderHost(headers.get("x-forwarded-host"));
 
-  if (isCustomDomainHost(hostHeader, runtimeHosts)) {
+  // Direct custom-domain request — Cloudflare SSL-for-SaaS preserves the
+  // customer Host end-to-end, so Host is the tenant.
+  if (isCustomDomainHost(hostHeader, runtimeHosts) && !isUgcSubdomainHost(hostHeader)) {
     return hostHeader;
   }
-  if (isCustomDomainHost(xOriginal, runtimeHosts)) {
-    return xOriginal;
-  }
-  if (isCustomDomainHost(forwarded, runtimeHosts)) {
-    return forwarded;
+
+  // Requests landing on our UGC subdomain come through the customer's reverse
+  // proxy (subfolder mode) which sets x-original-host to the real tenant. Only
+  // trust forwarding headers here — never on platform apex hosts, where a
+  // client-supplied x-original-host must not influence tenant resolution.
+  if (isUgcSubdomainHost(hostHeader)) {
+    if (isCustomDomainHost(xOriginal, runtimeHosts)) return xOriginal;
+    if (isCustomDomainHost(forwarded, runtimeHosts)) return forwarded;
+    return hostHeader;
   }
 
-  return hostHeader || xOriginal || forwarded || fallbackHostname.toLowerCase();
+  // Platform apex hosts (articurls.com, app.articurls.com, articurls.site,
+  // api.articurls.com): ignore client-supplied forwarding headers.
+  return hostHeader || fallbackHostname.toLowerCase();
 }
 
 /** For Next.js route handlers (robots, sitemap, rss). */
@@ -88,14 +108,6 @@ export function resolveTenantHostFromRequest(
   runtimeHosts: string[] = buildRuntimeHostsFromEnv(),
 ): string {
   return resolveTenantHost(req.headers, req.nextUrl.hostname, runtimeHosts);
-}
-
-/** For Next.js server components (site publication page). */
-export function resolveTenantHostFromHeaders(
-  headers: Headers,
-  runtimeHosts: string[] = buildRuntimeHostsFromEnv(),
-): string {
-  return resolveTenantHost(headers, "", runtimeHosts);
 }
 
 /** Normalize proxy downstream headers for site publication routes. */

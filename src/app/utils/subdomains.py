@@ -21,6 +21,7 @@ RESERVED_SUBDOMAINS = {
     "auth",
     "billing",
     "analytics",
+    "vitals",
     "dashboard",
     "help",
     "static",

@@ -7,7 +7,7 @@ export const loadPublicSite = cache(async (subdomain: string): Promise<PublicSit
   const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
     next: {
       revalidate: 86400,
-      tags: [`subdomain-${subdomain}`, "site-settings"],
+      tags: [`subdomain-${subdomain}`, `site-settings-${subdomain}`],
     },
   });
   if (res.status === 404) return null;

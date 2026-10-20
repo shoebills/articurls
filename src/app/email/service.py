@@ -87,3 +87,55 @@ def send_domain_expired_email(to_email: str, name: str, domain: str):
 
     subject = f"Your custom domain {domain} has been deactivated"
     send_email(to_email, subject, html)
+
+
+def _send_traffic_quota_email(
+    to_email: str,
+    template: str,
+    subject: str,
+    name: str,
+    total_pageviews: int,
+    tier_limit: int,
+):
+    html = (TEMPLATE_DIR / template).read_text()
+    html = html.replace("{{ name }}", name or "there")
+    html = html.replace("{{ usage_pct }}", str(min(100, round(total_pageviews * 100 / tier_limit))))
+    html = html.replace("{{ total_pageviews }}", f"{total_pageviews:,}")
+    html = html.replace("{{ tier_limit }}", f"{tier_limit:,}")
+    billing_url = f"{settings.app_base_url.rstrip('/')}/dashboard/billing/upgrade"
+    html = html.replace("{{ billing_url }}", billing_url)
+
+    send_email(to_email, subject, html)
+
+
+def send_traffic_warning_80_email(to_email: str, name: str, total_pageviews: int, tier_limit: int):
+    _send_traffic_quota_email(
+        to_email,
+        "traffic_warning_80.html",
+        "You are approaching your Articurls monthly traffic limit",
+        name,
+        total_pageviews,
+        tier_limit,
+    )
+
+
+def send_traffic_limit_100_email(to_email: str, name: str, total_pageviews: int, tier_limit: int):
+    _send_traffic_quota_email(
+        to_email,
+        "traffic_limit_100.html",
+        "You have reached your Articurls monthly traffic limit",
+        name,
+        total_pageviews,
+        tier_limit,
+    )
+
+
+def send_traffic_locked_email(to_email: str, name: str, total_pageviews: int, tier_limit: int):
+    _send_traffic_quota_email(
+        to_email,
+        "traffic_locked.html",
+        "Dashboard paused - Articurls monthly traffic limit exceeded",
+        name,
+        total_pageviews,
+        tier_limit,
+    )

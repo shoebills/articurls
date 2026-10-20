@@ -55,8 +55,9 @@ cd web && npm run lint
 - **Model ↔ DB drift**: run `alembic check` locally after every model/migration change (`alembic upgrade head && alembic check`). The migration chain must work on an empty DB — conditional DDL guards (e.g. `to_regclass(...)`) are the accepted pattern for tables that are created/dropped at different points in the graph.
 - **Develoment phase** Note that this app isnt live yet, no real customers so dont think about backfilling (but suggest wherever needed), also dont hestitate to wipe out old dashboard urls and renaming variables or db columns names or any internal names just to make the system consistent. Do not run docker container by yourself, building backend and alembic migration to head is my job. Do not write hacky code, make it standard and robust.
 - **Delete-site cleanup is incomplete (deferred)**: `DELETE /sites/{site_id}` currently deletes media objects + DB cascades only. Vercel domain removal, Umami website deletion, and Redis `domain_lookup` invalidation are part of the deferred delete-publication feature — do not assume they exist.
+- **Lifetime is a terminal unlimited-traffic plan** (10 seats, one-time $99): `tier_limit=None` in `compute_account_usage()` — same code path as `pro_unlimited`, so it never warns/locks and gets no quota emails (the Celery sweep filters `plan_type == "pro" AND status == "active"`). There is deliberately **no upgrade/downgrade path**: `/billing/checkout` returns 409 for active lifetime users, `/billing/change-plan` requires `plan_type == "pro"`, and the dashboard hides Change Plan / redirects `/billing/upgrade` back to `/billing`. Lifetime webhook handling (`payment.succeeded`/`subscription.*`/refunds/disputes in `routers/billing.py`) still guards the Dodo subscription streams that pre-date a lifetime purchase.
 - **Dashboard Settings UI** — reference `web/components/integrations-settings.tsx` as the gold standard. Parent `space-y-10`, section `space-y-4`, heading `text-base font-semibold text-foreground sm:text-lg`, heading description `text-xs text-muted-foreground sm:text-sm`, label+field wrapper `space-y-2.5` with field `mt-2` (Input/SelectTrigger/Textarea), helper text `text-xs text-muted-foreground sm:text-sm`, no `border-t`/`hr` separators — rely on `space-y-10` for section spacing.
-- **Future work — newsletter/ESP unsubscribe & privacy policy**: subscribers are collected on-site with no confirmation email. There is no unsubscribe flow in our court — when the ESP webhook newsletter integration lands, the ESP is responsible for unsubscribes. A Privacy Policy must then state that subscriber data is synced to the connected newsletter provider and unsubscribes are managed there. The Privacy Policy page lives on the marketing site (not in this repo) — TODO when created.
+- **Newsletter/ESP unsubscribe & privacy policy**: subscribers are collected on-site with no confirmation email, and Articurls never emails subscribers on an owner's behalf — subscribe/unsubscribe lives entirely at the publication owner's end (and/or their connected ESP). The Privacy Policy (`web/app/privacy/page.tsx`) and Terms of Service (`web/app/terms/page.tsx`) live in this repo and state that subscriber data is synced to a connected newsletter provider when configured, with unsubscribes managed by the owner/provider.
 
 ## Database Design Principles
 
@@ -89,12 +90,14 @@ These rules exist so future features (post revisions, tags, newsletter campaigns
 ## Multi-Tenant Domain Routing
 
 ```
-  Custom domain (e.g. mysite.com)    →  /custom-domain/[[...slug]]  (rewrite)
-  Marketing domain (articurls.com)   →  /[username]/...              (direct)
-  App domain (app.articurls.com)     →  /dashboard, /login, etc.     (direct)
+  Custom domain / UGC subdomain / subfolder
+    (mysite.com, john.articurls.site, example.com/blog)
+      →  /site/[domain]/[[...slug]]           (proxy rewrite)
+  Marketing domain (articurls.com)            →  marketing pages       (direct)
+  App domain (app.articurls.com)              →  /dashboard, /login    (direct; other paths 308 to marketing)
 ```
 
-The proxy uses `STATIC_INTERNAL_DOMAINS` + runtime env vars (`NEXT_PUBLIC_APP_ORIGIN`, `NEXT_PUBLIC_MARKETING_ORIGIN`) to distinguish internal from custom-domain hosts.
+The proxy uses `STATIC_INTERNAL_DOMAINS` + runtime env vars (`NEXT_PUBLIC_APP_ORIGIN`, `NEXT_PUBLIC_MARKETING_ORIGIN`, `NEXT_PUBLIC_UGC_ORIGIN`) to distinguish internal from tenant hosts. `x-original-host` is only trusted when the request lands on a `*.{ugc_domain}` subdomain (subfolder reverse proxies), never on platform apex hosts.
 
 ## Known Editor Config Directories
 
@@ -123,7 +126,7 @@ src/                    # FastAPI backend
     schemas/            # Pydantic request/response schemas
 web/                    # Next.js 16 frontend (App Router)
   proxy.ts              # Multi-tenant routing, security headers, cache headers
-  app/                  # Routes: /[username]/*, /dashboard/*, /site/[domain]/*, etc.
+  app/                  # Routes: /dashboard/*, /site/[domain]/*, marketing pages
   components/
     public/             # Theme-agnostic public building blocks (nav header/footer,
                         # post card, feed, pagination, TOC, subscribe, CTA, FAQ, search)

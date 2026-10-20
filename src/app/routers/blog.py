@@ -19,12 +19,18 @@ from ..storage.service import save_media, delete_media
 from ..cache.service import schedule_post_purge
 from ..config import settings
 from ..utils.rate_limit import check_rate_limit_user
+from ..utils.traffic_quota import require_within_traffic_quota
 
 _BLOG_CREATE_LIMIT = 50
+_BLOG_CREATE_BURST = 20
 _BLOG_UPLOAD_LIMIT = 120
+_BLOG_UPLOAD_BURST = 25
 _BLOG_UPDATE_LIMIT = 50
+_BLOG_UPDATE_BURST = 20
 _BLOG_PUBLISH_LIMIT = 30
+_BLOG_PUBLISH_BURST = 15
 _BLOG_DELETE_LIMIT = 20
+_BLOG_DELETE_BURST = 10
 _BLOG_RATE_WINDOW = 60
 
 
@@ -45,8 +51,8 @@ router = APIRouter(
 )
 
 @router.post("/", response_model=blog.GetBlog, status_code=status.HTTP_201_CREATED)
-def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-create", current_user.user_id, _BLOG_CREATE_LIMIT, _BLOG_RATE_WINDOW)
+def create_blog(request: blog.CreateBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-create", current_user.user_id, _BLOG_CREATE_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_CREATE_BURST)
 
     # Meta
     if request.meta_title is not None:
@@ -139,8 +145,8 @@ def get_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depend
 
 
 @router.post("/{id}/media", response_model=blog.BlogMediaOut, status_code=status.HTTP_201_CREATED)
-async def upload_blog_media(id: uuid.UUID, file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
+async def upload_blog_media(id: uuid.UUID, file: UploadFile = File(...), db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_UPLOAD_BURST)
 
     db_blog = (
         db.query(models.Blog)
@@ -183,8 +189,8 @@ async def upload_blog_media(id: uuid.UUID, file: UploadFile = File(...), db: Ses
 
 
 @router.delete("/{id}/media/{media_id}", status_code=status.HTTP_200_OK)
-def delete_blog_media(id: uuid.UUID, media_id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
+def delete_blog_media(id: uuid.UUID, media_id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_UPLOAD_BURST)
 
     db_blog = (
         db.query(models.Blog)
@@ -220,8 +226,9 @@ def delete_blog_media_by_url(
     url: str = Query(..., description="URL of the media to delete"),
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
-    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW)
+    check_rate_limit_user("blog-upload", current_user.user_id, _BLOG_UPLOAD_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_UPLOAD_BURST)
 
     db_blog = (
         db.query(models.Blog)
@@ -257,8 +264,8 @@ def delete_blog_media_by_url(
     return {"message": "Media deleted"}
 
 @router.patch("/{id}", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW)
+def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-update", current_user.user_id, _BLOG_UPDATE_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_UPDATE_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -414,8 +421,8 @@ def update_blog(id: uuid.UUID, request: blog.UpdateBlog, background_tasks: Backg
     return db_blog
 
 @router.delete("/{id}", status_code=status.HTTP_200_OK)
-def delete_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW)
+def delete_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-delete", current_user.user_id, _BLOG_DELETE_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_DELETE_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -453,8 +460,8 @@ def delete_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = 
     return {"message": "Blog deleted"}
 
 @router.post("/{id}/publish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def publish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+def publish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -514,8 +521,8 @@ def publish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session =
     return db_blog
 
 @router.post("/{id}/archive", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def archive_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+def archive_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -552,8 +559,8 @@ def archive_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session =
 
 
 @router.post("/{id}/unpublish", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def unpublish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+def unpublish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -586,8 +593,8 @@ def unpublish_blog(id: uuid.UUID, background_tasks: BackgroundTasks, db: Session
 
 
 @router.post("/{id}/schedule", response_model=blog.GetBlog, status_code=status.HTTP_200_OK)
-def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -656,8 +663,8 @@ def schedule_blog(id: uuid.UUID, request: blog.ScheduleBlog, db: Session = Depen
     return db_blog
 
 @router.post("/{id}/unschedule", status_code=status.HTTP_200_OK)
-def unschedule_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site)):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+def unschedule_blog(id: uuid.UUID, db: Session = Depends(get_db), current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site), _quota: None = Depends(require_within_traffic_quota)):
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(models.Blog.blog_id == id).first()
 
@@ -699,8 +706,9 @@ def assign_blog_categories(
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     current_user = Depends(get_current_user), current_site: models.Site = Depends(get_current_site),
+    _quota: None = Depends(require_within_traffic_quota),
 ):
-    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW)
+    check_rate_limit_user("blog-publish", current_user.user_id, _BLOG_PUBLISH_LIMIT, _BLOG_RATE_WINDOW, burst=_BLOG_PUBLISH_BURST)
 
     db_blog = db.query(models.Blog).filter(
         models.Blog.blog_id == id, models.Blog.site_id == current_site.site_id

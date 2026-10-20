@@ -15,8 +15,7 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
       {
         title: "Resources",
         links: [
-          { label: "Docs", href: "/docs" },
-          { label: "Blog", href: `${MARKETING_ORIGIN}/#examples` },
+          { label: "Blog", href: `${MARKETING_ORIGIN}/blog` },
           { label: "Log in", href: appAuthHref("/login") },
         ],
       },
@@ -48,7 +47,7 @@ export function MarketingFooter() {
       <div className="mx-auto max-w-6xl px-[max(1rem,env(safe-area-inset-left))] py-14 pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 sm:py-20">
         <div className="grid grid-cols-2 gap-x-6 gap-y-10 sm:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
-            <p className="text-lg font-semibold text-foreground">Write, Publish & Grow.</p>
+            <p className="text-lg font-semibold text-foreground">Launch, rank &amp; convert.</p>
           </div>
 
           {COLUMNS.map((col) => (

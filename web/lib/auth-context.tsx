@@ -2,8 +2,18 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import type { SubscriptionOut, UserSettings, SiteSummary } from "@/lib/types";
-import { getMe, getSubscription, isProSubscription, login as apiLogin, apiLogout, listSites, clearApiCache, consumePendingCheckout } from "@/lib/api";
+import type { SubscriptionOut, UserSettings, SiteSummary, AccountUsage } from "@/lib/types";
+import {
+  getMe,
+  getSubscription,
+  getAccountUsage,
+  isProSubscription,
+  login as apiLogin,
+  apiLogout,
+  listSites,
+  clearApiCache,
+  consumePendingCheckout,
+} from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
 const SITE_KEY = "articurls_site_id";
@@ -14,6 +24,7 @@ type AuthContextValue = {
   sites: SiteSummary[];
   activeSite: SiteSummary | null;
   subscription: SubscriptionOut | null;
+  usage: AccountUsage | null;
   isPro: boolean;
   wasPro: boolean;
   isTrial: boolean;
@@ -22,6 +33,7 @@ type AuthContextValue = {
   login: (email: string, password: string, redirectTo?: string) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<boolean>;
+  refreshUsage: () => Promise<void>;
   refreshSites: () => Promise<void>;
   switchSite: (siteId: string) => Promise<void>;
 };
@@ -43,6 +55,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [sites, setSites] = useState<SiteSummary[]>([]);
   const [activeSite, setActiveSite] = useState<SiteSummary | null>(null);
   const [subscription, setSubscription] = useState<SubscriptionOut | null>(null);
+  const [usage, setUsage] = useState<AccountUsage | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refreshSites = useCallback(async () => {
@@ -86,10 +99,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setActiveSite(current);
     }
 
-    const [me, sub] = await Promise.all([getMe(t), getSubscription(t)]);
+    const [me, sub, accountUsage] = await Promise.all([
+      getMe(t),
+      getSubscription(t),
+      getAccountUsage(t).catch(() => null),
+    ]);
     setUser(me);
     setSubscription(sub);
+    setUsage(accountUsage);
     return false;
+  }, []);
+
+  const refreshUsage = useCallback(async (): Promise<void> => {
+    const t = typeof window !== "undefined" ? localStorage.getItem(TOKEN_KEY) : null;
+    if (!t) return;
+    try {
+      const [sub, accountUsage] = await Promise.all([
+        getSubscription(t).catch(() => null),
+        getAccountUsage(t).catch(() => null),
+      ]);
+      setSubscription(sub);
+      setUsage(accountUsage);
+    } catch {
+      // Ignore transient errors; the next refresh cycle retries.
+    }
   }, []);
 
   const refreshUser = useCallback(async (): Promise<boolean> => {
@@ -97,6 +130,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!t) {
       setUser(null);
       setSubscription(null);
+      setUsage(null);
       setSites([]);
       setActiveSite(null);
       return false;
@@ -111,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setToken(null);
         setUser(null);
         setSubscription(null);
+        setUsage(null);
         setSites([]);
         setActiveSite(null);
       }
@@ -159,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
       setUser(null);
       setSubscription(null);
+      setUsage(null);
       setSites([]);
       setActiveSite(null);
     };
@@ -227,6 +263,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null);
     setUser(null);
     setSubscription(null);
+    setUsage(null);
     setSites([]);
     setActiveSite(null);
     await apiLogout();
@@ -245,6 +282,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       sites,
       activeSite,
       subscription,
+      usage,
       isPro,
       wasPro,
       isTrial,
@@ -253,10 +291,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       login,
       logout,
       refreshUser,
+      refreshUsage,
       refreshSites,
       switchSite,
     }),
-    [token, user, sites, activeSite, subscription, isPro, wasPro, isTrial, daysRemaining, loading, login, logout, refreshUser, refreshSites, switchSite]
+    [token, user, sites, activeSite, subscription, usage, isPro, wasPro, isTrial, daysRemaining, loading, login, logout, refreshUser, refreshUsage, refreshSites, switchSite]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

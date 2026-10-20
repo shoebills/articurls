@@ -130,14 +130,14 @@ def caddy_config(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> 
     host = _host(subdomain, ugc_domain)
     return f"""# Caddyfile
 {domain} {{
-    handle_path {subpath}* {{
+    handle {subpath}* {{
         reverse_proxy {backend} {{
             header_up Host {host}
             header_up X-Original-Host {{host}}
             header_up X-Articurls-Basepath {subpath}
         }}
     }}
-    handle_path /_next/* {{
+    handle /_next/* {{
         reverse_proxy {backend} {{
             header_up Host {host}
         }}

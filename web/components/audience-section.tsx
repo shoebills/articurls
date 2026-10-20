@@ -1,33 +1,38 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { PenLine, Code2, Rocket, Building2, FileText } from "lucide-react";
+import { Building2, ShoppingBag, Briefcase, Newspaper, Code2, Mail } from "lucide-react";
 
 const AUDIENCES = [
   {
-    who: "Hobby writers",
-    outcome: "Share your words on a home that's truly yours, and just write.",
-    icon: PenLine,
-  },
-  {
-    who: "Developers",
-    outcome: "Ship a fast, SEO-ready blog without babysitting servers or plugins.",
-    icon: Code2,
-  },
-  {
-    who: "Indie hackers",
-    outcome: "Build an audience and turn readers into subscribers as you launch.",
-    icon: Rocket,
-  },
-  {
-    who: "Startup founders",
-    outcome: "Publish on your own domain and let search bring the right people in.",
+    who: "B2B SaaS & startups",
+    outcome: "Mount your blog on /blog, compound domain authority, and convert readers with product CTAs.",
     icon: Building2,
   },
   {
-    who: "Technical writers",
-    outcome: "Focus on the craft while structure, meta, and feeds stay handled.",
-    icon: FileText,
+    who: "E-commerce & consumer brands",
+    outcome: "Publish fast buying guides and editorial content with FAQ rich snippets and brand theming.",
+    icon: ShoppingBag,
+  },
+  {
+    who: "Agencies & multi-brand teams",
+    outcome: "Manage unlimited client publications and switch sites from a single account.",
+    icon: Briefcase,
+  },
+  {
+    who: "Media & niche publishers",
+    outcome: "Run multi-author publications with category hubs, scheduling, and native AdSense support.",
+    icon: Newspaper,
+  },
+  {
+    who: "Developers & technical writers",
+    outcome: "Clean code blocks, zero CMS maintenance, custom CSS injection, and instant cache purging.",
+    icon: Code2,
+  },
+  {
+    who: "Creators & newsletter operators",
+    outcome: "Capture subscribers on-site and sync them to your ESP or automation tools via webhooks.",
+    icon: Mail,
   },
 ] as const;
 
@@ -52,8 +57,12 @@ export function AudienceSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Who it&apos;s for</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            Built for people who&apos;d rather write
+            Built for teams that publish to grow
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            From B2B SaaS to consumer brands, Articurls gives every publisher the same SEO-native engine —
+            without an engineering team.
+          </p>
         </div>
 
         <div
