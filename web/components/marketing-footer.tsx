@@ -1,24 +1,23 @@
 import Link from "next/link";
-import { BrandLogo } from "@/components/brand-logo";
-import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
+import { appAuthHref } from "@/lib/env";
 
 const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Product",
     links: [
-      { label: "Features", href: `${MARKETING_ORIGIN}/#features` },
-      { label: "How it works", href: `${MARKETING_ORIGIN}/#how-it-works` },
-      { label: "Pricing", href: `${MARKETING_ORIGIN}/#pricing` },
-      { label: "Start free", href: appAuthHref("/signup") },
+      { label: "Features", href: "/#features" },
+      { label: "How it works", href: "/#how-it-works" },
+      { label: "Pricing", href: "/#pricing" },
+      { label: "Start for free", href: appAuthHref("/signup?plan=pro") },
     ],
   },
-      {
-        title: "Resources",
-        links: [
-          { label: "Blog", href: `${MARKETING_ORIGIN}/blog` },
-          { label: "Log in", href: appAuthHref("/login") },
-        ],
-      },
+  {
+    title: "Resources",
+    links: [
+      { label: "Blog", href: "/blog" },
+      { label: "Log in", href: appAuthHref("/login") },
+    ],
+  },
   {
     title: "Company",
     links: [
@@ -38,8 +37,8 @@ const COLUMNS: { title: string; links: { label: string; href: string }[] }[] = [
 export function MarketingFooter() {
   return (
     <>
-      <div aria-hidden className="mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
-        <p className="-mb-[0.25em] block translate-y-[4%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
+      <div aria-hidden className="pointer-events-none mx-auto max-w-6xl overflow-hidden px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6">
+        <p className="pointer-events-none -mb-[0.25em] block translate-y-[4%] select-none whitespace-nowrap bg-gradient-to-b from-foreground/25 to-transparent bg-clip-text text-center font-bold leading-none tracking-tight text-transparent [font-size:23vw] lg:[font-size:17rem]">
           Articurls
         </p>
       </div>
@@ -60,7 +59,7 @@ export function MarketingFooter() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
+                      className="inline-block py-1 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground active:text-foreground touch-manipulation"
                     >
                       {link.label}
                     </Link>

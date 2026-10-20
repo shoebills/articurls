@@ -16,7 +16,7 @@ const LINKS = [
 export function MarketingNav() {
   const [open, setOpen] = useState(false);
   const navRef = useRef<HTMLElement | null>(null);
-  const signupUrl = appAuthHref("/signup");
+  const signupUrl = appAuthHref("/signup?plan=pro");
   const loginUrl = appAuthHref("/login");
 
   useEffect(() => {

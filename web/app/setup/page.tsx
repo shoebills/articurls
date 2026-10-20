@@ -121,7 +121,7 @@ function SetupForm() {
       timezone: browserTimezone(),
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
-    window.location.assign(consumePendingCheckout());
+    window.location.assign(consumePendingCheckout("/dashboard/billing?plan=pro"));
   }
 
   async function finishGoogleFlow() {
@@ -136,7 +136,7 @@ function SetupForm() {
     });
     localStorage.setItem(TOKEN_KEY, access_token);
     localStorage.setItem("articurls_last_login", "google");
-    window.location.assign(consumePendingCheckout());
+    window.location.assign(consumePendingCheckout("/dashboard/billing?plan=pro"));
   }
 
   async function handleFinalSubmit(e?: React.FormEvent) {

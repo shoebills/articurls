@@ -14,7 +14,7 @@ import { appAuthHref, MARKETING_ORIGIN } from "@/lib/env";
 import { generateFaqPageSchema, generateOrganizationSchema } from "@/lib/structured-data";
 
 export default function MarketingPage() {
-  const signupUrl = appAuthHref("/signup");
+  const signupUrl = appAuthHref("/signup?plan=pro");
 
   return (
     <>
@@ -34,15 +34,13 @@ export default function MarketingPage() {
                   <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
                   <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
                 </span>
-                Built for SEO-driven B2B &amp; B2C teams
+                Built for SEO
               </div>
               <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
                 The blog platform that&nbsp;ranks &amp; converts
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Launch on your custom domain or a <span className="font-medium text-foreground">/blog subdirectory</span> in
-                minutes. Technical SEO, AI search, structured data, conversion CTAs, and real-time
-                analytics — zero maintenance.
+                Launch a fast, modern blog on your own domain in minutes. Write, grow your audience, and track what works — without servers, plugins, or maintenance.
               </p>
               <div className="mt-16 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>

@@ -38,7 +38,7 @@ const AUDIENCES = [
 ] as const;
 
 export default function AboutPage() {
-  const signupUrl = appAuthHref("/signup");
+  const signupUrl = appAuthHref("/signup?plan=pro");
 
   return (
     <>
@@ -102,7 +102,7 @@ export default function AboutPage() {
               href={signupUrl}
               className="mt-8 inline-flex h-12 items-center rounded-lg bg-primary px-8 text-sm font-medium text-primary-foreground shadow-md shadow-primary/15 outline-none transition-[background-color,transform,box-shadow] duration-200 ease-out hover:bg-primary/92 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background active:scale-[0.98] motion-reduce:transition-none motion-reduce:active:scale-100"
             >
-              Start free
+              Start for free
             </a>
             <p className="mt-3 text-sm text-muted-foreground">No credit card required</p>
           </div>

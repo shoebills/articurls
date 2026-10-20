@@ -13,11 +13,11 @@ const SCATTERED = [
 ] as const;
 
 const CALM = [
-  { title: "Domain or /blog in minutes", sub: "Apex, subdomain, or subdirectory — auto SSL, zero config." },
-  { title: "Automatic technical SEO", sub: "Sitemaps, canonicals, JSON-LD, and AI-ready llms.txt." },
-  { title: "Auto 301 redirects", sub: "Slug changes never break rankings or backlinks." },
-  { title: "Conversion CTAs", sub: "End-of-post banners and newsletter webhooks built in." },
-  { title: "Real-time analytics", sub: "Visitors, referrers, and geo — privacy-friendly, no setup." },
+  "Domain or /blog in minutes",
+  "Automatic technical SEO",
+  "Auto 301 redirects",
+  "Conversion CTAs",
+  "Real-time analytics",
 ] as const;
 
 export function ProblemSection() {
@@ -73,11 +73,10 @@ export function ProblemSection() {
             <ul className="relative mt-6 flex h-[19rem] flex-col justify-center gap-3">
               {CALM.map((item) => (
                 <li
-                  key={item.title}
-                  className="flex flex-col gap-0.5 rounded-xl border border-border/60 bg-background/70 px-4 py-3"
+                  key={item}
+                  className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-3 text-base font-medium"
                 >
-                  <span className="text-base font-medium">{item.title}</span>
-                  <span className="text-xs leading-relaxed text-muted-foreground">{item.sub}</span>
+                  {item}
                 </li>
               ))}
             </ul>

@@ -45,11 +45,21 @@ export function PricingSection() {
 
         <div className="mt-10 flex justify-center">
           <Tabs value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
-            <TabsList>
-              <TabsTrigger value="monthly">Monthly</TabsTrigger>
-              <TabsTrigger value="yearly" className="gap-1.5">
+            <TabsList className="touch-manipulation">
+              <TabsTrigger
+                value="monthly"
+                onClick={() => setCycle("monthly")}
+                className="touch-manipulation"
+              >
+                Monthly
+              </TabsTrigger>
+              <TabsTrigger
+                value="yearly"
+                onClick={() => setCycle("yearly")}
+                className="gap-1.5 touch-manipulation"
+              >
                 Yearly
-                <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
+                <span className="pointer-events-none rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
                   Save 17%
                 </span>
               </TabsTrigger>
@@ -59,7 +69,7 @@ export function PricingSection() {
 
         <div className="mx-auto mt-10 max-w-4xl space-y-6">
           {/* Pro — two-column: pricing info on the left, benefits on the right */}
-          <div className="relative grid gap-8 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:p-8 lg:grid-cols-2 lg:items-center">
+          <div className="relative grid gap-8 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:p-8 md:grid-cols-2 md:items-center">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                 Grow audience
@@ -113,7 +123,7 @@ export function PricingSection() {
               </p>
             </div>
 
-            <div className="border-t border-border/60 pt-6 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-8">
+            <div className="border-t border-border/60 pt-6 md:border-t-0 md:border-l md:pt-0 md:pl-8">
               <FeatureList
                 features={[
                   currentTier.viewsText,

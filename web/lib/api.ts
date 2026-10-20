@@ -998,21 +998,27 @@ export function isProSubscription(sub: SubscriptionOut | null): boolean {
 }
 
 export function storePendingCheckout(plan: string | null, tier: string | null, cycle: string | null) {
-  if (plan !== "pro" && plan !== "lifetime") return;
   try {
-    localStorage.setItem(
-      "pendingCheckout",
-      JSON.stringify({ plan, tier: tier || "pro_10k", cycle: cycle || "monthly" })
-    );
+    if (plan === "pro" || plan === "lifetime") {
+      localStorage.setItem(
+        "pendingCheckout",
+        JSON.stringify({ plan, tier: tier || "pro_10k", cycle: cycle || "monthly" })
+      );
+    } else if (!localStorage.getItem("pendingCheckout")) {
+      localStorage.setItem(
+        "pendingCheckout",
+        JSON.stringify({ plan: "pro", tier: "pro_10k", cycle: "monthly" })
+      );
+    }
   } catch {
     /* ignore storage errors */
   }
 }
 
-export function consumePendingCheckout(): string {
+export function consumePendingCheckout(defaultTarget = "/dashboard"): string {
   const raw = typeof window !== "undefined" ? localStorage.getItem("pendingCheckout") : null;
   if (typeof window !== "undefined") localStorage.removeItem("pendingCheckout");
-  if (!raw) return "/dashboard";
+  if (!raw) return defaultTarget;
   try {
     const p = JSON.parse(raw);
     if (p?.plan === "lifetime") return "/dashboard/billing?plan=lifetime";
@@ -1023,7 +1029,7 @@ export function consumePendingCheckout(): string {
   } catch {
     /* fall through */
   }
-  return "/dashboard";
+  return defaultTarget;
 }
 
 export async function adminListUsers(
