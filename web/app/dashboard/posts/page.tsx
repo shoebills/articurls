@@ -147,7 +147,7 @@ export default function PostsPage() {
       setUnpublishId(null);
       await load();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Could not revert post to draft");
+      setErr(e instanceof ApiError ? e.message : "Could not unpublish post");
     } finally {
       setRowBusyId(null);
     }
@@ -434,7 +434,7 @@ export default function PostsPage() {
                             disabled={rowBusyId === b.blog_id}
                           >
                             <RotateCcw className="h-4 w-4" />
-                            Revert to draft
+                            Unpublish
                           </DropdownMenuItem>
                         )}
                         {b.status === "published" && (
@@ -464,7 +464,7 @@ export default function PostsPage() {
                             disabled={rowBusyId === b.blog_id}
                           >
                             <RotateCcw className="h-4 w-4" />
-                            Revert to draft
+                            Unpublish
                           </DropdownMenuItem>
                         )}
                         <DropdownMenuSeparator />
@@ -580,7 +580,7 @@ export default function PostsPage() {
       <Dialog open={unpublishId != null} onOpenChange={(o) => !o && setUnpublishId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Revert this post to draft?</DialogTitle>
+            <DialogTitle>Unpublish this post?</DialogTitle>
             <DialogDescription>It will be removed from your public blog and moved back to drafts.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -588,7 +588,7 @@ export default function PostsPage() {
               Cancel
             </Button>
             <Button onClick={confirmUnpublish}>
-              Revert to draft
+              Unpublish
             </Button>
           </DialogFooter>
         </DialogContent>

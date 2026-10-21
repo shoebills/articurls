@@ -305,7 +305,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
       applyPageToForm(updated);
       setSaveStatus("saved");
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to revert page to draft");
+      setErr(e instanceof ApiError ? e.message : "Failed to unpublish page");
     }
   }
 
@@ -513,7 +513,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
     if (pendingAction === "publish") return { title: "Publish this page now?" };
     if (pendingAction === "archive") return { title: "Archive this page?", description: "Move this page to your archive." };
     if (pendingAction === "unarchive") return { title: "Unarchive this page?", description: "Restore the page so it appears in your published list again." };
-    if (pendingAction === "unpublish") return { title: "Revert this page to draft?", description: "It will be removed from your public site and moved back to drafts." };
+    if (pendingAction === "unpublish") return { title: "Unpublish this page?", description: "It will be removed from your public site and moved back to drafts." };
     if (page.status === "published") return { title: "Save changes?", description: "This will update your live page." };
     return { title: "Save changes to this archived page?" };
   }
@@ -655,11 +655,11 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 min-h-0 px-3 text-xs"
+                    className="h-8 min-h-0 border-destructive/40 px-3 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setPendingAction("undo")}
                     disabled={saving || !dirty}
                   >
-                    Undo
+                    Discard
                   </Button>
                   <Button
                     variant="default"
@@ -668,7 +668,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     onClick={() => setPendingAction("update")}
                     disabled={saving || !dirty}
                   >
-                    {saving ? "Updating…" : "Update page"}
+                    {saving ? "Publishing…" : "Publish"}
                   </Button>
                 </>
               ) : (
@@ -692,7 +692,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     className="h-8 min-h-0 px-3 text-xs"
                     onClick={() => setPendingAction("unpublish")}
                   >
-                    Revert to draft
+                    Unpublish
                   </Button>
                   <Button
                     variant="outline"
@@ -720,7 +720,7 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     className="h-8 min-h-0 px-3 text-xs"
                     onClick={() => setPendingAction("unpublish")}
                   >
-                    Revert to draft
+                    Unpublish
                   </Button>
                 </>
               )}
@@ -1003,9 +1003,9 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
             <Button variant="outline" onClick={() => setPendingAction(null)}>
               Cancel
             </Button>
-            <Button onClick={confirmPendingAction}>
+            <Button variant={pendingAction === "undo" ? "destructive" : "default"} onClick={confirmPendingAction}>
               {pendingAction === "undo"
-                ? "Undo"
+                ? "Discard"
                 : pendingAction === "publish"
                   ? "Publish"
                   : pendingAction === "archive"
@@ -1013,8 +1013,8 @@ export default function EditPageRoute({ params }: { params: Promise<{ id: string
                     : pendingAction === "unarchive"
                       ? "Unarchive"
                       : pendingAction === "unpublish"
-                        ? "Revert to draft"
-                        : "Update page"}
+                        ? "Unpublish"
+                        : "Publish"}
             </Button>
           </DialogFooter>
         </DialogContent>

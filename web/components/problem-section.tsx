@@ -29,11 +29,11 @@ export function ProblemSection() {
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
             Your blog shouldn&apos;t be a
             <br />
-            <span className="text-muted-foreground">nine-tool engineering project.</span>
+            <span className="text-muted-foreground">multi-tool engineering project.</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
             Marketing teams juggle plugins, developers, and scattered analytics just to publish content that
-            ranks. Articurls replaces the whole stack with one SEO-native platform.
+            ranks. Articurls replaces the whole stack with a complete SEO-native platform.
           </p>
         </div>
 
@@ -41,7 +41,7 @@ export function ProblemSection() {
           <div className="relative overflow-hidden rounded-3xl border border-border/70 bg-muted/30 p-6 sm:p-8">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_60%_50%_at_50%_40%,oklch(0.55_0.2_25/0.05),transparent_75%)]" />
             <p className="relative text-sm font-medium text-muted-foreground">Today</p>
-            <p className="relative mt-1 text-lg font-semibold tracking-tight">Nine things to stitch together</p>
+            <p className="relative mt-1 text-lg font-semibold tracking-tight">Too many things to stitch together</p>
 
             <div className="relative mt-6 h-[19rem] w-full">
               {SCATTERED.map((tool) => (
@@ -68,7 +68,7 @@ export function ProblemSection() {
             <p className="relative inline-flex items-center gap-2 text-sm font-medium text-primary">
               With Articurls
             </p>
-            <p className="relative mt-1 text-lg font-semibold tracking-tight">One SEO-native platform</p>
+            <p className="relative mt-1 text-lg font-semibold tracking-tight">A complete SEO-native platform</p>
 
             <ul className="relative mt-6 flex h-[19rem] flex-col justify-center gap-3">
               {CALM.map((item) => (

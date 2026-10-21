@@ -29,7 +29,7 @@ export default function MarketingPage() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-[calc(3.5rem+0.75rem+4rem+env(safe-area-inset-top))] sm:px-6 sm:pt-[calc(4rem+1rem+4rem)] lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-[calc(4rem+1rem+5rem)]">
             <div className="min-w-0">
-              <h1 className="max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+              <h1 className="text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
                 Build a blog that&nbsp;ranks &amp; converts
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">

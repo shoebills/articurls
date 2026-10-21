@@ -62,13 +62,12 @@ export function PricingSection() {
         <div className="mx-auto mt-10 max-w-4xl space-y-10">
           {/* Pro — two-column: pricing info on the left, benefits on the right */}
           <div className="relative grid gap-8 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:p-8 md:grid-cols-2 md:items-center">
-            <div>
+            <div className="text-center">
               <p className="text-xs font-semibold uppercase tracking-[0.14em] text-primary">
                 Grow audience
               </p>
-              <h3 className="mt-1.5 text-2xl font-semibold tracking-tight">{currentTier.name}</h3>
 
-              <div className="mt-4 flex items-baseline gap-1.5">
+              <div className="mt-2 flex items-baseline justify-center gap-1.5">
                 <span className="text-4xl font-semibold tracking-tight">${price}</span>
                 <span className="text-base font-normal text-muted-foreground">{CYCLE_UNIT[cycle]}</span>
                 {cycle === "yearly" && (
@@ -83,14 +82,17 @@ export function PricingSection() {
 
               <div className="mt-4 space-y-1.5">
                 <div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Select Traffic Allowance
+                  Select plan
                 </div>
                 <Select
                   value={String(selectedTierIdx)}
                   onValueChange={(v) => setSelectedTierIdx(Number(v))}
                 >
-                  <SelectTrigger aria-label="Traffic allowance" className="w-full">
-                    <SelectValue placeholder="Select traffic allowance" />
+                  <SelectTrigger
+                    aria-label="Plan"
+                    className="relative w-full justify-center pr-9 text-center [&>svg]:absolute [&>svg]:right-3"
+                  >
+                    <SelectValue placeholder="Select plan" />
                   </SelectTrigger>
                   <SelectContent>
                     {PRO_TIERS.map((tier, idx) => (

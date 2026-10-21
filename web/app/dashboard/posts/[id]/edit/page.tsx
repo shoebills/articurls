@@ -482,7 +482,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
       clearManualDraft();
       applyBlogToForm(b);
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Revert to draft failed");
+      setErr(e instanceof ApiError ? e.message : "Unpublish failed");
     }
   }
 
@@ -734,7 +734,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
     if (pendingAction === "publish") return { title: "Publish this post now?" };
     if (pendingAction === "archive") return { title: "Archive this post?", description: "Move this post to your archive." };
     if (pendingAction === "unarchive") return { title: "Unarchive this post?", description: "Restore the post so it appears in your published list again." };
-    if (pendingAction === "unpublish") return { title: "Revert this post to draft?", description: "It will be removed from your public blog and moved back to drafts." };
+    if (pendingAction === "unpublish") return { title: "Unpublish this post?", description: "It will be removed from your public blog and moved back to drafts." };
     if (blog.status === "published") return { title: "Save changes?", description: "This will update your live post." };
     if (blog.status === "scheduled") return { title: "Save changes?", description: "This will update your scheduled post." };
     return { title: "Save changes to this archived post?" };
@@ -900,11 +900,11 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 min-h-0 px-3 text-xs"
+                    className="h-8 min-h-0 border-destructive/40 px-3 text-xs text-destructive hover:bg-destructive/10 hover:text-destructive"
                     onClick={() => setPendingAction("undo")}
                     disabled={saving || !dirty}
                   >
-                    Undo
+                    Discard
                   </Button>
                   <Button
                     variant="default"
@@ -913,7 +913,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     onClick={() => setPendingAction("update")}
                     disabled={saving || !dirty}
                   >
-                    {saving ? "Updating…" : "Update blog"}
+                    {saving ? "Publishing…" : "Publish"}
                   </Button>
                 </>
               ) : (
@@ -967,7 +967,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     className="h-8 min-h-0 px-3 text-xs"
                     onClick={() => setPendingAction("unpublish")}
                   >
-                    Revert to draft
+                    Unpublish
                   </Button>
                   <Button
                     variant="outline"
@@ -995,7 +995,7 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                     className="h-8 min-h-0 px-3 text-xs"
                     onClick={() => setPendingAction("unpublish")}
                   >
-                    Revert to draft
+                    Unpublish
                   </Button>
                 </>
               )}
@@ -1018,9 +1018,9 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
             <Button variant="outline" onClick={() => setPendingAction(null)}>
               Cancel
             </Button>
-            <Button onClick={confirmPendingAction}>
+            <Button variant={pendingAction === "undo" ? "destructive" : "default"} onClick={confirmPendingAction}>
               {pendingAction === "undo"
-                ? "Undo"
+                ? "Discard"
                 : pendingAction === "unschedule"
                   ? "Unschedule"
                   : pendingAction === "publish"
@@ -1030,8 +1030,8 @@ export default function EditPostPage({ params }: { params: Promise<{ id: string 
                       : pendingAction === "unarchive"
                         ? "Unarchive"
                         : pendingAction === "unpublish"
-                          ? "Revert to draft"
-                          : "Update blog"}
+                          ? "Unpublish"
+                          : "Publish"}
             </Button>
           </DialogFooter>
         </DialogContent>

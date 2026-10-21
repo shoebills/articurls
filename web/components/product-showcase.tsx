@@ -116,7 +116,7 @@ export function ProductShowcase() {
             Everything a content engine needs, in one place
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            A rich editor, technical SEO, custom domains, analytics, and conversion tools — working together so you can publish and grow without stitching anything together.
+            A rich editor, technical SEO, custom domains, analytics, and conversion tools working together so you can publish and grow without stitching anything together.
           </p>
         </div>
       </div>
@@ -314,8 +314,11 @@ function EditorPanel() {
             <div className="h-2 w-2/3 rounded-full bg-foreground/[0.06]" />
           </div>
         </div>
-        <div className="flex items-center justify-start pt-1 text-[11px] text-muted-foreground">
+        <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
           <span>Draft saved</span>
+          <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm">
+            Publish
+          </span>
         </div>
       </div>
     </AppFrame>
@@ -409,7 +412,7 @@ function ConvertPanel() {
         </div>
 
         <div>
-          <p className="text-sm font-semibold">End-of-post CTA</p>
+          <p className="text-sm font-semibold">CTA</p>
           <div className="mt-3 rounded-xl border border-border/80 bg-muted/20 p-5 text-center sm:p-6">
             <p className="text-lg font-bold tracking-tight text-foreground">Get the full growth framework</p>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

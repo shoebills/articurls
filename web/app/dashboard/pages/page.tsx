@@ -192,7 +192,7 @@ export default function PagesDashboardPage() {
       setUnpublishId(null);
       await load();
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : "Failed to revert page to draft");
+      setErr(e instanceof ApiError ? e.message : "Failed to unpublish page");
     } finally {
       setRowBusyId(null);
     }
@@ -420,7 +420,7 @@ export default function PagesDashboardPage() {
                                   disabled={rowBusyId === p.page_id}
                                 >
                                   <RotateCcw className="h-4 w-4" />
-                                  Revert to draft
+                                  Unpublish
                                 </DropdownMenuItem>
                               )}
                               {p.status === "published" && (
@@ -450,7 +450,7 @@ export default function PagesDashboardPage() {
                                   disabled={rowBusyId === p.page_id}
                                 >
                                   <RotateCcw className="h-4 w-4" />
-                                  Revert to draft
+                                  Unpublish
                                 </DropdownMenuItem>
                               )}
                               <DropdownMenuItem
@@ -548,7 +548,7 @@ export default function PagesDashboardPage() {
       <Dialog open={unpublishId != null} onOpenChange={(o) => !o && setUnpublishId(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Revert this page to draft?</DialogTitle>
+            <DialogTitle>Unpublish this page?</DialogTitle>
             <DialogDescription>It will be removed from your public site and moved back to drafts.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -556,7 +556,7 @@ export default function PagesDashboardPage() {
               Cancel
             </Button>
             <Button onClick={confirmUnpublish}>
-              Revert to draft
+              Unpublish
             </Button>
           </DialogFooter>
         </DialogContent>

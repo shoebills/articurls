@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUpRight, CalendarDays, Check, Globe, PenLine, TrendingUp } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, CalendarDays, Check, Globe, PenLine, TrendingUp } from "lucide-react";
 
 const STEPS = [
   {
@@ -158,7 +158,6 @@ function ClaimVisual() {
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
           <span className="flex h-11 items-center bg-muted/60 pl-3 pr-1 text-sm font-medium text-foreground">
             acme.com
-            <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-px bg-primary group-hover:animate-pulse" />
             /
           </span>
           <span className="flex h-11 flex-1 items-center pr-3 text-sm text-muted-foreground">blog</span>
@@ -176,10 +175,7 @@ function WriteVisual() {
     <div aria-hidden>
       <Chrome label="Editor" />
       <div className="space-y-3 p-5">
-        <div className="text-base font-semibold tracking-tight text-foreground">
-          Our SEO growth playbook
-          <span className="ml-0.5 inline-block h-4 w-[2px] translate-y-0.5 bg-primary group-hover:animate-pulse" />
-        </div>
+        <div className="text-base font-semibold tracking-tight text-foreground">Our SEO growth playbook</div>
         <div className="h-2.5 w-full rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-[90%] rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-2/3 rounded-full bg-foreground/[0.07]" />
@@ -204,59 +200,39 @@ function WriteVisual() {
 function GrowVisual() {
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const visitors = [420, 560, 510, 680, 640, 980, 1022];
-  const signups = [64, 71, 66, 89, 84, 128, 118];
-  const visitorMax = 1500;
-  const signupMax = 200;
-  const satVisitor = chartPoints(visitors, visitorMax)[5];
-  const satSignup = chartPoints(signups, signupMax)[5];
+  const pageviews = [690, 910, 830, 1090, 1010, 1530, 1560];
+  const max = 1600;
+  const satPageviews = chartPoints(pageviews, max)[5];
+  const satVisitors = chartPoints(visitors, max)[5];
 
   return (
     <div aria-hidden>
       <Chrome label="Analytics" />
       <div className="p-4 sm:p-5">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-medium text-muted-foreground">Traffic &amp; conversions</p>
+          <p className="text-[11px] font-medium text-muted-foreground">Traffic</p>
           <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground">
             <CalendarDays className="h-3 w-3" /> Last 7 days
           </span>
         </div>
 
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.6_0.15_145)]" /> Organic visitors
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <p className="text-lg font-bold tracking-tight">4,812</p>
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600">
-                <ArrowUpRight className="h-3 w-3" /> 18.2%
-              </span>
-            </div>
-          </div>
-          <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.58_0.18_280)]" /> Newsletter signups
-            </p>
-            <div className="mt-0.5 flex items-baseline gap-1.5">
-              <p className="text-lg font-bold tracking-tight">620</p>
-              <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600">
-                <ArrowUpRight className="h-3 w-3" /> 12.4%
-              </span>
-            </div>
-          </div>
+          <MiniKpi label="Pageviews" value="7,620" delta="16.4%" dot="bg-[oklch(0.6_0.15_145)]" />
+          <MiniKpi label="Visitors" value="4,812" delta="18.2%" dot="bg-[oklch(0.58_0.18_280)]" />
+          <MiniKpi label="Bounce rate" value="38.4%" delta="2.1%" trend="down" />
+          <MiniKpi label="Avg duration" value="2m 18s" delta="6.3%" />
         </div>
 
         <div className="mt-3 flex gap-2">
           <div className="flex h-[92px] flex-col justify-between text-right text-[9px] leading-none text-muted-foreground/60">
-            <span>1.5k</span>
-            <span>1k</span>
-            <span>500</span>
+            <span>1.6k</span>
+            <span>800</span>
             <span>0</span>
           </div>
           <div className="relative min-w-0 flex-1">
             <div className="pointer-events-none absolute left-[83%] top-0 z-10 -translate-x-[105%] rounded-md border border-border/70 bg-popover px-2 py-1 shadow-sm">
-              <p className="text-[9px] font-semibold leading-tight text-foreground">980 visitors</p>
-              <p className="text-[8px] leading-tight text-muted-foreground">128 signups · Sat</p>
+              <p className="text-[9px] font-semibold leading-tight text-foreground">1,530 pageviews</p>
+              <p className="text-[8px] leading-tight text-muted-foreground">980 visitors · Sat</p>
             </div>
             <span className="pointer-events-none absolute left-[83%] top-0 h-[92px] border-l border-dashed border-border/80" />
             <svg viewBox="0 0 320 100" className="h-[92px] w-full overflow-visible" preserveAspectRatio="none">
@@ -270,18 +246,18 @@ function GrowVisual() {
                   <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0" />
                 </linearGradient>
               </defs>
-              {[500, 1000].map((v) => {
-                const y = 100 - (v / visitorMax) * 100;
+              {[400, 800, 1200].map((v) => {
+                const y = 100 - (v / max) * 100;
                 return (
                   <line key={v} x1="0" y1={y} x2="320" y2={y} className="stroke-border" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
                 );
               })}
-              <path d={areaPath(visitors, visitorMax)} fill="url(#hiw-pv)" />
-              <path d={linePath(visitors, visitorMax)} fill="none" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" strokeLinecap="round" />
-              <path d={areaPath(signups, signupMax)} fill="url(#hiw-vi)" />
-              <path d={linePath(signups, signupMax)} fill="none" stroke="oklch(0.58 0.18 280)" strokeWidth="2" strokeLinecap="round" />
-              <circle cx={satVisitor[0]} cy={satVisitor[1]} r="3" fill="var(--card)" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" />
-              <circle cx={satSignup[0]} cy={satSignup[1]} r="3" fill="var(--card)" stroke="oklch(0.58 0.18 280)" strokeWidth="2.5" />
+              <path d={areaPath(pageviews, max)} fill="url(#hiw-pv)" />
+              <path d={linePath(pageviews, max)} fill="none" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" strokeLinecap="round" />
+              <path d={areaPath(visitors, max)} fill="url(#hiw-vi)" />
+              <path d={linePath(visitors, max)} fill="none" stroke="oklch(0.58 0.18 280)" strokeWidth="2" strokeLinecap="round" />
+              <circle cx={satPageviews[0]} cy={satPageviews[1]} r="3" fill="var(--card)" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" />
+              <circle cx={satVisitors[0]} cy={satVisitors[1]} r="3" fill="var(--card)" stroke="oklch(0.58 0.18 280)" strokeWidth="2.5" />
             </svg>
             <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/60">
               {days.map((d) => (
@@ -289,22 +265,37 @@ function GrowVisual() {
               ))}
             </div>
           </div>
-          <div className="flex h-[92px] flex-col justify-between text-left text-[9px] leading-none text-[oklch(0.58_0.18_280)]/70">
-            <span>200</span>
-            <span>100</span>
-            <span>0</span>
-          </div>
         </div>
+      </div>
+    </div>
+  );
+}
 
-        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-          <div className="min-w-0">
-            <p className="truncate text-[10px] font-medium text-foreground">/how-we-grew-organic-traffic</p>
-            <p className="text-[9px] text-muted-foreground">Top converting post</p>
-          </div>
-          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-emerald-600">
-            <ArrowUpRight className="h-3 w-3" /> 46 signups
-          </span>
-        </div>
+function MiniKpi({
+  label,
+  value,
+  delta,
+  trend = "up",
+  dot,
+}: {
+  label: string;
+  value: string;
+  delta: string;
+  trend?: "up" | "down";
+  dot?: string;
+}) {
+  const DeltaIcon = trend === "up" ? ArrowUpRight : ArrowDownRight;
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+      <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+        {dot ? <span className={`h-1.5 w-1.5 rounded-full ${dot}`} /> : null}
+        {label}
+      </p>
+      <div className="mt-0.5 flex items-baseline gap-1.5">
+        <p className="text-lg font-bold tracking-tight">{value}</p>
+        <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600">
+          <DeltaIcon className="h-3 w-3" /> {delta}
+        </span>
       </div>
     </div>
   );

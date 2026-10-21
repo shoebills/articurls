@@ -64,7 +64,7 @@ export default function RootLayout({
       data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
-      <body className="flex min-h-dvh flex-col overflow-x-hidden">
+      <body className="flex min-h-dvh flex-col">
         <Providers>{children}</Providers>
       </body>
     </html>
