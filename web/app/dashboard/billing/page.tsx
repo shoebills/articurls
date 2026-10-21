@@ -37,6 +37,7 @@ import {
   Activity,
   Zap,
   Globe,
+  Infinity,
 } from "lucide-react";
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
@@ -235,9 +236,8 @@ export default function BillingPage() {
                     Free Trial
                   </div>
                 ) : isLifetime ? (
-                  <div className="inline-flex items-center gap-2 rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-800">
-                    <Flame className="h-3.5 w-3.5" />
-                    Lifetime Plan · Unlimited views
+                  <div className="inline-flex items-center rounded-lg border border-amber-500/25 bg-amber-500/[0.06] px-3 py-1.5 text-xs font-medium text-amber-800">
+                    Lifetime Plan
                   </div>
                 ) : pro && sub ? (
                   subStatus === "past_due" ? (
@@ -358,11 +358,17 @@ export default function BillingPage() {
                       <span className="text-2xl sm:text-3xl font-bold tabular-nums">
                         {usage.total_pageviews.toLocaleString()}
                       </span>
-                      <span className="text-muted-foreground text-sm">
+                      <span className="inline-flex items-baseline gap-1 text-muted-foreground text-sm">
                         {" "}
-                        {usage.tier_limit !== null
-                          ? `/ ${usage.tier_limit.toLocaleString()} views`
-                          : "views (Unlimited traffic)"}
+                        {usage.tier_limit !== null ? (
+                          <span>/ {usage.tier_limit.toLocaleString()} views</span>
+                        ) : (
+                          <>
+                            <span>/</span>
+                            <Infinity className="h-4 w-4 self-center" aria-hidden />
+                            <span>views</span>
+                          </>
+                        )}
                       </span>
                     </div>
                     {usage.tier_limit !== null ? (
@@ -370,8 +376,8 @@ export default function BillingPage() {
                         {usage.usage_percentage ?? 0}% used
                       </span>
                     ) : (
-                      <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-700">
-                        No Quota Limit
+                      <span className="text-sm font-bold tabular-nums text-emerald-600">
+                        Unlimited
                       </span>
                     )}
                   </div>

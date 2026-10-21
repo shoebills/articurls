@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict
 
 
 class MetricsRow(BaseModel):
@@ -68,31 +68,5 @@ class UmamiExpandedMetricsResponse(BaseModel):
     rows: List[UmamiExpandedMetricsRow]
 
 
-class UmamiPagesResponse(BaseModel):
-    period: str
-    rows: List[MetricsRow]
-
-
-class UmamiSourcesResponse(BaseModel):
-    period: str
-    referrers: List[MetricsRow]
-
-
-class UmamiGeoResponse(BaseModel):
-    period: str
-    countries: List[MetricsRow]
-
-
-class UmamiTechResponse(BaseModel):
-    period: str
-    browsers: List[MetricsRow]
-    os: List[MetricsRow]
-    devices: List[MetricsRow]
-
-
 class UmamiRealtimeResponse(BaseModel):
     active_visitors: int
-    urls: Dict[str, int]
-    countries: Dict[str, int]
-    referrers: Dict[str, int]
-    events: List[Dict[str, Any]]

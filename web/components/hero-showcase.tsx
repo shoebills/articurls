@@ -1,4 +1,4 @@
-import { BarChart3, Bot, Check, FileJson2, Globe, Radio, Sparkles } from "lucide-react";
+import { BarChart3, Check, FileJson2, Globe } from "lucide-react";
 
 export function HeroShowcase() {
   return (
@@ -19,10 +19,6 @@ export function HeroShowcase() {
               <span className="ml-2 truncate text-[11px] font-medium text-muted-foreground">
                 Editor
               </span>
-              <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
-                <Sparkles className="h-3 w-3" />
-                SEO optimized
-              </span>
             </div>
             <div className="space-y-3 p-5">
               <div className="text-lg font-semibold tracking-tight text-foreground">
@@ -38,7 +34,7 @@ export function HeroShowcase() {
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
                     <FileJson2 className="h-3.5 w-3.5" />
-                    FAQ schema
+                    FAQ
                   </span>
                   <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
                     FAQPage
@@ -67,15 +63,21 @@ export function HeroShowcase() {
             <p className="mt-2 truncate rounded-lg bg-muted/50 px-2.5 py-1.5 font-mono text-sm font-semibold tracking-tight text-foreground">
               acme.com/blog
             </p>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {["Next.js", "Cloudflare", "Nginx"].map((s) => (
-                <span
-                  key={s}
-                  className="rounded-md border border-border/60 bg-background/70 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-                >
-                  {s}
+            <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              OR
+            </p>
+            <div className="mt-2 border-t border-border/60 pt-2">
+              <div className="flex items-center justify-between">
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                  <Globe className="h-3.5 w-3.5" /> Custom domain
                 </span>
-              ))}
+                <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
+                  <Check className="h-3 w-3" /> Live
+                </span>
+              </div>
+              <p className="mt-2 truncate rounded-lg bg-muted/50 px-2.5 py-1.5 font-mono text-sm font-semibold tracking-tight text-foreground">
+                acme.com
+              </p>
             </div>
           </div>
         </div>
@@ -114,16 +116,13 @@ export function HeroShowcase() {
           </div>
         </div>
 
-        {/* AI search ready */}
+        {/* Optimized for AI search */}
         <div className="hero-float-b absolute -bottom-6 right-2 z-40 [animation-delay:800ms] sm:-bottom-8 sm:right-8">
           <div className="inline-flex items-center gap-2 rounded-xl border border-border/70 bg-card/95 px-3.5 py-2 shadow-[0_18px_60px_-30px_rgba(15,23,42,0.5)] backdrop-blur">
-            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#7C3AED]/10 text-[#7C3AED]">
-              <Bot className="h-3.5 w-3.5" />
-            </span>
             <div>
-              <p className="text-xs font-medium text-foreground">AI search ready</p>
+              <p className="text-xs font-medium text-foreground">Optimized for AI search</p>
               <p className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground">
-                <Radio className="h-3 w-3" /> llms.txt · JSON-LD · Sitemap
+                llms.txt · JSON-LD · Sitemap &amp; more.
               </p>
             </div>
           </div>

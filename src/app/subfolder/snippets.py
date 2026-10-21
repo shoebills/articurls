@@ -26,26 +26,34 @@ _CLOUDFLARE_WORKER_TEMPLATE = """export default {
 
     // Strip trailing slash on subpath for exact match checks
     const normalizedSubpath = subpath.replace(/\\/+$/, "");
-    const isSubpathMatch = url.pathname === normalizedSubpath ||
-                           url.pathname.startsWith(normalizedSubpath + "/");
+    const isSubpathMatch =
+      url.pathname === normalizedSubpath ||
+      url.pathname.startsWith(normalizedSubpath + "/");
     const isAssetMatch = url.pathname.startsWith("/_next/");
 
     if (isSubpathMatch || isAssetMatch) {
       const proxyUrl = new URL(url.pathname + url.search, backendOrigin);
       const newHeaders = new Headers(request.headers);
+      newHeaders.set("host", proxyUrl.hostname);
       newHeaders.set("x-original-host", url.hostname);
       newHeaders.set("x-articurls-basepath", normalizedSubpath);
 
-      return fetch(proxyUrl.toString(), {
+      const response = await fetch(proxyUrl.toString(), {
         method: request.method,
         headers: newHeaders,
         body: request.body,
-        redirect: "manual"
+        redirect: "manual",
       });
+
+      if (isAssetMatch && response.status === 404) {
+        return fetch(request);
+      }
+
+      return response;
     }
 
     return fetch(request);
-  }
+  },
 };
 """
 
@@ -60,41 +68,41 @@ def cloudflare_worker(subdomain: str, ugc_domain: str, subpath: str) -> str:
 
 def nextjs_rewrite(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> str:
     backend = _backend(subdomain, ugc_domain)
-    return f"""// proxy.ts (Next.js App Router)
-import {{ NextResponse }} from 'next/server';
-import type {{ NextRequest }} from 'next/server';
+    return f"""// next.config.mjs
+/** @type {{import('next').NextConfig}} */
+const nextConfig = {{
+  async rewrites() {{
+    return [
+      {{
+        source: '{subpath}',
+        destination: '{backend}{subpath}',
+      }},
+      {{
+        source: '{subpath}/:path*',
+        destination: '{backend}{subpath}/:path*',
+      }},
+      {{
+        source: '/_next/:path*',
+        destination: '{backend}/_next/:path*',
+      }},
+    ];
+  }},
+}};
 
-export function proxy(request: NextRequest) {{
-  const {{ pathname }} = request.nextUrl;
-  const isSubpath = pathname === '{subpath}' || pathname.startsWith('{subpath}/');
-  const isAsset = pathname.startsWith('/_next/');
-
-  if (isSubpath || isAsset) {{
-    const url = new URL(pathname + request.nextUrl.search, '{backend}');
-    const headers = new Headers(request.headers);
-    headers.set('x-original-host', request.headers.get('host') || '{domain}');
-    headers.set('x-articurls-basepath', '{subpath}');
-    return NextResponse.rewrite(url, {{ request: {{ headers }} }});
-  }}
-}}
-
-export const config = {{
-  matcher: ['{subpath}', '{subpath}/:path*', '/_next/:path*'],
-}};"""
+export default nextConfig;"""
 
 
 def vercel_rewrite(subdomain: str, ugc_domain: str, subpath: str) -> str:
     backend = _backend(subdomain, ugc_domain)
-    return f"""// vercel.json
-{{
+    return f"""{{
   "rewrites": [
     {{
       "source": "{subpath}",
       "destination": "{backend}{subpath}"
     }},
     {{
-      "source": "{subpath}/:match*",
-      "destination": "{backend}{subpath}/:match*"
+      "source": "{subpath}/:path*",
+      "destination": "{backend}{subpath}/:path*"
     }},
     {{
       "source": "/_next/:path*",
@@ -107,8 +115,8 @@ def vercel_rewrite(subdomain: str, ugc_domain: str, subpath: str) -> str:
 def nginx_config(subdomain: str, ugc_domain: str, subpath: str) -> str:
     backend = _backend(subdomain, ugc_domain)
     host = _host(subdomain, ugc_domain)
-    return f"""# Nginx location block
-location {subpath} {{
+    return f"""# Nginx server block configuration
+location ^~ {subpath} {{
     proxy_pass {backend}{subpath};
     proxy_set_header Host {host};
     proxy_set_header X-Original-Host $host;
@@ -118,9 +126,12 @@ location {subpath} {{
     proxy_ssl_server_name on;
 }}
 
-location /_next/ {{
+location ^~ /_next/ {{
     proxy_pass {backend}/_next/;
     proxy_set_header Host {host};
+    proxy_set_header X-Original-Host $host;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
     proxy_ssl_server_name on;
 }}"""
 
@@ -130,7 +141,8 @@ def caddy_config(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> 
     host = _host(subdomain, ugc_domain)
     return f"""# Caddyfile
 {domain} {{
-    handle {subpath}* {{
+    @blog path {subpath} {subpath}/*
+    handle @blog {{
         reverse_proxy {backend} {{
             header_up Host {host}
             header_up X-Original-Host {{host}}
@@ -140,6 +152,7 @@ def caddy_config(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> 
     handle /_next/* {{
         reverse_proxy {backend} {{
             header_up Host {host}
+            header_up X-Original-Host {{host}}
         }}
     }}
 }}"""
@@ -147,13 +160,19 @@ def caddy_config(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> 
 
 def apache_config(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> str:
     backend = _backend(subdomain, ugc_domain)
-    return f"""# Apache .htaccess or httpd.conf
-RewriteEngine On
+    return f"""# Apache VirtualHost configuration (requires mod_proxy, mod_proxy_http, mod_ssl, mod_headers)
 SSLProxyEngine On
 ProxyPreserveHost Off
-RequestHeader set X-Original-Host "{domain}"
-RequestHeader set X-Articurls-Basepath "{subpath}"
-ProxyPass {subpath} {backend}{subpath}
-ProxyPassReverse {subpath} {backend}{subpath}
-ProxyPass /_next/ {backend}/_next/
-ProxyPassReverse /_next/ {backend}/_next/"""
+
+<Location {subpath}>
+    ProxyPass {backend}{subpath}
+    ProxyPassReverse {backend}{subpath}
+    RequestHeader set X-Original-Host "{domain}"
+    RequestHeader set X-Articurls-Basepath "{subpath}"
+</Location>
+
+<Location /_next/>
+    ProxyPass {backend}/_next/
+    ProxyPassReverse {backend}/_next/
+    RequestHeader set X-Original-Host "{domain}"
+</Location>"""

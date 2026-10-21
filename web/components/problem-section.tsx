@@ -2,9 +2,9 @@ import { ArrowDown, ArrowRight } from "lucide-react";
 
 const SCATTERED = [
   { label: "WordPress & plugins", x: "left-0 top-0", rotate: "-rotate-3" },
-  { label: "Security patches", x: "right-2 top-1", rotate: "rotate-2" },
+  { label: "Manual SEO", x: "right-2 top-1", rotate: "rotate-2" },
   { label: "/blog reverse proxy", x: "left-6 top-16", rotate: "rotate-1" },
-  { label: "Manual schema markup", x: "right-0 top-20", rotate: "-rotate-2" },
+  { label: "Technical settings", x: "right-0 top-20", rotate: "-rotate-2" },
   { label: "Broken redirects", x: "left-1 top-32", rotate: "rotate-3" },
   { label: "Slow Core Web Vitals", x: "right-8 top-32", rotate: "-rotate-1" },
   { label: "Separate analytics", x: "left-12 top-48", rotate: "rotate-2" },
@@ -13,10 +13,10 @@ const SCATTERED = [
 ] as const;
 
 const CALM = [
+  "Rich editor experience",
   "Domain or /blog in minutes",
   "Automatic technical SEO",
-  "Auto 301 redirects",
-  "Conversion CTAs",
+  "Fast pages loading",
   "Real-time analytics",
 ] as const;
 

@@ -17,7 +17,9 @@ const STATIC_INTERNAL_DOMAINS = new Set([
 ]);
 
 export function firstHeaderHost(raw: string | null): string {
-  return (raw || "").toLowerCase().split(",")[0].trim();
+  const first = (raw || "").toLowerCase().split(",")[0].trim();
+  if (!first || first.startsWith("localhost:")) return first;
+  return first.replace(/:\d+$/, "");
 }
 
 export function buildRuntimeHosts(appOrigin: string, marketingOrigin: string): string[] {
@@ -92,8 +94,8 @@ export function resolveTenantHost(
   // trust forwarding headers here — never on platform apex hosts, where a
   // client-supplied x-original-host must not influence tenant resolution.
   if (isUgcSubdomainHost(hostHeader)) {
-    if (isCustomDomainHost(xOriginal, runtimeHosts)) return xOriginal;
-    if (isCustomDomainHost(forwarded, runtimeHosts)) return forwarded;
+    if (isCustomDomainHost(xOriginal, runtimeHosts) && !isUgcSubdomainHost(xOriginal)) return xOriginal;
+    if (isCustomDomainHost(forwarded, runtimeHosts) && !isUgcSubdomainHost(forwarded)) return forwarded;
     return hostHeader;
   }
 

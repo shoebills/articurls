@@ -38,10 +38,6 @@ import type {
   UmamiExpandedMetricsResponse,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
-  UmamiPagesResponse,
-  UmamiSourcesResponse,
-  UmamiGeoResponse,
-  UmamiTechResponse,
   UmamiRealtimeResponse,
   UserSettings,
   SubfolderSettings,
@@ -56,10 +52,6 @@ export type {
   UmamiExpandedMetricsResponse,
   UmamiOverviewResponse,
   UmamiTimeseriesResponse,
-  UmamiPagesResponse,
-  UmamiSourcesResponse,
-  UmamiGeoResponse,
-  UmamiTechResponse,
   UmamiRealtimeResponse,
 };
 
@@ -1139,42 +1131,6 @@ export async function getUmamiExpandedMetrics(
   const q = new URLSearchParams({ type, period, limit: String(limit) });
   if (search && search.trim()) q.set("search", search.trim());
   return apiFetch(`/analytics/umami/metrics/expanded?${q.toString()}`, { token });
-}
-
-export async function getUmamiPages(
-  token: string,
-  period: AnalyticsPeriod = "7d",
-  limit = 50,
-): Promise<UmamiPagesResponse> {
-  const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/pages?${q.toString()}`, { token });
-}
-
-export async function getUmamiSources(
-  token: string,
-  period: AnalyticsPeriod = "7d",
-  limit = 20,
-): Promise<UmamiSourcesResponse> {
-  const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/sources?${q.toString()}`, { token });
-}
-
-export async function getUmamiGeo(
-  token: string,
-  period: AnalyticsPeriod = "7d",
-  limit = 20,
-): Promise<UmamiGeoResponse> {
-  const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/geo?${q.toString()}`, { token });
-}
-
-export async function getUmamiTech(
-  token: string,
-  period: AnalyticsPeriod = "7d",
-  limit = 20,
-): Promise<UmamiTechResponse> {
-  const q = new URLSearchParams({ period, limit: String(limit) });
-  return apiFetch(`/analytics/umami/tech?${q.toString()}`, { token });
 }
 
 export async function getUmamiRealtime(

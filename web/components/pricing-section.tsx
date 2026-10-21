@@ -46,18 +46,10 @@ export function PricingSection() {
         <div className="mt-10 flex justify-center">
           <Tabs value={cycle} onValueChange={(v) => setCycle(v as BillingCycle)}>
             <TabsList className="touch-manipulation">
-              <TabsTrigger
-                value="monthly"
-                onClick={() => setCycle("monthly")}
-                className="touch-manipulation"
-              >
+              <TabsTrigger value="monthly" className="touch-manipulation">
                 Monthly
               </TabsTrigger>
-              <TabsTrigger
-                value="yearly"
-                onClick={() => setCycle("yearly")}
-                className="gap-1.5 touch-manipulation"
-              >
+              <TabsTrigger value="yearly" className="gap-1.5 touch-manipulation">
                 Yearly
                 <span className="pointer-events-none rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-600">
                   Save 17%
@@ -67,7 +59,7 @@ export function PricingSection() {
           </Tabs>
         </div>
 
-        <div className="mx-auto mt-10 max-w-4xl space-y-6">
+        <div className="mx-auto mt-10 max-w-4xl space-y-10">
           {/* Pro — two-column: pricing info on the left, benefits on the right */}
           <div className="relative grid gap-8 rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/[0.05] to-card p-6 ring-1 ring-primary/20 shadow-xl shadow-primary/10 sm:p-8 md:grid-cols-2 md:items-center">
             <div>
@@ -86,7 +78,7 @@ export function PricingSection() {
                 )}
               </div>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                $0 Due today · 7-day free trial
+                $0 Due today
               </p>
 
               <div className="mt-4 space-y-1.5">
@@ -145,7 +137,7 @@ export function PricingSection() {
             </div>
           </div>
 
-          <div className="mx-auto max-w-sm">
+          <div className="mx-auto max-w-[26rem]">
             <LifetimeCard href={lifetimeHref} />
           </div>
         </div>
@@ -213,7 +205,6 @@ function LifetimeCard({ href }: { href: string }) {
             "Unlimited monthly pageviews",
             "Everything in Pro",
             "No recurring charges, ever",
-            "Future Pro features included",
             "Yours for life",
           ]}
           checkColor="text-background/70"

@@ -37,17 +37,22 @@ export async function resolveTenantSeo(
   const domainInfo = await resolveDomainForSeo(host);
   if (!domainInfo) return null;
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") return null;
-  if (domainInfo.redirect_to) return null;
 
   const configured = normalizeSubpath(domainInfo.custom_subpath);
   const requested = normalizeSubpath(requestedPrefix);
   if (configured !== requested) return null;
 
+  // Declarative subpath rewrites (vercel.json, next.config.mjs) forward to
+  // `{subdomain}.{ugc_domain}/{subpath}/*` without X-Original-Host, so
+  // `redirect_to` is present even on legitimate proxied subpath requests.
+  if (domainInfo.redirect_to && !configured) return null;
+
   const site = await loadPublicSite(domainInfo.subdomain);
   if (!site) return null;
 
+  const effectiveHost = domainInfo.custom_domain || host;
   const basePath = configured ? `/${configured}` : "";
-  const siteOrigin = `https://${host}${basePath}`;
+  const siteOrigin = `https://${effectiveHost}${basePath}`;
 
   return { site, subdomain: domainInfo.subdomain, siteOrigin, basePath };
 }

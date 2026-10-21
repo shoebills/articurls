@@ -1,20 +1,20 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Check, Globe, PenLine, TrendingUp } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Check, Globe, PenLine, TrendingUp } from "lucide-react";
 
 const STEPS = [
   {
     n: "01",
-    title: "Connect your domain or /blog",
-    body: "Start on a free .articurls.site address, then go live on your apex domain, subdomain, or a /blog subdirectory with copy-paste config for any stack.",
+    title: "Connect your domain",
+    body: "Start on a free .articurls.site address, then go live on your apex domain, subdomain, or a /blog subdirectory.",
     icon: Globe,
     visual: <ClaimVisual />,
   },
   {
     n: "02",
     title: "Write, structure & optimize",
-    body: "Draft in a rich editor with auto-optimized images, FAQ schema, categories, and multi-author profiles. Technical SEO is handled as you type.",
+    body: "Draft in a rich editor with auto-optimized images, FAQ, categories, and multi-author profiles. Technical SEO is handled as you type.",
     icon: PenLine,
     visual: <WriteVisual />,
   },
@@ -61,8 +61,7 @@ export function HowItWorks() {
             Live in three steps
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            From zero to a ranking, conversion-ready publication — no plugins, servers, or engineering
-            sprints.
+            From zero to a ranking, conversion-ready publication.
           </p>
         </div>
 
@@ -155,7 +154,7 @@ function ClaimVisual() {
     <div aria-hidden>
       <Chrome label="Connect your domain" />
       <div className="space-y-3 p-5">
-        <p className="text-xs font-medium text-muted-foreground">Subdirectory route</p>
+        <p className="text-xs font-medium text-muted-foreground">Subdirectory</p>
         <div className="flex items-center gap-0 overflow-hidden rounded-xl border border-primary/30 ring-4 ring-primary/10 transition-[box-shadow] group-hover:ring-primary/20">
           <span className="flex h-11 items-center bg-muted/60 pl-3 pr-1 text-sm font-medium text-foreground">
             acme.com
@@ -163,16 +162,6 @@ function ClaimVisual() {
             /
           </span>
           <span className="flex h-11 flex-1 items-center pr-3 text-sm text-muted-foreground">blog</span>
-        </div>
-        <div className="flex flex-wrap gap-1.5">
-          {["Next.js", "Cloudflare", "Vercel", "Nginx"].map((s) => (
-            <span
-              key={s}
-              className="rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground"
-            >
-              {s}
-            </span>
-          ))}
         </div>
         <div className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
           <Check className="h-3.5 w-3.5" /> Live with automatic SSL
@@ -195,20 +184,15 @@ function WriteVisual() {
         <div className="h-2.5 w-[90%] rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-2/3 rounded-full bg-foreground/[0.07]" />
         <div className="mt-4 rounded-xl border border-border/60 bg-muted/25 p-3">
-          <div className="flex items-center justify-between">
-            <span className="text-[11px] font-medium text-muted-foreground">FAQ schema</span>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-              Auto-generated
-            </span>
-          </div>
+          <span className="text-[11px] font-medium text-muted-foreground">FAQ</span>
           <div className="mt-2 space-y-1.5">
             <div className="h-2 w-3/4 rounded-full bg-foreground/[0.09]" />
             <div className="h-2 w-2/3 rounded-full bg-foreground/[0.06]" />
           </div>
         </div>
         <div className="flex items-center justify-between border-t border-border/60 pt-3">
-          <span className="text-[11px] font-medium text-muted-foreground">Draft saved · SEO ready</span>
-          <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white shadow-sm transition-transform group-hover:-translate-y-0.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Draft saved</span>
+          <span className="inline-flex items-center rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground shadow-sm transition-transform group-hover:-translate-y-0.5">
             Publish
           </span>
         </div>
@@ -218,66 +202,121 @@ function WriteVisual() {
 }
 
 function GrowVisual() {
-  const pageviews = [0.34, 0.5, 0.42, 0.7, 0.58, 0.86, 0.78];
-  const visitors = [0.2, 0.32, 0.27, 0.46, 0.4, 0.6, 0.55];
+  const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const visitors = [420, 560, 510, 680, 640, 980, 1022];
+  const signups = [64, 71, 66, 89, 84, 128, 118];
+  const visitorMax = 1500;
+  const signupMax = 200;
+  const satVisitor = chartPoints(visitors, visitorMax)[5];
+  const satSignup = chartPoints(signups, signupMax)[5];
+
   return (
     <div aria-hidden>
       <Chrome label="Analytics" />
       <div className="p-4 sm:p-5">
-        <div className="grid grid-cols-2 gap-2">
+        <div className="flex items-center justify-between">
+          <p className="text-[11px] font-medium text-muted-foreground">Traffic &amp; conversions</p>
+          <span className="inline-flex items-center gap-1 rounded-md border border-border/60 bg-background/60 px-2 py-1 text-[10px] font-medium text-muted-foreground">
+            <CalendarDays className="h-3 w-3" /> Last 7 days
+          </span>
+        </div>
+
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="text-[10px] font-medium text-muted-foreground">Organic visitors</p>
-            <p className="text-lg font-bold tracking-tight">4,812</p>
+            <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.6_0.15_145)]" /> Organic visitors
+            </p>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <p className="text-lg font-bold tracking-tight">4,812</p>
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600">
+                <ArrowUpRight className="h-3 w-3" /> 18.2%
+              </span>
+            </div>
           </div>
           <div className="rounded-lg border border-border/60 bg-background/60 px-3 py-2">
-            <p className="text-[10px] font-medium text-muted-foreground">Conversion rate</p>
-            <p className="text-lg font-bold tracking-tight">4.7%</p>
+            <p className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-[oklch(0.58_0.18_280)]" /> Newsletter signups
+            </p>
+            <div className="mt-0.5 flex items-baseline gap-1.5">
+              <p className="text-lg font-bold tracking-tight">620</p>
+              <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-emerald-600">
+                <ArrowUpRight className="h-3 w-3" /> 12.4%
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="mt-3">
-          <p className="text-[11px] font-medium text-muted-foreground">Search traffic · Last 7 days</p>
-          <svg viewBox="0 0 320 120" className="mt-1 h-24 w-full overflow-visible" preserveAspectRatio="none">
-            <defs>
-              <linearGradient id="hiw-pv" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0.32" />
-                <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0" />
-              </linearGradient>
-              <linearGradient id="hiw-vi" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0.32" />
-                <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0" />
-              </linearGradient>
-            </defs>
-            {[24, 52, 80].map((y) => (
-              <line key={y} x1="0" y1={y} x2="320" y2={y} className="stroke-border" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
-            ))}
-            <path d={areaPath(pageviews)} fill="url(#hiw-pv)" />
-            <path d={linePath(pageviews)} fill="none" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" strokeLinecap="round" />
-            <path d={areaPath(visitors)} fill="url(#hiw-vi)" />
-            <path d={linePath(visitors)} fill="none" stroke="oklch(0.58 0.18 280)" strokeWidth="2.5" strokeLinecap="round" />
-          </svg>
-          <div className="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.6_0.15_145)]" /> Visitors
-            </span>
-            <span className="inline-flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-[oklch(0.58_0.18_280)]" /> Subscribers
-            </span>
+        <div className="mt-3 flex gap-2">
+          <div className="flex h-[92px] flex-col justify-between text-right text-[9px] leading-none text-muted-foreground/60">
+            <span>1.5k</span>
+            <span>1k</span>
+            <span>500</span>
+            <span>0</span>
           </div>
+          <div className="relative min-w-0 flex-1">
+            <div className="pointer-events-none absolute left-[83%] top-0 z-10 -translate-x-[105%] rounded-md border border-border/70 bg-popover px-2 py-1 shadow-sm">
+              <p className="text-[9px] font-semibold leading-tight text-foreground">980 visitors</p>
+              <p className="text-[8px] leading-tight text-muted-foreground">128 signups · Sat</p>
+            </div>
+            <span className="pointer-events-none absolute left-[83%] top-0 h-[92px] border-l border-dashed border-border/80" />
+            <svg viewBox="0 0 320 100" className="h-[92px] w-full overflow-visible" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="hiw-pv" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0.32" />
+                  <stop offset="100%" stopColor="oklch(0.6 0.15 145)" stopOpacity="0" />
+                </linearGradient>
+                <linearGradient id="hiw-vi" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0.24" />
+                  <stop offset="100%" stopColor="oklch(0.58 0.18 280)" stopOpacity="0" />
+                </linearGradient>
+              </defs>
+              {[500, 1000].map((v) => {
+                const y = 100 - (v / visitorMax) * 100;
+                return (
+                  <line key={v} x1="0" y1={y} x2="320" y2={y} className="stroke-border" strokeDasharray="3 3" strokeWidth="1" opacity="0.5" />
+                );
+              })}
+              <path d={areaPath(visitors, visitorMax)} fill="url(#hiw-pv)" />
+              <path d={linePath(visitors, visitorMax)} fill="none" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" strokeLinecap="round" />
+              <path d={areaPath(signups, signupMax)} fill="url(#hiw-vi)" />
+              <path d={linePath(signups, signupMax)} fill="none" stroke="oklch(0.58 0.18 280)" strokeWidth="2" strokeLinecap="round" />
+              <circle cx={satVisitor[0]} cy={satVisitor[1]} r="3" fill="var(--card)" stroke="oklch(0.6 0.15 145)" strokeWidth="2.5" />
+              <circle cx={satSignup[0]} cy={satSignup[1]} r="3" fill="var(--card)" stroke="oklch(0.58 0.18 280)" strokeWidth="2.5" />
+            </svg>
+            <div className="mt-1 flex justify-between text-[9px] text-muted-foreground/60">
+              {days.map((d) => (
+                <span key={d}>{d}</span>
+              ))}
+            </div>
+          </div>
+          <div className="flex h-[92px] flex-col justify-between text-left text-[9px] leading-none text-[oklch(0.58_0.18_280)]/70">
+            <span>200</span>
+            <span>100</span>
+            <span>0</span>
+          </div>
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-3 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
+          <div className="min-w-0">
+            <p className="truncate text-[10px] font-medium text-foreground">/how-we-grew-organic-traffic</p>
+            <p className="text-[9px] text-muted-foreground">Top converting post</p>
+          </div>
+          <span className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-emerald-600">
+            <ArrowUpRight className="h-3 w-3" /> 46 signups
+          </span>
         </div>
       </div>
     </div>
   );
 }
 
-function chartPoints(values: number[]) {
-  const w = 320;
+function chartPoints(values: number[], max: number, w = 320, h = 100) {
   const stepX = w / (values.length - 1);
-  return values.map((v, i) => [i * stepX, 100 - v * 78] as const);
+  return values.map((v, i) => [i * stepX, h - (v / max) * h] as const);
 }
 
-function linePath(values: number[]) {
-  const pts = chartPoints(values);
+function linePath(values: number[], max: number) {
+  const pts = chartPoints(values, max);
   let d = `M ${pts[0][0]} ${pts[0][1]}`;
   for (let i = 1; i < pts.length; i++) {
     const [px, py] = pts[i - 1];
@@ -288,7 +327,7 @@ function linePath(values: number[]) {
   return d;
 }
 
-function areaPath(values: number[]) {
-  const pts = chartPoints(values);
-  return `${linePath(values)} L ${pts[pts.length - 1][0]} 120 L ${pts[0][0]} 120 Z`;
+function areaPath(values: number[], max: number) {
+  const pts = chartPoints(values, max);
+  return `${linePath(values, max)} L ${pts[pts.length - 1][0]} 100 L ${pts[0][0]} 100 Z`;
 }

@@ -197,15 +197,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const routing = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
   if (!routing) return { title: "Not found" };
   const { segments, basePath } = routing;
+  const effectiveHost = domainInfo.custom_domain || host;
 
-  const canonical = `https://${host}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
+  const canonical = `https://${effectiveHost}${basePath}${segments.length > 0 ? `/${segments.join("/")}` : ""}`;
   const alternatesWithFeeds = (site?: PublicSite | null) => {
     const types: Record<string, string> = {};
     if (site?.rss_enabled) {
-      types["application/rss+xml"] = `https://${host}${basePath}/rss.xml`;
+      types["application/rss+xml"] = `https://${effectiveHost}${basePath}/rss.xml`;
     }
     if (site?.atom_enabled) {
-      types["application/atom+xml"] = `https://${host}${basePath}/atom.xml`;
+      types["application/atom+xml"] = `https://${effectiveHost}${basePath}/atom.xml`;
     }
     return Object.keys(types).length > 0 ? { canonical, types } : { canonical };
   };
@@ -477,22 +478,29 @@ export default async function SitePublicationPage({ params }: Props) {
   }
 
   const subdomain = domainInfo.subdomain;
+  const routing = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
 
-  // Canonical domain consolidation runs before subpath validation so the
-  // default subdomain always redirects to the custom domain (including its
-  // configured subpath), even when the incoming URL lacks the subpath prefix.
-  if (domainInfo.redirect_to) {
+  // Canonical domain consolidation:
+  // - For apex/subdomain custom domains (`!domainInfo.custom_subpath`), any request
+  //   to the default `.articurls.site` subdomain redirects to `redirect_to`.
+  // - For subfolder publications (`domainInfo.custom_subpath` set), declarative
+  //   rewrites (`vercel.json`, `next.config.mjs`) proxy `/{subpath}/*` to
+  //   `{subdomain}.{ugc_domain}/{subpath}/*` without X-Original-Host. When the
+  //   incoming path already matches the configured subpath (`routing !== null`),
+  //   serve the page directly instead of redirecting (which would loop); only
+  //   redirect bare subdomain requests that lack the subpath prefix (`!routing`).
+  if (domainInfo.redirect_to && (!domainInfo.custom_subpath || !routing)) {
     const configuredBase = (domainInfo.custom_subpath || "").trim().replace(/^\/+/, "").replace(/\/+$/, "");
     const basePath = configuredBase ? `/${configuredBase}` : "";
     const pathname = `${basePath}${rawSegments.length === 0 ? "" : `/${rawSegments.join("/")}`}`;
     permanentRedirect(`${domainInfo.redirect_to}${pathname}`);
   }
 
-  const routing = resolveRoutingSegments(rawSegments, domainInfo.custom_subpath);
   if (!routing) notFound();
   const { segments, basePath } = routing;
+  const effectiveHost = domainInfo.custom_domain || host;
 
-  const siteOrigin = `https://${host}${basePath}`;
+  const siteOrigin = `https://${effectiveHost}${basePath}`;
 
   // ── Site-level redirects (checked before content resolution) ────────────
   const lookupPath = segments.length === 0 ? "/" : `/${segments.join("/")}`;
@@ -522,7 +530,7 @@ export default async function SitePublicationPage({ params }: Props) {
     if (!site || !content) notFound();
 
     const themeId = site.template_id;
-    const shared = { site, pages, categories, subdomain, host, basePath };
+    const shared = { site, pages, categories, subdomain, host: effectiveHost, basePath };
 
     // Render Blog post if found
     if (content.type === "blog" && content.blog) {
@@ -569,7 +577,7 @@ export default async function SitePublicationPage({ params }: Props) {
           category={data.category}
           blogs={data.blogs}
           subdomain={subdomain}
-          host={host}
+          host={effectiveHost}
           basePath={basePath}
         />
       </ThemeStyleWrapper>
@@ -598,7 +606,7 @@ export default async function SitePublicationPage({ params }: Props) {
           author={data.author}
           blogs={data.blogs}
           subdomain={subdomain}
-          host={host}
+          host={effectiveHost}
           basePath={basePath}
         />
       </ThemeStyleWrapper>
@@ -623,7 +631,7 @@ export default async function SitePublicationPage({ params }: Props) {
           pages={pages}
           categories={allCategories}
           subdomain={subdomain}
-          host={host}
+          host={effectiveHost}
           basePath={basePath}
         />
       </ThemeStyleWrapper>
@@ -651,7 +659,7 @@ export default async function SitePublicationPage({ params }: Props) {
         pages={pages}
         categories={categories}
         subdomain={subdomain}
-        host={host}
+        host={effectiveHost}
         basePath={basePath}
       />
     </ThemeStyleWrapper>

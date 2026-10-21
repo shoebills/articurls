@@ -724,32 +724,6 @@ export interface UmamiTimeseriesResponse {
   series: UmamiTimeseriesPoint[];
 }
 
-export interface UmamiPagesResponse {
-  period: string;
-  rows: UmamiMetricsRow[];
-}
-
-export interface UmamiSourcesResponse {
-  period: string;
-  referrers: UmamiMetricsRow[];
-}
-
-export interface UmamiGeoResponse {
-  period: string;
-  countries: UmamiMetricsRow[];
-}
-
-export interface UmamiTechResponse {
-  period: string;
-  browsers: UmamiMetricsRow[];
-  os: UmamiMetricsRow[];
-  devices: UmamiMetricsRow[];
-}
-
 export interface UmamiRealtimeResponse {
   active_visitors: number;
-  urls: Record<string, number>;
-  countries: Record<string, number>;
-  referrers: Record<string, number>;
-  events: Array<Record<string, unknown>>;
 }

@@ -29,18 +29,11 @@ export default function MarketingPage() {
           />
           <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-[max(1rem,env(safe-area-inset-left))] pb-[max(1.25rem,env(safe-area-inset-bottom))] pr-[max(1rem,env(safe-area-inset-right))] pt-[calc(3.5rem+0.75rem+4rem+env(safe-area-inset-top))] sm:px-6 sm:pt-[calc(4rem+1rem+4rem)] lg:grid-cols-[0.95fr_1.05fr] lg:gap-10 lg:pb-24 lg:pt-[calc(4rem+1rem+5rem)]">
             <div className="min-w-0">
-              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                </span>
-                Built for SEO
-              </div>
-              <h1 className="mt-5 max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
-                The blog platform that&nbsp;ranks &amp; converts
+              <h1 className="max-w-[16ch] text-4xl font-semibold leading-[1.03] tracking-tight sm:text-5xl lg:text-6xl">
+                Build a blog that&nbsp;ranks &amp; converts
               </h1>
               <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Launch a fast, modern blog on your own domain in minutes. Write, grow your audience, and track what works — without servers, plugins, or maintenance.
+                Launch a fast, modern blog on your own domain in minutes. Write, grow your audience and track what works. All without servers, plugins or maintenance.
               </p>
               <div className="mt-16 flex w-full max-w-md flex-col gap-3 sm:max-w-none sm:flex-row">
                 <Button size="lg" className="h-12 min-h-12 shadow-lg shadow-primary/20" asChild>
@@ -52,8 +45,6 @@ export default function MarketingPage() {
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 <span>No credit card required</span>
-                <span className="text-muted-foreground/40" aria-hidden>·</span>
-                <span>7-day free Pro trial</span>
               </div>
             </div>
 
@@ -89,11 +80,10 @@ export default function MarketingPage() {
 
             <div className="relative">
               <h2 className="mx-auto max-w-[16ch] text-4xl font-semibold leading-[1.05] tracking-tight text-white sm:text-6xl">
-                Own your content.<br />Own your traffic.
+                Your content.<br />Your traffic.
               </h2>
               <p className="mx-auto mt-6 max-w-md text-base leading-relaxed text-white/60 sm:text-lg">
-                Stop renting reach from social feeds. Build an asset that compounds in search — and keeps
-                working for you.
+                Stop renting reach from social feeds. Build an asset that compounds in search and keeps working for you.
               </p>
               <div className="mt-10 flex justify-center">
                 <Button

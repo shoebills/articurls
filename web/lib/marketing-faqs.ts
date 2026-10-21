@@ -2,61 +2,61 @@ export const MARKETING_FAQS = [
   {
     question: "What is Articurls?",
     answer:
-      "Articurls is a hosted blogging platform for a fast, SEO-native publication on your own domain — built for B2B teams and B2C brands that want search traffic without managing WordPress, servers, or plugins.",
+      "Articurls is a fully managed blogging platform that serves your publication on your own domain. It is built for teams and creators who want search traffic without managing WordPress, servers, or plugins.",
   },
   {
     question: "How do I get started?",
     answer:
-      "Create a free account, claim your subdomain, and start writing. Your blog is live in minutes with technical SEO, analytics, and conversion tools already in place.",
+      "Create a free account, verify your email, and claim your subdomain. Your blog is live in minutes with technical SEO, analytics, and conversion tools already in place.",
   },
   {
     question: "Can I use my own domain or a /blog subdirectory?",
     answer:
-      "Yes. Connect an apex domain or subdomain with automatic SSL, or mount your blog under yourdomain.com/blog with copy-paste reverse-proxy configs for Next.js, Cloudflare, Vercel, Nginx, Caddy, and Apache.",
+      "Yes. You can connect a custom domain or subdomain with automatic SSL, or serve your blog under yourdomain.com/blog using copy-paste reverse-proxy configs for Next.js, Cloudflare, Vercel, Nginx, Caddy, and Apache.",
   },
   {
     question: "Do I need hosting or an engineering team?",
     answer:
-      "No. Everything is fully hosted and managed for you. No servers to run, no updates to install, and no reverse-proxy or SEO work to maintain.",
+      "No. Articurls is fully hosted and managed. There are no servers to run, no updates to install, and no reverse-proxy or SEO setup to maintain.",
   },
   {
     question: "What technical SEO is included?",
     answer:
-      "Auto-generated sitemap.xml, robots.txt, and llms.txt (for AI search), JSON-LD structured data including BlogPosting and FAQPage schema, canonicals, granular noindex controls, and automatic 301 redirects when you change a slug.",
+      "Articurls generates sitemap.xml, robots.txt, and llms.txt (a proposed standard for AI crawlers) automatically. It also adds JSON-LD structured data (BlogPosting and FAQPage), canonical URLs, noindex controls, and automatic 301 redirects when a post URL changes.",
   },
   {
     question: "Can I schedule posts and manage multiple authors?",
     answer:
-      "Yes. Write now and schedule for later, create multi-author profiles with dedicated pages, organize content into categories, pin or feature posts, and set up standalone pages.",
+      "Yes. You can write posts now and schedule them to publish later, add multiple authors with dedicated profile pages, organize content into categories, pin or feature posts, and create standalone pages.",
   },
   {
     question: "How do subscribers and newsletters work?",
     answer:
-      "Collect subscribers directly on your site, export them to CSV anytime, and sync them in real time to your ESP or automation tools — like Zapier, Make, Loops, or Beehiiv — via outgoing webhooks.",
+      "You can collect subscribers with a form on your site, export them to CSV at any time, and sync new subscribers in real time to your email or automation tools, including Zapier, Make, Loops, and Beehiiv, through outgoing webhooks.",
   },
   {
-    question: "Can I add conversion CTAs?",
+    question: "Can I add call-to-action banners?",
     answer:
-      "Yes. Add customizable end-of-post and end-of-page call-to-action banners with their own heading, copy, and button, plus a highlighted CTA button in your navigation.",
+      "Yes. You can add call-to-action banners to the end of posts and pages with a custom heading, description, and button, plus a highlighted CTA button in your navigation.",
   },
   {
     question: "Can I manage multiple sites under one account?",
     answer:
-      "Yes. Every plan includes unlimited sites and publications, with a site switcher to move between brands or clients from a single dashboard.",
+      "Yes. Every plan includes unlimited sites and publications, and a site switcher lets you move between brands or clients from a single dashboard.",
   },
   {
     question: "Which integrations are supported?",
     answer:
-      "Native Google Analytics 4, Google Search Console verification, and Google AdSense (with an auto-hosted ads.txt), plus custom head/body code injection, custom CSS, and RSS & Atom feeds.",
+      "Google Analytics 4, Google Search Console verification, and Google AdSense, including an auto-hosted ads.txt. Articurls also supports custom head and body code injection, custom CSS, and RSS and Atom feeds.",
   },
   {
-    question: "What's included in the 7-day free trial?",
+    question: "What is included in the 7-day free trial?",
     answer:
-      "Everything. You get full Pro access during the trial — custom domains, subdirectories, analytics, subscriber capture, and all features. No credit card required.",
+      "You get full access to Pro features during the trial, including custom domains, subdirectories, analytics, and subscriber collection. No credit card required.",
   },
   {
     question: "Can I upgrade or cancel anytime?",
     answer:
-      "Yes. Upgrade to Pro whenever you're ready. There are no annual contracts and you can cancel anytime.",
+      "Yes. You can change your traffic allowance or cancel at any time. If you cancel, your plan stays active until the end of the current billing period.",
   },
 ] as const;

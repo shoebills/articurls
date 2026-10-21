@@ -3,8 +3,8 @@ from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, status
 from .. import models
 
-# articurls.com and any subdomain of it are reserved
-_RESERVED_RE = re.compile(r"(^|\.)articurls\.com$", re.IGNORECASE)
+# articurls.com / articurls.site and any subdomain of them are reserved
+_RESERVED_RE = re.compile(r"(^|\.)(articurls\.com|articurls\.site)$", re.IGNORECASE)
 
 # Valid hostname label: letters, digits, hyphens; no leading/trailing hyphen
 _HOSTNAME_RE = re.compile(
@@ -18,8 +18,8 @@ def normalize_hostname(raw: str) -> str:
     for prefix in ("https://", "http://"):
         if host.startswith(prefix):
             host = host[len(prefix):]
-    # strip path/query
-    host = host.split("/")[0].split("?")[0].split("#")[0]
+    # strip path/query/port
+    host = host.split("/")[0].split("?")[0].split("#")[0].split(":")[0]
     # strip trailing dot
     host = host.rstrip(".")
     return host
@@ -32,10 +32,15 @@ def validate_hostname(hostname: str) -> None:
             detail="Invalid hostname format.",
         )
 
-    if _RESERVED_RE.search(hostname):
+    from ..config import settings
+
+    ugc = (settings.ugc_domain or "").strip().lower()
+    if _RESERVED_RE.search(hostname) or (
+        ugc and (hostname == ugc or hostname.endswith(f".{ugc}"))
+    ):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="articurls.com domains cannot be used as custom domains.",
+            detail="Platform domains cannot be used as custom domains.",
         )
 
 

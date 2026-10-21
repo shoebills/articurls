@@ -5,7 +5,7 @@ import { Building2, ShoppingBag, Briefcase, Newspaper, Code2, Mail } from "lucid
 
 const AUDIENCES = [
   {
-    who: "B2B SaaS & startups",
+    who: "SaaS & startups",
     outcome: "Mount your blog on /blog, compound domain authority, and convert readers with product CTAs.",
     icon: Building2,
   },
@@ -21,12 +21,12 @@ const AUDIENCES = [
   },
   {
     who: "Media & niche publishers",
-    outcome: "Run multi-author publications with category hubs, scheduling, and native AdSense support.",
+    outcome: "Run a multi-author editorial team with category hubs, content scheduling, and native AdSense monetization.",
     icon: Newspaper,
   },
   {
     who: "Developers & technical writers",
-    outcome: "Clean code blocks, zero CMS maintenance, custom CSS injection, and instant cache purging.",
+    outcome: "Clean code blocks, zero CMS maintenance, plus custom CSS and head & body code injection.",
     icon: Code2,
   },
   {
@@ -57,11 +57,11 @@ export function AudienceSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">Who it&apos;s for</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            Built for teams that publish to grow
+            Built for individuals &amp; teams that publish to grow
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-            From B2B SaaS to consumer brands, Articurls gives every publisher the same SEO-native engine —
-            without an engineering team.
+            From SaaS owners to creators, Articurls gives every publisher the same SEO-native engine without
+            an engineering team.
           </p>
         </div>
 

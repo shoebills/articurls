@@ -593,14 +593,13 @@ def get_umami_realtime(
         )
 
     try:
-        realtime = client.get_realtime_sync(current_site.umami_website_id)
+        # "Online now" must reflect visitors active in the last ~5 minutes.
+        # `/api/realtime/{id}` returns a rolling 30-minute window and would
+        # overcount; use the dedicated active-visitors endpoint instead.
+        active = client.get_website_active_sync(current_site.umami_website_id)
 
         return {
-            "active_visitors": realtime.get("totals", {}).get("visitors", 0),
-            "urls": realtime.get("urls", {}),
-            "countries": realtime.get("countries", {}),
-            "referrers": realtime.get("referrers", {}),
-            "events": realtime.get("events", []),
+            "active_visitors": active.get("visitors", 0),
         }
     except UmamiError as exc:
         raise HTTPException(

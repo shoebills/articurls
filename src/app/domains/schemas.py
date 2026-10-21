@@ -42,5 +42,6 @@ class DomainVerifyOut(BaseModel):
 class DomainLookupOut(BaseModel):
     subdomain: str
     domain_status: str
+    custom_domain: Optional[str] = None
     redirect_to: Optional[str] = None
     custom_subpath: Optional[str] = None

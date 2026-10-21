@@ -13,7 +13,7 @@ export function FaqSection() {
         <div className="mx-auto max-w-2xl text-center">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary">FAQ</p>
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
-            Questions, answered
+            Frequently asked questions
           </h2>
         </div>
 

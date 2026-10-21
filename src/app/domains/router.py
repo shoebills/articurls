@@ -326,11 +326,17 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
             if subdomain and subdomain not in RESERVED_SUBDOMAINS:
                 db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
                 if db_site:
+                    has_active_custom = bool(
+                        db_site.custom_domain
+                        and db_site.domain_status
+                        in (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
+                    )
                     result = {
                         "subdomain": db_site.subdomain,
                         "domain_status": "active",
+                        "custom_domain": db_site.custom_domain if has_active_custom else None,
                         "redirect_to": _canonical_url_for_subdomain(db_site, normalized),
-                        "custom_subpath": db_site.custom_subpath,
+                        "custom_subpath": db_site.custom_subpath if has_active_custom else None,
                     }
                     try:
                         redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
@@ -350,6 +356,7 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     result = {
         "subdomain": db_site.subdomain,
         "domain_status": db_site.domain_status.value if hasattr(db_site.domain_status, "value") else db_site.domain_status,
+        "custom_domain": db_site.custom_domain,
         "redirect_to": None,
         "custom_subpath": db_site.custom_subpath,
     }

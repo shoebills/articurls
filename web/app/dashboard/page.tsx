@@ -27,6 +27,7 @@ import {
   Mail,
   ChevronRight,
   Check,
+  Infinity,
 } from "lucide-react";
 import type { BlogListItem, AccountUsage, RecentSubscriber, SubscriberListResponse } from "@/lib/types";
 
@@ -379,11 +380,17 @@ export default function DashboardPage() {
                 <span className="text-3xl sm:text-4xl font-extrabold tracking-tight tabular-nums text-foreground">
                   {usage.total_pageviews.toLocaleString()}
                 </span>
-                <span className="text-muted-foreground text-sm font-medium">
+                <span className="inline-flex items-baseline gap-1 text-muted-foreground text-sm font-medium">
                   {" "}
-                  {usage.tier_limit !== null
-                    ? `/ ${usage.tier_limit.toLocaleString()} monthly views`
-                    : "monthly views (Unlimited)"}
+                  {usage.tier_limit !== null ? (
+                    <span>/ {usage.tier_limit.toLocaleString()} monthly views</span>
+                  ) : (
+                    <>
+                      <span>/</span>
+                      <Infinity className="h-4 w-4 self-center" aria-hidden />
+                      <span>monthly views</span>
+                    </>
+                  )}
                 </span>
               </div>
               <div className="text-right">
@@ -397,14 +404,9 @@ export default function DashboardPage() {
                     </span>
                   </>
                 ) : (
-                  <>
-                    <span className="text-sm font-bold tabular-nums text-emerald-600">
-                      Unlimited
-                    </span>
-                    <span className="text-xs text-muted-foreground block">
-                      no traffic limit
-                    </span>
-                  </>
+                  <span className="text-sm font-bold tabular-nums text-emerald-600">
+                    Unlimited
+                  </span>
                 )}
               </div>
             </div>

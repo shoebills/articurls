@@ -59,7 +59,7 @@ export function MarketingFooter() {
                   <li key={link.label}>
                     <Link
                       href={link.href}
-                      className="inline-block py-1 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground active:text-foreground touch-manipulation"
+                      className="block py-2 text-sm text-muted-foreground transition-colors duration-200 hover:text-foreground"
                     >
                       {link.label}
                     </Link>

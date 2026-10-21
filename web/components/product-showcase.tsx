@@ -6,16 +6,13 @@ import {
   Italic,
   Heading2,
   List,
-  Quote,
   Link2,
-  Highlighter,
   ImageIcon,
-  Code,
-  Check,
   ShieldCheck,
   TrendingUp,
   TrendingDown,
   Eye,
+  EyeOff,
   Users,
   Globe,
   FolderTree,
@@ -24,14 +21,14 @@ import {
   FileJson2,
   ScrollText,
   ArrowUpRight,
-  Palette,
-  Sun,
-  Moon,
-  Monitor,
-  Megaphone,
-  Webhook,
   Search,
-  Layers,
+  Undo2,
+  Redo2,
+  Underline as UnderlineIcon,
+  MoreHorizontal,
+  ChevronDown,
+  ListOrdered,
+  WrapText,
 } from "lucide-react";
 import { SiYoutube } from "react-icons/si";
 
@@ -40,7 +37,7 @@ const PANELS = [
     key: "editor",
     kicker: "Write",
     title: "A rich editor built for SEO",
-    body: "Formatting, images, embeds, and code blocks — plus automatic image optimization, FAQ schema, categories, and multi-author profiles as you write.",
+    body: "Formatting, images, embeds, code blocks, plus automatic image optimization, FAQ, categories, and multi-author profiles as you write.",
     visual: <EditorPanel />,
   },
   {
@@ -53,29 +50,29 @@ const PANELS = [
   {
     key: "domain",
     kicker: "Own",
-    title: "Your domain, or a /blog subdirectory",
-    body: "Go live on an apex domain, subdomain, or mount under yourdomain.com/blog with one-click config for Next.js, Cloudflare, Vercel, Nginx, and more.",
+    title: "Your custom domain",
+    body: "Go live on an apex domain, subdomain, or mount under yourdomain.com/blog with one-click config for your preferred stack.",
     visual: <DomainPanel />,
   },
   {
     key: "convert",
     kicker: "Grow",
     title: "Turn readers into customers",
-    body: "Built-in newsletter forms, end-of-post CTAs, and real-time webhook sync to your ESP or automation tools — no confirmation-email friction.",
+    body: "Built-in newsletter forms, CTAs, and real-time webhook sync to your ESP or automation tools.",
     visual: <ConvertPanel />,
   },
   {
     key: "analytics",
     kicker: "Understand",
     title: "Real-time analytics that make sense",
-    body: "Live visitors, period-over-period deltas, referrers, and an interactive world map. Privacy-friendly, with CSV export and no setup required.",
+    body: "Pageviews, visitors, bounce rate, and avg visit duration, plus live visitors, top pages, sources, browsers, devices, and an interactive world map. Privacy-friendly, with period-over-period deltas, CSV export, and no setup required.",
     visual: <AnalyticsPanel />,
   },
   {
     key: "design",
     kicker: "Scale",
     title: "Your brand, multiple publications",
-    body: "Light/dark modes, brand color tokens, typography pairings, header & footer builders, native Google integrations, and unlimited sites under one account.",
+    body: "Light/dark modes, brand color tokens, typography pairings, theme presets, button styles, header & footer builders, native Google integrations, and webhook sync to Zapier, Make, Loops & Beehiiv.",
     visual: <DesignPanel />,
   },
 ] as const;
@@ -118,6 +115,9 @@ export function ProductShowcase() {
           <h2 className="mt-3 text-3xl font-semibold leading-[1.1] tracking-tight sm:text-4xl">
             Everything a content engine needs, in one place
           </h2>
+          <p className="mx-auto mt-4 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
+            A rich editor, technical SEO, custom domains, analytics, and conversion tools — working together so you can publish and grow without stitching anything together.
+          </p>
         </div>
       </div>
 
@@ -249,38 +249,51 @@ function AppFrame({ label, children, badge }: { label: string; children: React.R
 /* ── 1. Editor ────────────────────────────────────────────── */
 
 function EditorPanel() {
-  const tools = [
-    { icon: Bold, on: true },
-    { icon: Italic, on: false },
-    { icon: Heading2, on: false },
-    { icon: List, on: false },
-    { icon: Quote, on: false },
-    { icon: Link2, on: false },
-    { icon: Code, on: false },
-    { icon: Highlighter, on: false },
-    { icon: ImageIcon, on: false },
-  ];
   return (
-    <AppFrame
-      label="Editor"
-      badge={
-        <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
-          <Check className="h-3 w-3" /> SEO optimized
+    <AppFrame label="Editor">
+      <div className="flex h-12 items-center gap-px overflow-x-auto border-b border-border bg-background p-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <Undo2 className="h-4 w-4" />
         </span>
-      }
-    >
-      <div className="flex flex-wrap items-center gap-1 border-b border-border/60 bg-background px-3 py-2">
-        {tools.map(({ icon: Icon, on }, i) => (
-          <span
-            key={i}
-            className={`flex h-8 w-8 items-center justify-center rounded-md ${
-              on ? "bg-secondary text-secondary-foreground" : "text-muted-foreground"
-            }`}
-          >
-            <Icon className="h-4 w-4" />
-          </span>
-        ))}
-        <span className="ml-auto flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <Redo2 className="h-4 w-4" />
+        </span>
+        <span className="mx-2 h-6 w-px shrink-0 bg-border" />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-secondary-foreground">
+          <Bold className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <Italic className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <UnderlineIcon className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <MoreHorizontal className="h-4 w-4" />
+        </span>
+        <span className="mx-2 h-6 w-px shrink-0 bg-border" />
+        <span className="flex h-8 w-12 shrink-0 items-center justify-center rounded-lg px-1 text-foreground">
+          <Heading2 className="h-4 w-4 shrink-0" />
+          <ChevronDown className="ml-0.5 h-3 w-3 shrink-0" />
+        </span>
+        <span className="mx-2 h-6 w-px shrink-0 bg-border" />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <List className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <ListOrdered className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <WrapText className="h-4 w-4" />
+        </span>
+        <span className="mx-2 h-6 w-px shrink-0 bg-border" />
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <Link2 className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
+          <ImageIcon className="h-4 w-4" />
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-foreground">
           <SiYoutube className="h-4 w-4" />
         </span>
       </div>
@@ -293,23 +306,15 @@ function EditorPanel() {
         <div className="h-2.5 w-[94%] rounded-full bg-foreground/[0.07]" />
         <div className="h-2.5 w-[76%] rounded-full bg-foreground/[0.07]" />
         <div className="mt-4 rounded-xl border border-border/60 bg-muted/25 p-3">
-          <div className="flex items-center justify-between">
-            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
-              <FileJson2 className="h-3.5 w-3.5" /> FAQ schema
-            </span>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-              FAQPage
-            </span>
-          </div>
+          <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+            <FileJson2 className="h-3.5 w-3.5" /> FAQ
+          </span>
           <div className="mt-2 space-y-1.5">
             <div className="h-2 w-3/4 rounded-full bg-foreground/[0.09]" />
             <div className="h-2 w-2/3 rounded-full bg-foreground/[0.06]" />
           </div>
         </div>
-        <div className="flex items-center justify-between pt-1 text-[11px] text-muted-foreground">
-          <span className="inline-flex items-center gap-1">
-            <ImageIcon className="h-3.5 w-3.5" /> Auto-optimized responsive images
-          </span>
+        <div className="flex items-center justify-start pt-1 text-[11px] text-muted-foreground">
           <span>Draft saved</span>
         </div>
       </div>
@@ -325,35 +330,24 @@ function SeoPanel() {
     { icon: Bot, label: "llms.txt", sub: "AI search ready" },
     { icon: FileJson2, label: "JSON-LD", sub: "BlogPosting · FAQPage" },
     { icon: Zap, label: "Auto 301 redirects", sub: "Slug changes" },
+    { icon: Link2, label: "Canonical URLs", sub: "Duplicate content protection" },
+    { icon: ImageIcon, label: "Meta & Open Graph", sub: "Titles, descriptions, OG images" },
+    { icon: EyeOff, label: "Noindex controls", sub: "Categories · authors · pages" },
   ];
   return (
     <AppFrame label="SEO & AI Search">
-      <div className="p-6">
-        <p className="text-sm font-semibold">Search result appearance</p>
-        <div className="mt-4 space-y-2">
-          <p className="text-sm font-medium text-[#1a0dab]">How we grew organic traffic 4x in 90 days</p>
-          <p className="text-xs leading-relaxed text-muted-foreground">
-            A step-by-step breakdown of our SEO engine — technical foundations, content structure, and the
-            measurable results.
-          </p>
-          <p className="font-mono text-xs text-emerald-600">acme.com/blog/how-we-grew-organic-traffic</p>
-        </div>
-        <div className="mt-5 space-y-2 border-t border-border/60 pt-5">
-          {items.map((row) => (
-            <div key={row.label} className="flex items-center justify-between rounded-lg border bg-white px-4 py-2.5">
-              <div className="flex items-center gap-2.5">
-                <row.icon className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-sm font-medium">{row.label}</p>
-                  <p className="text-xs text-muted-foreground">{row.sub}</p>
-                </div>
+      <div className="space-y-2 p-6">
+        {items.map((row) => (
+          <div key={row.label} className="flex items-center rounded-lg border border-border/60 bg-background px-4 py-2.5">
+            <div className="flex items-center gap-2.5">
+              <row.icon className="h-4 w-4 text-primary" />
+              <div>
+                <p className="text-sm font-medium">{row.label}</p>
+                <p className="text-xs text-muted-foreground">{row.sub}</p>
               </div>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-600">
-                <Check className="h-3 w-3" /> Ready
-              </span>
             </div>
-          ))}
-        </div>
+          </div>
+        ))}
       </div>
     </AppFrame>
   );
@@ -374,10 +368,11 @@ function DomainPanel() {
               <p className="truncate font-mono text-sm font-semibold tracking-tight">blog.acme.com</p>
               <p className="text-xs text-muted-foreground">Apex / subdomain · Automatic SSL</p>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-              <Check className="h-3.5 w-3.5" /> Active
-            </span>
           </div>
+
+          <p className="text-center text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+            OR
+          </p>
 
           <div className="flex items-center gap-3 rounded-lg border border-primary/25 bg-primary/[0.03] p-3.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
@@ -385,22 +380,8 @@ function DomainPanel() {
             </span>
             <div className="min-w-0 flex-1">
               <p className="truncate font-mono text-sm font-semibold tracking-tight">acme.com/blog</p>
-              <p className="text-xs text-muted-foreground">Subdirectory · Reverse proxy</p>
+              <p className="text-xs text-muted-foreground">Reverse proxy</p>
             </div>
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600">
-              <Check className="h-3.5 w-3.5" /> Live
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-1.5 pt-1">
-            {["Next.js", "Cloudflare Worker", "Vercel", "Nginx", "Caddy", "Apache"].map((s) => (
-              <span
-                key={s}
-                className="rounded-md border border-border/60 bg-muted/40 px-2 py-1 text-[11px] font-medium text-muted-foreground"
-              >
-                {s}
-              </span>
-            ))}
           </div>
         </div>
       </div>
@@ -412,13 +393,13 @@ function DomainPanel() {
 
 function ConvertPanel() {
   return (
-    <AppFrame label="Conversion & Newsletter">
+    <AppFrame label="CTA & Newsletter">
       <div className="space-y-3 p-6">
         <div className="rounded-xl border border-border/80 bg-muted/20 p-4">
           <p className="text-sm font-semibold text-foreground">Join the newsletter</p>
           <p className="mt-1 text-xs text-muted-foreground">Get the latest playbooks in your inbox.</p>
           <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-end">
-            <div className="flex h-10 w-full items-center rounded-lg border border-input bg-white px-3 text-sm text-muted-foreground sm:flex-1">
+            <div className="flex h-10 w-full items-center rounded-lg border border-input bg-background px-3 text-sm text-muted-foreground sm:flex-1">
               you@company.com
             </div>
             <span className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm sm:min-w-[7.5rem]">
@@ -427,26 +408,23 @@ function ConvertPanel() {
           </div>
         </div>
 
-        <div className="rounded-xl border border-primary/25 bg-primary/[0.03] p-4">
-          <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">End-of-post CTA</p>
-            <Megaphone className="h-4 w-4 text-primary" />
+        <div>
+          <p className="text-sm font-semibold">End-of-post CTA</p>
+          <div className="mt-3 rounded-xl border border-border/80 bg-muted/20 p-5 text-center sm:p-6">
+            <p className="text-lg font-bold tracking-tight text-foreground">Get the full growth framework</p>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+              Customizable heading, copy, and button.
+            </p>
+            <span className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground shadow-sm">
+              Get the guide →
+            </span>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            “Get the full growth framework” — customizable heading, copy, and button.
-          </p>
-          <span className="mt-3 inline-flex h-8 items-center rounded-lg bg-primary px-3.5 text-xs font-medium text-primary-foreground shadow-sm">
-            Get the guide →
-          </span>
         </div>
 
-        <div className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/60 px-4 py-3">
-          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
-            <Webhook className="h-4 w-4" />
-          </span>
+        <div className="rounded-xl border border-border/60 bg-background/60 px-4 py-3">
           <p className="text-xs text-muted-foreground">
             <span className="font-medium text-foreground">Real-time webhook sync</span> to Zapier, Make,
-            Loops, Beehiiv, and more — no confirmation-email friction.
+            Loops, Beehiiv, and more. Auto emails to your subscribers as you want.
           </p>
         </div>
       </div>
@@ -530,54 +508,43 @@ function AnalyticsPanel() {
 /* ── 6. Design & Scale ────────────────────────────────────── */
 
 function DesignPanel() {
+  const themeItems = [
+    "Theme presets & layouts",
+    "Typography pairings",
+    "Dark mode & system mode",
+    "Nav & footer builder",
+    "Multi-site workspace",
+  ];
   return (
     <AppFrame label="Themes & Integrations">
       <div className="p-6">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold">Design system</p>
-          <div className="flex gap-1.5">
-            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border/60 bg-background text-muted-foreground">
-              <Sun className="h-3.5 w-3.5" />
-            </span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              <Moon className="h-3.5 w-3.5" />
-            </span>
-            <span className="flex h-7 w-7 items-center justify-center rounded-md border border-border/60 bg-background text-muted-foreground">
-              <Monitor className="h-3.5 w-3.5" />
-            </span>
-          </div>
-        </div>
+        <p className="text-sm font-semibold">Themes</p>
+        <ul className="mt-3 space-y-2.5">
+          {themeItems.map((item) => (
+            <li
+              key={item}
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-background/70 px-4 py-2.5 text-sm font-medium"
+            >
+              {item}
+            </li>
+          ))}
+        </ul>
 
-        <div className="mt-3 flex items-center gap-2.5">
-          <Palette className="h-4 w-4 text-muted-foreground" />
-          <div className="flex gap-1.5">
-            {["#18181b", "#ec4899", "#059669", "#0284c7", "#f97316"].map((c) => (
-              <span key={c} className="h-6 w-6 rounded-full border border-border/60" style={{ backgroundColor: c }} />
+        <div className="mt-5 border-t border-border/60 pt-5">
+          <p className="text-sm font-semibold">Integrations</p>
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {[
+              { label: "GA4", icon: ArrowUpRight },
+              { label: "Search Console", icon: Search },
+              { label: "AdSense", icon: Globe },
+            ].map((i) => (
+              <div key={i.label} className="rounded-lg border border-border/60 bg-background/60 px-3 py-2.5">
+                <i.icon className="h-4 w-4 text-muted-foreground" />
+                <p className="mt-1.5 text-xs font-medium">{i.label}</p>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Connected</p>
+              </div>
             ))}
           </div>
-          <span className="text-xs text-muted-foreground">Brand color tokens</span>
-        </div>
-
-        <div className="mt-4 flex items-center justify-between rounded-lg border border-border/60 bg-muted/20 px-4 py-2.5">
-          <div className="flex items-center gap-2">
-            <Layers className="h-4 w-4 text-primary" />
-            <p className="text-sm font-medium">Multi-site workspace</p>
-          </div>
-          <span className="text-xs text-muted-foreground">Unlimited publications</span>
-        </div>
-
-        <div className="mt-3 grid grid-cols-3 gap-2">
-          {[
-            { label: "GA4", icon: ArrowUpRight },
-            { label: "Search Console", icon: Search },
-            { label: "AdSense", icon: Globe },
-          ].map((i) => (
-            <div key={i.label} className="rounded-lg border border-border/60 bg-background/60 px-3 py-2.5">
-              <i.icon className="h-4 w-4 text-muted-foreground" />
-              <p className="mt-1.5 text-xs font-medium">{i.label}</p>
-              <p className="text-[10px] text-emerald-600">Connected</p>
-            </div>
-          ))}
         </div>
       </div>
     </AppFrame>

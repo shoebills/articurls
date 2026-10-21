@@ -53,7 +53,7 @@ const STACK_OPTIONS: StackOption[] = [
     id: "cloudflare",
     name: "Cloudflare Worker",
     filename: "worker.js",
-    instruction: "Create a Worker with this script and add a route for your domain and subpath.",
+    instruction: "Create a Worker with this script and add routes for your subpath and /_next/* (e.g. yourdomain.com/blog* and yourdomain.com/_next/*).",
   },
   {
     id: "vercel",
@@ -76,8 +76,8 @@ const STACK_OPTIONS: StackOption[] = [
   {
     id: "apache",
     name: "Apache",
-    filename: ".htaccess",
-    instruction: "Add these proxy rules to your .htaccess or VirtualHost configuration.",
+    filename: "/etc/apache2/sites-available/your-site.conf",
+    instruction: "Add these proxy rules inside your VirtualHost block and reload Apache (apachectl graceful).",
   },
 ];
 

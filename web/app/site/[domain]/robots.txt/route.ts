@@ -27,16 +27,17 @@ export async function GET(
   const domainInfo = await resolveDomainForSeo(host);
   if (!domainInfo) return textResponse(DISALLOW_ALL);
 
+  const configured = normalizeSubpath(domainInfo.custom_subpath);
   // Root-only file: the requested prefix must match the configured subpath
   // (empty for apex domains, the subpath for subfolder publications).
-  if (normalizeSubpath(req.headers.get("x-articurls-basepath")) !== normalizeSubpath(domainInfo.custom_subpath)) {
+  if (normalizeSubpath(req.headers.get("x-articurls-basepath")) !== configured) {
     return new NextResponse(null, { status: 404 });
   }
 
   if (domainInfo.domain_status !== "active" && domainInfo.domain_status !== "grace") {
     return textResponse(DISALLOW_ALL);
   }
-  if (domainInfo.redirect_to) return textResponse(DISALLOW_ALL);
+  if (domainInfo.redirect_to && !configured) return textResponse(DISALLOW_ALL);
 
   const site = await loadPublicSite(domainInfo.subdomain);
   if (!site) return textResponse(DISALLOW_ALL);
@@ -46,8 +47,8 @@ export async function GET(
     return textResponse(site.seo_robots_custom!);
   }
 
-  const basePath = normalizeSubpath(domainInfo.custom_subpath);
-  const siteOrigin = `https://${host}${basePath ? `/${basePath}` : ""}`;
+  const effectiveHost = domainInfo.custom_domain || host;
+  const siteOrigin = `https://${effectiveHost}${configured ? `/${configured}` : ""}`;
   const body = `User-agent: *
 Allow: /
 

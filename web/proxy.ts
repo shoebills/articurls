@@ -96,7 +96,7 @@ const APP_ALLOWED_PREFIXES = [
 ];
 
 const EXEMPT_PREFIXES = ["/_next", "/api"];
-const SHARED_EXACT = ["/favicon.ico", "/vitals.js", "/site-vitals"];
+const SHARED_EXACT = ["/favicon.ico", "/vitals.js", "/site-vitals", "/datamaps.world.json"];
 
 // Tenant-specific SEO/feed files, rewritten to /site/[domain]/<file> with the
 // original path prefix passed via x-articurls-basepath for subpath validation.
@@ -131,9 +131,12 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname !== "/" && pathname.endsWith("/")) {
-    const url = request.nextUrl.clone();
-    url.pathname = pathname.slice(0, -1);
-    return NextResponse.redirect(url, 308);
+    const cleanPath = pathname.slice(0, -1);
+    const location = `${cleanPath}${request.nextUrl.search}`;
+    return new NextResponse(null, {
+      status: 308,
+      headers: { Location: location },
+    });
   }
 
   if (request.nextUrl.searchParams.size > 0) {
@@ -150,9 +153,10 @@ export function proxy(request: NextRequest) {
       !pathname.startsWith("/_next");
 
     if (isPublicContent) {
-      const url = request.nextUrl.clone();
-      url.search = "";
-      return NextResponse.redirect(url, 301);
+      return new NextResponse(null, {
+        status: 301,
+        headers: { Location: pathname },
+      });
     }
   }
 
@@ -168,6 +172,16 @@ export function proxy(request: NextRequest) {
 
     const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
     const last = segments[segments.length - 1] || "";
+
+    // Subpath-prefixed first-party analytics endpoints (e.g. /blog/vitals.js,
+    // /blog/site-vitals): rewrite to the root route handlers.
+    if (last === "vitals.js" || last === "site-vitals") {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/${last}`;
+      return NextResponse.rewrite(rewriteUrl, {
+        request: { headers: tenantHeaders },
+      });
+    }
 
     // Tenant SEO/feed files: rewrite to /site/[domain]/<file>, passing the
     // requested prefix so the handler can validate it against the subpath.

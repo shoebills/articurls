@@ -42,6 +42,7 @@ export async function resolveDomainForSeo(
     const data: {
       subdomain: string;
       domain_status: string;
+      custom_domain?: string | null;
       redirect_to?: string | null;
       custom_subpath?: string | null;
     } = await res.json();
@@ -49,7 +50,7 @@ export async function resolveDomainForSeo(
     return {
       subdomain: data.subdomain,
       domain_status: data.domain_status,
-      custom_domain: host,
+      custom_domain: data.custom_domain ?? null,
       redirect_to: data.redirect_to ?? null,
       custom_subpath: data.custom_subpath ?? null,
     };
