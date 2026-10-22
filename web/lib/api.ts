@@ -476,11 +476,11 @@ export async function unpublishPage(token: string, pageId: string): Promise<User
 }
 
 export async function getPublicPages(subdomain: string): Promise<UserPage[]> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/pages`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/pages`);
 }
 
 export async function getPublicContent(subdomain: string, slug: string): Promise<PublicResolvedContent> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`);
 }
 
 export async function uploadProfileImage(token: string, file: File): Promise<{ profile_image_url: string }> {
@@ -644,17 +644,17 @@ export async function deleteBlogMediaByUrl(token: string, blogId: string, url: s
 }
 
 export async function getPublicSite(subdomain: string): Promise<PublicSite> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}`);
 }
 
 export async function searchPublicBlogs(subdomain: string, query: string, offset = 0): Promise<PublicBlogSearchResult[]> {
   return apiFetch(
-    `/${encodeURIComponent(subdomain)}/blogs/search?q=${encodeURIComponent(query)}&limit=5&offset=${offset}`
+    `/public/${encodeURIComponent(subdomain)}/blogs/search?q=${encodeURIComponent(query)}&limit=5&offset=${offset}`
   );
 }
 
 export async function getPublicBlogs(subdomain: string): Promise<PublicBlog[]> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/blogs`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/blogs`);
 }
 
 /** Public: request email subscription to a writer's posts. */
@@ -721,11 +721,11 @@ export async function updateMenuCategories(token: string, ordered_category_ids: 
 
 export async function getPublicCategories(subdomain: string, all = false): Promise<Category[]> {
   const q = all ? "?all=true" : "";
-  return apiFetch(`/${encodeURIComponent(subdomain)}/categories${q}`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/categories${q}`);
 }
 
 export async function getPublicCategoryBlogs(subdomain: string, slug: string): Promise<PublicCategoryBlogsResponse> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`);
 }
 
 // ── Authors ───────────────────────────────────────────────────────────
@@ -782,11 +782,11 @@ export async function uploadAuthorAvatar(
 }
 
 export async function getPublicAuthors(subdomain: string): Promise<Author[]> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/authors`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/authors`);
 }
 
 export async function getPublicAuthorBlogs(subdomain: string, slug: string): Promise<PublicAuthorDetail> {
-  return apiFetch(`/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`);
+  return apiFetch(`/public/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`);
 }
 
 // ── Sites ─────────────────────────────────────────────────────────────

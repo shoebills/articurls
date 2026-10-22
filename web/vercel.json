@@ -2,14 +2,19 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     {
+      "source": "/blog/:file(robots\\.txt|ads\\.txt|sitemap\\.xml|llms\\.txt|rss\\.xml|atom\\.xml|feed\\.xml|feed\\.atom)",
+      "has": [{ "type": "host", "value": "articurls.com" }],
+      "destination": "/site/blog.articurls.site/:file"
+    },
+    {
       "source": "/blog",
       "has": [{ "type": "host", "value": "articurls.com" }],
-      "destination": "https://blog.articurls.site/blog"
+      "destination": "/site/blog.articurls.site/blog"
     },
     {
       "source": "/blog/:path*",
       "has": [{ "type": "host", "value": "articurls.com" }],
-      "destination": "https://blog.articurls.site/blog/:path*"
+      "destination": "/site/blog.articurls.site/blog/:path*"
     }
   ]
 }

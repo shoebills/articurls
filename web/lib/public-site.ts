@@ -4,7 +4,7 @@ import type { PublicSite } from "@/lib/types";
 
 /** Cached public site fetch — shared by layouts and pages within one request and cached via ISR. */
 export const loadPublicSite = cache(async (subdomain: string): Promise<PublicSite | null> => {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}`, {
+  const res = await fetch(`${API_URL}/public/${encodeURIComponent(subdomain)}`, {
     next: {
       revalidate: 86400,
       tags: [`subdomain-${subdomain}`, `site-settings-${subdomain}`],

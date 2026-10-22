@@ -76,7 +76,7 @@ function resolveRoutingSegments(
 const loadSite = loadPublicSite;
 
 const loadBlogs = cache(async (subdomain: string): Promise<PublicBlog[]> => {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/blogs`, {
+  const res = await fetch(`${API_URL}/public/${encodeURIComponent(subdomain)}/blogs`, {
     next: {
       revalidate: 86400,
       tags: [`subdomain-${subdomain}`, `posts-list-${subdomain}`, `home-${subdomain}`],
@@ -88,7 +88,7 @@ const loadBlogs = cache(async (subdomain: string): Promise<PublicBlog[]> => {
 
 const loadContent = cache(async (subdomain: string, slug: string): Promise<PublicResolvedContent | null> => {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`,
+    `${API_URL}/public/${encodeURIComponent(subdomain)}/content/${encodeURIComponent(slug)}`,
     {
       next: {
         revalidate: 86400,
@@ -103,7 +103,7 @@ const loadContent = cache(async (subdomain: string, slug: string): Promise<Publi
 
 const loadRedirect = cache(async (subdomain: string, path: string): Promise<{ target_url: string; type: string } | null> => {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/redirect?path=${encodeURIComponent(path)}`,
+    `${API_URL}/public/${encodeURIComponent(subdomain)}/redirect?path=${encodeURIComponent(path)}`,
     {
       next: {
         revalidate: 86400,
@@ -116,7 +116,7 @@ const loadRedirect = cache(async (subdomain: string, path: string): Promise<{ ta
 });
 
 const loadPages = cache(async (subdomain: string): Promise<UserPage[]> => {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/pages`, {
+  const res = await fetch(`${API_URL}/public/${encodeURIComponent(subdomain)}/pages`, {
     next: {
       revalidate: 86400,
       tags: [`subdomain-${subdomain}`, `pages-list-${subdomain}`, `posts-list-${subdomain}`],
@@ -127,7 +127,7 @@ const loadPages = cache(async (subdomain: string): Promise<UserPage[]> => {
 });
 
 const loadCategories = cache(async (subdomain: string): Promise<Category[]> => {
-  const res = await fetch(`${API_URL}/${encodeURIComponent(subdomain)}/categories`, {
+  const res = await fetch(`${API_URL}/public/${encodeURIComponent(subdomain)}/categories`, {
     next: {
       revalidate: 86400,
       tags: [`subdomain-${subdomain}`, `categories-list-${subdomain}`, `posts-list-${subdomain}`],
@@ -139,7 +139,7 @@ const loadCategories = cache(async (subdomain: string): Promise<Category[]> => {
 
 const loadCategoryBlogs = cache(async (subdomain: string, slug: string): Promise<PublicCategoryBlogsResponse | null> => {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`,
+    `${API_URL}/public/${encodeURIComponent(subdomain)}/category/${encodeURIComponent(slug)}`,
     {
       next: {
         revalidate: 86400,
@@ -154,7 +154,7 @@ const loadCategoryBlogs = cache(async (subdomain: string, slug: string): Promise
 
 const loadAuthorBlogs = cache(async (subdomain: string, slug: string): Promise<PublicAuthorDetail | null> => {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`,
+    `${API_URL}/public/${encodeURIComponent(subdomain)}/author/${encodeURIComponent(slug)}`,
     {
       next: {
         revalidate: 86400,
@@ -169,7 +169,7 @@ const loadAuthorBlogs = cache(async (subdomain: string, slug: string): Promise<P
 
 const loadAllCategories = cache(async (subdomain: string): Promise<Category[]> => {
   const res = await fetch(
-    `${API_URL}/${encodeURIComponent(subdomain)}/categories?all=true`,
+    `${API_URL}/public/${encodeURIComponent(subdomain)}/categories?all=true`,
     {
       next: {
         revalidate: 86400,

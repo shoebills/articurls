@@ -225,8 +225,25 @@ export function proxy(request: NextRequest) {
   }
 
   if (host !== appHost) {
+    const segments = pathname === "/" ? [] : pathname.split("/").filter(Boolean);
+    const last = segments[segments.length - 1] || "";
+
+    if (segments.length >= 2 && (last === "vitals.js" || last === "site-vitals")) {
+      const rewriteUrl = request.nextUrl.clone();
+      rewriteUrl.pathname = `/${last}`;
+      return NextResponse.rewrite(rewriteUrl);
+    }
+
+    let nextResponse = NextResponse.next();
+    if (segments.length >= 2 && last && TENANT_SEO_FILES.has(last)) {
+      const prefix = segments.slice(0, -1).join("/");
+      const headers = new Headers(request.headers);
+      headers.set("x-articurls-basepath", `/${prefix}`);
+      nextResponse = NextResponse.next({ request: { headers } });
+    }
+
     return withCacheHeaders(
-      withSecurityHeaders(NextResponse.next()),
+      withSecurityHeaders(nextResponse),
       host,
       pathname
     );

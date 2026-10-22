@@ -249,7 +249,7 @@ def internal_list_redirects(subdomain: str, request: Request, db: Session = Depe
     return [_redirect_out(r) for r in rows]
 
 
-@router.get("/{subdomain}/redirect", status_code=status.HTTP_200_OK)
+@router.get("/public/{subdomain}/redirect", status_code=status.HTTP_200_OK)
 def resolve_redirect(
     subdomain: str,
     path: str,

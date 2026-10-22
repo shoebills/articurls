@@ -69,18 +69,39 @@ def cloudflare_worker(subdomain: str, ugc_domain: str, subpath: str) -> str:
     )
 
 
+_SEO_FILE_PATTERN = (
+    r":file(robots\.txt|ads\.txt|sitemap\.xml|llms\.txt|rss\.xml|atom\.xml|feed\.xml|feed\.atom)"
+)
+
+
 def nextjs_rewrite(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> str:
-    backend = _backend(subdomain, ugc_domain)
     has_clause = f"\n        has: [{{ type: 'host', value: '{domain}' }}]," if domain else ""
-    asset_rule = (
-        ""
-        if (domain and is_marketing_hostname(domain))
-        else f""",
+    if domain and is_marketing_hostname(domain):
+        tenant_host = _host(subdomain, ugc_domain)
+        return f"""// next.config.mjs
+/** @type {{import('next').NextConfig}} */
+const nextConfig = {{
+  async rewrites() {{
+    return [
       {{
-        source: '/_next/:path*',{has_clause}
-        destination: '{backend}/_next/:path*',
-      }}"""
-    )
+        source: '{subpath}/{_SEO_FILE_PATTERN}',{has_clause}
+        destination: '/site/{tenant_host}/:file',
+      }},
+      {{
+        source: '{subpath}',{has_clause}
+        destination: '/site/{tenant_host}{subpath}',
+      }},
+      {{
+        source: '{subpath}/:path*',{has_clause}
+        destination: '/site/{tenant_host}{subpath}/:path*',
+      }},
+    ];
+  }},
+}};
+
+export default nextConfig;"""
+
+    backend = _backend(subdomain, ugc_domain)
     return f"""// next.config.mjs
 /** @type {{import('next').NextConfig}} */
 const nextConfig = {{
@@ -93,7 +114,11 @@ const nextConfig = {{
       {{
         source: '{subpath}/:path*',{has_clause}
         destination: '{backend}{subpath}/:path*',
-      }}{asset_rule}
+      }},
+      {{
+        source: '/_next/:path*',{has_clause}
+        destination: '{backend}/_next/:path*',
+      }},
     ];
   }},
 }};
@@ -104,21 +129,32 @@ export default nextConfig;"""
 def vercel_rewrite(
     subdomain: str, ugc_domain: str, subpath: str, domain: str = ""
 ) -> str:
-    backend = _backend(subdomain, ugc_domain)
     has_line = (
         f'\n      "has": [{{ "type": "host", "value": "{domain}" }}],'
         if domain
         else ""
     )
-    asset_rule = (
-        ""
-        if (domain and is_marketing_hostname(domain))
-        else f""",
+    if domain and is_marketing_hostname(domain):
+        tenant_host = _host(subdomain, ugc_domain)
+        escaped_seo = _SEO_FILE_PATTERN.replace("\\", "\\\\")
+        return f"""{{
+  "rewrites": [
     {{
-      "source": "/_next/:path*",{has_line}
-      "destination": "{backend}/_next/:path*"
-    }}"""
-    )
+      "source": "{subpath}/{escaped_seo}",{has_line}
+      "destination": "/site/{tenant_host}/:file"
+    }},
+    {{
+      "source": "{subpath}",{has_line}
+      "destination": "/site/{tenant_host}{subpath}"
+    }},
+    {{
+      "source": "{subpath}/:path*",{has_line}
+      "destination": "/site/{tenant_host}{subpath}/:path*"
+    }}
+  ]
+}}"""
+
+    backend = _backend(subdomain, ugc_domain)
     return f"""{{
   "rewrites": [
     {{
@@ -128,7 +164,11 @@ def vercel_rewrite(
     {{
       "source": "{subpath}/:path*",{has_line}
       "destination": "{backend}{subpath}/:path*"
-    }}{asset_rule}
+    }},
+    {{
+      "source": "/_next/:path*",{has_line}
+      "destination": "{backend}/_next/:path*"
+    }}
   ]
 }}"""
 

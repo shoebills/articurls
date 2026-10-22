@@ -34,7 +34,7 @@ export async function fetchPublishedPosts(
 ): Promise<PublicBlog[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(subdomain)}/blogs`,
+      `${API_URL}/public/${encodeURIComponent(subdomain)}/blogs`,
       {
         next: {
           revalidate: 86400,
@@ -58,7 +58,7 @@ export async function fetchPublishedPosts(
 export async function fetchPages(subdomain: string): Promise<UserPage[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(subdomain)}/pages`,
+      `${API_URL}/public/${encodeURIComponent(subdomain)}/pages`,
       {
         next: {
           revalidate: 86400,
@@ -82,7 +82,7 @@ export async function fetchCategories(subdomain: string, all = false): Promise<C
   try {
     const q = all ? "?all=true" : "";
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(subdomain)}/categories${q}`,
+      `${API_URL}/public/${encodeURIComponent(subdomain)}/categories${q}`,
       {
         next: {
           revalidate: 86400,
@@ -105,7 +105,7 @@ export async function fetchCategories(subdomain: string, all = false): Promise<C
 export async function fetchAuthors(subdomain: string): Promise<Author[]> {
   try {
     const res = await fetch(
-      `${API_URL}/${encodeURIComponent(subdomain)}/authors`,
+      `${API_URL}/public/${encodeURIComponent(subdomain)}/authors`,
       {
         next: {
           revalidate: 86400,

@@ -11,6 +11,7 @@ from ..utils.rate_limit import check_rate_limit_ip
 
 router = APIRouter(
     tags=["Public"],
+    prefix="/public",
 )
 
 _PUBLIC_SEARCH_IP_LIMIT = 60

@@ -23,6 +23,7 @@ SYSTEM_RESERVED_SUBDOMAINS = {
     "analytics",
     "vitals",
     "dashboard",
+    "public",
     "static",
     "media",
     "assets",
@@ -99,9 +100,11 @@ def resolve_subdomain_to_current(db: Session, requested_subdomain_raw: str) -> t
 
 def permanent_subdomain_redirect(path: str, canonical_subdomain: str, query_string: str = "") -> RedirectResponse:
     segments = path.split("/")
-    if len(segments) > 1:
+    if len(segments) > 2 and segments[1] == "public":
+        segments[2] = canonical_subdomain
+    elif len(segments) > 1:
         segments[1] = canonical_subdomain
-    target = "/".join(segments) or f"/{canonical_subdomain}"
+    target = "/".join(segments) or f"/public/{canonical_subdomain}"
     if query_string:
         target = f"{target}?{query_string}"
     return RedirectResponse(url=target, status_code=status.HTTP_301_MOVED_PERMANENTLY)
