@@ -182,7 +182,7 @@ def purge_user_account(db: Any, db_user: models.User) -> None:
         for branding_url in (site.logo_url, site.favicon_url, site.og_image_url):
             delete_media_by_url(branding_url)
 
-        if site.custom_domain:
+        if site.custom_domain and not site.custom_subpath:
             try:
                 asyncio.run(_remove_vercel_domain(site.custom_domain))
             except Exception:

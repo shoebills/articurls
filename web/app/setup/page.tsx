@@ -62,7 +62,10 @@ function SetupForm() {
     setSubdomainStatus("checking");
     const timer = setTimeout(async () => {
       try {
-        const res = await checkSubdomainAvailability(cleaned);
+        const res = await checkSubdomainAvailability(cleaned, {
+          token: storedToken,
+          sessionId,
+        });
         if (res.available) {
           setSubdomainStatus("available");
           setSubdomainReason(null);
@@ -77,7 +80,7 @@ function SetupForm() {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [subdomain]);
+  }, [subdomain, storedToken, sessionId]);
 
   // Route guards: google flow needs a session, email flow needs a token
   useEffect(() => {

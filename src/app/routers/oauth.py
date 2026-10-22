@@ -33,6 +33,7 @@ from ..utils.google_oauth import (
     generate_session_id,
 )
 from ..utils import (
+    is_admin_email,
     user_by_email,
     normalize_email,
     validate_subdomain_or_raise,
@@ -354,7 +355,9 @@ async def complete_google_signup(
     name = request.name
 
     # Validate subdomain
-    subdomain = validate_subdomain_or_raise(request.subdomain)
+    subdomain = validate_subdomain_or_raise(
+        request.subdomain, allow_reserved=is_admin_email(email)
+    )
 
     # Check if email is now taken (race condition protection)
     existing_email = user_by_email(db, email)

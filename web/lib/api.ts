@@ -796,9 +796,15 @@ export async function listSites(token: string): Promise<SiteSummary[]> {
 }
 
 export async function checkSubdomainAvailability(
-  subdomain: string
+  subdomain: string,
+  options?: { token?: string | null; sessionId?: string | null }
 ): Promise<{ available: boolean; subdomain: string; reason?: string }> {
-  return apiFetch(`/sites/check-availability?subdomain=${encodeURIComponent(subdomain)}`, {
+  const params = new URLSearchParams({ subdomain });
+  if (options?.sessionId) {
+    params.set("session_id", options.sessionId);
+  }
+  return apiFetch(`/sites/check-availability?${params.toString()}`, {
+    token: options?.token || undefined,
     disableCache: true,
   });
 }

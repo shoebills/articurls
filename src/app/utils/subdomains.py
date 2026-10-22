@@ -11,7 +11,7 @@ from .text import normalize_subdomain
 SUBDOMAIN_MIN_LEN = 3
 SUBDOMAIN_MAX_LEN = 48
 SUBDOMAIN_RE = re.compile(r"^[a-z0-9][a-z0-9-]*[a-z0-9]$")
-RESERVED_SUBDOMAINS = {
+SYSTEM_RESERVED_SUBDOMAINS = {
     "www",
     "app",
     "api",
@@ -23,11 +23,9 @@ RESERVED_SUBDOMAINS = {
     "analytics",
     "vitals",
     "dashboard",
-    "help",
     "static",
     "media",
     "assets",
-    "blog",
     "site",
     "sites",
     "root",
@@ -35,7 +33,6 @@ RESERVED_SUBDOMAINS = {
     "staging",
     "test",
     "demo",
-    "docs",
     "login",
     "signup",
     "verify",
@@ -45,9 +42,17 @@ RESERVED_SUBDOMAINS = {
     "_next",
     "favicon.ico",
 }
+BRAND_RESERVED_SUBDOMAINS = {
+    "blog",
+    "docs",
+    "help",
+}
+RESERVED_SUBDOMAINS = SYSTEM_RESERVED_SUBDOMAINS | BRAND_RESERVED_SUBDOMAINS
 
 
-def subdomain_validation_failure(value: str) -> tuple[str, int] | None:
+def subdomain_validation_failure(
+    value: str, *, allow_reserved: bool = False
+) -> tuple[str, int] | None:
     """Return (detail, http_status) when the cleaned subdomain is invalid, else None."""
     if not value:
         return "Subdomain is required.", status.HTTP_422_UNPROCESSABLE_ENTITY
@@ -61,14 +66,18 @@ def subdomain_validation_failure(value: str) -> tuple[str, int] | None:
             "Subdomain can only contain lowercase letters, numbers, and hyphens.",
             status.HTTP_422_UNPROCESSABLE_ENTITY,
         )
-    if value in RESERVED_SUBDOMAINS:
+    if value in SYSTEM_RESERVED_SUBDOMAINS or (
+        not allow_reserved and value in BRAND_RESERVED_SUBDOMAINS
+    ):
         return "This subdomain is reserved.", status.HTTP_400_BAD_REQUEST
     return None
 
 
-def validate_subdomain_or_raise(raw: str | None) -> str:
+def validate_subdomain_or_raise(
+    raw: str | None, *, allow_reserved: bool = False
+) -> str:
     value = normalize_subdomain(raw)
-    failure = subdomain_validation_failure(value)
+    failure = subdomain_validation_failure(value, allow_reserved=allow_reserved)
     if failure:
         detail, http_status = failure
         raise HTTPException(status_code=http_status, detail=detail)

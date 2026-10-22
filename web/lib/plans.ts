@@ -14,7 +14,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_10k",
     label: "10K",
-    name: "Pro 10K",
+    name: "Starter",
     views: 10_000,
     viewsText: "10,000 monthly pageviews",
     monthly: 19,
@@ -23,7 +23,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_50k",
     label: "50K",
-    name: "Pro 50K",
+    name: "Creator",
     views: 50_000,
     viewsText: "50,000 monthly pageviews",
     monthly: 39,
@@ -32,7 +32,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_100k",
     label: "100K",
-    name: "Pro 100K",
+    name: "Publisher",
     views: 100_000,
     viewsText: "100,000 monthly pageviews",
     monthly: 69,
@@ -41,7 +41,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_250k",
     label: "250K",
-    name: "Pro 250K",
+    name: "Studio",
     views: 250_000,
     viewsText: "250,000 monthly pageviews",
     monthly: 119,
@@ -50,7 +50,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_500k",
     label: "500K",
-    name: "Pro 500K",
+    name: "Scale",
     views: 500_000,
     viewsText: "500,000 monthly pageviews",
     monthly: 199,
@@ -59,7 +59,7 @@ export const PRO_TIERS: ProTier[] = [
   {
     key: "pro_unlimited",
     label: "Unlimited",
-    name: "Pro Unlimited",
+    name: "Unlimited",
     views: null,
     viewsText: "Unlimited monthly pageviews",
     monthly: 249,
@@ -76,4 +76,8 @@ export const CYCLE_UNIT: Record<BillingCycle, string> = {
 
 export function tierPrice(tier: ProTier, cycle: BillingCycle): number {
   return tier[cycle];
+}
+
+export function tierOptionLabel(tier: ProTier): string {
+  return tier.views === null ? tier.name : `${tier.name} (${tier.label} views)`;
 }

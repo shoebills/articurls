@@ -42,13 +42,26 @@ class Site(Base):
         CheckConstraint("seo_llms_mode IN ('auto', 'custom')", name="ck_sites_seo_llms_mode"),
         CheckConstraint("length(seo_robots_custom) <= 10000", name="ck_sites_seo_robots_custom_len"),
         CheckConstraint("length(seo_llms_custom) <= 10000", name="ck_sites_seo_llms_custom_len"),
+        Index(
+            "uq_sites_custom_domain_apex",
+            "custom_domain",
+            unique=True,
+            postgresql_where=text("custom_domain IS NOT NULL AND custom_subpath IS NULL"),
+        ),
+        Index(
+            "uq_sites_custom_domain_subpath",
+            "custom_domain",
+            "custom_subpath",
+            unique=True,
+            postgresql_where=text("custom_domain IS NOT NULL AND custom_subpath IS NOT NULL"),
+        ),
     )
 
     site_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.user_id", ondelete="CASCADE"), nullable=False, index=True)
     subdomain = Column(String, unique=True, nullable=False, index=True)
     
-    custom_domain = Column(String, nullable=True, default=None, unique=True, index=True)
+    custom_domain = Column(String, nullable=True, default=None, index=True)
     custom_subpath = Column(String, nullable=True, default=None)
     domain_status = Column(Enum(DomainStatus, name="domain_status_enum", values_callable=lambda x: [e.value for e in x]), nullable=False, default=DomainStatus.NONE)
     domain_dns_instructions = Column(JSON, nullable=True, default=None)

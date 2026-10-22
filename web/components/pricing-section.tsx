@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PRO_TIERS, tierPrice, CYCLE_UNIT, type BillingCycle } from "@/lib/plans";
+import { PRO_TIERS, tierPrice, tierOptionLabel, CYCLE_UNIT, type BillingCycle } from "@/lib/plans";
 import { appAuthHref } from "@/lib/env";
 import { useAuth } from "@/lib/auth-context";
 
@@ -97,8 +97,7 @@ export function PricingSection() {
                   <SelectContent>
                     {PRO_TIERS.map((tier, idx) => (
                       <SelectItem key={tier.key} value={String(idx)}>
-                        {tier.name} — ${tierPrice(tier, cycle)}
-                        {CYCLE_UNIT[cycle]}
+                        {tierOptionLabel(tier)}
                       </SelectItem>
                     ))}
                   </SelectContent>

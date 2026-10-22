@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func
 from slugify import slugify
 from typing import List
+import jwt
 import uuid
 
 from .. import models
@@ -19,6 +20,8 @@ from ..storage.service import (
 )
 from ..config import settings
 from ..umami.client import UmamiClient, UmamiError
+from ..utils.admin import is_admin_email
+from ..utils.google_oauth import get_oauth_session
 from ..utils.rate_limit import check_rate_limit_ip, check_rate_limit_user
 from ..utils.subdomains import subdomain_validation_failure
 
@@ -68,10 +71,32 @@ def _site_summary_out(db: Session, site: models.Site) -> dict:
     }
 
 
+def _resolve_optional_caller_email(request: Request, session_id: str | None = None) -> str | None:
+    auth_header = request.headers.get("Authorization") or ""
+    if auth_header.lower().startswith("bearer "):
+        token = auth_header.split(" ", 1)[1].strip()
+        if token:
+            try:
+                payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+                if payload.get("purpose") == "access":
+                    return payload.get("sub")
+            except jwt.PyJWTError:
+                pass
+    if session_id:
+        try:
+            session_data = get_oauth_session(session_id)
+            if session_data:
+                return session_data.get("email")
+        except Exception:
+            pass
+    return None
+
+
 @router.get("/check-availability", status_code=status.HTTP_200_OK)
 def check_subdomain_availability(
     request: Request,
     subdomain: str = Query(..., min_length=1),
+    session_id: str | None = Query(None),
     db: Session = Depends(get_db),
 ):
     check_rate_limit_ip(
@@ -83,8 +108,11 @@ def check_subdomain_availability(
     )
     raw_subdomain = subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
+    caller_email = _resolve_optional_caller_email(request, session_id)
 
-    failure = subdomain_validation_failure(cleaned_subdomain)
+    failure = subdomain_validation_failure(
+        cleaned_subdomain, allow_reserved=is_admin_email(caller_email)
+    )
     if failure:
         reason, _ = failure
         return {"available": False, "subdomain": cleaned_subdomain, "reason": reason}
@@ -127,7 +155,9 @@ async def create_site(
     raw_subdomain = request.subdomain.strip().lower()
     cleaned_subdomain = slugify(raw_subdomain, lowercase=True)
 
-    failure = subdomain_validation_failure(cleaned_subdomain)
+    failure = subdomain_validation_failure(
+        cleaned_subdomain, allow_reserved=is_admin_email(current_user.email)
+    )
     if failure:
         detail, http_status = failure
         raise HTTPException(status_code=http_status, detail=detail)

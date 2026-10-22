@@ -48,6 +48,9 @@ def _is_origin_allowed(origin: str) -> bool:
     hostname = parsed.hostname or ""
 
     static_origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+    for extra_origin in (settings.marketing_origin, settings.app_base_url):
+        if extra_origin and extra_origin.strip():
+            static_origins.append(extra_origin.strip())
     for allowed in static_origins:
         allowed_host = urlparse(allowed).hostname or allowed
         if hostname == allowed_host:
@@ -62,10 +65,37 @@ def _is_origin_allowed(origin: str) -> bool:
         return False
 
     try:
-        cached = redis_client.get(f"domain_lookup:{hostname}")
-        if cached:
+        if redis_client.get(f"domain_lookup:{hostname}"):
             return True
+        cors_cache_key = f"cors_domain:{hostname}"
+        cached_cors = redis_client.get(cors_cache_key)
+        if cached_cors is not None:
+            return cached_cors == "1"
+    except Exception:
+        cached_cors = None
+
+    try:
+        from .. import database, models
+
+        db = database.SessionLocal()
+        try:
+            exists = (
+                db.query(models.Site.site_id)
+                .filter(
+                    models.Site.custom_domain == hostname,
+                    models.Site.domain_status.in_(
+                        (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
+                    ),
+                )
+                .first()
+                is not None
+            )
+        finally:
+            db.close()
+        try:
+            redis_client.setex(f"cors_domain:{hostname}", 300, "1" if exists else "0")
+        except Exception:
+            pass
+        return exists
     except Exception:
         return False
-
-    return False

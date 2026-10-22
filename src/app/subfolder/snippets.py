@@ -10,6 +10,9 @@ resolve the tenant and strip the subpath.
 from __future__ import annotations
 
 
+from ..domains.utils import is_marketing_hostname
+
+
 def _backend(subdomain: str, ugc_domain: str) -> str:
     return f"https://{subdomain}.{ugc_domain}"
 
@@ -68,23 +71,29 @@ def cloudflare_worker(subdomain: str, ugc_domain: str, subpath: str) -> str:
 
 def nextjs_rewrite(subdomain: str, ugc_domain: str, subpath: str, domain: str) -> str:
     backend = _backend(subdomain, ugc_domain)
+    has_clause = f"\n        has: [{{ type: 'host', value: '{domain}' }}]," if domain else ""
+    asset_rule = (
+        ""
+        if (domain and is_marketing_hostname(domain))
+        else f""",
+      {{
+        source: '/_next/:path*',{has_clause}
+        destination: '{backend}/_next/:path*',
+      }}"""
+    )
     return f"""// next.config.mjs
 /** @type {{import('next').NextConfig}} */
 const nextConfig = {{
   async rewrites() {{
     return [
       {{
-        source: '{subpath}',
+        source: '{subpath}',{has_clause}
         destination: '{backend}{subpath}',
       }},
       {{
-        source: '{subpath}/:path*',
+        source: '{subpath}/:path*',{has_clause}
         destination: '{backend}{subpath}/:path*',
-      }},
-      {{
-        source: '/_next/:path*',
-        destination: '{backend}/_next/:path*',
-      }},
+      }}{asset_rule}
     ];
   }},
 }};
@@ -92,22 +101,34 @@ const nextConfig = {{
 export default nextConfig;"""
 
 
-def vercel_rewrite(subdomain: str, ugc_domain: str, subpath: str) -> str:
+def vercel_rewrite(
+    subdomain: str, ugc_domain: str, subpath: str, domain: str = ""
+) -> str:
     backend = _backend(subdomain, ugc_domain)
+    has_line = (
+        f'\n      "has": [{{ "type": "host", "value": "{domain}" }}],'
+        if domain
+        else ""
+    )
+    asset_rule = (
+        ""
+        if (domain and is_marketing_hostname(domain))
+        else f""",
+    {{
+      "source": "/_next/:path*",{has_line}
+      "destination": "{backend}/_next/:path*"
+    }}"""
+    )
     return f"""{{
   "rewrites": [
     {{
-      "source": "{subpath}",
+      "source": "{subpath}",{has_line}
       "destination": "{backend}{subpath}"
     }},
     {{
-      "source": "{subpath}/:path*",
+      "source": "{subpath}/:path*",{has_line}
       "destination": "{backend}{subpath}/:path*"
-    }},
-    {{
-      "source": "/_next/:path*",
-      "destination": "{backend}/_next/:path*"
-    }}
+    }}{asset_rule}
   ]
 }}"""
 

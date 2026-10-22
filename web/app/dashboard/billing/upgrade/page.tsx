@@ -13,7 +13,7 @@ import {
 } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import type { AccountUsage, SubscriptionOut } from "@/lib/types";
-import { PRO_TIERS, tierPrice, CYCLE_UNIT, LIFETIME_PRICE, type BillingCycle } from "@/lib/plans";
+import { PRO_TIERS, tierPrice, tierOptionLabel, CYCLE_UNIT, LIFETIME_PRICE, type BillingCycle } from "@/lib/plans";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -276,7 +276,7 @@ function UpgradePlanContent() {
                         >
                           <div className="flex items-center justify-between gap-4 w-full">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-foreground text-sm">{tier.name}</span>
+                              <span className="font-semibold text-foreground text-sm">{tierOptionLabel(tier)}</span>
                             </div>
                             <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                               {exceeded ? (

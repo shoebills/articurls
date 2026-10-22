@@ -80,22 +80,17 @@ export function resolveTenantHost(
   runtimeHosts: string[] = [],
 ): string {
   const hostHeader = firstHeaderHost(headers.get("host"));
-  const xOriginal = firstHeaderHost(headers.get("x-original-host"));
-  const forwarded = firstHeaderHost(headers.get("x-forwarded-host"));
 
-  // Direct custom-domain request — Cloudflare SSL-for-SaaS preserves the
+  // Direct custom-domain request — Cloudflare SSL-for-SaaS / Vercel preserves the
   // customer Host end-to-end, so Host is the tenant.
   if (isCustomDomainHost(hostHeader, runtimeHosts) && !isUgcSubdomainHost(hostHeader)) {
     return hostHeader;
   }
 
-  // Requests landing on our UGC subdomain come through the customer's reverse
-  // proxy (subfolder mode) which sets x-original-host to the real tenant. Only
-  // trust forwarding headers here — never on platform apex hosts, where a
-  // client-supplied x-original-host must not influence tenant resolution.
+  // Requests landing on our UGC subdomain (including reverse-proxied subfolder
+  // requests) resolve by their permanent `{subdomain}.{ugc_domain}` host so
+  // multiple subfolder publications on the same domain remain unambiguous.
   if (isUgcSubdomainHost(hostHeader)) {
-    if (isCustomDomainHost(xOriginal, runtimeHosts) && !isUgcSubdomainHost(xOriginal)) return xOriginal;
-    if (isCustomDomainHost(forwarded, runtimeHosts) && !isUgcSubdomainHost(forwarded)) return forwarded;
     return hostHeader;
   }
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import re
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from .. import models
@@ -16,7 +17,7 @@ from ..domains.utils import (
     validate_hostname,
 )
 from ..domains.router import _remove_vercel_domain
-from ..security.oauth2 import get_current_site
+from ..security.oauth2 import get_current_site, get_current_user
 from ..subfolder.schemas import SubfolderIn, SubfolderOut
 from ..subfolder.snippets import (
     apache_config,
@@ -27,7 +28,7 @@ from ..subfolder.snippets import (
     vercel_rewrite,
 )
 from ..cache.service import purge_domain_lookup_tags
-from ..utils import is_pro_entitled
+from ..utils import is_admin_email, is_pro_entitled
 from ..utils.rate_limit import check_rate_limit_user
 
 router = APIRouter(tags=["Subfolder"])
@@ -76,6 +77,7 @@ def get_subfolder_settings(
 async def update_subfolder_settings(
     body: SubfolderIn,
     db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
     current_site: models.Site = Depends(get_current_site),
 ):
     check_rate_limit_user(
@@ -92,25 +94,43 @@ async def update_subfolder_settings(
         )
 
     domain = normalize_hostname(body.custom_domain)
-    validate_hostname(domain)
+    validate_hostname(
+        domain, allow_marketing_domain=is_admin_email(current_user.email)
+    )
     subpath = normalize_subpath(body.custom_subpath)
     validate_subpath(subpath)
 
-    existing = db.query(models.Site).filter(
-        models.Site.custom_domain == domain,
-        models.Site.site_id != current_site.site_id,
-    ).first()
-
-    if existing:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="This domain is already in use by another publication.",
+    existing_sites = (
+        db.query(models.Site)
+        .filter(
+            models.Site.custom_domain == domain,
+            models.Site.site_id != current_site.site_id,
         )
+        .all()
+    )
+
+    for existing in existing_sites:
+        if existing.user_id != current_site.user_id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This domain is already in use by another account.",
+            )
+        if existing.custom_subpath is None:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This domain is already connected as a root custom domain on another publication.",
+            )
+        if existing.custom_subpath == subpath:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="This domain and subpath are already in use by another publication.",
+            )
 
     # Subfolder mode is self-hosted by the customer (reverse proxy), so any
-    # prior Vercel registration for the domain is stale and must be removed.
+    # prior apex Vercel registration for the domain is stale and must be removed.
     old_domain = current_site.custom_domain
-    if old_domain:
+    old_subpath = current_site.custom_subpath
+    if old_domain and not old_subpath:
         await _remove_vercel_domain(old_domain)
 
     current_site.custom_domain = domain
@@ -120,7 +140,14 @@ async def update_subfolder_settings(
     current_site.verified_at = None
     current_site.grace_started_at = None
     current_site.grace_expires_at = None
-    db.commit()
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="This domain and subpath are already in use by another publication.",
+        )
     db.refresh(current_site)
 
     purge_domain_lookup_cache(domain, current_site.subdomain)
@@ -152,7 +179,8 @@ async def delete_subfolder_settings(
         burst=_SUBFOLDER_WRITE_BURST,
     )
     old_domain = current_site.custom_domain
-    if old_domain:
+    old_subpath = current_site.custom_subpath
+    if old_domain and not old_subpath:
         await _remove_vercel_domain(old_domain)
 
     reset_domain_columns(current_site)
@@ -183,7 +211,7 @@ def get_subfolder_snippets(
     return {
         "cloudflare": cloudflare_worker(subdomain, ugc_domain, clean_subpath),
         "nextjs": nextjs_rewrite(subdomain, ugc_domain, clean_subpath, domain),
-        "vercel": vercel_rewrite(subdomain, ugc_domain, clean_subpath),
+        "vercel": vercel_rewrite(subdomain, ugc_domain, clean_subpath, domain),
         "nginx": nginx_config(subdomain, ugc_domain, clean_subpath),
         "caddy": caddy_config(subdomain, ugc_domain, clean_subpath, domain),
         "apache": apache_config(subdomain, ugc_domain, clean_subpath, domain),

@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timedelta, timezone
+from urllib.parse import urlparse
 from fastapi import HTTPException, status
 from .. import models
 
@@ -25,19 +26,60 @@ def normalize_hostname(raw: str) -> str:
     return host
 
 
-def validate_hostname(hostname: str) -> None:
+def _origin_hostname(origin: str | None) -> str:
+    if not origin:
+        return ""
+    parsed = urlparse(origin.strip())
+    host = parsed.hostname or ""
+    return normalize_hostname(host) if host else ""
+
+
+def is_marketing_hostname(hostname: str) -> bool:
+    from ..config import settings
+
+    host = normalize_hostname(hostname)
+    if not host:
+        return False
+    configured_marketing = _origin_hostname(settings.marketing_origin)
+    allowed = {"articurls.com"}
+    if configured_marketing and configured_marketing not in ("localhost", "127.0.0.1"):
+        allowed.add(configured_marketing)
+    return host in allowed
+
+
+def is_platform_hostname(hostname: str) -> bool:
+    from ..config import settings
+
+    host = normalize_hostname(hostname)
+    if not host:
+        return False
+    if _RESERVED_RE.search(host):
+        return True
+    ugc = (settings.ugc_domain or "").strip().lower()
+    if ugc and (host == ugc or host.endswith(f".{ugc}")):
+        return True
+    for origin in (
+        settings.marketing_origin,
+        settings.app_base_url,
+        settings.public_base_url,
+    ):
+        origin_host = _origin_hostname(origin)
+        if origin_host and origin_host not in ("localhost", "127.0.0.1"):
+            if host == origin_host or host.endswith(f".{origin_host}"):
+                return True
+    return False
+
+
+def validate_hostname(hostname: str, *, allow_marketing_domain: bool = False) -> None:
     if not _HOSTNAME_RE.match(hostname):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Invalid hostname format.",
         )
 
-    from ..config import settings
-
-    ugc = (settings.ugc_domain or "").strip().lower()
-    if _RESERVED_RE.search(hostname) or (
-        ugc and (hostname == ugc or hostname.endswith(f".{ugc}"))
-    ):
+    if is_platform_hostname(hostname):
+        if allow_marketing_domain and is_marketing_hostname(hostname):
+            return
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Platform domains cannot be used as custom domains.",
@@ -63,6 +105,7 @@ def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | N
         from ..config import settings
         if custom_domain:
             redis_client.delete(f"domain_lookup:{custom_domain}")
+            redis_client.delete(f"cors_domain:{custom_domain}")
             hosts.append(custom_domain)
         if subdomain and settings.ugc_domain:
             redis_client.delete(f"domain_lookup:{subdomain}.{settings.ugc_domain}")

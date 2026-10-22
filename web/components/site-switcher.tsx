@@ -56,7 +56,9 @@ export function SiteSwitcher({
                   {currentDisplayName}
                 </p>
                 <p className="truncate text-xs text-muted-foreground leading-tight">
-                  {activeSite?.custom_domain || `${activeSite?.subdomain || ""}.${UGC_DOMAIN}`}
+                  {activeSite?.custom_domain
+                    ? `${activeSite.custom_domain}${activeSite.custom_subpath || ""}`
+                    : `${activeSite?.subdomain || ""}.${UGC_DOMAIN}`}
                 </p>
               </div>
             </div>
@@ -85,7 +87,9 @@ export function SiteSwitcher({
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium">{name}</p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {site.custom_domain || `${site.subdomain}.${UGC_DOMAIN}`}
+                      {site.custom_domain
+                        ? `${site.custom_domain}${site.custom_subpath || ""}`
+                        : `${site.subdomain}.${UGC_DOMAIN}`}
                     </p>
                   </div>
                 </div>

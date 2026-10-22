@@ -22,7 +22,14 @@ from .activation import (
 )
 from ..vercel.client import VercelClient, VercelError
 from ..utils.rate_limit import check_rate_limit_user
-from .utils import invalidate_domain_lookup_cache, normalize_hostname, reset_domain_columns, validate_hostname
+from ..utils.subdomains import SYSTEM_RESERVED_SUBDOMAINS
+from .utils import (
+    invalidate_domain_lookup_cache,
+    is_platform_hostname,
+    normalize_hostname,
+    reset_domain_columns,
+    validate_hostname,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -59,6 +66,9 @@ def _canonical_url_for_subdomain(
 async def _register_vercel_domain(hostname: str) -> Optional[Dict[str, Any]]:
     if not vercel_sync_required():
         return None
+    if is_platform_hostname(hostname):
+        logger.info("Skipping Vercel domain registration for platform hostname %s", hostname)
+        return None
     vc = VercelClient()
     try:
         return await vc.add_project_domain(hostname)
@@ -69,6 +79,9 @@ async def _register_vercel_domain(hostname: str) -> Optional[Dict[str, Any]]:
 
 async def _remove_vercel_domain(hostname: str) -> None:
     if not vercel_sync_required():
+        return
+    if is_platform_hostname(hostname):
+        logger.info("Skipping Vercel domain removal for platform hostname %s", hostname)
         return
     vc = VercelClient()
     await vc.remove_project_domain(hostname)
@@ -138,7 +151,8 @@ async def add_domain(
     dns_instructions = build_dns_instructions(hostname, vercel_domain)
 
     old_domain = db_site.custom_domain
-    if old_domain and old_domain != hostname:
+    old_subpath = db_site.custom_subpath
+    if old_domain and not old_subpath and old_domain != hostname:
         await _remove_vercel_domain(old_domain)
 
     db_site.custom_domain = hostname
@@ -282,7 +296,9 @@ async def delete_domain(
     if not db_site:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    if old_domain := db_site.custom_domain:
+    old_domain = db_site.custom_domain
+    old_subpath = db_site.custom_subpath
+    if old_domain and not old_subpath:
         await _remove_vercel_domain(old_domain)
 
     reset_domain_columns(db_site)
@@ -317,13 +333,19 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
     except Exception:
         pass
 
-    db_site = db.query(models.Site).filter(models.Site.custom_domain == normalized).first()
+    db_site = (
+        db.query(models.Site)
+        .filter(
+            models.Site.custom_domain == normalized,
+            models.Site.custom_subpath.is_(None),
+        )
+        .first()
+    )
     if not db_site:
         ugc_domain = settings.ugc_domain
         if ugc_domain and normalized.endswith(f".{ugc_domain}"):
             subdomain = normalized[: -len(f".{ugc_domain}")]
-            RESERVED_SUBDOMAINS = {"www", "app", "api", "admin", "mail", "support", "analytics", "vitals"}
-            if subdomain and subdomain not in RESERVED_SUBDOMAINS:
+            if subdomain and subdomain not in SYSTEM_RESERVED_SUBDOMAINS:
                 db_site = db.query(models.Site).filter(models.Site.subdomain == subdomain).first()
                 if db_site:
                     has_active_custom = bool(
