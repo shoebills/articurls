@@ -9,7 +9,7 @@ import { generateAuthorProfileSchema, generateBreadcrumbList } from "@/lib/struc
 import { getPublicProfileUrl } from "@/lib/public-url";
 import { transformImageUrl } from "@/lib/image-transform";
 import { assetUrl } from "@/lib/env";
-import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
+import { resolveLogoHref, resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardAuthorLayout({
   site,
@@ -22,7 +22,7 @@ export function StandardAuthorLayout({
   basePath,
 }: AuthorLayoutProps) {
   const navBlogName = resolveSiteName(site);
-  const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
+  const titleHref = resolveLogoHref(site, subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 

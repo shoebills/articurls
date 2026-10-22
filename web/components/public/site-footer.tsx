@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PublicSite, UserPage } from "@/lib/types";
-import { getPublicPageUrl } from "@/lib/public-url";
+import { formatWithBasePath, getPublicPageUrl } from "@/lib/public-url";
 import { SubscribeToAuthor } from "@/components/public/subscribe-to-author";
 import { assetUrl } from "@/lib/env";
 import { Network, Rss } from "lucide-react";
@@ -79,7 +79,9 @@ export function PublicSiteFooter({ site, pages, basePath = "" }: PublicSiteFoote
               </h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 {col.links.map((link) => {
-                  const href = link.url.startsWith("/") ? `${basePath}${link.url}` : normalizePublicLink(link.url);
+                  const href = link.url.startsWith("/")
+                    ? formatWithBasePath(link.url, basePath)
+                    : normalizePublicLink(link.url);
                   const isExternal = link.open_in_new_tab || /^https?:\/\//i.test(link.url);
 
                   return (

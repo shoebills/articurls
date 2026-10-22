@@ -105,7 +105,6 @@ def invalidate_domain_lookup_cache(custom_domain: str | None, subdomain: str | N
         from ..config import settings
         if custom_domain:
             redis_client.delete(f"domain_lookup:{custom_domain}")
-            redis_client.delete(f"cors_domain:{custom_domain}")
             hosts.append(custom_domain)
         if subdomain and settings.ugc_domain:
             redis_client.delete(f"domain_lookup:{subdomain}.{settings.ugc_domain}")

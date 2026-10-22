@@ -361,7 +361,15 @@ def domain_lookup(hostname: str, request: Request, db: Session = Depends(get_db)
                         "custom_subpath": db_site.custom_subpath if has_active_custom else None,
                     }
                     try:
-                        redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, json.dumps(result))
+                        payload = json.dumps(result)
+                        redis_client.setex(cache_key, _DOMAIN_CACHE_TTL, payload)
+                        if has_active_custom and db_site.custom_domain:
+                            redis_client.set(
+                                f"domain_lookup:{db_site.custom_domain}",
+                                payload,
+                                ex=_DOMAIN_CACHE_TTL,
+                                nx=True,
+                            )
                     except Exception:
                         pass
                     return result

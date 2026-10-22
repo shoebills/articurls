@@ -19,7 +19,7 @@ import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/im
 import { getPublicProfileUrl, getPublicAuthorUrl } from "@/lib/public-url";
 import { injectHeadingIds } from "@/lib/toc";
 import { assetUrl } from "@/lib/env";
-import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
+import { resolveLogoHref, resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardPostLayout({
   site,
@@ -32,7 +32,7 @@ export function StandardPostLayout({
   basePath,
 }: PostLayoutProps) {
   const navBlogName = resolveSiteName(site);
-  const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
+  const titleHref = resolveLogoHref(site, subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 

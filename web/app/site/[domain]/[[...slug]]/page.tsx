@@ -339,7 +339,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         robots: resolveNoindex(blog.noindex === true || isSiteIndexingOff(site)),
-        alternates: alternatesWithFeeds(site),
+        alternates: { ...alternatesWithFeeds(site), canonical: postCanonical },
         icons: faviconIcons(site),
         verification: resolveGoogleVerification(site),
         openGraph: {
@@ -375,7 +375,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title,
         description,
         robots: resolveNoindex(page.noindex === true || site?.seo_noindex_pages === true || isSiteIndexingOff(site)),
-        alternates: alternatesWithFeeds(site),
+        alternates: { ...alternatesWithFeeds(site), canonical: pageCanonical },
         icons: faviconIcons(site),
         verification: resolveGoogleVerification(site),
         openGraph: {

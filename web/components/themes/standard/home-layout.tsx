@@ -8,8 +8,7 @@ import { PublicSiteFooter } from "@/components/public/site-footer";
 import { PublicNavHeader, getPublicMainSpacing } from "@/components/public/nav-header";
 import { StructuredData } from "@/components/structured-data";
 import { generateWebSiteSchema } from "@/lib/structured-data";
-import { getPublicProfileUrl } from "@/lib/public-url";
-import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
+import { resolveLogoHref, resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardHomeLayout({
   site,
@@ -21,7 +20,7 @@ export function StandardHomeLayout({
   basePath,
 }: HomeLayoutProps) {
   const displayName = resolveSiteName(site);
-  const titleHref = site.logo_link || getPublicProfileUrl(site.subdomain, basePath);
+  const titleHref = resolveLogoHref(site, site.subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 

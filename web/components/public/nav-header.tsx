@@ -1,7 +1,7 @@
 import type { PublicSite, Category } from "@/lib/types";
 import { PublicDesktopNav, type PublicNavDesktopLink } from "./desktop-nav";
 import { PublicMobileNavMenu } from "./mobile-nav-menu";
-import { getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
+import { formatWithBasePath, getPublicCategoryUrl, getPublicProfileUrl } from "@/lib/public-url";
 
 export function getPublicNavHeaderClass(navbarStyle?: string): string {
   if (navbarStyle === "floating") {
@@ -34,7 +34,7 @@ export function resolveNavLinks(
   const hasCustomNav = Array.isArray(site.nav_items) && site.nav_items.length > 0;
   if (hasCustomNav) {
     return site.nav_items!.map((item) => ({
-      href: item.url.startsWith("/") ? `${basePath}${item.url}` : item.url,
+      href: item.url.startsWith("/") ? formatWithBasePath(item.url, basePath) : item.url,
       label: item.label,
       is_cta: item.is_cta,
       open_in_new_tab: item.open_in_new_tab,

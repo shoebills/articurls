@@ -65,37 +65,10 @@ def _is_origin_allowed(origin: str) -> bool:
         return False
 
     try:
-        if redis_client.get(f"domain_lookup:{hostname}"):
+        cached = redis_client.get(f"domain_lookup:{hostname}")
+        if cached:
             return True
-        cors_cache_key = f"cors_domain:{hostname}"
-        cached_cors = redis_client.get(cors_cache_key)
-        if cached_cors is not None:
-            return cached_cors == "1"
-    except Exception:
-        cached_cors = None
-
-    try:
-        from .. import database, models
-
-        db = database.SessionLocal()
-        try:
-            exists = (
-                db.query(models.Site.site_id)
-                .filter(
-                    models.Site.custom_domain == hostname,
-                    models.Site.domain_status.in_(
-                        (models.DomainStatus.ACTIVE, models.DomainStatus.GRACE)
-                    ),
-                )
-                .first()
-                is not None
-            )
-        finally:
-            db.close()
-        try:
-            redis_client.setex(f"cors_domain:{hostname}", 300, "1" if exists else "0")
-        except Exception:
-            pass
-        return exists
     except Exception:
         return False
+
+    return False

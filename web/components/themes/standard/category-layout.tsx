@@ -7,7 +7,7 @@ import { PublicSiteFooter } from "@/components/public/site-footer";
 import { StructuredData } from "@/components/structured-data";
 import { generateCollectionPageSchema, generateBreadcrumbList } from "@/lib/structured-data";
 import { getPublicProfileUrl } from "@/lib/public-url";
-import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
+import { resolveLogoHref, resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardCategoryLayout({
   site,
@@ -21,7 +21,7 @@ export function StandardCategoryLayout({
 }: CategoryLayoutProps) {
   const categoryName = category.name;
   const navBlogName = resolveSiteName(site);
-  const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
+  const titleHref = resolveLogoHref(site, subdomain, basePath);
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
 

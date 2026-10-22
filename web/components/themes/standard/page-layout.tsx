@@ -18,7 +18,7 @@ import { transformHtmlImages, transformImageUrl, generateSrcSet } from "@/lib/im
 import { getPublicProfileUrl } from "@/lib/public-url";
 import { injectHeadingIds } from "@/lib/toc";
 import { assetUrl } from "@/lib/env";
-import { resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
+import { resolveLogoHref, resolveSiteName, withJsonLdSlash } from "@/lib/public-page-helpers";
 
 export function StandardPageLayout({
   site,
@@ -30,7 +30,7 @@ export function StandardPageLayout({
   basePath,
 }: PageLayoutProps) {
   const navBlogName = resolveSiteName(site);
-  const titleHref = site.logo_link || getPublicProfileUrl(subdomain, basePath);
+  const titleHref = resolveLogoHref(site, subdomain, basePath);
   const contentWidth = "max-w-3xl";
   const isNavEnabled = site.navbar_enabled !== false;
   const mainSpacing = getPublicMainSpacing(isNavEnabled);
