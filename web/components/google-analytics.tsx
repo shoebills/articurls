@@ -1,5 +1,5 @@
 /** Articurls' own GA4 tag for the marketing site and dashboard. */
-const GA_MEASUREMENT_ID = "G-WC5XPV34JT";
+const GA_MEASUREMENT_ID = "G-QEFY64KV5F";
 
 export function GoogleAnalytics() {
   return (
