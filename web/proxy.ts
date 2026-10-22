@@ -131,12 +131,9 @@ export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   if (pathname !== "/" && pathname.endsWith("/")) {
-    const cleanPath = pathname.slice(0, -1);
-    const location = `${cleanPath}${request.nextUrl.search}`;
-    return new NextResponse(null, {
-      status: 308,
-      headers: { Location: location },
-    });
+    const url = request.nextUrl.clone();
+    url.pathname = pathname.slice(0, -1);
+    return NextResponse.redirect(url, 308);
   }
 
   if (request.nextUrl.searchParams.size > 0) {
@@ -153,10 +150,9 @@ export function proxy(request: NextRequest) {
       !pathname.startsWith("/_next");
 
     if (isPublicContent) {
-      return new NextResponse(null, {
-        status: 301,
-        headers: { Location: pathname },
-      });
+      const url = request.nextUrl.clone();
+      url.search = "";
+      return NextResponse.redirect(url, 301);
     }
   }
 

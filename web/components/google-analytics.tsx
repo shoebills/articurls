@@ -11,7 +11,7 @@ export function GoogleAnalytics() {
       <script
         id="articurls-google-tag-config"
         dangerouslySetInnerHTML={{
-          __html: `window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', '${GA_MEASUREMENT_ID}');`,
+          __html: `window.dataLayer = window.dataLayer || [];function gtag(){dataLayer.push(arguments);}gtag('js', new Date());gtag('config', '${GA_MEASUREMENT_ID}', { page_location: window.location.origin + window.location.pathname });`,
         }}
       />
     </>
