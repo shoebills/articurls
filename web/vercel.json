@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "rewrites": [
+    {
+      "source": "/blog",
+      "has": [{ "type": "host", "value": "articurls.com" }],
+      "destination": "https://blog.articurls.site/blog"
+    },
+    {
+      "source": "/blog/:path*",
+      "has": [{ "type": "host", "value": "articurls.com" }],
+      "destination": "https://blog.articurls.site/blog/:path*"
+    }
+  ]
+}
