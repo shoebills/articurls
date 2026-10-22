@@ -16,7 +16,7 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+You can start editing the page by modifying `app/(platform)/page.tsx`. The page auto-updates as you edit the file.
 
 Typography uses **[Inter](https://rsms.me/inter/)** for UI (the usual choice with shadcn) and **[JetBrains Mono](https://www.jetbrains.com/lp/mono/)** for monospace, loaded via `next/font`.
 

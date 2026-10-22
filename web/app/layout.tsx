@@ -1,7 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Inter, JetBrains_Mono } from "next/font/google";
-import { Analytics } from "@vercel/analytics/next";
-import { GoogleAnalytics } from "@/components/google-analytics";
 import { Providers } from "./providers";
 import "./globals.css";
 
@@ -67,9 +65,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="flex min-h-dvh flex-col">
-        <GoogleAnalytics />
         <Providers>{children}</Providers>
-        <Analytics />
       </body>
     </html>
   );
