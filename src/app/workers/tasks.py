@@ -2,7 +2,7 @@ from typing import Any
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from sqlalchemy import func
+from sqlalchemy import exists, func
 from .celery_app import celery
 from .. import database, models
 from ..config import settings
@@ -224,11 +224,21 @@ def unverified_account_cleanup():
 
         stale_users = db.query(models.User).filter(
             models.User.email_verified == False,  # noqa: E712
+            models.User.email_verified_at.is_(None),
             models.User.created_at.isnot(None),
             models.User.created_at < cutoff,
+            models.User.google_id.is_(None),
+            models.User.dodo_customer_id.is_(None),
+            ~exists().where(models.Site.user_id == models.User.user_id),
+            ~exists().where(models.Subscriptions.user_id == models.User.user_id),
+            ~exists().where(models.Transactions.user_id == models.User.user_id),
         ).all()
 
         for db_user in stale_users:
+            db.refresh(db_user)
+            if db_user.email_verified or db_user.email_verified_at is not None:
+                logger.info("Skipping cleanup for verified account %s", db_user.user_id)
+                continue
             logger.info("Deleting unverified account %s", db_user.user_id)
             purge_user_account(db, db_user)
 

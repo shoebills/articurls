@@ -309,7 +309,7 @@ def normalize_bucket_key(x: str, unit: str) -> str:
     Umami returns bucket labels like "2026-05-22T00:00:00Z" (day), with varying
     suffixes across versions; the prefix for the unit is stable.
     """
-    x = (x or "").strip()
+    x = (x or "").strip().replace(" ", "T", 1)
     if unit == "hour":
         return x[:13]  # "YYYY-MM-DDTHH"
     if unit == "day":

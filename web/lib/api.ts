@@ -307,7 +307,9 @@ export async function completeGoogleSignup(data: {
   });
 }
 
-export async function verifyEmail(token: string): Promise<TokenResponse> {
+export async function verifyEmail(
+  token: string
+): Promise<{ access_token?: string; token_type?: string; message?: string }> {
   const q = new URLSearchParams({ token });
   return apiFetch(`/user/verify-new-user?${q.toString()}`);
 }

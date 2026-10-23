@@ -171,7 +171,12 @@ def resend_verification_email(request: authentication.ResendVerificationEmail, r
 
     if db_user and not db_user.email_verified:
         verify_token = oauth2.create_new_user_token(email)
-        send_verify_new_user(email, db_user.name, verify_token)
+        send_verify_new_user(
+            email,
+            db_user.name,
+            verify_token,
+            is_new_signup=db_user.email_verified_at is None,
+        )
 
     return {"message": "If your account exists and is not yet verified, a new verification link has been sent."}
 

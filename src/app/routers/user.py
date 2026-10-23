@@ -129,18 +129,11 @@ def verify_new_user(token: str, request: Request, db: Session = Depends(get_db))
         )
 
     if db_user.email_verified:
-        access_token = oauth2.create_access_token(
-        data={"sub": db_user.email},
-        expires_delta=timedelta(minutes=settings.access_token_expire_minutes)
-        )
-
-        return {
-            "message": "Already confirmed",
-            "access_token": access_token,
-            "token_type": "bearer"
-            }
+        return {"message": "Already confirmed"}
 
     db_user.email_verified = True
+    if db_user.email_verified_at is None:
+        db_user.email_verified_at = datetime.now(timezone.utc)
 
     db.commit()
     db.refresh(db_user)
@@ -303,7 +296,12 @@ def update_user(
 
             try:
                 verify_token = oauth2.create_new_user_token(new_email)
-                send_verify_new_user(new_email, current_user.name, verify_token)
+                send_verify_new_user(
+                    new_email,
+                    current_user.name,
+                    verify_token,
+                    is_new_signup=False,
+                )
             except Exception:
                 pass
 

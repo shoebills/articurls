@@ -17,6 +17,17 @@ class DomainStatus(str, enum.Enum):
 
 class User(Base):
     __tablename__ = "users"
+    __table_args__ = (
+        CheckConstraint(
+            "email_verified = false OR email_verified_at IS NOT NULL",
+            name="ck_users_email_verified_at_consistency",
+        ),
+        Index(
+            "ix_users_unverified_cleanup",
+            "created_at",
+            postgresql_where=text("email_verified = false AND email_verified_at IS NULL"),
+        ),
+    )
 
     user_id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
     name = Column(String, nullable=False)
@@ -25,6 +36,7 @@ class User(Base):
     google_id = Column(String, nullable=True, unique=True, index=True)
     dodo_customer_id = Column(String, nullable=True, unique=True, index=True)
     email_verified = Column(Boolean, nullable=False, default=False)
+    email_verified_at = Column(DateTime(timezone=True), nullable=True)
     token_version = Column(Integer, nullable=False, default=0)
     profile_image_url = Column(String, nullable=True)
     

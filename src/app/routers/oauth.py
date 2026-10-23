@@ -216,6 +216,8 @@ async def google_callback(
                 # Safe to link: Link Google account to existing email user
                 existing_user_by_email.google_id = google_id
                 existing_user_by_email.email_verified = True
+                if existing_user_by_email.email_verified_at is None:
+                    existing_user_by_email.email_verified_at = datetime.now(timezone.utc)
                 
                 # Update account profile picture if not set
                 if picture and not existing_user_by_email.profile_image_url:
@@ -236,6 +238,8 @@ async def google_callback(
                 db.refresh(existing_user_by_email)
             elif not existing_user_by_email.email_verified:
                 existing_user_by_email.email_verified = True
+                if existing_user_by_email.email_verified_at is None:
+                    existing_user_by_email.email_verified_at = datetime.now(timezone.utc)
                 db.commit()
                 db.refresh(existing_user_by_email)
             
@@ -391,6 +395,7 @@ async def complete_google_signup(
         password=None,
         google_id=google_id,
         email_verified=True,  # Google verified the email
+        email_verified_at=datetime.now(timezone.utc),
     )
 
     db.add(new_user)

@@ -18,9 +18,29 @@ def send_email(to_email, subject, html):
     else:
         send_smtp_email(to_email, subject, html)
 
-def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
-
+def send_verify_new_user(
+    to_email: str,
+    blog_name: str,
+    verify_token: str,
+    *,
+    is_new_signup: bool = True,
+):
     html = (TEMPLATE_DIR / "verify_new_user.html").read_text()
+
+    if is_new_signup:
+        intro_before = "Thanks for signing up for "
+        intro_after = ". Confirm your email address to activate your account and open your dashboard."
+        note_title = "Verify your email to activate your account."
+        note_body = "Unverified accounts are automatically deleted 14 days after sign-up."
+        footer_note = "If you didn’t create an account, you can safely ignore this email."
+        subject = "Verify your email for Articurls"
+    else:
+        intro_before = "Confirm your new email address for "
+        intro_after = "."
+        note_title = "Verify your new email address."
+        note_body = "You’ll need to confirm this address to complete the change."
+        footer_note = "If you didn’t request this change, contact support immediately."
+        subject = "Verify your new email for Articurls"
 
     html = html.replace("{{ blog_name }}", blog_name)
     base = settings.app_base_url.rstrip("/")
@@ -29,8 +49,11 @@ def send_verify_new_user(to_email: str, blog_name: str, verify_token: str):
         f"{base}/verify?token={verify_token}",
     )
     html = html.replace("{{ expiry_hours }}", "24")
-
-    subject = "Verify your email for Articurls"
+    html = html.replace("{{ intro_before }}", intro_before)
+    html = html.replace("{{ intro_after }}", intro_after)
+    html = html.replace("{{ note_title }}", note_title)
+    html = html.replace("{{ note_body }}", note_body)
+    html = html.replace("{{ footer_note }}", footer_note)
 
     send_email(to_email, subject, html)
 

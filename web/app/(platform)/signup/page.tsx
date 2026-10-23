@@ -22,6 +22,7 @@ type SignupStep = "email" | "profile";
 function SignupForm() {
   const [step, setStep] = useState<SignupStep>("email");
   const searchParams = useSearchParams();
+  const plan = searchParams.get("plan");
 
   useEffect(() => {
     storePendingCheckout(
@@ -101,7 +102,11 @@ function SignupForm() {
               </p>
             )}
             <p className="mb-4 rounded-xl border border-amber-300/60 bg-amber-50/50 px-4 py-2.5 text-sm leading-relaxed text-amber-900">
-              Verify your email to finish signup. Your free trial starts when you choose a plan. Unverified accounts are deleted after 14 days.
+              Verify your email to finish signup.{" "}
+              {plan === "lifetime"
+                ? "Lifetime access starts after your one-time checkout."
+                : "Your 7-day Pro trial starts when you choose a plan."}{" "}
+              Unverified accounts are deleted after 14 days.
             </p>
             <Button
               type="button"
