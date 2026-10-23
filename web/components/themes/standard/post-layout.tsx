@@ -8,6 +8,7 @@ import { PublicFaqSection } from "@/components/public/faq-section";
 import { ContentEndCta } from "@/components/public/content-end-cta";
 import { BlogPostShareMenu } from "@/components/public/post-share-menu";
 import { BlogPostToc } from "@/components/public/post-toc";
+import { PublicCategoryBadges } from "@/components/public/category-badges";
 import { StructuredData } from "@/components/structured-data";
 import {
   generateBlogPostingSchema,
@@ -26,6 +27,7 @@ export function StandardPostLayout({
   blog,
   pages,
   categories,
+  allCategories,
   allBlogs,
   subdomain,
   host,
@@ -44,6 +46,10 @@ export function StandardPostLayout({
       return match && match.blog_id !== blog.blog_id ? [match] : [];
     })
     .slice(0, 3);
+
+  const postCategories = (blog.category_ids || [])
+    .map((id) => allCategories.find((c) => c.category_id === id))
+    .filter((c): c is (typeof allCategories)[number] => Boolean(c));
 
   const currentUrl = `https://${host}${basePath}/${encodeURIComponent(blog.slug)}`;
   const featuredBaseUrl = blog.featured_image_url ? assetUrl(blog.featured_image_url) : null;
@@ -65,6 +71,14 @@ export function StandardPostLayout({
         <BlogPostShareMenu url={currentUrl} title={blog.title} />
       </div>
       <header className="mt-6 sm:mt-8">
+        {postCategories.length > 0 && (
+          <PublicCategoryBadges
+            categories={postCategories}
+            subdomain={subdomain}
+            basePath={basePath}
+            className="mb-3"
+          />
+        )}
         <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">
           {blog.title}
         </h1>
@@ -88,7 +102,7 @@ export function StandardPostLayout({
           {blog.published_at && (
             <time className="inline-flex items-center gap-1.5 text-sm text-muted-foreground" dateTime={blog.published_at}>
               <Calendar className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-              {new Date(blog.published_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+              {new Date(blog.published_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
             </time>
           )}
         </div>
@@ -137,7 +151,7 @@ export function StandardPostLayout({
             blog={rel}
             subdomain={subdomain}
             basePath={basePath}
-            categories={categories}
+            categories={allCategories}
             showExcerpt={site.show_excerpt !== false}
           />
         ))}

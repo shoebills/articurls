@@ -30,6 +30,7 @@ export interface PostLayoutProps {
   blog: PublicBlog;
   pages: UserPage[];
   categories: Category[];
+  allCategories: Category[];
   allBlogs: PublicBlog[];
   subdomain: string;
   host: string;

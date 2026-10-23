@@ -63,7 +63,7 @@ export function StandardPageLayout({
         <h1 className="w-full break-words text-2xl font-bold leading-tight tracking-tight sm:text-3xl md:text-4xl">{page.title}</h1>
         {page.updated_at && (
           <p className="mt-3 text-sm text-muted-foreground">
-            Last updated {new Date(page.updated_at).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+            Last updated {new Date(page.updated_at).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })}
           </p>
         )}
       </header>

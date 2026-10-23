@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { PublicBlog, Category } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
+import { PublicCategoryBadges } from "@/components/public/category-badges";
 import { getPublicPostUrl } from "@/lib/public-url";
 import { resolveBlogCoverImage } from "@/lib/blog-images";
 
@@ -70,13 +70,7 @@ export function PublicPostCard({
         {!large && (allCategories.length > 0 || b.published_at) ? (
           <div className="flex items-center justify-between gap-2 mt-4">
             {allCategories.length > 0 ? (
-              <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                {allCategories.map((c) => (
-                  <Badge key={c.category_id} className="rounded-full shrink-0 border-transparent bg-primary/10 text-primary shadow-none hover:bg-primary/15">
-                    {c.name}
-                  </Badge>
-                ))}
-              </div>
+              <PublicCategoryBadges categories={allCategories} className="min-w-0" />
             ) : (
               <span />
             )}

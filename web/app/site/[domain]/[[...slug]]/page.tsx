@@ -519,11 +519,12 @@ export default async function SitePublicationPage({ params }: Props) {
 // ── Blog post or Custom page: /[slug] ────────────────────────────────────
   if (segments.length === 1 && !["category", "author", "categories"].includes(segments[0])) {
     const slug = segments[0];
-    const [content, site, pages, categories, allBlogs] = await Promise.all([
+    const [content, site, pages, categories, allCategories, allBlogs] = await Promise.all([
       loadContent(subdomain, slug),
       loadSite(subdomain),
       loadPages(subdomain),
       loadCategories(subdomain),
+      loadAllCategories(subdomain),
       loadBlogs(subdomain),
     ]);
 
@@ -537,7 +538,7 @@ export default async function SitePublicationPage({ params }: Props) {
       const PostLayout = getLayout(themeId, "post");
       return (
         <ThemeStyleWrapper site={site}>
-          <PostLayout {...shared} blog={content.blog} allBlogs={allBlogs} />
+          <PostLayout {...shared} blog={content.blog} allCategories={allCategories} allBlogs={allBlogs} />
         </ThemeStyleWrapper>
       );
     }
