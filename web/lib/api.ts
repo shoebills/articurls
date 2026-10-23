@@ -285,6 +285,7 @@ export async function exchangeOAuthCode(code: string): Promise<string> {
   }
   const data = await res.json() as TokenResponse;
   if (typeof window !== "undefined") {
+    clearApiCache();
     localStorage.setItem("articurls_token", data.access_token);
     localStorage.setItem("articurls_last_login", "google");
   }
@@ -1028,6 +1029,24 @@ export function consumePendingCheckout(defaultTarget = "/dashboard"): string {
     /* fall through */
   }
   return defaultTarget;
+}
+
+export async function resolvePostLoginRedirect(
+  token: string,
+  defaultTarget = "/dashboard"
+): Promise<string> {
+  const sites = await listSites(token).catch(() => null);
+  if (sites && sites.length === 0) {
+    return "/setup";
+  }
+  const sub = await getSubscription(token).catch(() => null);
+  if (sub) {
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("pendingCheckout");
+    }
+    return "/dashboard";
+  }
+  return consumePendingCheckout(defaultTarget);
 }
 
 export async function adminListUsers(

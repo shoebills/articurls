@@ -42,7 +42,7 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 export default function BillingPage() {
-  const { token } = useAuth();
+  const { token, subscription: authSub } = useAuth();
   const router = useRouter();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
   const [tx, setTx] = useState<TransactionOut[]>([]);
@@ -69,13 +69,21 @@ export default function BillingPage() {
     }
   }, [token]);
 
+  const effectiveSub = sub ?? authSub;
+
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    if (typeof window === "undefined" || !token || loading) return;
     const params = new URLSearchParams(window.location.search);
     const plan = params.get("plan");
     if (!plan) return;
     const clean = window.location.pathname;
     window.history.replaceState({}, "", clean);
+    if (
+      effectiveSub?.plan_type === "lifetime" &&
+      effectiveSub.status === "active"
+    ) {
+      return;
+    }
     if (plan === "pro") {
       const tier = params.get("tier");
       const cycle = params.get("cycle");
@@ -87,7 +95,7 @@ export default function BillingPage() {
     } else if (plan === "lifetime") {
       buyLifetime();
     }
-  }, [router, buyLifetime]);
+  }, [router, buyLifetime, token, loading, effectiveSub]);
 
   const load = useCallback(async () => {
     if (!token) return;

@@ -9,7 +9,7 @@ import { useAuth } from "@/lib/auth-context";
 export const DASHBOARD_EXEMPT_PREFIXES = ["/dashboard/billing", "/dashboard/support"];
 
 export function DashboardGate({ children }: { children: React.ReactNode }) {
-  const { token, loading, subscription } = useAuth();
+  const { token, loading, subscription, sites } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [hasOAuthCode] = useState(
@@ -17,10 +17,11 @@ export function DashboardGate({ children }: { children: React.ReactNode }) {
   );
 
   const isExempt = DASHBOARD_EXEMPT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  const needsSetup = !loading && !hasOAuthCode && !!token && sites.length === 0;
   // A user who has never subscribed (no subscription row) has no trial or
   // plan — funnel them to the plan picker so they start a 7-day trial.
   const needsPlan =
-    !loading && !hasOAuthCode && !!token && subscription === null && !isExempt;
+    !loading && !hasOAuthCode && !!token && !needsSetup && subscription === null && !isExempt;
 
   useEffect(() => {
     if (loading || hasOAuthCode) return;
@@ -28,14 +29,19 @@ export function DashboardGate({ children }: { children: React.ReactNode }) {
       router.replace("/login");
       return;
     }
+    if (needsSetup) {
+      router.replace("/setup");
+      return;
+    }
     if (needsPlan) {
       router.replace("/dashboard/billing/upgrade");
     }
-  }, [token, loading, subscription, router, hasOAuthCode, pathname, needsPlan]);
+  }, [token, loading, subscription, router, hasOAuthCode, pathname, needsSetup, needsPlan]);
 
   if (hasOAuthCode) return <>{children}</>;
   if (loading) return null;
   if (!token) return null;
+  if (needsSetup) return null;
   if (needsPlan) return null;
   return <>{children}</>;
 }

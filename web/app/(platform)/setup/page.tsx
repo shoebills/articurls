@@ -2,7 +2,7 @@
 
 import { useState, Suspense, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { checkSubdomainAvailability, completeGoogleSignup, createSite, ApiError, consumePendingCheckout } from "@/lib/api";
+import { checkSubdomainAvailability, completeGoogleSignup, createSite, ApiError, consumePendingCheckout, resolvePostLoginRedirect } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -125,7 +125,8 @@ function SetupForm() {
       timezone: browserTimezone(),
     });
     localStorage.setItem(SITE_KEY, String(newSite.site_id));
-    window.location.assign(consumePendingCheckout("/dashboard/billing?plan=pro"));
+    const target = await resolvePostLoginRedirect(storedToken, "/dashboard/billing?plan=pro");
+    window.location.assign(target);
   }
 
   async function finishGoogleFlow() {

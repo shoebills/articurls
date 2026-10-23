@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { exchangeOAuthCode, consumePendingCheckout } from "@/lib/api";
+import { exchangeOAuthCode, resolvePostLoginRedirect } from "@/lib/api";
 import { useAuth } from "@/lib/auth-context";
 import {
   listBlogs,
@@ -49,7 +49,9 @@ export default function DashboardPage() {
   const router = useRouter();
   const { token, user, activeSite, refreshSites } = useAuth();
   const exchangedOAuth = useRef(false);
-  const [oauthBusy, setOauthBusy] = useState(false);
+  const [oauthBusy, setOauthBusy] = useState(
+    () => typeof window !== "undefined" && !!new URLSearchParams(window.location.search).get("code")
+  );
 
   const [blogs, setBlogs] = useState<BlogListItem[]>(() => {
     if (typeof window === "undefined") return [];
@@ -87,7 +89,7 @@ export default function DashboardPage() {
   }, [activeSite?.site_id]);
 
   useEffect(() => {
-    if (!token) return;
+    if (!token || oauthBusy) return;
     let cancelled = false;
     (async () => {
       setLoading(true);
@@ -113,7 +115,7 @@ export default function DashboardPage() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, oauthBusy]);
 
   useEffect(() => {
     if (exchangedOAuth.current) return;
@@ -126,8 +128,8 @@ export default function DashboardPage() {
       const url = new URL(window.location.href);
       url.searchParams.delete("code");
       window.history.replaceState({}, "", url.toString());
-      exchangeOAuthCode(oauthCode).then(() => {
-        const target = consumePendingCheckout();
+      exchangeOAuthCode(oauthCode).then(async (accessToken) => {
+        const target = await resolvePostLoginRedirect(accessToken);
         if (target === "/dashboard") {
           window.location.reload();
         } else {

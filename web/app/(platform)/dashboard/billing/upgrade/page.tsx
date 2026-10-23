@@ -33,7 +33,7 @@ import {
 import { FloatingErrorToast } from "@/components/floating-error-toast";
 
 function UpgradePlanContent() {
-  const { token, refreshUser } = useAuth();
+  const { token, refreshUser, subscription: authSub } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sub, setSub] = useState<SubscriptionOut | null>(null);
@@ -101,13 +101,17 @@ function UpgradePlanContent() {
     load();
   }, [load]);
 
+  const effectiveSub = sub ?? authSub;
+  const isActiveLifetime =
+    effectiveSub?.plan_type === "lifetime" && effectiveSub.status === "active";
+
   // Lifetime is a terminal plan: it owns unlimited traffic and has no tier to
   // switch to, so an active lifetime user has nothing to pick here.
   useEffect(() => {
-    if (!loading && sub?.plan_type === "lifetime" && sub.status === "active") {
+    if (isActiveLifetime) {
       router.replace("/dashboard/billing");
     }
-  }, [loading, sub, router]);
+  }, [isActiveLifetime, router]);
 
   async function handleUpgrade() {
     if (!token) return;
@@ -222,7 +226,7 @@ function UpgradePlanContent() {
         </p>
       </div>
 
-      {loading ? (
+      {loading || isActiveLifetime ? (
         <Skeleton className="h-96 w-full rounded-2xl" />
       ) : (
         <>

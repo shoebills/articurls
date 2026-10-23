@@ -215,6 +215,7 @@ async def google_callback(
                 
                 # Safe to link: Link Google account to existing email user
                 existing_user_by_email.google_id = google_id
+                existing_user_by_email.email_verified = True
                 
                 # Update account profile picture if not set
                 if picture and not existing_user_by_email.profile_image_url:
@@ -231,6 +232,10 @@ async def google_callback(
                     else:
                         existing_user_by_email.profile_image_url = picture
                 
+                db.commit()
+                db.refresh(existing_user_by_email)
+            elif not existing_user_by_email.email_verified:
+                existing_user_by_email.email_verified = True
                 db.commit()
                 db.refresh(existing_user_by_email)
             

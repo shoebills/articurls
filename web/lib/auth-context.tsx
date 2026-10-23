@@ -12,7 +12,7 @@ import {
   apiLogout,
   listSites,
   clearApiCache,
-  consumePendingCheckout,
+  resolvePostLoginRedirect,
 } from "@/lib/api";
 
 const TOKEN_KEY = "articurls_token";
@@ -104,6 +104,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       getSubscription(t),
       getAccountUsage(t).catch(() => null),
     ]);
+    if (sub && typeof window !== "undefined") {
+      localStorage.removeItem("pendingCheckout");
+    }
     setUser(me);
     setSubscription(sub);
     setUsage(accountUsage);
@@ -208,7 +211,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
+  const [hasOAuthCode] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      (window.location.pathname === "/dashboard" || window.location.pathname === "/login") &&
+      !!new URLSearchParams(window.location.search).get("code")
+  );
+
   useEffect(() => {
+    if (hasOAuthCode) return;
     const t = localStorage.getItem(TOKEN_KEY);
     setToken(t);
     if (!t) {
@@ -232,7 +243,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setLoading(false);
       }
     })();
-  }, [loadAuthData, router]);
+  }, [loadAuthData, router, hasOAuthCode]);
 
   const login = useCallback(
     async (email: string, password: string, redirectTo = "/dashboard") => {
@@ -246,7 +257,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       if (redirectTo === "/dashboard") {
-        const target = consumePendingCheckout();
+        const target = await resolvePostLoginRedirect(res.access_token, "/dashboard");
         if (target !== "/dashboard") {
           router.push(target);
           return;
